@@ -11,9 +11,8 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
@@ -124,11 +123,10 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
       }
    }
 
-   private void checkVersion(Cache<Object, Object> c, MagicKey hello) {
-      Address address = c.getCacheManager().getAddress();
-      ConsistentHash readConsistentHash = c.getAdvancedCache().getDistributionManager().getReadConsistentHash();
-      if (readConsistentHash.isKeyLocalToNode(address, hello)) {
-         InternalCacheEntry ice = c.getAdvancedCache().getDataContainer().get(hello);
+   private void checkVersion(Cache<Object, Object> c, MagicKey key) {
+      LocalizedCacheTopology topology = c.getAdvancedCache().getDistributionManager().getCacheTopology();
+      if (topology.isReadOwner(key)) {
+         InternalCacheEntry<Object, Object> ice = c.getAdvancedCache().getDataContainer().peek(key);
          assertNotNull("Entry not found on owner cache " + c, ice);
          assertNotNull("Version is null on owner cache " + c, ice.getMetadata().version());
       }

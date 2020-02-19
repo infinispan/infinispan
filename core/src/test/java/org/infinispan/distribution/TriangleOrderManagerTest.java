@@ -10,7 +10,6 @@ import static org.testng.AssertJUnit.fail;
 import java.util.Collections;
 import java.util.List;
 
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
@@ -35,7 +34,7 @@ public class TriangleOrderManagerTest extends AbstractInfinispanTest {
 
    private static LocalizedCacheTopology mockCacheTopology(int topologyId) {
       List<Address> members = Collections.singletonList(LOCAL_ADDRESS);
-      ConsistentHash ch = new ReplicatedConsistentHash(MurmurHash3.getInstance(), members, new int[]{0});
+      ConsistentHash ch = new ReplicatedConsistentHash(members, new int[]{0});
       CacheTopology cacheTopology = new CacheTopology(topologyId, 0, ch, null, CacheTopology.Phase.NO_REBALANCE, members, null);
       return new LocalizedCacheTopology(CacheMode.DIST_SYNC, cacheTopology, key -> 0, LOCAL_ADDRESS, true);
    }

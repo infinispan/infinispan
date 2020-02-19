@@ -336,7 +336,7 @@ public class HotRodTestingUtil {
       assertEquals(cacheTopology.getActualMembers().size(), servers.size());
       ConsistentHash ch = cacheTopology.getCurrentCH();
       int numSegments = ch.getNumSegments();
-      int numOwners = ch.getNumOwners();
+      int numOwners = cache.getCacheConfiguration().clustering().hash().numOwners();
       assertEquals(hashTopologyResp.segments.size(), numSegments);
       for (int i = 0; i < numSegments; ++i) {
          List<Address> segment = ch.locateOwnersForSegment(i);
@@ -410,7 +410,7 @@ public class HotRodTestingUtil {
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
       ConsistentHash consistentHash = distributionManager.getCacheTopology().getCurrentCH();
       int numSegments = consistentHash.getNumSegments();
-      int numOwners = consistentHash.getNumOwners();
+      int numOwners = cache.getCacheConfiguration().clustering().hash().numOwners();
       assertEquals(hashIds.size(), servers.size());
 
       int segmentSize = (int) Math.ceil((double) Integer.MAX_VALUE / numSegments);
@@ -445,7 +445,7 @@ public class HotRodTestingUtil {
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
       ConsistentHash consistentHash = distributionManager.getCacheTopology().getCurrentCH();
       int numSegments = consistentHash.getNumSegments();
-      int numOwners = consistentHash.getNumOwners();
+      int numOwners = cache.getCacheConfiguration().clustering().hash().numOwners();
 
       // replicated responses have just one segment, and each server should have only one hash id: 0
       assertEquals(hashIds.size(), servers.size());

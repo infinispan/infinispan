@@ -3,7 +3,7 @@ package org.infinispan.statetransfer;
 import java.io.Serializable;
 import java.util.Random;
 
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.KeyPartitioner;
 
 /**
  * A key that maps to a given data segment of the ConsistentHash.
@@ -25,8 +25,8 @@ final class TestKey implements Serializable {
     */
    private final int hashCode;
 
-   public TestKey(String name, int segmentId, ConsistentHash ch) {
-      if (segmentId < 0 || segmentId >= ch.getNumSegments()) {
+   public TestKey(String name, int segmentId, KeyPartitioner keyPartitioner) {
+      if (segmentId < 0) {
          throw new IllegalArgumentException("segmentId is out of range");
       }
       this.name = name;
@@ -35,7 +35,7 @@ final class TestKey implements Serializable {
       Integer r;
       do {
          r = rnd.nextInt();
-      } while (segmentId != ch.getSegment(r));
+      } while (segmentId != keyPartitioner.getSegment(r));
 
       hashCode = r;
    }

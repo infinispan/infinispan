@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -185,7 +184,7 @@ public class StateReceiverTest extends AbstractInfinispanTest {
       }
 
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
-      return chf.create(MurmurHash3.getInstance(), 2, 40, addresses, null);
+      return chf.create(2, 40, addresses, null);
    }
 
    private LocalizedCacheTopology createLocalizedCacheTopology(int numberOfNodes) {

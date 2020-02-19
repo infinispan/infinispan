@@ -1,18 +1,18 @@
 package org.infinispan.distribution.ch.impl;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.util.Util;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.PersistentUUID;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.UnaryOperator;
+
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.util.Util;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.PersistentUUID;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -23,19 +23,16 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
    protected static final String STATE_CAPACITY_FACTORS = "capacityFactors";
    protected static final String STATE_NUM_SEGMENTS = "numSegments";
 
-   protected final Hash hashFunction;
    /**
     * The membership of the cache topology that uses this CH.
     */
    protected final List<Address> members;
    protected final float[] capacityFactors;
-   protected final int segmentSize;
 
-   protected AbstractConsistentHash(Hash hashFunction, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
+   protected AbstractConsistentHash(int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
       if (numSegments < 1)
          throw new IllegalArgumentException("The number of segments must be strictly positive");
 
-      this.hashFunction = hashFunction;
       this.members = new ArrayList<>(members);
       if (capacityFactors == null) {
          this.capacityFactors = null;
@@ -45,21 +42,18 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
             this.capacityFactors[i] = capacityFactors.get(members.get(i));
          }
       }
-      this.segmentSize = Util.getSegmentSize(numSegments);
    }
 
-   protected AbstractConsistentHash(Hash hashFunction, int numSegments, List<Address> members, float[] capacityFactors) {
+   protected AbstractConsistentHash(int numSegments, List<Address> members, float[] capacityFactors) {
       if (numSegments < 1)
          throw new IllegalArgumentException("The number of segments must be strictly positive");
 
-      this.hashFunction = hashFunction;
       this.members = members;
       this.capacityFactors = capacityFactors;
-      this.segmentSize = Util.getSegmentSize(numSegments);
    }
 
    protected AbstractConsistentHash(ScopedPersistentState state) {
-      this(parseHashFunction(state), parseNumSegments(state), parseMembers(state), parseCapacityFactors(state));
+      this(parseNumSegments(state), parseMembers(state), parseCapacityFactors(state));
    }
 
    protected static int parseNumSegments(ScopedPersistentState state) {
@@ -102,32 +96,11 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       for (int i = 0; i < capacityFactors.length; i++) {
          state.setProperty(String.format(STATE_CAPACITY_FACTOR, i), capacityFactors[i]);
       }
-      state.setProperty(ConsistentHashPersistenceConstants.STATE_HASH_FUNCTION, hashFunction.getClass().getName());
-   }
-
-   @Override
-   public Hash getHashFunction() {
-      return hashFunction;
-   }
-
-   @Override
-   public int getSegment(Object key) {
-      // The result must always be positive, so we make sure the dividend is positive first
-      return getNormalizedHash(key) / segmentSize;
-   }
-
-   public int getNormalizedHash(Object key) {
-      return hashFunction.hash(key) & Integer.MAX_VALUE;
    }
 
    @Override
    public List<Address> getMembers() {
       return members;
-   }
-
-   @Override
-   public boolean isKeyLocalToNode(Address nodeAddress, Object key) {
-      return isSegmentLocalToNode(nodeAddress, getSegment(key));
    }
 
    /**
@@ -186,9 +159,6 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
    }
 
    protected void checkSameHashAndSegments(AbstractConsistentHash dch2) {
-      if (!hashFunction.equals(dch2.getHashFunction())) {
-         throw new IllegalArgumentException("The consistent hash objects must have the same hash function");
-      }
       int numSegments = getNumSegments();
       if (numSegments != dch2.getNumSegments()) {
          throw new IllegalArgumentException("The consistent hash objects must have the same number of segments");

@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -41,6 +40,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.TriangleOrderManager;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
@@ -118,7 +118,8 @@ public class StateConsumerTest extends AbstractInfinispanTest {
 
       // create CHes
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
-      DefaultConsistentHash ch1 = chf.create(MurmurHash3.getInstance(), 2, 40, members1, null);
+      KeyPartitioner keyPartitioner = new HashFunctionPartitioner(40);
+      DefaultConsistentHash ch1 = chf.create(2, 40, members1, null);
       final DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2, null);
       DefaultConsistentHash ch3 = chf.rebalance(ch2);
       DefaultConsistentHash ch23 = chf.union(ch2, ch3);
@@ -204,8 +205,8 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       stateConsumer.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();
-      Object key1 = new TestKey("key1", 0, ch1);
-      Object key2 = new TestKey("key2", 0, ch1);
+      Object key1 = new TestKey("key1", 0, keyPartitioner);
+      Object key2 = new TestKey("key2", 0, keyPartitioner);
       cacheEntries.add(new ImmortalCacheEntry(key1, "value1"));
       cacheEntries.add(new ImmortalCacheEntry(key2, "value2"));
       when(dataContainer.iterator()).thenAnswer(invocation -> cacheEntries.iterator());

@@ -17,12 +17,12 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -80,7 +80,7 @@ public class InitialStateTransferCompletionTest extends MultipleCacheManagersTes
       assertEquals(numKeys, actualTransferredKeys);
 
       // check the current topology
-      CacheTopology cacheTopology = cache2.getAdvancedCache().getDistributionManager().getCacheTopology();
+      LocalizedCacheTopology cacheTopology = cache2.getAdvancedCache().getDistributionManager().getCacheTopology();
       assertNull(cacheTopology.getPendingCH());
       ConsistentHash readCh = cacheTopology.getReadConsistentHash();
       assertTrue(readCh.getMembers().contains(address(2)));
@@ -93,7 +93,7 @@ public class InitialStateTransferCompletionTest extends MultipleCacheManagersTes
       for (int i = 0; i < numKeys; i++) {
          String key = "k" + i;
          String expectedValue = "v" + i;
-         assertTrue(readCh.isKeyLocalToNode(address(2), key));
+         assertTrue(cacheTopology.isReadOwner(key));
          InternalCacheEntry entry = dc2.get(key);
          assertNotNull(entry);
          assertEquals(expectedValue, entry.getValue());

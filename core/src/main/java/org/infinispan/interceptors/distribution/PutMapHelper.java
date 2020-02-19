@@ -8,7 +8,7 @@ import java.util.function.Function;
 
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 
@@ -23,13 +23,13 @@ class PutMapHelper extends WriteManyCommandHelper<PutMapCommand, Map<Object, Obj
    }
 
    @Override
-   public PutMapCommand copyForPrimary(PutMapCommand cmd, ConsistentHash ch, IntSet segments) {
-      return new PutMapCommand(cmd).withMap(new ReadOnlySegmentAwareMap<>(cmd.getMap(), ch, segments));
+   public PutMapCommand copyForPrimary(PutMapCommand cmd, LocalizedCacheTopology topology, IntSet segments) {
+      return new PutMapCommand(cmd).withMap(new ReadOnlySegmentAwareMap<>(cmd.getMap(), topology, segments));
    }
 
    @Override
-   public PutMapCommand copyForBackup(PutMapCommand cmd, ConsistentHash ch, IntSet segments) {
-      PutMapCommand copy = new PutMapCommand(cmd).withMap(new ReadOnlySegmentAwareMap(cmd.getMap(), ch, segments));
+   public PutMapCommand copyForBackup(PutMapCommand cmd, LocalizedCacheTopology topology, IntSet segments) {
+      PutMapCommand copy = new PutMapCommand(cmd).withMap(new ReadOnlySegmentAwareMap(cmd.getMap(), topology, segments));
       copy.setForwarded(true);
       return copy;
    }

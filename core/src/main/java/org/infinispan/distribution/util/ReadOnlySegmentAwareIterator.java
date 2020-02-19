@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 
 /**
  * Iterator implementation that shows a read only view of the provided iterator by only
@@ -18,21 +18,21 @@ import org.infinispan.distribution.ch.ConsistentHash;
  */
 public class ReadOnlySegmentAwareIterator<E> implements Iterator<E> {
    protected final Iterator<E> iter;
-   protected final ConsistentHash ch;
+   protected final LocalizedCacheTopology topology;
    protected final IntSet allowedSegments;
 
    protected E next;
 
-   public ReadOnlySegmentAwareIterator(Iterator<E> iter, ConsistentHash ch, IntSet allowedSegments) {
+   public ReadOnlySegmentAwareIterator(Iterator<E> iter, LocalizedCacheTopology topology, IntSet allowedSegments) {
       super();
       this.iter = iter;
-      this.ch = ch;
+      this.topology = topology;
       this.allowedSegments = allowedSegments;
       next = findNext();
    }
 
    protected boolean valueAllowed(Object obj) {
-      int segment = ch.getSegment(obj);
+      int segment = topology.getSegment(obj);
       return allowedSegments.contains(segment);
    }
 

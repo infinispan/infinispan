@@ -188,7 +188,6 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
    }
 
    private boolean isEquivalent(Map<JGroupsAddress, PersistentUUID> addressMapping, ConsistentHash oldConsistentHash, ConsistentHash newConsistentHash, PersistentUUIDManager persistentUUIDManager) {
-      if (oldConsistentHash.getNumOwners() != newConsistentHash.getNumOwners()) return false;
       if (oldConsistentHash.getNumSegments() != newConsistentHash.getNumSegments()) return false;
       for (int i = 0; i < oldConsistentHash.getMembers().size(); i++) {
          JGroupsAddress oldAddress = (JGroupsAddress) oldConsistentHash.getMembers().get(i);

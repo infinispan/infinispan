@@ -21,14 +21,12 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.ScatteredConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
-import org.infinispan.distribution.group.impl.PartitionerConsistentHash;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -159,26 +157,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
       return factory;
    }
 
-   /**
-    * Decorates the given cache topology to add a key partitioner.
-    *
-    * The key partitioner may include support for grouping as well.
-    */
-   private CacheTopology addPartitioner(CacheTopology cacheTopology) {
-      ConsistentHash currentCH = cacheTopology.getCurrentCH();
-      currentCH = new PartitionerConsistentHash(currentCH, keyPartitioner);
-      ConsistentHash pendingCH = cacheTopology.getPendingCH();
-      if (pendingCH != null) {
-         pendingCH = new PartitionerConsistentHash(pendingCH, keyPartitioner);
-      }
-      ConsistentHash unionCH = cacheTopology.getUnionCH();
-      if (unionCH != null) {
-         unionCH = new PartitionerConsistentHash(unionCH, keyPartitioner);
-      }
-      return new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), currentCH, pendingCH,
-            unionCH, cacheTopology.getPhase(), cacheTopology.getActualMembers(), cacheTopology.getMembersPersistentUUIDs());
-   }
-
    private CompletionStage<Void> doTopologyUpdate(CacheTopology newCacheTopology, boolean isRebalance) {
       CacheTopology oldCacheTopology = distributionManager.getCacheTopology();
 
@@ -202,20 +180,18 @@ public class StateTransferManagerImpl implements StateTransferManager {
          }
       }
 
-      // handle the partitioner
-      CacheTopology partitionerCacheTopology = addPartitioner(newCacheTopology);
       int newRebalanceId = newCacheTopology.getRebalanceId();
       CacheTopology.Phase phase = newCacheTopology.getPhase();
 
-      return cacheNotifier.notifyTopologyChanged(oldCacheTopology, partitionerCacheTopology, newTopologyId, true)
-                          .thenCompose(ignored -> updateProviderAndConsumer(isRebalance, newTopologyId, partitionerCacheTopology,
-                                                    newRebalanceId, phase))
-                          .thenCompose(ignored -> cacheNotifier.notifyTopologyChanged(oldCacheTopology, partitionerCacheTopology,
-                                                                     newTopologyId, false))
-                          .thenRun(() -> {
-                             completeInitialTransferIfNeeded(partitionerCacheTopology, phase);
-                             partitionHandlingManager.onTopologyUpdate(partitionerCacheTopology);
-                          });
+      return cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newTopologyId, true)
+            .thenCompose(
+                  ignored -> updateProviderAndConsumer(isRebalance, newTopologyId, newCacheTopology, newRebalanceId, phase)
+            ).thenCompose(
+                  ignored -> cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newTopologyId, false)
+            ).thenRun(() -> {
+               completeInitialTransferIfNeeded(newCacheTopology, phase);
+               partitionHandlingManager.onTopologyUpdate(newCacheTopology);
+            });
    }
 
    private CompletionStage<Void> updateProviderAndConsumer(boolean isRebalance, int newTopologyId, CacheTopology newCacheTopology,

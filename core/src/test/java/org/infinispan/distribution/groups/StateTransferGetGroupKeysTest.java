@@ -1,6 +1,5 @@
 package org.infinispan.distribution.groups;
 
-import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.List;
@@ -16,6 +15,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
@@ -138,7 +138,8 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
       if (cacheMode.isScattered()) {
          builder.clustering().hash().consistentHashFactory(new CustomConsistentHashFactory(new BaseControlledConsistentHashFactory.ScatteredTrait(), cacheMode));
       } else {
-         builder.clustering().hash().consistentHashFactory(new CustomConsistentHashFactory(new BaseControlledConsistentHashFactory.DefaultTrait(), cacheMode));
+         ConsistentHashFactory chf = new CustomConsistentHashFactory(new BaseControlledConsistentHashFactory.DefaultTrait(), cacheMode);
+         builder.clustering().hash().consistentHashFactory(chf);
       }
       return builder;
    }
@@ -157,9 +158,8 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
       }
 
       @Override
-      protected int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
+      protected int[][] assignOwners(int numSegments, List<Address> members) {
          if (cacheMode.isDistributed()) {
-            assertEquals(2, numOwners);
             switch (members.size()) {
                case 1:
                   return new int[][]{{0}};

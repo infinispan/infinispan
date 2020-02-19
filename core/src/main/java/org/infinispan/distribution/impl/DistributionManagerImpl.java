@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DataLocality;
@@ -187,7 +186,7 @@ public class DistributionManagerImpl implements DistributionManager {
       List<Address> members = Collections.singletonList(localAddress);
       int[] owners = new int[numSegments];
       Arrays.fill(owners, 0);
-      ConsistentHash ch = new ReplicatedConsistentHash(MurmurHash3.getInstance(), members, owners);
+      ConsistentHash ch = new ReplicatedConsistentHash(members, owners);
       CacheTopology cacheTopology = new CacheTopology(-1, -1, ch, null, CacheTopology.Phase.NO_REBALANCE, members, null);
       return new LocalizedCacheTopology(cacheMode, cacheTopology, keyPartitioner, localAddress, false);
    }

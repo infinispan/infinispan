@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
 import org.infinispan.profiling.testinternals.Generator;
 import org.infinispan.remoting.transport.Address;
@@ -25,7 +24,7 @@ public class ReplicatedConsistentHashPersistenceTest extends BaseCHPersistenceTe
       members.add(Generator.generateAddress());
       members.add(Generator.generateAddress());
       ReplicatedConsistentHashFactory hashFactory = new ReplicatedConsistentHashFactory();
-      return hashFactory.create(MurmurHash3.getInstance(), 2, 100, members, Collections.emptyMap());
+      return hashFactory.create(2, 100, members, Collections.emptyMap());
    }
 
 }

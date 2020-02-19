@@ -20,6 +20,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -152,10 +153,12 @@ public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
    private void checkRehashed(DistributionManager dm, List<Cache<Object,Object>> caches, List<Address> addresses) {
       TestingUtil.waitForNoRebalance(caches);
       assertNull(dm.getCacheTopology().getPendingCH());
-      ConsistentHash ch = dm.getCacheTopology().getCurrentCH();
+      LocalizedCacheTopology topology = dm.getCacheTopology();
+      ConsistentHash ch = topology.getCurrentCH();
       assertEquals(addresses, ch.getMembers());
+      int numOwners = Math.min(caches.get(0).getCacheConfiguration().clustering().hash().numOwners(), ch.getMembers().size());
       for (int i = 0; i < ch.getNumSegments(); i++) {
-         assertEquals(ch.getNumOwners(), ch.locateOwnersForSegment(i).size());
+         assertEquals(numOwners, ch.locateOwnersForSegment(i).size());
       }
    }
 }

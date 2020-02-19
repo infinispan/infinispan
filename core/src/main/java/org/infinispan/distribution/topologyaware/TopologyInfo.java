@@ -14,7 +14,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 
@@ -33,10 +32,6 @@ public class TopologyInfo {
    private final List<Machine> allMachines = new ArrayList<>();
    private final List<Node> allNodes = new ArrayList<>();
    private final Map<Address, Node> addressMap = new HashMap<>();
-
-   public TopologyInfo(ConsistentHash ch) {
-      this(ch.getNumSegments(), ch.getNumOwners(), ch.getMembers(), ch.getCapacityFactors());
-   }
 
    public TopologyInfo(int numSegments, int numOwners, Collection<Address> members,
                        Map<Address, Float> capacityFactors) {

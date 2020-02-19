@@ -20,7 +20,6 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.SmallIntSet;
@@ -37,6 +36,7 @@ import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -134,9 +134,9 @@ public class StateProviderTest {
       members2.add(G);
 
       // create CHes
-      KeyPartitioner keyPartitioner = StateProviderTest::keyToSegment;
+      KeyPartitioner keyPartitioner = new HashFunctionPartitioner(StateProviderTest.NUM_SEGMENTS);
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
-      DefaultConsistentHash ch1 = chf.create(MurmurHash3.getInstance(), 2, StateProviderTest.NUM_SEGMENTS, members1, null);
+      DefaultConsistentHash ch1 = chf.create(2, StateProviderTest.NUM_SEGMENTS, members1, null);
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2, null);
 
       // create dependencies
@@ -151,8 +151,8 @@ public class StateProviderTest {
       stateProvider.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();
-      Object key1 = new TestKey("key1", 0, ch1);
-      Object key2 = new TestKey("key2", 0, ch1);
+      Object key1 = new TestKey("key1", 0, keyPartitioner);
+      Object key2 = new TestKey("key2", 0, keyPartitioner);
       cacheEntries.add(new ImmortalCacheEntry(key1, "value1"));
       cacheEntries.add(new ImmortalCacheEntry(key2, "value2"));
       when(dataContainer.iterator()).thenAnswer(invocation -> cacheEntries.iterator());
@@ -214,9 +214,9 @@ public class StateProviderTest {
       members2.add(G);
 
       // create CHes
-      KeyPartitioner keyPartitioner = StateProviderTest::keyToSegment;
+      KeyPartitioner keyPartitioner = new HashFunctionPartitioner(StateProviderTest.NUM_SEGMENTS);
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
-      DefaultConsistentHash ch1 = chf.create(MurmurHash3.getInstance(), 2, NUM_SEGMENTS, members1, null);
+      DefaultConsistentHash ch1 = chf.create(2, NUM_SEGMENTS, members1, null);
       //todo [anistor] it seems that address 6 is not used for un-owned segments
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2, null);
 
@@ -239,10 +239,10 @@ public class StateProviderTest {
       stateProvider.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();
-      Object key1 = new TestKey("key1", 0, ch1);
-      Object key2 = new TestKey("key2", 0, ch1);
-      Object key3 = new TestKey("key3", 1, ch1);
-      Object key4 = new TestKey("key4", 1, ch1);
+      Object key1 = new TestKey("key1", 0, keyPartitioner);
+      Object key2 = new TestKey("key2", 0, keyPartitioner);
+      Object key3 = new TestKey("key3", 1, keyPartitioner);
+      Object key4 = new TestKey("key4", 1, keyPartitioner);
       cacheEntries.add(new ImmortalCacheEntry(key1, "value1"));
       cacheEntries.add(new ImmortalCacheEntry(key2, "value2"));
       cacheEntries.add(new ImmortalCacheEntry(key3, "value3"));
@@ -295,9 +295,5 @@ public class StateProviderTest {
       stateProvider.stop();
 
       assertFalse(stateProvider.isStateTransferInProgress());
-   }
-
-   private static int keyToSegment(Object k) {
-      return MurmurHash3.getInstance().hash(k) & (NUM_SEGMENTS - 1);
    }
 }

@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.DistributionManager;
@@ -154,7 +153,7 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
          // Add a node to the cache topology, but not to the JGroups cluster view
          List<Address> newMembers = new ArrayList<>(initialTopology.getMembers());
          newMembers.add(SUSPECT);
-         ConsistentHash newCH = new ReplicatedConsistentHashFactory().create(MurmurHash3.getInstance(), 1, 1,
+         ConsistentHash newCH = new ReplicatedConsistentHashFactory().create(1, 1,
                                                                              newMembers, null);
          CacheTopology suspectTopology =
             new CacheTopology(initialTopology.getTopologyId(), initialTopology.getRebalanceId(), newCH, null, null,

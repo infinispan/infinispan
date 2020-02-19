@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.distribution.topologyaware.TopologyInfo;
 import org.infinispan.distribution.topologyaware.TopologyLevel;
@@ -31,8 +30,8 @@ import org.infinispan.remoting.transport.Address;
  */
 public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFactory {
    @Override
-   protected Builder createBuilder(Hash hashFunction, int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
-      return new Builder(hashFunction, numOwners, numSegments, members, capacityFactors);
+   protected Builder createBuilder(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
+      return new Builder(numOwners, numSegments, members, capacityFactors);
    }
 
    protected static class Builder extends SyncConsistentHashFactory.Builder {
@@ -40,8 +39,8 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
 
       protected TopologyLevel currentLevel;
 
-      protected Builder(Hash hashFunction, int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
-         super(hashFunction, numOwners, numSegments, members, capacityFactors);
+      protected Builder(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
+         super(numOwners, numSegments, members, capacityFactors);
          // Use the processed capacity factors and numOwners
          topologyInfo = new TopologyInfo(numSegments, this.actualNumOwners, members, this.capacityFactors);
          currentLevel = TopologyLevel.SITE;

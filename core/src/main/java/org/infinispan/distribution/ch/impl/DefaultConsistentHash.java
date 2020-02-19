@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.IntSet;
@@ -49,9 +48,9 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
     */
    private final List<Address>[] segmentOwners;
 
-   public DefaultConsistentHash(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
+   public DefaultConsistentHash(int numOwners, int numSegments, List<Address> members,
                                 Map<Address, Float> capacityFactors, List<Address>[] segmentOwners) {
-      super(hashFunction, numSegments, members, capacityFactors);
+      super(numSegments, members, capacityFactors);
       if (numOwners < 1)
          throw new IllegalArgumentException("The number of owners must be strictly positive");
 
@@ -66,9 +65,9 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    }
 
    // Only used by the externalizer, so we can skip copying collections
-   private DefaultConsistentHash(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
-         float[] capacityFactors, List<Address>[] segmentOwners) {
-      super(hashFunction, numSegments, members, capacityFactors);
+   private DefaultConsistentHash(int numOwners, int numSegments, List<Address> members,
+                                 float[] capacityFactors, List<Address>[] segmentOwners) {
+      super(numSegments, members, capacityFactors);
       if (numOwners < 1)
          throw new IllegalArgumentException("The number of owners must be strictly positive");
 
@@ -137,19 +136,6 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       return segments;
    }
 
-   /**
-    * @deprecated Since 8.2, use {@link HashFunctionPartitioner#getSegmentEndHashes()} instead.
-    */
-   @Deprecated
-   public List<Integer> getSegmentEndHashes() {
-      int numSegments = segmentOwners.length;
-      List<Integer> hashes = new ArrayList<>(numSegments);
-      for (int i = 0; i < numSegments; i++) {
-         hashes.add(((i + 1) % numSegments) * segmentSize);
-      }
-      return hashes;
-   }
-
    @Override
    public List<Address> locateOwnersForSegment(int segmentId) {
       return segmentOwners[segmentId];
@@ -160,7 +146,6 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       return segmentOwners[segmentId].get(0);
    }
 
-   @Override
    public int getNumOwners() {
       return numOwners;
    }
@@ -187,7 +172,6 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
 
       if (numOwners != that.numOwners) return false;
       if (segmentOwners.length != that.segmentOwners.length) return false;
-      if (!hashFunction.equals(that.hashFunction)) return false;
       if (!members.equals(that.members)) return false;
       for (int i = 0; i < segmentOwners.length; i++) {
          if (!segmentOwners[i].equals(that.segmentOwners[i]))
@@ -254,7 +238,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       }
 
       Map<Address, Float> unionCapacityFactors = unionCapacityFactors(dch2);
-      return new DefaultConsistentHash(hashFunction, numOwners, unionSegmentOwners.length, unionMembers, unionCapacityFactors, unionSegmentOwners);
+      return new DefaultConsistentHash(numOwners, unionSegmentOwners.length, unionMembers, unionCapacityFactors, unionSegmentOwners);
    }
 
    public String prettyPrintOwnership() {
@@ -303,7 +287,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          remappedSegmentOwners[i] = remappedOwners;
       }
 
-      return new DefaultConsistentHash(this.hashFunction, this.numOwners, this.segmentOwners.length, remappedMembers,
+      return new DefaultConsistentHash(this.numOwners, this.segmentOwners.length, remappedMembers,
             remappedCapacityFactors, remappedSegmentOwners);
    }
 
@@ -315,7 +299,6 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          output.writeInt(ch.numOwners);
          output.writeObject(ch.members);
          output.writeObject(ch.capacityFactors);
-         output.writeObject(ch.hashFunction);
 
          // Avoid computing the identityHashCode for every ImmutableListCopy/Address
          HashMap<Address, Integer> memberIndexes = getMemberIndexMap(ch.members);
@@ -335,7 +318,6 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          int numOwners = unmarshaller.readInt();
          List<Address> members = (List<Address>) unmarshaller.readObject();
          float[] capacityFactors = (float[]) unmarshaller.readObject();
-         Hash hash = (Hash) unmarshaller.readObject();
 
          List<Address>[] segmentOwners = new List[numSegments];
          for (int i = 0; i < numSegments; i++) {
@@ -348,7 +330,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
             segmentOwners[i] = Immutables.immutableListWrap(owners);
          }
 
-         return new DefaultConsistentHash(hash, numOwners, numSegments, members, capacityFactors, segmentOwners);
+         return new DefaultConsistentHash(numOwners, numSegments, members, capacityFactors, segmentOwners);
       }
 
       private HashMap<Address, Integer> getMemberIndexMap(List<Address> members) {

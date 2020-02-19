@@ -7,12 +7,9 @@ import java.util.Map;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.OwnershipStatistics;
-import org.infinispan.distribution.group.impl.PartitionerConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 /**
@@ -67,10 +64,8 @@ public class CapacityFactorsFunctionalTest extends MultipleCacheManagersTest {
 
    private void assertCapacityFactors(float... expectedCapacityFactors) {
       ConsistentHash ch = cache(0).getAdvancedCache().getDistributionManager().getReadConsistentHash();
-      DefaultConsistentHash dch =
-            (DefaultConsistentHash) TestingUtil.extractField(PartitionerConsistentHash.class, ch, "ch");
       int numNodes = expectedCapacityFactors.length;
-      Map<Address,Float> capacityFactors = dch.getCapacityFactors();
+      Map<Address,Float> capacityFactors = ch.getCapacityFactors();
       for (int i = 0; i < numNodes; i++) {
          assertEquals(expectedCapacityFactors[i], capacityFactors.get(address(i)), 0.0);
       }

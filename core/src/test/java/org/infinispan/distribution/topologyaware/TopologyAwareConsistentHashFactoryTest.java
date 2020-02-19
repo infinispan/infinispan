@@ -10,11 +10,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.TestTopologyAwareAddress;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
+import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.distribution.ch.impl.OwnershipStatistics;
 import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
@@ -40,6 +42,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    private List<Address> chMembers;
    private Map<Address, Float> capacityFactors;
    private ConsistentHashFactory<DefaultConsistentHash> chf;
+   private KeyPartitioner keyPartitioner;
    protected DefaultConsistentHash ch;
 
    @BeforeMethod()
@@ -52,6 +55,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
          testAddresses[i] = new TestTopologyAwareAddress(i * 100);
          testAddresses[i].setName(Character.toString((char) ('A' + i)));
       }
+      keyPartitioner = new HashFunctionPartitioner(numSegments);
    }
 
    protected ConsistentHashFactory<DefaultConsistentHash> createConsistentHashFactory() {
@@ -62,43 +66,39 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       addNode(testAddresses[0], "m0", null, null);
 
       updateConsistentHash(1);
-      assertEquals(ch.locateOwners(testAddresses[0]).size(), 1);
+      IntStream.range(0, numSegments).forEach(i ->  assertOwners(i, 1));
       updateConsistentHash(2);
-      assertEquals(ch.locateOwners(testAddresses[0]).size(), 1);
+      IntStream.range(0, numSegments).forEach(i ->  assertOwners(i, 1));
 
       addNode(testAddresses[1], "m1", null, null);
 
       updateConsistentHash(1);
-      for (Address testAddress : testAddresses) {
-         assertEquals(ch.locateOwners(testAddress).size(), 1);
-      }
+      int numSegments = ch.getNumSegments();
+      IntStream.range(0, numSegments).forEach(i ->  assertOwners(i, 1));
+
       updateConsistentHash(2);
-      for (Address testAddress : testAddresses) {
-         assertEquals(ch.locateOwners(testAddress).size(), 2);
-      }
+      IntStream.range(0, numSegments).forEach(i ->  assertOwners(i, 2));
+
       updateConsistentHash(3);
-      for (Address testAddress : testAddresses) {
-         assertEquals(ch.locateOwners(testAddress).size(), 2);
-      }
+      IntStream.range(0, numSegments).forEach(i ->  assertOwners(i, 2));
 
       addNode(testAddresses[2], "m0", null, null);
 
       updateConsistentHash(1);
-      for (Address testAddress : testAddresses) {
-         assertEquals(ch.locateOwners(testAddress).size(), 1);
-      }
+      IntStream.range(0, numSegments).forEach(i ->  assertOwners(i, 1));
+
       updateConsistentHash(2);
-      for (Address testAddress : testAddresses) {
-         assertEquals(ch.locateOwners(testAddress).size(), 2);
-      }
+      IntStream.range(0, numSegments).forEach(i ->  assertOwners(i, 2));
+
       updateConsistentHash(3);
-      for (Address testAddress : testAddresses) {
-         assertEquals(ch.locateOwners(testAddress).size(), 3);
-      }
+      IntStream.range(0, numSegments).forEach(i ->  assertOwners(i, 3));
+
       updateConsistentHash(4);
-      for (Address testAddress : testAddresses) {
-         assertEquals(ch.locateOwners(testAddress).size(), 3);
-      }
+      IntStream.range(0, numSegments).forEach(i ->  assertOwners(i, 3));
+   }
+
+   private void assertOwners(int segment, int expected) {
+      assertEquals(ch.locateOwnersForSegment(segment).size(), expected);
    }
 
    public void testDifferentMachines() {
@@ -324,13 +324,13 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    private void assertAllLocationsWithRebalance(int numOwners) {
-      ch = chf.create(MurmurHash3.getInstance(), numOwners, numSegments, chMembers, capacityFactors);
+      ch = chf.create(numOwners, numSegments, chMembers, capacityFactors);
 
       List<Address> membersWithLoad = computeNodesWithLoad(chMembers);
       assertAllLocations(membersWithLoad, numOwners);
       assertDistribution(membersWithLoad, numOwners);
 
-      ch = chf.create(MurmurHash3.getInstance(), numOwners, numSegments, chMembers.subList(0, 1), capacityFactors);
+      ch = chf.create(numOwners, numSegments, chMembers.subList(0, 1), capacityFactors);
       assertAllLocations(chMembers.subList(0, 1), numOwners);
 
       for (int i = 2; i <= chMembers.size(); i++) {
@@ -513,7 +513,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    private void updateConsistentHash(int numOwners, int numSegments) {
-      ch = chf.create(MurmurHash3.getInstance(), numOwners, numSegments, chMembers, capacityFactors);
+      ch = chf.create(numOwners, numSegments, chMembers, capacityFactors);
       log.debugf("Created CH with numOwners %d, members %s", numOwners, chMembers);
    }
 

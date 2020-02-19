@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.profiling.testinternals.Generator;
 import org.infinispan.remoting.transport.Address;
@@ -30,7 +29,7 @@ public class SyncConsistentHashPersistenceTest extends BaseCHPersistenceTest {
          capacityFactors.put(member, 1.0f);
       }
       SyncConsistentHashFactory hashFactory = new SyncConsistentHashFactory();
-      return hashFactory.create(MurmurHash3.getInstance(), 2, 100, members, capacityFactors);
+      return hashFactory.create(2, 100, members, capacityFactors);
    }
 
 }

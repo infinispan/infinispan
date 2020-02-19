@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 
 abstract class WriteManyCommandHelper<C extends WriteCommand, Container, Item> {
@@ -17,9 +17,9 @@ abstract class WriteManyCommandHelper<C extends WriteCommand, Container, Item> {
 
    public abstract C copyForLocal(C cmd, Container container);
 
-   public abstract C copyForPrimary(C cmd, ConsistentHash ch, IntSet segments);
+   public abstract C copyForPrimary(C cmd, LocalizedCacheTopology topology, IntSet segments);
 
-   public abstract C copyForBackup(C cmd, ConsistentHash ch, IntSet segments);
+   public abstract C copyForBackup(C cmd, LocalizedCacheTopology topology, IntSet segments);
 
    public abstract Collection<Item> getItems(C cmd);
 
