@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
@@ -24,15 +23,13 @@ import org.infinispan.remoting.transport.Address;
  * @since 8.2
  */
 public class SyncReplicatedConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash> {
-   public static final float OWNED_SEGMENTS_ALLOWED_VARIATION = 1.10f;
-   public static final float PRIMARY_SEGMENTS_ALLOWED_VARIATION = 1.20f;
 
    private static final SyncConsistentHashFactory syncCHF = new SyncConsistentHashFactory();
 
    @Override
-   public ReplicatedConsistentHash create(Hash hashFunction, int numOwners, int numSegments,
+   public ReplicatedConsistentHash create(int numOwners, int numSegments,
          List<Address> members, Map<Address, Float> capacityFactors) {
-      DefaultConsistentHash dch = syncCHF.create(hashFunction, 1, numSegments, members, null);
+      DefaultConsistentHash dch = syncCHF.create(1, numSegments, members, null);
       return replicatedFromDefault(dch);
    }
 
@@ -51,7 +48,7 @@ public class SyncReplicatedConsistentHashFactory implements ConsistentHashFactor
       for (int segment = 0; segment < numSegments; segment++) {
          primaryOwners[segment] = members.indexOf(dch.locatePrimaryOwnerForSegment(segment));
       }
-      return new ReplicatedConsistentHash(dch.getHashFunction(), members, primaryOwners);
+      return new ReplicatedConsistentHash(members, primaryOwners);
    }
 
    @Override
@@ -68,7 +65,7 @@ public class SyncReplicatedConsistentHashFactory implements ConsistentHashFactor
       for (int segment = 0; segment < numSegments; segment++) {
          baseSegmentOwners[segment] = Collections.singletonList(baseCH.locatePrimaryOwnerForSegment(segment));
       }
-      return new DefaultConsistentHash(baseCH.getHashFunction(), 1,
+      return new DefaultConsistentHash(1,
             numSegments, baseCH.getMembers(), null, baseSegmentOwners);
    }
 

@@ -136,7 +136,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
 
          ConsistentHash serverCh = distributionManager.getReadConsistentHash();
          int numSegments = serverCh.getNumSegments();
-         int keySegment = serverCh.getSegment(key);
+         int keySegment = distributionManager.getCacheTopology().getSegment(key);
          Address serverOwner = serverCh.locatePrimaryOwnerForSegment(keySegment);
          Address serverPreviousOwner = serverCh.locatePrimaryOwnerForSegment((keySegment - 1 + numSegments) % numSegments);
          assert clusterAddress.equals(serverOwner) || clusterAddress.equals(serverPreviousOwner);

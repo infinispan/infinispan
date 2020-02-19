@@ -106,7 +106,7 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
       }
 
       @Override
-      protected int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
+      protected int[][] assignOwners(int numSegments, List<Address> members) {
          return new int[][]{{members.size() - 1}};
       }
 

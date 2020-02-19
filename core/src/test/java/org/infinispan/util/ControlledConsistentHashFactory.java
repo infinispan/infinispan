@@ -86,7 +86,7 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
    }
 
    @Override
-   protected int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
+   protected int[][] assignOwners(int numSegments, List<Address> members) {
       return Arrays.stream(ownerIndexes)
                    .map(indexes -> mapOwnersToCurrentMembers(members, indexes))
                    .toArray(int[][]::new);

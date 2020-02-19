@@ -4,9 +4,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 
-import org.infinispan.commons.util.IntSet;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.commons.util.AbstractDelegatingCollection;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.distribution.LocalizedCacheTopology;
 
 /**
  * Set implementation that shows a read only view of the provided set by only allowing
@@ -23,13 +23,13 @@ import org.infinispan.commons.util.AbstractDelegatingCollection;
 public class ReadOnlySegmentAwareCollection<E> extends AbstractDelegatingCollection<E> {
 
    protected final Collection<E> set;
-   protected final ConsistentHash ch;
+   protected final LocalizedCacheTopology topology;
    protected final IntSet allowedSegments;
 
-   public ReadOnlySegmentAwareCollection(Collection<E> set, ConsistentHash ch, IntSet allowedSegments) {
+   public ReadOnlySegmentAwareCollection(Collection<E> set, LocalizedCacheTopology topology, IntSet allowedSegments) {
       super();
       this.set = Collections.unmodifiableCollection(set);
-      this.ch = ch;
+      this.topology = topology;
       this.allowedSegments = allowedSegments;
    }
 
@@ -39,7 +39,7 @@ public class ReadOnlySegmentAwareCollection<E> extends AbstractDelegatingCollect
    }
 
    protected boolean valueAllowed(Object obj) {
-      int segment = ch.getSegment(obj);
+      int segment = topology.getSegment(obj);
       return allowedSegments.contains(segment);
    }
 
@@ -98,6 +98,6 @@ public class ReadOnlySegmentAwareCollection<E> extends AbstractDelegatingCollect
 
    @Override
    public Iterator<E> iterator() {
-      return new ReadOnlySegmentAwareIterator<>(super.iterator(), ch, allowedSegments);
+      return new ReadOnlySegmentAwareIterator<>(super.iterator(), topology, allowedSegments);
    }
 }

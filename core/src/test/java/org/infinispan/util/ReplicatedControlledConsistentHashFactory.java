@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -44,8 +43,7 @@ public class ReplicatedControlledConsistentHashFactory
    }
 
    @Override
-   public ReplicatedConsistentHash create(Hash hashFunction, int numOwners, int numSegments,
-         List<Address> members, Map<Address, Float> capacityFactors) {
+   public ReplicatedConsistentHash create(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
       int[] thePrimaryOwners = new int[primaryOwnerIndices.length];
       for (int i = 0; i < primaryOwnerIndices.length; i++) {
          if (membersToUse != null) {
@@ -56,20 +54,18 @@ public class ReplicatedControlledConsistentHashFactory
             thePrimaryOwners[i] = Math.min(primaryOwnerIndices[i], members.size() - 1);
          }
       }
-      return new ReplicatedConsistentHash(hashFunction, members, thePrimaryOwners);
+      return new ReplicatedConsistentHash(members, thePrimaryOwners);
    }
 
    @Override
    public ReplicatedConsistentHash updateMembers(ReplicatedConsistentHash baseCH, List<Address> newMembers,
          Map<Address, Float> capacityFactors) {
-      return create(baseCH.getHashFunction(), baseCH.getNumOwners(), baseCH.getNumSegments(), newMembers,
-            null);
+      return create(baseCH.getNumOwners(), baseCH.getNumSegments(), newMembers, null);
    }
 
    @Override
    public ReplicatedConsistentHash rebalance(ReplicatedConsistentHash baseCH) {
-      return create(baseCH.getHashFunction(), baseCH.getNumOwners(), baseCH.getNumSegments(),
-            baseCH.getMembers(), null);
+      return create(baseCH.getNumOwners(), baseCH.getNumSegments(), baseCH.getMembers(), null);
    }
 
    @Override

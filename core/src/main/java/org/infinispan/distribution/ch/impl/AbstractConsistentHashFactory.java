@@ -1,13 +1,12 @@
 package org.infinispan.distribution.ch.impl;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -68,22 +67,19 @@ public abstract class AbstractConsistentHashFactory<CH extends ConsistentHash> i
    }
 
    static abstract class Builder {
-      protected final Hash hashFunction;
       protected final OwnershipStatistics stats;
       protected final List<Address> members;
       protected final Map<Address, Float> capacityFactors;
       // For debugging
       protected int modCount = 0;
 
-      public Builder(Hash hashFunction, OwnershipStatistics stats, List<Address> members, Map<Address, Float> capacityFactors) {
-         this.hashFunction = hashFunction;
+      public Builder(OwnershipStatistics stats, List<Address> members, Map<Address, Float> capacityFactors) {
          this.stats = stats;
          this.members = members;
          this.capacityFactors = capacityFactors;
       }
 
       public Builder(Builder other) {
-         this.hashFunction = other.hashFunction;
          this.members = other.members;
          this.capacityFactors = other.capacityFactors;
          this.stats = new OwnershipStatistics(other.stats);
@@ -105,17 +101,6 @@ public abstract class AbstractConsistentHashFactory<CH extends ConsistentHash> i
 
       public float getCapacityFactor(Address node) {
          return capacityFactors != null ? capacityFactors.get(node) : 1;
-      }
-
-      public float getTotalCapacity() {
-         if (capacityFactors == null)
-            return getNumNodes();
-
-         float totalCapacity = 0;
-         for (Address node : members) {
-            totalCapacity += capacityFactors.get(node);
-         }
-         return totalCapacity;
       }
    }
 }

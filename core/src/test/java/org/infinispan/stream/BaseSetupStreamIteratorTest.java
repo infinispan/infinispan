@@ -131,7 +131,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       }
 
       @Override
-      protected int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
+      protected int[][] assignOwners(int numSegments, List<Address> members) {
          // The test needs a segment owned by nodes 01, 12, and 21 when there are 3 nodes in the cluster.
          // There are no restrictions for before/after, so we make the coordinator the primary owner of all segments.
          switch (members.size()) {
@@ -152,7 +152,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       }
 
       @Override
-      protected int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
+      protected int[][] assignOwners(int numSegments, List<Address> members) {
          // The test needs a segment owned by each node when there are 3 nodes in the cluster.
          // There are no restrictions for before/after, so we make the coordinator the primary owner of all segments.
          switch (members.size()) {

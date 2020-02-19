@@ -6,7 +6,6 @@ import static org.testng.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.List;
 
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.impl.OwnershipStatistics;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
@@ -38,7 +37,7 @@ public class ReplicatedConsistentHashFactoryTest {
       List<Address> c = Arrays.asList(C);
 
       for (int segments : testSegments) {
-         ReplicatedConsistentHash ch = factory.create(MurmurHash3.getInstance(), 0, segments, a, null);
+         ReplicatedConsistentHash ch = factory.create(0, segments, a, null);
          checkDistribution(ch);
 
          ch = factory.updateMembers(ch, ab, null);

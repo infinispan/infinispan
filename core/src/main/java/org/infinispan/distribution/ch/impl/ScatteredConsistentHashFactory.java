@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.globalstate.ScopedPersistentState;
@@ -27,7 +26,7 @@ import org.infinispan.remoting.transport.Address;
 public class ScatteredConsistentHashFactory extends AbstractConsistentHashFactory<ScatteredConsistentHash> {
 
    @Override
-   public ScatteredConsistentHash create(Hash hashFunction, int numOwners, int numSegments,
+   public ScatteredConsistentHash create(int numOwners, int numSegments,
                                        List<Address> members, Map<Address, Float> capacityFactors) {
       if (numOwners != 1)
          throw new IllegalArgumentException("The number of owners is supposed to be 1");
@@ -37,7 +36,7 @@ public class ScatteredConsistentHashFactory extends AbstractConsistentHashFactor
 
       // Use the CH rebalance algorithm to get an even spread
       // Round robin doesn't work properly because a segment's owner must be unique,
-      Builder builder = new Builder(hashFunction, numSegments, members, capacityFactors);
+      Builder builder = new Builder(numSegments, members, capacityFactors);
       rebalanceBuilder(builder);
 
       return builder.build();
@@ -151,15 +150,15 @@ public class ScatteredConsistentHashFactory extends AbstractConsistentHashFactor
       private final Address[] segmentOwners;
       private boolean isRebalanced;
 
-      public Builder(Hash hashFunction, int numSegments, List<Address> members,
+      public Builder(int numSegments, List<Address> members,
                      Map<Address, Float> capacityFactors) {
-         super(hashFunction, new OwnershipStatistics(members), members, capacityFactors);
+         super(new OwnershipStatistics(members), members, capacityFactors);
          this.segmentOwners = new Address[numSegments];
       }
 
       public Builder(ScatteredConsistentHash baseCH, List<Address> actualMembers,
                      Map<Address, Float> actualCapacityFactors) {
-         super(baseCH.getHashFunction(), new OwnershipStatistics(baseCH, actualMembers), actualMembers, actualCapacityFactors);
+         super(new OwnershipStatistics(baseCH, actualMembers), actualMembers, actualCapacityFactors);
          int numSegments = baseCH.getNumSegments();
          Set<Address> actualMembersSet = new HashSet<>(actualMembers);
          Address[] owners = new Address[numSegments];
@@ -201,7 +200,7 @@ public class ScatteredConsistentHashFactory extends AbstractConsistentHashFactor
       }
 
       public ScatteredConsistentHash build() {
-         return new ScatteredConsistentHash(hashFunction, segmentOwners.length, members, capacityFactors, segmentOwners, isRebalanced);
+         return new ScatteredConsistentHash(segmentOwners.length, members, capacityFactors, segmentOwners, isRebalanced);
       }
 
       public void setRebalanced(boolean isRebalanced) {

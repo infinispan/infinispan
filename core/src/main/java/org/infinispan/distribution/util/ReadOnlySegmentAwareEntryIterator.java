@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 
 /**
  * Iterator implementation that shows a read only view of the provided iterator by only
@@ -18,8 +18,8 @@ import org.infinispan.distribution.ch.ConsistentHash;
  */
 public class ReadOnlySegmentAwareEntryIterator<K, V> extends ReadOnlySegmentAwareIterator<Entry<K, V>> {
 
-   public ReadOnlySegmentAwareEntryIterator(Iterator<Entry<K, V>> iter, ConsistentHash ch, IntSet allowedSegments) {
-      super(iter, ch, allowedSegments);
+   public ReadOnlySegmentAwareEntryIterator(Iterator<Entry<K, V>> iter, LocalizedCacheTopology topology, IntSet allowedSegments) {
+      super(iter, topology, allowedSegments);
    }
 
    @Override

@@ -527,7 +527,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
          newCurrentMembers = getExpectedMembers();
          actualMembers = newCurrentMembers;
-         newCurrentCH = joinInfo.getConsistentHashFactory().create(HASH_FUNCTION, joinInfo.getNumOwners(),
+         newCurrentCH = joinInfo.getConsistentHashFactory().create(joinInfo.getNumOwners(),
                joinInfo.getNumSegments(), newCurrentMembers, getCapacityFactors());
       } else {
          // ReplicatedConsistentHashFactory allocates segments to all its members, so we can't add any members here
@@ -753,7 +753,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    protected CacheTopology createInitialCacheTopology() {
       log.tracef("Initializing status for cache %s", cacheName);
       List<Address> initialMembers = getExpectedMembers();
-      ConsistentHash initialCH = joinInfo.getConsistentHashFactory().create(HASH_FUNCTION, joinInfo.getNumOwners(),
+      ConsistentHash initialCH = joinInfo.getConsistentHashFactory().create(joinInfo.getNumOwners(),
             joinInfo.getNumSegments(), initialMembers, getCapacityFactors());
       CacheTopology initialTopology = new CacheTopology(initialTopologyId, INITIAL_REBALANCE_ID, initialCH, null,
             CacheTopology.Phase.NO_REBALANCE, initialMembers, persistentUUIDManager.mapAddresses(initialMembers));

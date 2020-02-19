@@ -1,7 +1,5 @@
 package org.infinispan.statetransfer;
 
-import static org.testng.AssertJUnit.assertEquals;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -160,9 +158,8 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
          super(1);
       }
 
-      protected final int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
+      protected final int[][] assignOwners(int numSegments, List<Address> members) {
          //the owners will be the first member and the last (numberOfOwners - 1)-th members
-         assertEquals(2, numOwners);
          switch (members.size()) {
             case 1:
                return new int[][]{{0}};

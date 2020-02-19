@@ -188,7 +188,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          for (Entry<Address, IntSet> pair : segmentMap.entrySet()) {
             Address member = pair.getKey();
             IntSet segments = pair.getValue();
-            handleSegmentsForWriteOnlyManyCommand(ctx, command, helper, ch, allFuture, member, segments);
+            handleSegmentsForWriteOnlyManyCommand(ctx, command, helper, ch, allFuture, member, segments, cacheTopology);
          }
          return asyncValue(allFuture);
       } else { // origin is not local
@@ -199,7 +199,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private <C extends WriteCommand, Container, Item> void handleSegmentsForWriteOnlyManyCommand(
          InvocationContext ctx, C command, WriteManyCommandHelper<C, Container, Item> helper, ConsistentHash ch,
-         CountDownCompletableFuture allFuture, Address member, IntSet segments) {
+         CountDownCompletableFuture allFuture, Address member, IntSet segments, LocalizedCacheTopology topology) {
       if (member.equals(rpcManager.getAddress())) {
          Container myItems = filterAndWrap(ctx, command, segments, helper);
 
@@ -209,11 +209,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          // calls complete.
          invokeNextAndFinally(ctx, localCommand,
                               createLocalInvocationHandler(ch, allFuture, segments, helper, (f, rv) -> {
-                          }));
+                          }, topology));
          return;
       }
 
-      C copy = helper.copyForPrimary(command, ch, segments);
+      C copy = helper.copyForPrimary(command, topology, segments);
       copy.setTopologyId(command.getTopologyId());
       int size = helper.getItems(copy).size();
       if (size <= 0) {
@@ -278,7 +278,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       //  it is possible that the function will be applied multiple times on some of the nodes.
       //  There is no general solution for this ATM; proper solution will probably record CommandInvocationId
       //  in the entry, and implement some housekeeping
-      ConsistentHash ch = checkTopologyId(command).getWriteConsistentHash();
+      LocalizedCacheTopology topology = checkTopologyId(command);
+      ConsistentHash ch = topology.getWriteConsistentHash();
       if (ctx.isOriginLocal()) {
          Map<Address, IntSet> segmentMap = primaryOwnersOfSegments(ch);
          Object[] results = null;
@@ -296,9 +297,9 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             Address member = pair.getKey();
             IntSet segments = pair.getValue();
             if (member.equals(rpcManager.getAddress())) {
-               handleLocalSegmentsForReadWriteManyCommand(ctx, command, helper, ch, allFuture, offset, segments);
+               handleLocalSegmentsForReadWriteManyCommand(ctx, command, helper, ch, allFuture, offset, segments, topology);
             } else {
-               handleRemoteSegmentsForReadWriteManyCommand(command, helper, ch, allFuture, offset, member, segments);
+               handleRemoteSegmentsForReadWriteManyCommand(command, helper, allFuture, offset, member, segments, topology);
             }
          }
          return asyncValue(allFuture);
@@ -309,7 +310,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private <C extends WriteCommand, Container, Item> void handleLocalSegmentsForReadWriteManyCommand(
          InvocationContext ctx, C command, WriteManyCommandHelper<C, Container, Item> helper, ConsistentHash ch,
-         MergingCompletableFuture<Object> allFuture, MutableInt offset, IntSet segments) throws Exception {
+         MergingCompletableFuture<Object> allFuture, MutableInt offset, IntSet segments, LocalizedCacheTopology topology) {
       Container myItems = helper.newContainer();
       List<Object> remoteKeys = null;
       // Filter command keys/entries into the collection, and record remote retrieval for those that are not
@@ -345,7 +346,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       C localCommand = helper.copyForLocal(command, myItems);
       localCommand.setTopologyId(command.getTopologyId());
       InvocationFinallyAction<C> handler =
-            createLocalInvocationHandler(ch, allFuture, segments, helper, MergingCompletableFuture.moveListItemsToFuture(myOffset));
+            createLocalInvocationHandler(ch, allFuture, segments, helper, MergingCompletableFuture.moveListItemsToFuture(myOffset), topology);
       // It's safe to ignore the invocation stages below, because handleRemoteSegmentsForReadWriteManyCommand
       // does not touch the context.
       if (retrievals == null) {
@@ -360,12 +361,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private <C extends WriteCommand, Item> void handleRemoteSegmentsForReadWriteManyCommand(
-         C command, WriteManyCommandHelper<C, ?, Item> helper,
-         ConsistentHash ch, MergingCompletableFuture<Object> allFuture,
-         MutableInt offset, Address member, IntSet segments) {
+         C command, WriteManyCommandHelper<C, ?, Item> helper, MergingCompletableFuture<Object> allFuture,
+         MutableInt offset, Address member, IntSet segments, LocalizedCacheTopology topology) {
       final int myOffset = offset.value;
       // TODO: here we iterate through all entries - is the ReadOnlySegmentAwareMap really worth it?
-      C copy = helper.copyForPrimary(command, ch, segments);
+      C copy = helper.copyForPrimary(command, topology, segments);
       copy.setTopologyId(command.getTopologyId());
       int size = helper.getItems(copy).size();
       offset.value += size;
@@ -430,7 +430,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    private <C extends WriteCommand, F extends CountDownCompletableFuture, Item>
    InvocationFinallyAction<C> createLocalInvocationHandler(
          ConsistentHash ch, F allFuture, IntSet segments, WriteManyCommandHelper<C, ?, Item> helper,
-         BiConsumer<F, Object> returnValueConsumer) {
+         BiConsumer<F, Object> returnValueConsumer, LocalizedCacheTopology topology) {
       return (rCtx, rCommand, rv, throwable) -> {
          if (throwable != null) {
             allFuture.completeExceptionally(throwable);
@@ -440,7 +440,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             Map<Address, IntSet> backupOwners = backupOwnersOfSegments(ch, segments);
             for (Entry<Address, IntSet> backup : backupOwners.entrySet()) {
                // rCommand is the original command
-               C backupCopy = helper.copyForBackup(rCommand, ch, backup.getValue());
+               C backupCopy = helper.copyForBackup(rCommand, topology, backup.getValue());
                backupCopy.setTopologyId(rCommand.getTopologyId());
                if (helper.getItems(backupCopy).isEmpty()) continue;
                Address backupOwner = backup.getKey();
@@ -483,29 +483,30 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private <C extends WriteCommand> Object writeManyRemoteCallback(WriteManyCommandHelper<C , ?, ?> helper,InvocationContext ctx, C command, Object rv) {
-         ConsistentHash ch = checkTopologyId(command).getWriteConsistentHash();
-         // We have already checked that the command topology is actual, so we can assume that we really are primary owner
-         Map<Address, IntSet> backups = backupOwnersOfSegments(ch, IntSets.from(ch.getPrimarySegmentsForOwner(rpcManager.getAddress())));
-         if (backups.isEmpty()) {
-            return rv;
+      LocalizedCacheTopology topology = checkTopologyId(command);
+      ConsistentHash ch = topology.getWriteConsistentHash();
+      // We have already checked that the command topology is actual, so we can assume that we really are primary owner
+      Map<Address, IntSet> backups = backupOwnersOfSegments(ch, topology.getLocalReadSegments());
+      if (backups.isEmpty()) {
+         return rv;
+      }
+      boolean isSync = isSynchronous(command);
+      CompletableFuture[] futures = isSync ? new CompletableFuture[backups.size()] : null;
+      int future = 0;
+      for (Entry<Address, IntSet> backup : backups.entrySet()) {
+         C copy = helper.copyForBackup(command, topology, backup.getValue());
+         copy.setTopologyId(command.getTopologyId());
+         Address backupOwner = backup.getKey();
+         if (isSync) {
+            futures[future++] = rpcManager
+                  .invokeCommand(backupOwner, copy, SingleResponseCollector.validOnly(),
+                        rpcManager.getSyncRpcOptions())
+                  .toCompletableFuture();
+         } else {
+            rpcManager.sendTo(backupOwner, copy, DeliverOrder.PER_SENDER);
          }
-         boolean isSync = isSynchronous(command);
-         CompletableFuture[] futures = isSync ? new CompletableFuture[backups.size()] : null;
-         int future = 0;
-         for (Entry<Address, IntSet> backup : backups.entrySet()) {
-            C copy = helper.copyForBackup(command, ch, backup.getValue());
-            copy.setTopologyId(command.getTopologyId());
-            Address backupOwner = backup.getKey();
-            if (isSync) {
-               futures[future++] = rpcManager
-                     .invokeCommand(backupOwner, copy, SingleResponseCollector.validOnly(),
-                                    rpcManager.getSyncRpcOptions())
-                     .toCompletableFuture();
-            } else {
-               rpcManager.sendTo(backupOwner, copy, DeliverOrder.PER_SENDER);
-            }
-         }
-         return isSync ? asyncValue(CompletableFuture.allOf(futures).thenApply(nil -> rv)) : rv;
+      }
+      return isSync ? asyncValue(CompletableFuture.allOf(futures).thenApply(nil -> rv)) : rv;
 
    }
 

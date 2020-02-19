@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -28,13 +27,13 @@ import org.infinispan.remoting.transport.Address;
 public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash> {
 
    @Override
-   public ReplicatedConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
+   public ReplicatedConsistentHash create(int numOwners, int numSegments, List<Address> members,
                                           Map<Address, Float> capacityFactors) {
       int[] primaryOwners = new int[numSegments];
       for (int i = 0; i < numSegments; i++) {
          primaryOwners[i] = i % members.size();
       }
-      return new ReplicatedConsistentHash(hashFunction, members, primaryOwners);
+      return new ReplicatedConsistentHash(members, primaryOwners);
    }
 
    @Override
@@ -104,7 +103,7 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
          }
       }
 
-      return new ReplicatedConsistentHash(baseCH.getHashFunction(), newMembers, primaryOwners);
+      return new ReplicatedConsistentHash(newMembers, primaryOwners);
    }
 
    private int findLeastUsedNode(int[] nodeUsage) {

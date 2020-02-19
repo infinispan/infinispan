@@ -332,8 +332,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       }
 
       @Override
-      protected final int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
-         assertEquals("Wrong number of owners", 3, numOwners);
+      protected final int[][] assignOwners(int numSegments, List<Address> members) {
          //the primary owner is the last member.
          switch (members.size()) {
             case 1:

@@ -1,16 +1,10 @@
 package org.infinispan.distribution.ch;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
-import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
 
@@ -45,21 +39,6 @@ import org.infinispan.remoting.transport.Address;
  * @since 4.0
  */
 public interface ConsistentHash {
-   /**
-    * @return The configured number of owners. Note that the actual number of owners of each key may be different.
-    * @deprecated Since 9.1, it should not be used to obtain the number of owners of a particular key.
-    */
-   @Deprecated
-   int getNumOwners();
-
-   /**
-    * @deprecated Since 8.2, the {@code Hash} is optional - replaced in the configuration by the
-    * {@code KeyPartitioner}
-    */
-   @Deprecated
-   default Hash getHashFunction() {
-      throw new UnsupportedOperationException();
-   }
 
    /**
     * @return The actual number of hash space segments. Note that it may not be the same as the number
@@ -73,73 +52,6 @@ public interface ConsistentHash {
     * @return set of node addresses.
     */
    List<Address> getMembers();
-
-   /**
-    * Should be equivalent to return the first element of {@link #locateOwners}.
-    * Useful as a performance optimization, as this is a frequently needed information.
-    * @param key key to locate
-    * @return the address of the owner
-    * @deprecated Since 9.0, please use {@link LocalizedCacheTopology#getDistribution(Object)} instead.
-    */
-   @Deprecated
-   default Address locatePrimaryOwner(Object key) {
-      return locatePrimaryOwnerForSegment(getSegment(key));
-   }
-
-   /**
-    * Finds all the owners of a key. The first element in the returned list is the primary owner.
-    *
-    * @param key key to locate
-    * @return An unmodifiable list of addresses where the key resides.
-    *         Will never be {@code null}, and it will always have at least 1 element.
-    * @deprecated Since 9.0, please use {@link LocalizedCacheTopology#getDistribution(Object)} instead.
-    */
-   @Deprecated
-   default List<Address> locateOwners(Object key) {
-      return locateOwnersForSegment(getSegment(key));
-   }
-
-   /**
-    * @deprecated Since 9.0, please use {@link LocalizedCacheTopology#getWriteOwners(Collection)} instead.
-    */
-   @Deprecated
-   default Set<Address> locateAllOwners(Collection<Object> keys) {
-      // Use a HashSet assuming most of the time the number of keys is small.
-      HashSet<Address> owners = new HashSet<>();
-      IntSet segments = IntSets.mutableEmptySet(getNumSegments());
-      for (Object key : keys) {
-         int segment = getSegment(key);
-         if (segments.add(segment)) {
-            owners.addAll(locateOwnersForSegment(segment));
-         }
-         if (owners.size() == getMembers().size()) {
-            return owners;
-         }
-      }
-      return owners;
-   }
-
-   /**
-    * Test to see whether a key is owned by a given node.
-    *
-    * @param nodeAddress address of the node to test
-    * @param key key to test
-    * @return {@code true} if the key is mapped to the address; {@code false} otherwise
-    * @deprecated Since 9.0, please use {@link LocalizedCacheTopology#isReadOwner(Object)} and {@link LocalizedCacheTopology#isWriteOwner(Object)} instead.
-    */
-   @Deprecated
-   default boolean isKeyLocalToNode(Address nodeAddress, Object key) {
-      return locateOwnersForSegment(getSegment(key)).contains(nodeAddress);
-   }
-
-   /**
-    * @return The hash space segment that a key maps to.
-    *
-    * @deprecated Since 9.0, please use {@link KeyPartitioner#getSegment(Object)}
-    *    or {@link LocalizedCacheTopology#getSegment(Object)} instead.
-    */
-   @Deprecated
-   int getSegment(Object key);
 
    /**
     * @return All the nodes that own a given hash space segment, first address is the primary owner. The returned list is unmodifiable.

@@ -84,7 +84,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.distribution.group.impl.PartitionerConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
@@ -375,6 +374,7 @@ public class TestingUtil {
       final long giveup = System.nanoTime() + TimeUnit.SECONDS.toNanos(REBALANCE_TIMEOUT_SECONDS);
       for (Cache<?, ?> c : caches) {
          c = unwrapSecureCache(c);
+         int numOwners = c.getCacheConfiguration().clustering().hash().numOwners();
          DistributionManager distributionManager = c.getAdvancedCache().getDistributionManager();
          Address cacheAddress = c.getAdvancedCache().getRpcManager().getAddress();
          CacheTopology cacheTopology;
@@ -392,7 +392,7 @@ public class TestingUtil {
                chContainsAllMembers = currentCH.getMembers().size() == caches.length;
                currentChIsBalanced = true;
 
-               int actualNumOwners = Math.min(currentCH.getNumOwners(), currentCH.getMembers().size());
+               int actualNumOwners = Math.min(numOwners, currentCH.getMembers().size());
                for (int i = 0; i < currentCH.getNumSegments(); i++) {
                   if (currentCH.locateOwnersForSegment(i).size() < actualNumOwners) {
                      currentChIsBalanced = false;
@@ -402,8 +402,6 @@ public class TestingUtil {
 
                // We need to check that the topologyId > 1 to account for nodes restarting
                if (chContainsAllMembers && !rebalanceInProgress && cacheTopology.getTopologyId() > 1) {
-                  if (currentCH instanceof PartitionerConsistentHash)
-                     currentCH = extractField(currentCH, "ch");
                   rebalanceInProgress = !chf.rebalance(currentCH).equals(currentCH);
                }
                if (chContainsAllMembers && !rebalanceInProgress && currentChIsBalanced)

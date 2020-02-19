@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
@@ -33,7 +32,7 @@ import org.infinispan.remoting.transport.Address;
 public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<DefaultConsistentHash> {
 
    @Override
-   public DefaultConsistentHash create(Hash hashFunction, int numOwners, int numSegments,
+   public DefaultConsistentHash create(int numOwners, int numSegments,
                                        List<Address> members, Map<Address, Float> capacityFactors) {
       if (members.size() == 0)
          throw new IllegalArgumentException("Can't construct a consistent hash without any members");
@@ -43,7 +42,7 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
 
       // Use the CH rebalance algorithm to get an even spread
       // Round robin doesn't work properly because a segment's owner must be unique,
-      Builder builder = new Builder(hashFunction, numOwners, numSegments, members, capacityFactors);
+      Builder builder = new Builder(numOwners, numSegments, members, capacityFactors);
       rebalanceBuilder(builder);
 
       return builder.build();
@@ -337,12 +336,10 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
       private final int initialNumOwners;
       private final int actualNumOwners;
       private final List<Address>[] segmentOwners;
-      // For debugging
-      private int modCount = 0;
 
-      public Builder(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
+      public Builder(int numOwners, int numSegments, List<Address> members,
                      Map<Address, Float> capacityFactors) {
-         super(hashFunction, new OwnershipStatistics(members), members, capacityFactors);
+         super(new OwnershipStatistics(members), members, capacityFactors);
          this.initialNumOwners = numOwners;
          this.actualNumOwners = computeActualNumOwners(numOwners, members, capacityFactors);
          this.segmentOwners = new List[numSegments];
@@ -353,7 +350,7 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
 
       public Builder(DefaultConsistentHash baseCH, List<Address> actualMembers,
                      Map<Address, Float> actualCapacityFactors) {
-         super(baseCH.getHashFunction(), new OwnershipStatistics(baseCH, actualMembers), actualMembers, actualCapacityFactors);
+         super(new OwnershipStatistics(baseCH, actualMembers), actualMembers, actualCapacityFactors);
          int numSegments = baseCH.getNumSegments();
          Set<Address> actualMembersSet = new HashSet<Address>(actualMembers);
          List[] owners = new List[numSegments];
@@ -473,7 +470,7 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
       }
 
       public DefaultConsistentHash build() {
-         return new DefaultConsistentHash(hashFunction, initialNumOwners, segmentOwners.length, members, capacityFactors,
+         return new DefaultConsistentHash(initialNumOwners, segmentOwners.length, members, capacityFactors,
                segmentOwners);
       }
 
@@ -483,16 +480,6 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
 
       public int getOwned(Address node) {
          return stats.getOwned(node);
-      }
-
-      public float getPrimaryOwnedPerCapacity(Address node) {
-         float capacityFactor = getCapacityFactor(node);
-         return capacityFactor != 0 ? getPrimaryOwned(node) / capacityFactor : Float.MAX_VALUE;
-      }
-
-      public float getOwnedPerCapacity(Address node) {
-         float capacityFactor = getCapacityFactor(node);
-         return capacityFactor != 0 ? getOwned(node) / capacityFactor : Float.MAX_VALUE;
       }
 
       public int computeActualNumOwners(int numOwners, List<Address> members, Map<Address, Float> capacityFactors) {

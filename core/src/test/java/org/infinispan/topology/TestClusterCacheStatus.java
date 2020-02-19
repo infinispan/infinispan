@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategy;
@@ -48,7 +47,7 @@ public class TestClusterCacheStatus {
 
    public static TestClusterCacheStatus start(CacheJoinInfo joinInfo, List<Address> members) {
       ConsistentHash currentCH = joinInfo.getConsistentHashFactory()
-                                         .create(MurmurHash3.getInstance(), joinInfo.getNumOwners(),
+                                         .create(joinInfo.getNumOwners(),
                                                  joinInfo.getNumSegments(), members, null);
       CacheTopology topology = new CacheTopology(1, 1, currentCH, null, null, CacheTopology.Phase.NO_REBALANCE, members,
                                                  persistentUUIDs(members));
@@ -151,7 +150,7 @@ public class TestClusterCacheStatus {
 
    public ConsistentHash ch(Address... addresses) {
       return joinInfo.getConsistentHashFactory()
-                     .create(MurmurHash3.getInstance(), joinInfo.getNumOwners(), joinInfo.getNumSegments(),
+                     .create(joinInfo.getNumOwners(), joinInfo.getNumSegments(),
                              asList(addresses), null);
    }
 

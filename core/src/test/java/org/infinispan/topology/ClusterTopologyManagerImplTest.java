@@ -19,7 +19,6 @@ import org.infinispan.commands.topology.RebalanceStartCommand;
 import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
 import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.commands.topology.TopologyUpdateStableCommand;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -170,9 +169,9 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
 
       // Initial conditions (rebalance in phase 3, READ_NEW_WRITE_ALL)
       transport.init(2, asList(A, B));
-      ConsistentHash stableCH = replicatedChf.create(MurmurHash3.getInstance(), joinInfoA.getNumOwners(),
+      ConsistentHash stableCH = replicatedChf.create(joinInfoA.getNumOwners(),
                                                      joinInfoA.getNumSegments(), singletonList(A), null);
-      ConsistentHash pendingCH = replicatedChf.create(MurmurHash3.getInstance(), joinInfoA.getNumOwners(),
+      ConsistentHash pendingCH = replicatedChf.create(joinInfoA.getNumOwners(),
                                                       joinInfoA.getNumSegments(), asList(A, B), null);
       CacheTopology initialTopology = new CacheTopology(4, 2, stableCH, pendingCH,
                                                         CacheTopology.Phase.READ_NEW_WRITE_ALL, asList(A, B),

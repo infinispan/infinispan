@@ -76,7 +76,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
    }
 
    private void testConsistentHashModifications(ConsistentHashFactory<DefaultConsistentHash> chf, Hash hashFunction, List<Address> nodes, int ns, int no, Map<Address, Float> lfMap) {
-      DefaultConsistentHash baseCH = chf.create(hashFunction, no, ns, nodes, lfMap);
+      DefaultConsistentHash baseCH = chf.create(no, ns, nodes, lfMap);
       assertEquals(lfMap, baseCH.getCapacityFactors());
       checkDistribution(baseCH, lfMap, false);
 
@@ -103,7 +103,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
          List<Address> newMembers = new ArrayList<>(baseMembers);
          HashMap<Address, Float> newCapacityFactors = lfMap != null ? new HashMap<>(lfMap) : null;
          for (int k = 0; k < nodesToRemove; k++) {
-            int indexToRemove = Math.abs(baseCH.getHashFunction().hash(k) % newMembers.size());
+            int indexToRemove = Math.abs(MurmurHash3.getInstance().hash(k) % newMembers.size());
             if (newCapacityFactors != null) {
                newCapacityFactors.remove(newMembers.get(indexToRemove));
             }
@@ -167,7 +167,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       return baseCH;
    }
 
-   private void checkDistribution(ConsistentHash ch, Map<Address, Float> lfMap, boolean allowExtraOwners) {
+   private void checkDistribution(DefaultConsistentHash ch, Map<Address, Float> lfMap, boolean allowExtraOwners) {
       int numSegments = ch.getNumSegments();
       List<Address> nodes = ch.getMembers();
       int numNodes = nodes.size();
@@ -361,7 +361,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       TestAddress C = new TestAddress(2, "C");
       TestAddress D = new TestAddress(3, "D");
 
-      DefaultConsistentHash ch1 = chf.create(MurmurHash3.getInstance(), 2, 60, Arrays.asList(A), null);
+      DefaultConsistentHash ch1 = chf.create(2, 60, Arrays.asList(A), null);
 
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, Arrays.asList(A, B), null);
       ch2 = chf.rebalance(ch2);

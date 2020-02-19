@@ -149,8 +149,9 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       CacheTopology duringJoinTopology = ltm0.getCacheTopology(cacheName);
       assertEquals(joinTopologyId, duringJoinTopology.getTopologyId());
       assertNotNull(duringJoinTopology.getPendingCH());
+      int keySegment = TestingUtil.getSegmentForKey(key, cache0);
       log.tracef("Rebalance started. Found key %s with current owners %s and pending owners %s", key,
-            duringJoinTopology.getCurrentCH().locateOwners(key), duringJoinTopology.getPendingCH().locateOwners(key));
+            duringJoinTopology.getCurrentCH().locateOwnersForSegment(keySegment), duringJoinTopology.getPendingCH().locateOwnersForSegment(keySegment));
 
       // We need to wait for the state transfer to insert the entry before inserting the blocking interceptor;
       // otherwise we could block the PUT_FOR_STATE_TRANSFER instead
@@ -191,7 +192,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
 
       // Allow the retry to proceed on cache1
       CacheTopology postReceiveStateTopology = ltm0.getCacheTopology(cacheName);
-      if (postReceiveStateTopology.getCurrentCH().locateOwners(key).contains(address(1))) {
+      if (postReceiveStateTopology.getCurrentCH().locateOwnersForSegment(keySegment).contains(address(1))) {
          beforeCache1Barrier.await(10, TimeUnit.SECONDS);
          beforeCache1Barrier.await(10, TimeUnit.SECONDS);
       }
@@ -226,8 +227,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       }
 
       @Override
-      protected int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
-         assertEquals(2, numOwners);
+      protected int[][] assignOwners(int numSegments, List<Address> members) {
          switch (members.size()) {
             case 1:
                return new int[][]{{0}};

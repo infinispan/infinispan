@@ -10,8 +10,8 @@ import java.util.List;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
@@ -145,10 +145,10 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       ss.exit("main:2nd_node_left");
 
       log.trace("Testing condition");
-      ConsistentHash ch = cache(a0).getAdvancedCache().getDistributionManager().getReadConsistentHash();
-      assertEquals(3, ch.getMembers().size());
+      LocalizedCacheTopology topology = cache(a0).getAdvancedCache().getDistributionManager().getCacheTopology();
+      assertEquals(3, topology.getMembers().size());
       for (Object k : allKeys) {
-         Collection<Address> owners = ch.locateOwners(k);
+         Collection<Address> owners = topology.getDistribution(k).readOwners();
          try {
             cache(a0).get(k);
             if (owners.contains(address0) || owners.contains(address1)) {

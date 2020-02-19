@@ -6,10 +6,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.commons.util.IntSet;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.commons.util.AbstractDelegatingCollection;
 import org.infinispan.commons.util.AbstractDelegatingMap;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.distribution.LocalizedCacheTopology;
 
 /**
  * Map implementation that shows a read only view of the provided entry by only allowing
@@ -29,16 +29,16 @@ import org.infinispan.commons.util.AbstractDelegatingMap;
 public class ReadOnlySegmentAwareMap<K, V> extends AbstractDelegatingMap<K, V> {
 
    protected final Map<K, V> map;
-   protected final ConsistentHash ch;
+   protected final LocalizedCacheTopology topology;
    protected final IntSet allowedSegments;
 
    protected Set<K> segmentAwareKeySet;
    protected Set<Map.Entry<K, V>> segmentAwareEntrySet;
 
-   public ReadOnlySegmentAwareMap(Map<K, V> map, ConsistentHash ch, IntSet allowedSegments) {
+   public ReadOnlySegmentAwareMap(Map<K, V> map, LocalizedCacheTopology topology, IntSet allowedSegments) {
       super();
       this.map = Collections.unmodifiableMap(map);
-      this.ch = ch;
+      this.topology = topology;
       this.allowedSegments = allowedSegments;
    }
 
@@ -48,7 +48,7 @@ public class ReadOnlySegmentAwareMap<K, V> extends AbstractDelegatingMap<K, V> {
    }
 
    protected boolean keyAllowed(Object key) {
-      int segment = ch.getSegment(key);
+      int segment = topology.getSegment(key);
       return allowedSegments.contains(segment);
    }
 
@@ -82,7 +82,7 @@ public class ReadOnlySegmentAwareMap<K, V> extends AbstractDelegatingMap<K, V> {
    public Set<java.util.Map.Entry<K, V>> entrySet() {
       if (segmentAwareEntrySet == null) {
          segmentAwareEntrySet = new CollectionAsSet<>(
-            new ReadOnlySegmentAwareEntryCollection<>(delegate().entrySet(), ch, allowedSegments));
+            new ReadOnlySegmentAwareEntryCollection<>(delegate().entrySet(), topology, allowedSegments));
       }
       return segmentAwareEntrySet;
    }
@@ -105,7 +105,7 @@ public class ReadOnlySegmentAwareMap<K, V> extends AbstractDelegatingMap<K, V> {
    @Override
    public Set<K> keySet() {
       if (segmentAwareKeySet == null) {
-         segmentAwareKeySet = new CollectionAsSet<K>(new ReadOnlySegmentAwareCollection<>(super.keySet(), ch, allowedSegments));
+         segmentAwareKeySet = new CollectionAsSet<K>(new ReadOnlySegmentAwareCollection<>(super.keySet(), topology, allowedSegments));
       }
       return segmentAwareKeySet;
    }
@@ -144,7 +144,7 @@ public class ReadOnlySegmentAwareMap<K, V> extends AbstractDelegatingMap<K, V> {
 
    @Override
    public String toString() {
-      return "ReadOnlySegmentAwareMap [map=" + map + ", ch=" + ch +
+      return "ReadOnlySegmentAwareMap [map=" + map + ", ch=" + topology +
             ", allowedSegments=" + allowedSegments + "]";
    }
 

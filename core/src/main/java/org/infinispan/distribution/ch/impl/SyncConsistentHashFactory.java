@@ -6,7 +6,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -15,7 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commands.topology.CacheJoinCommand;
-import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -58,16 +57,16 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
    public static final float PRIMARY_SEGMENTS_ALLOWED_VARIATION = 1.05f;
 
    @Override
-   public DefaultConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
+   public DefaultConsistentHash create(int numOwners, int numSegments, List<Address> members,
                                        Map<Address, Float> capacityFactors) {
       checkCapacityFactors(members, capacityFactors);
 
-      Builder builder = createBuilder(hashFunction, numOwners, numSegments, members, capacityFactors);
+      Builder builder = createBuilder(numOwners, numSegments, members, capacityFactors);
       builder.populateOwners(numSegments);
       builder.populateExtraOwners(numSegments);
       builder.copyOwners();
 
-      return new DefaultConsistentHash(hashFunction, numOwners, numSegments, members, capacityFactors, builder.segmentOwners);
+      return new DefaultConsistentHash(numOwners, numSegments, members, capacityFactors, builder.segmentOwners);
    }
 
    @Override
@@ -78,8 +77,8 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       return new DefaultConsistentHash(state);
    }
 
-   protected Builder createBuilder(Hash hashFunction, int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
-      return new Builder(hashFunction, numOwners, numSegments, members, capacityFactors);
+   protected Builder createBuilder(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
+      return new Builder(numOwners, numSegments, members, capacityFactors);
    }
 
    protected void checkCapacityFactors(List<Address> members, Map<Address, Float> capacityFactors) {
@@ -127,20 +126,20 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          } else {
             // this segment has 0 owners, fix it
             if (rebalancedCH == null) {
-               rebalancedCH = create(baseCH.getHashFunction(), numOwners, numSegments, newMembers, actualCapacityFactors);
+               rebalancedCH = create(numOwners, numSegments, newMembers, actualCapacityFactors);
             }
             newSegmentOwners[i] = rebalancedCH.locateOwnersForSegment(i);
          }
       }
 
-      return new DefaultConsistentHash(baseCH.getHashFunction(), numOwners, numSegments, newMembers,
+      return new DefaultConsistentHash(numOwners, numSegments, newMembers,
             actualCapacityFactors, newSegmentOwners);
    }
 
    @Override
    public DefaultConsistentHash rebalance(DefaultConsistentHash baseCH) {
-      DefaultConsistentHash rebalancedCH = create(baseCH.getHashFunction(), baseCH.getNumOwners(),
-            baseCH.getNumSegments(), baseCH.getMembers(), baseCH.getCapacityFactors());
+      DefaultConsistentHash rebalancedCH = create(baseCH.getNumOwners(), baseCH.getNumSegments(), baseCH.getMembers(),
+            baseCH.getCapacityFactors());
 
       // the ConsistentHashFactory contract says we should return the same instance if we're not making changes
       if (rebalancedCH.equals(baseCH))
@@ -155,7 +154,6 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
    }
 
    protected static class Builder {
-      protected final Hash hashFunction;
       protected final int numOwners;
       protected final Map<Address, Float> capacityFactors;
       protected final int actualNumOwners;
@@ -167,9 +165,8 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
 
       protected boolean ignoreMaxSegments;
 
-      protected Builder(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
-                      Map<Address, Float> capacityFactors) {
-         this.hashFunction = hashFunction;
+      protected Builder(int numOwners, int numSegments, List<Address> members,
+                        Map<Address, Float> capacityFactors) {
          this.numSegments = numSegments;
          this.numOwners = numOwners;
          this.actualNumOwners = Math.min(numOwners, members.size());
@@ -215,14 +212,11 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       }
 
       protected List<Address> sort(List<Address> members, final Map<Address, Float> capacityFactors) {
-         ArrayList<Address> result = new ArrayList<Address>(members);
-         Collections.sort(result, new Comparator<Address>() {
-            @Override
-            public int compare(Address o1, Address o2) {
-               // Sort descending by capacity factor and ascending by address (UUID)
-               int capacityComparison = capacityFactors != null ? capacityFactors.get(o1).compareTo(capacityFactors.get(o2)) : 0;
-               return capacityComparison != 0 ? -capacityComparison : o1.compareTo(o2);
-            }
+         ArrayList<Address> result = new ArrayList<>(members);
+         result.sort((o1, o2) -> {
+            // Sort descending by capacity factor and ascending by address (UUID)
+            int capacityComparison = capacityFactors != null ? capacityFactors.get(o1).compareTo(capacityFactors.get(o2)) : 0;
+            return capacityComparison != 0 ? -capacityComparison : o1.compareTo(o2);
          });
          return result;
       }
@@ -333,9 +327,9 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       private int computeSegment(Address member, int virtualNode) {
          // Add the virtual node count after applying MurmurHash on the node's hashCode
          // to make up for badly spread test addresses.
-         int virtualNodeHash = normalizedHash(hashFunction, member.hashCode());
+         int virtualNodeHash = normalizedHash(member.hashCode());
          if (virtualNode != 0) {
-            virtualNodeHash = normalizedHash(hashFunction, virtualNodeHash + virtualNode);
+            virtualNodeHash = normalizedHash(virtualNodeHash + virtualNode);
          }
          return virtualNodeHash / segmentSize;
       }
@@ -410,8 +404,8 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          return false;
       }
 
-      protected int normalizedHash(Hash hashFunction, int hashcode) {
-         return hashFunction.hash(hashcode) & Integer.MAX_VALUE;
+      protected int normalizedHash(int hashcode) {
+         return MurmurHash3.getInstance().hash(hashcode) & Integer.MAX_VALUE;
       }
    }
 

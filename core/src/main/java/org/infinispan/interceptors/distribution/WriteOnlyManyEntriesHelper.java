@@ -8,7 +8,7 @@ import java.util.function.Function;
 
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 
@@ -23,15 +23,15 @@ class WriteOnlyManyEntriesHelper extends WriteManyCommandHelper<WriteOnlyManyEnt
    }
 
    @Override
-   public WriteOnlyManyEntriesCommand copyForPrimary(WriteOnlyManyEntriesCommand cmd, ConsistentHash ch, IntSet segments) {
+   public WriteOnlyManyEntriesCommand copyForPrimary(WriteOnlyManyEntriesCommand cmd, LocalizedCacheTopology topology, IntSet segments) {
       return new WriteOnlyManyEntriesCommand(cmd)
-            .withArguments(new ReadOnlySegmentAwareMap<>(cmd.getArguments(), ch, segments));
+            .withArguments(new ReadOnlySegmentAwareMap<>(cmd.getArguments(), topology, segments));
    }
 
    @Override
-   public WriteOnlyManyEntriesCommand copyForBackup(WriteOnlyManyEntriesCommand cmd, ConsistentHash ch, IntSet segments) {
+   public WriteOnlyManyEntriesCommand copyForBackup(WriteOnlyManyEntriesCommand cmd, LocalizedCacheTopology topology, IntSet segments) {
       WriteOnlyManyEntriesCommand copy = new WriteOnlyManyEntriesCommand(cmd)
-            .withArguments(new ReadOnlySegmentAwareMap(cmd.getArguments(), ch, segments));
+            .withArguments(new ReadOnlySegmentAwareMap(cmd.getArguments(), topology, segments));
       copy.setForwarded(true);
       return copy;
    }

@@ -3,6 +3,7 @@ package org.infinispan.distribution;
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
 import static java.lang.Math.sqrt;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,10 +13,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -32,7 +34,7 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
 
    private List<Address> createAddresses(int numNodes) {
       Random r = new Random();
-      List<Address> addresses = new ArrayList<Address>(numNodes);
+      List<Address> addresses = new ArrayList<>(numNodes);
       while (addresses.size() < numNodes)
          addresses.add(new JGroupsAddress(new org.jgroups.util.UUID(r.nextLong(), r.nextLong())));
       return addresses;
@@ -41,7 +43,7 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
    private ConsistentHash createNewConsistentHash(List<Address> servers) {
       try {
          // TODO Revisit after we have replaced the CH with the CHFactory in the configuration
-         return new DefaultConsistentHashFactory().create(MurmurHash3.getInstance(), 2, 10,
+         return new DefaultConsistentHashFactory().create(2, 10,
                servers, null);
       } catch (RuntimeException re) {
          throw re;
@@ -69,12 +71,14 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
       ConsistentHash ch = createNewConsistentHash(createAddresses(numNodes));
       int dummy = 0;
       long start = System.nanoTime();
+      KeyPartitioner keyPartitioner = new HashFunctionPartitioner(ch.getNumSegments());
       for (int i = 0; i < iterations; i++) {
          Object key = i;
-         dummy += ch.locateOwners(key).size();
+         int segment = keyPartitioner.getSegment(key);
+         dummy += ch.locateOwnersForSegment(segment).size();
       }
       long duration = System.nanoTime() - start;
-      assert dummy == iterations * min(numOwners, numNodes);
+      assertEquals(dummy, iterations * min(numOwners, numNodes));
       return duration;
    }
 
@@ -93,10 +97,12 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
    private void doTestDistribution(int numKeys, int numNodes, List<Object> keys) {
       ConsistentHash ch = createNewConsistentHash(createAddresses(numNodes));
 
-      Map<Address, Integer> distribution = new HashMap<Address, Integer>();
+      Map<Address, Integer> distribution = new HashMap<>();
 
+      KeyPartitioner keyPartitioner = new HashFunctionPartitioner(ch.getNumSegments());
       for (Object key : keys) {
-         Address a = ch.locateOwners(key).get(0);
+         int segment = keyPartitioner.getSegment(key);
+         Address a = ch.locateOwnersForSegment(segment).get(0);
          if (distribution.containsKey(a)) {
             int i = distribution.get(a);
             distribution.put(a, i + 1);

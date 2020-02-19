@@ -5,7 +5,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,11 +12,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
-import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
@@ -37,30 +34,21 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    private static final String STATE_PRIMARY_OWNERS = "primaryOwners.%d";
    private static final String STATE_PRIMARY_OWNERS_COUNT = "primaryOwners";
-   private final Hash hashFunction;
    private final int[] primaryOwners;
    private final List<Address> members;
    private final Set<Address> membersSet;
    private final Set<Integer> segments;
-   private final int segmentSize;
 
-   public ReplicatedConsistentHash(Hash hashFunction, List<Address> members, int[] primaryOwners) {
-      this.hashFunction = hashFunction;
+   public ReplicatedConsistentHash(List<Address> members, int[] primaryOwners) {
       this.members = Collections.unmodifiableList(new ArrayList<>(members));
       this.membersSet = Collections.unmodifiableSet(new HashSet<>(members));
       this.primaryOwners = primaryOwners;
       segments = IntSets.immutableRangeSet(primaryOwners.length);
-      segmentSize = Util.getSegmentSize(primaryOwners.length);
    }
 
    public ReplicatedConsistentHash union(ReplicatedConsistentHash ch2) {
-      if (!this.getHashFunction().equals(ch2.getHashFunction())) {
-         throw new IllegalArgumentException("The consistent hash objects must have the same hash function");
-      }
-      if (this.getNumSegments() != ch2.getNumSegments()) {
+      if (this.getNumSegments() != ch2.getNumSegments())
          throw new IllegalArgumentException("The consistent hash objects must have the same number of segments");
-
-      }
 
       List<Address> unionMembers = new ArrayList<>(this.getMembers());
       for (Address member : ch2.getMembers()) {
@@ -76,11 +64,10 @@ public class ReplicatedConsistentHash implements ConsistentHash {
          primaryOwners[segmentId] = primaryOwnerIndex;
       }
 
-      return new ReplicatedConsistentHash(this.getHashFunction(), unionMembers, primaryOwners);
+      return new ReplicatedConsistentHash(unionMembers, primaryOwners);
    }
 
    ReplicatedConsistentHash(ScopedPersistentState state) {
-      this.hashFunction = Util.getInstance(state.getProperty(ConsistentHashPersistenceConstants.STATE_HASH_FUNCTION), null);
       int numMembers = Integer.parseInt(state.getProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS));
       this.members = new ArrayList<>(numMembers);
       for(int i = 0; i < numMembers; i++) {
@@ -94,7 +81,6 @@ public class ReplicatedConsistentHash implements ConsistentHash {
          this.primaryOwners[i] = state.getIntProperty(String.format(STATE_PRIMARY_OWNERS, i));
       }
       segments = IntSets.immutableRangeSet(primaryOwners.length);
-      segmentSize = Util.getSegmentSize(primaryOwners.length);
    }
 
    @Override
@@ -102,7 +88,6 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       return primaryOwners.length;
    }
 
-   @Override
    public int getNumOwners() {
       return members.size();
    }
@@ -110,17 +95,6 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    @Override
    public List<Address> getMembers() {
       return members;
-   }
-
-   @Override
-   public Hash getHashFunction() {
-      return hashFunction;
-   }
-
-   @Override
-   public int getSegment(Object key) {
-      // The result must always be positive, so we make sure the dividend is positive first
-      return (hashFunction.hash(key) & Integer.MAX_VALUE) / segmentSize;
    }
 
    @Override
@@ -181,16 +155,6 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    }
 
    @Override
-   public Set<Address> locateAllOwners(Collection<Object> keys) {
-      return membersSet;
-   }
-
-   @Override
-   public boolean isKeyLocalToNode(Address nodeAddress, Object key) {
-      return isSegmentLocalToNode(nodeAddress, 0);
-   }
-
-   @Override
    public boolean isSegmentLocalToNode(Address nodeAddress, int segmentId) {
       return membersSet.contains(nodeAddress);
    }
@@ -203,7 +167,6 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    public void toScopedState(ScopedPersistentState state) {
       state.setProperty(ConsistentHashPersistenceConstants.STATE_CONSISTENT_HASH, this.getClass().getName());
-      state.setProperty(ConsistentHashPersistenceConstants.STATE_HASH_FUNCTION, hashFunction.getClass().getName());
       state.setProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS, Integer.toString(members.size()));
       for (int i = 0; i < members.size(); i++) {
          state.setProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i),
@@ -225,7 +188,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
          }
          remappedMembers.add(a);
       }
-      return new ReplicatedConsistentHash(hashFunction, remappedMembers, primaryOwners);
+      return new ReplicatedConsistentHash(remappedMembers, primaryOwners);
    }
 
    @Override
@@ -257,7 +220,6 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    public int hashCode() {
       final int prime = 31;
       int result = 1;
-      result = prime * result + ((hashFunction == null) ? 0 : hashFunction.hashCode());
       result = prime * result + ((members == null) ? 0 : members.hashCode());
       result = prime * result + Arrays.hashCode(primaryOwners);
       return result;
@@ -272,11 +234,6 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       if (getClass() != obj.getClass())
          return false;
       ReplicatedConsistentHash other = (ReplicatedConsistentHash) obj;
-      if (hashFunction == null) {
-         if (other.hashFunction != null)
-            return false;
-      } else if (!hashFunction.equals(other.hashFunction))
-         return false;
       if (members == null) {
          if (other.members != null)
             return false;
@@ -292,7 +249,6 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
       @Override
       public void doWriteObject(ObjectOutput output, ReplicatedConsistentHash ch) throws IOException {
-         output.writeObject(ch.hashFunction);
          output.writeObject(ch.members);
          output.writeObject(ch.primaryOwners);
       }
@@ -300,10 +256,9 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       @Override
       @SuppressWarnings("unchecked")
       public ReplicatedConsistentHash doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         Hash hashFunction = (Hash) unmarshaller.readObject();
          List<Address> members = (List<Address>) unmarshaller.readObject();
          int[] primaryOwners = (int[]) unmarshaller.readObject();
-         return new ReplicatedConsistentHash(hashFunction, members, primaryOwners);
+         return new ReplicatedConsistentHash(members, primaryOwners);
       }
 
       @Override
