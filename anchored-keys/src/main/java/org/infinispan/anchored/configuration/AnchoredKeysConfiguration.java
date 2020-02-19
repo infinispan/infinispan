@@ -8,6 +8,16 @@ import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.serializing.SerializedWith;
 
+/**
+ * Configuration module to transform an {@link org.infinispan.configuration.cache.CacheMode#INVALIDATION_SYNC}
+ * cache into an anchored-key cache.
+ *
+ * <p>Anchored keys caches always write new entries to the newest member of the cache.
+ * The administrator is supposed to add a new node when the current writer is close to full.</p>
+ *
+ * @since 11
+ * @author Dan Berindei
+ */
 @SerializedWith(AnchoredKeysConfigurationSerializer.class)
 @BuiltBy(AnchoredKeysConfigurationBuilder.class)
 public class AnchoredKeysConfiguration implements ConfigurationInfo {
