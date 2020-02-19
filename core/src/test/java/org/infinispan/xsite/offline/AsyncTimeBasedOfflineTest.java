@@ -100,7 +100,7 @@ public class AsyncTimeBasedOfflineTest extends AbstractXSiteTest {
       assertTrue(status.isEnabled());
       eventually(status::minTimeHasElapsed);
       cache(LON, cacheName, index).put("_key_", "_value_");
-      assertTrue("Site " + SFO + " is online. status=" + status, status.isOffline());
+      eventually(() -> "Site " + SFO + " is online. status=" + status, status::isOffline);
    }
 
    private void assertBringSiteOnline(String cacheName, int index) {
