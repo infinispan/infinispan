@@ -1,6 +1,6 @@
 package org.infinispan.lock;
 
-import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.test.TestingUtil.named;
 import static org.mockito.ArgumentMatchers.any;
@@ -66,7 +66,7 @@ public class LockManagerTest extends AbstractInfinispanTest {
       DefaultLockManager lockManager = new DefaultLockManager();
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
       TestingUtil.inject(lockContainer, asyncExecutor, AbstractCacheTest.TIME_SERVICE);
-      TestingUtil.inject(lockManager, lockContainer, named(BLOCKING_EXECUTOR, asyncExecutor),
+      TestingUtil.inject(lockManager, lockContainer, named(NON_BLOCKING_EXECUTOR, asyncExecutor),
                          named(TIMEOUT_SCHEDULE_EXECUTOR, mockScheduledExecutor));
       doSingleCounterTest(lockManager);
    }
