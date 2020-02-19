@@ -39,10 +39,10 @@ public class TxDistributedCacheStream<Original, R, K, V> extends DistributedCach
    private final Function<? super CacheEntry<K, V>, ? extends Original> toOriginalFunction;
 
    public TxDistributedCacheStream(Address localAddress, boolean parallel, DistributionManager dm,
-           Supplier<CacheStream<R>> supplier, TxClusterStreamManager<Original, K> csm, boolean includeLoader,
+           Supplier<CacheStream<R>> supplier, boolean includeLoader,
            int distributedBatchSize, Executor executor, ComponentRegistry registry, LocalTxInvocationContext ctx,
            Function<? super Original, ?> toKeyFunction, Function<? super CacheEntry<K, V>, ? extends Original> toOriginalFunction) {
-      super(localAddress, parallel, dm, supplier, csm, includeLoader, distributedBatchSize, executor, registry, toKeyFunction);
+      super(localAddress, parallel, dm, ctx, supplier, includeLoader, distributedBatchSize, executor, registry, toKeyFunction);
       this.localAddress = localAddress;
       this.hash = dm.getWriteConsistentHash();
       this.ctx = ctx;

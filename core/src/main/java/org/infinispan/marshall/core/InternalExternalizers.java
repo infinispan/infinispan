@@ -109,6 +109,7 @@ import org.infinispan.statetransfer.TransactionInfo;
 import org.infinispan.stats.impl.ClusterCacheStatsImpl;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.AbstractCacheStream;
+import org.infinispan.stream.impl.CacheBiConsumers;
 import org.infinispan.stream.impl.CacheStreamIntermediatePublisher;
 import org.infinispan.stream.impl.CacheStreamIntermediateReducer;
 import org.infinispan.stream.impl.EndIterator;
@@ -273,6 +274,7 @@ final class InternalExternalizers {
       addInternalExternalizer(ThrowableExternalizer.INSTANCE, exts);
       addInternalExternalizer(new ImmutableListCopy.Externalizer(), exts);
       addInternalExternalizer(EnumExternalizer.INSTANCE, exts);
+      addInternalExternalizer(new CacheBiConsumers.Externalizer(), exts);
 
       return exts;
    }

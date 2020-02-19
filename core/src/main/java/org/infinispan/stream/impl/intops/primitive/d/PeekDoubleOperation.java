@@ -3,6 +3,8 @@ package org.infinispan.stream.impl.intops.primitive.d;
 import java.util.function.DoubleConsumer;
 import java.util.stream.DoubleStream;
 
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.stream.CacheAware;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 import io.reactivex.Flowable;
@@ -24,6 +26,15 @@ public class PeekDoubleOperation implements IntermediateOperation<Double, Double
 
    public DoubleConsumer getConsumer() {
       return consumer;
+   }
+
+   @Override
+   public void handleInjection(ComponentRegistry registry) {
+      if (consumer instanceof CacheAware) {
+         ((CacheAware) consumer).injectCache(registry.getCache().running());
+      } else {
+         registry.wireDependencies(consumer);
+      }
    }
 
    @Override

@@ -3,13 +3,10 @@ package org.infinispan.stream.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -17,30 +14,24 @@ import java.util.PrimitiveIterator;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.BaseStream;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.CacheStream;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
@@ -53,12 +44,8 @@ import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.intops.FlatMappingOperation;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.intops.MappingOperation;
-import org.infinispan.stream.impl.termop.SegmentRetryingOperation;
-import org.infinispan.stream.impl.termop.SingleRunOperation;
-import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.reactivestreams.Publisher;
 
@@ -76,7 +63,6 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
    protected final Address localAddress;
    protected final DistributionManager dm;
    protected final Supplier<CacheStream<Original>> supplier;
-   protected final ClusterStreamManager csm;
    protected final ClusterPublisherManager cpm;
    protected final Executor executor;
    protected final ComponentRegistry registry;
@@ -85,6 +71,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
    protected final StateTransferLock stateTransferLock;
    protected final boolean includeLoader;
    protected final Function<? super Original, ?> toKeyFunction;
+   protected final InvocationContext invocationContext;
 
    protected Runnable closeRunnable = null;
 
@@ -104,15 +91,14 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
    protected long timeout = 30;
    protected TimeUnit timeoutUnit = TimeUnit.SECONDS;
 
-   protected AbstractCacheStream(Address localAddress, boolean parallel, DistributionManager dm,
-           Supplier<CacheStream<Original>> supplier, ClusterStreamManager<Original, Object> csm,
-           boolean includeLoader, int distributedBatchSize, Executor executor,
+   protected AbstractCacheStream(Address localAddress, boolean parallel, DistributionManager dm, InvocationContext ctx,
+           Supplier<CacheStream<Original>> supplier, boolean includeLoader, int distributedBatchSize, Executor executor,
          ComponentRegistry registry, Function<? super Original, ?> toKeyFunction) {
       this.localAddress = localAddress;
       this.parallel = parallel;
       this.dm = dm;
+      this.invocationContext = ctx;
       this.supplier = supplier;
-      this.csm = csm;
       this.includeLoader = includeLoader;
       this.distributedBatchSize = distributedBatchSize;
       this.executor = executor;
@@ -129,8 +115,8 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       this.intermediateOperations = other.intermediateOperations;
       this.localAddress = other.localAddress;
       this.dm = other.dm;
+      this.invocationContext = other.invocationContext;
       this.supplier = other.supplier;
-      this.csm = other.csm;
       this.includeLoader = other.includeLoader;
       this.executor = other.executor;
       this.registry = other.registry;
@@ -193,10 +179,6 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       return parallel;
    }
 
-   boolean getParallelDistribution() {
-      return parallelDistribution == null ? true : parallelDistribution;
-   }
-
    @Override
    public S2 sequential() {
       parallel = false;
@@ -232,45 +214,6 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       }
    }
 
-   <R> R performOperation(Function<? super S2, ? extends R> function, boolean retryOnRehash, BinaryOperator<R> accumulator,
-                          Predicate<? super R> earlyTerminatePredicate) {
-      ResultsAccumulator<R> remoteResults = new ResultsAccumulator<>(accumulator, dm.getReadConsistentHash().getNumSegments());
-      if (rehashAware) {
-         return performOperationRehashAware(function, retryOnRehash, remoteResults, earlyTerminatePredicate);
-      } else {
-         return performOperation(function, remoteResults, earlyTerminatePredicate);
-      }
-   }
-
-   <R> R performOperation(Function<? super S2, ? extends R> function, ResultsAccumulator<R> remoteResults,
-                          Predicate<? super R> earlyTerminatePredicate) {
-      ConsistentHash ch = dm.getWriteConsistentHash();
-      TerminalOperation<Original, R> op = new SingleRunOperation(intermediateOperations,
-              supplierForSegments(ch, segmentsToFilter, null), function);
-      Object id = csm.remoteStreamOperation(getParallelDistribution(), parallel, ch, segmentsToFilter, keysToFilter,
-              Collections.emptyMap(), includeLoader, toKeyFunction != null, op, remoteResults, earlyTerminatePredicate);
-      try {
-         R localValue = op.performOperation();
-         remoteResults.onCompletion(null, IntSets.immutableEmptySet(), localValue);
-         if (id != null) {
-            try {
-               if ((earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) &&
-                       !csm.awaitCompletion(id, timeout, timeoutUnit)) {
-                  throw new TimeoutException();
-               }
-            } catch (InterruptedException e) {
-               throw new CacheException(e);
-            }
-         }
-
-         getLog().tracef("Finished operation for id %s", id);
-
-         return remoteResults.currentValue;
-      } finally {
-         csm.forgetOperation(id);
-      }
-   }
-
    <R> R performPublisherOperation(Function<? super Publisher<T>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       Function usedTransformer;
@@ -283,320 +226,17 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       DeliveryGuarantee guarantee = rehashAware ? DeliveryGuarantee.EXACTLY_ONCE : DeliveryGuarantee.AT_MOST_ONCE;
       CompletionStage<R> stage;
       if (toKeyFunction == null) {
-         stage = cpm.keyReduction(parallel, segmentsToFilter, keysToFilter, csm.getContext(), includeLoader, guarantee,
+         stage = cpm.keyReduction(parallel, segmentsToFilter, keysToFilter, invocationContext, includeLoader, guarantee,
                usedTransformer, finalizer);
       } else {
-         stage = cpm.entryReduction(parallel, segmentsToFilter, keysToFilter, csm.getContext(), includeLoader, guarantee,
+         stage = cpm.entryReduction(parallel, segmentsToFilter, keysToFilter, invocationContext, includeLoader, guarantee,
                usedTransformer, finalizer);
       }
       return CompletionStages.join(stage);
    }
 
-   <R> R performOperationRehashAware(Function<? super S2, ? extends R> function, boolean retryOnRehash,
-                                     ResultsAccumulator<R> remoteResults, Predicate<? super R> earlyTerminatePredicate) {
-      IntSet segmentsToProcess = segmentsToFilter;
-      TerminalOperation<Original, R> op;
-      do {
-         LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
-         ConsistentHash ch = cacheTopology.getReadConsistentHash();
-         if (retryOnRehash) {
-            op = new SegmentRetryingOperation(intermediateOperations, supplierForSegments(ch, segmentsToProcess,
-                    null), function);
-         } else {
-            op = new SingleRunOperation(intermediateOperations, supplierForSegments(ch, segmentsToProcess, null),
-                    function);
-         }
-         Object id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, ch, segmentsToProcess,
-                 keysToFilter, Collections.emptyMap(), includeLoader, toKeyFunction != null, op, remoteResults,
-               earlyTerminatePredicate);
-         try {
-            R localValue;
-            boolean localRun = ch.getMembers().contains(localAddress);
-            if (localRun) {
-               localValue = op.performOperation();
-
-               IntSet ourSegments;
-               if (segmentsToProcess != null) {
-                  ourSegments =  IntSets.mutableFrom(ch.getPrimarySegmentsForOwner(localAddress));
-                  ourSegments.retainAll(segmentsToProcess);
-               } else {
-                  ourSegments = IntSets.from(ch.getPrimarySegmentsForOwner(localAddress));
-               }
-               // TODO: we can do this more efficiently - since we drop all results locally
-               LocalizedCacheTopology newCacheTopology = dm.getCacheTopology();
-               if (newCacheTopology.getTopologyId() == cacheTopology.getTopologyId() ||
-                   newCacheTopology.getReadConsistentHash().equals(ch)) {
-                  remoteResults.onCompletion(null, ourSegments, localValue);
-               } else {
-                  getLog().tracef("Local cache topology changed from %d to %d, suspecting local segments %s",
-                                  cacheTopology.getTopologyId(), newCacheTopology.getTopologyId(), ourSegments);
-                  remoteResults.onSegmentsLost(ourSegments);
-               }
-            } else {
-               // This isn't actually used because localRun short circuits first
-               localValue = null;
-            }
-            if (id != null) {
-               try {
-                  if ((!localRun || earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) &&
-                          !csm.awaitCompletion(id, timeout, timeoutUnit)) {
-                     throw new TimeoutException();
-                  }
-               } catch (InterruptedException e) {
-                  throw new CacheException(e);
-               }
-            }
-         } finally {
-            csm.forgetOperation(id);
-         }
-         if (!remoteResults.lostSegments.isEmpty()) {
-            segmentsToProcess = IntSets.mutableCopyFrom(remoteResults.lostSegments);
-            remoteResults.lostSegments.clear();
-            getLog().tracef("Found %s lost segments for identifier %s", segmentsToProcess, id);
-            try {
-               int nextTopology = cacheTopology.getTopologyId() + 1;
-               getLog().tracef("Waiting for topology %d to continue stream operation with segments %s", nextTopology,
-                     segmentsToProcess);
-               stateTransferLock.topologyFuture(nextTopology).get(timeout, timeoutUnit);
-            } catch (InterruptedException | ExecutionException | java.util.concurrent.TimeoutException e) {
-               throw new CacheException(e);
-            }
-         } else {
-            // If we didn't lose any segments we don't need to process anymore
-            segmentsToProcess = null;
-            getLog().tracef("Finished rehash aware operation for id %s", id);
-         }
-      } while (segmentsToProcess != null && !segmentsToProcess.isEmpty());
-
-      return remoteResults.currentValue;
-   }
-
-   void performRehashKeyTrackingOperation(
-           Function<Supplier<Stream<Original>>, KeyTrackingTerminalOperation<Original, Object, ? extends T>> function) {
-      final AtomicBoolean complete = new AtomicBoolean();
-
-      int numSegments = dm.getReadConsistentHash().getNumSegments();
-      KeyTrackingConsumer<Object> results = new KeyTrackingConsumer<>(keyPartitioner, numSegments);
-      IntSet segmentsToProcess = segmentsToFilter == null ? IntSets.immutableRangeSet(numSegments) : segmentsToFilter;
-      do {
-         CacheTopology cacheTopology = dm.getCacheTopology();
-         ConsistentHash ch = cacheTopology.getReadConsistentHash();
-         boolean localRun = ch.getMembers().contains(localAddress);
-         IntSet segments;
-         Set<Object> excludedKeys;
-         if (localRun) {
-            segments = IntSets.mutableFrom(ch.getPrimarySegmentsForOwner(localAddress));
-            segments.retainAll(segmentsToProcess);
-
-            excludedKeys = new HashSet<>();
-            for (PrimitiveIterator.OfInt segmentIterator = segments.iterator(); segmentIterator.hasNext(); ) {
-               excludedKeys.addAll(results.referenceArray.get(segmentIterator.nextInt()));
-            }
-         } else {
-            // This null is okay as it is only referenced if it was a localRun
-            segments = null;
-            excludedKeys = Collections.emptySet();
-         }
-         KeyTrackingTerminalOperation<Original, Object, ? extends T> op = function.apply(supplierForSegments(ch,
-                 segmentsToProcess, excludedKeys));
-         op.handleInjection(registry);
-         Object id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, ch, segmentsToProcess,
-               keysToFilter, new AtomicReferenceArrayToMap<>(results.referenceArray), includeLoader,
-               toKeyFunction != null, op, results);
-         try {
-            if (localRun) {
-               Collection<Object> localValue = op.performForEachOperation(results);
-               // TODO: we can do this more efficiently - this hampers performance during rehash
-               if (dm.getReadConsistentHash().equals(ch)) {
-                  getLog().tracef("Found local values %s for id %s", localValue.size(), id);
-                  results.onCompletion(null, segments, localValue);
-               } else {
-                  IntSet ourSegments = IntSets.mutableFrom(ch.getPrimarySegmentsForOwner(localAddress));
-                  ourSegments.retainAll(segmentsToProcess);
-                  getLog().tracef("CH changed - making %s segments suspect for identifier %s", ourSegments, id);
-                  results.onSegmentsLost(ourSegments);
-                  // We keep track of those keys so we don't fire them again
-                  results.onIntermediateResult(null, localValue);
-               }
-            }
-            if (id != null) {
-               try {
-                  if (!csm.awaitCompletion(id, timeout, timeoutUnit)) {
-                     throw new TimeoutException();
-                  }
-               } catch (InterruptedException e) {
-                  throw new CacheException(e);
-               }
-            }
-         } finally {
-            csm.forgetOperation(id);
-         }
-         if (!results.lostSegments.isEmpty()) {
-            segmentsToProcess = IntSets.mutableCopyFrom(results.lostSegments);
-            results.lostSegments.clear();
-            getLog().tracef("Found %s lost segments for identifier %s", segmentsToProcess, id);
-            try {
-               int nextTopology = cacheTopology.getTopologyId() + 1;
-               getLog().tracef("Waiting for topology %d to continue key tracking operation with segments %s", nextTopology,
-                     segmentsToProcess);
-               stateTransferLock.topologyFuture(nextTopology).get(timeout, timeoutUnit);
-            } catch (InterruptedException | ExecutionException | java.util.concurrent.TimeoutException e) {
-               throw new CacheException(e);
-            }
-         } else {
-            getLog().tracef("Finished rehash aware operation for id %s", id);
-            complete.set(true);
-         }
-      } while (!complete.get());
-   }
-
    protected boolean isPrimaryOwner(ConsistentHash ch, Object key) {
       return localAddress.equals(ch.locatePrimaryOwnerForSegment(keyPartitioner.getSegment(key)));
-   }
-
-   static class AtomicReferenceArrayToMap<R> extends AbstractMap<Integer, R> {
-      final AtomicReferenceArray<R> array;
-
-      AtomicReferenceArrayToMap(AtomicReferenceArray<R> array) {
-         this.array = array;
-      }
-
-      @Override
-      public boolean containsKey(Object o) {
-         if (!(o instanceof Integer))
-            return false;
-         int i = (int) o;
-         return 0 <= i && i < array.length();
-      }
-
-      @Override
-      public R get(Object key) {
-         if (!(key instanceof Integer))
-            return null;
-         int i = (int) key;
-         if (0 <= i && i < array.length()) {
-            return array.get(i);
-         }
-         return null;
-      }
-
-      @Override
-      public int size() {
-         return array.length();
-      }
-
-      @Override
-      public boolean remove(Object key, Object value) {
-         throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void clear() {
-         throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public Set<Entry<Integer, R>> entrySet() {
-         // Do we want to implement this later?
-         throw new UnsupportedOperationException();
-      }
-   }
-
-   class KeyTrackingConsumer<K> implements ClusterStreamManager.ResultsCallback<Collection<K>>,
-           KeyTrackingTerminalOperation.IntermediateCollector<Collection<K>> {
-      final KeyPartitioner keyPartitioner;
-
-      final IntSet lostSegments;
-
-      final AtomicReferenceArray<Set<K>> referenceArray;
-
-      KeyTrackingConsumer(KeyPartitioner keyPartitioner, int numSegments) {
-         this.keyPartitioner = keyPartitioner;
-
-         this.referenceArray = new AtomicReferenceArray<>(numSegments);
-         for (int i = 0; i < referenceArray.length(); ++i) {
-            // We only allow 1 request per id
-            referenceArray.set(i, new HashSet<>());
-         }
-         lostSegments = IntSets.concurrentSet(numSegments);
-      }
-
-      @Override
-      public void onIntermediateResult(Address address, Collection<K> results) {
-         if (results != null) {
-            getLog().tracef("Response from %s with results %s", address, results.size());
-            results.forEach(key -> {
-               int segment = keyPartitioner.getSegment(key);
-               Set<K> keys = referenceArray.get(segment);
-               // On completion we null this out first - thus we don't need to add
-               if (keys != null) {
-                  keys.add(key);
-               }
-            });
-         }
-      }
-
-      @Override
-      public void onCompletion(Address address, IntSet completedSegments, Collection<K> results) {
-         if (!completedSegments.isEmpty()) {
-            getLog().tracef("Completing segments %s", completedSegments);
-            // We null this out first so intermediate results don't add for no reason
-            completedSegments.forEach((int s) -> referenceArray.set(s, null));
-         } else {
-            getLog().tracef("No segments to complete from %s", address);
-         }
-         onIntermediateResult(address, results);
-      }
-
-      @Override
-      public void onSegmentsLost(IntSet segments) {
-         lostSegments.addAll(segments);
-      }
-
-      @Override
-      public void sendDataResonse(Collection<K> response) {
-         onIntermediateResult(null, response);
-      }
-   }
-
-   static class ResultsAccumulator<R> implements ClusterStreamManager.ResultsCallback<R> {
-      private final BinaryOperator<R> binaryOperator;
-      private final IntSet lostSegments;
-      R currentValue;
-
-      ResultsAccumulator(BinaryOperator<R> binaryOperator, int numSegments) {
-         this.binaryOperator = binaryOperator;
-         this.lostSegments = IntSets.concurrentSet(numSegments);
-      }
-
-      @Override
-      public void onIntermediateResult(Address address, R results) {
-         if (results != null) {
-            synchronized (this) {
-               if (currentValue != null) {
-                  currentValue = binaryOperator.apply(currentValue, results);
-               } else {
-                  currentValue = results;
-               }
-            }
-         }
-      }
-
-      @Override
-      public void onCompletion(Address address, IntSet completedSegments, R results) {
-         onIntermediateResult(address, results);
-      }
-
-      @Override
-      public void onSegmentsLost(IntSet segments) {
-         lostSegments.addAll(segments);
-      }
-   }
-
-
-   protected Supplier<Stream<Original>> supplierForSegments(ConsistentHash ch, IntSet targetSegments,
-                                                              Set<Object> excludedKeys) {
-      return supplierForSegments(ch, targetSegments, excludedKeys, true);
    }
 
    /**

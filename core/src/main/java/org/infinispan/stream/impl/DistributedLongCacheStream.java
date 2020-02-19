@@ -24,7 +24,6 @@ import java.util.function.ObjLongConsumer;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
@@ -45,10 +44,6 @@ import org.infinispan.stream.impl.intops.primitive.l.MapToDoubleLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.MapToIntLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.MapToObjLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.PeekLongOperation;
-import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapLongOperation;
-import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapObjLongOperation;
-import org.infinispan.stream.impl.termop.primitive.ForEachLongOperation;
-import org.infinispan.stream.impl.termop.primitive.ForEachObjLongOperation;
 import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableBiFunction;
 import org.infinispan.util.function.SerializableBinaryOperator;
@@ -214,11 +209,9 @@ public class DistributedLongCacheStream<Original> extends AbstractCacheStream<Or
 
    @Override
    public void forEach(LongConsumer action) {
-      if (!rehashAware) {
-         performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
-      } else {
-         performRehashKeyTrackingOperation(s -> getForEach(action, s));
-      }
+      peek(action)
+            .iterator()
+            .forEachRemaining((long ignore) -> { });
    }
 
    @Override
@@ -228,38 +221,14 @@ public class DistributedLongCacheStream<Original> extends AbstractCacheStream<Or
 
    @Override
    public <K, V> void forEach(ObjLongConsumer<Cache<K, V>> action) {
-      if (!rehashAware) {
-         performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
-      } else {
-         performRehashKeyTrackingOperation(s -> getForEach(action, s));
-      }
+      peek(CacheBiConsumers.longConsumer(action))
+            .iterator()
+            .forEachRemaining((long ignore) -> { });
    }
 
    @Override
    public <K, V> void forEach(SerializableObjLongConsumer<Cache<K, V>> action) {
       forEach((ObjLongConsumer<Cache<K, V>>) action);
-   }
-
-   KeyTrackingTerminalOperation<Original, Object, Long> getForEach(LongConsumer consumer,
-           Supplier<Stream<Original>> supplier) {
-      if (iteratorOperation == IteratorOperation.FLAT_MAP) {
-         return new ForEachFlatMapLongOperation<>(intermediateOperations, supplier, nonNullKeyFunction(),
-               distributedBatchSize, consumer);
-      } else {
-         return new ForEachLongOperation<>(intermediateOperations, supplier, nonNullKeyFunction(), distributedBatchSize,
-               consumer);
-      }
-   }
-
-   <K, V> KeyTrackingTerminalOperation<Original, Object, Long> getForEach(ObjLongConsumer<Cache<K, V>> consumer,
-           Supplier<Stream<Original>> supplier) {
-      if (iteratorOperation == IteratorOperation.FLAT_MAP) {
-         return new ForEachFlatMapObjLongOperation(intermediateOperations, supplier, nonNullKeyFunction(),
-               distributedBatchSize, consumer);
-      } else {
-         return new ForEachObjLongOperation(intermediateOperations, supplier, nonNullKeyFunction(),
-               distributedBatchSize, consumer);
-      }
    }
 
    @Override
