@@ -67,6 +67,11 @@ Optionally set properties in the configuration as follows:
 * Prefix properties with `database` to adjust and tune RocksDB databases.
 * Prefix properties with `data` to configure the column families in which RocksDB stores your data.
 
+----
+<property name="database.max_background_compactions">2</property>
+<property name="data.write_buffer_size">64MB</property>
+----
+
 .Segmentation
 
 `RocksDBStore` supports segmentation and creates a separate column family per
