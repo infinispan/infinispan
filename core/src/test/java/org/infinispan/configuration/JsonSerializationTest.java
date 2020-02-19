@@ -52,6 +52,7 @@ import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.filter.CacheFilters;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
@@ -63,7 +64,6 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.PrincipalRoleMapperContext;
 import org.infinispan.security.mappers.IdentityRoleMapper;
-import org.infinispan.stream.impl.termop.TerminalOperationExternalizer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Person;
@@ -475,7 +475,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
    public void testSerializationConfig() throws IOException {
       final String regexp = "org.infinispan.test.*";
       AdvancedExternalizer<?> mapExternalizer = new MapExternalizer();
-      AdvancedExternalizer<?> opExternalizer = new TerminalOperationExternalizer();
+      AdvancedExternalizer<?> opExternalizer = new CacheFilters.CacheFiltersExternalizer();
       GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
       globalConfigurationBuilder.serialization()
             .marshaller(new JavaSerializationMarshaller())
@@ -493,7 +493,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertEquals(JavaSerializationMarshaller.class.getName(), serialization.get("marshaller").asText());
       JsonNode externalizerMap = serialization.get("advanced-externalizer");
       assertEquals(MapExternalizer.class.getName(), externalizerMap.get("1").asText());
-      assertEquals(TerminalOperationExternalizer.class.getName(), externalizerMap.get("2").asText());
+      assertEquals(CacheFilters.CacheFiltersExternalizer.class.getName(), externalizerMap.get("2").asText());
 
       JsonNode whiteList = serialization.get("white-list");
       JsonNode classes = whiteList.get("classes");

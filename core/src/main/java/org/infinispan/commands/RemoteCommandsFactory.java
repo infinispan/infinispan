@@ -81,11 +81,6 @@ import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherComman
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
-import org.infinispan.stream.impl.StreamIteratorCloseCommand;
-import org.infinispan.stream.impl.StreamIteratorNextCommand;
-import org.infinispan.stream.impl.StreamIteratorRequestCommand;
-import org.infinispan.stream.impl.StreamRequestCommand;
-import org.infinispan.stream.impl.StreamResponseCommand;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
@@ -369,21 +364,6 @@ public class RemoteCommandsFactory {
                break;
             case ClusteredGetAllCommand.COMMAND_ID:
                command = new ClusteredGetAllCommand(cacheName);
-               break;
-            case StreamRequestCommand.COMMAND_ID:
-               command = new StreamRequestCommand(cacheName);
-               break;
-            case StreamResponseCommand.COMMAND_ID:
-               command = new StreamResponseCommand(cacheName);
-               break;
-            case StreamIteratorRequestCommand.COMMAND_ID:
-               command = new StreamIteratorRequestCommand<>(cacheName);
-               break;
-            case StreamIteratorNextCommand.COMMAND_ID:
-               command = new StreamIteratorNextCommand(cacheName);
-               break;
-            case StreamIteratorCloseCommand.COMMAND_ID:
-               command = new StreamIteratorCloseCommand(cacheName);
                break;
             case SingleKeyBackupWriteCommand.COMMAND_ID:
                command = new SingleKeyBackupWriteCommand(cacheName);

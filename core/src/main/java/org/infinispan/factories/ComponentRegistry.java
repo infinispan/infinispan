@@ -42,8 +42,6 @@ import org.infinispan.scattered.BiasManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stats.ClusterCacheStats;
-import org.infinispan.stream.impl.ClusterStreamManager;
-import org.infinispan.stream.impl.LocalStreamManager;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
@@ -84,7 +82,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<BiasManager> biasManager;
    private ComponentRef<CacheNotifier> cacheNotifier;
    private ComponentRef<ClusterCacheNotifier> clusterCacheNotifier;
-   private ComponentRef<ClusterStreamManager> clusterStreamManager;
    private ComponentRef<CommandAckCollector> commandAckCollector;
    private ComponentRef<CommandsFactory> commandsFactory;
    private ComponentRef<InternalConflictManager> conflictManager;
@@ -93,7 +90,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<InternalEntryFactory> internalEntryFactory;
    private ComponentRef<InvocationContextFactory> invocationContextFactory;
    private ComponentRef<LocalPublisherManager> localPublisherManager;
-   private ComponentRef<LocalStreamManager> localStreamManager;
    private ComponentRef<LockManager> lockManager;
    private ComponentRef<OrderedUpdatesManager> orderedUpdatesManager;
    private ComponentRef<PerCacheInboundInvocationHandler> inboundInvocationHandler;
@@ -360,7 +356,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       conflictManager = basicComponentRegistry.getComponent(InternalConflictManager.class);
       commandsFactory = basicComponentRegistry.getComponent(CommandsFactory.class);
       clusterCacheNotifier = basicComponentRegistry.getComponent(ClusterCacheNotifier.class);
-      clusterStreamManager = basicComponentRegistry.getComponent(ClusterStreamManager.class);
       commandAckCollector = basicComponentRegistry.getComponent(CommandAckCollector.class);
       distributionManager = basicComponentRegistry.getComponent(DistributionManager.class);
       inboundInvocationHandler = basicComponentRegistry.getComponent(PerCacheInboundInvocationHandler.class);
@@ -369,7 +364,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       internalMarshaller = basicComponentRegistry.getComponent(KnownComponentNames.INTERNAL_MARSHALLER, StreamingMarshaller.class);
       invocationContextFactory = basicComponentRegistry.getComponent(InvocationContextFactory.class);
       localPublisherManager = basicComponentRegistry.getComponent(LocalPublisherManager.class);
-      localStreamManager = basicComponentRegistry.getComponent(LocalStreamManager.class);
       lockManager = basicComponentRegistry.getComponent(LockManager.class);
       orderedUpdatesManager = basicComponentRegistry.getComponent(OrderedUpdatesManager.class);
       persistenceMarshaller = basicComponentRegistry.getComponent(KnownComponentNames.PERSISTENCE_MARSHALLER, PersistenceMarshaller.class);
@@ -441,10 +435,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       return clusterCacheNotifier;
    }
 
-   public ComponentRef<ClusterStreamManager> getClusterStreamManager() {
-      return clusterStreamManager;
-   }
-
    public ComponentRef<CommandAckCollector> getCommandAckCollector() {
       return commandAckCollector;
    }
@@ -467,11 +457,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public ComponentRef<PublisherHandler> getPublisherHandler() {
       return publisherHandler;
-   }
-
-   @SuppressWarnings("unchecked")
-   public ComponentRef<LocalStreamManager> getLocalStreamManager() {
-      return localStreamManager;
    }
 
    public ComponentRef<LockManager> getLockManager() {

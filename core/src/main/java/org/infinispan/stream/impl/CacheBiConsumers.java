@@ -18,6 +18,7 @@ import java.util.function.ObjLongConsumer;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -46,8 +47,13 @@ public class CacheBiConsumers {
    static class CacheObjBiConsumer<K, V, R> implements Consumer<R> {
       private final BiConsumer<Cache<K, V>, ? super R> biConsumer;
 
-      @Inject
       protected transient Cache<K, V> cache;
+
+      @Inject
+      void inject(Cache<K, V> cache, ComponentRegistry componentRegistry) {
+         componentRegistry.wireDependencies(biConsumer);
+         this.cache = cache;
+      }
 
       CacheObjBiConsumer(BiConsumer<Cache<K, V>, ? super R> biConsumer) {
          this.biConsumer = biConsumer;
@@ -63,8 +69,13 @@ public class CacheBiConsumers {
    static class CacheDoubleConsumer<K, V> implements DoubleConsumer {
       private final ObjDoubleConsumer<Cache<K, V>> objDoubleConsumer;
 
-      @Inject
       protected transient Cache<K, V> cache;
+
+      @Inject
+      void inject(Cache<K, V> cache, ComponentRegistry componentRegistry) {
+         componentRegistry.wireDependencies(objDoubleConsumer);
+         this.cache = cache;
+      }
 
       CacheDoubleConsumer(ObjDoubleConsumer<Cache<K, V>> objDoubleConsumer) {
          this.objDoubleConsumer = objDoubleConsumer;
@@ -80,8 +91,13 @@ public class CacheBiConsumers {
    static class CacheLongConsumer<K, V> implements LongConsumer {
       private final ObjLongConsumer<Cache<K, V>> objLongConsumer;
 
-      @Inject
       protected transient Cache<K, V> cache;
+
+      @Inject
+      void inject(Cache<K, V> cache, ComponentRegistry componentRegistry) {
+         componentRegistry.wireDependencies(objLongConsumer);
+         this.cache = cache;
+      }
 
       CacheLongConsumer(ObjLongConsumer<Cache<K, V>> objLongConsumer) {
          this.objLongConsumer = objLongConsumer;
@@ -97,8 +113,13 @@ public class CacheBiConsumers {
    static class CacheIntConsumer<K, V> implements IntConsumer {
       private final ObjIntConsumer<Cache<K, V>> objIntConsumer;
 
-      @Inject
       protected transient Cache<K, V> cache;
+
+      @Inject
+      void inject(Cache<K, V> cache, ComponentRegistry componentRegistry) {
+         componentRegistry.wireDependencies(objIntConsumer);
+         this.cache = cache;
+      }
 
       CacheIntConsumer(ObjIntConsumer<Cache<K, V>> objIntConsumer) {
          this.objIntConsumer = objIntConsumer;

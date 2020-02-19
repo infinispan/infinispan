@@ -96,12 +96,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
-import org.infinispan.stream.impl.StreamIteratorCloseCommand;
-import org.infinispan.stream.impl.StreamIteratorNextCommand;
-import org.infinispan.stream.impl.StreamIteratorRequestCommand;
-import org.infinispan.stream.impl.StreamRequestCommand;
-import org.infinispan.stream.impl.StreamResponseCommand;
-import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.ReclosableLatch;
@@ -462,38 +456,6 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, Object groupName) {
       return actual.buildGetKeysInGroupCommand(flagsBitSet, groupName);
-   }
-
-   @Override
-   public <K> StreamRequestCommand<K> buildStreamRequestCommand(Object id, boolean parallelStream,
-           StreamRequestCommand.Type type, IntSet segments, Set<K> keys, Set<K> excludedKeys,
-           boolean includeLoader, boolean entryStream, Object terminalOperation) {
-      return actual.buildStreamRequestCommand(id, parallelStream, type, segments, keys, excludedKeys, includeLoader,
-              entryStream, terminalOperation);
-   }
-
-   @Override
-   public <R> StreamResponseCommand<R> buildStreamResponseCommand(Object identifier, boolean complete,
-         IntSet lostSegments, R response) {
-      return actual.buildStreamResponseCommand(identifier, complete, lostSegments, response);
-   }
-
-   @Override
-   public <K> StreamIteratorRequestCommand<K> buildStreamIteratorRequestCommand(Object id, boolean parallelStream,
-         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
-         Iterable<IntermediateOperation> intOps, long batchSize) {
-      return actual.buildStreamIteratorRequestCommand(id, parallelStream, segments, keys, excludedKeys, includeLoader,
-            entryStream, intOps, batchSize);
-   }
-
-   @Override
-   public StreamIteratorNextCommand buildStreamIteratorNextCommand(Object id, long batchSize) {
-      return actual.buildStreamIteratorNextCommand(id, batchSize);
-   }
-
-   @Override
-   public StreamIteratorCloseCommand buildStreamIteratorCloseCommand(Object id) {
-      return actual.buildStreamIteratorCloseCommand(id);
    }
 
    @Override
