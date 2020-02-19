@@ -41,11 +41,6 @@ import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherComman
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
-import org.infinispan.stream.impl.StreamIteratorCloseCommand;
-import org.infinispan.stream.impl.StreamIteratorNextCommand;
-import org.infinispan.stream.impl.StreamIteratorRequestCommand;
-import org.infinispan.stream.impl.StreamRequestCommand;
-import org.infinispan.stream.impl.StreamResponseCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
@@ -92,14 +87,12 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             VersionedCommitCommand.class,
             XSiteStatePushCommand.class, SingleXSiteRpcCommand.class,
             ClusteredGetAllCommand.class, TouchCommand.class,
-            StreamRequestCommand.class, StreamResponseCommand.class,
             SingleKeyBackupWriteCommand.class,
             SingleKeyFunctionalBackupWriteCommand.class,
             PutMapBackupWriteCommand.class,
             MultiEntriesFunctionalBackupWriteCommand.class,
             MultiKeyFunctionalBackupWriteCommand.class,
-            InvalidateVersionsCommand.class, StreamIteratorRequestCommand.class,
-            StreamIteratorNextCommand.class, StreamIteratorCloseCommand.class,
+            InvalidateVersionsCommand.class,
             RevokeBiasCommand.class, RenewBiasCommand.class, ReductionPublisherRequestCommand.class,
             MultiClusterEventCommand.class, InitialPublisherCommand.class, NextPublisherCommand.class,
             CancelPublisherCommand.class, CheckTransactionRpcCommand.class,

@@ -36,8 +36,6 @@ import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.stream.impl.StreamRequestCommand;
-import org.infinispan.stream.impl.TerminalOperation;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
@@ -64,7 +62,6 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    private InboundInvocationHandler invocationHandler;
    private Address address;
    private CommandsFactory commandsFactory;
-   private ReplicableCommand blockingCacheRpcCommand;
    private ReplicableCommand nonBlockingCacheRpcCommand;
    private ReplicableCommand blockingNonCacheRpcCommand;
    private ReplicableCommand nonBlockingNonCacheRpcCommand;
@@ -99,9 +96,6 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       commandsFactory = extractCommandsFactory(cache);
 
       //populate commands
-      blockingCacheRpcCommand = new StreamRequestCommand<>(cacheName, null, null, false,
-                                                           StreamRequestCommand.Type.TERMINAL, null, null, null, false,
-                                                           false, mock(TerminalOperation.class));
       int segment = TestingUtil.getSegmentForKey("key", cache);
       nonBlockingCacheRpcCommand = new ClusteredGetCommand("key", cacheName, segment, EnumUtil.EMPTY_BIT_SET);
       blockingNonCacheRpcCommand = new RebalanceStatusRequestCommand(cacheName.toString());
@@ -124,7 +118,6 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
 
    public void testCommands() {
       //if some of these tests fails, we need to pick another command to make the assertions true
-      Assert.assertTrue(blockingCacheRpcCommand.canBlock());
       Assert.assertTrue(blockingNonCacheRpcCommand.canBlock());
       Assert.assertTrue(blockingSingleRpcCommand.canBlock());
 
@@ -134,7 +127,6 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    }
 
    public void testCacheRpcCommands() throws Exception {
-      assertDispatchForCommand(blockingCacheRpcCommand, true);
       assertDispatchForCommand(nonBlockingCacheRpcCommand, false);
    }
 

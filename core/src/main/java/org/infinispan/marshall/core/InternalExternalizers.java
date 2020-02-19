@@ -112,10 +112,7 @@ import org.infinispan.stream.impl.AbstractCacheStream;
 import org.infinispan.stream.impl.CacheBiConsumers;
 import org.infinispan.stream.impl.CacheStreamIntermediatePublisher;
 import org.infinispan.stream.impl.CacheStreamIntermediateReducer;
-import org.infinispan.stream.impl.EndIterator;
-import org.infinispan.stream.impl.IteratorResponses;
 import org.infinispan.stream.impl.intops.IntermediateOperationExternalizer;
-import org.infinispan.stream.impl.termop.TerminalOperationExternalizer;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
@@ -236,7 +233,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new SuccessfulResponse.Externalizer(), exts);
       addInternalExternalizer(new SyncConsistentHashFactory.Externalizer(), exts);
       addInternalExternalizer(new SyncReplicatedConsistentHashFactory.Externalizer(), exts);
-      addInternalExternalizer(new TerminalOperationExternalizer(), exts);
       addInternalExternalizer(new TopologyAwareConsistentHashFactory.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new TopologyAwareSyncConsistentHashFactory.Externalizer(), exts);
       addInternalExternalizer(new TransactionInfo.Externalizer(), exts);
@@ -253,8 +249,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new XSiteState.XSiteStateExternalizer(), exts);
       addInternalExternalizer(new TriangleAckExternalizer(), exts);
       addInternalExternalizer(new PublisherResponseExternalizer(), exts);
-      addInternalExternalizer(new IteratorResponses.IteratorResponsesExternalizer(), exts);
-      addInternalExternalizer(new EndIterator.EndIteratorExternalizer(), exts);
       addInternalExternalizer(XidImpl.EXTERNALIZER, exts);
       addInternalExternalizer(new EncoderKeyMapper.Externalizer(), exts);
       addInternalExternalizer(new EncoderValueMapper.Externalizer(), exts);

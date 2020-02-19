@@ -18,7 +18,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.stream.impl.LocalStreamManager;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -64,10 +63,6 @@ public class DistributedStreamRehashTest extends MultipleCacheManagersTest {
       // We stop the #1 node which equates to entries store in segment 2
       Cache<MagicKey, Object> nodeToBlockBeforeProcessing = cache(1, CACHE_NAME);
       Cache<MagicKey, Object> nodeToStop = cache(3, CACHE_NAME);
-
-      LocalStreamManager<Map.Entry<MagicKey, Object>, MagicKey> localStreamManager = TestingUtil.extractComponent(
-            nodeToBlockBeforeProcessing, LocalStreamManager.class);
-      LocalStreamManager<Map.Entry<MagicKey, Object>, MagicKey> spiedManager = spy(localStreamManager);
 
       CheckPoint checkPoint = new CheckPoint();
       // Always let it process the publisher

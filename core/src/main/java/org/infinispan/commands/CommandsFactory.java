@@ -93,12 +93,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
-import org.infinispan.stream.impl.StreamIteratorCloseCommand;
-import org.infinispan.stream.impl.StreamIteratorNextCommand;
-import org.infinispan.stream.impl.StreamIteratorRequestCommand;
-import org.infinispan.stream.impl.StreamRequestCommand;
-import org.infinispan.stream.impl.StreamResponseCommand;
-import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
@@ -536,31 +530,6 @@ public interface CommandsFactory {
     * @return the GetKeysInGroup created.
     */
    GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, Object groupName);
-
-   <K> StreamRequestCommand<K> buildStreamRequestCommand(Object id, boolean parallelStream, StreamRequestCommand.Type type,
-           IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
-         Object terminalOperation);
-
-   /**
-    * Builds {@link StreamResponseCommand} used to send back a response either intermediate or complete to the
-    * originating node with the information for the stream request.
-    * @param identifier the unique identifier for the stream request
-    * @param complete whether or not this is an intermediate or final response from this node for the given id
-    * @param lostSegments what segments that were lost during processing
-    * @param response the actual response
-    * @param <R> type of response
-    * @return the command to send back the response
-    */
-   <R> StreamResponseCommand<R> buildStreamResponseCommand(Object identifier, boolean complete, IntSet lostSegments,
-           R response);
-
-   <K> StreamIteratorRequestCommand<K> buildStreamIteratorRequestCommand(Object id, boolean parallelStream,
-         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
-         Iterable<IntermediateOperation> intOps, long batchSize);
-
-   StreamIteratorNextCommand buildStreamIteratorNextCommand(Object id, long batchSize);
-
-   StreamIteratorCloseCommand buildStreamIteratorCloseCommand(Object id);
 
    <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f,
          int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);

@@ -43,8 +43,6 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.PersistenceConfiguration;
-import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -84,7 +82,6 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   private final boolean writeBehindShared;
    private final int maxSegment;
 
    // This is a hack to allow for cast to work properly, since Java doesn't work as well with nested generics
@@ -114,7 +111,6 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
               executor, registry, toKeyFunction);
 
       Configuration configuration = registry.getComponent(Configuration.class);
-      writeBehindShared = hasWriteBehindSharedStore(configuration.persistence());
       maxSegment = configuration.clustering().hash().numSegments();
    }
 
@@ -127,17 +123,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
       super(other);
 
       Configuration configuration = registry.getComponent(Configuration.class);
-      writeBehindShared = hasWriteBehindSharedStore(configuration.persistence());
       maxSegment = configuration.clustering().hash().numSegments();
-   }
-
-   boolean hasWriteBehindSharedStore(PersistenceConfiguration persistenceConfiguration) {
-      for (StoreConfiguration storeConfiguration : persistenceConfiguration.stores()) {
-         if (storeConfiguration.shared() && storeConfiguration.async().enabled()) {
-            return true;
-         }
-      }
-      return false;
    }
 
    @Override

@@ -15,7 +15,6 @@ import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistryImpl;
 import org.infinispan.remoting.inboundhandler.GlobalInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
-import org.infinispan.stream.impl.IteratorHandler;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.util.EmbeddedTimeService;
@@ -36,7 +35,7 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
       BackupReceiverRepository.class, EventLogManager.class,
       InboundInvocationHandler.class, PersistentUUIDManager.class,
       RemoteCommandsFactory.class, TimeService.class, DataOperationOrderer.class,
-      IteratorHandler.class, GlobalStateManager.class, GlobalConfigurationManager.class,
+      GlobalStateManager.class, GlobalConfigurationManager.class,
       SerializationContextRegistry.class
 })
 @Scope(Scopes.GLOBAL)
@@ -57,8 +56,6 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return new EventLogManagerImpl();
       else if (componentName.equals(PersistentUUIDManager.class.getName()))
          return new PersistentUUIDManagerImpl();
-      else if (componentName.equals(IteratorHandler.class.getName()))
-         return new IteratorHandler();
       else if (componentName.equals(GlobalStateManager.class.getName()))
          return new GlobalStateManagerImpl();
       else if (componentName.equals(GlobalConfigurationManager.class.getName()))

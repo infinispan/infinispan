@@ -5,7 +5,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -28,7 +27,6 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
@@ -40,7 +38,6 @@ import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.intops.FlatMappingOperation;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.intops.MappingOperation;
@@ -166,14 +163,6 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
 
    protected abstract S2 unwrap();
 
-   protected Function<? super Original, ?> nonNullKeyFunction() {
-      if (toKeyFunction == null) {
-         return StreamMarshalling.identity();
-      } else {
-         return toKeyFunction;
-      }
-   }
-
    @Override
    public boolean isParallel() {
       return parallel;
@@ -239,65 +228,8 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       return localAddress.equals(ch.locatePrimaryOwnerForSegment(keyPartitioner.getSegment(key)));
    }
 
-   /**
-    * If <code>usePrimary</code> is true the segments are the primary segments but only those that exist in
-    * targetSegments.  However if <code>usePrimary</code> is false then <code>targetSegments</code> must be
-    * provided and non null and this will be used specifically.
-    * @param ch
-    * @param targetSegments
-    * @param excludedKeys
-    * @param usePrimary determines whether we should utilize the primary segments or not.
-    * @return
-    */
-   protected Supplier<Stream<Original>> supplierForSegments(ConsistentHash ch, IntSet targetSegments,
-                                                              Set<Object> excludedKeys, boolean usePrimary) {
-      if (!ch.getMembers().contains(localAddress)) {
-         return Stream::empty;
-      }
-      IntSet segments;
-      if (usePrimary) {
-         if (targetSegments != null) {
-            segments = IntSets.mutableCopyFrom(ch.getPrimarySegmentsForOwner(localAddress));
-            segments.retainAll(targetSegments);
-         } else {
-            segments = IntSets.from(ch.getPrimarySegmentsForOwner(localAddress));
-         }
-      } else {
-         segments = targetSegments;
-      }
-
-      return () -> {
-         if (segments != null && segments.isEmpty()) {
-            return Stream.empty();
-         }
-
-         CacheStream<Original> stream = supplier.get().filterKeySegments(segments);
-         if (keysToFilter != null) {
-            stream = stream.filterKeys(keysToFilter);
-         }
-         if (excludedKeys != null && !excludedKeys.isEmpty()) {
-            return stream.filter(e -> !excludedKeys.contains(toKeyFunction == null ? e : toKeyFunction.apply(e)));
-         }
-         // Make sure the stream is set to be parallel or not
-         return parallel ? stream.parallel() : stream.sequential();
-      };
-   }
-
    enum IteratorOperation {
-      NO_MAP {
-         @Override
-         public Iterable<IntermediateOperation> prepareForIteration(
-               Iterable<IntermediateOperation> intermediateOperations, Function<Object, ?> toKeyFunction) {
-            return intermediateOperations;
-         }
-
-         @Override
-         public <V> Publisher<V> handlePublisher(Publisher<V> publisher, Consumer<Object> keyConsumer,
-               Function<V, ?> toKeyFunction) {
-            return Flowable.fromPublisher(publisher)
-                  .doOnNext(e -> keyConsumer.accept(toKeyFunction.apply(e)));
-         }
-      },
+      NO_MAP,
       MAP {
          /**
           * Function to be used to unwrap an entry. If this is null, then no wrapping is required
@@ -308,46 +240,13 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
             // Map should be wrap entry in KVP<Key, Result(s)> so we have to unwrap those result(s)
             return e -> ((KeyValuePair<?, Out>) e).getValue();
          }
-
-         @Override
-         public Iterable<IntermediateOperation> prepareForIteration(
-               Iterable<IntermediateOperation> intermediateOperations, Function<Object, ?> toKeyFunction) {
-            return Collections.singletonList(new MapHandler<>(intermediateOperations, toKeyFunction));
-         }
       },
-      FLAT_MAP {
-
-         @Override
-         public Iterable<IntermediateOperation> prepareForIteration(
-               Iterable<IntermediateOperation> intermediateOperations, Function<Object, ?> toKeyFunction) {
-            return Collections.singletonList(new FlatMapHandler<>(intermediateOperations, toKeyFunction));
-         }
-
-         @Override
-         public <V> Publisher<V> handlePublisher(Publisher<V> publisher, Consumer<Object> keyConsumer,
-               Function<V, ?> toKeyFunction) {
-            return flowableFromPublisher(publisher, keyConsumer)
-                  .flatMap(e -> Flowable.fromIterable(((KeyValuePair<?, Iterable>) e).getValue()));
-         };
-      };
+      FLAT_MAP
+      ;
 
       public <In, Out> Function<In, Out> getFunction() {
          // There is no unwrapping required as we just have the CacheEntry directly
          return null;
-      }
-
-      public abstract Iterable<IntermediateOperation> prepareForIteration(
-            Iterable<IntermediateOperation> intermediateOperations, Function<Object, ?> toKeyFunction);
-
-      public <V> Publisher<V> handlePublisher(Publisher<V> publisher, Consumer<Object> keyConsumer,
-            Function<V, ?> toKeyFunction) {
-         return flowableFromPublisher(publisher, keyConsumer);
-      };
-
-      protected <V> Flowable<V> flowableFromPublisher(Publisher<V> publisher, Consumer<Object> keyConsumer) {
-         // Map and FlatMap both wrap in KVP<Key, Result(s)> so we have to expose the key
-         return Flowable.fromPublisher(publisher)
-               .doOnNext(e -> keyConsumer.accept(((KeyValuePair) e).getKey()));
       }
    }
 
