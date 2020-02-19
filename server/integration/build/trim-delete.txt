@@ -114,7 +114,6 @@ modules/system/layers/base/org/jboss/ws/**
 modules/system/layers/base/org/opensaml/**
 modules/system/layers/base/org/picketlink/**
 modules/system/layers/base/org/slf4j/ext/**
-modules/system/layers/base/org/slf4j/impl/main/**
 modules/system/layers/base/org/wildfly/clustering/ee/**
 modules/system/layers/base/org/wildfly/clustering/jgroups/**
 modules/system/layers/base/org/wildfly/clustering/infinispan/**
