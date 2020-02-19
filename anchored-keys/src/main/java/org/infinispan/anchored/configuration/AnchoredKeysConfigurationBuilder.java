@@ -6,13 +6,35 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 
+/**
+ * Configuration module builder to transform an {@link CacheMode#INVALIDATION_SYNC} cache into an "anchored keys" cache.
+ *
+ * <p>Usage:
+ * <pre>
+ * ConfigurationBuilder cacheBuilder = new ConfigurationBuilder();
+ * cacheBuilder.clustering().cacheMode(CacheMode.INVALIDATION_SYNC);
+ * cacheBuilder.addModule(AnchoredKeysConfigurationBuilder.class).enabled(true);
+ * </pre>
+ * </p>
+ * @see AnchoredKeysConfiguration
+ *
+ * @since 11
+ * @author Dan Berindei
+ */
 public class AnchoredKeysConfigurationBuilder implements Builder<AnchoredKeysConfiguration> {
    private final AttributeSet attributes;
-   private ConfigurationBuilder rootBuilder;
+   private final ConfigurationBuilder rootBuilder;
 
    public AnchoredKeysConfigurationBuilder(ConfigurationBuilder builder) {
       rootBuilder = builder;
       this.attributes = AnchoredKeysConfiguration.attributeSet();
+   }
+
+   /**
+    * Enable or disable anchored keys.
+    */
+   public void enabled(boolean enabled) {
+      attributes.attribute(AnchoredKeysConfiguration.ENABLED).set(enabled);
    }
 
    @Override
@@ -34,9 +56,5 @@ public class AnchoredKeysConfigurationBuilder implements Builder<AnchoredKeysCon
    public Builder<?> read(AnchoredKeysConfiguration template) {
       attributes.read(template.attributes());
       return this;
-   }
-
-   public void enabled(boolean enabled) {
-      attributes.attribute(AnchoredKeysConfiguration.ENABLED).set(enabled);
    }
 }

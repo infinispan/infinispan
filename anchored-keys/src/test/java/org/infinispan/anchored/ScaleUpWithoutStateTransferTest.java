@@ -57,8 +57,8 @@ public class ScaleUpWithoutStateTransferTest extends MultipleCacheManagersTest {
       managerBuilder.defaultCacheName(CACHE_NAME);
 
       ConfigurationBuilder cacheBuilder = new ConfigurationBuilder();
-      cacheBuilder.clustering().cacheMode(CacheMode.INVALIDATION_SYNC);
-      cacheBuilder.memory().storageType(StorageType.OFF_HEAP);
+      cacheBuilder.clustering().cacheMode(CacheMode.INVALIDATION_SYNC).hash().numSegments(1);
+      cacheBuilder.memory().storageType(storageType);
       cacheBuilder.addModule(AnchoredKeysConfigurationBuilder.class).enabled(true);
 
       addClusterEnabledCacheManager(managerBuilder, cacheBuilder);
