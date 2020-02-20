@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -81,6 +82,7 @@ import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleTargetRequest;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
+import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -151,6 +153,7 @@ public class JGroupsTransport implements Transport {
    protected ScheduledExecutorService timeoutExecutor;
    @Inject @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
    protected ExecutorService remoteExecutor;
+   protected ActionSequencer backupSequencer;
 
    private final Lock viewUpdateLock = new ReentrantLock();
    private final Condition viewUpdateCondition = viewUpdateLock.newCondition();
@@ -326,13 +329,28 @@ public class JGroupsTransport implements Transport {
          DeliverOrder order = xsb.isSync() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER;
          long timeout = xsb.getTimeout();
          try {
-            sendCommand(recipient, command, request.getRequestId(), order, rsvp, false, false);
+            Message message = new Message(toJGroupsAddress(recipient));
+            marshallRequest(message, command, request.getRequestId());
+            setMessageFlags(message, order, rsvp, false);
+
+            Callable<CompletionStage<Void>> sendAction = () -> {
+               try {
+                  send(message);
+               } catch (Throwable t) {
+                  request.completeExceptionally(t);
+               }
+               return CompletableFutures.completedNull();
+            };
+            if (order.preserveOrder()) {
+               backupSequencer.orderOnKey(xsb.getSiteName(), sendAction);
+            } else {
+               remoteExecutor.submit(sendAction);
+            }
             if (timeout > 0) {
                request.setTimeout(timeoutExecutor, timeout, TimeUnit.MILLISECONDS);
             }
          } catch (Throwable t) {
-            request.cancel(true);
-            throw t;
+            request.completeExceptionally(t);
          }
       }
       return new JGroupsBackupResponse(backupCalls, timeService);
@@ -381,6 +399,7 @@ public class JGroupsTransport implements Transport {
       probeHandler.updateThreadPool(remoteExecutor);
       props = TypedProperties.toTypedProperties(configuration.transport().properties());
       requests = new RequestRepository();
+      backupSequencer = new ActionSequencer(remoteExecutor);
 
       if (log.isInfoEnabled())
          log.startingJGroupsChannel(configuration.transport().clusterName());
@@ -1180,8 +1199,8 @@ public class JGroupsTransport implements Transport {
 
    private void siteUnreachable(String site) {
       requests.forEach(request -> {
-         if (request instanceof SingleSiteRequest) {
-            ((SingleSiteRequest) request).sitesUnreachable(site);
+         if (request instanceof SingleSiteRequest<?>) {
+            ((SingleSiteRequest<?>) request).sitesUnreachable(site);
          }
       });
    }
