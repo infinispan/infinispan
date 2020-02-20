@@ -232,7 +232,12 @@
             </xs:all>
             <xs:attribute name="context-path" type="xs:string" use="optional">
                <xs:annotation>
-                  <xs:documentation>Context path on which to register the REST connector. Defaults to '' (the root context)
+                  <xs:documentation>
+                    Sets the context path for REST connectors and defaults to
+                    the root context. The command line interface (CLI) and
+                    other internal components use the root context. For this
+                    reason, you should not change the default value or set a
+                    custom context path.
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
@@ -279,7 +284,7 @@
       <xs:attribute name="await-initial-retrieval" type="xs:boolean" use="optional"
                     default="${Server.TopologyStateTransfer.await-initial-retrieval}">
          <xs:annotation>
-            <xs:documentation>Configures whether to initial state retrieval should happen immediately at startup. Applies only when lazy-retrieval is false. Values are true (default) / false.
+            <xs:documentation>Configures whether initial state retrieval should happen immediately at startup. Applies only when lazy-retrieval is false. Values are true (default) / false.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
