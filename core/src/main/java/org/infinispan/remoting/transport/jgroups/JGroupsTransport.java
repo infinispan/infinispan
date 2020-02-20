@@ -156,6 +156,8 @@ public class JGroupsTransport implements Transport {
    protected ScheduledExecutorService timeoutExecutor;
    @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    protected ExecutorService nonBlockingExecutor;
+   @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
+   protected ExecutorService blockingExecutor;
    @Inject protected CacheManagerJmxRegistration jmxRegistration;
 
    private final Lock viewUpdateLock = new ReentrantLock();
@@ -326,13 +328,23 @@ public class JGroupsTransport implements Transport {
          DeliverOrder order = xsb.isSync() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER;
          long timeout = xsb.getTimeout();
          try {
-            sendCommand(recipient, command, request.getRequestId(), order, false, false);
+            Message message = new Message(toJGroupsAddress(recipient));
+            marshallRequest(message, command, request.getRequestId());
+            setMessageFlags(message, order, false);
+
+            blockingExecutor.submit(() -> {
+               try {
+                  send(message);
+               } catch (Throwable t) {
+                  request.completeExceptionally(t);
+               }
+            });
+
             if (timeout > 0) {
                request.setTimeout(timeoutExecutor, timeout, TimeUnit.MILLISECONDS);
             }
          } catch (Throwable t) {
-            request.cancel(true);
-            throw t;
+            request.completeExceptionally(t);
          }
       }
       return new JGroupsBackupResponse(backupCalls, timeService);
@@ -351,13 +363,24 @@ public class JGroupsTransport implements Transport {
       long timeout = backup.getTimeout();
       XSiteResponseImpl xSiteResponse = new XSiteResponseImpl(timeService, backup);
       try {
-         sendCommand(recipient, rpcCommand, request.getRequestId(), order, false, false);
+         Message message = new Message(toJGroupsAddress(recipient));
+         marshallRequest(message, rpcCommand, request.getRequestId());
+         setMessageFlags(message, order, false);
+
+         blockingExecutor.submit(() -> {
+            try {
+               send(message);
+            } catch (Throwable t) {
+               request.completeExceptionally(t);
+            }
+         });
+
          if (timeout > 0) {
             request.setTimeout(timeoutExecutor, timeout, TimeUnit.MILLISECONDS);
          }
          request.whenComplete(xSiteResponse);
       } catch (Throwable t) {
-         request.cancel(true);
+         request.completeExceptionally(t);
          xSiteResponse.completeExceptionally(t);
       }
       return xSiteResponse;
