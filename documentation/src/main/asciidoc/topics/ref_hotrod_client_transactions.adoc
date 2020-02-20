@@ -1,5 +1,16 @@
+[id='hotrod_transactions']
+= Hot Rod Java Client Transactions
+You can configure and use Hot Rod clients in JTA {tx}s.
+
+To participate in a transaction, the Hot Rod client requires the {tm} with which it interacts and whether it participates in the transaction through the {sync} or {xa} interface.
+
+[IMPORTANT]
+====
+Transactions are optimistic in that clients acquire write locks on entries during the prepare phase. To avoid data inconsistency, be sure to read about link:#hr_transactions_force_return_value[Detecting Conflicts with Transactions].
+====
+
 [[hr_transactions_config_server]]
-= Configuring the Server
+== Configuring the Server
 Caches in the server must also be transactional for clients to participate in JTA {tx}s.
 
 The following server configuration is required, otherwise transactions rollback only:
@@ -11,7 +22,7 @@ The following server configuration is required, otherwise transactions rollback 
 Hot Rod transactions have their own recovery mechanism.
 
 [[hr_transactions_config_client]]
-= Configuring Hot Rod Clients
+== Configuring Hot Rod Clients
 When you create the {rcm}, you can set the default {tm} and {tx-mode} that the {rc} uses.
 
 The {rcm} lets you create only one configuration for transactional caches, as in the following example:
@@ -40,7 +51,7 @@ infinispan.client.hotrod.transaction.timeout = 60000
 ----
 
 [[hr_transactions_tmlookup]]
-== TransactionManagerLookup Interface
+=== TransactionManagerLookup Interface
 `TransactionManagerLookup` provides an entry point to fetch a {tm}.
 
 Available implementations of `TransactionManagerLookup`:
@@ -80,7 +91,7 @@ The {rc} interacts with the {tm} via {xa}. Recovery capabilities are disabled.
 The {rc} interacts with the {tm} via {xa}. Recovery capabilities are enabled. Invoke the `XaResource.recover()` method to retrieve transactions to recover.
 
 [[hr_transactions_override_rcm]]
-= Overriding Configuration for Cache Instances
+== Overriding Configuration for Cache Instances
 Because {rcm} does not support different configurations for each cache instance. However, {rcm} includes the `getCache(String)` method that returns the {rc} instances and lets you override some configuration parameters, as follows:
 
 `getCache(String cacheName, TransactionMode transactionMode)`::
@@ -107,7 +118,7 @@ The `getCache(String)` method returns {rc} instances regardless of whether they 
 ====
 
 [[hr_transactions_force_return_value]]
-= Detecting Conflicts with Transactions
+== Detecting Conflicts with Transactions
 Transactions use the initial values of keys to detect conflicts. For example, "k" has a value of "v" when a transaction begins. During the prepare phase, the transaction fetches "k" from the server to read the value. If the value has changed, the transaction rolls back to avoid a conflict.
 
 [NOTE]
@@ -184,7 +195,7 @@ tm.commit();
 In the preceding examples, TX1 and TX2 both read the key so the `forceReturnValue` parameter does not take effect. One transaction commits, the other rolls back. However, the `cache.get()` operation requires an additional server request. If you do not need the return value for the `cache.put()` operation that server request is inefficient.
 
 [[hr_transactions_ex_use_config]]
-= Using the Configured Transaction Manager and Transaction Mode
+== Using the Configured Transaction Manager and Transaction Mode
 
 The following example shows how to use the `TransactionManager` and `TransactionMode` that you configure in the `RemoteCacheManager`:
 
@@ -211,7 +222,7 @@ tm.commit();
 ----
 
 [[hr_transactions_ex_override_tm]]
-= Overriding the Transaction Manager
+== Overriding the Transaction Manager
 
 The following example shows how to override `TransactionManager` with the `getCache` method:
 
@@ -238,7 +249,7 @@ myCustomTM.commit();
 ----
 
 [[hr_transactions_ex_override_mode]]
-= Overriding the Transaction Mode
+== Overriding the Transaction Mode
 
 The following example shows how to override `TransactionMode` with the `getCache` method:
 
