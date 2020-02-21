@@ -54,10 +54,10 @@
     <!-- It deadlocks with JGroups 4.0.6, enable only after making sure it works -->
     <!--<org.infinispan.test.hibernate.cache.util.TestDisconnectHandler />-->
 
-   <UFC max_credits="3m"
+   <UFC max_credits="4m"
         min_threshold="0.40"
    />
-   <MFC max_credits="3m"
+   <MFC max_credits="4m"
         min_threshold="0.40"
     />
    <FRAG2 frag_size="60000" />

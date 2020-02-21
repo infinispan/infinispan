@@ -348,7 +348,7 @@
                     <protocol type="pbcast.GMS" module="org.jgroups:${infinispan.module.slot}"/>
                     <protocol type="UFC" module="org.jgroups:${infinispan.module.slot}"/>
                     <protocol type="MFC" module="org.jgroups:${infinispan.module.slot}"/>
-                    <protocol type="FRAG2" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="FRAG3" module="org.jgroups:${infinispan.module.slot}"/>
                 </stack>
             </stacks>
         </subsystem>

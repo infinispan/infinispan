@@ -16,7 +16,7 @@
    <MPING bind_addr="${jgroups.tcp.address:127.0.0.1}"
           mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
           mcast_port="${jgroups.mping.mcast_port:43366}"
-          ip_ttl="${jgroups.udp.ip_ttl:2}" 
+          ip_ttl="${jgroups.udp.ip_ttl:2}"
    />
    <MERGE3 min_interval="10000" 
            max_interval="30000" 
@@ -47,10 +47,10 @@
    <pbcast.GMS print_local_addr="false"
                join_timeout="${jgroups.join_timeout:5000}"
    />
-   <UFC max_credits="3m"
+   <UFC max_credits="4m"
         min_threshold="0.40"
    />
-   <MFC max_credits="3m"
+   <MFC max_credits="4m"
         min_threshold="0.40"
    />
    <FRAG3/>
