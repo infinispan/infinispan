@@ -9,8 +9,8 @@
   <protocol type="UNICAST3"/>
   <protocol type="pbcast.STABLE"/>
   <protocol type="pbcast.GMS"/>
-  <protocol type="UFC_NB"/>
-  <protocol type="MFC_NB"/>
+  <protocol type="UFC"/>
+  <protocol type="MFC"/>
   <protocol type="FRAG3"/>
 </stack>
 <stack name="tcp">
@@ -26,6 +26,7 @@
   <protocol type="UNICAST3"/>
   <protocol type="pbcast.STABLE"/>
   <protocol type="pbcast.GMS"/>
-  <protocol type="MFC_NB"/>
+  <protocol type="UFC"/>
+  <protocol type="MFC"/>
   <protocol type="FRAG3"/>
 </stack>
