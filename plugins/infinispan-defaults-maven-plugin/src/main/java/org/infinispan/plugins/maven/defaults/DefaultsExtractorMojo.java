@@ -222,7 +222,7 @@ public class DefaultsExtractorMojo extends AbstractMojo {
       if (outputAscii) {
          return ":" + entry.getKey() + ": " + entry.getValue();
       }
-      return entry.getKey() + " = " + entry.getValue();
+      return entry.getKey() + "=" + entry.getValue();
    }
 
    private void filterXsdSchemas() throws MojoExecutionException {
@@ -230,7 +230,7 @@ public class DefaultsExtractorMojo extends AbstractMojo {
             plugin(
                   groupId("org.apache.maven.plugins"),
                   artifactId("maven-resources-plugin"),
-                  version("2.6")
+                  version("3.1.0")
             ),
             goal("copy-resources"),
             configuration(
