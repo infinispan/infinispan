@@ -53,9 +53,9 @@
                 max_leave_attempts="3"
     />
 
-    <UFC_NB max_credits="3m"
+    <UFC max_credits="4m"
          min_threshold="0.40"/>
-    <MFC_NB max_credits="3m"
+    <MFC max_credits="4m"
          min_threshold="0.40"/>
 
     <FRAG3/>
