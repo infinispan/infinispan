@@ -17,7 +17,6 @@ import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.test.InfinispanServerRule;
-import org.infinispan.server.test.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -35,10 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class RestMetricsResource {
 
    @ClassRule
-   public static final InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
-                                    .numServers(2)
-                                    .build();
+   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
