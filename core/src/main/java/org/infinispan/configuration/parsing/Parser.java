@@ -633,7 +633,11 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case STATISTICS: {
-               builder.cacheContainer().statistics(Boolean.parseBoolean(value));
+               boolean statistics = Boolean.parseBoolean(value);
+               builder.cacheContainer().statistics(statistics);
+               if (!reader.getSchema().since(10, 1)) {
+                  builder.jmx().enabled(statistics);
+               }
                break;
             }
             case SHUTDOWN_HOOK: {

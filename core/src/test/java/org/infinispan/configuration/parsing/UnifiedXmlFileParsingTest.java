@@ -342,7 +342,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          public void check(ConfigurationBuilderHolder holder) {
             GlobalConfiguration g = getGlobalConfiguration(holder);
             assertEquals("maximal", g.cacheManagerName());
-            assertFalse(g.jmx().enabled());
+            assertTrue(g.statistics());
+            assertTrue(g.jmx().enabled());
             assertEquals("my-domain", g.jmx().domain());
             assertTrue(g.jmx().mbeanServerLookup() instanceof CustomMBeanServerPropertiesTest.TestLookup);
             assertEquals(1, g.jmx().properties().size());
