@@ -10,7 +10,9 @@ import org.jgroups.JChannel;
  *
  * @author Manik Surtani
  * @since 4.0
+ * @deprecated since 11.0, this will be removed in the next major version with no direct replacement.
  */
+@Deprecated
 public interface JGroupsChannelLookup {
    /**
     * Retrieves a JGroups channel.  Passes in all of the properties used to configure the channel.
