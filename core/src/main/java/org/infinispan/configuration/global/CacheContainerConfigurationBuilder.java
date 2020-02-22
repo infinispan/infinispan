@@ -167,6 +167,14 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       return this;
    }
 
+   /**
+    * @deprecated Since 10.1.3. Use {@link #statistics(boolean)} instead.
+    */
+   @Deprecated
+   public CacheContainerConfigurationBuilder statistics(Boolean statistics) {
+      return statistics(statistics.booleanValue());
+   }
+
    public boolean statistics() {
       return attributes.attribute(STATISTICS).get();
    }

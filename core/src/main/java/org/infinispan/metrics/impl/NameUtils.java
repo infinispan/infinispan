@@ -6,10 +6,17 @@ package org.infinispan.metrics.impl;
  */
 final class NameUtils {
 
+   /**
+    * Replace illegal metric name chars with underscores.
+    */
    public static String filterIllegalChars(String name) {
       return name.replaceAll("[^\\w]+", "_");
    }
 
+   /**
+    * Transform a camel-cased name to snake-case, because microprofile metrics loves underscores. Eventual sequences of
+    * multiple underscores are replaced with a single underscore.
+    */
    public static String decamelize(String name) {
       StringBuilder sb = new StringBuilder(name);
       for (int i = 1; i < sb.length(); i++) {

@@ -74,7 +74,6 @@ public class CacheConfigurationService extends AbstractCacheConfigurationService
 
         GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(dependencies.getCacheContainer());
         builder.statistics().enabled(globalConfiguration.statistics());
-        // TODO [anistor] what about JMX ???
         TransactionManager tm = this.dependencies.getTransactionManager();
         if (tm != null) {
             builder.transaction().transactionManagerLookup(new TransactionManagerProvider());

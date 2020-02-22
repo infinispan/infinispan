@@ -169,8 +169,8 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
       try {
          setter = attributeMetadata.isWritable() ? findSetter(objectClass, attributeMetadata.getName()) : null;
          getter = findGetter(objectClass, attributeMetadata.getName());
-      } catch (NoClassDefFoundError e) {
-         // missing dependency ?
+      } catch (NoClassDefFoundError ignored) {
+         // missing dependency
       }
       return new InvokableSetterBasedMBeanAttributeInfo(attributeMetadata.getName(), attributeMetadata.getType(),
                                                         attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
