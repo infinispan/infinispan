@@ -19,17 +19,17 @@ public abstract class JMXStatisticsConfigurationBuilder extends AbstractConfigur
    /**
     * Enable statistics gathering and reporting
     */
-   public abstract StatisticsConfigurationBuilder enable();
+   public abstract JMXStatisticsConfigurationBuilder enable();
 
    /**
     * Disable statistics gathering and reporting
     */
-   public abstract StatisticsConfigurationBuilder disable();
+   public abstract JMXStatisticsConfigurationBuilder disable();
 
    /**
     * Enable or disable statistics gathering and reporting
     */
-   public abstract StatisticsConfigurationBuilder enabled(boolean enabled);
+   public abstract JMXStatisticsConfigurationBuilder enabled(boolean enabled);
 
    /**
     * If set to false, statistics gathering cannot be enabled during runtime. Performance optimization.
@@ -37,5 +37,5 @@ public abstract class JMXStatisticsConfigurationBuilder extends AbstractConfigur
     * @deprecated since 10.1.3. This method will be removed in a future version.
     */
    @Deprecated
-   public abstract StatisticsConfigurationBuilder available(boolean available);
+   public abstract JMXStatisticsConfigurationBuilder available(boolean available);
 }

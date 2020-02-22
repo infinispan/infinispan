@@ -15,7 +15,7 @@ import org.infinispan.commons.jmx.PlatformMBeanServerLookup;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
- * Configures JMX for the cache manager.
+ * Configures JMX for the cache manager and its caches.
  *
  * @since 10.1.3
  */

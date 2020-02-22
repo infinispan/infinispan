@@ -5,7 +5,7 @@ import java.util.Properties;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 
 /**
- * Configures JMX for the cache manager.
+ * Configures JMX for the cache manager and its caches.
  *
  * @deprecated since 10.1.3. Use {@link GlobalJmxConfigurationBuilder} instead. This will be removed in next major version.
  */
@@ -21,9 +21,9 @@ public abstract class GlobalJmxStatisticsConfigurationBuilder extends AbstractGl
     *
     * @param properties properties to pass to the MBean Server Lookup
     */
-   public abstract GlobalJmxConfigurationBuilder withProperties(Properties properties);
+   public abstract GlobalJmxStatisticsConfigurationBuilder withProperties(Properties properties);
 
-   public abstract GlobalJmxConfigurationBuilder addProperty(String key, String value);
+   public abstract GlobalJmxStatisticsConfigurationBuilder addProperty(String key, String value);
 
    /**
     * If JMX is enabled then all 'published' JMX objects will appear under this name.
@@ -31,7 +31,7 @@ public abstract class GlobalJmxStatisticsConfigurationBuilder extends AbstractGl
     *
     * @param domain
     */
-   public abstract GlobalJmxConfigurationBuilder domain(String domain);
+   public abstract GlobalJmxStatisticsConfigurationBuilder domain(String domain);
 
    /**
     * If JMX is enabled then all 'published' JMX objects will appear under this name.
@@ -40,7 +40,7 @@ public abstract class GlobalJmxStatisticsConfigurationBuilder extends AbstractGl
     * @deprecated Since 10.1.3, please use {@link #domain(String)} instead.
     */
    @Deprecated
-   public GlobalJmxConfigurationBuilder jmxDomain(String domain) {
+   public GlobalJmxStatisticsConfigurationBuilder jmxDomain(String domain) {
       return domain(domain);
    }
 
@@ -52,7 +52,7 @@ public abstract class GlobalJmxStatisticsConfigurationBuilder extends AbstractGl
     * @deprecated Since 10.1, please set a unique {@link #domain} or {@link GlobalConfiguration#cacheManagerName()} instead.
     */
    @Deprecated
-   public abstract GlobalJmxConfigurationBuilder allowDuplicateDomains(Boolean allowDuplicateDomains);
+   public abstract GlobalJmxStatisticsConfigurationBuilder allowDuplicateDomains(Boolean allowDuplicateDomains);
 
    /**
     * If JMX statistics are enabled, this property represents the name of this cache manager. It
@@ -63,27 +63,27 @@ public abstract class GlobalJmxStatisticsConfigurationBuilder extends AbstractGl
     * @deprecated Use {@link GlobalConfigurationBuilder#cacheManagerName(String)} instead
     */
    @Deprecated
-   public abstract GlobalJmxConfigurationBuilder cacheManagerName(String cacheManagerName);
+   public abstract GlobalJmxStatisticsConfigurationBuilder cacheManagerName(String cacheManagerName);
 
    /**
     * Sets the instance of the {@link org.infinispan.commons.jmx.MBeanServerLookup} class to be used to bound JMX MBeans to.
     *
     * @param mBeanServerLookupInstance An instance of {@link org.infinispan.commons.jmx.MBeanServerLookup}
     */
-   public abstract GlobalJmxConfigurationBuilder mBeanServerLookup(MBeanServerLookup mBeanServerLookupInstance);
+   public abstract GlobalJmxStatisticsConfigurationBuilder mBeanServerLookup(MBeanServerLookup mBeanServerLookupInstance);
 
    /**
     * Disables JMX in the cache manager.
     */
-   public abstract GlobalJmxConfigurationBuilder disable();
+   public abstract GlobalJmxStatisticsConfigurationBuilder disable();
 
    /**
     * Enables JMX in the cache manager.
     */
-   public abstract GlobalJmxConfigurationBuilder enable();
+   public abstract GlobalJmxStatisticsConfigurationBuilder enable();
 
    /**
     * Enables JMX in the cache manager.
     */
-   public abstract GlobalJmxConfigurationBuilder enabled(boolean enabled);
+   public abstract GlobalJmxStatisticsConfigurationBuilder enabled(boolean enabled);
 }

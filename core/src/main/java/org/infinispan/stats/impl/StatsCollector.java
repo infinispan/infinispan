@@ -227,7 +227,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
       return removeTimes.sum() / removes;
    }
 
-   @ManagedAttribute(description = "Required minimum number of nodes to guarantee data consistency",
+   @ManagedAttribute(description = "Required minimum number of nodes to hold current cache data",
          displayName = "Required minimum number of nodes"
    )
    @Override
