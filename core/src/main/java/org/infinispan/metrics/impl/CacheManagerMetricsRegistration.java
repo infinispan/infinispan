@@ -16,15 +16,4 @@ public final class CacheManagerMetricsRegistration extends AbstractMetricsRegist
    protected String initNamePrefix() {
       return "cache_manager_" + NameUtils.filterIllegalChars(globalConfig.cacheManagerName());
    }
-
-   @Override
-   protected String initNodeName() {
-      String nodeName = globalConfig.transport().nodeName();
-      if (nodeName == null || nodeName.isEmpty()) {
-         //TODO [anistor] ensure unique node name is set in all tests and also in real life usage
-         nodeName = java.util.UUID.randomUUID().toString();
-         //throw new CacheConfigurationException("Node name must be specified if metrics are enabled.");
-      }
-      return NameUtils.filterIllegalChars(nodeName);
-   }
 }

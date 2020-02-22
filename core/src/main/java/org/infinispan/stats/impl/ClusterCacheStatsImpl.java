@@ -199,7 +199,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       return getStatAsLong(AVERAGE_WRITE_TIME_NANOS);
    }
 
-   @ManagedAttribute(description = "Required minimum number of nodes to guarantee data consistency",
+   @ManagedAttribute(description = "Required minimum number of nodes to hold current cache data",
          displayName = "Required minimum number of nodes"
    )
    @Override
