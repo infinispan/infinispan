@@ -1,7 +1,9 @@
 package org.infinispan.metrics.impl;
 
+import java.net.InetAddress;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -15,7 +17,10 @@ import org.eclipse.microprofile.metrics.MetricType;
 import org.eclipse.microprofile.metrics.MetricUnits;
 import org.eclipse.microprofile.metrics.Tag;
 import org.eclipse.microprofile.metrics.Timer;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalMetricsConfiguration;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
@@ -34,31 +39,68 @@ import io.smallrye.metrics.MetricRegistries;
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
-public class InfinispanMetricsRegistry {
+public class InfinispanMetricRegistry {
 
-   private static final Log log = LogFactory.getLog(InfinispanMetricsRegistry.class);
+   private static final Log log = LogFactory.getLog(InfinispanMetricRegistry.class);
 
    public static final String NODE_TAG_NAME = "node";
 
-   private final MetricRegistry registry;
+   private MetricRegistry registry;
 
-   public InfinispanMetricsRegistry() {
-      registry = makeRegistry();
+   private Tag nodeTag;
+
+   @Inject
+   GlobalConfiguration globalConfig;
+
+   public InfinispanMetricRegistry() {
+      registry = lookupRegistry();
    }
 
-   protected MetricRegistry makeRegistry() {
+   protected MetricRegistry lookupRegistry() {
       return MetricRegistries.get(MetricRegistry.Type.VENDOR);
    }
 
-   public final MetricRegistry getRegistry() {
-      return registry;
+   @Start
+   protected void start() {
+      String nodeName = globalConfig.transport().nodeName();
+      if (nodeName == null || nodeName.isEmpty()) {
+         //TODO [anistor] ensure unique node name is set in all tests and also in real life usage
+         nodeName = generateRandomName();
+         //throw new CacheConfigurationException("Node name must be specified if metrics are enabled.");
+      }
+      nodeName = NameUtils.filterIllegalChars(nodeName);
+      nodeTag = new Tag(NODE_TAG_NAME, nodeName);
    }
 
-   public Set<MetricID> register(GlobalMetricsConfiguration metricsCfg, String nodeName, Object instance, MBeanMetadata mBeanMetadata, String namePrefix) {
-      Tag nodeTag = new Tag(NODE_TAG_NAME, nodeName);
+   private static String generateRandomName() {
+      String hostName = null;
+      try {
+         hostName = InetAddress.getLocalHost().getHostName();
+      } catch (Throwable ignored) {
+      }
+      if (hostName == null) {
+         try {
+            hostName = InetAddress.getByName(null).getHostName();
+         } catch (Throwable ignored) {
+         }
+      }
+      if (hostName == null) {
+         hostName = "localhost";
+      } else {
+         int dotPos = hostName.indexOf('.');
+         if (dotPos > 0 && !Character.isDigit(hostName.charAt(0))) {
+            hostName = hostName.substring(0, dotPos);
+         }
+      }
+      int rand = 1 + ThreadLocalRandom.current().nextInt(Short.MAX_VALUE * 2);
+      return hostName + '-' + rand;
+   }
+
+   public Set<MetricID> registerMetrics(Object instance, MBeanMetadata beanMetadata, String namePrefix) {
       Set<MetricID> metricIds = new HashSet<>();
 
-      for (MBeanMetadata.AttributeMetadata attr : mBeanMetadata.getAttributes()) {
+      GlobalMetricsConfiguration metricsCfg = globalConfig.metrics();
+      for (MBeanMetadata.AttributeMetadata attr : beanMetadata.getAttributes()) {
          Supplier<?> getter = attr.getter(instance);
          Consumer<Metric> setter = (Consumer<Metric>) attr.setter(instance);
 
@@ -112,7 +154,7 @@ public class InfinispanMetricsRegistry {
       return metricIds;
    }
 
-   public void unregister(MetricID metricId) {
+   public void unregisterMetric(MetricID metricId) {
       registry.remove(metricId);
 
       if (log.isTraceEnabled()) {

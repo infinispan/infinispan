@@ -67,7 +67,7 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected void configureCache(ConfigurationBuilder builder) {
-      builder.statistics().enabled(true);
+      builder.statistics().available(false);
       if (transactional != null) {
          builder.transaction().transactionMode(transactionMode());
          if (lockingMode != null) {

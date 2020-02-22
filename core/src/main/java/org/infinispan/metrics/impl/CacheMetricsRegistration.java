@@ -35,9 +35,4 @@ public final class CacheMetricsRegistration extends AbstractMetricsRegistration 
    protected String initNamePrefix() {
       return globalMetricsRegistration.namePrefix + "_cache_" + NameUtils.filterIllegalChars(cacheName);
    }
-
-   @Override
-   protected String initNodeName() {
-      return globalMetricsRegistration.nodeName;
-   }
 }

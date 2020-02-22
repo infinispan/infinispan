@@ -21,14 +21,33 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
       attributes = GlobalMetricsConfiguration.attributeDefinitionSet();
    }
 
+   /**
+    * Metrics are enabled if at least one of the metric types is enabled. See {@link #gauges()}, {@link #histograms()}.
+    */
+   public boolean enabled() {
+      return gauges() || histograms();
+   }
+
+   public boolean gauges() {
+      return attributes.attribute(GAUGES).get();
+   }
+
    public GlobalMetricsConfigurationBuilder gauges(boolean gauges) {
       attributes.attribute(GAUGES).set(gauges);
       return this;
    }
 
+   public boolean histograms() {
+      return attributes.attribute(HISTOGRAMS).get();
+   }
+
    public GlobalMetricsConfigurationBuilder histograms(boolean histograms) {
       attributes.attribute(HISTOGRAMS).set(histograms);
       return this;
+   }
+
+   public String prefix() {
+      return attributes.attribute(PREFIX).get();
    }
 
    public GlobalMetricsConfigurationBuilder prefix(String prefix) {

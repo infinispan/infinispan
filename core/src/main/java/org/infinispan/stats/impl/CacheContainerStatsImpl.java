@@ -137,7 +137,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       return totalAverageReadTime;
    }
 
-   @ManagedAttribute(description = "Required minimum number of nodes to guarantee data consistency",
+   @ManagedAttribute(description = "Required minimum number of nodes to hold current cache data",
          displayName = "Required minimum number of nodes"
    )
    @Override

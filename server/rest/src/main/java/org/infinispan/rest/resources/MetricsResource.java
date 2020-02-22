@@ -46,8 +46,8 @@ public final class MetricsResource implements ResourceHandler {
          new JmxRegistrar().init();
       } catch (IOException | IllegalArgumentException e) {
          // Smallrye uses a global singleton registry which is a nightmare for tests where more than one
-         // server has to exist in a single JVM. It fails and we can't do anything about it.
-         log.failedToInitBaseAndVendorMetrics(e);
+         // server has to exist in a single JVM. This is a benign failure and we can't do anything about it.
+         log.debug("Failed to initialize base and vendor metrics from platform's JMX MBeans", e);
       }
    }
 
