@@ -173,7 +173,7 @@ public final class DataConversion {
                encoderClass = GlobalMarshallerEncoder.class;
             }
          }
-         if (binary) {
+         if (binary && embeddedMode) {
             encoderClass = BinaryEncoder.class;
          }
       }
