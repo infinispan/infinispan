@@ -512,7 +512,6 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
              .jmx().enabled(true)
              .domain("x")
              .mBeanServerLookup(mBeanServerLookup)
-             .allowDuplicateDomains(true)
              .addProperty("prop1", "val1")
              .addProperty("prop2", "val2");
 
@@ -526,7 +525,6 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
 
       assertTrue(cacheContainer.get("statistics").asBoolean());
       assertTrue(jmx.get("enabled").asBoolean());
-      assertTrue(jmx.get("duplicate-domains").asBoolean());
       assertEquals("x", jmx.get("domain").asText());
       assertEquals(TestMBeanServerLookup.class.getName(), jmx.get("mbean-server-lookup").asText());
       assertEquals("val1", jmx.get("properties").get("prop1").asText());

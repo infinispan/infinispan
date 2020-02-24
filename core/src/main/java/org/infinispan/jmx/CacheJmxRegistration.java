@@ -48,7 +48,6 @@ public final class CacheJmxRegistration extends AbstractJmxRegistration {
       if (mBeanServer == null && globalJmxRegistration.mBeanServer != null) {
          groupName = initGroup();
          // grab domain and MBean server from container
-         jmxDomain = globalJmxRegistration.jmxDomain;
          mBeanServer = globalJmxRegistration.mBeanServer;
       }
 

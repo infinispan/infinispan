@@ -18,6 +18,7 @@ public enum Attribute {
     ADDRESS_COUNT,
     AFTER,
     ALIASES,
+    @Deprecated
     ALLOW_DUPLICATE_DOMAINS("duplicate-domains"),
     @Deprecated
     ASYNC_EXECUTOR("async-executor"),

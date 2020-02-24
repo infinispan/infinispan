@@ -20,12 +20,6 @@ public abstract class GlobalJmxStatisticsConfiguration implements ConfigurationI
    public abstract TypedProperties properties();
 
    /**
-    * @deprecated Since 10.1, please set a unique {@link #domain} or {@link GlobalConfiguration#cacheManagerName()} instead.
-    */
-   @Deprecated
-   public abstract boolean allowDuplicateDomains();
-
-   /**
     * @return the cache manager name
     * @deprecated Since 10.1. please use {@link GlobalConfiguration#cacheManagerName()} instead.
     */

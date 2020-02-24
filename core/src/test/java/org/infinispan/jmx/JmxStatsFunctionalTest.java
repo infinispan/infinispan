@@ -5,7 +5,6 @@ import static org.infinispan.test.TestingUtil.existsDomain;
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
-import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -13,7 +12,6 @@ import java.lang.reflect.Method;
 import java.util.Properties;
 
 import javax.management.MBeanServer;
-import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
@@ -21,7 +19,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -154,7 +151,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       assertTrue(server.isRegistered(getCacheObjectName(jmxDomain, "remote1(repl_sync)", "RpcManager")));
    }
 
-   public void testMultipleManagersOnSameServerFails(Method method) throws Exception {
+   public void testMultipleManagersOnSameServerFails(Method method) {
       final String jmxDomain = JMX_DOMAIN + '_' + method.getName();
       GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
       configureJmx(globalConfiguration, jmxDomain, mBeanServerLookup);
@@ -170,18 +167,6 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       configureJmx(globalConfiguration2, jmxDomain, mBeanServerLookup);
       expectException(EmbeddedCacheManagerStartupException.class, JmxDomainConflictException.class,
             () -> TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration2, new ConfigurationBuilder()));
-
-      GlobalConfigurationBuilder globalConfiguration3 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      configureJmx(globalConfiguration3, jmxDomain, mBeanServerLookup);
-      globalConfiguration3.jmx().allowDuplicateDomains(true);
-      CacheContainer duplicateAllowedContainer = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration3, new ConfigurationBuilder());
-      try {
-         final String duplicateName = jmxDomain + "2";
-         ObjectName duplicateObjectName = getCacheManagerObjectName(duplicateName);
-         assertEquals("0", server.getAttribute(duplicateObjectName, "CreatedCacheCount"));
-      } finally {
-         duplicateAllowedContainer.stop();
-      }
    }
 
    public void testMultipleManagersOnSameServerWithCloneFails() {

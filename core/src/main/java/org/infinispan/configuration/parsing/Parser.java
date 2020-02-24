@@ -938,8 +938,10 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case ALLOW_DUPLICATE_DOMAINS: {
-               builder.jmx().allowDuplicateDomains(Boolean.parseBoolean(value));
-               break;
+               if (!reader.getSchema().since(11, 0)) {
+                  ignoreAttribute(reader, Attribute.VERSION);
+                  break;
+               }
             }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -959,7 +961,6 @@ public class Parser implements ConfigurationParser {
    }
 
    private void parseTransport(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
-      GlobalConfigurationBuilder globalBuilder = holder.getGlobalConfigurationBuilder();
       if (holder.getGlobalConfigurationBuilder().transport().getTransport() == null) {
          holder.getGlobalConfigurationBuilder().transport().defaultTransport();
       }
