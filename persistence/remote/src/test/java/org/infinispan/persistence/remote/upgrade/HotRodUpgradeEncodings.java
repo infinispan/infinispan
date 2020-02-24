@@ -1,0 +1,93 @@
+package org.infinispan.persistence.remote.upgrade;
+
+import static java.util.stream.IntStream.range;
+import static org.infinispan.test.AbstractCacheTest.getDefaultClusteredCacheConfig;
+import static org.testng.Assert.assertEquals;
+
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.upgrade.RollingUpgradeManager;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
+
+/**
+ * Test rolling upgrades with different key encodings in the server, e.g. StorageType.BINARY
+ *
+ * @since 11.0
+ */
+@Test(groups = "functional", testName = "upgrade.hotrod.HotRodUpgradeEncodings")
+public class HotRodUpgradeEncodings extends AbstractInfinispanTest {
+
+   private static final String CACHE_NAME = "encoded";
+
+   private TestCluster sourceCluster, targetCluster;
+
+   private StorageType storageType;
+
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new HotRodUpgradeEncodings().withStorage(StorageType.BINARY),
+            new HotRodUpgradeEncodings().withStorage(StorageType.OBJECT),
+            new HotRodUpgradeEncodings().withStorage(StorageType.OFF_HEAP)
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "[" + storageType.toString() + "]";
+   }
+
+   public HotRodUpgradeEncodings withStorage(StorageType storageType) {
+      this.storageType = storageType;
+      return this;
+   }
+
+   @BeforeClass
+   public void setup() {
+      ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
+      configurationBuilder.clustering().hash().numSegments(2);
+      configurationBuilder.memory().storageType(storageType);
+      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
+            .cache().name(CACHE_NAME)
+            .configuredWith(configurationBuilder)
+            .build();
+
+      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
+            .cache().name(CACHE_NAME).remotePort(sourceCluster.getHotRodPort())
+            .configuredWith(configurationBuilder)
+            .build();
+   }
+
+   @AfterClass
+   public void tearDown() {
+      targetCluster.destroy();
+      sourceCluster.destroy();
+   }
+
+
+   void loadSourceCluster(int entries) {
+      RemoteCache<String, String> remoteCache = sourceCluster.getRemoteCache(CACHE_NAME);
+      range(0, entries).boxed().parallel().map(String::valueOf).forEach(k -> {
+         remoteCache.put(k, "value" + k);
+      });
+   }
+
+   @Test
+   public void testMigrate() throws Exception {
+      int entries = 1000;
+      loadSourceCluster(entries);
+
+      RollingUpgradeManager rum = targetCluster.getRollingUpgradeManager(CACHE_NAME);
+      rum.synchronizeData("hotrod", 10, 2);
+      targetCluster.disconnectSource("hotrod");
+
+      assertEquals(targetCluster.getRemoteCache(CACHE_NAME).size(), entries);
+   }
+
+}
