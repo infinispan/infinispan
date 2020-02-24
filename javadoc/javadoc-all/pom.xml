@@ -235,6 +235,11 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-scripting</artifactId>
       </dependency>
+
+      <dependency>
+         <groupId>io.projectreactor.tools</groupId>
+         <artifactId>blockhound</artifactId>
+      </dependency>
    </dependencies>
 
    <build>
