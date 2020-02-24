@@ -17,12 +17,15 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.ServerAddress;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.upgrade.RollingUpgradeManager;
+import org.testng.Assert;
 
 
 class TestCluster {
@@ -68,6 +71,28 @@ class TestCluster {
 
    void cleanAllCaches() {
       embeddedCacheManagers.stream().flatMap(m -> m.getCacheNames().stream().map(m::getCache)).forEach(Cache::clear);
+   }
+
+   @Override
+   public String toString() {
+      StringBuilder sb = new StringBuilder();
+      String members = embeddedCacheManagers.stream().map(EmbeddedCacheManager::getMembers).map(Object::toString).collect(Collectors.joining(","));
+      sb.append("Cluster members: ").append(members);
+      String addresses = hotRodServers.stream().map(HotRodServer::getAddress).map(ServerAddress::toString).collect(Collectors.joining(","));
+      sb.append("Servers: ").append(addresses);
+      sb.append(addresses);
+      return sb.toString();
+   }
+
+   public void disconnectSource(String cacheName) {
+      embeddedCacheManagers.forEach(c -> {
+         RollingUpgradeManager rum = c.getCache(cacheName).getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+         try {
+            rum.disconnectSource("hotrod");
+         } catch (Exception e) {
+            Assert.fail("Failed to disconnect source!");
+         }
+      });
    }
 
    static class Builder {
@@ -182,6 +207,7 @@ class TestCluster {
 
          for (int i = 0; i < numMembers; i++) {
             GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+            gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
             gcb.transport().defaultTransport().clusterName(name);
             EmbeddedCacheManager clusteredCacheManager =
                   createClusteredCacheManager(gcb, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
