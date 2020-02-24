@@ -17,11 +17,10 @@ public class GlobalJmxConfiguration extends GlobalJmxStatisticsConfiguration {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public static final AttributeDefinition<String> DOMAIN = AttributeDefinition.builder("domain", "org.infinispan").immutable().build();
    public static final AttributeDefinition<MBeanServerLookup> MBEAN_SERVER_LOOKUP = AttributeDefinition.builder("mbeanServerLookup", null, MBeanServerLookup.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
-   public static final AttributeDefinition<Boolean> ALLOW_DUPLICATE_DOMAINS = AttributeDefinition.builder("duplicateDomains", true).immutable().build();
    public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class).immutable().initializer(TypedProperties::new).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(GlobalJmxConfiguration.class, ENABLED, DOMAIN, MBEAN_SERVER_LOOKUP, ALLOW_DUPLICATE_DOMAINS, PROPERTIES);
+      return new AttributeSet(GlobalJmxConfiguration.class, ENABLED, DOMAIN, MBEAN_SERVER_LOOKUP, PROPERTIES);
    }
 
    private static final ElementDefinition<GlobalJmxConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(Element.JMX.getLocalName());
@@ -29,7 +28,6 @@ public class GlobalJmxConfiguration extends GlobalJmxStatisticsConfiguration {
    private final Attribute<Boolean> enabled;
    private final Attribute<String> domain;
    private final Attribute<MBeanServerLookup> mBeanServerLookup;
-   private final Attribute<Boolean> allowDuplicateDomains;
    private final Attribute<TypedProperties> properties;
    private final String cacheManagerName;
 
@@ -40,7 +38,6 @@ public class GlobalJmxConfiguration extends GlobalJmxStatisticsConfiguration {
       this.enabled = attributes.attribute(ENABLED);
       this.domain = attributes.attribute(DOMAIN);
       this.mBeanServerLookup = attributes.attribute(MBEAN_SERVER_LOOKUP);
-      this.allowDuplicateDomains = attributes.attribute(ALLOW_DUPLICATE_DOMAINS);
       this.properties = attributes.attribute(PROPERTIES);
       this.cacheManagerName = cacheManagerName;
    }
@@ -63,15 +60,6 @@ public class GlobalJmxConfiguration extends GlobalJmxStatisticsConfiguration {
 
    public TypedProperties properties() {
       return properties.get();
-   }
-
-   /**
-    * @deprecated Since 10.1, please set a unique {@link #domain} or {@link GlobalConfiguration#cacheManagerName()}
-    * instead.
-    */
-   @Deprecated
-   public boolean allowDuplicateDomains() {
-      return allowDuplicateDomains.get();
    }
 
    /**

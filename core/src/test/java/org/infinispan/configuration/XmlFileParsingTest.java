@@ -511,7 +511,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertFalse(c.statistics().enabled());
       assertTrue(gc.statistics());
       assertTrue(gc.jmx().enabled());
-      assertTrue(gc.jmx().allowDuplicateDomains());
       assertEquals("funky_domain", gc.jmx().domain());
       assertTrue(gc.jmx().mbeanServerLookup() instanceof TestMBeanServerLookup);
 

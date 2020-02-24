@@ -27,6 +27,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.executors.LazyInitializingScheduledExecutorService;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -101,24 +102,12 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
             () -> mBeanServerLookup.getMBeanServer().invoke(name, "stop", new Object[]{}, new String[]{}));
    }
 
-   public void testSameDomain(Method m) {
+   public void testSameDomain() {
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
-      gc.jmx().enabled(true).domain(JMX_DOMAIN)
-        .allowDuplicateDomains(true)
-        .mBeanServerLookup(mBeanServerLookup);
+      gc.jmx().enabled(true).domain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder c = new ConfigurationBuilder();
-      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManager(gc, c);
 
-      CacheManagerJmxRegistration otherJmxRegistration = extractGlobalComponent(otherContainer, CacheManagerJmxRegistration.class);
-      String otherDomain = otherJmxRegistration.getDomain();
-      ObjectName otherName = getCacheManagerObjectName(otherDomain);
-      try {
-         assertEquals(JMX_DOMAIN + 2, otherDomain);
-      } finally {
-         otherContainer.stop();
-      }
-
-      Exceptions.expectException(InstanceNotFoundException.class, () -> mBeanServerLookup.getMBeanServer().getAttribute(otherName, "CreatedCacheCount"));
+      Exceptions.expectException(EmbeddedCacheManagerStartupException.class, () -> TestCacheManagerFactory.createCacheManager(gc, c));
    }
 
    public void testJmxRegistrationAtStartupAndStop(Method m) throws Exception {

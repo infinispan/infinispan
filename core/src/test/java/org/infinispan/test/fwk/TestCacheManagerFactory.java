@@ -345,8 +345,7 @@ public class TestCacheManagerFactory {
                                    MBeanServerLookup mBeanServerLookup) {
       builder.jmx().enabled(true)
              .domain(jmxDomain)
-             .mBeanServerLookup(mBeanServerLookup)
-             .allowDuplicateDomains(false);
+             .mBeanServerLookup(mBeanServerLookup);
    }
 
    public static ConfigurationBuilder getDefaultCacheConfiguration(boolean transactional) {

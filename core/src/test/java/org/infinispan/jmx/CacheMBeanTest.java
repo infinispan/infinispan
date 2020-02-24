@@ -130,7 +130,6 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
    public void testDuplicateJmxDomainOnlyCacheExposesJmxStatistics() {
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
       gc.jmx().enabled(true)
-        .allowDuplicateDomains(false)
         .domain(JMX_DOMAIN)
         .mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder c = new ConfigurationBuilder();

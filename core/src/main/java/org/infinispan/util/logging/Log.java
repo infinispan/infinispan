@@ -198,11 +198,8 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Unable to unregister MBean %s", id = 33)
 //   void unableToUnregisterMBean(String name, @Cause Exception e);
 
-   @Message(value = "There's already a JMX MBean instance %s registered under " +
-         "'%s' JMX domain. If you want to allow multiple instances configured " +
-         "with same JMX domain enable 'allowDuplicateDomains' attribute in " +
-         "'jmx' config element", id = 34)
-   JmxDomainConflictException jmxMBeanAlreadyRegistered(String mBeanName, String jmxDomain);
+   @Message(value = "The '%s' JMX domain is already in use", id = 34)
+   JmxDomainConflictException jmxMBeanAlreadyRegistered(String jmxDomain, @Cause Throwable cause);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Could not reflect field description of this class. Was it removed?", id = 35)

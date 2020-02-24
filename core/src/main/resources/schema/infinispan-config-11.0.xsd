@@ -683,14 +683,6 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="duplicate-domains" type="xs:boolean" default="${GlobalJmx.duplicateDomains}">
-      <xs:annotation>
-        <xs:documentation>
-          Deprecated since 10.1; please set a unique domain or cache manager name instead.
-          If true, multiple cache manager instances could be configured under the same configured JMX domain. Each cache manager will in practice use a different JMX domain that has been calculated based on the configured one by adding an incrementing index to it.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
     <xs:attribute name="enabled" type="xs:boolean" default="${GlobalJmx.enabled}">
       <xs:annotation>
         <xs:documentation>

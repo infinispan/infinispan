@@ -1,6 +1,5 @@
 package org.infinispan.configuration.global;
 
-import static org.infinispan.configuration.global.GlobalJmxConfiguration.ALLOW_DUPLICATE_DOMAINS;
 import static org.infinispan.configuration.global.GlobalJmxConfiguration.DOMAIN;
 import static org.infinispan.configuration.global.GlobalJmxConfiguration.ENABLED;
 import static org.infinispan.configuration.global.GlobalJmxConfiguration.MBEAN_SERVER_LOOKUP;
@@ -53,20 +52,6 @@ public class GlobalJmxConfigurationBuilder extends GlobalJmxStatisticsConfigurat
     */
    public GlobalJmxConfigurationBuilder domain(String domain) {
       attributes.attribute(DOMAIN).set(domain);
-      return this;
-   }
-
-   /**
-    * If true, multiple cache manager instances could be configured under the same configured JMX
-    * domain. Each cache manager will in practice use a different JMX domain that has been
-    * calculated based on the configured one by adding an incrementing index to it.
-    *
-    * @deprecated Since 10.1, please set a unique {@link #domain} or {@link GlobalConfiguration#cacheManagerName()}
-    * instead.
-    */
-   @Deprecated
-   public GlobalJmxConfigurationBuilder allowDuplicateDomains(Boolean allowDuplicateDomains) {
-      attributes.attribute(ALLOW_DUPLICATE_DOMAINS).set(allowDuplicateDomains);
       return this;
    }
 

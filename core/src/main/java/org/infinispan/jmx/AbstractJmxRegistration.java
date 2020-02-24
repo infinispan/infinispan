@@ -5,7 +5,6 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -45,14 +44,12 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
 
    volatile MBeanServer mBeanServer;
 
-   String jmxDomain;
-
    String groupName;
 
    private List<ResourceDMBean> resourceDMBeans;
 
    /**
-    * The component used for domain reservation.
+    * The component to be registered first for domain reservation.
     */
    private final String mainComponent;
 
@@ -82,20 +79,16 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
             groupName = initGroup();
 
             resourceDMBeans = Collections.synchronizedList(getResourceDMBeansFromComponents());
-            Iterator<ResourceDMBean> it = resourceDMBeans.iterator();
-            ResourceDMBean first = it.next();
-
-            // register first bean to reserve the domain
-            this.jmxDomain = findVirginDomain(mBeanServer, first, globalConfig.jmx());
             this.mBeanServer = mBeanServer;
 
-            // register remaining beans
+            // register those beans, Jack
             try {
-               while (it.hasNext()) {
-                  ResourceDMBean resourceDMBean = it.next();
+               for (ResourceDMBean resourceDMBean : resourceDMBeans) {
                   ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
                   register(resourceDMBean, objectName, mBeanServer);
                }
+            } catch (InstanceAlreadyExistsException | IllegalArgumentException e) {
+               throw CONTAINER.jmxMBeanAlreadyRegistered(globalConfig.jmx().domain(), e);
             } catch (Exception e) {
                throw new CacheException("Failure while registering MBeans", e);
             }
@@ -112,28 +105,6 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
             throw new CacheException("Failure while registering MBeans", e);
          }
       }
-   }
-
-   //TODO remove support for allowDuplicateDomains in Infinispan 11. https://issues.jboss.org/browse/ISPN-10900
-   private String findVirginDomain(MBeanServer mBeanServer, ResourceDMBean first, GlobalJmxConfiguration jmx) {
-      String jmxDomain = jmx.domain();
-      int counter = 2;
-      while (true) {
-         try {
-            register(first, getObjectName(jmxDomain, groupName, first.getMBeanName()), mBeanServer);
-            break;
-         } catch (InstanceAlreadyExistsException | IllegalArgumentException e) {
-            if (jmx.allowDuplicateDomains()) {
-               // add 'unique' suffix and retry
-               jmxDomain = jmx.domain() + counter++;
-            } else {
-               throw CONTAINER.jmxMBeanAlreadyRegistered(groupName, jmx.domain());
-            }
-         } catch (Exception e) {
-            throw new CacheException("Failure while registering MBeans", e);
-         }
-      }
-      return jmxDomain;
    }
 
    /**
@@ -167,7 +138,7 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
       if (mBeanServer == null) {
          throw new IllegalStateException("MBean server not initialized");
       }
-      return jmxDomain;
+      return globalConfig.jmx().domain();
    }
 
    /**
