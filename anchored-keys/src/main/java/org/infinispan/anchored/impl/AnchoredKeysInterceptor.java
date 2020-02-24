@@ -1,6 +1,5 @@
 package org.infinispan.anchored.impl;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -41,6 +40,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -51,15 +51,15 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
+import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.ValidSingleResponseCollector;
+import org.infinispan.topology.CacheTopology;
 
 import net.jcip.annotations.GuardedBy;
 
@@ -73,17 +73,16 @@ public class AnchoredKeysInterceptor extends DDAsyncInterceptor {
 
    @Inject EmbeddedCacheManager manager;
    @Inject RpcManager rpcManager;
-   @Inject Transport transport;
-   @Inject CacheManagerNotifier notifier;
-   @Inject
-   @ComponentName(KnownComponentNames.CACHE_NAME)
+   @Inject DistributionManager distributionManager;
+   @Inject CacheNotifier notifier;
+   @Inject @ComponentName(KnownComponentNames.CACHE_NAME)
    String cacheName;
    @Inject CommandsFactory commandsFactory;
 
    Cache<Object, Object> anchorCache;
    volatile Address currentWriter;
    @GuardedBy("this")
-   int currentViewId = -1;
+   int currentTopologyId = -1;
 
    public AnchoredKeysInterceptor(Cache<Object, Object> anchorCache) {
       this.anchorCache = anchorCache;
@@ -92,19 +91,19 @@ public class AnchoredKeysInterceptor extends DDAsyncInterceptor {
    @Start
    public void start() {
       notifier.addListener(this);
-      updateWriter(transport.getMembers(), transport.getViewId());
+      updateWriter(distributionManager.getCacheTopology());
    }
 
-   @ViewChanged
-   public void onViewChange(ViewChangedEvent event) {
-      updateWriter(event.getNewMembers(), event.getViewId());
+   @TopologyChanged
+   public void onViewChange(TopologyChangedEvent<?, ?> event) {
+      updateWriter(distributionManager.getCacheTopology());
    }
 
-   private void updateWriter(List<Address> members, int viewId) {
+   private void updateWriter(CacheTopology cacheTopology) {
       synchronized (this) {
-         if (viewId > currentViewId) {
-            currentViewId = viewId;
-            currentWriter = members.get(members.size() - 1);
+         if (cacheTopology.getTopologyId() > currentTopologyId) {
+            currentTopologyId = cacheTopology.getTopologyId();
+            currentWriter = cacheTopology.getMembers().get(cacheTopology.getMembers().size() - 1);
          }
       }
    }
@@ -122,7 +121,7 @@ public class AnchoredKeysInterceptor extends DDAsyncInterceptor {
       return computeKeyWriter(ctx, command, key, writer)
             .thenApply(ctx, command, (rCtx, rCommand, rv) -> {
                Address owner = rv != null ? (Address) rv : writer;
-               if (owner == transport.getAddress()) {
+               if (owner == rpcManager.getAddress()) {
                   // The key was assigned to this node, but it was removed
                   return invokeNext(ctx, command);
                }
