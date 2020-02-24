@@ -9,20 +9,17 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.Collection;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
-import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.test.FixedServerBalancing;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
@@ -124,23 +121,6 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
          this.name = name;
       }
 
-   }
-
-   static class FixedServerBalancing implements FailoverRequestBalancingStrategy {
-      private final HotRodServer server;
-
-      public FixedServerBalancing(HotRodServer server) {
-         this.server = server;
-      }
-
-      @Override
-      public void setServers(Collection<SocketAddress> servers1) {
-      }
-
-      @Override
-      public SocketAddress nextServer(Set<SocketAddress> failedServers) {
-         return InetSocketAddress.createUnresolved(server.getHost(), server.getPort());
-      }
    }
 
    private int queryCount(String query, RemoteCache<?, ?> remoteCache) {
