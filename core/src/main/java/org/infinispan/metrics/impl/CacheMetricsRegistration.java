@@ -9,6 +9,8 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
 /**
+ * Creates and registers metrics for all components from a cache's component registry.
+ *
  * @author anistor@redhat.com
  * @since 10.1.3
  */
@@ -27,7 +29,7 @@ public final class CacheMetricsRegistration extends AbstractMetricsRegistration 
    CacheManagerMetricsRegistration globalMetricsRegistration;
 
    @Override
-   protected boolean metricsEnabled() {
+   public boolean metricsEnabled() {
       return globalMetricsRegistration.metricsEnabled() && cacheConfiguration.statistics().enabled();
    }
 
