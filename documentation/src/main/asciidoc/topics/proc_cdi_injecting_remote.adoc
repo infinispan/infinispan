@@ -1,0 +1,76 @@
+[id='cdi_inject_remote']
+= Injecting Remote Caches
+Set up CDI beans to inject remote caches.
+
+.Procedure
+
+. Create a cache qualifier annotation.
++
+[source,java]
+----
+@Remote("mygreetingcache") <1>
+@Qualifier
+@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface RemoteGreetingCache { <2>
+}
+----
++
+<1> names the cache to inject.
+<2> creates a `@RemoteGreetingCache` qualifier.
++
+. Add the `@RemoteGreetingCache` qualifier to your cache injection point.
++
+[source,java]
+----
+public class GreetingService {
+
+    @Inject @RemoteGreetingCache
+    private RemoteCache<String, String> cache;
+
+    public String greet(String user) {
+        String cachedValue = cache.get(user);
+        if (cachedValue == null) {
+            cachedValue = "Hello " + user;
+            cache.put(user, cachedValue);
+        }
+        return cachedValue;
+    }
+}
+----
+
+.Tips for injecting remote caches
+
+* You can inject remote caches without using qualifiers.
++
+[source,java]
+----
+   ...
+   @Inject
+   @Remote("greetingCache")
+   private RemoteCache<String, String> cache;
+----
+
+
+* If you have more than one {brandname} cluster, you can create separate remote cache manager producers for each cluster.
++
+[source,java]
+----
+...
+import javax.enterprise.context.ApplicationScoped;
+
+public class Config {
+
+    @RemoteGreetingCache
+    @Produces
+    @ApplicationScoped <1>
+    public ConfigurationBuilder builder = new ConfigurationBuilder(); <2>
+        builder.addServer().host("localhost").port(11222);
+        return new RemoteCacheManager(builder.build());
+    }
+}
+----
++
+<1> creates the bean once for the application. Producers that create cache managers should always include the `@ApplicationScoped` annotation to avoid creating multiple cache managers, which are heavy weight objects.
+<2> creates a new `RemoteCacheManager` instance that is bound to the `@RemoteGreetingCache` qualifier.
