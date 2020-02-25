@@ -99,7 +99,7 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-cli-interpreter</artifactId>
+            <artifactId>infinispan-jboss-marshalling</artifactId>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>

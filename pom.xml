@@ -127,7 +127,6 @@
       <module>spring/spring5/spring5-common</module>
       <module>spring/spring5/spring5-embedded</module>
       <module>spring/spring5/spring5-remote</module>
-      <module>cli/cli-interpreter</module>
       <module>cli/cli-client</module>
       <module>tasks/api</module>
       <module>tasks/manager</module>
@@ -5606,7 +5605,6 @@
                               <source>${dir.ispn}/cdi/remote/src/main/java</source>
                               <source>${dir.ispn}/checkstyle/src/main/java</source>
                               <source>${dir.ispn}/cli/cli-client/src/main/java</source>
-                              <source>${dir.ispn}/cli/cli-interpreter/src/main/java</source>
                               <source>${dir.ispn}/client/hotrod-client/src/main/java</source>
                               <source>${dir.ispn}/client/infinispan-key-value-store-hotrod/src/main/java</source>
                               <source>${dir.ispn}/client/rest-client/src/main/java</source>
