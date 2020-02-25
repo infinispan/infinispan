@@ -28,11 +28,9 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import io.smallrye.metrics.MetricRegistries;
-
 /**
  * Keeps a reference to the microprofile MetricRegistry. Optional component in component registry. Availability based on
- * available jars in classpath!
+ * available jars in classpath! See {@link InfinispanMetricRegistryFactory}.
  *
  * @author anistor@redhat.com
  * @since 10.1.3
@@ -45,19 +43,15 @@ public class InfinispanMetricRegistry {
 
    public static final String NODE_TAG_NAME = "node";
 
-   private MetricRegistry registry;
+   private final MetricRegistry registry;
 
-   private Tag nodeTag;
+   private Tag nodeTag;     //todo [anistor] also set tag _app with the cache manager name
 
    @Inject
    GlobalConfiguration globalConfig;
 
-   public InfinispanMetricRegistry() {
-      registry = lookupRegistry();
-   }
-
-   protected MetricRegistry lookupRegistry() {
-      return MetricRegistries.get(MetricRegistry.Type.VENDOR);
+   protected InfinispanMetricRegistry(MetricRegistry registry) {
+      this.registry = registry;
    }
 
    @Start
@@ -66,7 +60,7 @@ public class InfinispanMetricRegistry {
       if (nodeName == null || nodeName.isEmpty()) {
          //TODO [anistor] ensure unique node name is set in all tests and also in real life usage
          nodeName = generateRandomName();
-         //throw new CacheConfigurationException("Node name must be specified if metrics are enabled.");
+         //throw new CacheConfigurationException("Node name must always be specified in configuration if metrics are enabled.");
       }
       nodeName = NameUtils.filterIllegalChars(nodeName);
       nodeTag = new Tag(NODE_TAG_NAME, nodeName);
@@ -105,7 +99,7 @@ public class InfinispanMetricRegistry {
          Consumer<Metric> setter = (Consumer<Metric>) attr.setter(instance);
 
          if (getter != null || setter != null) {
-            String metricName = namePrefix + "_" + NameUtils.decamelize(attr.getName());
+            String metricName = namePrefix + '_' + NameUtils.decamelize(attr.getName());
             MetricID metricId = new MetricID(metricName, nodeTag);
 
             if (getter != null) {
@@ -120,7 +114,7 @@ public class InfinispanMetricRegistry {
                         .build();
 
                   if (log.isTraceEnabled()) {
-                     log.tracef("Registering metric %s", metricId);
+                     log.tracef("Registering gauge metric %s", metricId);
                   }
                   registry.register(metadata, gaugeMetric, nodeTag);
                   metricIds.add(metricId);
@@ -136,7 +130,7 @@ public class InfinispanMetricRegistry {
                         .build();
 
                   if (log.isTraceEnabled()) {
-                     log.tracef("Registering metric %s", metricId);
+                     log.tracef("Registering histogram metric %s", metricId);
                   }
                   Timer timerMetric = registry.timer(metadata, nodeTag);
                   setter.accept(timerMetric);
@@ -155,11 +149,15 @@ public class InfinispanMetricRegistry {
    }
 
    public void unregisterMetric(MetricID metricId) {
-      registry.remove(metricId);
-
+      boolean removed = registry.remove(metricId);
       if (log.isTraceEnabled()) {
-         log.tracef("Unregistered metric \"%s\". Metric registry @%x contains %d metrics.",
-                    metricId, System.identityHashCode(registry), registry.getMetrics().size());
+         if (removed) {
+            log.tracef("Unregistered metric \"%s\". Metric registry @%x contains %d metrics.",
+                       metricId, System.identityHashCode(registry), registry.getMetrics().size());
+         } else {
+            log.tracef("Could not remove unexisting metric \"%s\". Metric registry @%x contains %d metrics.",
+                       metricId, System.identityHashCode(registry), registry.getMetrics().size());
+         }
       }
    }
 }

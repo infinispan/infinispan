@@ -33,15 +33,15 @@ public final class InfinispanMetricRegistryFactory implements ComponentFactory, 
    @Override
    public Object construct(String componentName) {
       if (globalConfig.metrics().enabled()) {
+         // try cautiously
          try {
             // ensure microprofile config dependencies exist
             ConfigProvider.getConfig();
 
             // ensure microprofile metrics dependencies exist
-            MetricRegistries.get(MetricRegistry.Type.VENDOR);
+            MetricRegistry registry = MetricRegistries.get(MetricRegistry.Type.VENDOR);
 
-            // try, cautiously
-            return new InfinispanMetricRegistry();
+            return new InfinispanMetricRegistry(registry);
          } catch (Throwable e) {
             // missing dependency
             log.debug("Microprofile metrics are not available due to missing classpath dependencies.", e);

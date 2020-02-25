@@ -5,6 +5,8 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
 /**
+ * Creates and registers metrics for all components from a cache manager's global component registry.
+ *
  * @author anistor@redhat.com
  * @since 10.1.3
  */
@@ -14,6 +16,8 @@ public final class CacheManagerMetricsRegistration extends AbstractMetricsRegist
 
    @Override
    protected String initNamePrefix() {
-      return "cache_manager_" + NameUtils.filterIllegalChars(globalConfig.cacheManagerName());
+      String prefix = "cache_manager_" + NameUtils.filterIllegalChars(globalConfig.cacheManagerName());
+      String globalPrefix = globalConfig.metrics().prefix();
+      return globalPrefix != null && !globalPrefix.isEmpty() ? globalPrefix + '_' + prefix : prefix;
    }
 }

@@ -1,6 +1,5 @@
 package org.infinispan.test.fwk;
 
-import org.eclipse.microprofile.metrics.MetricRegistry;
 import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.scopes.Scope;
@@ -11,7 +10,7 @@ import io.smallrye.metrics.MetricsRegistryImpl;
 
 /**
  * Utility allowing a cache manager to have its own separate MetricRegistry in tests to avoid collisions due to the
- * microprofile metrics implementation using a single shared one per JVM.
+ * microprofile metrics implementation using a single shared registry per JVM.
  *
  * @author anistor@redhat.com
  * @since 10.1
@@ -20,16 +19,16 @@ final class InfinispanMetricRegistryTestHelper {
 
    @Scope(Scopes.GLOBAL)
    static class TestInfinispanMetricRegistry extends InfinispanMetricRegistry {
-      @Override
-      protected MetricRegistry lookupRegistry() {
-         // executed once for each cache manager, so each manager will have its own separate registry during tests
-         return new MetricsRegistryImpl();
+
+      TestInfinispanMetricRegistry() {
+         // executed once for each cache manager
+         super(new MetricsRegistryImpl());
       }
    }
 
    /**
-    * Replaces InfinispanMetricRegistry component with TestInfinispanMetricsRegistry to allow isolation between cache
-    * managers.
+    * Replaces InfinispanMetricRegistry component with one that uses a private MetricRegistry to allow isolation between
+    * cache managers and avoid unintended metric collisions.
     */
    static void replace(GlobalConfigurationBuilder gcb) {
       if (gcb.metrics().enabled()) {
@@ -37,7 +36,7 @@ final class InfinispanMetricRegistryTestHelper {
             gcb.addModule(TestGlobalConfigurationBuilder.class)
                .testGlobalComponent(InfinispanMetricRegistry.class.getName(), new TestInfinispanMetricRegistry());
          } catch (LinkageError ignored) {
-            // missing dependency
+            // missing metrics related dependency
          }
       }
    }
