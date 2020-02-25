@@ -15,6 +15,9 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
+import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.topology.RebalanceStartCommand;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
@@ -25,7 +28,6 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ControlledTransport;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -138,16 +140,13 @@ public class CoordinatorStopTest extends MultipleCacheManagersTest {
       t2.unblock();
 
       // Let the rebalance begin
-      rpcManager2.expectCommand(StateRequestCommand.class,
-            request -> assertEquals(StateRequestCommand.Type.CONFIRM_REVOKED_SEGMENTS, request.getType()))
-            .send().receiveAll();
+      rpcManager2.expectCommand(ScatteredStateConfirmRevokedCommand.class).send().receiveAll();
       // Allow both nodes to receive the view. If we did not block (1), too, topology + 2 could be ignored
       // on cache(1) and the CONFIRM_REVOKED_SEGMENTS would get blocked until topology + 3 arrives - and this
       // does not happen before the test times out.
       viewLatch.countDown();
 
-      ControlledRpcManager.BlockedRequest keyTransferRequest = rpcManager2.expectCommand(StateRequestCommand.class,
-            request -> assertEquals(StateRequestCommand.Type.START_KEYS_TRANSFER, request.getType()));
+      ControlledRpcManager.BlockedRequest<ScatteredStateGetKeysCommand> keyTransferRequest = rpcManager2.expectCommand(ScatteredStateGetKeysCommand.class);
 
       // topology + 3 should have null pendingCH
       // Before the fix the topology would recover transitory topologies from above and base current CH on them
@@ -161,8 +160,7 @@ public class CoordinatorStopTest extends MultipleCacheManagersTest {
 
       // Cancel command is sent only with the fix in
       if (t3.getCacheTopology().getCurrentCH().locatePrimaryOwnerForSegment(0) == null) {
-         ControlledRpcManager.BlockedRequest cancelStateTransfer = rpcManager2.expectCommand(StateRequestCommand.class,
-               request -> assertEquals(StateRequestCommand.Type.CANCEL_STATE_TRANSFER, request.getType()));
+         ControlledRpcManager.BlockedRequest<StateTransferCancelCommand> cancelStateTransfer = rpcManager2.expectCommand(StateTransferCancelCommand.class);
          cancelStateTransfer.send();
       }
 

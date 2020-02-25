@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.conflict.ConflictManager;
@@ -27,7 +28,6 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.logging.Log;
@@ -97,7 +97,7 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
 
    @Override
    protected void performMerge() throws Exception {
-      CompletableFuture<StateRequestCommand> blockedStateRequest = createStateRequestFuture();
+      CompletableFuture<ConflictResolutionStartCommand> blockedStateRequest = createStateRequestFuture();
 
       for (String key : ALL_KEYS) {
          assertCacheGet(key, PARTITION_0_VAL, p0.getNodes());
@@ -132,9 +132,9 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
       assertEquals(0, cm.getConflicts().peek(m -> log.errorf("Conflict: " + m)).count());
    }
 
-   private CompletableFuture<StateRequestCommand> createStateRequestFuture() {
+   private CompletableFuture<ConflictResolutionStartCommand> createStateRequestFuture() {
       int segment = PARTITIONER.getSegment(DURING_CR_CRASH_KEY);
-      CompletableFuture<StateRequestCommand> future = new CompletableFuture<>();
+      CompletableFuture<ConflictResolutionStartCommand> future = new CompletableFuture<>();
       wrapInboundInvocationHandler(cache(2), handler -> new CompleteFutureOnStateRequestHandler(handler, segment, manager(2), future));
       return future;
    }
@@ -142,10 +142,10 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
    private class CompleteFutureOnStateRequestHandler extends AbstractDelegatingHandler {
       final int segment;
       final EmbeddedCacheManager manager;
-      final CompletableFuture<StateRequestCommand> future;
+      final CompletableFuture<ConflictResolutionStartCommand> future;
 
       CompleteFutureOnStateRequestHandler(PerCacheInboundInvocationHandler delegate, int segment, EmbeddedCacheManager manager,
-                                          CompletableFuture<StateRequestCommand> future) {
+                                          CompletableFuture<ConflictResolutionStartCommand> future) {
          super(delegate);
          this.segment = segment;
          this.manager = manager;
@@ -154,8 +154,8 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
 
       @Override
       public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
-         if (command instanceof StateRequestCommand) {
-            StateRequestCommand src = (StateRequestCommand) command;
+         if (command instanceof ConflictResolutionStartCommand) {
+            ConflictResolutionStartCommand src = (ConflictResolutionStartCommand) command;
             if (src.getSegments().contains(segment)) {
                log.debugf("Completing future and ignoring state request %s", command);
                future.complete(src);

@@ -8,6 +8,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -64,7 +67,8 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
       partition1.remove(c);
 
       ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(c);
-      controlledRpcManager.excludeCommands(StateRequestCommand.class, StateResponseCommand.class);
+      controlledRpcManager.excludeCommands(StateTransferStartCommand.class, ScatteredStateGetKeysCommand.class,
+            ScatteredStateConfirmRevokedCommand.class, StateResponseCommand.class);
 
       Future<Boolean> future = fork(() -> c.replace(key, value, "myNewValue"));
 

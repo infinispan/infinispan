@@ -22,8 +22,10 @@ public interface StateConsumer {
    boolean isStateTransferInProgressForKey(Object key);
 
    /**
-    * Receive notification of topology changes. StateRequestCommands are issued for segments that are new to this member
-    * and the segments that are no longer owned are discarded.
+    * Receive notification of topology changes. {@link org.infinispan.commands.statetransfer.StateTransferStartCommand},
+    * or {@link org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand} for
+    * {@link org.infinispan.configuration.cache.CacheMode#SCATTERED_SYNC}, are issued for segments that are new to this
+    * member and the segments that are no longer owned are discarded.
     *
     * @return completion stage that is completed when the topology update is processed,
     * wrapping another completion stage that is completed when the state transfer has finished

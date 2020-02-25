@@ -40,6 +40,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -973,9 +974,9 @@ public class StateConsumerImpl implements StateConsumer {
       }
       if (trace)
          log.tracef("Requesting cluster listeners of cache %s from node %s", cacheName, sources);
-      StateRequestCommand cmd =
-            commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_CACHE_LISTENERS,
-                                                     rpcManager.getAddress(), topologyId, null);
+
+      CacheRpcCommand cmd = commandsFactory.buildStateTransferGetListenersCommand(topologyId);
+
       CompletionStage<ValidResponse> remoteStage =
             rpcManager.invokeCommand(source, cmd, SingleResponseCollector.validOnly(), rpcOptions);
       return handleAndCompose(remoteStage, (response, throwable) -> {
@@ -998,8 +999,7 @@ public class StateConsumerImpl implements StateConsumer {
          log.tracef("Requesting transactions from node %s for segments %s", source, segments);
       }
       // get transactions and locks
-      StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS,
-                                                                         rpcManager.getAddress(), topologyId, segments);
+      CacheRpcCommand cmd = commandsFactory.buildStateTransferGetTransactionsCommand(topologyId, segments);
       return rpcManager.invokeCommand(source, cmd, PassthroughSingleResponseCollector.INSTANCE, rpcOptions);
    }
 

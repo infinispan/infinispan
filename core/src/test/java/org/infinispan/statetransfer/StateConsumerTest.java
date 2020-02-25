@@ -28,6 +28,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -70,6 +73,7 @@ import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -157,12 +161,20 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       when(persistenceManager.addSegments(any())).thenReturn(CompletableFuture.completedFuture(false));
       when(persistenceManager.publishKeys(any(), any())).thenReturn(Flowable.empty());
 
-      when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class), any(Address.class), anyInt(), any(IntSet.class)))
-         .thenAnswer(invocation-> new StateRequestCommand(ByteString.fromString("cache1"),
-                                                          (StateRequestCommand.Type) invocation.getArguments()[0],
-                                                          (Address) invocation.getArguments()[1],
-                                                          (Integer) invocation.getArguments()[2],
-                                                          (IntSet) invocation.getArguments()[3]));
+      when(commandsFactory.buildStateTransferStartCommand(anyInt(), any(IntSet.class)))
+            .thenAnswer(invocation -> new StateTransferStartCommand(ByteString.fromString("cache1"),
+                  (Integer) invocation.getArguments()[0],
+                  (IntSet) invocation.getArguments()[1]));
+
+      when(commandsFactory.buildStateTransferGetTransactionsCommand(anyInt(), any(IntSet.class)))
+            .thenAnswer(invocation -> new StateTransferGetTransactionsCommand(ByteString.fromString("cache1"),
+                  (Integer) invocation.getArguments()[0],
+                  (IntSet) invocation.getArguments()[1]));
+
+      when(commandsFactory.buildStateTransferCancelCommand(anyInt(), any(IntSet.class)))
+            .thenAnswer(invocation -> new StateTransferCancelCommand(ByteString.fromString("cache1"),
+                  (Integer) invocation.getArguments()[0],
+                  (IntSet) invocation.getArguments()[1]));
 
       when(transport.getViewId()).thenReturn(1);
       when(rpcManager.getAddress()).thenReturn(addresses[0]);
@@ -170,25 +182,25 @@ public class StateConsumerTest extends AbstractInfinispanTest {
 
       final Map<Address, Set<Integer>> requestedSegments = new ConcurrentHashMap<>();
       final Set<Integer> flatRequestedSegments = new ConcurrentSkipListSet<>();
-      when(rpcManager.invokeCommand(any(Address.class), any(StateRequestCommand.class), any(ResponseCollector.class),
-                                    any(RpcOptions.class)))
+      when(rpcManager.invokeCommand(any(Address.class), any(StateTransferGetTransactionsCommand.class), any(ResponseCollector.class),
+            any(RpcOptions.class)))
             .thenAnswer(invocation -> {
                Address recipient = invocation.getArgument(0);
-               StateRequestCommand cmd = invocation.getArgument(1);
-               SuccessfulResponse results;
-               if (cmd.getType().equals(StateRequestCommand.Type.GET_TRANSACTIONS)) {
-                  Set<Integer> segments = cmd.getSegments();
-                  requestedSegments.put(recipient, segments);
-                  flatRequestedSegments.addAll(segments);
-                  results = SuccessfulResponse.create(new ArrayList<TransactionInfo>());
-               } else if (cmd.getType().equals(StateRequestCommand.Type.START_STATE_TRANSFER)
-                     || cmd.getType().equals(StateRequestCommand.Type.CANCEL_STATE_TRANSFER)) {
-                  results = SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE;
-               } else {
-                  throw new IllegalStateException("Unexpected command: " + cmd);
-               }
-               return CompletableFuture.completedFuture(results);
+               StateTransferGetTransactionsCommand cmd = invocation.getArgument(1);
+               Set<Integer> segments = cmd.getSegments();
+               requestedSegments.put(recipient, segments);
+               flatRequestedSegments.addAll(segments);
+               return CompletableFuture.completedFuture(SuccessfulResponse.create(new ArrayList<TransactionInfo>()));
             });
+      Answer<?> successfulResponse = invocation -> CompletableFuture.completedFuture(SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
+      when(rpcManager.invokeCommand(any(Address.class), any(StateTransferStartCommand.class), any(ResponseCollector.class),
+            any(RpcOptions.class)))
+            .thenAnswer(successfulResponse);
+
+      when(rpcManager.invokeCommand(any(Address.class), any(StateTransferCancelCommand.class), any(ResponseCollector.class),
+            any(RpcOptions.class)))
+            .thenAnswer(successfulResponse);
+
 
       when(rpcManager.getSyncRpcOptions()).thenReturn(new RpcOptions(DeliverOrder.NONE, 10000, TimeUnit.MILLISECONDS));
       when(rpcManager.blocking(any(CompletionStage.class))).thenAnswer(invocation -> ((CompletionStage) invocation

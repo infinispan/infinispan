@@ -14,6 +14,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -24,7 +26,6 @@ import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -64,7 +65,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
    public void testSimulatedOldStateResponse() throws Throwable {
       // Initial owners for both segments are cache 1, 2, and 3
       // Start a rebalance, with cache 0 becoming an owner of both CH segments
-      // Block the first StateRequestCommand on cache 0
+      // Block the first StateTransferStartCommand on cache 0
       // While state transfer is blocked, simulate an old state response command on cache 0
       // Check that the old command is ignored and state transfer completes successfully
       StateSequencer sequencer = new StateSequencer();
@@ -82,17 +83,9 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       assertNull(dm0.getCacheTopology().getPendingCH());
 
       // Block when cache 0 sends the first state request to cache 1
-      CommandMatcher segmentRequestMatcher = new CommandMatcher() {
-         @Override
-         public boolean accept(ReplicableCommand command) {
-            if (!(command instanceof StateRequestCommand))
-               return false;
-            StateRequestCommand stateRequestCommand = (StateRequestCommand) command;
-            if (stateRequestCommand.getType() != StateRequestCommand.Type.START_STATE_TRANSFER)
-               return false;
-            return stateRequestCommand.getTopologyId() == initialTopologyId + 1;
-         }
-      };
+      CommandMatcher segmentRequestMatcher = command -> command instanceof StateTransferStartCommand &&
+            ((StateTransferStartCommand) command).getTopologyId() == initialTopologyId + 1;
+
       advanceOnOutboundRpc(sequencer, cache(0), segmentRequestMatcher)
             .before("st:block_state_request", "st:resume_state_request");
 
@@ -179,15 +172,12 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
 
          @Override
          public boolean accept(ReplicableCommand command) {
-            if (command instanceof StateRequestCommand) {
-               StateRequestCommand stateRequestCommand = (StateRequestCommand) command;
-               if (stateRequestCommand.getType() == StateRequestCommand.Type.GET_TRANSACTIONS) {
-                  // Commands 0 and 1 are sent during the first rebalance
-                  // Command 2 is the first sent after the node is killed
-                  if (counter.getAndIncrement() == 2)
-                     return true;
-                  log.debugf("Not blocking command %s", command);
-               }
+            if (command instanceof StateTransferGetTransactionsCommand) {
+               // Commands 0 and 1 are sent during the first rebalance
+               // Command 2 is the first sent after the node is killed
+               if (counter.getAndIncrement() == 2)
+                  return true;
+               log.debugf("Not blocking command %s", command);
             }
             return false;
          }

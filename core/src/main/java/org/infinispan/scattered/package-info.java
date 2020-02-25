@@ -155,11 +155,12 @@
  *        and the node storing the value in {@link org.infinispan.container.entries.RemoteMetadata}
  *    <li>OWNED: all data is in
  * </ol>
- * There are new types of {@link org.infinispan.statetransfer.StateRequestCommand}, namely it is:
+ * There are new commands:
  * <ul>
- *    <li>{@code CONFIRM_REVOKED_SEGMENTS} that makes sure that all old owners have adopted the new topology
- *        and won't serve furher requests according to the old one.
- *    <li>{@code START_KEYS_TRANSFER} that is very similar to {@code START_STATE_TRANSFER} but moves only keys.
+ *    <li>{@link org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand} that makes sure that all
+ *    old owners have adopted the new topology and won't serve furher requests according to the old one.
+ *    <li>{@link org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand} that is very similar to
+ *    {@link org.infinispan.commands.statetransfer.StateTransferStartCommand} but moves only keys.
  * </ul>
  * <p>
  * During node crash, we experience 3 topologies:

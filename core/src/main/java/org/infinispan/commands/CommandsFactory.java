@@ -44,6 +44,13 @@ import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
+import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
@@ -91,7 +98,6 @@ import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherComman
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
@@ -423,13 +429,22 @@ public interface CommandsFactory {
 
    LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet);
 
-   /**
-    * Builds a StateRequestCommand used for requesting transactions and locks and for starting or canceling transfer of cache entries.
-    */
-   StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int topologyId, IntSet segments);
+   ConflictResolutionStartCommand buildConflictResolutionStartCommand(int topologyId, IntSet segments);
+
+   StateTransferCancelCommand buildStateTransferCancelCommand(int topologyId, IntSet segments);
+
+   StateTransferGetListenersCommand buildStateTransferGetListenersCommand(int topologyId);
+
+   StateTransferGetTransactionsCommand buildStateTransferGetTransactionsCommand(int topologyId, IntSet segments);
+
+   StateTransferStartCommand buildStateTransferStartCommand(int topologyId, IntSet segments);
+
+   ScatteredStateGetKeysCommand buildScatteredStateGetKeysCommand(int topologyId, IntSet segments);
+
+   ScatteredStateConfirmRevokedCommand buildScatteredStateConfirmRevokeCommand(int topologyId, IntSet segments);
 
    /**
-    * Builds a StateResponseCommand used for pushing cache entries to another node in response to a StateRequestCommand.
+    * Builds a StateResponseCommand used for pushing cache entries to another node.
     */
    StateResponseCommand buildStateResponseCommand(Address sender, int viewId, Collection<StateChunk> stateChunks, boolean applyState, boolean pushTransfer);
 

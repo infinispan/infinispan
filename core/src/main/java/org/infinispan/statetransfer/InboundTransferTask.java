@@ -6,10 +6,10 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
-
-import net.jcip.annotations.GuardedBy;
+import java.util.function.Function;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -24,6 +24,8 @@ import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Inbound state transfer task. Fetches multiple data segments from a remote source node and applies them to local
@@ -117,12 +119,14 @@ public class InboundTransferTask {
     * @return a {@code CompletableFuture} that completes when the transfer is done.
     */
    public CompletionStage<Void> requestSegments() {
-      return startTransfer(applyState ? StateRequestCommand.Type.START_STATE_TRANSFER :
-                           StateRequestCommand.Type.START_CONSISTENCY_CHECK);
+      Address address = rpcManager.getAddress();
+      return startTransfer(applyState ?
+            segments -> commandsFactory.buildStateTransferStartCommand(topologyId, segments) :
+            segments -> commandsFactory.buildConflictResolutionStartCommand(topologyId, segments));
    }
 
    public CompletionStage<Void> requestKeys() {
-      return startTransfer(StateRequestCommand.Type.START_KEYS_TRANSFER);
+      return startTransfer(segments -> commandsFactory.buildScatteredStateGetKeysCommand(topologyId, segments));
    }
 
    /**
@@ -130,7 +134,7 @@ public class InboundTransferTask {
     *
     * @return A {@code CompletionStage} that completes when the segments have been applied
     */
-   private CompletionStage<Void> startTransfer(StateRequestCommand.Type type) {
+   private CompletionStage<Void> startTransfer(Function<IntSet, CacheRpcCommand> transferCommand) {
       if (isCancelled)
          return completionFuture;
 
@@ -140,12 +144,10 @@ public class InboundTransferTask {
          completionFuture.complete(null);
          return completionFuture;
       }
+      CacheRpcCommand cmd = transferCommand.apply(segmentsCopy);
       if (trace) {
-         log.tracef("Requesting state (%s) from node %s for segments %s", type, source, segmentsCopy);
+         log.tracef("Requesting state (%s) from node %s for segments %s", cmd, source, segmentsCopy);
       }
-      // start transfer of cache entries
-      StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(type, rpcManager.getAddress(), topologyId,
-                                                                         segmentsCopy);
       CompletionStage<Response> remoteStage =
             rpcManager.invokeCommand(source, cmd, PassthroughSingleResponseCollector.INSTANCE, rpcOptions);
       return handleAndCompose(remoteStage, (response, throwable) -> {
@@ -157,7 +159,7 @@ public class InboundTransferTask {
          } else if (response instanceof SuccessfulResponse) {
             if (trace) {
                log.tracef("Successfully requested state (%s) from node %s for segments %s",
-                          type, source, segmentsCopy);
+                          cmd, source, segmentsCopy);
             }
          } else if (response instanceof CacheNotFoundResponse) {
             if (trace) log.tracef("State source %s was suspected, another source will be selected", source);
@@ -232,9 +234,7 @@ public class InboundTransferTask {
    }
 
    private void sendCancelCommand(IntSet cancelledSegments) {
-      StateRequestCommand.Type requestType = applyState ? StateRequestCommand.Type.CANCEL_STATE_TRANSFER : StateRequestCommand.Type.CANCEL_CONSISTENCY_CHECK;
-      StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(requestType, rpcManager.getAddress(),
-            topologyId, cancelledSegments);
+      CacheRpcCommand cmd = commandsFactory.buildStateTransferCancelCommand(topologyId, cancelledSegments);
       try {
          rpcManager.sendTo(source, cmd, DeliverOrder.NONE);
       } catch (Exception e) {

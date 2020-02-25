@@ -2,12 +2,12 @@ package org.infinispan.distribution.rehash;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
@@ -18,12 +18,15 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -36,7 +39,6 @@ import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateConsumer;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.Mocks;
@@ -352,15 +354,14 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
                    primaryOwnerCache.getCacheManager().getAddress());
 
       // Wait for both nodes to start state transfer
-      // If the cache is transactional, there's a GET_TRANSACTIONS request before the START_STATE_TRANSFER request
       if (transactional) {
-         blockingRpcManager0.expectCommand(StateRequestCommand.class).send().receiveAll();
-         blockingRpcManager2.expectCommand(StateRequestCommand.class).send().receiveAll();
+         blockingRpcManager0.expectCommand(StateTransferGetTransactionsCommand.class).send().receiveAll();
+         blockingRpcManager2.expectCommand(StateTransferGetTransactionsCommand.class).send().receiveAll();
       }
-      ControlledRpcManager.BlockedRequest<StateRequestCommand> blockedStateRequest0 =
-            blockingRpcManager0.expectCommand(StateRequestCommand.class);
-      ControlledRpcManager.BlockedRequest<StateRequestCommand> blockedStateRequest2 =
-            blockingRpcManager2.expectCommand(StateRequestCommand.class);
+      ControlledRpcManager.BlockedRequest<StateTransferStartCommand> blockedStateRequest0 =
+            blockingRpcManager0.expectCommand(StateTransferStartCommand.class);
+      ControlledRpcManager.BlockedRequest<StateTransferStartCommand> blockedStateRequest2 =
+            blockingRpcManager2.expectCommand(StateTransferStartCommand.class);
 
       // Unblock the state request from node 2
       // Don't wait for response, because node 2 might be sending the first state response on the request thread
