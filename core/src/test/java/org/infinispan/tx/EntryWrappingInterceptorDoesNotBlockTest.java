@@ -21,6 +21,8 @@ import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseClusteredReadCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -37,7 +39,6 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -134,8 +135,8 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       Future<?> newNode = fork(() -> cache(3));
 
       // block sending segment 0 to node 2
-      expectStateRequestCommand(crm2, StateRequestCommand.Type.GET_TRANSACTIONS).send().receiveAll();
-      expectStateRequestCommand(crm2, StateRequestCommand.Type.START_STATE_TRANSFER).send().receiveAllAsync();
+      crm2.expectCommand(StateTransferGetTransactionsCommand.class).send().receiveAll();
+      crm2.expectCommand(StateTransferStartCommand.class).send().receiveAllAsync();
       ControlledRpcManager.BlockedRequest blockedStateResponse0 = crm0.expectCommand(StateResponseCommand.class);
       assertTrue(topologyChangeLatch.await(10, TimeUnit.SECONDS));
 
@@ -176,11 +177,6 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       blockedStateResponse0.send().receiveAll();
 
       newNode.get(10, TimeUnit.SECONDS);
-   }
-
-   private ControlledRpcManager.BlockedRequest expectStateRequestCommand(ControlledRpcManager crm,
-                                                                         StateRequestCommand.Type type) {
-      return crm.expectCommand(StateRequestCommand.class, c -> assertEquals(type, c.getType()));
    }
 
    private Object readWriteKey(MagicKey key, int index) {

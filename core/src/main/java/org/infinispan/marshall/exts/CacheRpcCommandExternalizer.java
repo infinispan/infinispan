@@ -18,6 +18,13 @@ import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
+import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
@@ -39,7 +46,6 @@ import org.infinispan.reactive.publisher.impl.commands.batch.CancelPublisherComm
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
@@ -78,7 +84,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
    @Override
    public Set<Class<? extends CacheRpcCommand>> getTypeClasses() {
       Set<Class<? extends CacheRpcCommand>> coreCommands = Util.asSet(LockControlCommand.class,
-            StateRequestCommand.class, StateResponseCommand.class, ClusteredGetCommand.class,
+            StateResponseCommand.class, ClusteredGetCommand.class,
             SingleRpcCommand.class, CommitCommand.class,
             PrepareCommand.class, RollbackCommand.class,
             TxCompletionNotificationCommand.class, GetInDoubtTransactionsCommand.class,
@@ -101,7 +107,10 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             XSiteStateTransferClearStatusCommand.class, XSiteStateTransferFinishReceiveCommand.class,
             XSiteStateTransferFinishSendCommand.class, XSiteStateTransferRestartSendingCommand.class,
             XSiteStateTransferStartReceiveCommand.class, XSiteStateTransferStartSendCommand.class,
-            XSiteStateTransferStatusRequestCommand.class);
+            XSiteStateTransferStatusRequestCommand.class, ConflictResolutionStartCommand.class,
+            ScatteredStateGetKeysCommand.class, ScatteredStateConfirmRevokedCommand.class,
+            StateTransferCancelCommand.class, StateTransferGetListenersCommand.class,
+            StateTransferGetTransactionsCommand.class, StateTransferStartCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

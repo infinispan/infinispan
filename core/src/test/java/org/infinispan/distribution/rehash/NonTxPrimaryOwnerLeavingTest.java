@@ -8,6 +8,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
@@ -15,7 +16,6 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -74,7 +74,7 @@ public class NonTxPrimaryOwnerLeavingTest extends MultipleCacheManagersTest {
 
       // Block remote put commands invoked from cache0
       ControlledRpcManager crm = ControlledRpcManager.replaceRpcManager(cache0);
-      crm.excludeCommands(StateRequestCommand.class, StateResponseCommand.class);
+      crm.excludeCommands(StateTransferStartCommand.class, StateResponseCommand.class);
 
       // Try to put a key/value from cache0 with cache1 the primary owner
       final MagicKey key = new MagicKey(cache1);

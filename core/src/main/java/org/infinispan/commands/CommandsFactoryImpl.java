@@ -45,6 +45,13 @@ import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
+import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
@@ -108,7 +115,6 @@ import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherComman
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -327,8 +333,38 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int topologyId, IntSet segments) {
-      return new StateRequestCommand(cacheName, subtype, sender, topologyId, segments);
+   public ConflictResolutionStartCommand buildConflictResolutionStartCommand(int topologyId, IntSet segments) {
+      return new ConflictResolutionStartCommand(cacheName, topologyId, segments);
+   }
+
+   @Override
+   public ScatteredStateConfirmRevokedCommand buildScatteredStateConfirmRevokeCommand(int topologyId, IntSet segments) {
+      return new ScatteredStateConfirmRevokedCommand(cacheName, topologyId, segments);
+   }
+
+   @Override
+   public ScatteredStateGetKeysCommand buildScatteredStateGetKeysCommand(int topologyId, IntSet segments) {
+      return new ScatteredStateGetKeysCommand(cacheName, topologyId, segments);
+   }
+
+   @Override
+   public StateTransferCancelCommand buildStateTransferCancelCommand(int topologyId, IntSet segments) {
+      return new StateTransferCancelCommand(cacheName, topologyId, segments);
+   }
+
+   @Override
+   public StateTransferGetListenersCommand buildStateTransferGetListenersCommand(int topologyId) {
+      return new StateTransferGetListenersCommand(cacheName, topologyId);
+   }
+
+   @Override
+   public StateTransferGetTransactionsCommand buildStateTransferGetTransactionsCommand(int topologyId, IntSet segments) {
+      return new StateTransferGetTransactionsCommand(cacheName, topologyId, segments);
+   }
+
+   @Override
+   public StateTransferStartCommand buildStateTransferStartCommand(int topologyId, IntSet segments) {
+      return new StateTransferStartCommand(cacheName, topologyId, segments);
    }
 
    @Override

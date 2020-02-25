@@ -46,8 +46,9 @@ public class StateResponseCommand extends BaseRpcCommand implements TopologyAffe
    private boolean applyState;
 
    /**
-    * Traditional state transfer is pull based (node sends StateRequestCommand and expects StateResponseCommand).
-    * This flags unsolicited StateResponseCommand that should be applied anyway. Used by scattered cache.
+    * Traditional state transfer is pull based (node sends {@link org.infinispan.commands.statetransfer.StateTransferStartCommand}
+    * and expects StateResponseCommand). This flags unsolicited StateResponseCommand that should be applied anyway. Used
+    * by scattered cache.
     */
    private boolean pushTransfer;
 

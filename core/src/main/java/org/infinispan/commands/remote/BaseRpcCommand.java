@@ -6,7 +6,7 @@ import org.infinispan.util.ByteString;
 public abstract class BaseRpcCommand implements CacheRpcCommand {
    protected final ByteString cacheName;
 
-   private Address origin;
+   protected Address origin;
 
    protected BaseRpcCommand(ByteString cacheName) {
       this.cacheName = cacheName;

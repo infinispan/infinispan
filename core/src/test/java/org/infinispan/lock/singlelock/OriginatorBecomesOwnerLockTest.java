@@ -16,13 +16,14 @@ import javax.transaction.SystemException;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -97,7 +98,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
 
    private void testLockMigrationDuringPrepare(final Object key) throws Exception {
       ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(originatorCache);
-      controlledRpcManager.excludeCommands(StateRequestCommand.class, StateResponseCommand.class);
+      controlledRpcManager.excludeCommands(StateTransferStartCommand.class, StateTransferGetTransactionsCommand.class, StateResponseCommand.class);
       final EmbeddedTransactionManager tm = embeddedTm(ORIGINATOR_INDEX);
 
       Future<EmbeddedTransaction> f = fork(() -> {
@@ -194,7 +195,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
 
    private void testLockMigrationDuringCommit(final Object key) throws Exception {
       ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(originatorCache);
-      controlledRpcManager.excludeCommands(StateRequestCommand.class, StateResponseCommand.class);
+      controlledRpcManager.excludeCommands(StateTransferStartCommand.class, StateTransferGetTransactionsCommand.class, StateResponseCommand.class);
       final EmbeddedTransactionManager tm = embeddedTm(ORIGINATOR_INDEX);
 
       Future<EmbeddedTransaction> f = fork(() -> {

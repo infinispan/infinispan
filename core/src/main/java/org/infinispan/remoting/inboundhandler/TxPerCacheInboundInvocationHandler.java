@@ -4,13 +4,19 @@ import java.util.Collection;
 
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
+import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.CheckTopologyAction;
 import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
@@ -52,6 +58,7 @@ public class TxPerCacheInboundInvocationHandler extends BasePerCacheInboundInvoc
          final boolean sync = order.preserveOrder();
          final BlockingRunnable runnable;
 
+         boolean waitForTransactionalData = true;
          switch (command.getCommandId()) {
             case PrepareCommand.COMMAND_ID:
             case VersionedPrepareCommand.COMMAND_ID:
@@ -67,9 +74,16 @@ public class TxPerCacheInboundInvocationHandler extends BasePerCacheInboundInvoc
                      sync, createReadyAction(commandTopologyId, (LockControlCommand) command)
                );
                break;
+            case ConflictResolutionStartCommand.COMMAND_ID:
+            case ScatteredStateConfirmRevokedCommand.COMMAND_ID:
+            case ScatteredStateGetKeysCommand.COMMAND_ID:
+            case StateTransferCancelCommand.COMMAND_ID:
+            case StateTransferGetListenersCommand.COMMAND_ID:
+            case StateTransferGetTransactionsCommand.COMMAND_ID:
+            case StateTransferStartCommand.COMMAND_ID:
+               waitForTransactionalData = false;
             default:
-               runnable = createDefaultRunnable(command, reply, commandTopologyId,
-                     command.getCommandId() != StateRequestCommand.COMMAND_ID, onExecutorService, sync);
+               runnable = createDefaultRunnable(command, reply, commandTopologyId, waitForTransactionalData, onExecutorService, sync);
                break;
          }
          handleRunnable(runnable, onExecutorService);

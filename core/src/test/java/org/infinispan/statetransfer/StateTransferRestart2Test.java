@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -29,7 +30,7 @@ import org.testng.annotations.Test;
  * Tests scenario for ISPN-7127
  *
  * - create nodes A, B - start node C - starts state transfer from B to C
- * - abruptly kill B before it is able to reply to the StateRequestCommand from C
+ * - abruptly kill B before it is able to reply to the {@link StateTransferStartCommand} from C
  * - C resends the request to A
  * - finally cluster A, C is formed where all entries are properly backed up on both nodes
  *
@@ -113,9 +114,7 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
       public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
                                                   ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                   long timeout, TimeUnit unit) {
-         if (command instanceof StateRequestCommand &&
-               ((StateRequestCommand) command).getType() == StateRequestCommand.Type.START_STATE_TRANSFER &&
-             target.equals(address(1))) {
+         if (command instanceof StateTransferStartCommand && target.equals(address(1))) {
             d1.setDiscardAll(true);
 
             fork((Callable<Void>) () -> {

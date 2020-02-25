@@ -10,6 +10,13 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
+import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
@@ -30,7 +37,6 @@ import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.inboundhandler.action.TriangleOrderAction;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.CommandAckCollector;
@@ -91,8 +97,14 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
             case ExceptionAckCommand.COMMAND_ID:
                handleBackupAckCommand((BackupAckCommand) command);
                return;
-            case StateRequestCommand.COMMAND_ID:
-               handleStateRequestCommand((StateRequestCommand) command, reply, order);
+            case ConflictResolutionStartCommand.COMMAND_ID:
+            case ScatteredStateConfirmRevokedCommand.COMMAND_ID:
+            case ScatteredStateGetKeysCommand.COMMAND_ID:
+            case StateTransferCancelCommand.COMMAND_ID:
+            case StateTransferGetListenersCommand.COMMAND_ID:
+            case StateTransferGetTransactionsCommand.COMMAND_ID:
+            case StateTransferStartCommand.COMMAND_ID:
+               handleStateRequestCommand(command, reply, order);
                return;
             default:
                handleDefaultCommand(command, reply, order);
@@ -142,7 +154,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       return trace;
    }
 
-   private void handleStateRequestCommand(StateRequestCommand command, Reply reply, DeliverOrder order) {
+   private void handleStateRequestCommand(CacheRpcCommand command, Reply reply, DeliverOrder order) {
       if (executeOnExecutorService(order, command)) {
          BlockingRunnable runnable = createDefaultRunnable(command, reply, extractCommandTopologyId(command),
                TopologyMode.READY_TOPOLOGY, order.preserveOrder());

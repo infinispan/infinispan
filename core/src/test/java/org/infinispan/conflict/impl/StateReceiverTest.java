@@ -23,6 +23,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
+import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
@@ -45,7 +47,6 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateChunk;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
@@ -53,6 +54,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -135,18 +137,15 @@ public class StateReceiverTest extends AbstractInfinispanTest {
       RpcManager rpcManager = mock(RpcManager.class);
       CacheNotifier<?, ?> cacheNotifier = mock(CacheNotifier.class);
 
-      when(rpcManager.invokeCommand(any(Collection.class), any(StateRequestCommand.class), any(), any()))
-            .thenAnswer(invocation -> {
-               Collection<Address> recipients = (Collection<Address>) invocation.getArguments()[0];
-               Address recipient = recipients.iterator().next();
-               StateRequestCommand cmd = (StateRequestCommand) invocation.getArguments()[1];
-               Map<Address, Response> results = new HashMap<>(1);
-               if (cmd.getType().equals(StateRequestCommand.Type.START_CONSISTENCY_CHECK)
-                     || cmd.getType().equals(StateRequestCommand.Type.CANCEL_CONSISTENCY_CHECK)) {
-                  results.put(recipient, SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
-               }
-               return results;
-            });
+      Answer<?> answer = invocation -> {
+         Collection<Address> recipients = (Collection<Address>) invocation.getArguments()[0];
+         Address recipient = recipients.iterator().next();
+         Map<Address, Response> results = new HashMap<>(1);
+         results.put(recipient, SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
+         return results;
+      };
+      when(rpcManager.invokeCommand(any(Collection.class), any(ConflictResolutionStartCommand.class), any(), any())).thenAnswer(answer);
+      when(rpcManager.invokeCommand(any(Collection.class), any(StateTransferCancelCommand.class), any(), any())).thenAnswer(answer);
 
       when(rpcManager.getSyncRpcOptions()).thenAnswer(invocation -> new RpcOptions(DeliverOrder.PER_SENDER, 10000, TimeUnit.MILLISECONDS));
 

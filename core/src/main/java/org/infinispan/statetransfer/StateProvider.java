@@ -34,7 +34,7 @@ public interface StateProvider {
 
    /**
     * Gets the list of transactions that affect keys from the given segments. This is invoked in response to a
-    * StateRequestCommand of type StateRequestCommand.Type.GET_TRANSACTIONS.
+    * {@link org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand}.
     *
     * @param destination the address of the requester
     * @param topologyId required topology before we can start collecting transactions
@@ -47,7 +47,7 @@ public interface StateProvider {
 
    /**
     * Start to send cache entries that belong to the given set of segments. This is invoked in response to a
-    * StateRequestCommand of type StateRequestCommand.Type.START_STATE_TRANSFER.
+    * {@link org.infinispan.commands.statetransfer.StateTransferStartCommand}.
     *
     * If the applyState field is set to false, then upon delivery at the destination the cache entries are processed
     * by a {@link StateReceiver} and are not applied to the local cache.
@@ -60,7 +60,7 @@ public interface StateProvider {
 
    /**
     * Cancel sending of cache entries that belong to the given set of segments. This is invoked in response to a
-    * StateRequestCommand of type StateRequestCommand.Type.CANCEL_STATE_TRANSFER.
+    * {@link org.infinispan.commands.statetransfer.StateTransferCancelCommand}.
     *
     * @param destination the address of the requester
     * @param topologyId

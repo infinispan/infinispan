@@ -30,6 +30,13 @@ import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
+import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
+import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
+import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.topology.CacheAvailabilityUpdateCommand;
 import org.infinispan.commands.topology.CacheJoinCommand;
 import org.infinispan.commands.topology.CacheLeaveCommand;
@@ -79,7 +86,6 @@ import org.infinispan.reactive.publisher.impl.commands.batch.CancelPublisherComm
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
@@ -296,8 +302,26 @@ public class RemoteCommandsFactory {
             case ClusteredGetCommand.COMMAND_ID:
                command = new ClusteredGetCommand(cacheName);
                break;
-            case StateRequestCommand.COMMAND_ID:
-               command = new StateRequestCommand(cacheName);
+            case ConflictResolutionStartCommand.COMMAND_ID:
+               command = new ConflictResolutionStartCommand(cacheName);
+               break;
+            case ScatteredStateConfirmRevokedCommand.COMMAND_ID:
+               command = new ScatteredStateConfirmRevokedCommand(cacheName);
+               break;
+            case ScatteredStateGetKeysCommand.COMMAND_ID:
+               command = new ScatteredStateGetKeysCommand(cacheName);
+               break;
+            case StateTransferCancelCommand.COMMAND_ID:
+               command = new StateTransferCancelCommand(cacheName);
+               break;
+            case StateTransferStartCommand.COMMAND_ID:
+               command = new StateTransferStartCommand(cacheName);
+               break;
+            case StateTransferGetListenersCommand.COMMAND_ID:
+               command = new StateTransferGetListenersCommand(cacheName);
+               break;
+            case StateTransferGetTransactionsCommand.COMMAND_ID:
+               command = new StateTransferGetTransactionsCommand(cacheName);
                break;
             case StateResponseCommand.COMMAND_ID:
                command = new StateResponseCommand(cacheName);

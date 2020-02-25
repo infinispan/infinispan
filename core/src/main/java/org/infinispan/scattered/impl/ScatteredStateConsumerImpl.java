@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -49,7 +50,6 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateConsumerImpl;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -153,9 +153,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       if (trace)
          log.tracef("Revoking all segments, chunk counter reset to 0");
 
-      StateRequestCommand command = commandsFactory.buildStateRequestCommand(
-            StateRequestCommand.Type.CONFIRM_REVOKED_SEGMENTS,
-            rpcManager.getAddress(), cacheTopology.getTopologyId(), addedSegments);
+      CacheRpcCommand command = commandsFactory.buildScatteredStateConfirmRevokeCommand(cacheTopology.getTopologyId(), addedSegments);
             // we need to wait synchronously for the completion
       return rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(),
                                            rpcManager.getSyncRpcOptions())

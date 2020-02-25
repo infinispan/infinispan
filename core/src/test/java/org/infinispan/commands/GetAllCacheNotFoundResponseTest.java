@@ -23,7 +23,6 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
-import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -48,7 +47,7 @@ public class GetAllCacheNotFoundResponseTest extends MultipleCacheManagersTest {
 
    public void test() throws InterruptedException, ExecutionException, TimeoutException {
       ControlledRpcManager crm4 = ControlledRpcManager.replaceRpcManager(cache(4));
-      crm4.excludeCommands(StateRequestCommand.class, StateResponseCommand.class);
+      crm4.excludeCommands(StateResponseCommand.class);
 
       MagicKey key1 = new MagicKey(cache(0), cache(1));
       MagicKey key2 = new MagicKey(cache(0), cache(2));
