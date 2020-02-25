@@ -277,7 +277,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return cacheTopology;
    }
 
-   private Object primaryReturnHandler(InvocationContext ctx, AbstractDataWriteCommand command, Object localResult) {
+   protected Object primaryReturnHandler(InvocationContext ctx, AbstractDataWriteCommand command, Object localResult) {
       if (!command.isSuccessful()) {
          if (trace) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
          return localResult;
