@@ -39,12 +39,15 @@ public class AnchoredKeysConfigurationBuilder implements Builder<AnchoredKeysCon
 
    @Override
    public void validate() {
-      if (rootBuilder.clustering().cacheMode() != CacheMode.INVALIDATION_SYNC) {
-         throw new CacheConfigurationException("Anchored keys requires cache mode to be INVALIDATION_SYNC");
+      if (!rootBuilder.clustering().cacheMode().isReplicated()) {
+         throw new CacheConfigurationException("Anchored keys requires cache to be in replication mode");
       }
       if (rootBuilder.transaction().transactionMode() != null && rootBuilder.transaction().transactionMode().isTransactional()) {
          throw new CacheConfigurationException("Anchored keys do not support transactions");
       }
+
+      // TODO Maybe just assert that awaitInitialTransfer is disabled instead?
+      rootBuilder.clustering().stateTransfer().awaitInitialTransfer(false);
    }
 
    @Override
