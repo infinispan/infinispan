@@ -1,0 +1,14 @@
+[id='cdi_dependencies']
+= CDI Dependencies
+Update your `pom.xml` with one of the following dependencies to include the
+{brandname} CDI extension in your project:
+
+.Embedded (Library) Mode
+----
+include::dependencies_maven/cdi_embedded.xml[]
+----
+
+.Server Mode
+----
+include::dependencies_maven/cdi_remote.xml[]
+----
