@@ -127,7 +127,6 @@
       <module>spring/spring5/spring5-common</module>
       <module>spring/spring5/spring5-embedded</module>
       <module>spring/spring5/spring5-remote</module>
-      <module>cli/cli-interpreter</module>
       <module>cli/cli-client</module>
       <module>tasks/api</module>
       <module>tasks/manager</module>
