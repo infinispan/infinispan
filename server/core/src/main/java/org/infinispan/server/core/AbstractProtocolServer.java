@@ -1,12 +1,15 @@
 package org.infinispan.server.core;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.ObjectName;
 
+import org.eclipse.microprofile.metrics.MetricID;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.logging.LogFactory;
@@ -14,6 +17,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.metrics.impl.CacheManagerMetricsRegistration;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyTransport;
@@ -44,6 +48,8 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    private ThreadPoolExecutor executor;
    private ManageableThreadPoolExecutorService manageableThreadPoolExecutorService;
    private ObjectName executorObjName;
+   private CacheManagerMetricsRegistration metricsRegistration;
+   private Set<MetricID> metricIds;
 
    protected AbstractProtocolServer(String protocolName) {
       this.protocolName = protocolName;
@@ -142,6 +148,8 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
          }
          throw re;
       }
+
+      registerMetrics();
    }
 
    public ThreadPoolExecutor getExecutor() {
@@ -171,6 +179,22 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       }
    }
 
+   protected void registerMetrics() {
+      metricsRegistration = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(CacheManagerMetricsRegistration.class);
+      if (metricsRegistration.metricsEnabled()) {
+         String protocol = "server_" + getQualifiedName() + '_' + configuration.port();
+         metricIds = Collections.synchronizedSet(metricsRegistration.registerExternalMetrics(transport, protocol));
+         metricIds.addAll(metricsRegistration.registerExternalMetrics(manageableThreadPoolExecutorService, protocol));
+      }
+   }
+
+   protected void unregisterMetrics() {
+      if (metricIds != null) {
+         metricsRegistration.unregisterMetrics(metricIds);
+         metricIds = null;
+      }
+   }
+
    public final String getQualifiedName() {
       return protocolName + (configuration.name().length() > 0 ? "-" : "") + configuration.name();
    }
@@ -192,6 +216,8 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       } catch (Exception e) {
          throw new CacheException(e);
       }
+
+      unregisterMetrics();
 
       if (isDebug)
          log.debug("Server stopped");

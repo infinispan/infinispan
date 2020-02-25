@@ -89,7 +89,6 @@ public class LazyInitializingScheduledExecutorService extends ManageableExecutor
          return true;
       else
          return executor.awaitTermination(timeout, unit);
-
    }
 
    @Override
