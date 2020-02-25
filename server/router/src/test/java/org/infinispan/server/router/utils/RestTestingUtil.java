@@ -1,11 +1,11 @@
 package org.infinispan.server.router.utils;
 
-import org.infinispan.rest.client.NettyHttpClient;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.rest.RestServer;
+import org.infinispan.rest.client.NettyHttpClient;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.router.Router;
 
