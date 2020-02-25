@@ -11,7 +11,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
-import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 
@@ -34,7 +33,7 @@ final class SecurityActions {
    }
 
    static Properties getSystemProperties() {
-      return doPrivileged(() -> System.getProperties());
+      return doPrivileged(System::getProperties);
    }
 
    static void addSecurityProvider(Provider provider) {
@@ -67,12 +66,11 @@ final class SecurityActions {
       return doPrivileged(action);
    }
 
-   static void startProtocolServer(final ProtocolServer server, final ProtocolServerConfiguration configuration, final EmbeddedCacheManager cacheManager, final CacheIgnoreManager cacheIgnoreManager) {
-      PrivilegedAction<Void> action = () -> {
-         server.start(configuration, cacheManager, cacheIgnoreManager);
+   static void startProtocolServer(ProtocolServer<ProtocolServerConfiguration> server, ProtocolServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
+      doPrivileged(() -> {
+         server.start(configuration, cacheManager);
          return null;
-      };
-      doPrivileged(action);
+      });
    }
 
    static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager manager) {

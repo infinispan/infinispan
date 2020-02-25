@@ -18,17 +18,13 @@ import io.netty.channel.ChannelOutboundHandler;
 public interface ProtocolServer<C extends ProtocolServerConfiguration> {
 
    /**
-    * Starts the server backed by the given cache manager and with the corresponding configuration.
+    * Starts the server backed by the given cache manager, with the corresponding configuration. The cache manager is
+    * expected to be completely initialized and started prior to this call.
     */
    void start(C configuration, EmbeddedCacheManager cacheManager);
 
    /**
-    * Starts the server backed by the given cache manager, with the corresponding configuration and the handler for the ignored caches state
-    */
-   void start(C configuration, EmbeddedCacheManager cacheManager, CacheIgnoreManager cacheIgnore);
-
-   /**
-    *  Stops the server
+    * Stops the server.
     */
    void stop();
 
