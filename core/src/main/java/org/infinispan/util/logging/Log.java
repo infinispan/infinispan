@@ -198,7 +198,7 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Unable to unregister MBean %s", id = 33)
 //   void unableToUnregisterMBean(String name, @Cause Exception e);
 
-   @Message(value = "The '%s' JMX domain is already in use", id = 34)
+   @Message(value = "The '%s' JMX domain is already in use.", id = 34)
    JmxDomainConflictException jmxMBeanAlreadyRegistered(String jmxDomain, @Cause Throwable cause);
 
 //   @LogMessage(level = WARN)

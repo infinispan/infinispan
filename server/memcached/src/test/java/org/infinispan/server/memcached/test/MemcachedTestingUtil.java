@@ -97,16 +97,15 @@ public class MemcachedTestingUtil {
       if (server != null) server.stop();
    }
 
-}
+   private static final class UniquePortThreadLocal extends ThreadLocal<Integer> {
 
-class UniquePortThreadLocal extends ThreadLocal<Integer> {
-   private UniquePortThreadLocal() { }
+      static UniquePortThreadLocal INSTANCE = new UniquePortThreadLocal();
 
-   static UniquePortThreadLocal INSTANCE = new UniquePortThreadLocal();
+      private static final AtomicInteger uniqueAddr = new AtomicInteger(16211);
 
-   private static final AtomicInteger uniqueAddr = new AtomicInteger(16211);
-   @Override
-   protected Integer initialValue() {
-      return uniqueAddr.getAndAdd(100);
+      @Override
+      protected Integer initialValue() {
+         return uniqueAddr.getAndAdd(100);
+      }
    }
 }

@@ -43,7 +43,7 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
    }
 
    protected EmbeddedCacheManager createTestCacheManager() {
-      return TestCacheManagerFactory.createCacheManager(false);
+      return TestCacheManagerFactory.createCacheManager(true);
    }
 
    @AfterClass(alwaysRun = true)

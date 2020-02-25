@@ -10,6 +10,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -25,19 +30,27 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  *
  * @since 10.0
  */
+@Scope(Scopes.GLOBAL)
 public final class CacheIgnoreManager {
    private static final String IGNORED_CACHES_KEY = "ignored-caches";
 
-   private final Cache<String, IgnoredCaches> cache;
+   private Cache<String, IgnoredCaches> cache;
    private final IgnoredCaches ignored = new IgnoredCaches();
-   private final Object listener = new CacheListener();
+   private final CacheListener listener = new CacheListener();
    private volatile boolean hasIgnores;
    private volatile boolean stopped;
 
-   public CacheIgnoreManager(EmbeddedCacheManager cacheManager) {
-      this.cache = cacheManager.getCache(SERVER_STATE_CACHE);
-      this.updateLocalCopy(cache.get(IGNORED_CACHES_KEY));
-      this.cache.addListener(listener);
+   @Inject
+   EmbeddedCacheManager cacheManager;
+
+   CacheIgnoreManager() {
+   }
+
+   @Start
+   public void start() {
+      cache = cacheManager.getCache(SERVER_STATE_CACHE);
+      updateLocalCopy(cache.get(IGNORED_CACHES_KEY));
+      cache.addListener(listener);
    }
 
    public CompletableFuture<Void> unignoreCache(String cacheName) {
@@ -53,7 +66,6 @@ public final class CacheIgnoreManager {
          ignored.caches.add(cacheName);
          hasIgnores = !ignored.caches.isEmpty();
          return cache.putAsync(IGNORED_CACHES_KEY, ignored).thenApply(r -> null);
-
       }
    }
 
@@ -75,6 +87,7 @@ public final class CacheIgnoreManager {
       }
    }
 
+   @Stop
    public void stop() {
       synchronized (this) {
          if (!stopped)
@@ -103,7 +116,9 @@ public final class CacheIgnoreManager {
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.IGNORED_CACHES)
-   static class IgnoredCaches {
+   static final class IgnoredCaches {
+
+      @ProtoField(number = 1, collectionImplementation = HashSet.class)
       final Set<String> caches;
 
       IgnoredCaches() {
@@ -115,11 +130,6 @@ public final class CacheIgnoreManager {
          // ProtoStream cannot use KeySetView directly as it does not have a zero args constructor
          this.caches = ConcurrentHashMap.newKeySet(caches.size());
          this.caches.addAll(caches);
-      }
-
-      @ProtoField(number = 1, collectionImplementation = HashSet.class)
-      Set<String> getCaches() {
-         return caches;
       }
    }
 }
