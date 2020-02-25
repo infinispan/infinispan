@@ -5,7 +5,6 @@ import java.nio.file.Path;
 
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.AuthenticationConfiguration;
 import org.infinispan.rest.configuration.RestServerConfiguration;
@@ -98,13 +97,12 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    }
 
    @Override
-   protected void startInternal(RestServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
-      this.configuration = configuration;
+   protected void startInternal() {
       AuthenticationConfiguration auth = configuration.authentication();
       if (auth.enabled()) {
          auth.authenticator().init(this);
       }
-      super.startInternal(configuration, cacheManager);
+      super.startInternal();
       restCacheManager = new RestCacheManager<>(cacheManager, this::isCacheIgnored);
 
       invocationHelper = new InvocationHelper(restCacheManager,

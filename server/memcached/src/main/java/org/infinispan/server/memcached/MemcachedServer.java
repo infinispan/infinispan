@@ -1,6 +1,5 @@
 package org.infinispan.server.memcached;
 
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -11,7 +10,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ExpirationConfiguration;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
@@ -33,16 +31,19 @@ import io.netty.channel.ChannelOutboundHandler;
  */
 @Deprecated
 public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfiguration> {
+
+   private final static Log log = LogFactory.getLog(MemcachedServer.class, Log.class);
+
+   protected final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+   private AdvancedCache<byte[], byte[]> memcachedCache;
+
    public MemcachedServer() {
       super("Memcached");
    }
 
-   private final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
-   protected ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-   private AdvancedCache<byte[], byte[]> memcachedCache;
-
    @Override
-   protected void startInternal(MemcachedServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
+   protected void startInternal() {
       if (cacheManager.getCacheConfiguration(configuration.defaultCacheName()) == null) {
          ConfigurationBuilder builder = new ConfigurationBuilder();
          Configuration defaultCacheConfiguration = cacheManager.getDefaultCacheConfiguration();
@@ -59,7 +60,7 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
       Cache<byte[], byte[]> cache = cacheManager.getCache(configuration.defaultCacheName());
       memcachedCache = cache.getAdvancedCache();
 
-      super.startInternal(configuration, cacheManager);
+      super.startInternal();
    }
 
    @Override

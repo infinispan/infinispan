@@ -36,7 +36,7 @@ public class IgnoreCaches {
    private static final String CACHE_MANAGER = "default";
 
    @Test
-   public void testIgnoreCaches() throws Exception {
+   public void testIgnoreCaches() {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
       String testCache = SERVER_TEST.getMethodName();
@@ -82,7 +82,7 @@ public class IgnoreCaches {
       assertStatus(204, client.server().ignoreCache(CACHE_MANAGER, cacheName));
    }
 
-   private Set<String> getIgnoredCaches(RestClient client, String cacheManagerName) throws Exception {
+   private Set<String> getIgnoredCaches(RestClient client, String cacheManagerName) {
       JsonNode body = RestResponses.jsonResponseBody(client.server().listIgnoredCaches(cacheManagerName));
       Set<String> res = new HashSet<>();
       body.elements().forEachRemaining(n -> res.add(n.asText()));
