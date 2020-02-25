@@ -5,13 +5,11 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.cli.interpreter.Interpreter;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
@@ -268,12 +266,6 @@ final class SecurityActions {
       return null;
    }
 
-   static Map<String, String> executeInterpreter(final Interpreter interpreter, final String sessionId,
-                                                 final String command) throws Exception {
-      PrivilegedExceptionAction<Map<String, String>> action = () -> interpreter.execute(sessionId, command);
-      return doPrivileged(action);
-   }
-
    static SearchManager getSearchManager(AdvancedCache<?, ?> cache) {
       GetSearchManagerAction action = new GetSearchManagerAction(cache);
       return doPrivileged(action);
@@ -296,6 +288,6 @@ final class SecurityActions {
 
    static Optional<CounterManager> findCounterManager(EmbeddedCacheManager cacheManager) {
       return Optional.ofNullable(doPrivileged((PrivilegedAction<CounterManager>) () -> EmbeddedCounterManagerFactory
-                                                                                          .asCounterManager(cacheManager)));
+            .asCounterManager(cacheManager)));
    }
 }
