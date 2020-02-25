@@ -7,7 +7,6 @@ import java.util.Set;
 import org.eclipse.microprofile.metrics.MetricID;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -56,18 +55,12 @@ abstract class AbstractMetricsRegistration {
    @Stop
    protected void stop() {
       if (metricIds != null) {
-         try {
-            for (MetricID metricId : metricIds) {
-               infinispanMetricRegistry.unregisterMetric(metricId);
-            }
-            metricIds = null;
-         } catch (Exception e) {
-            throw new CacheException("Failure while unregistering metrics", e);
-         }
+         unregisterMetrics(metricIds);
+         metricIds = null;
       }
    }
 
-   protected boolean metricsEnabled() {
+   public boolean metricsEnabled() {
       return infinispanMetricRegistry != null && globalConfig.metrics().enabled();
    }
 
@@ -80,28 +73,76 @@ abstract class AbstractMetricsRegistration {
             if (instance != null) {
                MBeanMetadata beanMetadata = basicComponentRegistry.getMBeanMetadata(instance.getClass().getName());
                if (beanMetadata != null) {
-                  registerMetrics(instance, beanMetadata, component.getName());
+                  Set<MetricID> ids = registerMetrics(instance, beanMetadata, null, component.getName(), null);
+                  metricIds.addAll(ids);
                }
             }
          }
       }
    }
 
-   //todo [anistor] the 'type' attribute from the ObjectName should be probably used too
-   private void registerMetrics(Object instance, MBeanMetadata beanMetadata, String componentName) {
+   private Set<MetricID> registerMetrics(Object instance, MBeanMetadata beanMetadata, String type, String componentName, String suffix) {
       String jmxObjectName = beanMetadata.getJmxObjectName();
       if (jmxObjectName == null) {
          jmxObjectName = componentName;
       }
+      if (jmxObjectName == null) {
+         throw new IllegalArgumentException("No MBean name and no component name was specified");
+      }
       String metricPrefix = namePrefix;
       if (!jmxObjectName.equals("Cache") && !jmxObjectName.equals("CacheManager")) {
-         metricPrefix = namePrefix + "_" + NameUtils.decamelize(jmxObjectName);
+         if (type != null && !type.equals(jmxObjectName)) {
+            metricPrefix += '_' + NameUtils.decamelize(type);
+         }
+         metricPrefix += '_' + NameUtils.decamelize(jmxObjectName);
+         if (suffix != null) {
+            metricPrefix += '_' + NameUtils.decamelize(suffix);
+         }
       }
-      GlobalMetricsConfiguration metricsCfg = globalConfig.metrics();
-      if (metricsCfg.prefix() != null && !metricsCfg.prefix().isEmpty()) {
-         metricPrefix = metricsCfg.prefix() + "_" + metricPrefix;
+      return infinispanMetricRegistry.registerMetrics(instance, beanMetadata, metricPrefix);
+   }
+
+   /**
+    * Register metrics for a component that was manually registered later, after component registry startup. The metric
+    * ids will be tracked and unregistration will be performed automatically on stop.
+    */
+   public void registerMetrics(Object instance, String type, String componentName) {
+      if (infinispanMetricRegistry == null) {
+         throw new IllegalStateException("Microprofile metrics are not initialized");
       }
-      Set<MetricID> ids = infinispanMetricRegistry.registerMetrics(instance, beanMetadata, metricPrefix);
+      MBeanMetadata beanMetadata = basicComponentRegistry.getMBeanMetadata(instance.getClass().getName());
+      if (beanMetadata == null) {
+         throw new IllegalArgumentException("No MBean metadata available for " + instance.getClass().getName());
+      }
+      Set<MetricID> ids = registerMetrics(instance, beanMetadata, type, componentName, null);
       metricIds.addAll(ids);
+   }
+
+   /**
+    * Register metrics for a component that was manually registered later, after component registry startup. The metric
+    * ids will <b>NOT</b> be tracked and unregistration will <b>NOT</b> be performed automatically on stop.
+    */
+   public Set<MetricID> registerExternalMetrics(Object instance, String suffix) {
+      if (infinispanMetricRegistry == null) {
+         throw new IllegalStateException("Microprofile metrics are not initialized");
+      }
+      MBeanMetadata beanMetadata = basicComponentRegistry.getMBeanMetadata(instance.getClass().getName());
+      if (beanMetadata == null) {
+         throw new IllegalArgumentException("No MBean metadata available for " + instance.getClass().getName());
+      }
+      return registerMetrics(instance, beanMetadata, null, null, suffix);
+   }
+
+   public void unregisterMetrics(Set<MetricID> metricIds) {
+      if (infinispanMetricRegistry == null) {
+         throw new IllegalStateException("Microprofile metrics are not initialized");
+      }
+      try {
+         for (MetricID metricId : metricIds) {
+            infinispanMetricRegistry.unregisterMetric(metricId);
+         }
+      } catch (Exception e) {
+         throw new CacheException("Failure while unregistering metrics", e);
+      }
    }
 }

@@ -49,6 +49,7 @@ import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
+import org.infinispan.metrics.impl.CacheMetricsRegistration;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Transformer;
@@ -217,7 +218,7 @@ public class LifecycleManager implements ModuleLifecycle {
          MutableSearchFactory mutableSearchFactory = searchFactory.unwrap(MutableSearchFactory.class);
          mutableSearchFactory.getFilterDefinitions().remove(SEGMENT_FILTER_NAME);
          Class<?>[] indexedEntities = indexingConfiguration.indexedEntities().toArray(new Class<?>[0]);
-         for(Class<?> clazz : indexedEntities) {
+         for (Class<?> clazz : indexedEntities) {
             mutableSearchFactory.getProgrammaticMapping().entity(clazz).classBridge(SegmentFieldBridge.class);
          }
          searchFactory.addClasses(indexedEntities);
@@ -225,7 +226,22 @@ public class LifecycleManager implements ModuleLifecycle {
 
       checkIndexableClasses(searchFactory, indexingConfiguration.indexedEntities());
 
-      registerQueryMBeans(cr, configuration, searchFactory);
+      AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
+      MassIndexer massIndexer = ComponentRegistryUtils.getMassIndexer(cache);
+      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchFactory, massIndexer);
+      stats.setStatisticsEnabled(configuration.statistics().enabled());
+      cr.registerComponent(stats, InfinispanQueryStatisticsInfo.class);
+
+      registerQueryMBeans(cr, massIndexer, stats);
+
+      registerMetrics(cr, stats);
+   }
+
+   private void registerMetrics(ComponentRegistry cr, InfinispanQueryStatisticsInfo stats) {
+      CacheMetricsRegistration cacheMetricsRegistration = cr.getComponent(CacheMetricsRegistration.class);
+      if (cacheMetricsRegistration.metricsEnabled()) {
+         cacheMetricsRegistration.registerMetrics(stats, "query", "statistics");
+      }
    }
 
    /**
@@ -243,15 +259,10 @@ public class LifecycleManager implements ModuleLifecycle {
    /**
     * Register query statistics and mass-indexer MBeans for a cache.
     */
-   private void registerQueryMBeans(ComponentRegistry cr, Configuration cfg, SearchIntegrator searchIntegrator) {
-      AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
-      MassIndexer massIndexer = ComponentRegistryUtils.getMassIndexer(cache);
-      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchIntegrator, massIndexer);
-      stats.setStatisticsEnabled(cfg.statistics().enabled());
-      cr.registerComponent(stats, InfinispanQueryStatisticsInfo.class);
-
+   private void registerQueryMBeans(ComponentRegistry cr, MassIndexer massIndexer, InfinispanQueryStatisticsInfo stats) {
       GlobalConfiguration globalConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration();
       if (globalConfig.jmx().enabled()) {
+         Cache<?, ?> cache = cr.getComponent(Cache.class);
          String queryGroupName = getQueryGroupName(globalConfig.cacheManagerName(), cache.getName());
          CacheJmxRegistration jmxRegistration = cr.getComponent(CacheJmxRegistration.class);
          try {
