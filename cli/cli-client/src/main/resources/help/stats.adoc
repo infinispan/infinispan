@@ -1,0 +1,27 @@
+STATS(1)
+===========
+:doctype: manpage
+
+
+NAME
+----
+stats - displays statistics about resources.
+
+
+SYNOPSIS
+--------
+*stats* ['PATH']
+
+
+EXAMPLES
+--------
+`stats //containers/default` +
+Displays statistics about the default container.
+
+`stats //containers/default/caches/mycache` +
+Displays statistics about the `mycache` cache.
+
+
+SEE ALSO
+--------
+cd(1), ls(1), describe(1)
