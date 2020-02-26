@@ -376,9 +376,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
       final AdvancedCache<Object, Object> flaggedCache = getCacheForStateInsertion();
       return Flowable.fromPublisher(preloadCl.entryPublisher(null, true, true))
             .take(maxEntries)
-            .observeOn(nonBlockingScheduler)
             .doOnNext(me -> preloadKey(flaggedCache, me))
             .count()
+            .observeOn(nonBlockingScheduler)
             .subscribeOn(blockingScheduler)
             .to(RxJavaInterop.singleToCompletionStage())
             .thenAccept(insertAmount -> {
