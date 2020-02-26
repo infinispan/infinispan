@@ -89,4 +89,7 @@ public interface Messages {
 
    @Message("Could not connect to server: %s")
    ConnectException connectionFailed(String message);
+
+   @Message("Invalid resource '%s'")
+   IllegalArgumentException invalidResource(String name);
 }
