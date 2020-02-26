@@ -309,9 +309,12 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    /**
     * Returns statistics for this cache manager
     *
-    * since 7.1
+    * @since 7.1
     * @return statistics for this cache manager
+    * @deprecated Since 10.1.3. This mixes statistics across unrelated caches so the reported numbers don't have too much
+    * relevance.
     */
+   @Deprecated
    CacheContainerStats getStats();
 
    /**
