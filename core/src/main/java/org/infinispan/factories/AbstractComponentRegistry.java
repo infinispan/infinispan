@@ -149,7 +149,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
       return getComponent(componentClass, name);
    }
 
-   @SuppressWarnings("unchecked")
    protected <T> T getOrCreateComponent(Class<T> componentClass, String name, boolean nameIsFQCN) {
       return getComponent(componentClass, name);
    }
@@ -160,10 +159,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
     * @param type type to find
     * @return component, or null
     */
-   @SuppressWarnings("unchecked")
    public <T> T getComponent(Class<T> type) {
       String className = type.getName();
-      return (T) getComponent(type, className);
+      return getComponent(type, className);
    }
 
    @SuppressWarnings("unchecked")
@@ -176,7 +174,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
       return (T) getComponent(componentClassName, name, false);
    }
 
-   @SuppressWarnings("unchecked")
    public <T> T getComponent(Class<T> componentClass, String name) {
       ComponentRef<T> component = basicComponentRegistry.getComponent(name, componentClass);
       return component != null ? component.wired() : null;
