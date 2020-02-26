@@ -14,7 +14,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
 /**
- * If {@link org.infinispan.configuration.cache.Configuration#jmxStatistics()} is enabled, then class will register all
+ * If {@link org.infinispan.configuration.cache.Configuration#statistics()} is enabled, then class will register all
  * the MBeans from cache local's ConfigurationRegistry to the MBean server.
  *
  * @author Mircea.Markus@jboss.com
