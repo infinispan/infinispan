@@ -98,7 +98,7 @@ import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherComman
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
-import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
@@ -446,7 +446,7 @@ public interface CommandsFactory {
    /**
     * Builds a StateResponseCommand used for pushing cache entries to another node.
     */
-   StateResponseCommand buildStateResponseCommand(Address sender, int viewId, Collection<StateChunk> stateChunks, boolean applyState, boolean pushTransfer);
+   StateResponseCommand buildStateResponseCommand(int viewId, Collection<StateChunk> stateChunks, boolean applyState, boolean pushTransfer);
 
    /**
     * Retrieves the cache name this CommandFactory is set up to construct commands for.

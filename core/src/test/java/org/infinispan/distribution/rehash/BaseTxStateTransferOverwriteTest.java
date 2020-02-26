@@ -39,7 +39,7 @@ import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateConsumer;
-import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;

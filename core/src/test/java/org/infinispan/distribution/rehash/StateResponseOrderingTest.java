@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -26,7 +27,6 @@ import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
-import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -108,7 +108,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       StateChunk stateChunk1 = new StateChunk(1, Arrays.asList(new ImmortalCacheEntry("k0", "v0")), true);
       String cacheName = manager(0).getCacheManagerConfiguration().defaultCacheName().get();
       StateResponseCommand stateResponseCommand = new StateResponseCommand(ByteString.fromString(cacheName),
-            address(1), initialTopologyId, Arrays.asList(stateChunk0, stateChunk1), true, false);
+            initialTopologyId, Arrays.asList(stateChunk0, stateChunk1), true, false);
       // Call with preserveOrder = true to force the execution in the same thread
       stateResponseCommand.setOrigin(address(3));
       handler.handle(stateResponseCommand, Reply.NO_OP, DeliverOrder.PER_SENDER);
