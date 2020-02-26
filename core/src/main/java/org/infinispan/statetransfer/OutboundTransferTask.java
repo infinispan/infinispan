@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -208,7 +209,7 @@ public class OutboundTransferTask {
          }
       }
 
-      StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId,
+      StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(topologyId,
                                                                            chunks.values(), applyState, pushTransfer);
       try {
          return rpcManager.invokeCommand(destination, cmd, SingleResponseCollector.validOnly(), rpcOptions)

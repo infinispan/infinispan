@@ -101,7 +101,7 @@ import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherComman
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
-import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.ReclosableLatch;
@@ -370,8 +370,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public StateResponseCommand buildStateResponseCommand(Address sender, int viewId, Collection<StateChunk> stateChunks, boolean applyState, boolean pushTransfer) {
-      return actual.buildStateResponseCommand(sender, viewId, stateChunks, applyState, pushTransfer);
+   public StateResponseCommand buildStateResponseCommand(int viewId, Collection<StateChunk> stateChunks, boolean applyState, boolean pushTransfer) {
+      return actual.buildStateResponseCommand(viewId, stateChunks, applyState, pushTransfer);
    }
 
    @Override

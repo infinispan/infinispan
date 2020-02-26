@@ -115,7 +115,7 @@ import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherComman
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
-import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
@@ -368,8 +368,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public StateResponseCommand buildStateResponseCommand(Address sender, int topologyId, Collection<StateChunk> stateChunks, boolean applyState, boolean pushTransfer) {
-      return new StateResponseCommand(cacheName, sender, topologyId, stateChunks, applyState, pushTransfer);
+   public StateResponseCommand buildStateResponseCommand(int topologyId, Collection<StateChunk> stateChunks, boolean applyState, boolean pushTransfer) {
+      return new StateResponseCommand(cacheName, topologyId, stateChunks, applyState, pushTransfer);
    }
 
    @Override

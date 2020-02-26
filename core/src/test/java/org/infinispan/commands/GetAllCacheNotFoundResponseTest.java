@@ -23,7 +23,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
-import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;

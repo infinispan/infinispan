@@ -20,6 +20,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.SmallIntSet;
@@ -221,11 +222,10 @@ public class StateProviderTest {
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2, null);
 
       // set up dependencies
-      when(commandsFactory.buildStateResponseCommand(any(Address.class), anyInt(), any(), anyBoolean(), anyBoolean()))
+      when(commandsFactory.buildStateResponseCommand(anyInt(), any(), anyBoolean(), anyBoolean()))
             .thenAnswer(invocation -> new StateResponseCommand(ByteString.fromString("testCache"),
-                                                               (Address) invocation.getArguments()[0],
-                                                               (Integer) invocation.getArguments()[1],
-                                                               (Collection<StateChunk>) invocation.getArguments()[2],
+                                                               (Integer) invocation.getArguments()[0],
+                                                               (Collection<StateChunk>) invocation.getArguments()[1],
                                                                true, false));
 
       when(rpcManager.getAddress()).thenReturn(A);
