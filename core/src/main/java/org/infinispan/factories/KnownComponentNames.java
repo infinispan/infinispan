@@ -16,7 +16,6 @@ import org.infinispan.commons.util.ProcessorInfo;
 public class KnownComponentNames {
    public static final String CACHE_NAME = "cacheName";
 
-   public static final String REMOTE_COMMAND_EXECUTOR = "org.infinispan.executors.remote";
    public static final String ASYNC_NOTIFICATION_EXECUTOR = "org.infinispan.executors.notification";
    public static final String EXPIRATION_SCHEDULED_EXECUTOR = "org.infinispan.executors.expiration";
    public static final String NON_BLOCKING_EXECUTOR = "org.infinispan.executors.non-blocking";
@@ -38,19 +37,16 @@ public class KnownComponentNames {
    static {
       DEFAULT_THREAD_COUNT.put(ASYNC_NOTIFICATION_EXECUTOR, 1);
       DEFAULT_THREAD_COUNT.put(EXPIRATION_SCHEDULED_EXECUTOR, 1);
-      DEFAULT_THREAD_COUNT.put(REMOTE_COMMAND_EXECUTOR, 200);
       DEFAULT_THREAD_COUNT.put(NON_BLOCKING_EXECUTOR, ProcessorInfo.availableProcessors() * 2);
       DEFAULT_THREAD_COUNT.put(BLOCKING_EXECUTOR, 150);
 
       DEFAULT_QUEUE_SIZE.put(ASYNC_NOTIFICATION_EXECUTOR, 1_000);
       DEFAULT_QUEUE_SIZE.put(EXPIRATION_SCHEDULED_EXECUTOR, 0);
-      DEFAULT_QUEUE_SIZE.put(REMOTE_COMMAND_EXECUTOR, 0);
       DEFAULT_QUEUE_SIZE.put(NON_BLOCKING_EXECUTOR, 1_000);
       DEFAULT_QUEUE_SIZE.put(BLOCKING_EXECUTOR, 5_000);
 
       DEFAULT_THREAD_PRIORITY.put(ASYNC_NOTIFICATION_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREAD_PRIORITY.put(EXPIRATION_SCHEDULED_EXECUTOR, Thread.NORM_PRIORITY);
-      DEFAULT_THREAD_PRIORITY.put(REMOTE_COMMAND_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREAD_PRIORITY.put(TIMEOUT_SCHEDULE_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREAD_PRIORITY.put(NON_BLOCKING_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREAD_PRIORITY.put(BLOCKING_EXECUTOR, Thread.NORM_PRIORITY);

@@ -161,7 +161,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 if (container.hasDefined(ThreadPoolResource.WILDCARD_PATH.getKey())) {
                     writeScheduledThreadPoolElements(Element.EXPIRATION_THREAD_POOL, ScheduledThreadPoolResource.EXPIRATION, writer, container);
                     writeThreadPoolElements(Element.LISTENER_THREAD_POOL, ThreadPoolResource.LISTENER, writer, container);
-                    writeThreadPoolElements(Element.REMOTE_COMMAND_THREAD_POOL, ThreadPoolResource.REMOTE_COMMAND, writer, container);
                     writeThreadPoolElements(Element.NON_BLOCKING_THREAD_POOL, ThreadPoolResource.NON_BLOCKING, writer, container);
                     writeThreadPoolElements(Element.BLOCKING_THREAD_POOL, ThreadPoolResource.BLOCKING, writer, container);
                 }

@@ -23,7 +23,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -1139,11 +1138,16 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       if (transport != null) {
          long time = configurationManager.getGlobalConfiguration().transport().distributedSyncTimeout();
          return ClusterExecutors.allSubmissionExecutor(null, this, transport, time, TimeUnit.MILLISECONDS,
-               globalComponentRegistry.getComponent(ExecutorService.class, KnownComponentNames.REMOTE_COMMAND_EXECUTOR),
+               // This can run arbitrary code, including user - such commands can block
+               // This should be remedied in https://issues.redhat.com/browse/ISPN-11482
+               globalComponentRegistry.getComponent(ExecutorService.class, KnownComponentNames.NON_BLOCKING_EXECUTOR),
                globalComponentRegistry.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR));
       } else {
          return ClusterExecutors.allSubmissionExecutor(null, this, null,
-               TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT.getDefaultValue(), TimeUnit.MILLISECONDS, ForkJoinPool.commonPool(),
+               TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT.getDefaultValue(), TimeUnit.MILLISECONDS,
+               // This can run arbitrary code, including user - such commands can block
+               // This should be remedied in https://issues.redhat.com/browse/ISPN-11482
+               globalComponentRegistry.getComponent(ExecutorService.class, KnownComponentNames.NON_BLOCKING_EXECUTOR),
                globalComponentRegistry.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR));
       }
    }

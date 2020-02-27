@@ -71,11 +71,6 @@ public class CheckTransactionRpcCommand implements CacheRpcCommand {
    }
 
    @Override
-   public boolean canBlock() {
-      return false;
-   }
-
-   @Override
    public void writeTo(ObjectOutput output) throws IOException {
       MarshallUtil.marshallCollection(gtxToCheck, output);
    }

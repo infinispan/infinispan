@@ -24,6 +24,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestBlocking;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
@@ -147,7 +148,7 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
          if (!event.isPre()) {
             lockAcquiredLatch.countDown();
             try {
-               waitLatch.await(10, SECONDS);
+               TestBlocking.await(waitLatch, 10, SECONDS);
             } catch (InterruptedException e) {
                throw new RuntimeException(e);
             }

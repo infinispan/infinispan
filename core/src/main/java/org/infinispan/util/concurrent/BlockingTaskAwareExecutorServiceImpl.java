@@ -114,7 +114,13 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
       if (command instanceof BlockingRunnable) {
          execute((BlockingRunnable) command);
       } else {
-         execute(new RunnableWrapper(command));
+         try {
+            executorService.execute(command);
+         } catch (RejectedExecutionException rejected) {
+            //put it back!
+            blockedTasks.offer(new RunnableWrapper(command));
+            checkForReadyTasks();
+         }
       }
    }
 

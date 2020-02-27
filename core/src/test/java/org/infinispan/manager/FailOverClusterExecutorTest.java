@@ -8,10 +8,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 /**
@@ -47,15 +48,9 @@ public class FailOverClusterExecutorTest extends MultipleCacheManagersTest {
    }
 
    @Test
-   public void testTimeoutOccursWithRetry() throws InterruptedException, ExecutionException, TimeoutException {
+   public void testTimeoutOccursWithRetry() {
       CompletableFuture<Void> fut = cacheManagers.get(0).executor().timeout(10, TimeUnit.MILLISECONDS)
-            .singleNodeSubmission(2).submit(() -> {
-               try {
-                  Thread.sleep(TimeUnit.SECONDS.toMillis(2));
-               } catch (InterruptedException e) {
-                  throw new RuntimeException(e);
-               }
-            });
+            .singleNodeSubmission(2).submit(() -> TestingUtil.sleepThread(TimeUnit.SECONDS.toMillis(2)));
       Exceptions.expectExecutionException(org.infinispan.util.concurrent.TimeoutException.class, fut);
    }
 }

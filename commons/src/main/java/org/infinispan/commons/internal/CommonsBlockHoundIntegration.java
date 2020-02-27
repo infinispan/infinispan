@@ -1,7 +1,6 @@
 package org.infinispan.commons.internal;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 
 import org.infinispan.commons.executors.NonBlockingThread;
 import org.infinispan.commons.util.concurrent.NonBlockingRejectedExecutionHandler;
@@ -23,11 +22,13 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
    // Register all methods of a given class to allow for blocking - NOTE that if these methods invoke passed in code,
    // such as a Runnable/Callable, this should not be used!
    public static void allowPublicMethodsToBlock(BlockHound.Builder builder, Class<?> clazz) {
-      Method[] methods = clazz.getMethods();
+      allowMethodsToBlock(builder, clazz, true);
+   }
+
+   public static void allowMethodsToBlock(BlockHound.Builder builder, Class<?> clazz, boolean publicOnly) {
+      Method[] methods = publicOnly ? clazz.getMethods() : clazz.getDeclaredMethods();
       for (Method method : methods) {
-         if (Modifier.isPublic(method.getModifiers())) {
-            builder.allowBlockingCallsInside(clazz.getName(), method.getName());
-         }
+         builder.allowBlockingCallsInside(clazz.getName(), method.getName());
       }
    }
 }

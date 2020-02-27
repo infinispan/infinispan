@@ -1,6 +1,6 @@
 package org.infinispan.xsite;
 
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.util.concurrent.CompletableFutures.asCompletionException;
 import static org.infinispan.util.concurrent.CompletableFutures.completedExceptionFuture;
 import static org.infinispan.util.logging.Log.XSITE;
@@ -18,7 +18,6 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
@@ -30,6 +29,7 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -72,7 +72,7 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
       this.cacheName = ByteString.fromString(cache.getName());
       ComponentRegistry registry = this.cache.getComponentRegistry();
       this.timeService = registry.getTimeService();
-      ExecutorService executor = registry.getComponent(ExecutorService.class, REMOTE_COMMAND_EXECUTOR);
+      ExecutorService executor = registry.getComponent(ExecutorService.class, BLOCKING_EXECUTOR);
       TransactionHandler txHandler = new TransactionHandler(cache);
       this.defaultHandler = new DefaultHandler(txHandler, executor);
       this.asyncBackupHandler = new AsyncBackupHandler(txHandler, executor, timeService);

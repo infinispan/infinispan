@@ -16,10 +16,6 @@
                               queue-length="22"
                               max-threads="23"
                               keepalive-time="24"/>
-        <remote-command-thread-pool min-threads="41"
-                               queue-length="42"
-                               max-threads="43"
-                               keepalive-time="44"/>
         <non-blocking-thread-pool min-threads="31"
                                   queue-length="32"
                                   max-threads="33"

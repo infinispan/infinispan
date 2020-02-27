@@ -54,8 +54,8 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
    @Inject Configuration configuration;
    @Inject protected StateTransferLock stateTransferLock;
-   @Inject @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
-   Executor remoteExecutor;
+   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
+   Executor nonBlockingExecutor;
    @Inject DistributionManager distributionManager;
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
@@ -151,7 +151,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          CancellableRetry<T> cancellableRetry = new CancellableRetry<>(command, topologyId);
          // We have to use handleAsync and rethrow the exception in the handler, rather than
          // thenComposeAsync(), because if `future` completes with an exception we want to continue in remoteExecutor
-         CompletableFuture<Void> retryFuture = future.handleAsync(cancellableRetry, remoteExecutor);
+         CompletableFuture<Void> retryFuture = future.handleAsync(cancellableRetry, nonBlockingExecutor);
          cancellableRetry.setRetryFuture(retryFuture);
          // We want to time out the current command future, not the main topology-waiting future,
          // but the command future can take longer time to finish.

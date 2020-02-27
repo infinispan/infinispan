@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
-import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -405,10 +404,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(5, threadFactory.initialPriority());
 
             threadFactory = getGlobalConfiguration(holder).transport().remoteCommandThreadPool().threadFactory();
-            assertEquals("infinispan", threadFactory.threadGroup().getName());
-            assertEquals("%G %i", threadFactory.threadNamePattern());
-            assertEquals(5, threadFactory.initialPriority());
-            assertTrue(getGlobalConfiguration(holder).transport().remoteCommandThreadPool().threadPoolFactory() instanceof CachedThreadPoolExecutorFactory);
+            assertNull(threadFactory);
+            threadPool = getGlobalConfiguration(holder).transport().remoteCommandThreadPool().threadPoolFactory();
+            assertNull(threadPool);
 
             threadFactory = getGlobalConfiguration(holder).transport().transportThreadPool().threadFactory();
             assertNull(threadFactory);

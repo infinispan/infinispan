@@ -56,6 +56,7 @@ public class ReplicableRunnableCommand implements GlobalRpcCommand {
 
    @Override
    public boolean canBlock() {
-      return true;
+      // These commands can be arbitrary user commands - so be careful about them blocking
+      return false;
    }
 }

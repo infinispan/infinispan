@@ -41,9 +41,4 @@ public abstract class AbstractCacheControlCommand implements GlobalRpcCommand {
    public boolean isReturnValueExpected() {
       return true;
    }
-
-   @Override
-   public boolean canBlock() {
-      return true;
-   }
 }

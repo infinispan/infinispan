@@ -9,6 +9,8 @@ import org.infinispan.container.offheap.SegmentedBoundedOffHeapDataContainer;
 import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.expiration.impl.ClusterExpirationManager;
 import org.infinispan.factories.impl.BasicComponentRegistryImpl;
+import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
+import org.infinispan.interceptors.impl.PrefetchInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
@@ -54,6 +56,8 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
          builder.allowBlockingCallsInside(KeyAffinityServiceImpl.class.getName(), "handleViewChange");
 
          builder.allowBlockingCallsInside(TransactionTable.class.getName(), "calculateMinTopologyId");
+
+         builder.allowBlockingCallsInside(ClusterTopologyManagerImpl.class.getName(), "acquireUpdateLock");
       }
       // This invokes the actual runnable - we have to make sure it doesn't block as normal
       builder.disallowBlockingCallsInside(LimitedExecutor.class.getName(), "actualRun");
@@ -87,10 +91,9 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       // https://issues.redhat.com/browse/ISPN-11473
       builder.allowBlockingCallsInside(InvocationHelper.class.getName(), "executeCommandAsyncWithInjectedTx");
 
-      // This can be called requesting blocking from different areas - this should really be non blocking an each
-      // invocation can handle if it needs to block or not
-      // https://issues.redhat.com/browse/ISPN-11474
-      builder.allowBlockingCallsInside(RecoveryManagerImpl.class.getName(), "sendTxCompletionNotification");
+      // Scattered prefetch iteration is currently blocking - needs to be rewritten to be non blocking
+      // https://issues.redhat.com/browse/ISPN-10864
+      builder.allowBlockingCallsInside(PrefetchInterceptor.class.getName() + "$BackingIterator", "hasNext");
    }
 
    private static void registerBlockingMethods(BlockHound.Builder builder) {
@@ -115,5 +118,8 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       // can block the current thread while doing I/O
       builder.allowBlockingCallsInside(ClusterTopologyManagerImpl.class.getName(), "prepareJoin");
       builder.allowBlockingCallsInside(ClusterTopologyManagerImpl.class.getName(), "updateClusterState");
+
+      // This can block if there is a store otherwise it won't block
+      builder.allowBlockingCallsInside(CacheMgmtInterceptor.class.getName(), "getNumberOfEntries");
    }
 }

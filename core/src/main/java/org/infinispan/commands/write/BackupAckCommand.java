@@ -51,11 +51,6 @@ public class BackupAckCommand extends BaseRpcCommand {
    }
 
    @Override
-   public boolean canBlock() {
-      return false;
-   }
-
-   @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeLong(id);
       output.writeInt(topologyId);

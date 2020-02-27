@@ -57,11 +57,6 @@ public class GetKeysInGroupCommand extends AbstractTopologyAffectedCommand imple
    }
 
    @Override
-   public boolean canBlock() {
-      return false;
-   }
-
-   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitGetKeysInGroupCommand(ctx, this);
    }

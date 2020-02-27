@@ -28,11 +28,6 @@ public class HeartBeatCommand implements ReplicableCommand {
    }
 
    @Override
-   public boolean canBlock() {
-      return false;
-   }
-
-   @Override
    public void writeTo(ObjectOutput output){
       //nothing to write
    }

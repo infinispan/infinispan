@@ -46,12 +46,6 @@ public class CancelPublisherCommand extends BaseRpcCommand {
    }
 
    @Override
-   public boolean canBlock() {
-      // This command just removes some references and immediately returns
-      return false;
-   }
-
-   @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(requestId);
    }

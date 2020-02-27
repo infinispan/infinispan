@@ -68,11 +68,6 @@ public class GetAllCommand extends AbstractTopologyAffectedCommand {
       return true;
    }
 
-   @Override
-   public boolean canBlock() {
-      return false;
-   }
-
    public boolean isReturnEntries() {
       return returnEntries;
    }

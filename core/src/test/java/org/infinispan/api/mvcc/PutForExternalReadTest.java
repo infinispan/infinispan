@@ -31,6 +31,7 @@ import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.ReplListener;
+import org.infinispan.test.TestBlocking;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -99,9 +100,9 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
             if (command instanceof PutKeyValueCommand) {
                if (!ctx.isOriginLocal()) {
                   // wait first before the check
-                  barrier.await(10, TimeUnit.SECONDS);
+                  TestBlocking.await(barrier, 10, TimeUnit.SECONDS);
                   // and once more after the check
-                  barrier.await(10, TimeUnit.SECONDS);
+                  TestBlocking.await(barrier, 10, TimeUnit.SECONDS);
                }
             }
             return invokeNext(ctx, command);

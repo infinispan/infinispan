@@ -282,7 +282,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       final Phaser phaser = new Phaser(1);
       getConflicts(topology).forEach(conflictMap -> {
          phaser.register();
-         blockingExecutor.execute(() -> {
             if (trace) log.tracef("Cache %s conflict detected %s", cacheName, conflictMap);
 
             Collection<CacheEntry<K, V>> entries = conflictMap.values();
@@ -333,7 +332,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
                if (exception != null)
                   log.exceptionDuringConflictResolution(key, exception);
             });
-         });
       });
       phaser.arriveAndAwaitAdvance();
 

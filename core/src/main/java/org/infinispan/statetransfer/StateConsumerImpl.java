@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -66,7 +66,6 @@ import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.executors.LimitedExecutor;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -83,6 +82,7 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -100,7 +100,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -141,17 +140,16 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject protected InvocationContextFactory icf;
    @Inject protected StateTransferLock stateTransferLock;
    @Inject protected CacheNotifier<?, ?> cacheNotifier;
-   @Inject @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
-   protected BlockingTaskAwareExecutorService remoteCommandsExecutor;
    @Inject protected CommitManager commitManager;
    @Inject @ComponentName(NON_BLOCKING_EXECUTOR)
-   protected ExecutorService nonBlockingExecutor;
+   protected Executor nonBlockingExecutor;
    @Inject protected CommandAckCollector commandAckCollector;
    @Inject protected TriangleOrderManager triangleOrderManager;
    @Inject protected DistributionManager distributionManager;
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject InternalConflictManager<?, ?> conflictManager;
    @Inject LocalPublisherManager<Object, Object> localPublisherManager;
+   @Inject PerCacheInboundInvocationHandler inboundInvocationHandler;
 
    protected String cacheName;
    protected long timeout;
@@ -341,7 +339,7 @@ public class StateConsumerImpl implements StateConsumer {
          }
 
          stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());
-         remoteCommandsExecutor.checkForReadyTasks();
+         inboundInvocationHandler.checkForReadyTasks();
 
          if (!wasMember && isMember) {
             return fetchClusterListeners(cacheTopology);
@@ -441,7 +439,7 @@ public class StateConsumerImpl implements StateConsumer {
             log.tracef("Unlock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
          }
          stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
-         remoteCommandsExecutor.checkForReadyTasks();
+         inboundInvocationHandler.checkForReadyTasks();
 
          // Only set the flag here, after all the transfers have been added to the transfersBySource map
          if (stateTransferTopologyId.get() != NO_STATE_TRANSFER_IN_PROGRESS && isMember) {

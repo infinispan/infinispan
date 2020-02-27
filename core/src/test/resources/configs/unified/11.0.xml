@@ -87,8 +87,6 @@
 
       <non-blocking-bounded-queue-thread-pool name="infinispan-non-blocking" thread-factory="infinispan-factory"
                                               core-threads="12" max-threads="15" queue-length="132" keepalive-time="9851" />
-      <!-- transport.remote-command-executor -->
-      <cached-thread-pool name="infinispan-cached" thread-factory="infinispan-factory" />
       <!-- expiration-executor -->
       <scheduled-thread-pool name="infinispan-expiration" thread-factory="infinispan-factory" />
    </threads>
@@ -97,7 +95,7 @@
                     listener-executor="infinispan-listener" non-blocking-executor="infinispan-non-blocking"
                     blocking-executor="infinispan-blocking"
                     statistics="true" shutdown-hook="DONT_REGISTER" zero-capacity-node="false">
-      <transport cluster="maximal-cluster" remote-command-executor="infinispan-cached" lock-timeout="120000" stack="tcp" node-name="a-node" machine="a" rack="b" site="c"
+      <transport cluster="maximal-cluster" lock-timeout="120000" stack="tcp" node-name="a-node" machine="a" rack="b" site="c"
                  initial-cluster-size="4" initial-cluster-timeout="30000" />
       <security>
          <authorization audit-logger="org.infinispan.security.audit.NullAuditLogger">

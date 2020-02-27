@@ -19,6 +19,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.statetransfer.StateConsumer;
@@ -41,6 +43,7 @@ public class GetAllCommandNodeCrashTest extends MultipleCacheManagersTest {
       cache(2).put(key, "value");
 
       ControlledRpcManager rpcManager = ControlledRpcManager.replaceRpcManager(cache(2));
+      rpcManager.excludeCommands(StateResponseCommand.class, StateTransferStartCommand.class);
 
       CountDownLatch blockTopologyUpdate = new CountDownLatch(1);
       StateConsumer stateConsumerMock = spy(extractComponent(cache(2), StateConsumer.class));

@@ -1,6 +1,6 @@
 package org.infinispan.remoting.inboundhandler;
 
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.concurrent.CompletionStage;
@@ -55,8 +55,8 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    private static final Log log = LogFactory.getLog(GlobalInboundInvocationHandler.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject @ComponentName(REMOTE_COMMAND_EXECUTOR)
-   ExecutorService remoteCommandsExecutor;
+   @Inject @ComponentName(BLOCKING_EXECUTOR)
+   ExecutorService blockingExecutor;
    @Inject BackupReceiverRepository backupReceiverRepository;
    @Inject GlobalComponentRegistry globalComponentRegistry;
 
@@ -135,7 +135,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
          //we must/can run in this thread
          runnable.run();
       } else {
-         remoteCommandsExecutor.execute(runnable);
+         blockingExecutor.execute(runnable);
       }
    }
 
