@@ -352,8 +352,12 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     }
                 }
                 case REMOTE_COMMAND_THREAD_POOL: {
+                    if (namespace.since(11, 0)) {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
                     if (namespace.since(8, 0)) {
-                        this.parseThreadPool(ThreadPoolResource.REMOTE_COMMAND, reader, containerAddress, operations);
+                        ROOT_LOGGER.deprecatedExecutor(ModelKeys.REMOTE_COMMAND_EXECUTOR, ModelKeys.REMOTE_COMMAND_THREAD_POOL);
+                        ParseUtils.nextElement(reader);
                         break;
                     } else {
                         throw ParseUtils.unexpectedElement(reader);

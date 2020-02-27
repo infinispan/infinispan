@@ -54,11 +54,6 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    }
 
    @Override
-   public boolean canBlock() {
-      return false;
-   }
-
-   @Override
    public String toString() {
       return "InvalidateCommand{keys=" +
             toStr(Arrays.asList(keys)) +

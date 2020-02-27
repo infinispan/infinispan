@@ -37,11 +37,6 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
    }
 
    @Override
-   public boolean canBlock() {
-      return true;
-   }
-
-   @Override
    public Collection<?> getKeysToLock() {
       return getAffectedKeys();
    }

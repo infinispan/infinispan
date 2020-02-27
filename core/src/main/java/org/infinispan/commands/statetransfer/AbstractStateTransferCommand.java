@@ -39,12 +39,6 @@ abstract class AbstractStateTransferCommand extends BaseRpcCommand implements To
    }
 
    @Override
-   public boolean canBlock() {
-      // All state request commands need to wait for the proper topology
-      return true;
-   }
-
-   @Override
    public int getTopologyId() {
       return topologyId;
    }

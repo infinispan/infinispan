@@ -36,9 +36,4 @@ public abstract class XSiteReplicateCommand extends BaseRpcCommand {
    public byte getCommandId() {
       return commandId;
    }
-
-   @Override
-   public boolean canBlock() {
-      return false;
-   }
 }

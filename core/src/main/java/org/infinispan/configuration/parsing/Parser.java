@@ -4,7 +4,6 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EX
 import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.shortened;
 import static org.infinispan.util.logging.Log.CONFIG;
 
@@ -1007,8 +1006,11 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case REMOTE_COMMAND_EXECUTOR: {
-               transport.remoteExecutor(value);
-               transport.remoteCommandThreadPool().read(createThreadPoolConfiguration(value, REMOTE_COMMAND_EXECUTOR, holder));
+               if (reader.getSchema().since(11, 0)) {
+                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               } else {
+                  CONFIG.ignoredAttribute("remote command executor", "11.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
+               }
                break;
             }
             case LOCK_TIMEOUT: {

@@ -94,7 +94,7 @@ public class NonTxPerCacheInboundInvocationHandler extends BasePerCacheInboundIn
 
    @Override
    public void onEvent(LockState state) {
-      remoteCommandsExecutor.checkForReadyTasks();
+      checkForReadyTasks();
    }
 
    @Override

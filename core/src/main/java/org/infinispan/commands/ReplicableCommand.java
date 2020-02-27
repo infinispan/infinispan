@@ -82,8 +82,12 @@ public interface ReplicableCommand {
     * true.
     *
     * @return {@code true} if the command can block/wait, {@code false} otherwise
+    * @deprecated since 11.0 - All commands will be required to be non blocking!
     */
-   boolean canBlock();
+   @Deprecated
+   default boolean canBlock() {
+      return false;
+   }
 
    /**
     * Writes this instance to the {@link ObjectOutput}.

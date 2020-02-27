@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
@@ -107,7 +108,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             CacheState cacheState = (CacheState) v;
             Configuration persisted = persistedConfigurations.get(cacheName);
             if (persisted != null) {
-               Configuration configuration = buildConfiguration(cacheName, cacheState);
+               Configuration configuration = CompletionStages.join(buildConfiguration(cacheName, cacheState));
                if (!persisted.matches(configuration)) {
                   throw CONFIG.incompatibleClusterConfiguration(cacheName, configuration, persisted);
                } else {
@@ -207,13 +208,15 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    CompletableFuture<Void> createCacheLocally(String name, CacheState state) {
       log.debugf("Starting cache %s from global state", name);
-      Configuration configuration = buildConfiguration(name, state);
-      return localConfigurationManager.createCache(name, state.getTemplate(), configuration, state.getFlags());
+      CompletionStage<Configuration> configurationStage = buildConfiguration(name, state);
+      return configurationStage.thenCompose(configuration -> localConfigurationManager.createCache(name, state.getTemplate(), configuration, state.getFlags()))
+            .toCompletableFuture();
    }
 
-   private Configuration buildConfiguration(String name, CacheState state) {
+   private CompletionStage<Configuration> buildConfiguration(String name, CacheState state) {
       ConfigurationBuilderHolder builderHolder = parserRegistry.parse(state.getConfiguration());
-      return builderHolder.getNamedConfigurationBuilders().get(name).build(configurationManager.getGlobalConfiguration());
+      Configuration config = builderHolder.getNamedConfigurationBuilders().get(name).build(configurationManager.getGlobalConfiguration());
+      return CompletableFuture.completedFuture(config);
    }
 
    @Override

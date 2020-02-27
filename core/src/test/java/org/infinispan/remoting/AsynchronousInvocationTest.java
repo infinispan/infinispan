@@ -7,11 +7,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.GlobalRpcCommand;
@@ -56,7 +56,8 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    public static final ByteString CACHE_NAME_BYTES = ByteString.fromString(CACHE_NAME);
 
    private EmbeddedCacheManager cacheManager;
-   private DummyTaskCountExecutorService executorService;
+   private DummyTaskCountExecutorService nonBlockingExecutorService;
+   private DummyTaskCountExecutorService blockingExecutorService;
    private InboundInvocationHandler invocationHandler;
    private Address address;
 
@@ -90,14 +91,22 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
 
    @BeforeClass
    public void setUp() throws Throwable {
-      executorService = new DummyTaskCountExecutorService();
-      BlockingTaskAwareExecutorService remoteExecutorService =
-         new BlockingTaskAwareExecutorServiceImpl("AsynchronousInvocationTest-Controller", executorService,
+      // We need to use an actual thread pool - due to a circular dependency in ClusterTopologyManagerImpl invoking
+      // a command via the non blocking executor that loads up the LocalTopologyManagerImpl that Injects the ClusterTopologyManagerImpl
+      ExecutorService realExecutor = Executors.newSingleThreadExecutor();
+      nonBlockingExecutorService = new DummyTaskCountExecutorService(realExecutor);
+      blockingExecutorService = new DummyTaskCountExecutorService(realExecutor);
+      BlockingTaskAwareExecutorService nonBlockingExecutor =
+         new BlockingTaskAwareExecutorServiceImpl("AsynchronousInvocationTest-Controller-NonBlocking", nonBlockingExecutorService,
                                                   TIME_SERVICE);
+      BlockingTaskAwareExecutorService blockingExecutor =
+            new BlockingTaskAwareExecutorServiceImpl("AsynchronousInvocationTest-Controller-Blocking", blockingExecutorService,
+                  TIME_SERVICE);
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalBuilder.defaultCacheName(CACHE_NAME);
       globalBuilder.addModule(TestGlobalConfigurationBuilder.class)
-                   .testGlobalComponent(KnownComponentNames.REMOTE_COMMAND_EXECUTOR, remoteExecutorService);
+                   .testGlobalComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, nonBlockingExecutor)
+                   .testGlobalComponent(KnownComponentNames.BLOCKING_EXECUTOR, blockingExecutor);
       ConfigurationBuilder builder = getDefaultCacheConfiguration(false);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       cacheManager = createClusteredCacheManager(globalBuilder, builder);
@@ -113,7 +122,8 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    public void tearDown() {
       if (cacheManager != null) {
          // BlockingTaskAwareExecutorServiceImpl doesn't have a @Stop annotation so we need to stop it manually
-         extractGlobalComponent(cacheManager, ExecutorService.class, KnownComponentNames.REMOTE_COMMAND_EXECUTOR).shutdownNow();
+         extractGlobalComponent(cacheManager, ExecutorService.class, KnownComponentNames.NON_BLOCKING_EXECUTOR).shutdownNow();
+         extractGlobalComponent(cacheManager, ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR).shutdownNow();
          cacheManager.stop();
       }
    }
@@ -153,28 +163,34 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    private void assertDispatchForCommand(ReplicableCommand command, boolean isBlocking) throws Exception {
       Assert.assertEquals(isBlocking, command.canBlock());
       log.debugf("Testing " + command.getClass().getCanonicalName());
-      executorService.reset();
+      DummyTaskCountExecutorService executorToUse = isBlocking ? blockingExecutorService : nonBlockingExecutorService;
+      executorToUse.reset();
       CompletableFutureResponse response = new CompletableFutureResponse();
       invocationHandler.handleFromCluster(address, command, response, DeliverOrder.NONE);
       response.await(30, TimeUnit.SECONDS);
-      Assert.assertEquals(executorService.hasExecutedCommand, isBlocking,
+      Assert.assertEquals(executorToUse.hasExecutedCommand, isBlocking,
                           "Command " + command.getClass() + " dispatched wrongly.");
 
-      executorService.reset();
+      executorToUse.reset();
       response = new CompletableFutureResponse();
       invocationHandler.handleFromCluster(address, command, response, DeliverOrder.PER_SENDER);
       response.await(30, TimeUnit.SECONDS);
-      Assert.assertFalse(executorService.hasExecutedCommand, "Command " + command.getClass() + " dispatched wrongly.");
+      Assert.assertFalse(executorToUse.hasExecutedCommand, "Command " + command.getClass() + " dispatched wrongly.");
    }
 
    private class DummyTaskCountExecutorService extends AbstractExecutorService {
 
+      private final ExecutorService realExecutor;
       private volatile boolean hasExecutedCommand;
+
+      private DummyTaskCountExecutorService(ExecutorService realExecutor) {
+         this.realExecutor = realExecutor;
+      }
 
       @Override
       public void execute(Runnable command) {
          hasExecutedCommand = true;
-         command.run();
+         realExecutor.execute(command);
       }
 
       public void reset() {
@@ -183,27 +199,27 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
 
       @Override
       public void shutdown() {
-         //no-op
+         realExecutor.shutdown();
       }
 
       @Override
       public List<Runnable> shutdownNow() {
-         return Collections.emptyList(); //no-op
+         return realExecutor.shutdownNow();
       }
 
       @Override
       public boolean isShutdown() {
-         return false; //no-op
+         return realExecutor.isShutdown();
       }
 
       @Override
       public boolean isTerminated() {
-         return false; //no-op
+         return realExecutor.isTerminated();
       }
 
       @Override
-      public boolean awaitTermination(long timeout, TimeUnit unit) {
-         return false; //no-op
+      public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+         return realExecutor.awaitTermination(timeout, unit);
       }
    }
 

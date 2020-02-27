@@ -101,11 +101,6 @@ public abstract class AbstractDataCommand implements DataCommand, SegmentSpecifi
       return true;
    }
 
-   @Override
-   public boolean canBlock() {
-      return false;
-   }
-
    protected final String printFlags() {
       return prettyPrintBitSet(flags, Flag.class);
    }

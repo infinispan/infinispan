@@ -81,11 +81,6 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
    }
 
    @Override
-   public boolean canBlock() {
-      return false;
-   }
-
-   @Override
    public void writeTo(ObjectOutput output) throws IOException {
       MarshallUtil.marshallCollection(keys, output);
       output.writeObject(f);

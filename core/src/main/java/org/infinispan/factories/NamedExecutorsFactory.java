@@ -4,7 +4,6 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EX
 import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.getDefaultThreadPrio;
 import static org.infinispan.factories.KnownComponentNames.shortened;
@@ -19,7 +18,6 @@ import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService;
-import org.infinispan.executors.LazyInitializingExecutorService;
 import org.infinispan.executors.LazyInitializingScheduledExecutorService;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.threads.DefaultNonBlockingThreadFactory;
@@ -33,7 +31,7 @@ import org.infinispan.factories.threads.DefaultThreadFactory;
  * @since 4.0
  */
 @DefaultFactoryFor(names = {ASYNC_NOTIFICATION_EXECUTOR, BLOCKING_EXECUTOR, NON_BLOCKING_EXECUTOR,
-                             EXPIRATION_SCHEDULED_EXECUTOR, REMOTE_COMMAND_EXECUTOR, TIMEOUT_SCHEDULE_EXECUTOR})
+                             EXPIRATION_SCHEDULED_EXECUTOR, TIMEOUT_SCHEDULE_EXECUTOR})
 public class NamedExecutorsFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
    @Override
    public Object construct(String componentName) {
@@ -55,11 +53,6 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
                         globalConfiguration.expirationThreadPool(),
                         EXPIRATION_SCHEDULED_EXECUTOR,
                         ExecutorServiceType.SCHEDULED);
-         } else if (componentName.equals(REMOTE_COMMAND_EXECUTOR)) {
-            return createExecutorService(
-                        globalConfiguration.transport().remoteCommandThreadPool(),
-                        REMOTE_COMMAND_EXECUTOR,
-                        ExecutorServiceType.REMOTE_BLOCKING);
          } else if (componentName.equals(NON_BLOCKING_EXECUTOR)) {
             return createExecutorService(
                         globalConfiguration.asyncThreadPool(),
@@ -103,14 +96,12 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
       switch (type) {
          case SCHEDULED:
             return (T) new LazyInitializingScheduledExecutorService(executorFactory, threadFactory);
-         case REMOTE_BLOCKING:
+         default:
             final String controllerName = "Controller-" + shortened(componentName) + "-" +
                   globalConfiguration.transport().nodeName();
             return (T) new LazyInitializingBlockingTaskAwareExecutorService(executorFactory, threadFactory,
                                                                         globalComponentRegistry.getTimeService(),
                                                                         controllerName);
-         default:
-            return (T) new LazyInitializingExecutorService(executorFactory, threadFactory);
       }
    }
 

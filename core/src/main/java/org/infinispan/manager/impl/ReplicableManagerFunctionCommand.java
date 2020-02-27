@@ -61,6 +61,8 @@ public class ReplicableManagerFunctionCommand implements ReplicableCommand {
 
    @Override
    public boolean canBlock() {
-      return true;
+      // Note that it is highly possible that a user command could block, and some internal Infinispan ones already do
+      // This should be remedied with https://issues.redhat.com/browse/ISPN-11482
+      return false;
    }
 }

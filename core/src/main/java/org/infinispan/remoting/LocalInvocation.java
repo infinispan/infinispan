@@ -1,7 +1,11 @@
 package org.infinispan.remoting;
 
+import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
+
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
@@ -28,6 +32,7 @@ public class LocalInvocation implements Callable<Response>, Function<Object, Res
    private final ComponentRegistry componentRegistry;
    private final CommandsFactory commandsFactory;
    private final Address self;
+   private final Executor blockingExecutor;
 
    private LocalInvocation(ResponseGenerator responseGenerator, CacheRpcCommand command,
                            ComponentRegistry componentRegistry, Address self) {
@@ -36,6 +41,7 @@ public class LocalInvocation implements Callable<Response>, Function<Object, Res
       this.componentRegistry = componentRegistry;
       this.commandsFactory = componentRegistry.getCommandsFactory();
       this.self = self;
+      this.blockingExecutor = componentRegistry.getComponent(Executor.class, BLOCKING_EXECUTOR);
    }
 
    @Override
@@ -73,7 +79,19 @@ public class LocalInvocation implements Callable<Response>, Function<Object, Res
       commandsFactory.initializeReplicableCommand(command, false);
       command.setOrigin(self);
       try {
-         return command.invokeAsync(componentRegistry).thenApply(this);
+         CompletionStage<?> stage;
+         if (command.canBlock()) {
+            stage = CompletableFuture.supplyAsync(() -> {
+               try {
+                  return command.invokeAsync(componentRegistry);
+               } catch (Throwable t) {
+                  throw CompletableFutures.asCompletionException(t);
+               }
+            }, blockingExecutor);
+         } else {
+            stage = command.invokeAsync(componentRegistry);
+         }
+         return stage.thenApply(this);
       } catch (Throwable throwable) {
          return CompletableFutures.completedExceptionFuture(throwable);
       }

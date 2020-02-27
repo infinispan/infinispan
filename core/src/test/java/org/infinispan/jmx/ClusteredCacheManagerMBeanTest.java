@@ -1,6 +1,6 @@
 package org.infinispan.jmx;
 
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
@@ -102,10 +102,10 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
 
       LazyInitializingBlockingTaskAwareExecutorService remoteExecutor =
          extractGlobalComponent(manager(0), LazyInitializingBlockingTaskAwareExecutorService.class,
-                                REMOTE_COMMAND_EXECUTOR);
+                                NON_BLOCKING_EXECUTOR);
       remoteExecutor.submit(() -> {});
 
-      objectName = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", REMOTE_COMMAND_EXECUTOR);
+      objectName = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", NON_BLOCKING_EXECUTOR);
       assertTrue(server.isRegistered(objectName));
       assertEquals(30000L, server.getAttribute(objectName, "KeepAliveTime"));
       assertEquals(TestCacheManagerFactory.NAMED_EXECUTORS_THREADS_NO_QUEUE,

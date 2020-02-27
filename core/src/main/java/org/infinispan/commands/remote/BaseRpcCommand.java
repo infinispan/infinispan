@@ -33,9 +33,4 @@ public abstract class BaseRpcCommand implements CacheRpcCommand {
    public void setOrigin(Address origin) {
       this.origin = origin;
    }
-
-   @Override
-   public boolean canBlock() {
-      return false;
-   }
 }

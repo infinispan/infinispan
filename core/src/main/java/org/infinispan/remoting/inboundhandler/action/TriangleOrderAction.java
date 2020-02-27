@@ -39,6 +39,6 @@ public class TriangleOrderAction implements Action {
    @Override
    public void onFinally(ActionState state) {
       handler.getTriangleOrderManager().markDelivered(segmentId, sequenceNumber, state.getCommandTopologyId());
-      handler.getRemoteExecutor().checkForReadyTasks();
+      handler.checkForReadyTasks();
    }
 }

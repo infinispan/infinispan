@@ -25,7 +25,6 @@ package org.jboss.as.clustering.infinispan.subsystem;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.getDefaultKeepaliveMillis;
 import static org.infinispan.factories.KnownComponentNames.getDefaultMinThreads;
 import static org.infinispan.factories.KnownComponentNames.getDefaultQueueSize;
@@ -82,9 +81,6 @@ public enum ThreadPoolResource implements ResourceDefinition, ThreadPoolDefiniti
    NON_BLOCKING("non-blocking", getDefaultMinThreads(NON_BLOCKING_EXECUTOR),
          getDefaultThreads(NON_BLOCKING_EXECUTOR), getDefaultQueueSize(NON_BLOCKING_EXECUTOR),
          getDefaultKeepaliveMillis()),
-   REMOTE_COMMAND("remote-command", getDefaultMinThreads(REMOTE_COMMAND_EXECUTOR),
-                  getDefaultThreads(REMOTE_COMMAND_EXECUTOR), getDefaultQueueSize(REMOTE_COMMAND_EXECUTOR),
-                  getDefaultKeepaliveMillis()),
     ;
 
     static final PathElement WILDCARD_PATH = pathElement(PathElement.WILDCARD_VALUE);

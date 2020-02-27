@@ -106,7 +106,7 @@ public class TxPerCacheInboundInvocationHandler extends BasePerCacheInboundInvoc
          int commandTopologyId, boolean onExecutorService, boolean sync, ReadyAction readyAction) {
       final TopologyMode topologyMode = TopologyMode.create(onExecutorService, true);
       if (onExecutorService && readyAction != null) {
-         readyAction.addListener(remoteCommandsExecutor::checkForReadyTasks);
+         readyAction.addListener(this::checkForReadyTasks);
          return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId, sync) {
             @Override
             public boolean isReady() {

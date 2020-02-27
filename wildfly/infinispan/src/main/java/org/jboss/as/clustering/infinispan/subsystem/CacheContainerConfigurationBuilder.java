@@ -120,7 +120,6 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
                 .addDependency(ThreadPoolResource.NON_BLOCKING.getServiceName(this.name), ThreadPoolConfiguration.class, this.nonBlockingThreadPool)
                 .addDependency(ThreadPoolResource.BLOCKING.getServiceName(this.name), ThreadPoolConfiguration.class, this.blockingThreadPool)
                 .addDependency(ThreadPoolResource.LISTENER.getServiceName(this.name), ThreadPoolConfiguration.class, this.listenerThreadPool)
-                .addDependency(ThreadPoolResource.REMOTE_COMMAND.getServiceName(this.name), ThreadPoolConfiguration.class, this.remoteCommandThreadPool)
                 .addDependency(ScheduledThreadPoolResource.EXPIRATION.getServiceName(this.name), ThreadPoolConfiguration.class, this.expirationThreadPool)
         ;
         if (module != null) {
@@ -210,8 +209,6 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
             if (topology != null) {
                 transportBuilder.siteId(topology.getSite()).rackId(topology.getRack()).machineId(topology.getMachine());
             }
-
-            transportBuilder.remoteCommandThreadPool().read(this.remoteCommandThreadPool.getValue());
         }
 
         GlobalStateLocationConfiguration statePersistence = (this.globalStateLocation != null) ? this.globalStateLocation.getValue() : null;

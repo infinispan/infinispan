@@ -1,7 +1,6 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
@@ -53,6 +52,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -68,7 +68,6 @@ import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -152,10 +151,10 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       StateTransferLock stateTransferLock = mock(StateTransferLock.class);
       AsyncInterceptorChain interceptorChain = mock(AsyncInterceptorChain.class);
       InvocationContextFactory icf = mock(InvocationContextFactory.class);
-      BlockingTaskAwareExecutorService remoteCommandsExecutor = mock(BlockingTaskAwareExecutorService.class);
       InternalConflictManager conflictManager = mock(InternalConflictManager.class);
       DistributionManager distributionManager = mock(DistributionManager.class);
       LocalPublisherManager localPublisherManager = mock(LocalPublisherManager.class);
+      PerCacheInboundInvocationHandler invocationHandler = mock(PerCacheInboundInvocationHandler.class);
 
       when(persistenceManager.removeSegments(any())).thenReturn(CompletableFuture.completedFuture(false));
       when(persistenceManager.addSegments(any())).thenReturn(CompletableFuture.completedFuture(false));
@@ -211,9 +210,9 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       TestingUtil.inject(stateConsumer, cache, TestingUtil.named(NON_BLOCKING_EXECUTOR, pooledExecutorService),
                          localTopologyManager, interceptorChain, icf, configuration, rpcManager,
                          commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
-                         TestingUtil.named(REMOTE_COMMAND_EXECUTOR, remoteCommandsExecutor),
                          new CommitManager(), new CommandAckCollector(), new TriangleOrderManager(0),
-                         new HashFunctionPartitioner(), conflictManager, distributionManager, localPublisherManager);
+                         new HashFunctionPartitioner(), conflictManager, distributionManager, localPublisherManager,
+                         invocationHandler);
       stateConsumer.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();

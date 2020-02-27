@@ -36,4 +36,10 @@ public interface PerCacheInboundInvocationHandler extends JmxStatisticsExposer {
    int getFirstTopologyAsMember();
 
    void registerXSiteCommandReceiver(boolean sync);
+
+   /**
+    * Checks if any pending tasks are now ready to be ran and will run in them in a separate thread. This method does not
+    * block.
+    */
+   void checkForReadyTasks();
 }

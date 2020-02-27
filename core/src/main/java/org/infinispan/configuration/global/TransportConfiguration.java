@@ -128,6 +128,7 @@ public class TransportConfiguration implements ConfigurationInfo {
       return transportThreadPool;
    }
 
+   @Deprecated
    public ThreadPoolConfiguration remoteCommandThreadPool() {
       return remoteCommandThreadPool;
    }

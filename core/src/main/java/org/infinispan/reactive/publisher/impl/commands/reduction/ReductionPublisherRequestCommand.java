@@ -139,12 +139,6 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
    }
 
    @Override
-   public boolean canBlock() {
-      // This command is guaranteed to only use CPU now - stores are done in a blocking thread pool
-      return false;
-   }
-
-   @Override
    public String toString() {
       return "PublisherRequestCommand{" +
             ", includeLoader=" + includeLoader +

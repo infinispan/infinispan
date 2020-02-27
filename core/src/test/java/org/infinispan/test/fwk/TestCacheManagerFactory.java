@@ -416,17 +416,12 @@ public class TestCacheManagerFactory {
    }
 
    public static void minimizeThreads(GlobalConfigurationBuilder builder) {
-      BlockingThreadPoolExecutorFactory executorFactoryNoQueue =
-         new BlockingThreadPoolExecutorFactory(NAMED_EXECUTORS_THREADS_NO_QUEUE, 0, 0, NAMED_EXECUTORS_KEEP_ALIVE);
       BlockingThreadPoolExecutorFactory executorFactoryWithQueue =
          new BlockingThreadPoolExecutorFactory(NAMED_EXECUTORS_THREADS_WITH_QUEUE, NAMED_EXECUTORS_THREADS_WITH_QUEUE,
                                                NAMED_EXECUTORS_QUEUE_SIZE, NAMED_EXECUTORS_KEEP_ALIVE);
       BlockingThreadPoolExecutorFactory nonBlockingExecutorFactoryWithQueue =
             new BlockingThreadPoolExecutorFactory(NAMED_EXECUTORS_THREADS_WITH_QUEUE, NAMED_EXECUTORS_THREADS_WITH_QUEUE,
                   NAMED_EXECUTORS_QUEUE_SIZE, NAMED_EXECUTORS_KEEP_ALIVE, true);
-
-      builder.transport().remoteCommandThreadPool().threadPoolFactory(executorFactoryNoQueue);
-      builder.stateTransferThreadPool().threadPoolFactory(executorFactoryNoQueue);
 
       builder.persistenceThreadPool().threadPoolFactory(executorFactoryWithQueue);
       builder.asyncThreadPool().threadPoolFactory(nonBlockingExecutorFactoryWithQueue);

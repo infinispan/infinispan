@@ -60,11 +60,6 @@ public class CustomReplicableCommand implements VisitableCommand, Serializable {
    }
 
    @Override
-   public boolean canBlock() {
-      return false;
-   }
-
-   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitUnknownCommand(ctx, this);
    }

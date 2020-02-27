@@ -1,6 +1,7 @@
 package org.infinispan.remoting.inboundhandler;
 
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.remoting.inboundhandler.BasePerCacheInboundInvocationHandler.MBEAN_COMPONENT_NAME;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
@@ -51,8 +52,10 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    public static final String MBEAN_COMPONENT_NAME = "InboundInvocationHandler";
    private static final int NO_TOPOLOGY_COMMAND = Integer.MIN_VALUE;
 
-   @Inject @ComponentName(REMOTE_COMMAND_EXECUTOR)
-   protected BlockingTaskAwareExecutorService remoteCommandsExecutor;
+   @Inject @ComponentName(BLOCKING_EXECUTOR)
+   protected BlockingTaskAwareExecutorService blockingExecutor;
+   @Inject @ComponentName(NON_BLOCKING_EXECUTOR)
+   protected BlockingTaskAwareExecutorService nonBlockingExecutor;
    @Inject StateTransferLock stateTransferLock;
    @Inject ResponseGenerator responseGenerator;
    @Inject ComponentRegistry componentRegistry;
@@ -153,8 +156,9 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    }
 
    final void handleRunnable(BlockingRunnable runnable, boolean onExecutorService) {
+      // This means it is blocking and not preserve order per executeOnExecutorService
       if (onExecutorService) {
-         remoteCommandsExecutor.execute(runnable);
+         blockingExecutor.execute(runnable);
       } else {
          runnable.run();
       }
@@ -246,7 +250,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    }
 
    private BlockingRunnable createNonNullReadyActionRunnable(CacheRpcCommand command, Reply reply, int commandTopologyId, boolean sync, ReadyAction readyAction) {
-      readyAction.addListener(remoteCommandsExecutor::checkForReadyTasks);
+      readyAction.addListener(this::checkForReadyTasks);
       return new DefaultTopologyRunnable(this, command, reply, TopologyMode.READY_TX_DATA, commandTopologyId, sync) {
          @Override
          public boolean isReady() {
@@ -275,5 +279,11 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    @Override
    public int getFirstTopologyAsMember() {
          return firstTopologyAsMember;
+   }
+
+   @Override
+   public void checkForReadyTasks() {
+      blockingExecutor.checkForReadyTasks();
+      nonBlockingExecutor.checkForReadyTasks();
    }
 }

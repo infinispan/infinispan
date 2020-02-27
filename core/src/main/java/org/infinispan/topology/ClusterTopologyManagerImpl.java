@@ -179,15 +179,25 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    @Stop(priority = 100)
    public void stop() {
       // Stop blocking cache topology commands.
-      updateLock.lock();
+      acquireUpdateLock();
       try {
          clusterManagerStatus = ClusterManagerStatus.STOPPING;
          joinViewFuture.stop();
       } finally {
-         updateLock.unlock();
+         releaseUpdateLock();
       }
 
       cacheManagerNotifier.removeListener(viewListener);
+   }
+
+   // This method is here to augment with blockhound as we allow it to block, but don't want the calls
+   // inside the lock to block - Do not move or rename without updating the reference
+   private void acquireUpdateLock() {
+      updateLock.lock();
+   }
+
+   private void releaseUpdateLock() {
+      updateLock.unlock();
    }
 
    @Override
@@ -232,7 +242,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    private ClusterCacheStatus prepareJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo,
                                           int joinerViewId) {
-      updateLock.lock();
+      acquireUpdateLock();
       try {
          if (!clusterManagerStatus.isRunning()) {
             log.debugf("Ignoring join request from %s for cache %s, the local cache manager is shutting down",
@@ -247,18 +257,18 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
          return initCacheStatusIfAbsent(cacheName, joinInfo.getCacheMode());
       } finally {
-         updateLock.unlock();
+         releaseUpdateLock();
       }
    }
 
    private boolean canHandleJoin(int joinerViewId) {
-      updateLock.lock();
+      acquireUpdateLock();
       try {
          return joinerViewId <= viewId &&
                 clusterManagerStatus != ClusterManagerStatus.RECOVERING_CLUSTER &&
                 clusterManagerStatus != ClusterManagerStatus.INITIALIZING;
       } finally {
-         updateLock.unlock();
+         releaseUpdateLock();
       }
    }
 
@@ -430,7 +440,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             mergeStage.dependsOn(runAsync(() -> cacheStatus.doMergePartitions(e.getValue()), cs));
          }
          return mergeStage.freeze().thenRun(() -> {
-            updateLock.lock();
+            acquireUpdateLock();
             try {
                if (viewId != newViewId) {
                   log.debugf("View updated while we were recovering the cluster for view %d", newViewId);
@@ -439,7 +449,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                clusterManagerStatus = ClusterManagerStatus.COORDINATOR;
                globalRebalancingEnabled = responseCollector.getRebalancingEnabled();
             } finally {
-               updateLock.unlock();
+               releaseUpdateLock();
             }
 
             for (ClusterCacheStatus cacheStatus : cacheStatusMap.values()) {
@@ -461,7 +471,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    private boolean updateClusterState(boolean mergeView, int newViewId) {
-      updateLock.lock();
+      acquireUpdateLock();
       try {
          if (newViewId < transport.getViewId()) {
             log.tracef("Ignoring old cluster view notification: %s", newViewId);
@@ -486,7 +496,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          // notify threads that might be waiting to join
          viewId = newViewId;
       } finally {
-         updateLock.unlock();
+         releaseUpdateLock();
       }
       return true;
    }

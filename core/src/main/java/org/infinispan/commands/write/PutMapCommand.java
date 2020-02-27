@@ -207,11 +207,6 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    }
 
    @Override
-   public boolean canBlock() {
-      return true;
-   }
-
-   @Override
    public LoadType loadType() {
       return hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES) ? LoadType.DONT_LOAD : LoadType.PRIMARY;
    }

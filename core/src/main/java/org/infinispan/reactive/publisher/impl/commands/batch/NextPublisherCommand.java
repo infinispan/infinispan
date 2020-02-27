@@ -58,12 +58,6 @@ public class  NextPublisherCommand extends BaseRpcCommand implements TopologyAff
    }
 
    @Override
-   public boolean canBlock() {
-      // This command is guaranteed to only use CPU now - stores are done in a blocking thread pool
-      return false;
-   }
-
-   @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(requestId);
    }

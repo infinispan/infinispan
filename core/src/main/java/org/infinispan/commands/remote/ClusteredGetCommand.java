@@ -164,10 +164,4 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
    public boolean isReturnValueExpected() {
       return true;
    }
-
-   @Override
-   public boolean canBlock() {
-      return false;
-   }
-
 }

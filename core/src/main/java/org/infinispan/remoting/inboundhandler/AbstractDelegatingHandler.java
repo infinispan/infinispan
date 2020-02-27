@@ -76,4 +76,9 @@ public abstract class AbstractDelegatingHandler implements PerCacheInboundInvoca
    public void resetStatistics() {
       delegate.resetStatistics();
    }
+
+   @Override
+   public void checkForReadyTasks() {
+      delegate.checkForReadyTasks();
+   }
 }

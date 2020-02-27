@@ -38,7 +38,6 @@ import org.infinispan.remoting.inboundhandler.action.TriangleOrderAction;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.BlockingRunnable;
-import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.locks.LockListener;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -117,7 +116,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    //lock listener interface
    @Override
    public void onEvent(LockState state) {
-      remoteCommandsExecutor.checkForReadyTasks();
+      checkForReadyTasks();
    }
 
    //action interface
@@ -130,10 +129,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
 
    public TriangleOrderManager getTriangleOrderManager() {
       return triangleOrderManager;
-   }
-
-   public BlockingTaskAwareExecutorService getRemoteExecutor() {
-      return remoteCommandsExecutor;
    }
 
    @Override
@@ -158,7 +153,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       if (executeOnExecutorService(order, command)) {
          BlockingRunnable runnable = createDefaultRunnable(command, reply, extractCommandTopologyId(command),
                TopologyMode.READY_TOPOLOGY, order.preserveOrder());
-         remoteCommandsExecutor.execute(runnable);
+         blockingExecutor.execute(runnable);
       } else {
          BlockingRunnable runnable = createDefaultRunnable(command, reply, extractCommandTopologyId(command),
                TopologyMode.WAIT_TOPOLOGY, order.preserveOrder());
@@ -170,7 +165,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       if (executeOnExecutorService(order, command)) {
          BlockingRunnable runnable = createDefaultRunnable(command, reply, extractCommandTopologyId(command),
                TopologyMode.READY_TX_DATA, order.preserveOrder());
-         remoteCommandsExecutor.execute(runnable);
+         blockingExecutor.execute(runnable);
       } else {
          BlockingRunnable runnable = createDefaultRunnable(command, reply, extractCommandTopologyId(command),
                TopologyMode.WAIT_TX_DATA, order.preserveOrder());
@@ -183,14 +178,14 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       ReadyAction readyAction = createTriangleOrderAction(command, topologyId, command.getSequence(),
             command.getSegmentId());
       BlockingRunnable runnable = createMultiKeyBackupRunnable(command, topologyId, readyAction);
-      remoteCommandsExecutor.execute(runnable);
+      nonBlockingExecutor.execute(runnable);
    }
 
    private void handleSingleKeyBackupCommand(BackupWriteCommand command) {
       final int topologyId = command.getTopologyId();
       ReadyAction readyAction = createTriangleOrderAction(command, topologyId, command.getSequence(), command.getSegmentId());
       BlockingRunnable runnable = createSingleKeyBackupRunnable(command, topologyId, readyAction);
-      remoteCommandsExecutor.execute(runnable);
+      nonBlockingExecutor.execute(runnable);
    }
 
    private void handleBackupAckCommand(BackupAckCommand command) {
@@ -203,7 +198,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
          BlockingRunnable runnable = createDefaultRunnable(command, reply, commandTopologyId,
                                                            TopologyMode.READY_TX_DATA,
                                                            order.preserveOrder());
-         remoteCommandsExecutor.execute(runnable);
+         blockingExecutor.execute(runnable);
       } else {
          createDefaultRunnable(command, reply, extractCommandTopologyId(command), TopologyMode.WAIT_TX_DATA,
                order.preserveOrder()).run();
@@ -255,7 +250,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
 
    private BlockingRunnable createSingleKeyBackupRunnable(BackupWriteCommand command, int commandTopologyId,
                                                          ReadyAction readyAction) {
-      readyAction.addListener(remoteCommandsExecutor::checkForReadyTasks);
+      readyAction.addListener(this::checkForReadyTasks);
       return new DefaultTopologyRunnable(this, command, Reply.NO_OP, TopologyMode.READY_TX_DATA, commandTopologyId,
             false) {
          @Override
@@ -301,7 +296,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
 
    private BlockingRunnable createMultiKeyBackupRunnable(BackupWriteCommand command, int commandTopologyId,
                                                        ReadyAction readyAction) {
-      readyAction.addListener(remoteCommandsExecutor::checkForReadyTasks);
+      readyAction.addListener(this::checkForReadyTasks);
       return new DefaultTopologyRunnable(this, command, Reply.NO_OP, TopologyMode.READY_TX_DATA, commandTopologyId,
             false) {
          @Override

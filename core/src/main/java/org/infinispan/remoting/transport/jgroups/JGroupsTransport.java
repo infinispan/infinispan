@@ -154,8 +154,8 @@ public class JGroupsTransport implements Transport {
    @Inject protected InboundInvocationHandler invocationHandler;
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    protected ScheduledExecutorService timeoutExecutor;
-   @Inject @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
-   protected ExecutorService remoteExecutor;
+   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
+   protected ExecutorService nonBlockingExecutor;
    @Inject protected CacheManagerJmxRegistration jmxRegistration;
 
    private final Lock viewUpdateLock = new ReentrantLock();
@@ -436,7 +436,7 @@ public class JGroupsTransport implements Transport {
       if (running)
          throw new IllegalStateException("Two or more cache managers are using the same JGroupsTransport instance");
 
-      probeHandler.updateThreadPool(remoteExecutor);
+      probeHandler.updateThreadPool(nonBlockingExecutor);
       props = TypedProperties.toTypedProperties(configuration.transport().properties());
       requests = new RequestRepository();
 
@@ -723,7 +723,7 @@ public class JGroupsTransport implements Transport {
          // Complete the future for the old view
          if (oldFuture != null) {
             CompletableFuture<Void> future = oldFuture;
-            remoteExecutor.execute(() -> future.complete(null));
+            nonBlockingExecutor.execute(() -> future.complete(null));
          }
       }
 
@@ -740,7 +740,7 @@ public class JGroupsTransport implements Transport {
 
       // Targets leaving may finish some requests and potentially potentially block for a long time.
       // We don't want to block view handling, so we unblock the commands on a separate thread.
-      remoteExecutor.execute(() -> {
+      nonBlockingExecutor.execute(() -> {
          if (requests != null) {
             requests.forEach(request -> request.onNewView(clusterView.getMembersSet()));
          }

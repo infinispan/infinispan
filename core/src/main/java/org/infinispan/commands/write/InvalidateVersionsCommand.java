@@ -121,11 +121,6 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
    }
 
    @Override
-   public boolean canBlock() {
-      return false;
-   }
-
-   @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeInt(topologyId);
       // TODO: topology ids are mostly the same - sort the arrays according to topologyIds and use compaction encoding

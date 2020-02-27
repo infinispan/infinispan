@@ -11,8 +11,10 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.TestSuiteProgress;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.eviction.impl.EvictionWithConcurrentOperationsTest;
+import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestBlocking;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.concurrent.InboundRpcSequencerAction;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.concurrent.ReclosableLatch;
@@ -28,7 +30,11 @@ import reactor.blockhound.integration.BlockHoundIntegration;
 public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
    @Override
    public void applyTo(BlockHound.Builder builder) {
-      allowTestsToBlock(builder);
+      try {
+         allowTestsToBlock(builder);
+      } catch (ClassNotFoundException e) {
+         throw new AssertionError(e);
+      }
 
       builder.allowBlockingCallsInside(CoreTestBlockHoundIntegration.class.getName(), "writeJUnitReport");
 
@@ -50,7 +56,7 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
       });
    }
 
-   private static void allowTestsToBlock(BlockHound.Builder builder) {
+   private static void allowTestsToBlock(BlockHound.Builder builder) throws ClassNotFoundException {
       builder.allowBlockingCallsInside(EvictionWithConcurrentOperationsTest.class.getName() + "$Latch", "blockIfNeeded");
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, CheckPoint.class);
       builder.allowBlockingCallsInside(BlockingInterceptor.class.getName(), "blockIfNeeded");
@@ -67,6 +73,12 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, NotifierLatch.class);
 
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, TestBlocking.class);
+
+      builder.allowBlockingCallsInside(TestingUtil.class.getName(), "sleepThread");
+
+      CommonsBlockHoundIntegration.allowMethodsToBlock(builder, Class.forName(ReplListener.class.getName() + "$ReplListenerInterceptor"), false);
+      // This uses a lambda callback to invoke some methods - which aren't public
+      CommonsBlockHoundIntegration.allowMethodsToBlock(builder, Class.forName(InboundRpcSequencerAction.class.getName() + "$SequencerPerCacheInboundInvocationHandler"), false);
    }
 
    private static void writeJUnitReport(String testName, Throwable throwable, String type) {
