@@ -1,10 +1,9 @@
 package org.infinispan.remoting;
 
-import static org.infinispan.test.TestingUtil.extractCommandsFactory;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -15,15 +14,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.Cache;
-import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.GlobalRpcCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
-import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
-import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -38,10 +34,10 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestException;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -56,23 +52,40 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "remoting.AsynchronousInvocationTest")
 public class AsynchronousInvocationTest extends AbstractInfinispanTest {
+   public static final String CACHE_NAME = "testCache";
+   public static final ByteString CACHE_NAME_BYTES = ByteString.fromString(CACHE_NAME);
 
    private EmbeddedCacheManager cacheManager;
    private DummyTaskCountExecutorService executorService;
    private InboundInvocationHandler invocationHandler;
    private Address address;
-   private CommandsFactory commandsFactory;
-   private ReplicableCommand nonBlockingCacheRpcCommand;
-   private ReplicableCommand blockingNonCacheRpcCommand;
-   private ReplicableCommand nonBlockingNonCacheRpcCommand;
-   private ReplicableCommand blockingSingleRpcCommand;
-   private ReplicableCommand nonBlockingSingleRpcCommand;
 
-   private static <C extends ReplicableCommand> C mockCommand(Class<C> commandClass, boolean blocking) throws Throwable {
-      C mock = mock(commandClass);
+   private static CacheRpcCommand mockCacheRpcCommand(boolean blocking) throws Throwable {
+      CacheRpcCommand mock = mock(CacheRpcCommand.class);
       when(mock.canBlock()).thenReturn(blocking);
-      doReturn(null).when(mock).invokeAsync();
+      when(mock.getCacheName()).thenReturn(CACHE_NAME_BYTES);
+      when(mock.invokeAsync(any())).thenReturn(CompletableFutures.completedNull());
       return mock;
+   }
+
+   private static GlobalRpcCommand mockGlobalRpcCommand(boolean blocking) throws Throwable {
+      GlobalRpcCommand mock = mock(GlobalRpcCommand.class);
+      when(mock.canBlock()).thenReturn(blocking);
+      when(mock.invokeAsync(any())).thenReturn(CompletableFutures.completedNull());
+      return mock;
+   }
+
+   private static ReplicableCommand mockReplicableCommand(boolean blocking) throws Throwable {
+      ReplicableCommand mock = mock(ReplicableCommand.class);
+      when(mock.canBlock()).thenReturn(blocking);
+      when(mock.invokeAsync()).thenReturn(CompletableFutures.completedNull());
+      return mock;
+   }
+
+   private static SingleRpcCommand mockSingleRpcCommand(boolean blocking) {
+      VisitableCommand mock = mock(VisitableCommand.class);
+      when(mock.canBlock()).thenReturn(blocking);
+      return new SingleRpcCommand(CACHE_NAME_BYTES, mock);
    }
 
    @BeforeClass
@@ -82,71 +95,69 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
          new BlockingTaskAwareExecutorServiceImpl("AsynchronousInvocationTest-Controller", executorService,
                                                   TIME_SERVICE);
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.defaultCacheName(CACHE_NAME);
       globalBuilder.addModule(TestGlobalConfigurationBuilder.class)
                    .testGlobalComponent(KnownComponentNames.REMOTE_COMMAND_EXECUTOR, remoteExecutorService);
       ConfigurationBuilder builder = getDefaultCacheConfiguration(false);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       cacheManager = createClusteredCacheManager(globalBuilder, builder);
-      Cache<Object, Object> cache = cacheManager.getCache();
-      ByteString cacheName = ByteString.fromString(cache.getName());
       Transport transport = extractGlobalComponent(cacheManager, Transport.class);
       address = transport.getAddress();
-      invocationHandler = TestingUtil.extractGlobalComponent(cacheManager, InboundInvocationHandler.class);
+      invocationHandler = extractGlobalComponent(cacheManager, InboundInvocationHandler.class);
 
-      commandsFactory = extractCommandsFactory(cache);
-
-      //populate commands
-      int segment = TestingUtil.getSegmentForKey("key", cache);
-      nonBlockingCacheRpcCommand = new ClusteredGetCommand("key", cacheName, segment, EnumUtil.EMPTY_BIT_SET);
-      blockingNonCacheRpcCommand = new RebalanceStatusRequestCommand(cacheName.toString());
-      //the GetKeyValueCommand is not replicated, but I only need a command that returns false in canBlock()
-      nonBlockingNonCacheRpcCommand = new ClusteredGetCommand("key", cacheName, segment, EnumUtil.EMPTY_BIT_SET);
-      VisitableCommand blockingVisitableCommand = mockCommand(VisitableCommand.class, true);
-      blockingSingleRpcCommand = new SingleRpcCommand(cacheName, blockingVisitableCommand);
-      VisitableCommand nonBlockingVisitableCommand = mockCommand(VisitableCommand.class, false);
-      nonBlockingSingleRpcCommand = new SingleRpcCommand(cacheName, nonBlockingVisitableCommand);
+      // Start the cache
+      cacheManager.getCache();
    }
 
    @AfterClass
    public void tearDown() {
       if (cacheManager != null) {
          // BlockingTaskAwareExecutorServiceImpl doesn't have a @Stop annotation so we need to stop it manually
-         cacheManager.getGlobalComponentRegistry().getComponent(ExecutorService.class, KnownComponentNames.REMOTE_COMMAND_EXECUTOR).shutdownNow();
+         extractGlobalComponent(cacheManager, ExecutorService.class, KnownComponentNames.REMOTE_COMMAND_EXECUTOR).shutdownNow();
          cacheManager.stop();
       }
    }
 
-   public void testCommands() {
-      //if some of these tests fails, we need to pick another command to make the assertions true
-      Assert.assertTrue(blockingNonCacheRpcCommand.canBlock());
-      Assert.assertTrue(blockingSingleRpcCommand.canBlock());
+   public void testCacheRpcCommands() throws Throwable {
+      CacheRpcCommand blockingCacheRpcCommand = mockCacheRpcCommand(true);
+      assertDispatchForCommand(blockingCacheRpcCommand, true);
 
-      Assert.assertFalse(nonBlockingCacheRpcCommand.canBlock());
-      Assert.assertFalse(nonBlockingNonCacheRpcCommand.canBlock());
-      Assert.assertFalse(nonBlockingSingleRpcCommand.canBlock());
-   }
-
-   public void testCacheRpcCommands() throws Exception {
+      CacheRpcCommand nonBlockingCacheRpcCommand = mockCacheRpcCommand(false);
       assertDispatchForCommand(nonBlockingCacheRpcCommand, false);
    }
 
-   public void testSingleRpcCommand() throws Exception {
+   public void testGlobalRpcCommands() throws Throwable {
+      GlobalRpcCommand blockingGlobalRpcCommand = mockGlobalRpcCommand(true);
+      assertDispatchForCommand(blockingGlobalRpcCommand, true);
+
+      GlobalRpcCommand nonBlockingGlobalRpcCommand = mockGlobalRpcCommand(false);
+      assertDispatchForCommand(nonBlockingGlobalRpcCommand, false);
+   }
+
+   public void testReplicableCommands() throws Throwable {
+      ReplicableCommand blockingReplicableCommand = mockReplicableCommand(true);
+      assertDispatchForCommand(blockingReplicableCommand, true);
+
+      ReplicableCommand nonBlockingReplicableCommand = mockReplicableCommand(false);
+      assertDispatchForCommand(nonBlockingReplicableCommand, false);
+   }
+
+   public void testSingleRpcCommand() throws Throwable {
+      SingleRpcCommand blockingSingleRpcCommand = mockSingleRpcCommand(true);
       assertDispatchForCommand(blockingSingleRpcCommand, true);
+
+      SingleRpcCommand nonBlockingSingleRpcCommand = mockSingleRpcCommand(false);
       assertDispatchForCommand(nonBlockingSingleRpcCommand, false);
    }
 
-   public void testNonCacheRpcCommands() throws Exception {
-      assertDispatchForCommand(blockingNonCacheRpcCommand, true);
-      assertDispatchForCommand(nonBlockingNonCacheRpcCommand, false);
-   }
-
-   private void assertDispatchForCommand(ReplicableCommand command, boolean expected) throws Exception {
+   private void assertDispatchForCommand(ReplicableCommand command, boolean isBlocking) throws Exception {
+      Assert.assertEquals(isBlocking, command.canBlock());
       log.debugf("Testing " + command.getClass().getCanonicalName());
       executorService.reset();
       CompletableFutureResponse response = new CompletableFutureResponse();
       invocationHandler.handleFromCluster(address, command, response, DeliverOrder.NONE);
       response.await(30, TimeUnit.SECONDS);
-      Assert.assertEquals(executorService.hasExecutedCommand, expected,
+      Assert.assertEquals(executorService.hasExecutedCommand, isBlocking,
                           "Command " + command.getClass() + " dispatched wrongly.");
 
       executorService.reset();
@@ -191,7 +202,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       }
 
       @Override
-      public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+      public boolean awaitTermination(long timeout, TimeUnit unit) {
          return false; //no-op
       }
    }
