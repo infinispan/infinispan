@@ -150,6 +150,7 @@
       <module>hibernate</module>
       <module>api</module>
       <module>anchored-keys</module>
+      <module>search-mapper</module>
    </modules>
    <properties>
       <!-- Semantic versioning defaults. -->
