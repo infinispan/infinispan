@@ -139,6 +139,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             Configuration indexed = getConfiguration(holder, "indexed");
             assertFalse(indexed.indexing().autoConfig());
             assertTrue(indexed.indexing().enabled());
+
+            Configuration minimalOffHeap = getConfiguration(holder, "minimal-offheap");
+            assertEquals(StorageType.OFF_HEAP, minimalOffHeap.memory().storageType());
          }
       },
       INFINISPAN_100(10, 0) {
