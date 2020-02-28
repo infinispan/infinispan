@@ -148,7 +148,7 @@ public class HotRodTestingUtil {
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, int idleTimeout,
                                                 String proxyHost, int proxyPort, long delay) {
-      return startHotRodServer(manager, port, idleTimeout, proxyHost, proxyPort, delay, TestResourceTracker.getCurrentTestShortName());
+      return startHotRodServer(manager, port, idleTimeout, proxyHost, proxyPort, delay, null);
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, HotRodServerConfigurationBuilder builder) {

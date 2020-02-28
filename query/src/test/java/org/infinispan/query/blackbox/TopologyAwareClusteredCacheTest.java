@@ -2,8 +2,8 @@ package org.infinispan.query.blackbox;
 
 import java.util.List;
 
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.Test;
@@ -18,15 +18,13 @@ public class TopologyAwareClusteredCacheTest extends ClusteredCacheTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      List caches = TestQueryHelperFactory.createTopologyAwareCacheNodes(
+      List<EmbeddedCacheManager> managers = TestQueryHelperFactory.createTopologyAwareCacheNodes(
                2, getCacheMode(), transactionEnabled(), isIndexLocalOnly(), isRamDirectory(), "default", Person.class);
 
-      for (Object cache : caches) {
-         cacheManagers.add(((Cache) cache).getCacheManager());
-      }
+      registerCacheManager(managers);
 
-      cache1 = (Cache<Object, Person>) caches.get(0);
-      cache2 = (Cache<Object, Person>) caches.get(1);
+      cache1 = cache(0);
+      cache2 = cache(1);
 
       waitForClusterToForm();
    }

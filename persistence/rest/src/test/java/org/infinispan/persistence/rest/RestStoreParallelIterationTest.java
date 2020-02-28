@@ -25,7 +25,7 @@ public class RestStoreParallelIterationTest extends ParallelIterationTest {
    private RestServer restServer;
 
    protected void configurePersistence(ConfigurationBuilder cb) {
-      localCacheManager = TestCacheManagerFactory.createServerModeCacheManager();
+      localCacheManager = TestCacheManagerFactory.createServerModeCacheManager(new ConfigurationBuilder());
       RestServerConfigurationBuilder restServerConfigurationBuilder = new RestServerConfigurationBuilder();
       restServer = new RestServer();
       restServer.start(restServerConfigurationBuilder.build(), localCacheManager);

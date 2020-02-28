@@ -7,7 +7,6 @@ import java.net.URL;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
@@ -44,8 +43,7 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
 
          EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(holder);
          registerCacheManager(cm);
-         Cache cache = cm.getCache(getClass().getSimpleName());
-         caches.add(cache);
+         cm.getCache();
       }
       waitForClusterToForm();
    }
@@ -53,8 +51,9 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
    @Override
    protected void rebuildIndexes() throws Exception {
       String cacheManagerName = manager(0).getCacheManagerConfiguration().cacheManagerName();
+      String defaultCacheName = manager(0).getCacheManagerConfiguration().defaultCacheName().orElse(null);
       ObjectName massIndexerObjName = getMassIndexerObjectName(
-            BASE_JMX_DOMAIN + 0, cacheManagerName, getClass().getSimpleName());
+            BASE_JMX_DOMAIN + 0, cacheManagerName, defaultCacheName);
       mBeanServerLookup.getMBeanServer().invoke(massIndexerObjName, "start", new Object[0], new String[0]);
    }
 

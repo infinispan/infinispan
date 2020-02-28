@@ -11,9 +11,9 @@ import javax.inject.Inject;
 import org.infinispan.Cache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.cdi.embedded.test.testutil.Deployments;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.TestResourceTrackingListener;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -50,10 +50,10 @@ public class CacheRegistrationTest extends Arquillian {
        // Make sure the cache is registered
       cache.put("foo", "bar");
 
-      final Set<String> cacheNames = defaultCacheManager.getCacheConfigurationNames();
+      final Set<String> cacheNames = defaultCacheManager.getCacheNames();
 
       assertEquals(cacheNames.size(), 3);
-      assertTrue(cacheNames.containsAll(Arrays.asList("small", "large", TestResourceTracker.getCurrentTestShortName())));
+      assertTrue(cacheNames.containsAll(Arrays.asList("small", "large", TestCacheManagerFactory.DEFAULT_CACHE_NAME)));
    }
 
    public void testCacheRegistrationInSpecificCacheManager() {
@@ -61,7 +61,7 @@ public class CacheRegistrationTest extends Arquillian {
       cache.put("foo", "bar");
       final Set<String> cacheNames = specificCacheManager.getCacheConfigurationNames();
 
-      assertEquals(cacheNames.size(), 2);
-      assertTrue(cacheNames.containsAll(Arrays.asList("very-large", TestResourceTracker.getCurrentTestShortName())));
+      assertEquals(cacheNames.size(), 1);
+      assertTrue(cacheNames.containsAll(Arrays.asList("very-large")));
    }
 }

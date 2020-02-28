@@ -4,7 +4,6 @@ import static org.infinispan.query.helper.StaticTestingErrorHandler.assertAllGoo
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -64,9 +63,9 @@ public class MergeTest extends MultipleCacheManagersTest {
             .addProperty("default.indexwriter.ram_buffer_size", "256")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      List<Cache<Long, Person>> caches = createClusteredCaches(2, cacheCfg);
-      cache1 = caches.get(0);
-      cache2 = caches.get(1);
+      createClusteredCaches(2, cacheCfg);
+      cache1 = cache(0);
+      cache2 = cache(1);
    }
 
    public void testMergesWrites() throws Exception {

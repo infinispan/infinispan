@@ -7,7 +7,7 @@
 
     <bean
             id="infinispanCacheContainer"
-            class="org.infinispan.test.fwk.TestCacheManagerFactory"
+            class="org.infinispan.spring.embedded.support.InfinispanDefaultCacheFactoryBeanContextTest"
             factory-method="createCacheManager"
             destroy-method="stop"/>
 

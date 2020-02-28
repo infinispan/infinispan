@@ -1,7 +1,5 @@
 package org.infinispan.query.blackbox;
 
-import java.util.List;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -30,7 +28,7 @@ public class ClusteredQueryMultipleCachesTest extends ClusteredQueryTest {
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      List<Cache<String, Person>> caches = createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg, new TransportFlags(), "cacheA", "cacheB");
+      createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg, new TransportFlags(), "cacheA", "cacheB");
       cacheAMachine1 = manager(0).getCache("cacheA");
       cacheAMachine2 = manager(1).getCache("cacheA");
       cacheBMachine1 = manager(0).getCache("cacheB");

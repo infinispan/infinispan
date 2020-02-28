@@ -1,5 +1,6 @@
 package org.infinispan.persistence.rest;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
@@ -38,7 +39,7 @@ public class RestCacheStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {
-      return TestCacheManagerFactory.createServerModeCacheManager();
+      return TestCacheManagerFactory.createServerModeCacheManager(new ConfigurationBuilder());
    }
 
    @Override

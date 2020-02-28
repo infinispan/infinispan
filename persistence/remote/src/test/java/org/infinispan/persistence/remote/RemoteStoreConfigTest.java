@@ -28,13 +28,15 @@ import org.testng.annotations.Test;
 public class RemoteStoreConfigTest extends AbstractInfinispanTest {
 
    public static final String CACHE_LOADER_CONFIG = "remote-cl-config.xml";
+   public static final String STORE_CACHE_NAME = "RemoteStoreConfigTest";
    private EmbeddedCacheManager cacheManager;
    private HotRodServer hotRodServer;
 
    @BeforeClass
    public void startUp() {
-      cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
-      assertEquals(cacheManager.getCache().size(), 0);
+      cacheManager = TestCacheManagerFactory.createCacheManager();
+      Cache<?, ?> storeCache = cacheManager.createCache(STORE_CACHE_NAME, hotRodCacheConfiguration().build());
+      assertEquals(storeCache.size(), 0);
       hotRodServer = HotRodTestingUtil.startHotRodServer(cacheManager, 19711);
    }
 
@@ -50,16 +52,17 @@ public class RemoteStoreConfigTest extends AbstractInfinispanTest {
 
             cache.put("k", "v");
 
-            assertEquals(1, cacheManager.getCache().size());
+            Cache<Object, Object> storeCache = cacheManager.getCache(STORE_CACHE_NAME);
+            assertEquals(1, storeCache.size());
             cache.stop();
-            assertEquals(1, cacheManager.getCache().size());
+            assertEquals(1, storeCache.size());
          }
       });
 
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(CACHE_LOADER_CONFIG)) {
          @Override
          public void call() {
-            Cache cache = cm.getCache();
+            Cache cache = cm.getCache(STORE_CACHE_NAME);
             assertEquals("v", cache.get("k"));
          }
       });

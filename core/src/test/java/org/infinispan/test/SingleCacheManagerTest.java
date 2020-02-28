@@ -29,7 +29,9 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
    protected void setup() throws Exception {
       cacheManager = createCacheManager();
-      if (cache == null) cache = cacheManager.getCache();
+      if (cache == null && SecurityActions.getCacheManagerConfiguration(cacheManager).defaultCacheName().isPresent()) {
+         cache = cacheManager.getCache();
+      }
    }
 
    protected void teardown() {
@@ -135,10 +137,5 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
             return true;
          }
       });
-   }
-
-   @Override
-   public String getDefaultCacheName() {
-      return cacheManager.getCacheManagerConfiguration().defaultCacheName().get();
    }
 }

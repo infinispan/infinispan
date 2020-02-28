@@ -109,7 +109,7 @@ public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
       assert c.invocationBatching().enabled();
       assert c.transaction().transactionMode().isTransactional();
 
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder())) {
          @Override
          public void call() {
             assert !cm.getCache().getCacheConfiguration().transaction().transactionMode().isTransactional();

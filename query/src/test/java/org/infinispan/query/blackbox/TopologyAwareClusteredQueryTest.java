@@ -1,10 +1,11 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.query.helper.TestQueryHelperFactory.createTopologyAwareCacheNodes;
+
 import java.util.List;
 
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.query.helper.TestQueryHelperFactory;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.Test;
 
@@ -18,15 +19,14 @@ public class TopologyAwareClusteredQueryTest extends ClusteredQueryTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      List caches = TestQueryHelperFactory.createTopologyAwareCacheNodes(2, getCacheMode(), transactionEnabled(),
-            isIndexLocalOnly(), isRamDirectory(), "default", Person.class);
+      List<EmbeddedCacheManager> managers = createTopologyAwareCacheNodes(2, getCacheMode(), transactionEnabled(),
+                                                                          isIndexLocalOnly(), isRamDirectory(),
+                                                                          "default", Person.class);
 
-      for (Object cache : caches) {
-         cacheManagers.add(((Cache) cache).getCacheManager());
-      }
+      registerCacheManager(managers);
 
-      cacheAMachine1 = (Cache<String, Person>) caches.get(0);
-      cacheAMachine2 = (Cache<String, Person>) caches.get(1);
+      cacheAMachine1 = cache(0);
+      cacheAMachine2 = cache(1);
 
       waitForClusterToForm();
       populateCache();

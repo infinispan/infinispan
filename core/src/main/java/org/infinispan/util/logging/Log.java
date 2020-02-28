@@ -1503,7 +1503,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Cache manager initialized with a default cache configuration but without a name for it. Set it in the GlobalConfiguration.", id = 435)
    CacheConfigurationException defaultCacheConfigurationWithoutName();
 
-   @Message(value = "Cache '%s' has been requested, but no cache configuration exists with that name and no default cache has been set for this container", id = 436)
+   @Message(value = "Cache '%s' has been requested, but no matching cache configuration exists", id = 436)
    CacheConfigurationException noSuchCacheConfiguration(String name);
 
    @LogMessage(level = WARN)

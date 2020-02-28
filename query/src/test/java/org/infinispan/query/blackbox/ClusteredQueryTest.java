@@ -103,9 +103,9 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
             .addProperty("lucene_version", "LUCENE_CURRENT");
       cacheCfg.memory()
             .storageType(storageType);
-      List<Cache<String, Person>> caches = createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
-      cacheAMachine1 = caches.get(0);
-      cacheAMachine2 = caches.get(1);
+      createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
+      cacheAMachine1 = cache(0);
+      cacheAMachine2 = cache(1);
       populateCache();
    }
 

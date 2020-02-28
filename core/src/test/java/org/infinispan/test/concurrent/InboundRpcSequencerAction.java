@@ -83,7 +83,7 @@ public class InboundRpcSequencerAction {
                   reply.reply(response);
                }
             }, order);
-         } finally {
+         } catch (Throwable t) {
             advance(accepted, statesAfter, Reply.NO_OP);
          }
       }

@@ -1,6 +1,7 @@
 package org.infinispan.conflict.impl;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.partitionhandling.PartitionHandling;
@@ -35,9 +36,14 @@ public class MultipleCachesDuringConflictResolutionTest extends BasePartitionHan
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = cacheConfiguration();
       dcc.clustering().cacheMode(cacheMode)
-            .partitionHandling().whenSplit(PartitionHandling.ALLOW_READ_WRITES).mergePolicy(MergePolicy.PREFERRED_ALWAYS);
+         .partitionHandling().whenSplit(PartitionHandling.ALLOW_READ_WRITES).mergePolicy(MergePolicy.PREFERRED_ALWAYS);
       String[] cacheNames = getCacheNames();
-      createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true), cacheNames);
+      // Create a default cache because waitForPartitionToForm() needs it
+      GlobalConfigurationBuilder gc = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gc.defaultCacheName(cacheNames[0]);
+      createClusteredCaches(numMembersInCluster, gc, dcc, false, new TransportFlags().withFD(true).withMerge(true),
+                            cacheNames);
+
       waitForClusterToForm(cacheNames);
    }
 

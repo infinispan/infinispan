@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -55,7 +56,8 @@ public class CrashJoinTest extends AbstractStateTransferTest {
 
    public void testNodeJoin() throws Exception {
       List<MagicKey> keys = init();
-      Cache c4 = addClusterEnabledCacheManager(TestDataSCI.INSTANCE, defaultConfig, TRANSPORT_FLAGS).getCache(CACHE_NAME);
+      EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(TestDataSCI.INSTANCE, null, TRANSPORT_FLAGS);
+      Cache c4 = cm4.createCache(CACHE_NAME, defaultConfig.build());
       TestingUtil.blockUntilViewsReceived(30000, false, c1, c2, c3, c4);
       TestingUtil.waitForNoRebalance(c1, c2, c3, c4);
 

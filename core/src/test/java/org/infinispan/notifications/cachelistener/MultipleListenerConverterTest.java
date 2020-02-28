@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
@@ -28,7 +29,7 @@ import org.testng.annotations.Test;
 public class MultipleListenerConverterTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager();
+      return TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder());
    }
 
    private static class StringConverter implements CacheEventConverter<Object, Object, String> {

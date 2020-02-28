@@ -1,6 +1,5 @@
 package org.infinispan.query.distributed;
 
-import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -11,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -23,7 +23,6 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.massindex.IndexUpdater;
 import org.infinispan.query.test.Transaction;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.commons.test.TestResourceTracker;
 
 /**
  * Long running test for the async MassIndexer, specially regarding cancellation. Supposed to be run as a main class.
@@ -75,9 +74,9 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      List<Cache<Integer, Transaction>> caches = createClusteredCaches(2, cacheCfg);
-      cache1 = caches.get(0);
-      cache2 = caches.get(1);
+      createClusteredCaches(2, cacheCfg);
+      cache1 = cache(0);
+      cache2 = cache(1);
       massIndexer = Search.getSearchManager(cache1).getMassIndexer();
    }
 

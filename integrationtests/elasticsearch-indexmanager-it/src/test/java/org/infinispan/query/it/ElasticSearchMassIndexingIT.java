@@ -1,9 +1,5 @@
 package org.infinispan.query.it;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -26,7 +22,7 @@ public class ElasticSearchMassIndexingIT extends DistributedMassIndexingTest {
             .index(Index.PRIMARY_OWNER)
             .addIndexedEntity(Car.class);
       ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());
-      List<Cache<Object, Object>> cacheList = createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
+      createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
       ConfigurationBuilder indexCache = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       indexCache.clustering().stateTransfer().fetchInMemoryState(true);
       defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, indexCache);
@@ -34,7 +30,5 @@ public class ElasticSearchMassIndexingIT extends DistributedMassIndexingTest {
       defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME, indexCache);
 
       waitForClusterToForm();
-
-      caches.addAll(cacheList.stream().collect(Collectors.toList()));
    }
 }

@@ -34,9 +34,6 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    FunctionalMapImpl<Object, String> fmapR1;
    FunctionalMapImpl<Object, String> fmapR2;
 
-   FunctionalMapImpl<Object, String> fmapS1;
-   FunctionalMapImpl<Object, String> fmapS2;
-
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder localBuilder = new ConfigurationBuilder();
@@ -52,8 +49,9 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
       replBuilder.clustering().cacheMode(isSync ? CacheMode.REPL_SYNC : CacheMode.REPL_ASYNC);
       configureCache(replBuilder);
       cacheManagers.stream().forEach(cm -> cm.defineConfiguration(REPL, replBuilder.build()));
-      // Create scattered caches
-      if (!Boolean.TRUE.equals(transactional)) {
+
+      if (transactional != Boolean.TRUE) {
+         // Create scattered caches
          ConfigurationBuilder scatteredBuilder = new ConfigurationBuilder();
          scatteredBuilder.clustering().cacheMode(CacheMode.SCATTERED_SYNC);
          if (biasAcquisition != null) {
@@ -62,8 +60,12 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
          configureCache(scatteredBuilder);
          cacheManagers.stream().forEach(cm -> cm.defineConfiguration(SCATTERED, scatteredBuilder.build()));
       }
+
       // Wait for cluster to form
-      waitForClusterToForm(DIST, REPL, SCATTERED);
+      waitForClusterToForm(DIST, REPL);
+      if (transactional != Boolean.TRUE) {
+         waitForClusterToForm(SCATTERED);
+      }
    }
 
    protected void configureCache(ConfigurationBuilder builder) {
@@ -115,8 +117,6 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
       fmapD2 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(1), DIST));
       fmapR1 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(0), REPL));
       fmapR2 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(1), REPL));
-      fmapS1 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(0), SCATTERED));
-      fmapS2 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(1), SCATTERED));
    }
 
    protected <K, V> AdvancedCache<K, V> getAdvancedCache(EmbeddedCacheManager cm, String cacheName) {

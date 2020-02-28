@@ -7,6 +7,7 @@ import java.util.Random;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -28,7 +29,7 @@ public abstract class AbstractMarshallingTest extends AbstractInfinispanTest {
    @BeforeClass(alwaysRun=true)
    public void setUp() {
       // Manual addition of externalizers to replication what happens in fully functional tests
-      cm = TestCacheManagerFactory.createCacheManager();
+      cm = TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder());
       marshaller = TestingUtil.extractGlobalMarshaller(cm.getCache().getCacheManager());
    }
 

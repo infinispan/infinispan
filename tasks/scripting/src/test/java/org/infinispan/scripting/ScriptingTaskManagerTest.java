@@ -1,10 +1,12 @@
 package org.infinispan.scripting;
 
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.impl.ScriptTask;
 import org.infinispan.scripting.utils.ScriptingUtils;
@@ -34,12 +36,12 @@ public class ScriptingTaskManagerTest extends SingleCacheManagerTest {
    @Override
    protected void setup() throws Exception {
       super.setup();
-      taskManager = cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
-      cacheManager.defineConfiguration(ScriptingTest.CACHE_NAME, cacheManager.getDefaultCacheConfiguration());
+      taskManager = extractGlobalComponent(cacheManager, TaskManager.class);
+      cacheManager.defineConfiguration(ScriptingTest.CACHE_NAME, new ConfigurationBuilder().build());
    }
 
    public void testTask() throws Exception {
-      ScriptingManager scriptingManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+      ScriptingManager scriptingManager = extractGlobalComponent(cacheManager, ScriptingManager.class);
       ScriptingUtils.loadScript(scriptingManager, TEST_SCRIPT);
       String result = (String) taskManager.runTask(TEST_SCRIPT, new TaskContext().addParameter("a", "a")).get();
       assertEquals("a", result);
@@ -61,7 +63,7 @@ public class ScriptingTaskManagerTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*Script execution error.*")
    public void testBrokenTask() throws Exception {
-      ScriptingManager scriptingManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+      ScriptingManager scriptingManager = extractGlobalComponent(cacheManager, ScriptingManager.class);
       ScriptingUtils.loadScript(scriptingManager, BROKEN_SCRIPT);
       taskManager.runTask(BROKEN_SCRIPT, new TaskContext()).get();
    }

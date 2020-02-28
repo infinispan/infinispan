@@ -4,7 +4,10 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertSame;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.common.InfinispanTestExecutionListener;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
@@ -49,5 +52,12 @@ public class InfinispanDefaultCacheFactoryBeanContextTest extends AbstractTestNG
             "InfinispanDefaultCacheFactoryBean should always return the same cache instance when being "
                   + "called repeatedly. However, the cache instances are not the same.",
             testDefaultCache1, testDefaultCache2);
+   }
+
+   /**
+    * Referenced in the Spring configuration.
+    */
+   public static EmbeddedCacheManager createCacheManager() {
+      return TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder());
    }
 }

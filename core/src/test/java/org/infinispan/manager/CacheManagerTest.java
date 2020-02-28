@@ -85,6 +85,8 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          expectException(CacheConfigurationException.class,
                          () -> cm.defineConfiguration(TestingUtil.getDefaultCacheName(cm),
                                                       new ConfigurationBuilder().build()));
+
+         expectException(CacheConfigurationException.class, () -> cm.getCache("non-existent-cache"));
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
@@ -264,7 +266,9 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testConcurrentCacheManagerStopAndGetCache() throws Exception {
-      EmbeddedCacheManager manager = createCacheManager(false);
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.defaultCacheName(CACHE_NAME);
+      EmbeddedCacheManager manager = createCacheManager(globalBuilder, new ConfigurationBuilder(), false);
       CompletableFuture<Void> cacheStartBlocked = new CompletableFuture<>();
       CompletableFuture<Void> cacheStartResumed = new CompletableFuture<>();
       CompletableFuture<Void> managerStopBlocked = new CompletableFuture<>();
@@ -338,9 +342,10 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cacheManager = null;
       try {
          cacheManager = createCacheManager();
-         cacheManager.defineConfiguration("correct-cache-1", cacheManager.getDefaultCacheConfiguration());
-         cacheManager.defineConfiguration("correct-cache-2", cacheManager.getDefaultCacheConfiguration());
-         cacheManager.defineConfiguration("correct-cache-3", cacheManager.getDefaultCacheConfiguration());
+         Configuration configuration = new ConfigurationBuilder().build();
+         cacheManager.defineConfiguration("correct-cache-1", configuration);
+         cacheManager.defineConfiguration("correct-cache-2", configuration);
+         cacheManager.defineConfiguration("correct-cache-3", configuration);
          ConfigurationBuilder incorrectBuilder = new ConfigurationBuilder();
          incorrectBuilder.customInterceptors().addInterceptor().position(InterceptorConfiguration.Position.FIRST)
                .interceptor(new ExceptionInterceptor());
@@ -368,8 +373,8 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    public void testCacheManagerRestartReusingConfigurations() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            createCacheManager(CacheMode.REPL_SYNC, false),
+            createCacheManager(CacheMode.REPL_SYNC, false)) {
          @Override
          public void call() {
             EmbeddedCacheManager cm1 = cms[0];
@@ -406,7 +411,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    public void testExceptionOnCacheManagerStop() {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.persistence().addStore(UnreliableCacheStoreConfigurationBuilder.class);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
+      EmbeddedCacheManager cm = createCacheManager(c);
       try {
          assertEquals(ComponentStatus.RUNNING, cm.getStatus());
          Cache<Integer, String> cache = cm.getCache();

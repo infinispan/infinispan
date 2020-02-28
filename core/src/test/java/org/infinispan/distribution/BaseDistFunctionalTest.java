@@ -81,9 +81,9 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       cacheName = "dist";
       configuration = buildConfiguration();
       // Create clustered caches with failure detection protocols on
-      caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, getSerializationContext(), configuration,
+      createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, getSerializationContext(), configuration,
                                      new TransportFlags().withFD(false));
-
+      caches = caches(cacheName);
       if (INIT_CLUSTER_SIZE > 0) c1 = caches.get(0);
       if (INIT_CLUSTER_SIZE > 1) c2 = caches.get(1);
       if (INIT_CLUSTER_SIZE > 2) c3 = caches.get(2);

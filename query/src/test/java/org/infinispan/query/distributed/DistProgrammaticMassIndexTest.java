@@ -48,8 +48,6 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
          holder.newConfigurationBuilder(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME).read(cacheCfg1);
          holder.newConfigurationBuilder(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME).read(cacheCfg1);
       }, NUM_NODES);
-
-      caches.addAll(caches());
    }
 
    protected void verifyFindsCar(Cache cache, int count, String carMake) throws Exception {

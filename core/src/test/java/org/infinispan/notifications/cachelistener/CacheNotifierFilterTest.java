@@ -10,6 +10,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.filter.CollectionKeyFilter;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
@@ -128,7 +129,8 @@ public class CacheNotifierFilterTest extends MultipleCacheManagersTest {
       // This would block all cache events
       cache0.addListener(listener, new CollectionKeyFilter<>(Collections.emptyList(), true));
 
-      addClusterEnabledCacheManager(builderUsed);
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager();
+      cm.createCache(CACHE_NAME, builderUsed.build());
 
       waitForClusterToForm(CACHE_NAME);
 

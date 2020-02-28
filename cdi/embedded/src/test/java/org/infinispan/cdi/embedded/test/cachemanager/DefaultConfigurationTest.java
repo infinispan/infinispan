@@ -11,7 +11,7 @@ import org.infinispan.Cache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -37,7 +37,7 @@ public class DefaultConfigurationTest extends Arquillian {
 
    public void testDefaultConfiguration() {
       assertEquals(cache.getCacheConfiguration().memory().size(), 16);
-      assertEquals(cache.getName(), TestResourceTracker.getCurrentTestShortName());
+      assertEquals(cache.getName(), TestCacheManagerFactory.DEFAULT_CACHE_NAME);
    }
 
    /**
