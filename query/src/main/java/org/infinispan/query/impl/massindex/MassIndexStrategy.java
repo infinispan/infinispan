@@ -62,28 +62,4 @@ interface MassIndexStrategy {
          return IndexingExecutionMode.ALL;
       }
    };
-
-
-   /**
-    * The per node primary strategy will execute all the work on a per node basis,
-    * considering only primary owners when indexing.
-    */
-   MassIndexStrategy PER_NODE_PRIMARY = new MassIndexStrategy() {
-      @Override
-      public FlushExecutionMode getFlushStrategy() {
-         return FlushExecutionMode.PER_NODE;
-      }
-
-      @Override
-      public CleanExecutionMode getCleanStrategy() {
-         return CleanExecutionMode.PER_NODE;
-      }
-
-      @Override
-      public IndexingExecutionMode getIndexingStrategy() {
-         return IndexingExecutionMode.PRIMARY_OWNER;
-      }
-   };
-
-
 }

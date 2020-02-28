@@ -64,8 +64,7 @@ public final class IndexInspector {
    public boolean hasSharedIndex(Class<?> entity) {
       IndexManager indexManager = getIndexManagerPerClass().get(entity);
       if (indexManager == null) return false;
-      return indexManager instanceof InfinispanIndexManager ||
-            indexManager.getClass().getName().equals(ELASTICSEARCH_INDEX_MANAGER);
+      return isShared(indexManager);
    }
 
    private boolean isShared(IndexManager indexManager) {
