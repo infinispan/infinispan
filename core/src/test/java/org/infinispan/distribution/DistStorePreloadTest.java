@@ -74,12 +74,12 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest<?>> extends Bas
       AdvancedCacheLoader<String, String> cs = TestingUtil.getFirstLoader(c1);
       assertEquals(NUM_KEYS, PersistenceUtil.count(cs, null));
 
-      addClusterEnabledCacheManager(TestDataSCI.INSTANCE, configuration, new TransportFlags().withFD(false));
+      addClusterEnabledCacheManager(TestDataSCI.INSTANCE, null, new TransportFlags().withFD(false));
       EmbeddedCacheManager cm2 = cacheManagers.get(1);
       cm2.defineConfiguration(cacheName, buildConfiguration().build());
       c2 = cache(1, cacheName);
       caches.add(c2);
-      waitForClusterToForm();
+      waitForClusterToForm(cacheName);
 
       DataContainer<String, String> dc2 = c2.getAdvancedCache().getDataContainer();
       assertEquals("Expected all the cache store entries to be preloaded on the second cache", NUM_KEYS, dc2.size());

@@ -23,6 +23,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -39,8 +41,9 @@ public class GridFileTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
-      cacheManager.defineConfiguration("data", cacheManager.getDefaultCacheConfiguration());
-      cacheManager.defineConfiguration("metadata", cacheManager.getDefaultCacheConfiguration());
+      Configuration configuration = new ConfigurationBuilder().build();
+      cacheManager.defineConfiguration("data", configuration);
+      cacheManager.defineConfiguration("metadata", configuration);
       return cacheManager;
    }
 

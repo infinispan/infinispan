@@ -53,12 +53,10 @@ public class ConfigurationManager {
          return namedConfiguration.get(cacheName);
    }
 
-   public Configuration getConfiguration(String cacheName, String defaultCacheName) {
+   public Configuration getConfiguration(String cacheName) {
       Configuration configuration = findConfiguration(cacheName);
-      if (configuration != null)
+      if (configuration != null) {
          return configuration;
-      if (defaultCacheName != null) {
-         return namedConfiguration.get(defaultCacheName);
       } else {
          throw CONFIG.noSuchCacheConfiguration(cacheName);
       }

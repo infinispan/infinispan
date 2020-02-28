@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.FunctionalMap.ReadOnlyMap;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
@@ -25,7 +26,7 @@ public class FunctionalSimpleTutorialTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager();
+      return TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder());
    }
 
    public void testSimpleTutorial() throws Exception {

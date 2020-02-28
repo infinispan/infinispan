@@ -8,7 +8,7 @@ import javax.inject.Inject;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
-import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -42,7 +42,7 @@ public class DefaultCacheTest extends Arquillian {
       cache.put("manik", "Sri Lankan");
       assertEquals(cache.get("pete"), "British");
       assertEquals(cache.get("manik"), "Sri Lankan");
-      assertEquals(cache.getName(), TestResourceTracker.getCurrentTestShortName());
+      assertEquals(cache.getName(), TestCacheManagerFactory.DEFAULT_CACHE_NAME);
       /*
        * Check that the advanced cache contains the same data as the simple
        * cache. As we can inject either Cache or AdvancedCache, this is double
@@ -51,6 +51,6 @@ public class DefaultCacheTest extends Arquillian {
        */
       assertEquals(advancedCache.get("pete"), "British");
       assertEquals(advancedCache.get("manik"), "Sri Lankan");
-      assertEquals(advancedCache.getName(), TestResourceTracker.getCurrentTestShortName());
+      assertEquals(advancedCache.getName(), TestCacheManagerFactory.DEFAULT_CACHE_NAME);
    }
 }

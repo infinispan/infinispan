@@ -344,11 +344,6 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       return cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
    }
 
-   @Override
-   public String getDefaultCacheName() {
-      return site(0).cacheManagers.get(0).getCacheManagerConfiguration().defaultCacheName().get();
-   }
-
    protected DefaultTakeOfflineManager takeOfflineManager(String site, String cacheName, int index) {
       return (DefaultTakeOfflineManager) cache(site, cacheName, index).getAdvancedCache()
             .getComponentRegistry()

@@ -4,8 +4,6 @@ import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.Assert.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.util.List;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -41,33 +39,30 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      List<Cache<String, Car>> cacheList = createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
+      createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
 
       waitForClusterToForm();
-
-      caches.addAll(cacheList);
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public void testReindexing() throws Exception {
-      caches.get(0).put(key("C1"), new Car("megane", "white", 300));
-      caches.get(1).put(key("P1"), new Person("james", "blurb", 23));
-      caches.get(1).put(key("P2"), new Person("tony", "blurb", 28));
-      caches.get(1).put(key("P3"), new Person("chris", "blurb", 26));
-      caches.get(1).put(key("P4"), new Person("iker", "blurb", 23));
-      caches.get(1).put(key("P5"), new Person("sergio", "blurb", 29));
+      cache(0).put(key("C1"), new Car("megane", "white", 300));
+      cache(1).put(key("P1"), new Person("james", "blurb", 23));
+      cache(1).put(key("P2"), new Person("tony", "blurb", 28));
+      cache(1).put(key("P3"), new Person("chris", "blurb", 26));
+      cache(1).put(key("P4"), new Person("iker", "blurb", 23));
+      cache(1).put(key("P5"), new Person("sergio", "blurb", 29));
 
       checkIndex(5, Person.class);
       checkIndex(1, Car.class);
       checkIndex(1, "make", "megane", Car.class);
       checkIndex(1, "name", "james", Person.class);
 
-      caches.get(1).put(key("C2"), new Car("megane", "blue", 300));
+      cache(1).put(key("C2"), new Car("megane", "blue", 300));
       checkIndex(2, "make", "megane", Car.class);
 
       //add an entry without indexing it:
-      caches.get(1).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("C3"), new Car("megane", "blue", 300));
+      cache(1).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("C3"), new Car("megane", "blue", 300));
       checkIndex(2, "make", "megane", Car.class);
 
       //re-sync datacontainer with indexes:
@@ -78,10 +73,10 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
       checkIndex(1, "name", "tony", Person.class);
 
       //verify we cleanup old stale index values by removing the data but avoid touching the index
-      caches.get(1).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).remove(key("C2"));
-      caches.get(1).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).remove(key("P3"));
-      assertNull(caches.get(1).get(key("P3")));
-      assertNull(caches.get(1).get(key("C2")));
+      cache(1).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).remove(key("C2"));
+      cache(1).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).remove(key("P3"));
+      assertNull(cache(1).get(key("P3")));
+      assertNull(cache(1).get(key("C2")));
       checkIndex(3, "make", "megane", Car.class);
       checkIndex(5, Person.class);
 
@@ -102,7 +97,7 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
    }
 
    private void checkIndex(int expectedCount, String q, Class<?> entity) {
-      for (Cache<?, ?> cache : caches) {
+      for (Cache<?, ?> cache : caches()) {
          StaticTestingErrorHandler.assertAllGood(cache);
          SearchManager searchManager = Search.getSearchManager(cache);
          CacheQuery<?> cacheQuery = searchManager.getQuery(q, FETCH);

@@ -35,7 +35,7 @@ public class RemoteApplicationPublishedBridgeTest extends InfinispanApplicationP
 
    @BeforeClass
    public void beforeClass() {
-      embeddedCacheManager = TestCacheManagerFactory.createCacheManager();
+      embeddedCacheManager = TestCacheManagerFactory.createCacheManager(new org.infinispan.configuration.cache.ConfigurationBuilder());
       hotrodServer = HotRodTestingUtil.startHotRodServer(embeddedCacheManager, 19723);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host("localhost").port(hotrodServer.getPort())

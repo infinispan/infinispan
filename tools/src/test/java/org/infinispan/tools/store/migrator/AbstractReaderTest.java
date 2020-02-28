@@ -83,6 +83,7 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
 
       GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
       globalConfig.serialization().addContextInitializer(TestUtil.SCI.INSTANCE);
+      globalConfig.defaultCacheName(TEST_CACHE_NAME);
 
       // Create a new cache instance, with the required externalizers, to ensure that the new RocksDbStore can be
       // loaded and contains all of the expected values.

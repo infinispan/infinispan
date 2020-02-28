@@ -1,8 +1,8 @@
 package org.infinispan.distribution.rehash;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
@@ -75,7 +75,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
    @Test
    public void testStateTransferWithRequestorsForNonExistentL1Value() throws Exception {
       // First 2 caches are primary and backup respectively at the beginning
-      L1Manager l1Manager = c1.getAdvancedCache().getComponentRegistry().getComponent(L1Manager.class);
+      L1Manager l1Manager = TestingUtil.extractComponent(c1, L1Manager.class);
       l1Manager.addRequestor(key, c3.getCacheManager().getAddress());
 
       assertNull(c3.get(key));
@@ -91,7 +91,8 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       // Now force 1 and 3 to be owners so then 3 will get invalidation and state transfer
       factory.setOwnerIndexes(0, 2);
 
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(configuration);
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager();
+      cm.defineConfiguration(cacheName, configuration.build());
 
       Future<Void> join = fork(() -> {
          waitForClusterToForm(cacheName);
@@ -133,7 +134,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       assertIsInL1(c3, key);
 
       CyclicBarrier barrier = new CyclicBarrier(2);
-      c3.getAdvancedCache().getAsyncInterceptorChain()
+      TestingUtil.extractInterceptorChain(c3)
             .addInterceptorAfter(new BlockingInterceptor<>(barrier, InvalidateL1Command.class, true, false),
                   EntryWrappingInterceptor.class);
 
@@ -152,7 +153,8 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       // Now force 1 and 3 to be owners so then 3 will get invalidation and state transfer
       factory.setOwnerIndexes(0, 2);
 
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(configuration);
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager();
+      cm.defineConfiguration(cacheName, configuration.build());
 
       Future<Void> join = fork(() -> {
          waitForClusterToForm(cacheName);

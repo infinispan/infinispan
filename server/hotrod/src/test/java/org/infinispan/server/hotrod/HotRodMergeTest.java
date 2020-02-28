@@ -52,7 +52,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       ConfigurationBuilder dcc = hotRodCacheConfiguration();
       dcc.clustering().cacheMode(cacheMode).hash().numOwners(1);
       dcc.clustering().partitionHandling().whenSplit(partitionHandling);
-      createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true), "merge");
+      createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true));
       waitForClusterToForm();
 
       // Allow servers for both instances to run in parallel
@@ -63,8 +63,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
          nextServerPort += 1;
       }
 
-      client = new HotRodClient("127.0.0.1", servers.get(0).getPort(), "merge", 60, (byte) 21);
-      TestingUtil.waitForNoRebalance(cache(0), cache(1));
+      client = new HotRodClient("127.0.0.1", servers.get(0).getPort(), getDefaultCacheName(), 60, (byte) 21);
    }
 
    @AfterClass(alwaysRun = true)
@@ -145,7 +144,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
          if (resp.topologyResponse == null || (resp.topologyResponse.topologyId < expectedTopologyId)) {
             return false;
          }
-         assertHashTopology20Received(resp.topologyResponse, servers, getDefaultCacheName(), expectedTopologyId);
+         assertHashTopology20Received(resp.topologyResponse, servers, client.defaultCacheName(), expectedTopologyId);
          return true;
       });
    }
@@ -153,7 +152,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
    private void expectCompleteTopology(HotRodClient c, int expectedTopologyId) {
       TestResponse resp = c.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0);
       assertStatus(resp, Success);
-      assertHashTopology20Received(resp.topologyResponse, servers, getDefaultCacheName(), expectedTopologyId);
+      assertHashTopology20Received(resp.topologyResponse, servers, client.defaultCacheName(), expectedTopologyId);
    }
 
    private void eventuallyExpectPartialTopology(HotRodClient c, int expectedTopologyId) {
@@ -163,7 +162,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
          if (resp.topologyResponse == null || (resp.topologyResponse.topologyId < expectedTopologyId)) {
             return false;
          }
-         assertHashTopology20Received(resp.topologyResponse, Arrays.asList(servers.get(0)), getDefaultCacheName(),
+         assertHashTopology20Received(resp.topologyResponse, Arrays.asList(servers.get(0)), client.defaultCacheName(),
                                       expectedTopologyId);
          return true;
       });
@@ -172,7 +171,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
    private void expectPartialTopology(HotRodClient c, int expectedTopologyId) {
       TestResponse resp = c.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0);
       assertStatus(resp, Success);
-      assertHashTopology20Received(resp.topologyResponse, Arrays.asList(servers.get(0)), getDefaultCacheName(),
+      assertHashTopology20Received(resp.topologyResponse, Arrays.asList(servers.get(0)), client.defaultCacheName(),
                                    expectedTopologyId);
    }
 

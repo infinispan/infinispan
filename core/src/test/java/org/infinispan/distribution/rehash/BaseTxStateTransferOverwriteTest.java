@@ -2,12 +2,12 @@ package org.infinispan.distribution.rehash;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
@@ -18,6 +18,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
@@ -65,7 +66,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
    }
 
    protected boolean l1Enabled() {
-      return cache(0).getCacheConfiguration().clustering().l1().enabled();
+      return cache(0, cacheName).getCacheConfiguration().clustering().l1().enabled();
    }
 
    @Override

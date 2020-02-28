@@ -39,8 +39,9 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
       configuration.clustering().remoteTimeout(3, TimeUnit.SECONDS);
       configuration.clustering().hash().numOwners(1);
       configuration.locking().lockAcquisitionTimeout(45, TimeUnit.SECONDS);
-      caches = createClusteredCaches(2, cacheName, configuration);
+      createClusteredCaches(2, cacheName, configuration);
 
+      caches = caches(cacheName);
       c1 = caches.get(0);
       c2 = caches.get(1);
 

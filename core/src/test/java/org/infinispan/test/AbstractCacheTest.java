@@ -91,6 +91,6 @@ public abstract class AbstractCacheTest extends AbstractInfinispanTest {
    }
 
    public String getDefaultCacheName() {
-      throw new UnsupportedOperationException();
+      return TestCacheManagerFactory.DEFAULT_CACHE_NAME;
    }
 }

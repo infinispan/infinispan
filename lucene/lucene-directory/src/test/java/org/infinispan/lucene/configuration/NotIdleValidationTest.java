@@ -20,12 +20,12 @@ public class NotIdleValidationTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = CacheTestSupport.createLocalCacheConfiguration();
-      cfg.expiration().maxIdle(10l);
+      cfg.expiration().maxIdle(10L);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp =
-         "ISPN(\\d)*: Lucene Directory for index 'testIndexBeta' can not use Cache 'NotIdleValidationTest': expiration idle time enabled on the Cache configuration!")
+         "ISPN(\\d)*: Lucene Directory for index 'testIndexBeta' can not use Cache 'defaultcache': expiration idle time enabled on the Cache configuration!")
    public void failOnExpiry() {
       DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "testIndexBeta").create();
    }

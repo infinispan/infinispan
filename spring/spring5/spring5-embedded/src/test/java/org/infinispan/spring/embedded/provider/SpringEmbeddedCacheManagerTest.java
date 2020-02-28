@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.common.provider.SpringCache;
@@ -138,7 +139,7 @@ public class SpringEmbeddedCacheManagerTest extends AbstractInfinispanTest {
     */
    @Test
    public final void stopShouldStopTheNativeEmbeddedCacheManager() {
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder())) {
          @Override
          public void call() {
             cm.getCache(); // Implicitly starts EmbeddedCacheManager
@@ -165,11 +166,9 @@ public class SpringEmbeddedCacheManagerTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
          public void call() {
-            final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(
-                  cm);
+            final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(cm);
 
-            final EmbeddedCacheManager nativeCacheManagerReturned = objectUnderTest
-                  .getNativeCacheManager();
+            final EmbeddedCacheManager nativeCacheManagerReturned = objectUnderTest.getNativeCacheManager();
 
             assertSame(
                   "getNativeCacheManager() should have returned the EmbeddedCacheManager supplied at construction time. However, it retuned a different one.",
@@ -184,6 +183,7 @@ public class SpringEmbeddedCacheManagerTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             // Given
+            cm.defineConfiguration("same", new ConfigurationBuilder().build());
             final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(cm);
             final String sameCacheName = "same";
 
@@ -205,6 +205,8 @@ public class SpringEmbeddedCacheManagerTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             // Given
+            cm.defineConfiguration("thisCache", new ConfigurationBuilder().build());
+            cm.defineConfiguration("thatCache", new ConfigurationBuilder().build());
             final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(cm);
             final String firstCacheName = "thisCache";
             final String secondCacheName = "thatCache";
@@ -227,6 +229,7 @@ public class SpringEmbeddedCacheManagerTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             // Given
+            cm.defineConfiguration("same", new ConfigurationBuilder().build());
             final SpringEmbeddedCacheManager objectUnderTest = new SpringEmbeddedCacheManager(cm);
             final String sameCacheName = "same";
 

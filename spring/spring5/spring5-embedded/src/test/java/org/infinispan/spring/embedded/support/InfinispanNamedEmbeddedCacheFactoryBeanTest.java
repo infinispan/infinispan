@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -41,22 +42,15 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest extends AbstractInfinis
    @BeforeClass
    public void startCacheManagers() {
       DEFAULT_CACHE_MANAGER = TestCacheManagerFactory.createCacheManager();
+      Configuration configuration = new ConfigurationBuilder().build();
+      DEFAULT_CACHE_MANAGER.defineConfiguration("test.cache.Name", configuration);
+      DEFAULT_CACHE_MANAGER.defineConfiguration("test.bean.Name", configuration);
       DEFAULT_CACHE_MANAGER.start();
 
-      InputStream configStream = null;
-      try {
-         configStream = NAMED_ASYNC_CACHE_CONFIG_LOCATION.getInputStream();
+      try (InputStream configStream = NAMED_ASYNC_CACHE_CONFIG_LOCATION.getInputStream()) {
          PRECONFIGURED_DEFAULT_CACHE_MANAGER = TestCacheManagerFactory.fromStream(configStream);
       } catch (final IOException e) {
          throw new ExceptionInInitializerError(e);
-      } finally {
-         if (configStream != null) {
-            try {
-               configStream.close();
-            } catch (final IOException e) {
-               // Ignore
-            }
-         }
       }
    }
 

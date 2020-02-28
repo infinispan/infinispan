@@ -1,8 +1,5 @@
 package org.infinispan.query.it;
 
-import java.util.List;
-
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
@@ -40,8 +37,8 @@ public class ClusteredCacheWithElasticsearchIndexManagerIT extends ClusteredCach
                 .enable()
                 .addIndexedEntity(Person.class);
         ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());
-        List<Cache<Object, Person>> caches = createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
-        cache1 = caches.get(0);
-        cache2 = caches.get(1);
+        createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
+        cache1 = cache(0);
+        cache2 = cache(1);
     }
 }

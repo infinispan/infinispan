@@ -1,5 +1,7 @@
 package org.infinispan.cdi.embedded.test;
 
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
@@ -9,7 +11,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.commons.test.TestResourceTracker;
 
 /**
@@ -35,7 +36,11 @@ public class DefaultTestEmbeddedCacheManagerProducer {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
       builder.read(defaultConfiguration);
-      return TestCacheManagerFactory.createClusteredCacheManager(globalConfigurationBuilder, builder);
+      EmbeddedCacheManager manager = createClusteredCacheManager(globalConfigurationBuilder, builder);
+      // Defie a wildcard configuration for the CDI integration tests
+      manager.defineConfiguration("org.infinispan.integrationtests.cdijcache.interceptor.service.Cache*Service*",
+                                  new ConfigurationBuilder().template(true).build());
+      return manager;
    }
 
    /**

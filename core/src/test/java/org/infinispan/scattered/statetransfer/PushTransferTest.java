@@ -44,7 +44,8 @@ public class PushTransferTest extends AbstractStateTransferTest {
 
    public void testNodeJoin() throws Exception {
       List<MagicKey> keys = init();
-      EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(TestDataSCI.INSTANCE, defaultConfig, TRANSPORT_FLAGS);
+      EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(TestDataSCI.INSTANCE, null, TRANSPORT_FLAGS);
+      cm4.defineConfiguration(CACHE_NAME, defaultConfig.build());
       int startTopologyId = c1.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
 
       BlockingLocalTopologyManager bltm = BlockingLocalTopologyManager.replaceTopologyManager(cm4, CACHE_NAME);

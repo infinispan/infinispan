@@ -1,8 +1,5 @@
 package org.infinispan.query.distributed;
 
-import java.util.List;
-
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.test.Block;
@@ -31,12 +28,10 @@ public class OverlappingDistMassIndexTest extends OverlappingIndexMassIndexTest 
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      List<Cache<String, Object>> cacheList = createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
+      createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
 
       waitForClusterToForm(getDefaultCacheName());
 
-      for (Cache cache : cacheList) {
-         caches.add(cache);
-      }
+      caches = caches();
    }
 }

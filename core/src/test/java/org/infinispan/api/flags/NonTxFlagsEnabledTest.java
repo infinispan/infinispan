@@ -8,6 +8,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.UnnecessaryLoadingTest;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.TestDataSCI;
@@ -39,7 +40,8 @@ public class NonTxFlagsEnabledTest extends FlagsEnabledTest {
    }
 
    public void testCacheLocalInNonOwner() {
-      addClusterEnabledCacheManager(TestDataSCI.INSTANCE, getConfigurationBuilder());
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(TestDataSCI.INSTANCE);
+      cm.createCache(cacheName, getConfigurationBuilder().build());
       waitForClusterToForm(cacheName);
       final AdvancedCache<Object, String> cache1 = advancedCache(0, cacheName);
       final AdvancedCache<Object, String> cache2 = advancedCache(1, cacheName);
