@@ -119,7 +119,7 @@
       <version.apache.maven.wagon>3.3.3</version.apache.maven.wagon>
       <version.arquillian>1.4.1.Final</version.arquillian>
       <version.asm>2.2.3</version.asm>
-      <version.asm.ow2>6.1.1</version.asm.ow2>
+      <version.asm.ow2>7.1</version.asm.ow2>
       <version.byteman>4.0.6</version.byteman>
       <version.caffeine>2.8.0</version.caffeine>
       <version.cdi>2.0</version.cdi>
@@ -128,12 +128,14 @@
       <version.eclipse.aether>1.1.0</version.eclipse.aether>
       <version.eclipse.sisu>0.3.3</version.eclipse.sisu>
       <version.elasticsearch>5.6.8</version.elasticsearch>
-      <version.glassfish.jaxb>2.3.0</version.glassfish.jaxb>
+      <version.glassfish.jaxb>2.3.1</version.glassfish.jaxb>
       <version.glassfish.json>1.1.4</version.glassfish.json>
       <version.groovy>2.4.8</version.groovy>
       <version.gson>2.8.5</version.gson>
       <version.hamcrest>1.3</version.hamcrest>
-      <version.hibernate.core>5.3.12.Final</version.hibernate.core>
+      <version.hibernate.core_v51>5.1.11.Final</version.hibernate.core_v51>
+      <version.hibernate.core_v53>5.3.14.Final</version.hibernate.core_v53>
+      <version.hibernate.core>${version.hibernate.core_v53}</version.hibernate.core>
       <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
       <version.hibernate_dep.classmate>1.3.4</version.hibernate_dep.classmate>
       <version.hibernate_dep.dom4j>1.6.1_5</version.hibernate_dep.dom4j>
@@ -165,7 +167,7 @@
       <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
       <version.jboss.shrinkwrap.descriptors>2.0.0</version.jboss.shrinkwrap.descriptors>
       <version.jboss.shrinkwrap.resolver>3.1.3</version.jboss.shrinkwrap.resolver>
-      <version.jboss.xnio>3.7.3.Final</version.jboss.xnio>
+      <version.jboss.xnio>3.7.7.Final</version.jboss.xnio>
       <version.jcip-annotations>1.0</version.jcip-annotations>
       <version.jetty>9.4.5.v20170502</version.jetty>
       <version.jgroups>4.1.9.Final</version.jgroups>
@@ -193,7 +195,7 @@
       <version.org.wildfly>${appserver.version}</version.org.wildfly>
       <version.org.wildfly.arquillian>2.2.0.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.core>10.0.0.Final</version.org.wildfly.core>
-      <version.org.wildfly.elytron>1.10.3.Final</version.org.wildfly.elytron>
+      <version.org.wildfly.elytron>1.10.4.Final</version.org.wildfly.elytron>
       <version.org.wildfly.openssl>1.0.9.Final</version.org.wildfly.openssl>
       <version.osgi>4.3.1</version.osgi>
       <version.pax.exam>4.11.0</version.pax.exam>
