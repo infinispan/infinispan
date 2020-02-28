@@ -11,7 +11,7 @@ import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -49,7 +49,7 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
       return cb;
    }
 
-   @BeforeMethod
+   @BeforeClass
    protected void setUpTempDir() {
       Util.recursiveFileRemove(TMP_DIR);
       boolean created = new File(TMP_DIR).mkdirs();
