@@ -2,6 +2,7 @@ package org.infinispan.util;
 
 import org.infinispan.affinity.impl.KeyAffinityServiceImpl;
 import org.infinispan.cache.impl.CacheImpl;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.internal.CommonsBlockHoundIntegration;
 import org.infinispan.container.offheap.OffHeapConcurrentMap;
 import org.infinispan.container.offheap.SegmentedBoundedOffHeapDataContainer;
@@ -43,9 +44,6 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
          builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "runTasks");
          // This invokes the actual runnable - we have to make sure it doesn't block as normal
          builder.disallowBlockingCallsInside(LimitedExecutor.class.getName(), "actualRun");
-
-         builder.allowBlockingCallsInside(BasicComponentRegistryImpl.class.getName(), "prepareWrapperChange");
-         builder.allowBlockingCallsInside(BasicComponentRegistryImpl.class.getName(), "commitWrapperChange");
 
          // This method by design will never block; It may block very shortly if another thread is removing or adding
          // to the queue, but it will never block for an extended period by design as there will always be room
@@ -107,7 +105,12 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       // This happens when a cache is requested while it is still starting
       // Due to this happening at startup or extremely rarely at runtime, we can ignore it
       // This should be fixed in https://issues.redhat.com/browse/ISPN-11396
-      builder.allowBlockingCallsInside(BasicComponentRegistryImpl.class.getName(), "awaitWrapperState");
+      CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, BasicComponentRegistryImpl.class);
+      try {
+         CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, Class.forName(BasicComponentRegistryImpl.class.getName() + "$ComponentWrapper"));
+      } catch (ClassNotFoundException e) {
+         throw new CacheException(e);
+      }
 
       // This method calls initCacheStatusIfAbsent which can invoke readScopedState which reads scope from a file that
       // can block the current thread while doing I/O
