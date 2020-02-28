@@ -21,7 +21,7 @@ import org.infinispan.query.indexmanager.InfinispanIndexManager;
  * @since 11.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public class IndexInspector {
+public final class IndexInspector {
 
    private final Map<Class<?>, IndexManager> indexManagerPerClass = new HashMap<>(2);
    private final Map<String, Class<?>> indexedEntities;

@@ -2,8 +2,6 @@ package org.infinispan.it.endpoints;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 
-import java.io.IOException;
-
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -22,7 +20,7 @@ public class JsonPojoStoreTest extends BaseJsonTest {
       ConfigurationBuilder indexedCache = new ConfigurationBuilder();
 
       indexedCache.indexing().enable()
-            .addProperty("default.directory_provider", "ram");
+            .addProperty("default.directory_provider", "local-heap");
 
       indexedCache.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
       indexedCache.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
@@ -31,7 +29,7 @@ public class JsonPojoStoreTest extends BaseJsonTest {
    }
 
    @Override
-   protected RemoteCacheManager createRemoteCacheManager() throws IOException {
+   protected RemoteCacheManager createRemoteCacheManager() {
       return new RemoteCacheManager(new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
             .addServer().host("localhost").port(hotRodServer.getPort())
             .addContextInitializers(EndpointITSCI.INSTANCE)

@@ -34,8 +34,8 @@ final class QueryPartitioner {
    }
 
    private boolean hasSharedIndex(Class<?> entity) {
-      if(indexMode != null) {
-         return Index.PRIMARY_OWNER.equals(indexMode);
+      if (indexMode != null) {
+         return Index.PRIMARY_OWNER == indexMode;
       }
       return indexInspector.hasSharedIndex(entity);
    }

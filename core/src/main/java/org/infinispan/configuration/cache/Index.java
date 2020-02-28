@@ -28,7 +28,6 @@ public enum Index {
     * Is indexing enabled?
     * @deprecated Use {@link IndexingConfiguration#enabled()}} instead
     */
-   @Deprecated
    public boolean isEnabled() {
       return this != NONE;
    }
@@ -36,7 +35,6 @@ public enum Index {
    /**
     * @deprecated in 10.1. Equivalent to a simple equality comparison to {@link #PRIMARY_OWNER}.
     */
-   @Deprecated
    public boolean isPrimaryOwner() {
       return this == PRIMARY_OWNER;
    }

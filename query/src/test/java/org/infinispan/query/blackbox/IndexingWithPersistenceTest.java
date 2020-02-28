@@ -43,7 +43,7 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
             .enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       builder.persistence().addStore(new DummyInMemoryStoreConfigurationBuilder(builder.persistence()));
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, builder);

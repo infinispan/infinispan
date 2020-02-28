@@ -270,7 +270,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    }
 
    private InfinispanQueryStatisticsInfo.IndexStatistics getIndexStatistics(Cache<?, ?> cache) {
-      if(!cache.getCacheConfiguration().indexing().enabled()) {
+      if (!cache.getCacheConfiguration().indexing().enabled()) {
          return null;
       }
 

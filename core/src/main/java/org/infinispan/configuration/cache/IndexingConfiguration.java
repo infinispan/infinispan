@@ -22,8 +22,9 @@ import org.infinispan.commons.util.TypedProperties;
  * Configures indexing of entries in the cache for searching.
  */
 public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration implements Matchable<IndexingConfiguration>, ConfigurationInfo {
+   @Deprecated
    public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder("index", null, Index.class).immutable().build();
-   public final static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public static final AttributeDefinition<Boolean> AUTO_CONFIG = AttributeDefinition.builder("autoConfig", false).immutable().build();
    public static final AttributeDefinition<Map<Class<?>, Class<?>>> KEY_TRANSFORMERS = AttributeDefinition.builder("key-transformers", null, (Class<Map<Class<?>, Class<?>>>) (Class<?>) Map.class)
          .copier(CollectionAttributeCopier.INSTANCE)
@@ -36,7 +37,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED);
    }
 
-   static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(INDEXING.getLocalName());
+   static final ElementDefinition<IndexingConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(INDEXING.getLocalName());
 
    private static final String DIRECTORY_PROVIDER_KEY = "directory_provider";
 
@@ -48,6 +49,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    private static final String LOCAL_HEAP_DIRECTORY_PROVIDER = "local-heap";
    private static final String LOCAL_HEAP_DIRECTORY_PROVIDER_FQN = "org.hibernate.search.store.impl.RAMDirectoryProvider";
 
+   @Deprecated
    private final Attribute<Index> index;
    private final Attribute<Boolean> autoConfig;
    private final Attribute<Map<Class<?>, Class<?>>> keyTransformers;

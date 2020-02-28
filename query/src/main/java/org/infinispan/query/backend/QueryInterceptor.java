@@ -37,7 +37,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -108,12 +107,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       this.searchFactory = searchFactory;
       this.keyTransformationHandler = keyTransformationHandler;
       this.indexingMode = indexingMode;
-      this.isManualIndexing = searchFactory.unwrap(SearchIntegrator.class).getIndexingMode() == IndexingMode.MANUAL;
+      this.isManualIndexing = searchFactory.getIndexingMode() == IndexingMode.MANUAL;
       this.txOldValues = txOldValues;
       this.valueDataConversion = cache.getValueDataConversion();
       this.keyDataConversion = cache.getKeyDataConversion();
-      Configuration cfg = cache.getCacheConfiguration();
-      this.isPersistenceEnabled = cfg.persistence().usingStores();
+      this.isPersistenceEnabled = cache.getCacheConfiguration().persistence().usingStores();
    }
 
    @Start
@@ -126,21 +124,19 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    private boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx, Object key, Object value) {
-      if(indexingMode != null) {
+      if (indexingMode != null) {
          return indexingMode.shouldModifyIndexes(command, ctx, distributionManager, rpcManager, key);
       }
 
       if (isManualIndexing) return false;
 
-      IndexModificationStrategy strategy;
       CacheMode cacheMode = cacheConfiguration.clustering().cacheMode();
-      boolean clustered = cacheMode.isClustered();
-
-      if (!clustered) return true;
+      if (!cacheMode.isClustered()) return true;
 
       if (value == null) return cacheMode.isReplicated() || ctx.isOriginLocal();
 
-      strategy = indexInspector.hasSharedIndex(value.getClass()) ? IndexModificationStrategy.PRIMARY_OWNER : IndexModificationStrategy.ALL;
+      IndexModificationStrategy strategy = indexInspector.hasSharedIndex(value.getClass()) ?
+            IndexModificationStrategy.PRIMARY_OWNER : IndexModificationStrategy.ALL;
 
       return strategy.shouldModifyIndexes(command, ctx, distributionManager, rpcManager, key);
    }
@@ -444,10 +440,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       if (shouldModifyIndexes(command, ctx, null, null)) {
          purgeAllIndexes(NoTransactionContext.INSTANCE);
       }
-   }
-
-   public IndexModificationStrategy getIndexModificationMode() {
-      return indexingMode;
    }
 
    public boolean isStopping() {

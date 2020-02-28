@@ -51,8 +51,7 @@ public class ClientListenerWithIndexingAndProtobufTest extends MultiHotRodServer
       return TestDomainSCI.INSTANCE;
    }
 
-
-   public void testEventFilter() throws Exception {
+   public void testEventFilter() {
       User user1 = new UserPB();
       user1.setId(1);
       user1.setName("John");

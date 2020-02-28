@@ -16,12 +16,12 @@
 
 <!-- Optional -->
 <replicated-cache name="LuceneIndexesMetadata_custom">
-<indexing enabled="false" />
+    <indexing enabled="false" />
     <!-- extra configuration -->
 </replicated-cache>
 
 <!-- Optional -->
 <distributed-cache name="LuceneIndexesData_custom">
-<indexing enabled="false" />
+    <indexing enabled="false" />
     <!-- extra configuration -->
 </distributed-cache>
