@@ -30,12 +30,10 @@ public class ManualIndexingTest extends MultipleCacheManagersTest {
          Cache<String, Car> cache = cacheManager.getCache();
          caches.add(cache);
       }
-      waitForClusterToForm(new String[] {
-            getDefaultCacheName(),
-            "LuceneIndexesMetadata",
-            "LuceneIndexesData",
-            "LuceneIndexesLocking",
-      });
+      waitForClusterToForm("default",
+                           "LuceneIndexesMetadata",
+                           "LuceneIndexesData",
+                           "LuceneIndexesLocking");
    }
 
    public void testManualIndexing() throws Exception {

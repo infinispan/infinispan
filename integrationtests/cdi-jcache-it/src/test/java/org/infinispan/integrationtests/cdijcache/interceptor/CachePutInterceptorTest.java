@@ -17,7 +17,7 @@ import org.infinispan.integrationtests.cdijcache.interceptor.config.Custom;
 import org.infinispan.integrationtests.cdijcache.interceptor.service.CachePutService;
 import org.infinispan.integrationtests.cdijcache.interceptor.service.CustomCacheKey;
 import org.infinispan.jcache.annotation.DefaultCacheKey;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.test.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -48,7 +48,7 @@ public class CachePutInterceptorTest extends Arquillian {
    private CachePutService service;
 
    @Inject
-   private CacheContainer cacheContainer;
+   private EmbeddedCacheManager cacheContainer;
 
    @Custom
    @Inject

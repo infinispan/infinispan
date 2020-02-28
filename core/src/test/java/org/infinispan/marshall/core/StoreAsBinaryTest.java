@@ -470,7 +470,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
    }
 
    public void testEqualsAndHashCode() throws Exception {
-      StreamingMarshaller marshaller = extractGlobalMarshaller(cache(0).getCacheManager());
+      StreamingMarshaller marshaller = extractGlobalMarshaller(manager(0));
       CountMarshallingPojo pojo = new CountMarshallingPojo();
       WrappedBytes wb = new WrappedByteArray(marshaller.objectToByteBuffer(pojo));
       WrappedBytes wb2 = new WrappedByteArray(marshaller.objectToByteBuffer(pojo));

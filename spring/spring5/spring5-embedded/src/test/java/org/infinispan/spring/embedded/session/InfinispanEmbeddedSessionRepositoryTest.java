@@ -1,5 +1,6 @@
 package org.infinispan.spring.embedded.session;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository;
@@ -18,7 +19,7 @@ public class InfinispanEmbeddedSessionRepositoryTest extends InfinispanSessionRe
 
    @BeforeClass
    public void beforeClass() {
-      embeddedCacheManager = TestCacheManagerFactory.createCacheManager();
+      embeddedCacheManager = TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder());
    }
 
    @AfterMethod

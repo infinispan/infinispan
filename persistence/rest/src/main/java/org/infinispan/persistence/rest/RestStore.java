@@ -41,7 +41,6 @@ import org.infinispan.util.logging.LogFactory;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-
 import io.reactivex.Flowable;
 import net.jcip.annotations.ThreadSafe;
 
@@ -190,6 +189,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       try {
          CompletionStage<RestResponse> clear = cacheClient.clear();
          RestResponse response = CompletionStages.join(clear);
+         response.close();
          if (!isSuccessful(response.getStatus())) throw new PersistenceException("Failed to clear remote store");
       } catch (Exception e) {
          throw new PersistenceException(e);

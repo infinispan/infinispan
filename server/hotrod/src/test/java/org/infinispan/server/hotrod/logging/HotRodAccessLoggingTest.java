@@ -43,6 +43,6 @@ public class HotRodAccessLoggingTest extends HotRodSingleNodeTest {
       String logline = logAppender.getLog(0);
       assertTrue(logline, logline.matches(
             "^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"PUT /" +
-            testShortName + "/\\[B0x6B6579 HOTROD/2\\.1\" OK \\d+ \\d+ \\d+$"));
+            getDefaultCacheName() + "/\\[B0x6B6579 HOTROD/2\\.1\" OK \\d+ \\d+ \\d+$"));
    }
 }

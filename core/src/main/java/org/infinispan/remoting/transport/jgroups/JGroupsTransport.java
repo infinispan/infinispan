@@ -821,7 +821,7 @@ public class JGroupsTransport implements Transport {
    @Override
    public int getViewId() {
       if (channel == null)
-         throw new CacheException("The cache has been stopped and invocations are not allowed!");
+         throw new IllegalLifecycleStateException("The cache has been stopped and invocations are not allowed!");
       return clusterView.getViewId();
    }
 

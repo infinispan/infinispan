@@ -1,5 +1,8 @@
 package org.infinispan.functional;
 
+import static org.infinispan.commons.test.Exceptions.expectExceptionNonStrict;
+import static org.testng.Assert.assertEquals;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -21,26 +24,25 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.TxReadOnlyKeyCommand;
 import org.infinispan.commands.functional.TxReadOnlyManyCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.CountingRequestRepository;
 import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableFunction;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import static org.infinispan.commons.test.Exceptions.expectExceptionNonStrict;
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt; and Krzysztof Sobolewski &lt;Krzysztof.Sobolewski@atende.pl&gt;
@@ -50,14 +52,10 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
    static ConcurrentMap<Class<? extends AbstractFunctionalOpTest>, AtomicInteger> invocationCounts = new ConcurrentHashMap<>();
 
    FunctionalMap.ReadOnlyMap<Object, String> ro;
-   FunctionalMap.ReadOnlyMap<Object, String> sro;
    FunctionalMap.ReadOnlyMap<Integer, String> lro;
    WriteOnlyMap<Object, String> wo;
    ReadWriteMap<Object, String> rw;
    AdvancedCache<Object, String> cache;
-   WriteOnlyMap<Object, String> swo;
-   ReadWriteMap<Object, String> srw;
-   AdvancedCache<Object, String> scatteredCache;
    WriteOnlyMap<Integer, String> lwo;
    ReadWriteMap<Integer, String> lrw;
    List<CountingRequestRepository> countingRequestRepositories;
@@ -112,18 +110,14 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
    }
 
    @Override
-   @BeforeMethod
-   public void createBeforeMethod() throws Throwable {
-      super.createBeforeMethod();
+   protected void initMaps() {
+      super.initMaps();
+
       this.ro = ReadOnlyMapImpl.create(fmapD1);
-      this.sro = ReadOnlyMapImpl.create(fmapS1);
       this.lro = ReadOnlyMapImpl.create(fmapL1);
       this.wo = WriteOnlyMapImpl.create(fmapD1);
       this.rw = ReadWriteMapImpl.create(fmapD1);
       this.cache = cacheManagers.get(0).<Object, String>getCache(DIST).getAdvancedCache();
-      this.swo = WriteOnlyMapImpl.create(fmapS1);
-      this.srw = ReadWriteMapImpl.create(fmapS1);
-      this.scatteredCache = cacheManagers.get(0).<Object, String>getCache(SCATTERED).getAdvancedCache();
       this.lwo = WriteOnlyMapImpl.create(fmapL1);
       this.lrw = ReadWriteMapImpl.create(fmapL1);
    }
@@ -131,10 +125,15 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       super.createCacheManagers();
-      countingRequestRepositories = cacheManagers.stream().map(cm -> CountingRequestRepository.replaceDispatcher(cm)).collect(Collectors.toList());
-      Stream.of(null, DIST, REPL, SCATTERED).forEach(name -> caches(name).forEach(c -> {
-         c.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(new CommandCachingInterceptor(), CallInterceptor.class);
-      }));
+      countingRequestRepositories = cacheManagers.stream()
+                                                 .map(CountingRequestRepository::replaceDispatcher)
+                                                 .collect(Collectors.toList());
+      for (EmbeddedCacheManager manager : managers()) {
+         for (String cacheName : manager.getCacheNames()) {
+            TestingUtil.extractInterceptorChain(manager.getCache(cacheName))
+                       .addInterceptorBefore(new CommandCachingInterceptor(), CallInterceptor.class);
+         }
+      }
    }
 
    protected void advanceGenerationsAndAwait(long timeout, TimeUnit timeUnit) throws Exception {

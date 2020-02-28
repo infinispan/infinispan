@@ -341,9 +341,4 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    protected  TransactionTable txTable(Cache cache) {
       return cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
    }
-
-   @Override
-   public String getDefaultCacheName() {
-      return site(0).cacheManagers.get(0).getCacheManagerConfiguration().defaultCacheName().get();
-   }
 }

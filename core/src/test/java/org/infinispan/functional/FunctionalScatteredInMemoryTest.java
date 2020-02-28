@@ -10,8 +10,13 @@ import static org.testng.Assert.fail;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletionException;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.BiasAcquisition;
+import org.infinispan.functional.impl.FunctionalMapImpl;
+import org.infinispan.functional.impl.ReadOnlyMapImpl;
+import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.scattered.Utils;
 import org.infinispan.test.TestException;
@@ -19,12 +24,30 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "functional.FunctionalScatteredInMemoryTest")
 public class FunctionalScatteredInMemoryTest extends AbstractFunctionalOpTest {
+   AdvancedCache<Object, String> scatteredCache;
+   FunctionalMapImpl<Object, String> fmapS1;
+   FunctionalMapImpl<Object, String> fmapS2;
+   FunctionalMap.ReadOnlyMap<Object, String> sro;
+   FunctionalMap.WriteOnlyMap<Object, String> swo;
+   FunctionalMap.ReadWriteMap<Object, String> srw;
+
    @Override
    public Object[] factory() {
       return new Object[] {
             new FunctionalScatteredInMemoryTest().biasAcquisition(BiasAcquisition.NEVER),
             new FunctionalScatteredInMemoryTest().biasAcquisition(BiasAcquisition.ON_WRITE)
       };
+   }
+
+   @Override
+   protected void initMaps() {
+      super.initMaps();
+      this.scatteredCache = cacheManagers.get(0).<Object, String>getCache(SCATTERED).getAdvancedCache();
+      fmapS1 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(0), SCATTERED));
+      fmapS2 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(1), SCATTERED));
+      this.sro = ReadOnlyMapImpl.create(fmapS1);
+      this.swo = WriteOnlyMapImpl.create(fmapS1);
+      this.srw = ReadWriteMapImpl.create(fmapS1);
    }
 
    @Test(dataProvider = "owningModeAndWriteMethod")

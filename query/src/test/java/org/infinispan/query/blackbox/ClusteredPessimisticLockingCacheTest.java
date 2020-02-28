@@ -1,8 +1,5 @@
 package org.infinispan.query.blackbox;
 
-import java.util.List;
-
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -31,9 +28,9 @@ public class ClusteredPessimisticLockingCacheTest extends ClusteredCacheTest {
             .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);
-      List<Cache<Object, Person>> caches = createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
-      cache1 = caches.get(0);
-      cache2 = caches.get(1);
+      createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
+      cache1 = cache(0);
+      cache2 = cache(1);
    }
 
    protected boolean transactionsEnabled() {

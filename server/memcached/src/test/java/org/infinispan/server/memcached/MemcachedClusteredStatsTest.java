@@ -1,5 +1,6 @@
 package org.infinispan.server.memcached;
 
+import static org.infinispan.commons.test.TestResourceTracker.getCurrentTestShortName;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 
 import javax.management.JMException;
@@ -30,6 +31,7 @@ public class MemcachedClusteredStatsTest extends MemcachedMultiNodeTest {
    @Override
    public EmbeddedCacheManager createCacheManager(int index) {
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.defaultCacheName(cacheName);
       configureJmx(globalBuilder, JMX_DOMAIN + "-" + index, mBeanServerLookup);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.REPL_SYNC);
@@ -38,7 +40,7 @@ public class MemcachedClusteredStatsTest extends MemcachedMultiNodeTest {
 
    public void testSingleConnectionPerServer() throws Exception {
       ObjectName objectName = new ObjectName(String.format("%s-0:type=Server,component=Transport,name=Memcached-%s-%d",
-            JMX_DOMAIN, getClass().getSimpleName(), servers.get(0).getPort()));
+                                                           JMX_DOMAIN, getCurrentTestShortName(), servers.get(0).getPort()));
 
       // Now verify that via JMX as well, these stats are also as expected
       eventuallyEquals(2, () -> {

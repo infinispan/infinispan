@@ -2,7 +2,6 @@ package org.infinispan.query.searchmanager;
 
 import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -16,7 +15,6 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.IndexedQueryMode;
-import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -38,8 +36,8 @@ public class ClusteredCacheQueryTimeoutTest extends MultipleCacheManagersTest {
             .addIndexedEntity(Foo.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);
-      cache1 = caches.get(0);
+      createClusteredCaches(2, cacheCfg);
+      cache1 = cache(0);
    }
 
    @Test(expectedExceptions = UnsupportedOperationException.class, expectedExceptionsMessageRegExp = "Clustered queries do not support timeouts yet.")

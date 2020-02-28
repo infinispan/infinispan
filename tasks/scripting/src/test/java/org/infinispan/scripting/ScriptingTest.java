@@ -13,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -124,7 +125,7 @@ public class ScriptingTest extends AbstractScriptingTest {
 
       cacheManager.getCache(CACHE_NAME).put(key, value);
 
-      CompletableFuture exec = scriptingManager.runScript("testExecWithoutProp.js");
+      CompletableFuture<?> exec = scriptingManager.runScript("testExecWithoutProp.js");
       exec.get(1000, TimeUnit.MILLISECONDS);
 
       assertEquals(value + ":additionFromJavascript", cacheManager.getCache(CACHE_NAME).get(key));
@@ -214,10 +215,11 @@ public class ScriptingTest extends AbstractScriptingTest {
    public void testMapReduceScript() throws IOException, ExecutionException, InterruptedException {
       InputStream is = this.getClass().getResourceAsStream("/wordCountStream.js");
       String script = loadFileAsString(is);
-      loadData(cache(), "/macbeth.txt");
+      Cache<String, String> cache = cache(CACHE_NAME);
+      loadData(cache, "/macbeth.txt");
 
       scriptingManager.addScript("wordCountStream.js", script);
-      Map<String, Long> result = (Map<String, Long>) scriptingManager.runScript("wordCountStream.js", new TaskContext().cache(cache())).get();
+      Map<String, Long> result = (Map<String, Long>) scriptingManager.runScript("wordCountStream.js", new TaskContext().cache(cache)).get();
       assertEquals(3202, result.size());
       assertEquals(Long.valueOf(287), result.get("macbeth"));
    }

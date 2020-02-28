@@ -3,6 +3,7 @@ package org.infinispan.spring.embedded.support;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.spring.embedded.InfinispanDefaultCacheFactoryBean;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -43,7 +44,7 @@ public class InfinispanDefaultCacheFactoryBeanTest extends AbstractInfinispanTes
    @Test
    public final void infinispanDefaultCacheFactoryBeanShouldProduceANonNullInfinispanCache() {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
-      TestingUtil.withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
+      TestingUtil.withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder())) {
          @Override
          public void call() {
             try {
@@ -70,7 +71,7 @@ public class InfinispanDefaultCacheFactoryBeanTest extends AbstractInfinispanTes
    @Test
    public final void getObjectTypeShouldReturnTheMostDerivedTypeOfTheProducedInfinispanCache() {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
-      TestingUtil.withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
+      TestingUtil.withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder())) {
          @Override
          public void call() {
             try {
@@ -92,7 +93,7 @@ public class InfinispanDefaultCacheFactoryBeanTest extends AbstractInfinispanTes
 
    /**
     * Test method for
-    * {@link org.infinispan.spring.support.InfinispanDefaultCacheFactoryBean#isSingleton()}.
+    * {@link org.infinispan.spring.embedded.InfinispanDefaultCacheFactoryBean#isSingleton()}.
     */
    @Test
    public final void infinispanDefaultCacheFactoryBeanShouldDeclareItselfToBeSingleton() {
@@ -105,12 +106,12 @@ public class InfinispanDefaultCacheFactoryBeanTest extends AbstractInfinispanTes
 
    /**
     * Test method for
-    * {@link org.infinispan.spring.support.InfinispanDefaultCacheFactoryBean#destroy()}.
+    * {@link org.infinispan.spring.embedded.InfinispanDefaultCacheFactoryBean#destroy()}.
     */
    @Test
    public final void infinispanDefaultCacheFactoryBeanShouldStopTheCreatedInfinispanCacheWhenItIsDestroyed() {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
-      TestingUtil.withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
+      TestingUtil.withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder())) {
          @Override
          public void call() {
             try {

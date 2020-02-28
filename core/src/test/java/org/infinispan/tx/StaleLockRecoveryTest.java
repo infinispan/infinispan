@@ -1,7 +1,5 @@
 package org.infinispan.tx;
 
-import java.util.List;
-
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
@@ -32,9 +30,9 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       c.transaction().lockingMode(LockingMode.PESSIMISTIC)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
-      List<Cache<String, String>> caches = createClusteredCaches(2, "tx", c);
-      c1 = caches.get(0);
-      c2 = caches.get(1);
+      createClusteredCaches(2, "tx", c);
+      c1 = cache(0, "tx");
+      c2 = cache(1, "tx");
    }
 
    public void testStaleLock() throws SystemException, NotSupportedException {

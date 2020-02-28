@@ -640,7 +640,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     */
    private <K, V> Cache<K, V> wireAndStartCache(String cacheName, String configurationName) {
       boolean sameCache = cacheName.equals(configurationName);
-      Configuration c = configurationManager.getConfiguration(configurationName, defaultCacheName);
+      Configuration c = configurationManager.getConfiguration(configurationName);
       if (c == null) {
          throw CONFIG.noSuchCacheConfiguration(configurationName);
       } else if (!sameCache) {

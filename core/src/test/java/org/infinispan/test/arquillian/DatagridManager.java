@@ -2,6 +2,7 @@ package org.infinispan.test.arquillian;
 
 import java.util.List;
 import java.util.concurrent.Future;
+
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -162,15 +163,15 @@ public class DatagridManager extends MultipleCacheManagersTest
    }
 
    @Override
-   public <K, V> List<Cache<K, V>> createClusteredCaches(
+   public void createClusteredCaches(
          int numMembersInCluster, String cacheName, ConfigurationBuilder builder) {
-      return super.createClusteredCaches(numMembersInCluster, cacheName, builder);
+      super.createClusteredCaches(numMembersInCluster, cacheName, builder);
    }
 
    @Override
-   public <K, V> List<Cache<K, V>> createClusteredCaches(
+   public void createClusteredCaches(
          int numMembersInCluster, String cacheName, ConfigurationBuilder builder, TransportFlags flags) {
-      return super.createClusteredCaches(numMembersInCluster, cacheName, builder, flags);
+      super.createClusteredCaches(numMembersInCluster, cacheName, builder, flags);
    }
 
    @Override

@@ -20,12 +20,12 @@ public class NoLifespanValidationTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = CacheTestSupport.createLocalCacheConfiguration();
-      cfg.expiration().lifespan(10l);
+      cfg.expiration().lifespan(10L);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp =
-         "ISPN(\\d)*: Lucene Directory for index 'testIndexAlpha' can not use Cache 'NoLifespanValidationTest': maximum lifespan enabled on the Cache configuration!")
+         "ISPN(\\d)*: Lucene Directory for index 'testIndexAlpha' can not use Cache 'defaultcache': maximum lifespan enabled on the Cache configuration!")
    public void failOnExpiry() {
       DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "testIndexAlpha").create();
    }

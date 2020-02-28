@@ -55,7 +55,8 @@ public class AsymmetricClusterTest extends MultipleCacheManagersTest {
 
       TestingUtil.blockUntilViewsReceived(30000, false, manager(0));
 
-      addClusterEnabledCacheManager(clusteredConfig, new TransportFlags().withFD(true));
+      addClusterEnabledCacheManager(new TransportFlags().withFD(true));
+      manager(2).defineConfiguration(CACHE_NAME, clusteredConfig.build());
 
       manager(2).getCache(CACHE_NAME);
    }

@@ -21,10 +21,11 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      caches = createClusteredCaches(2, "test",
+      createClusteredCaches(2, "test",
             getDefaultClusteredCacheConfig(cacheMode),
                   new TransportFlags().withFD(true).withMerge(true));
 
+      caches = caches("test");
       c1 = caches.get(0);
       c2 = caches.get(1);
       d1 = TestingUtil.getDiscardForCache(c1.getCacheManager());

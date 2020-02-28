@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.event.Event.Type;
@@ -26,7 +27,7 @@ public class CrashedMemberDetectorTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {
-      return TestCacheManagerFactory.createCacheManager();
+      return TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder());
    }
 
    public void testDetectCrashedMembers() {

@@ -59,8 +59,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       defaultConfig = getDefaultClusteredCacheConfig(cacheMode, transactional);
-      createClusteredCaches(3, defaultConfig, new TransportFlags().withFD(true).withMerge(true));
-      defineConfigurationOnAllManagers(CACHE_NAME, defaultConfig);
+      createClusteredCaches(3, defaultConfig, new TransportFlags().withFD(true).withMerge(true), CACHE_NAME);
 
       c1 = cache(0, CACHE_NAME);
       c2 = cache(1, CACHE_NAME);
@@ -77,7 +76,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
    public void testNodeAbruptLeave() {
       // Create some more caches to trigger ISPN-2572
-      ConfigurationBuilder cfg = new ConfigurationBuilder().read(manager(0).getDefaultCacheConfiguration());
+      ConfigurationBuilder cfg = defaultConfig;
       defineConfigurationOnAllManagers("cache2", cfg);
       defineConfigurationOnAllManagers("cache3", cfg);
       defineConfigurationOnAllManagers("cache4", cfg);
@@ -114,7 +113,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that a new node can join
-      EmbeddedCacheManager newCm = addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
+      EmbeddedCacheManager newCm = addClusterEnabledCacheManager(new TransportFlags().withFD(true).withMerge(true));
       newCm.defineConfiguration(CACHE_NAME, defaultConfig.build());
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c1, c2, c4);
@@ -153,7 +152,8 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that a new node can join
-      addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
+      addClusterEnabledCacheManager(new TransportFlags().withFD(true).withMerge(true));
+      manager(3).defineConfiguration(CACHE_NAME, defaultConfig.build());
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c2, c3, c4);
       TestingUtil.waitForNoRebalance(c2, c3, c4);
@@ -194,7 +194,8 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Merge took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that a new node can join
-      addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
+      addClusterEnabledCacheManager(new TransportFlags().withFD(true).withMerge(true));
+      manager(3).defineConfiguration(CACHE_NAME, defaultConfig.build());
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c1, c2, c3, c4);
       TestingUtil.waitForNoRebalance(c1, c2, c3, c4);
@@ -237,7 +238,8 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Merge took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that a new node can join
-      addClusterEnabledCacheManager(defaultConfig, new TransportFlags().withFD(true).withMerge(true));
+      addClusterEnabledCacheManager(new TransportFlags().withFD(true).withMerge(true));
+      manager(3).defineConfiguration(CACHE_NAME, defaultConfig.build());
       Cache<Object, Object> c4 = cache(3, CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c2, c3, c4);
       TestingUtil.waitForNoRebalance(c2, c3, c4);
@@ -279,8 +281,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       final CheckPoint checkpoint = new CheckPoint();
       blockRebalanceStart(mergeCoordManager, checkpoint, 2);
 
-      final EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(defaultConfig,
-            new TransportFlags().withFD(true).withMerge(true));
+      EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(new TransportFlags().withFD(true).withMerge(true));
       blockRebalanceStart(cm4, checkpoint, 2);
       // Force the initialization of the transport
       cm4.defineConfiguration(CACHE_NAME, defaultConfig.build());
@@ -316,8 +317,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       assert endTime - startTime < 30000 : "Merge took too long: " + Util.prettyPrintTime(endTime - startTime);
 
       // Check that another node can join
-      EmbeddedCacheManager cm5 = addClusterEnabledCacheManager(defaultConfig,
-            new TransportFlags().withFD(true).withMerge(true));
+      EmbeddedCacheManager cm5 = addClusterEnabledCacheManager(new TransportFlags().withFD(true).withMerge(true));
       cm5.defineConfiguration(CACHE_NAME, defaultConfig.build());
       Cache<Object, Object> c5 = cm5.getCache(CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c1, c2, c3, c4, c5);
