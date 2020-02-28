@@ -1,10 +1,10 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
@@ -26,6 +26,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -90,7 +91,8 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
    protected void addClusteredCacheManager() {
       // First we add the new node, but block the dist exec execution
       log.info("Adding a new node ..");
-      addClusterEnabledCacheManager(sci, builderUsed);
+      EmbeddedCacheManager manager = addClusterEnabledCacheManager(sci);
+      manager.defineConfiguration(CACHE_NAME, builderUsed.build());
       log.info("Added a new node");
    }
 

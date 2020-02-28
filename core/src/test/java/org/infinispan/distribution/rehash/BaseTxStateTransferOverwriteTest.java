@@ -67,7 +67,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
    }
 
    protected boolean l1Enabled() {
-      return cache(0).getCacheConfiguration().clustering().l1().enabled();
+      return cache(0, cacheName).getCacheConfiguration().clustering().l1().enabled();
    }
 
    @Override

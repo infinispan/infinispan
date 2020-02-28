@@ -3,8 +3,6 @@ package org.infinispan.query.distributed;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-import java.util.List;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -33,29 +31,25 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
             .clustering()
             .hash().numSegments(10 * NUM_NODES);
       cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);
-      List<Cache<String, Car>> cacheList = createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
+      createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
 
       waitForClusterToForm(getDefaultCacheName());
-
-      for (Cache cache : cacheList) {
-         caches.add(cache);
-      }
    }
 
    @Override
    public void testReindexing() throws Exception {
       final int NUM_CARS = 100;
       for (int i = 0; i < NUM_CARS; ++i) {
-         caches.get(i % NUM_NODES).put("car" + i, new Car("skoda", "white", 42));
+         cache(i % NUM_NODES).put("car" + i, new Car("skoda", "white", 42));
       }
-      for (Cache cache : caches) {
+      for (Cache cache : caches()) {
          assertEquals(cache.size(), NUM_CARS);
          verifyFindsCar(cache, NUM_CARS, "skoda");
       }
       rebuildIndexes();
       for (int i = 0; i < NUM_CARS; ++i) {
          String key = "car" + i;
-         for (Cache cache : caches) {
+         for (Cache cache : caches()) {
             assertNotNull(cache.get(key));
          }
       }
@@ -64,7 +58,7 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
 
    @Override
    protected void rebuildIndexes() {
-      for (Cache cache : caches) {
+      for (Cache cache : caches()) {
          MassIndexer massIndexer = Search.getSearchManager(cache).getMassIndexer();
          eventually(() -> !massIndexer.isRunning());
          massIndexer.start();

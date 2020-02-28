@@ -10,6 +10,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.PersistenceMarshallerImpl;
 import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
+import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.multimap.api.embedded.MultimapCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -23,6 +24,7 @@ public class MultimapStoreBucketTest extends AbstractInfinispanTest {
 
    public void testMultimapWithJavaSerializationMarshaller() throws Exception {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.defaultCacheName("test");
       globalBuilder.serialization().marshaller(new JavaSerializationMarshaller()).whiteList().addClass(SuperPerson.class.getName());
 
       ConfigurationBuilder config = new ConfigurationBuilder();
@@ -30,7 +32,7 @@ public class MultimapStoreBucketTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalBuilder, config);
 
       MultimapCacheManager<String, Person> multimapCacheManager = EmbeddedMultimapCacheManagerFactory.from(cm);
-      EmbeddedMultimapCache<String, Person> multimapCache = (EmbeddedMultimapCache<String, Person>) multimapCacheManager.get("test");
+      MultimapCache<String, Person> multimapCache = multimapCacheManager.get("test");
       multimapCache.put("k1", new SuperPerson());
       PersistenceMarshallerImpl pm = TestingUtil.extractPersistenceMarshaller(cm);
       assertTrue(pm.getUserMarshaller() instanceof JavaSerializationMarshaller);

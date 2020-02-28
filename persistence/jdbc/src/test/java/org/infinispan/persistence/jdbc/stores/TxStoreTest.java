@@ -1,9 +1,9 @@
 package org.infinispan.persistence.jdbc.stores;
 
 import static javax.transaction.Status.STATUS_ROLLEDBACK;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -19,6 +19,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.table.TableName;
@@ -29,7 +30,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -68,7 +68,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
 
       cacheManager = TestCacheManagerFactory.createClusteredCacheManager(cc);
-      cache = cacheManager.getCache("Test");
+      cache = cacheManager.getCache();
       store = TestingUtil.getFirstTxWriter(cache);
    }
 

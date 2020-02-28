@@ -48,17 +48,17 @@ public class TestQueryHelperFactory {
       return component;
    }
 
-   public static List createTopologyAwareCacheNodes(int numberOfNodes, CacheMode cacheMode, boolean transactional,
-                                                    boolean indexLocalOnly, boolean isRamDirectoryProvider, String defaultCacheName, Class... indexedTypes) {
+   public static List<EmbeddedCacheManager> createTopologyAwareCacheNodes(int numberOfNodes, CacheMode cacheMode, boolean transactional,
+                                                    boolean indexLocalOnly, boolean isRamDirectoryProvider, String defaultCacheName, Class<?>... indexedTypes) {
       return createTopologyAwareCacheNodes(numberOfNodes, cacheMode, transactional, indexLocalOnly,
             isRamDirectoryProvider, defaultCacheName, f -> {
             }, indexedTypes);
    }
 
-   public static List createTopologyAwareCacheNodes(int numberOfNodes, CacheMode cacheMode, boolean transactional,
+   public static List<EmbeddedCacheManager> createTopologyAwareCacheNodes(int numberOfNodes, CacheMode cacheMode, boolean transactional,
                                                     boolean indexLocalOnly, boolean isRamDirectoryProvider, String defaultCacheName,
-                                                    Consumer<ConfigurationBuilderHolder> holderConsumer, Class... indexedTypes) {
-      List caches = new ArrayList();
+                                                    Consumer<ConfigurationBuilderHolder> holderConsumer, Class<?>... indexedTypes) {
+      List<EmbeddedCacheManager> managers = new ArrayList<>();
 
       ConfigurationBuilder builder = AbstractCacheTest.getDefaultClusteredCacheConfig(cacheMode, transactional);
 
@@ -78,7 +78,7 @@ public class TestQueryHelperFactory {
             builder.clustering().stateTransfer().fetchInMemoryState(true);
          }
       }
-      for (Class indexedType : indexedTypes) {
+      for (Class<?> indexedType : indexedTypes) {
          builder.indexing().addIndexedEntity(indexedType);
       }
 
@@ -91,12 +91,12 @@ public class TestQueryHelperFactory {
          holderConsumer.accept(holder);
          holder.newConfigurationBuilder(defaultCacheName).read(builder.build());
 
-         EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(holder);
+         EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(holder);
 
-         caches.add(cm1.getCache());
+         managers.add(cm);
       }
 
-      return caches;
+      return managers;
    }
 
 }

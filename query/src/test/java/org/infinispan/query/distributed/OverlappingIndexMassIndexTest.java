@@ -42,13 +42,11 @@ public class OverlappingIndexMassIndexTest extends MultipleCacheManagersTest {
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      List<Cache<String, Object>> cacheList = createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
+      createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
 
       waitForClusterToForm(getDefaultCacheName());
 
-      for (Cache cache : cacheList) {
-         caches.add(cache);
-      }
+      caches = caches();
    }
 
    public void testReindex() throws Exception {

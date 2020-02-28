@@ -4,10 +4,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
-import java.util.List;
 import java.util.Map;
 
 import javax.transaction.Transaction;
@@ -47,11 +45,10 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
             // TODO: Another case of default values changed (see ISPN-2651)
             .transaction().useSynchronization(false);
 
-      List<Cache<Object, Object>> caches =
-            createClusteredCaches(2, "cache", builder);
+      createClusteredCaches(2, "cache", builder);
 
-      cache1 = caches.get(0);
-      cache2 = caches.get(1);
+      cache1 = cache(0, "cache");
+      cache2 = cache(1, "cache");
    }
 
    public void testSyncTxRepl() throws Exception {
@@ -76,7 +73,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       // value on cache2 must be 38
       age = (Integer) cache2.get("age");
       assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
-      assertTrue("\"age\" must be 38", age == 38);
+      assertEquals("\"age\" must be 38", (int) age, 38);
    }
 
    public void testRemoteCacheListener() throws Exception {
@@ -89,7 +86,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
          // value on cache2 must be 38
          age = (Integer) cache2.get("age");
          assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
-         assertTrue("\"age\" must be 38", age == 38);
+         assertEquals("\"age\" must be 38", (int) age, 38);
          cache1.remove("age");
       } finally {
          cache2.removeListener(lis);
@@ -109,7 +106,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       // value on cache2 must be 38
       age = (Integer) cache2.get("age");
       assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
-      assertTrue("\"age\" must be 38", age == 38);
+      assertEquals("\"age\" must be 38", (int) age, 38);
    }
 
 
@@ -149,7 +146,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       // value on cache2 must be 38
       age = (Integer) cache2.get("age");
       assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
-      assertTrue("\"age\" must be 38", age == 38);
+      assertEquals("\"age\" must be 38", (int) age, 38);
    }
 
    public void testSyncReplMap() throws Exception {
@@ -171,7 +168,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       // value on cache2 must be 38
       age = (Integer) cache2.get("age");
       assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
-      assertTrue("\"age\" must be 38", age == 38);
+      assertEquals("\"age\" must be 38", (int) age, 38);
       assertNull("lock info is " + lm1.printLockInfo(), lm1.getOwner("age"));
    }
 
@@ -184,13 +181,13 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
          cache1.put(key, val);
       }
 
-      public void put(Map map) {
+      public void put(Map<?, ?> map) {
          if (map.isEmpty()) fail("put(): map size can't be 0");
          cache1.putAll(map);
       }
 
       @CacheEntryModified
-      public void modified(Event ne) {
+      public void modified(Event<Object, Object> ne) {
          if (!ne.isPre()) {
             log.debug("modified visited with key: " + key);
             try {

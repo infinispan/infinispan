@@ -10,9 +10,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.test.fwk.TransportFlags;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -45,7 +47,8 @@ public abstract class StressTest extends MultipleCacheManagersTest {
 
                log.trace("Adding new cache again to force rehash");
                // We should only create one so just make it the next cache manager to kill
-               cacheToKill = createClusteredCaches(1, CACHE_NAME, builderUsed).get(0);
+               EmbeddedCacheManager cm = addClusterEnabledCacheManager(new TransportFlags());
+               cacheToKill = cm.createCache(CACHE_NAME, builderUsed.build());
                log.trace("Added new cache again to force rehash");
             }
             return null;

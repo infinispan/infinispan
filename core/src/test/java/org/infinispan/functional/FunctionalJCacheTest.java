@@ -23,6 +23,7 @@ import javax.cache.processor.MutableEntry;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.functional.decorators.FunctionalJCache;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -719,7 +720,7 @@ public class FunctionalJCacheTest extends AbstractFunctionalTest {
    }
 
    public void testClose() {
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder())) {
          @Override
          public void call() throws Exception {
             AdvancedCache<Integer, String> advCache = cm.<Integer, String>getCache().getAdvancedCache();

@@ -20,7 +20,7 @@ public class MassIndexingWithStoreTest extends DistributedMassIndexingTest {
 
    @Override
    public void testReindexing() throws Exception {
-      Cache<String, Car> cache0 = caches.get(0);
+      Cache<String, Car> cache0 = cache(0);
       for (int i = 0; i < 10; i++) {
          cache0.put("CAR#" + i, new Car("Volkswagen", "white", 200));
       }

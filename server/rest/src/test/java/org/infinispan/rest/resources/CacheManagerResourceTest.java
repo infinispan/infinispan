@@ -11,8 +11,10 @@ import static org.testng.AssertJUnit.assertFalse;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -20,6 +22,7 @@ import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
 import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -131,11 +134,8 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       String json = response.getContentAsString();
       JsonNode jsonNode = mapper.readTree(json);
       List<String> names = asText(jsonNode.findValues("name"));
-      assertEquals("CacheManagerResourceTest", names.get(0));
-      assertEquals("___protobuf_metadata", names.get(1));
-      assertEquals("___script_cache", names.get(2));
-      assertEquals("cache1", names.get(3));
-      assertEquals("cache2", names.get(4));
+      Set<String> expectedNames = Util.asSet("defaultcache", "___protobuf_metadata", "___script_cache", "cache1", "cache2");
+      assertEquals(expectedNames, new HashSet<>(names));
 
       List<String> status = asText(jsonNode.findValues("status"));
       assertTrue(status.contains("RUNNING"));

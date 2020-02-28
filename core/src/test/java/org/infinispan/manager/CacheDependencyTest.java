@@ -57,7 +57,7 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
       cacheManager.stop();
 
       assertAllTerminated(cacheA, cacheB);
-      assertEquals(Arrays.asList("B", getDefaultCacheName(), GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME), listener.stopOrder);
+      assertEquals(Arrays.asList("B", GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, getDefaultCacheName()), listener.stopOrder);
    }
 
    @Test
@@ -101,7 +101,7 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
       cacheManager.stop();
 
       assertAllTerminated(cacheA, cacheB, cacheC, cacheD);
-      assertEquals(Arrays.asList("A", "B", "D", "C", getDefaultCacheName(), GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME), listener.stopOrder);
+      assertEquals(Arrays.asList("A", "B", "D", "C", GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, getDefaultCacheName()), listener.stopOrder);
    }
 
    @Test
@@ -126,13 +126,13 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
       cacheManager.stop();
 
       assertAllTerminated(cacheA, cacheB, cacheC);
-      assertEquals(Arrays.asList("A", "C", getDefaultCacheName(), GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME), listener.stopOrder);
+      assertEquals(Arrays.asList("A", "C", GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, getDefaultCacheName()), listener.stopOrder);
 
    }
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager();
+      return TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder());
    }
 
    @Listener

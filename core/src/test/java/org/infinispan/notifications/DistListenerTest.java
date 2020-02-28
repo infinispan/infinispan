@@ -1,11 +1,12 @@
 package org.infinispan.notifications;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.util.List;
 import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -13,10 +14,7 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Used to verify which nodes are going to receive events in case it's configured
@@ -113,13 +111,8 @@ public class DistListenerTest extends MultipleCacheManagersTest {
       assertViewChanged(false);
 
       // Now add a new node and shutdown
-      Cache<?, ?> shutdownCache = createClusteredCaches(1, getDefaultClusteredCacheConfig(
-            CacheMode.DIST_SYNC, true)).get(0);
-      EmbeddedCacheManager manager = shutdownCache.getCacheManager();
-      cacheManagers.remove(manager);
-      manager.stop();
-      TestingUtil.blockUntilViewsReceived(5000, false, caches());
-      TestingUtil.waitForNoRebalance(caches());
+      createClusteredCaches(1, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true));
+      killMember(cacheManagers.size() - 1);
 
       // We shouldn't have any events still...
       assertCreated(false);

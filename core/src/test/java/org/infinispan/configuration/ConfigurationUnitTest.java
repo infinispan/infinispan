@@ -84,7 +84,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.transaction().use1PcForAutoCommitTransactions(true)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
-      withCacheManager(new CacheManagerCallable(createCacheManager()) {
+      withCacheManager(new CacheManagerCallable(createCacheManager(new ConfigurationBuilder())) {
          @Override
          public void call() {
             cm.getCache();
@@ -94,7 +94,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
 
    @Test
    public void testGetCache() {
-      withCacheManager(new CacheManagerCallable(createCacheManager()) {
+      withCacheManager(new CacheManagerCallable(createCacheManager(new ConfigurationBuilder())) {
          @Override
          public void call() {
             cm.getCache();
@@ -114,7 +114,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
 
    @Test
    public void testGetAndPut() {
-      withCacheManager(new CacheManagerCallable(createCacheManager()) {
+      withCacheManager(new CacheManagerCallable(createCacheManager(new ConfigurationBuilder())) {
          @Override
          public void call() {
             Cache<String, String> cache = cm.getCache();

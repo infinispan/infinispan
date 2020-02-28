@@ -4,7 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,6 +33,7 @@ public class StartCacheFromListenerTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager();
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       manager(0).defineConfiguration("some", dcc.build());
+      manager(0).defineConfiguration("single", dcc.build());
       manager(0).defineConfiguration("cacheStarting", dcc.build());
       manager(0).defineConfiguration("cacheStarted", dcc.build());
    }
@@ -42,8 +42,8 @@ public class StartCacheFromListenerTest extends MultipleCacheManagersTest {
 
    public void testSingleInvocation() {
       final EmbeddedCacheManager cacheManager = manager(0);
-      GlobalComponentRegistry registry = (GlobalComponentRegistry) TestingUtil.extractField(cacheManager, "globalComponentRegistry");
-      List<ModuleLifecycle> lifecycles = new LinkedList<ModuleLifecycle>();
+      GlobalComponentRegistry registry = TestingUtil.extractGlobalComponentRegistry(cacheManager);
+      List<ModuleLifecycle> lifecycles = new LinkedList<>();
       TestingUtil.replaceField(lifecycles, "moduleLifecycles", registry, GlobalComponentRegistry.class);
       lifecycles.add(new ModuleLifecycle() {
          @Override
@@ -51,15 +51,12 @@ public class StartCacheFromListenerTest extends MultipleCacheManagersTest {
             log.debug("StartCacheFromListenerTest.cacheStarting");
             if (!cacheStartingInvoked.get()) {
                cacheStartingInvoked.set(true);
-               Future<Cache> fork = fork(new Callable<Cache>() {
-                  @Override
-                  public Cache call() throws Exception {
-                     try {
-                        return cacheManager.getCache("cacheStarting");
-                     } catch (Exception e) {
-                        log.error("Got", e);
-                        throw e;
-                     }
+               Future<Cache> fork = fork(() -> {
+                  try {
+                     return cacheManager.getCache("cacheStarting");
+                  } catch (Exception e) {
+                     log.error("Got", e);
+                     throw e;
                   }
                });
                try {
@@ -86,7 +83,7 @@ public class StartCacheFromListenerTest extends MultipleCacheManagersTest {
 
    public void testStartSameCache() {
       final EmbeddedCacheManager cacheManager = manager(0);
-      GlobalComponentRegistry registry = (GlobalComponentRegistry) TestingUtil.extractField(cacheManager, "globalComponentRegistry");
+      GlobalComponentRegistry registry = TestingUtil.extractGlobalComponentRegistry(cacheManager);
       List<ModuleLifecycle> lifecycles = new LinkedList<>();
       TestingUtil.replaceField(lifecycles, "moduleLifecycles", registry, GlobalComponentRegistry.class);
       lifecycles.add(new ModuleLifecycle() {

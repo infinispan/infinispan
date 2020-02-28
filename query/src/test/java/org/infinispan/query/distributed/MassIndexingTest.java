@@ -28,36 +28,36 @@ import org.testng.annotations.Test;
 public class MassIndexingTest extends DistributedMassIndexingTest {
 
    public void testReindexing() throws Exception {
-      for (int i = 0; i < 200; i++) {
-         caches.get(i % 2).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F" + i + "NUM"),
+      for (int i = 0; i < 10; i++) {
+         cache(i % 2).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F" + i + "NUM"),
                new Car((i % 2 == 0 ? "megane" : "bmw"), "blue", 300 + i));
       }
 
       //Adding also non-indexed values
-      caches.get(0).getAdvancedCache().put(key("FNonIndexed1NUM"), new NotIndexedType("test1"));
-      caches.get(0).getAdvancedCache().put(key("FNonIndexed2NUM"), new NotIndexedType("test2"));
+      cache(0).getAdvancedCache().put(key("FNonIndexed1NUM"), new NotIndexedType("test1"));
+      cache(0).getAdvancedCache().put(key("FNonIndexed2NUM"), new NotIndexedType("test2"));
 
       verifyFindsCar(0, "megane");
       verifyFindsCar(0, "test1");
       verifyFindsCar(0, "test2");
 
-      caches.get(0).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("FNonIndexed3NUM"), new NotIndexedType("test3"));
+      cache(0).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("FNonIndexed3NUM"), new NotIndexedType("test3"));
       verifyFindsCar(0, "test3");
 
       //re-sync datacontainer with indexes:
       rebuildIndexes();
 
-      verifyFindsCar(100, "megane");
+      verifyFindsCar(5, "megane");
       verifyFindsCar(0, "test1");
       verifyFindsCar(0, "test2");
    }
 
    public void testOverlappingMassIndexers() {
-      Cache<Integer, Car> cache = caches.get(0);
+      Cache<Integer, Car> cache = cache(0);
       SearchManager searchManager = Search.getSearchManager(cache);
       MassIndexer massIndexer = searchManager.getMassIndexer();
 
-      IntStream.range(0, 300).forEach(i -> cache.put(i, new Car("whatever", "whatever", 0)));
+      IntStream.range(0, 10).forEach(i -> cache.put(i, new Car("whatever", "whatever", 0)));
 
       CompletableFuture<Void> first = massIndexer.startAsync();
       eventually(massIndexer::isRunning);
@@ -92,7 +92,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
 
    @Override
    protected void rebuildIndexes() throws Exception {
-      Cache cache = caches.get(0);
+      Cache cache = cache(0);
       SearchManager searchManager = Search.getSearchManager(cache);
       CompletableFuture<Void> future = searchManager.getMassIndexer().startAsync();
       future.get();

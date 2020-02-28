@@ -48,6 +48,8 @@ import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.test.skip.SkipTestNG;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
@@ -403,21 +405,22 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
          public void call() throws Exception {
-            cm.defineConfiguration("read-only", cm.getDefaultCacheConfiguration());
+            Configuration configBuilder = new ConfigurationBuilder().build();
+            cm.defineConfiguration("read-only", configBuilder);
             AdvancedCache<?, ?> readOnlyCache = getAdvancedCache(cm, "read-only");
             try (ReadOnlyMap<?, ?> ro = ReadOnlyMapImpl.create(FunctionalMapImpl.create(readOnlyCache))) {
                assertNotNull(ro); // No-op, just verify that it implements AutoCloseable
             }
             assertTrue(readOnlyCache.getStatus().isTerminated());
 
-            cm.defineConfiguration("write-only", cm.getDefaultCacheConfiguration());
+            cm.defineConfiguration("write-only", configBuilder);
             AdvancedCache<?, ?> writeOnlyCache = getAdvancedCache(cm, "write-only");
             try (WriteOnlyMap<?, ?> wo = WriteOnlyMapImpl.create(FunctionalMapImpl.create(writeOnlyCache))) {
                assertNotNull(wo); // No-op, just verify that it implements AutoCloseable
             }
             assertTrue(writeOnlyCache.getStatus().isTerminated());
 
-            cm.defineConfiguration("read-write", cm.getDefaultCacheConfiguration());
+            cm.defineConfiguration("read-write", configBuilder);
             AdvancedCache<?, ?> readWriteCache = getAdvancedCache(cm, "read-write");
             try (ReadWriteMap<?, ?> rw = ReadWriteMapImpl.create(FunctionalMapImpl.create(readWriteCache))) {
                assertNotNull(rw); // No-op, just verify that it implements AutoCloseable

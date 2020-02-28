@@ -4,7 +4,6 @@ import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Serializable;
-import java.util.List;
 
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
@@ -38,11 +37,10 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      List<Cache<String, ClassWithLongIndexName>> caches =
-            createClusteredCaches(3, SCI.INSTANCE, getDefaultConfiguration());
-      cache0 = caches.get(0);
-      cache1 = caches.get(1);
-      cache2 = caches.get(2);
+      createClusteredCaches(3, SCI.INSTANCE, getDefaultConfiguration());
+      cache0 = cache(0);
+      cache1 = cache(1);
+      cache2 = cache(2);
    }
 
    private ConfigurationBuilder getDefaultConfiguration() {

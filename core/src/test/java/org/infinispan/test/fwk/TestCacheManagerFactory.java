@@ -44,7 +44,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Galder Zamarreño
  */
 public class TestCacheManagerFactory {
-   private static final Log log = LogFactory.getLog(TestCacheManagerFactory.class);
+   public static final String DEFAULT_CACHE_NAME = "defaultcache";
    public static final int NAMED_EXECUTORS_THREADS_NO_QUEUE = 6;
    // Check *TxPartitionAndMerge*Test with taskset -c 1 before reducing the following 2
    private static final int NAMED_EXECUTORS_THREADS_WITH_QUEUE = 6;
@@ -52,7 +52,9 @@ public class TestCacheManagerFactory {
    private static final int NAMED_EXECUTORS_KEEP_ALIVE = 30000;
 
    private static final String MARSHALLER = LegacyKeySupportSystemProperties.getProperty(
-      "infinispan.test.marshaller.class", "infinispan.marshaller.class");
+         "infinispan.test.marshaller.class", "infinispan.marshaller.class");
+
+   private static final Log log = LogFactory.getLog(TestCacheManagerFactory.class);
 
    /**
     * Note this method does not amend the global configuration to reduce overall resource footprint.  It is therefore
@@ -80,7 +82,9 @@ public class TestCacheManagerFactory {
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, ConfigurationBuilderHolder holder) {
       GlobalConfigurationBuilder gcb = holder.getGlobalConfigurationBuilder();
-      amendDefaultCache(gcb);
+      if (holder.getDefaultConfigurationBuilder() != null) {
+         amendDefaultCache(gcb);
+      }
       setNodeName(gcb);
       InfinispanMetricRegistryTestHelper.replace(gcb);
       checkJmx(gcb.build());
@@ -246,12 +250,13 @@ public class TestCacheManagerFactory {
                                                                   ConfigurationBuilder defaultCacheConfig,
                                                                   TransportFlags flags) {
       amendGlobalConfiguration(gcb, flags);
-      amendJTA(defaultCacheConfig);
+      if (defaultCacheConfig != null) {
+         amendJTA(defaultCacheConfig);
+      }
       return newDefaultCacheManager(start, gcb, defaultCacheConfig);
    }
 
    public static void amendGlobalConfiguration(GlobalConfigurationBuilder gcb, TransportFlags flags) {
-      amendDefaultCache(gcb);
       amendMarshaller(gcb);
       minimizeThreads(gcb);
       amendTransport(gcb, flags);
@@ -270,11 +275,11 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createCacheManager() {
-      return createCacheManager(new ConfigurationBuilder());
+      return createCacheManager((ConfigurationBuilder) null);
    }
 
    public static EmbeddedCacheManager createServerModeCacheManager() {
-      return createServerModeCacheManager(new ConfigurationBuilder());
+      return createServerModeCacheManager((ConfigurationBuilder) null);
    }
 
    public static EmbeddedCacheManager createServerModeCacheManager(ConfigurationBuilder builder) {
@@ -316,12 +321,19 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(start, globalBuilder, new ConfigurationBuilder());
    }
 
-   public static EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
+   public static EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder,
+                                                         ConfigurationBuilder builder) {
+      return createCacheManager(globalBuilder, builder, true);
+   }
+
+   public static EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder,
+                                                         ConfigurationBuilder builder, boolean start) {
       if (globalBuilder.transport().build().transport().transport() != null) {
-         throw new IllegalArgumentException("Use TestCacheManagerFactory.createClusteredCacheManager(...) for clustered cache managers");
+         throw new IllegalArgumentException(
+               "Use TestCacheManagerFactory.createClusteredCacheManager(...) for clustered cache managers");
       }
       amendTransport(globalBuilder);
-      return newDefaultCacheManager(true, globalBuilder, builder);
+      return newDefaultCacheManager(start, globalBuilder, builder);
    }
 
    public static EmbeddedCacheManager createCacheManager(CacheMode mode, boolean indexing) {
@@ -427,7 +439,7 @@ public class TestCacheManagerFactory {
 
    public static void amendDefaultCache(GlobalConfigurationBuilder builder) {
       if (!builder.defaultCacheName().isPresent()) {
-         builder.defaultCacheName(TestResourceTracker.getCurrentTestShortName());
+         builder.defaultCacheName(DEFAULT_CACHE_NAME);
       }
    }
 
