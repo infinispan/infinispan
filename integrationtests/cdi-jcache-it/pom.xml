@@ -108,12 +108,12 @@
          <dependencies>
             <dependency>
                <groupId>org.jboss.arquillian.container</groupId>
-               <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
+               <artifactId>arquillian-weld-embedded</artifactId>
                <scope>test</scope>
             </dependency>
             <dependency>
                <groupId>org.jboss.weld</groupId>
-               <artifactId>weld-core</artifactId>
+               <artifactId>weld-core-impl</artifactId>
                <scope>test</scope>
             </dependency>
             <dependency>
