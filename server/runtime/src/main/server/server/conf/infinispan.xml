@@ -7,7 +7,6 @@
 
    <cache-container name="default" statistics="true">
       <transport cluster="${infinispan.cluster.name}" stack="${infinispan.cluster.stack:tcp}" node-name="${infinispan.node.name:}"/>
-      <metrics gauges="true" histograms="true"/>
    </cache-container>
 
    <server xmlns="urn:infinispan:server:11.0">
