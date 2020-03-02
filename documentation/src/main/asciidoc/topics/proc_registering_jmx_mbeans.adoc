@@ -12,14 +12,18 @@ register MBeans in custom MBeanServer instances.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jmx_mbean_server_lookup.xml[]
+<cache-container>
+   <jmx enabled="true" mbean-server-lookup="com.acme.MyMBeanServerLookup" />
+</cache-container>
 ----
 
 .Programmatically
 
 [source,java]
 ----
-include::code_examples/JmxMbeanServerLookup.java[]
+GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
+  .jmx().enable().mBeanServerLookup(new com.acme.MyMBeanServerLookup())
+  .build();
 ----
 
 .Reference

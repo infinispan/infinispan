@@ -1,0 +1,39 @@
+[id='enable_jmx']
+= Enabling and Configuring JMX
+You can enable JMX with {brandname} servers to collect statistics and perform
+administrative operations.
+
+[NOTE]
+====
+You can enable JMX without enabling statistics if you want to use management
+operations only. In this case, {brandname} provides `0` values for all
+statistics.
+====
+
+.Procedure
+
+* Enable JMX declaratively or programmatically.
+
+.Declaratively
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<cache-container>
+  <jmx enabled="true" /> <1>
+</cache-container>
+----
+
+.Programmatically
+
+[source,java]
+----
+GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
+  .jmx().enable() <1>
+  .build();
+----
+
+<1> registers {brandname} JMX MBeans.
+
+.Reference
+
+* link:#enable_statistics[Enabling {brandname} Statistics]

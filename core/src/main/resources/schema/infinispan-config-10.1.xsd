@@ -236,12 +236,16 @@
       </xs:element>
       <xs:element name="metrics" type="tns:metrics" minOccurs="0">
         <xs:annotation>
-          <xs:documentation>Defines microprofile metrics configuration.</xs:documentation>
+          <xs:documentation>
+            Configures MicroProfile metrics.
+          </xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:element name="jmx" type="tns:jmx" minOccurs="0">
         <xs:annotation>
-          <xs:documentation>Defines JMX management details.</xs:documentation>
+          <xs:documentation>
+            Enables and configures JMX monitoring and management.
+          </xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:element name="global-state" type="tns:global-state" minOccurs="0">
@@ -627,21 +631,24 @@
     <xs:attribute name="gauges" type="xs:boolean" default="${GlobalMetrics.gauges}">
       <xs:annotation>
         <xs:documentation>
-          Enables exporting of gauge metrics. These are exported by default if statistics are enabled.
+          Exports gauge metrics. Gauges are enabled by default but you must
+          enable statistics so that they are exported.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="histograms" type="xs:boolean" default="${GlobalMetrics.histograms}">
       <xs:annotation>
         <xs:documentation>
-          Enables exporting of histograms. These are costly to compute so are not enabled by default.
+          Exports histogram metrics. Histograms are not enabled by default
+          because they require additional computation. If you enable histograms
+          you must also enable statistics so that they are exported.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="prefix" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          Global name prefix for metrics.
+          Specifies a global name prefix for metrics.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -658,21 +665,27 @@
     <xs:sequence>
       <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded">
         <xs:annotation>
-          <xs:documentation>A jmx property with name and value to be passed to the MBean Server lookup instance.</xs:documentation>
+          <xs:documentation>
+            Specifies a JMX property with a name and value that is passed to
+            the MBean Server lookup instance.
+          </xs:documentation>
         </xs:annotation>
       </xs:element>
     </xs:sequence>
     <xs:attribute name="domain" type="xs:string" default="${GlobalJmx.domain}">
       <xs:annotation>
         <xs:documentation>
-          If JMX statistics are enabled then all 'published' JMX objects will appear under this name. This is optional, if not specified an object name will be created for you by default.
+          If JMX statistics are enabled then all 'published' JMX objects appear
+          under this domain. Optional, if not specified it defaults to
+          "org.infinispan".
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="mbean-server-lookup" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          Class that will attempt to locate a JMX MBean server to bind to. Defaults to using the platform MBean server.
+          Class that attempts to locate a JMX MBean server to bind to. Defaults
+          to the platform MBean server.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -687,7 +700,7 @@
     <xs:attribute name="enabled" type="xs:boolean" default="${GlobalJmx.enabled}">
       <xs:annotation>
         <xs:documentation>
-          Enables exporting of MBeans.
+          Enables exporting of JMX MBeans.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
