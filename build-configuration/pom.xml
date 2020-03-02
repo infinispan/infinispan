@@ -173,8 +173,7 @@
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.13</version.junit>
       <version.karaf>4.2.3</version.karaf>
-      <!-- Downgraded because of https://issues.apache.org/jira/browse/LOG4J2-2652 -->
-      <version.log4j>2.11.2</version.log4j>
+      <version.log4j>2.13.1</version.log4j>
       <version.logback>1.1.7</version.logback>
       <version.lucene>5.5.5</version.lucene>
       <version.lucene.module.slot>5.5.5</version.lucene.module.slot>
