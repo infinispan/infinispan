@@ -308,6 +308,21 @@
             <object/>
          </memory>
       </local-cache>
+      <local-cache name="minimal-offheap">
+         <memory>
+            <off-heap/>
+         </memory>
+      </local-cache>
+      <local-cache name="minimal-binary">
+         <memory>
+            <binary/>
+         </memory>
+      </local-cache>
+      <local-cache name="minimal-object">
+         <memory>
+            <object/>
+         </memory>
+      </local-cache>
 
       <!-- template configurations -->
       <local-cache-configuration name="local-template" module="org.infinispan" statistics="true">

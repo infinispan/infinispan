@@ -17,7 +17,7 @@ public class MemoryStorageConfiguration implements ConfigurationInfo {
 
    private final AttributeSet attributes;
    private final StorageType storageType;
-   private final ElementDefinition elementDefinition;
+   private final ElementDefinition<MemoryStorageConfiguration> elementDefinition;
 
    static public AttributeSet attributeDefinitionSet() {
       return new AttributeSet(MemoryStorageConfiguration.class, SIZE, EVICTION_TYPE, EVICTION_STRATEGY, ADDRESS_COUNT);
@@ -27,7 +27,7 @@ public class MemoryStorageConfiguration implements ConfigurationInfo {
       this.attributes = attributes;
       this.storageType = storageType;
       String storage = storageType == null ? StorageType.OBJECT.getElement().getLocalName() : storageType.getElement().getLocalName();
-      this.elementDefinition = new DefaultElementDefinition(storage);
+      this.elementDefinition = new DefaultElementDefinition<>(storage,true, false);
    }
 
    @Override
@@ -36,7 +36,7 @@ public class MemoryStorageConfiguration implements ConfigurationInfo {
    }
 
    @Override
-   public ElementDefinition getElementDefinition() {
+   public ElementDefinition<MemoryStorageConfiguration> getElementDefinition() {
       return elementDefinition;
    }
 
@@ -72,12 +72,15 @@ public class MemoryStorageConfiguration implements ConfigurationInfo {
 
       MemoryStorageConfiguration that = (MemoryStorageConfiguration) o;
 
-      return attributes.equals(that.attributes);
+      if (!attributes.equals(that.attributes)) return false;
+      return storageType == that.storageType;
    }
 
    @Override
    public int hashCode() {
-      return attributes.hashCode();
+      int result = attributes.hashCode();
+      result = 31 * result + storageType.hashCode();
+      return result;
    }
 
    @Override

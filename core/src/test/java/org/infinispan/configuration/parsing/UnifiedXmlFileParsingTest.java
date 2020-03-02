@@ -111,6 +111,13 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public enum ParserVersionCheck {
+      INFINISPAN_101(10, 1) {
+         @Override
+         public void check(ConfigurationBuilderHolder holder) {
+            Configuration minimalOffHeap = getConfiguration(holder, "minimal-offheap");
+            assertEquals(StorageType.OFF_HEAP, minimalOffHeap.memory().storageType());
+         }
+      },
       INFINISPAN_100(10, 0) {
          @Override
          public void check(ConfigurationBuilderHolder holder) {
