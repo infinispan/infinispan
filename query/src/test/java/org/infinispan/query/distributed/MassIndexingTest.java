@@ -57,7 +57,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
       SearchManager searchManager = Search.getSearchManager(cache);
       MassIndexer massIndexer = searchManager.getMassIndexer();
 
-      IntStream.range(0, 300).forEach(i -> cache.put(i, new Car("whatever", "whatever", 0)));
+      IntStream.range(0, 10).forEach(i -> cache.put(i, new Car("whatever", "whatever", 0)));
 
       CompletableFuture<Void> first = massIndexer.startAsync();
       eventually(massIndexer::isRunning);

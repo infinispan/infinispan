@@ -45,6 +45,7 @@ import org.infinispan.configuration.cache.RecoveryConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.SitesConfiguration;
 import org.infinispan.configuration.cache.StatisticsConfiguration;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
@@ -617,8 +618,9 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
 
    private void writeMemory(XMLExtendedStreamWriter writer, Configuration configuration) throws XMLStreamException {
       MemoryConfiguration memory = configuration.memory();
-      AttributeSet attributes = memory.heapConfiguration().attributes();
-      if (attributes.isModified()) {
+      MemoryStorageConfiguration memoryStorageConfiguration = memory.heapConfiguration();
+      AttributeSet attributes = memoryStorageConfiguration.attributes();
+      if (attributes.isModified() || memoryStorageConfiguration.storageType() != StorageType.OBJECT) {
          writer.writeStartElement(Element.MEMORY);
          writer.writeStartElement(memory.storageType().getElement());
          switch (memory.storageType()) {
