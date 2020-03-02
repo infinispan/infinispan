@@ -1,7 +1,7 @@
 [id='name_cache_managers-{context}']
 = Naming Multiple Cache Managers
-In cases where multiple {brandname} cache managers run on the same JVM, you
-should uniquely identify each cache manager to prevent conflicts.
+In cases where multiple {brandname} Cache Managers run on the same JVM, you
+should uniquely identify each Cache Manager to prevent conflicts.
 
 .Procedure
 
@@ -14,7 +14,10 @@ name, which results in a JMX MBean named `org.infinispan:type=CacheManager,name=
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/jmx_statistics_cache_manager.xml[]
+<cache-container name="Hibernate2LC">
+  <jmx enabled="true" />
+  ...
+</cache-container>
 ----
 
 
@@ -22,7 +25,10 @@ include::config_examples/jmx_statistics_cache_manager.xml[]
 
 [source,java]
 ----
-include::code_examples/JmxStatisticsCacheManager.java[]
+GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
+  .cacheManagerName("Hibernate2LC")
+  .jmx().enable()
+  .build();
 ----
 
 .Reference

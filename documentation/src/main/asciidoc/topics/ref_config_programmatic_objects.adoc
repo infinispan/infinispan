@@ -8,12 +8,12 @@ Constructs global configuration objects that apply to all cache definitions.
 Constructs configuration objects specific to cache definitions.
 
 .Global configuration
-An example of global configuration is to enable JMX statistics at the Cache
-Manager level, as follows:
+An example of global configuration is to enable statistics and export them via
+JMX or the `metrics` endpoint at the Cache Manager level, as follows:
 
 [source,java]
 ----
-include::code_examples/EnableJmxStats.java[]
+include::code_examples/ConfigStats.java[]
 ----
 
 .Cache configuration

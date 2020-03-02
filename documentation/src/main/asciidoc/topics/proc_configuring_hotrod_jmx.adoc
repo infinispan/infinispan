@@ -1,10 +1,7 @@
 [id='hotrod_monitoring']
-= Monitoring Hot Rod Clients via JMX
-Enable Hot Rod client statistics via JMX to register an MBean for the
-`RemoteCacheManager` and each `RemoteCache`.
-
-Hot Rod client statistics include remote and near-cache hits and misses as well
-as connection pool usage.
+= Monitoring Hot Rod Client Statistics
+Enable Hot Rod client statistics that include remote and near-cache hits and
+misses as well as connection pool usage.
 
 .Procedure
 
@@ -13,8 +10,20 @@ Rod client statistics.
 
 [source,java]
 ----
-include::code_examples/HotRodJmx.java[]
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+   .statistics()
+    .enable() <1>
+   .jmxEnable() <2>
+    .jmxDomain("org.infinispan") <3>
+   .addServer()
+    .host("127.0.0.1")
+    .port(11222);
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 ----
 
 <1> enables client statistics.
-<2> sets the JMX domain name to which MBeans are exposed.
+<2> registers a JMX MBean for the `RemoteCacheManager` and each `RemoteCache`.
+<3> sets the JMX domain name to which MBeans are exposed.
