@@ -127,6 +127,15 @@ public class RestMetricsResource {
             .reduce(0L, Long::sum);
 
       assertEquals(NUM_PUTS, totalStoresAfter);
+
+      // delete cache and check that the metric is gone
+      sync(client.cache(SERVER_TEST.getMethodName()).delete());
+      response = sync(metricsClient.metricsMetadata("vendor/" + metricName));
+      assertEquals(404, response.getStatus());
+
+      // check that an unexistent metric is correctly reported as missing
+      response = sync(metricsClient.metricsMetadata("vendor/no_such_metric"));
+      assertEquals(404, response.getStatus());
    }
 
    @Test
@@ -134,6 +143,7 @@ public class RestMetricsResource {
       RestClient client = SERVER_TEST.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
+      // this is a histogram of write times
       String metricName = "cache_manager_default_cache_" + SERVER_TEST.getMethodName() + "_statistics_store_times";
 
       RestResponse response = sync(metricsClient.metrics("vendor/" + metricName));
@@ -168,23 +178,30 @@ public class RestMetricsResource {
 
    @Test
    public void testMicroprofileMetricsMetadata() throws Exception {
-      RestMetricsClient metricsClient = SERVER_TEST.rest().create().metrics();
-      RestResponse response = sync(metricsClient.metricsMetadata());
+      RestClient client = SERVER_TEST.rest().create();
+      RestMetricsClient metricsClient = client.metrics();
 
+      String metricName = "cache_manager_default_cache_" + SERVER_TEST.getMethodName() + "_statistics_stores";
+
+      // get all
+      RestResponse response = sync(metricsClient.metricsMetadata());
       assertEquals(200, response.getStatus());
       assertEquals(MediaType.APPLICATION_JSON, response.contentType());
-
       String metricsMetadataJson = response.getBody();
-      String metricName = "cache_manager_default_cache_" + SERVER_TEST.getMethodName() + "_statistics_stores";
       assertTrue(metricsMetadataJson.contains(metricName));
 
+      // get one
       response = sync(metricsClient.metricsMetadata("vendor/" + metricName));
       assertEquals(200, response.getStatus());
-
       JsonNode node = mapper.readTree(response.getBody());
       assertNotNull(node.get(metricName));
       assertEquals("gauge", node.get(metricName).get("type").asText());
       assertEquals("stores", node.get(metricName).get("displayName").asText());
+
+      // delete cache and check that the metric is gone
+      sync(client.cache(SERVER_TEST.getMethodName()).delete());
+      response = sync(metricsClient.metricsMetadata("vendor/" + metricName));
+      assertEquals(404, response.getStatus());
    }
 
    /**
