@@ -161,6 +161,13 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
    protected abstract String initGroup();
 
    /**
+    * Checks that JMX is effectively enabled.
+    */
+   public final boolean enabled() {
+      return mBeanServer != null;
+   }
+
+   /**
     * Gets the domain name. This should not be called unless JMX is enabled.
     */
    public final String getDomain() {
