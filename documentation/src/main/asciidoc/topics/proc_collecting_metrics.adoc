@@ -1,45 +1,38 @@
-[id='metric_endpoint']
+[id='collect_metrics']
 = Collecting {brandname} Metrics
-{brandname} servers provide monitoring data through an HTTP `metrics` endpoint
-that exposes OS, JVM, and application-level statistics.
+Collect {brandname} metrics with monitoring tools such as Prometheus.
+
+.Prerequisites
+
+* Enable statistics. If you do not enable statistics, {brandname} provides `0`
+and `-1` values for metrics.
+* Optionally enable histograms. By default {brandname} generates gauges but not histograms.
 
 .Procedure
 
-. Start at least one {brandname} server.
-. Test the metrics endpoint with any HTTP client, as in the following examples:
-+
-To get metrics in Prometheus or OpenMetrics format:
+* Get metrics in Prometheus (OpenMetrics) format:
 +
 ----
 $ curl -v http://localhost:11222/metrics
 ----
-+
-To get metrics in Microprofile JSON format:
+
+* Get metrics in MicroProfile JSON format:
 +
 ----
 $ curl --header "Accept: application/json" http://localhost:11222/metrics
 ----
-+
-[NOTE]
-====
-If you configure {brandname} servers with security, you should include the
-appropriate credentials or client certificates to access the metrics endpoint.
-====
-+
-{brandname} responds with monitoring data.
 
 .Next steps
 
-Configure monitoring applications to collect {brandname} metrics from the
-endpoint as appropriate. For example, add the following to your
-`prometheus.yml` file:
+Configure monitoring applications to collect {brandname} metrics. For example,
+add the following to `prometheus.yml`:
 
 ----
 static_configs:
-    - targets: ['localhost:9090', 'localhost:11222']
+    - targets: ['localhost:11222']
 ----
 
 .Reference
 
-* link:https://github.com/eclipse/microprofile-metrics/blob/master/README.adoc[Eclipse Microprofile Metrics]
 * https://prometheus.io/docs/prometheus/latest/configuration/configuration/[Prometheus Configuration]
+* link:#enable_statistics[Enabling {brandname} Statistics]
