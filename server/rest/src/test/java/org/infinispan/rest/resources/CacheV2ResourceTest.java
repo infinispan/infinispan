@@ -38,7 +38,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.test.TestingUtil;
-import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -65,9 +65,9 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       return builder;
    }
 
-   @AfterClass
+   @AfterMethod
    public void tearDown() {
-      Util.recursiveFileRemove(PERSISTENT_LOCATION);
+      Util.recursiveFileRemove(SHARED_LOCATION);
    }
 
    @Override
