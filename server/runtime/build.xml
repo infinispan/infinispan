@@ -21,6 +21,16 @@
       <copy todir="${test.lib.dir}" flatten="true">
          <fileset refid="maven.test.dependencies"/>
       </copy>
+      <unzip dest="${output.dir}/docs/schema">
+         <fileset dir="${output.dir}/lib">
+            <include name="infinispan-*.jar"/>
+            <include name="jgroups-*.jar"/>
+         </fileset>
+         <patternset>
+            <include name="**/*.xsd"/>
+         </patternset>
+         <mapper type="flatten"/>
+      </unzip>
    </target>
 
    <target name="default">
