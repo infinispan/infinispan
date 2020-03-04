@@ -8,6 +8,7 @@ import org.infinispan.commons.util.Experimental;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
+import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.functional.MetaParam;
 import org.infinispan.functional.MetaParam.MetaCreated;
 import org.infinispan.functional.MetaParam.MetaEntryVersion;
@@ -37,7 +38,7 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
 
    @ProtoFactory
    MetaParamsInternalMetadata(NumericVersion numericVersion, SimpleClusteredVersion clusteredVersion,
-                              long created, long lastUsed, long lifespan, long maxIdle) {
+                              long created, long lastUsed, long lifespan, long maxIdle, CounterConfiguration counterConfiguration) {
       this.params = new MetaParams(MetaParams.EMPTY_ARRAY, 0);
       if (numericVersion != null || clusteredVersion != null) {
          this.params.add(new MetaEntryVersion(numericVersion == null ? clusteredVersion : numericVersion));
@@ -46,6 +47,9 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       if (lastUsed > -1) params.add(new MetaLastUsed(lastUsed));
       if (lifespan > -1) params.add(new MetaLifespan(lifespan));
       if (maxIdle > -1) params.add(new MetaMaxIdle(maxIdle));
+      if (counterConfiguration != null) {
+         params.add(new CounterConfigurationMetaParam(counterConfiguration));
+      }
    }
 
    private MetaParamsInternalMetadata(MetaParams params) {
@@ -112,6 +116,11 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
    public long maxIdle() {
       return params.find(MetaMaxIdle.class)
             .orElse(MetaMaxIdle.defaultValue()).get();
+   }
+
+   @ProtoField(number = 7)
+   public CounterConfiguration counterConfiguration() {
+      return params.find(CounterConfigurationMetaParam.class).map(CounterConfigurationMetaParam::get).orElse(null);
    }
 
    @Override

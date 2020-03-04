@@ -1,20 +1,11 @@
 package org.infinispan.counter.api;
 
-import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedInt;
-import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedInt;
-import static org.infinispan.counter.util.EncodeUtil.decodeStorage;
-import static org.infinispan.counter.util.EncodeUtil.decodeType;
-import static org.infinispan.counter.util.EncodeUtil.encodeTypeAndStorage;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A counter configuration used to define counters cluster wide via {@link CounterManager#defineCounter(String,
@@ -27,9 +18,8 @@ import org.infinispan.commons.marshall.Ids;
  * @see CounterType
  * @since 9.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.COUNTER_CONFIGURATION)
 public class CounterConfiguration {
-
-   public static final AdvancedExternalizer<CounterConfiguration> EXTERNALIZER = new Externalize();
 
    private final long initialValue;
    private final long upperBound;
@@ -38,8 +28,9 @@ public class CounterConfiguration {
    private final CounterType type;
    private final Storage storage;
 
-   private CounterConfiguration(long initialValue, long lowerBound, long upperBound, int concurrencyLevel,
-         CounterType type, Storage storage) {
+   @ProtoFactory
+   CounterConfiguration(long initialValue, long lowerBound, long upperBound, int concurrencyLevel, CounterType type,
+         Storage storage) {
       this.initialValue = initialValue;
       this.upperBound = upperBound;
       this.lowerBound = lowerBound;
@@ -52,26 +43,32 @@ public class CounterConfiguration {
       return new Builder(Objects.requireNonNull(type));
    }
 
+   @ProtoField(number = 1, defaultValue = "0")
    public long initialValue() {
       return initialValue;
    }
 
+   @ProtoField(number = 3, defaultValue = "0")
    public long upperBound() {
       return upperBound;
    }
 
+   @ProtoField(number = 2, defaultValue = "0")
    public long lowerBound() {
       return lowerBound;
    }
 
+   @ProtoField(number = 5)
    public CounterType type() {
       return type;
    }
 
+   @ProtoField(number = 4, defaultValue = "0")
    public int concurrencyLevel() {
       return concurrencyLevel;
    }
 
+   @ProtoField(number = 6)
    public Storage storage() {
       return storage;
    }
@@ -210,55 +207,6 @@ public class CounterConfiguration {
        */
       public CounterConfiguration build() {
          return new CounterConfiguration(initialValue, lowerBound, upperBound, concurrencyLevel, type, storage);
-      }
-   }
-
-   public static class Externalize implements AdvancedExternalizer<CounterConfiguration> {
-
-      @Override
-      public Set<Class<? extends CounterConfiguration>> getTypeClasses() {
-         return Collections.singleton(CounterConfiguration.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.COUNTER_CONFIGURATION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, CounterConfiguration object) throws IOException {
-         output.writeByte(encodeTypeAndStorage(object));
-         output.writeLong(object.initialValue);
-         switch (object.type) {
-            case BOUNDED_STRONG:
-               output.writeLong(object.lowerBound);
-               output.writeLong(object.upperBound);
-               break;
-            case WEAK:
-               writeUnsignedInt(output, object.concurrencyLevel);
-               break;
-            default:
-         }
-      }
-
-      @Override
-      public CounterConfiguration readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         byte flags = input.readByte();
-         CounterType type = decodeType(flags);
-         Builder builder = builder(type);
-         builder.storage(decodeStorage(flags));
-         builder.initialValue(input.readLong());
-         switch (type) {
-            case BOUNDED_STRONG:
-               builder.lowerBound(input.readLong());
-               builder.upperBound(input.readLong());
-               break;
-            case WEAK:
-               builder.concurrencyLevel(readUnsignedInt(input));
-               break;
-            default:
-         }
-         return builder.build();
       }
    }
 
