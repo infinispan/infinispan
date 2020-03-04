@@ -2,6 +2,7 @@ package org.infinispan.server.hotrod.tx;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertKeyDoesNotExist;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
 import static org.infinispan.test.TestingUtil.extractComponent;
@@ -540,7 +541,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
    @Override
    protected ConfigurationBuilder createCacheConfig() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       builder.transaction().lockingMode(lockingMode);
       switch (transactionMode) {

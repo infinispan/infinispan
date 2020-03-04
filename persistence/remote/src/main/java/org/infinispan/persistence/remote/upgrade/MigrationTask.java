@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -73,7 +74,8 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
       DefaultThreadFactory threadFactory = new DefaultThreadFactory(null, 1, THREAD_NAME + "-%t", null, null);
       ExecutorService executorService = Executors.newFixedThreadPool(threads, threadFactory);
       RemoveListener listener = null;
-      Cache<Object, Object> cache = embeddedCacheManager.getCache(cacheName);
+      AdvancedCache<Object, Object> advancedCache = embeddedCacheManager.getCache(cacheName).getAdvancedCache();
+      Cache cache = advancedCache.withStorageMediaType();
       try {
          ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
          PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);

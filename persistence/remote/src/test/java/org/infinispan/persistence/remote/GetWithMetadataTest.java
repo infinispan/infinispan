@@ -14,6 +14,7 @@ import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -51,7 +52,7 @@ public class GetWithMetadataTest extends AbstractInfinispanTest {
    }
 
    protected ConfigurationBuilder getTargetCacheConfiguration(int sourcePort) {
-      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      ConfigurationBuilder cb = hotRodCacheConfiguration(MediaType.APPLICATION_JBOSS_MARSHALLING);
       createCacheStoreConfig(CACHE_NAME, sourcePort, cb.persistence());
       return cb;
    }
@@ -66,7 +67,7 @@ public class GetWithMetadataTest extends AbstractInfinispanTest {
       try {
          // Create source hotrod server
          sourceCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
-         sourceCacheManager.defineConfiguration(CACHE_NAME, hotRodCacheConfiguration().build());
+         sourceCacheManager.defineConfiguration(CACHE_NAME, hotRodCacheConfiguration(MediaType.APPLICATION_JBOSS_MARSHALLING).build());
          sourceServer = HotRodClientTestingUtil.startHotRodServer(sourceCacheManager);
 
          // Put some entries
@@ -79,7 +80,7 @@ public class GetWithMetadataTest extends AbstractInfinispanTest {
          long k2Created = key2Metadata.getCreated();
 
          // Create target hotrod server, with a remote cache loader pointing to the source one
-         targetCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+         targetCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration(MediaType.APPLICATION_JBOSS_MARSHALLING));
          targetServer = HotRodClientTestingUtil.startHotRodServer(targetCacheManager);
          ConfigurationBuilder targetCacheConfiguration = getTargetCacheConfiguration(sourceServer.getPort());
          targetCacheManager.defineConfiguration(CACHE_NAME, targetCacheConfiguration.build());

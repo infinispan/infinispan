@@ -278,13 +278,13 @@ public class DataConversionTest extends AbstractInfinispanTest {
       value.mediaType("application/bar");
 
       withCacheManager(new CacheManagerCallable(
-            createCacheManager(TestDataSCI.INSTANCE, cfg)) {
+            createCacheManager(TestDataSCI.INSTANCE)) {
          @Override
          public void call() {
-            Cache<String, String> cache = cm.getCache();
-
-            EncoderRegistry encoderRegistry = cache.getAdvancedCache().getComponentRegistry().getComponent(EncoderRegistry.class);
+            EncoderRegistry encoderRegistry = cm.getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
             encoderRegistry.registerTranscoder(new FooBarTranscoder());
+            cm.defineConfiguration("default", cfg.build());
+            Cache<String, String> cache = cm.getCache("default");
 
             cache.put("foo-key", "bar-value");
             assertEquals(cache.get("foo-key"), "bar-value");
@@ -314,7 +314,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
             createCacheManager(TestDataSCI.INSTANCE, cfg)) {
          @Override
          public void call() {
-            Cache<byte[], byte[]> cache = cm.getCache();
+            AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache().withStorageMediaType();
 
             byte[] key = "key1".getBytes(ISO_8859_1);
             byte[] value = new byte[]{97, 118, 105, -61, -93, 111};  // 'avião' in UTF-8

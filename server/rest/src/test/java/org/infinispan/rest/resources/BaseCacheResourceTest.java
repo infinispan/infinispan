@@ -102,7 +102,8 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
    @SuppressWarnings("unchecked")
    public InternalCacheEntry<String, byte[]> getCacheEntry(String cacheName, byte[] key) {
-      CacheEntry cacheEntry = getCache(cacheName).getCacheEntry(key);
+      AdvancedCache cache = getCache(cacheName).withStorageMediaType();
+      CacheEntry cacheEntry = cache.getCacheEntry(key);
       return (InternalCacheEntry<String, byte[]>) cacheEntry;
    }
 
@@ -451,7 +452,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("application/json");
       // keys can be returned in any order
-      ResponseAssertion.assertThat(response).hasReturnedText("[\"key2\",\"key1\"]","[\"key1\",\"key2\"]");
+      ResponseAssertion.assertThat(response).hasReturnedText("[\"key2\",\"key1\"]", "[\"key1\",\"key2\"]");
    }
 
    @Test

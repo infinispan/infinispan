@@ -529,7 +529,7 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
          long now = System.currentTimeMillis();
          int seconds = (int) ((now + TimeUnit.DAYS.toMillis(1)) / 1000); // current time + 1 day
          assertStatus(client2x.put(k(m), seconds, seconds, v(m)), Success);
-         CacheEntry<byte[], byte[]> entry = advancedCache.getCacheEntry(k(m));
+         CacheEntry<byte[], byte[]> entry = advancedCache.withStorageMediaType().getCacheEntry(k(m));
          // Use rounding to accommodate for processing delays
          assertEquals(seconds / 100, (entry.getLifespan() + now) / 100_000);
          assertEquals(seconds / 100, (entry.getMaxIdle() + now) / 100_000);
@@ -541,7 +541,7 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
          long now = System.currentTimeMillis();
          int seconds = (int) ((now + TimeUnit.DAYS.toMillis(1)) / 1000); // current time + 1 day
          assertStatus(client3x.put(k(m), seconds, seconds, v(m)), Success);
-         CacheEntry<byte[], byte[]> entry = advancedCache.getCacheEntry(k(m));
+         CacheEntry<byte[], byte[]> entry = advancedCache.withStorageMediaType().getCacheEntry(k(m));
          // Ensure we get the same value
          assertEquals(seconds, entry.getLifespan() / 1000);
          assertEquals(seconds, entry.getMaxIdle() / 1000);

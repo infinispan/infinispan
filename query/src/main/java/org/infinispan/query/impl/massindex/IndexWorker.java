@@ -67,7 +67,7 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
 
    @Override
    public Void apply(EmbeddedCacheManager embeddedCacheManager) {
-      Cache<Object, Object> cache = embeddedCacheManager.getCache(cacheName);
+      Cache<Object, Object> cache = embeddedCacheManager.getCache(cacheName).getAdvancedCache().withStorageMediaType();
       AdvancedCache<Object, Object> unwrapped = SecurityActions.getUnwrappedCache(cache).getAdvancedCache();
       StorageType storageType = unwrapped.getCacheConfiguration().memory().storageType();
       if (storageType == StorageType.OBJECT) {

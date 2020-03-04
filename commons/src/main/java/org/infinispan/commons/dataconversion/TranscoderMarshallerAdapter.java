@@ -33,7 +33,7 @@ public class TranscoderMarshallerAdapter extends OneToManyTranscoder {
             return content;
          }
          if (destinationType.match(marshaller.mediaType())) {
-            return marshaller.objectToByteBuffer(content);
+            return contentType.equals(marshaller.mediaType()) ? content : marshaller.objectToByteBuffer(content);
          }
          if (destinationType.match(MediaType.APPLICATION_OBJECT)) {
             return marshaller.objectFromByteBuffer((byte[]) content);

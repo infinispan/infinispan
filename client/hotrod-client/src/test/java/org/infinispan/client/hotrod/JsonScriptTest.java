@@ -9,9 +9,9 @@ import java.io.IOException;
 import java.util.Collections;
 
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
@@ -28,7 +28,7 @@ public class JsonScriptTest extends MultiHotRodServersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
+      ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(MediaType.APPLICATION_JSON);
       createHotRodServers(CLUSTER_SIZE, cfgBuilder);
       waitForClusterToForm();
    }

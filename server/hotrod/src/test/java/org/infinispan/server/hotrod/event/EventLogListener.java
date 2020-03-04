@@ -196,7 +196,7 @@ public class EventLogListener extends TestClientListener {
    }
 
    private long serverDataVersion(byte[] k, Cache cache) {
-      CacheEntry cacheEntry = cache.getAdvancedCache().getCacheEntry(k);
+      CacheEntry cacheEntry = cache.getAdvancedCache().withStorageMediaType().getCacheEntry(k);
       Metadata metadata = cacheEntry.getMetadata();
       EntryVersion version = metadata.version();
       return ((NumericVersion) version).getVersion();

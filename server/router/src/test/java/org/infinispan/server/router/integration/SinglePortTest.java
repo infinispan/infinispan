@@ -167,7 +167,7 @@ public class SinglePortTest {
         httpClient = NettyHttpClient.forConfiguration(builder.build());
 
         DefaultFullHttpRequest request = new DefaultFullHttpRequest(HTTP_1_1, POST, restPrefix + "/key", wrappedBuffer("value".getBytes(CharsetUtil.UTF_8)));
-        request.trailingHeaders().add(HttpHeaderNames.CONTENT_TYPE, "text/plain");
+        request.headers().add(HttpHeaderNames.CONTENT_TYPE, "text/plain");
         FullHttpResponse response = httpClient.sendRequest(request).toCompletableFuture().get(5, TimeUnit.SECONDS);
         Assertions.assertThat(response.status()).isEqualTo(HttpResponseStatus.NO_CONTENT);
         Assertions.assertThat(restServer.getCacheManager().getCache().size()).isEqualTo(1);

@@ -5,6 +5,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClie
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
+import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createServerModeCacheManager;
 import static org.testng.Assert.assertTrue;
@@ -30,6 +31,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.event.EventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.RawStaticFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
+import org.infinispan.client.hotrod.query.RemoteQueryTestUtils;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -48,6 +50,8 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -299,19 +303,23 @@ public class DataFormatTest extends SingleHotRodServerTest {
    }
 
    @Test
-   public void testJsonFromDefaultCache() {
+   public void testJsonFromDefaultCache() throws JsonProcessingException {
+      RemoteCache<String, String> schemaCache = remoteCacheManager.getCache(PROTOBUF_METADATA_CACHE_NAME);
+      schemaCache.put("schema.proto", "message M { optional string json_key = 1; }");
+      RemoteQueryTestUtils.checkSchemaErrors(schemaCache);
+
       DataFormat jsonValues = DataFormat.builder()
             .valueType(APPLICATION_JSON)
             .valueMarshaller(new UTF8StringMarshaller()).build();
 
       RemoteCache<Integer, String> cache = remoteCacheManager.getCache().withDataFormat(jsonValues);
 
-      String value = "{\"json_key\":\"json_value\"}";
+      String value = "{\"_type\":\"M\",\"json_key\":\"json_value\"}";
       cache.put(1, value);
 
       String valueAsJson = cache.get(1);
-
-      assertEquals(value, valueAsJson);
+      JsonNode node = new ObjectMapper().readTree(valueAsJson);
+      assertEquals("json_value", node.get("json_key").asText());
    }
 
    private byte[] marshall(Object o) throws Exception {

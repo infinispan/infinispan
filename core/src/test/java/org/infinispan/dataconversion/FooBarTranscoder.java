@@ -6,7 +6,6 @@ import static org.infinispan.commons.dataconversion.MediaType.fromString;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 
@@ -18,7 +17,7 @@ public class FooBarTranscoder implements Transcoder {
    private final Set<MediaType> supportedTypes;
 
    public FooBarTranscoder() {
-      supportedTypes = new HashSet<>(asList(fromString("application/foo"), fromString("application/bar")));
+      supportedTypes = new HashSet<>(asList(fromString("application/x-java-object"), fromString("application/foo"), fromString("application/bar")));
    }
 
    @Override
@@ -29,7 +28,7 @@ public class FooBarTranscoder implements Transcoder {
          case "application/bar":
             return content.toString().replaceAll("foo", "bar");
          default:
-            throw new EncodingException("Not supported!");
+            return content;
       }
    }
 

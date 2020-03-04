@@ -25,11 +25,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -53,7 +56,6 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.SingleByteFrameDecoderChannelInitializer;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.util.KeyValuePair;
 
 import io.netty.channel.Channel;
@@ -277,14 +279,14 @@ public class HotRodTestingUtil {
       assertStatus(resp, Success);
       boolean isArrayEquals = Arrays.equals(expected, resp.data.get());
       assertTrue("Retrieved data should have contained " + Util.printArray(expected, true) + " (" + new String(expected)
-            + "), but instead we received " + Util.printArray(resp.data.get(), true) + " (" +  new String(resp.data.get()) +")", isArrayEquals);
+            + "), but instead we received " + Util.printArray(resp.data.get(), true) + " (" + new String(resp.data.get()) + ")", isArrayEquals);
       return isArrayEquals;
    }
 
    public static void assertByteArrayEquals(byte[] expected, byte[] actual) {
       boolean isArrayEquals = Arrays.equals(expected, actual);
       assertTrue("Retrieved data should have contained " + Util.printArray(expected, true) + " (" + new String(expected)
-            + "), but instead we received " + Util.printArray(actual, true) + " (" +  new String(actual) +")", isArrayEquals);
+            + "), but instead we received " + Util.printArray(actual, true) + " (" + new String(actual) + ")", isArrayEquals);
    }
 
    public static boolean assertSuccess(TestGetWithVersionResponse resp, byte[] expected, int expectedVersion) {
@@ -306,7 +308,7 @@ public class HotRodTestingUtil {
    }
 
    public static void assertTopologyReceived(AbstractTestTopologyAwareResponse resp, List<HotRodServer> servers,
-                                             int expectedTopologyId ) {
+                                             int expectedTopologyId) {
       assertEquals(resp.topologyId, expectedTopologyId);
       if (resp instanceof TestHashDistAware10Response) {
          TestHashDistAware10Response h10 = (TestHashDistAware10Response) resp;
@@ -472,54 +474,52 @@ public class HotRodTestingUtil {
          if (client != null) {
             client.stop().await();
          }
-      }
-      catch (Throwable t) {
+      } catch (Throwable t) {
          log.error("Error stopping client", t);
       }
    }
 
-   public static GlobalConfigurationBuilder hotRodGlobalConfiguration(Class<?> klass) {
-      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
-      globalConfigurationBuilder.defaultCacheName(klass.getSimpleName());
-      return globalConfigurationBuilder;
-   }
-
-   public static GlobalConfigurationBuilder hotRodClusteredGlobalConfiguration(Class<?> klass) {
-      GlobalConfigurationBuilder globalConfigurationBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfigurationBuilder.defaultCacheName(klass.getSimpleName());
-      return globalConfigurationBuilder;
-   }
-
    public static ConfigurationBuilder hotRodCacheConfiguration() {
-      return new ConfigurationBuilder();
+      return hotRodCacheConfiguration(new ConfigurationBuilder());
    }
 
    public static ConfigurationBuilder hotRodCacheConfiguration(ConfigurationBuilder builder) {
-      return builder;
+      return hotRodCacheConfiguration(builder, MediaType.APPLICATION_PROTOSTREAM);
+   }
+
+   public static ConfigurationBuilder hotRodCacheConfiguration(ConfigurationBuilder cfg, MediaType types) {
+      cfg.encoding().key().mediaType(types.toString());
+      cfg.encoding().value().mediaType(types.toString());
+      return cfg;
+   }
+
+   public static ConfigurationBuilder hotRodCacheConfiguration(MediaType types) {
+      return hotRodCacheConfiguration(new ConfigurationBuilder(), types);
    }
 
    public static CacheEntry assertHotRodEquals(EmbeddedCacheManager cm, byte[] key, byte[] expectedValue) {
-      return assertHotRodEquals(cm, cm.getCache(), key, expectedValue);
+      return assertHotRodEquals(cm.getCache(), key, expectedValue);
    }
 
    public static CacheEntry assertHotRodEquals(EmbeddedCacheManager cm, String cacheName,
-                                                       byte[] key, byte[] expectedValue) {
-      return assertHotRodEquals(cm, cm.getCache(cacheName), key, expectedValue);
+                                               byte[] key, byte[] expectedValue) {
+      return assertHotRodEquals(cm.getCache(cacheName), key, expectedValue);
    }
 
    public static CacheEntry assertHotRodEquals(EmbeddedCacheManager cm, String key, String expectedValue) {
-      return assertHotRodEquals(cm, cm.getCache(), marshall(key), marshall(expectedValue));
+      return assertHotRodEquals(cm.getCache(), marshall(key), marshall(expectedValue));
    }
 
 
    public static CacheEntry assertHotRodEquals(EmbeddedCacheManager cm, String cacheName,
-                                                       String key, String expectedValue) {
-      return assertHotRodEquals(cm, cm.getCache(cacheName), marshall(key), marshall(expectedValue));
+                                               String key, String expectedValue) {
+      return assertHotRodEquals(cm.getCache(cacheName), marshall(key), marshall(expectedValue));
    }
 
-   private static CacheEntry assertHotRodEquals(EmbeddedCacheManager cm, Cache<byte[], byte[]> cache,
-                                                        byte[] key, byte[] expectedValue) {
-      CacheEntry<byte[], byte[]> entry = cache.getAdvancedCache().getCacheEntry(key);
+   private static CacheEntry assertHotRodEquals(Cache<byte[], byte[]> cache,
+                                                byte[] key, byte[] expectedValue) {
+      AdvancedCache advancedCache = cache.getAdvancedCache().withStorageMediaType();
+      CacheEntry<byte[], byte[]> entry = advancedCache.getCacheEntry(key);
       // Assert based on passed parameters
       if (expectedValue == null) {
          assertNull(entry);

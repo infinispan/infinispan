@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -34,14 +35,14 @@ public class RemoteStoreRawValuesTest extends BaseStoreTest {
    private HotRodServer hrServer;
 
    @Override
-   protected AdvancedLoadWriteStore createStore() throws Exception {
+   protected AdvancedLoadWriteStore createStore() {
       ConfigurationBuilder localBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       localBuilder.memory().evictionType(EvictionType.COUNT).size(WRITE_DELETE_BATCH_MAX_ENTRIES)
             .expiration().wakeUpInterval(10L);
 
       localCacheManager = TestCacheManagerFactory.createCacheManager(
             new GlobalConfigurationBuilder().defaultCacheName(REMOTE_CACHE),
-            hotRodCacheConfiguration(localBuilder));
+            hotRodCacheConfiguration(localBuilder, MediaType.APPLICATION_JBOSS_MARSHALLING));
 
       localCacheManager.getCache(REMOTE_CACHE);
       TestingUtil.replaceComponent(localCacheManager, TimeService.class, timeService, true);
