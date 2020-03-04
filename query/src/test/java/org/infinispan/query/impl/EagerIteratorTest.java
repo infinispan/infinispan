@@ -13,8 +13,10 @@ import java.util.Map;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
+import org.mockito.internal.stubbing.answers.Returns;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -55,6 +57,7 @@ public class EagerIteratorTest {
          String k = invocation.getArguments()[0].toString();
          return dummyResults.get(k);
       });
+      when(cache.getKeyDataConversion()).thenAnswer(new Returns(DataConversion.DEFAULT_KEY));
 
       iterator = new EagerIterator<>(entityInfos, new EntityLoader(cache, keyTransformationHandler), getFetchSize());
    }

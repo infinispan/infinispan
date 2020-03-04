@@ -56,12 +56,10 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
    public Object[] factory() {
       return new Object[]{
             new MultiServerStoreQueryTest().storageType(StorageType.OFF_HEAP),
-            // Disabled until https://issues.jboss.org/browse/ISPN-10700 is fixed
-//            new MultiServerStoreQueryTest().storageType(StorageType.BINARY),
+            new MultiServerStoreQueryTest().storageType(StorageType.BINARY),
             new MultiServerStoreQueryTest().storageType(StorageType.OBJECT),
             new MultiServerStoreQueryTest().storageType(StorageType.OFF_HEAP).evictionSize(1),
-            // Disabled until https://issues.jboss.org/browse/ISPN-10700 is fixed
-//            new MultiServerStoreQueryTest().storageType(StorageType.BINARY).evictionSize(1),
+            new MultiServerStoreQueryTest().storageType(StorageType.BINARY).evictionSize(1),
             new MultiServerStoreQueryTest().storageType(StorageType.OBJECT).evictionSize(1),
       };
    }

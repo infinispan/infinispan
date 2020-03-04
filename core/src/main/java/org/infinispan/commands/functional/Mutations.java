@@ -15,6 +15,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.functional.EntryView;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.registry.InternalCacheRegistry;
 
 /**
@@ -92,8 +93,9 @@ final class Mutations {
          Configuration configuration = registry.getComponent(Configuration.class);
          InternalCacheRegistry icr = registry.getComponent(InternalCacheRegistry.class);
          String cacheName = registry.getComponent(String.class, KnownComponentNames.CACHE_NAME);
-         keyDataConversion.injectDependencies(cacheName, icr, globalConfiguration, encoderRegistry, configuration);
-         valueDataConversion.injectDependencies(cacheName, icr, globalConfiguration, encoderRegistry, configuration);
+         PersistenceMarshaller persistenceMarshaller = registry.getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
+         keyDataConversion.injectDependencies(persistenceMarshaller, cacheName, icr, globalConfiguration, encoderRegistry, configuration);
+         valueDataConversion.injectDependencies(persistenceMarshaller, cacheName, icr, globalConfiguration, encoderRegistry, configuration);
       }
    }
 

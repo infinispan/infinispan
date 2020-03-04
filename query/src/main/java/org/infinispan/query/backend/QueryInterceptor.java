@@ -406,7 +406,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    private String keyToString(Object key, int segment) {
-      return keyTransformationHandler.keyToString(extractKey(key), segment);
+      return keyTransformationHandler.keyToString(key, segment);
    }
 
    public KeyTransformationHandler getKeyTransformationHandler() {

@@ -12,6 +12,7 @@ import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.TopFieldDocs;
 import org.infinispan.AdvancedCache;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.remoting.transport.Address;
 
@@ -26,6 +27,7 @@ import org.infinispan.remoting.transport.Address;
 class DistributedIterator<E> implements ResultIterator<E> {
 
    protected final AdvancedCache<?, ?> cache;
+   private final DataConversion keyDataConversion;
 
    private int currentIndex = -1;
 
@@ -44,6 +46,7 @@ class DistributedIterator<E> implements ResultIterator<E> {
       this.maxResults = maxResults;
       this.firstResult = firstResult;
       this.cache = cache;
+      this.keyDataConversion = cache.getKeyDataConversion();
       final int parallels = topDocsResponses.size();
       this.partialResults = new NodeTopDocs[parallels];
       TopDocs[] partialTopDocs = sort != null ? new TopFieldDocs[parallels] : new TopDocs[parallels];
@@ -98,7 +101,7 @@ class DistributedIterator<E> implements ResultIterator<E> {
    protected E fetchValue(int scoreIndex, NodeTopDocs nodeTopDocs) {
       Object[] keys = nodeTopDocs.keys;
       if (keys != null && keys.length > 0) {
-         return (E) cache.get(keys[scoreIndex]);
+         return (E) cache.get(keyDataConversion.fromStorage(keys[scoreIndex]));
       }
       return (E) nodeTopDocs.projections[scoreIndex];
    }

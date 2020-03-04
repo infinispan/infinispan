@@ -1,7 +1,9 @@
 package org.infinispan.dataconversion;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.notifications.Listener.Observation.POST;
 import static org.infinispan.test.TestingUtil.withCacheManager;
@@ -24,9 +26,7 @@ import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
@@ -64,12 +64,17 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
       withCacheManager(new CacheManagerCallable(
             createCacheManager(TestDataSCI.INSTANCE, cfg)) {
+
+         private final DataConversion conversion = cm.getCache().getAdvancedCache().getValueDataConversion();
+
+         public Object asStored(Object object) {
+            return conversion.convert(object, APPLICATION_OBJECT, APPLICATION_PROTOSTREAM);
+         }
+
          @Override
-         public void call() throws IOException, InterruptedException {
+         public void call() {
             cm.getClassWhiteList().addClasses(Person.class);
             Cache<String, Person> cache = cm.getCache();
-
-            Marshaller marshaller = cache.getAdvancedCache().getComponentRegistry().getInternalMarshaller();
 
             Person value = new Person();
             cache.put("1", value);
@@ -78,8 +83,8 @@ public class DataConversionTest extends AbstractInfinispanTest {
             assertEquals(cache.get("1"), value);
 
             // Read unencoded
-            Cache<?, ?> unencodedCache = cache.getAdvancedCache().withEncoding(IdentityEncoder.class);
-            assertEquals(unencodedCache.get(marshaller.objectToByteBuffer("1")), marshaller.objectToByteBuffer(value));
+            Cache<?, ?> unencodedCache = cache.getAdvancedCache().withStorageMediaType();
+            assertEquals(unencodedCache.get(asStored("1")), asStored(value));
          }
       });
    }
@@ -268,23 +273,17 @@ public class DataConversionTest extends AbstractInfinispanTest {
    @Test
    @SuppressWarnings("unchecked")
    public void testTranscodingWithCustomConfig() {
-
-      ConfigurationBuilder cfg = new ConfigurationBuilder();
-
-      ContentTypeConfigurationBuilder key = cfg.encoding().key();
-      ContentTypeConfigurationBuilder value = cfg.encoding().value();
-
-      key.mediaType("application/foo");
-      value.mediaType("application/bar");
-
-      withCacheManager(new CacheManagerCallable(
-            createCacheManager(TestDataSCI.INSTANCE)) {
+      withCacheManager(new CacheManagerCallable(createCacheManager(TestDataSCI.INSTANCE)) {
          @Override
          public void call() {
             EncoderRegistry encoderRegistry = cm.getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
             encoderRegistry.registerTranscoder(new FooBarTranscoder());
-            cm.defineConfiguration("default", cfg.build());
-            Cache<String, String> cache = cm.getCache("default");
+            ConfigurationBuilder cfg = new ConfigurationBuilder();
+            cfg.encoding().key().mediaType("application/foo");
+            cfg.encoding().value().mediaType("application/bar");
+            cm.defineConfiguration("foobar", cfg.build());
+
+            Cache<String, String> cache = cm.getCache("foobar");
 
             cache.put("foo-key", "bar-value");
             assertEquals(cache.get("foo-key"), "bar-value");

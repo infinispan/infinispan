@@ -399,9 +399,20 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       assertKeyNotNull(key);
       assertValueNotNull(value);
       assertFunctionNotNull(remappingFunction);
+      DataConversion keyDataConversion;
+      DataConversion valueDataConversion;
+      //TODO: Correctly propagate DataConversion objects https://issues.redhat.com/browse/ISPN-11584
+      if (remappingFunction instanceof BiFunctionMapper) {
+         BiFunctionMapper biFunctionMapper = (BiFunctionMapper) remappingFunction;
+         keyDataConversion = biFunctionMapper.getKeyDataConversion();
+         valueDataConversion = biFunctionMapper.getValueDataConversion();
+      } else {
+         keyDataConversion = getKeyDataConversion();
+         valueDataConversion = getValueDataConversion();
+      }
       ReadWriteKeyCommand<K, V, V> command = commandsFactory.buildReadWriteKeyCommand(key,
             new MergeFunction<>(value, remappingFunction, metadata), keyPartitioner.getSegment(key),
-            Params.fromFlagsBitSet(flags), getKeyDataConversion(), getValueDataConversion());
+            Params.fromFlagsBitSet(flags), keyDataConversion, valueDataConversion);
       return invocationHelper.invoke(contextBuilder, command, 1);
    }
 

@@ -30,6 +30,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -1952,4 +1953,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cross-site Replication not available for local cache.", id = 576)
    CacheConfigurationException xsiteInLocalCache();
+
+   @Message(value = "Converting from unwrapped protostream payload requires the 'type' parameter to be supplied in the destination MediaType", id = 577)
+   MarshallingException missingTypeForUnwrappedPayload();
 }

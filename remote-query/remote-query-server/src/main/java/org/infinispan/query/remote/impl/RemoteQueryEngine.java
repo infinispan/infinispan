@@ -41,7 +41,7 @@ final class RemoteQueryEngine extends ObjectRemoteQueryEngine {
    private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> c.getComponentRegistry().getComponent(RemoteQueryManager.class).getQueryEngine(c);
 
    RemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
-      super(isIndexed ? cache.withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class) : cache,
+      super(isIndexed ? cache.withStorageMediaType().withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class) : cache.withStorageMediaType(),
             isIndexed, ProtobufMatcher.class, new ProtobufFieldBridgeAndAnalyzerProvider());
    }
 

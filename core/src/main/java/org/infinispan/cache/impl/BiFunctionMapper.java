@@ -15,6 +15,9 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
+/**
+ * A Bifuncion wrapper that uses the cache's underlying DataConversion objects to perform its operations.
+ */
 @Scope(Scopes.NAMED_CACHE)
 public class BiFunctionMapper implements BiFunction {
 
@@ -35,6 +38,14 @@ public class BiFunctionMapper implements BiFunction {
       this.biFunction = remappingFunction;
       this.keyDataConversion = keyDataConversion;
       this.valueDataConversion = valueDataConversion;
+   }
+
+   public DataConversion getKeyDataConversion() {
+      return keyDataConversion;
+   }
+
+   public DataConversion getValueDataConversion() {
+      return valueDataConversion;
    }
 
    @Override

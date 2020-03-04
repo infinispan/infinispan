@@ -4,6 +4,7 @@ import javax.cache.expiry.Duration;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.integration.CacheLoader;
 
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.jcache.Exceptions;
 import org.infinispan.jcache.Expiration;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -17,11 +18,15 @@ public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi
    private CacheLoader<K, V> delegate;
    private InitializationContext ctx;
    private ExpiryPolicy expiryPolicy;
+   private DataConversion keyDataConversion;
+   private DataConversion valueDataConversion;
 
    public JCacheLoaderAdapter() {
       // Empty constructor required so that it can be instantiated with
       // reflection. This is a limitation of the way the current cache
       // loader configuration works.
+      this.keyDataConversion = DataConversion.IDENTITY_KEY;
+      this.valueDataConversion = DataConversion.IDENTITY_KEY;
    }
 
    public void setCacheLoader(CacheLoader<K, V> delegate) {
@@ -37,18 +42,23 @@ public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi
       this.ctx = ctx;
    }
 
+   public void setDataConversion(DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      this.keyDataConversion = keyDataConversion;
+      this.valueDataConversion = valueDataConversion;
+   }
+
    @Override
-   public MarshallableEntry<K,V> loadEntry(Object key) throws PersistenceException {
-      V value = loadValue(key);
+   public MarshallableEntry<K, V> loadEntry(Object key) throws PersistenceException {
+      V value = loadValue(keyDataConversion.fromStorage(key));
       if (value != null) {
          Duration expiry = Expiration.getExpiry(expiryPolicy, Expiration.Operation.CREATION);
          if (expiry == null || expiry.isEternal()) {
-            return ctx.<K,V>getMarshallableEntryFactory().create(key, value);
+            return ctx.<K, V>getMarshallableEntryFactory().create(key, valueDataConversion.toStorage(value));
          } else {
             long now = ctx.getTimeService().wallClockTime();
             long exp = now + expiry.getTimeUnit().toMillis(expiry.getDurationAmount());
             Metadata meta = new EmbeddedMetadata.Builder().lifespan(exp - now).build();
-            return ctx.<K,V>getMarshallableEntryFactory().create(key, value, meta, now, -1);
+            return ctx.<K, V>getMarshallableEntryFactory().create(key, valueDataConversion.toStorage(value), meta, now, -1);
          }
       }
       return null;

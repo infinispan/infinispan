@@ -64,7 +64,7 @@ public class QueryEngine<TypeMetadata> {
    protected static final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
    protected QueryEngine(AdvancedCache<?, ?> cache, Class<? extends Matcher> matcherImplClass) {
-      this.cache = cache.withStorageMediaType();
+      this.cache = cache;
       this.matcherImplClass = matcherImplClass;
       this.queryCache = SecurityActions.getGlobalComponentRegistry(cache).getComponent(QueryCache.class);
       this.matcher = SecurityActions.getCacheComponentRegistry(cache).getComponent(matcherImplClass);

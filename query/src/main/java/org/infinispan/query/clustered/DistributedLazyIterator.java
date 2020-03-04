@@ -44,6 +44,11 @@ final class DistributedLazyIterator<E> extends DistributedIterator<E> {
    protected E fetchValue(int scoreIndex, NodeTopDocs nodeTopDocs) {
       ClusteredQueryOperation operation = ClusteredQueryOperation.retrieveKeyFromLazyQuery(queryId, scoreIndex);
       SegmentsClusteredQueryCommand cmd = new SegmentsClusteredQueryCommand(cache.getName(), operation, new BitSet());
-      return (E) invoker.unicast(nodeTopDocs.address, cmd).getFetchedValue();
+      Object fetchedValue = invoker.unicast(nodeTopDocs.address, cmd).getFetchedValue();
+      if(fetchedValue instanceof Object[]) {
+         // Projections are already stored in the request format, so no need for conversion
+         return (E) fetchedValue;
+      }
+      return (E) cache.getValueDataConversion().fromStorage(fetchedValue);
    }
 }

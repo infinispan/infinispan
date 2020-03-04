@@ -2,6 +2,7 @@ package org.infinispan.query.remote.impl;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
+import static org.infinispan.encoding.ProtostreamTranscoder.WRAPPED_PARAM;
 
 import java.util.Map;
 
@@ -20,7 +21,7 @@ import org.infinispan.query.remote.client.impl.QueryRequest;
  */
 public interface RemoteQueryManager {
 
-   MediaType PROTOSTREAM_UNWRAPPED = APPLICATION_PROTOSTREAM.withParameter("wrapped", "false");
+   MediaType PROTOSTREAM_UNWRAPPED = APPLICATION_PROTOSTREAM.withParameter(WRAPPED_PARAM, "false");
    MediaType QUERY_REQUEST_TYPE = APPLICATION_OBJECT.withClassType(QueryRequest.class);
 
    /**

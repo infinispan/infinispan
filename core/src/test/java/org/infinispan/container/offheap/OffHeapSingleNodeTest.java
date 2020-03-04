@@ -9,16 +9,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.Test;
 
 /**
@@ -60,9 +59,9 @@ public class OffHeapSingleNodeTest extends OffHeapMultiNodeTest {
 
       timeService.advance(20);
 
-      Marshaller marshaller = cache.getAdvancedCache().getComponentRegistry().getInternalMarshaller();
+      DataConversion keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
 
-      WrappedBytes keyWB = new WrappedByteArray(marshaller.objectToByteBuffer(key));
+      WrappedBytes keyWB = (WrappedBytes) keyDataConversion.toStorage(key);
 
       AtomicBoolean invoked = new AtomicBoolean(false);
       DataContainer container = cache.getAdvancedCache().getDataContainer();

@@ -51,6 +51,23 @@ import org.testng.annotations.Test;
 public class ExceptionEvictionTest extends MultipleCacheManagersTest {
    private static final int SIZE = 10;
 
+   /**
+    * The JVM overhead in bytes for an immortal entry when integer keys and values are marshalled with protostream and
+    * stored as {@link org.infinispan.protostream.WrappedMessage}.
+    * More details on {@link org.infinispan.container.entries.CacheEntrySizeCalculator}.
+    */
+   public static final int IMMORTAL_ENTRY_SIZE = 104;
+
+   /**
+    * The overhead per entry in bytes when using optimistic transactions, due to extra storage in the metadata.
+    */
+   public static final int OPTIMISTIC_TX_OVERHEAD = 40;
+
+   /**
+    * The extra overhead per entry in bytes due to usage of maxIdle or lifespan.
+    */
+   public static final int MORTAL_ENTRY_OVERHEAD = 16;
+
    private int nodeCount;
    private ConfigurationBuilder configurationBuilder;
 
@@ -130,8 +147,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
             memoryConfigurationBuilder.size(SIZE);
             break;
          case BINARY:
-            // 64 bytes per entry, however tests that add metadata require 16 more even
-            memoryConfigurationBuilder.evictionType(EvictionType.MEMORY).size(convertAmountForStorage(SIZE) + 16);
+            memoryConfigurationBuilder.evictionType(EvictionType.MEMORY).size(convertAmountForStorage(SIZE) + MORTAL_ENTRY_OVERHEAD);
             break;
          case OFF_HEAP:
             // Each entry takes up 63 bytes total for our tests, however tests that add expiration require 16 more
@@ -203,7 +219,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          case OBJECT:
             return expected;
          case BINARY:
-            return expected * (optimistic ? 64 : 24);
+            return expected * (optimistic ? IMMORTAL_ENTRY_SIZE + OPTIMISTIC_TX_OVERHEAD : IMMORTAL_ENTRY_SIZE);
          case OFF_HEAP:
             return expected * (optimistic ? UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(51) :
                                UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(33));
@@ -517,7 +533,8 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          LocalizedCacheTopology lct = cache(0).getAdvancedCache().getDistributionManager().getCacheTopology();
          DataConversion dc = cache(0).getAdvancedCache().getKeyDataConversion();
 
-         int minKey = -128;
+         // use positive numbers as protobuf encodes negative numbers as 10-bytes long
+         int minKey = 1;
          int nextKey = minKey;
          Address targetNode;
          Iterator<Address> owners = lct.getWriteOwners(dc.toStorage(nextKey)).iterator();

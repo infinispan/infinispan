@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.infinispan.cache.impl.BiFunctionMapper;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.factories.ComponentRegistry;
@@ -32,10 +33,21 @@ public class MergeFunction<K, V> implements Function<EntryView.ReadWriteEntryVie
       try {
          V merged = value;
          if (entry.find().isPresent()) {
-            merged = remappingFunction.apply(entry.get(), value);
+            V t = entry.get();
+            if (remappingFunction instanceof BiFunctionMapper) {
+               BiFunctionMapper mapper = (BiFunctionMapper) this.remappingFunction;
+               Object toStorage = mapper.getValueDataConversion().toStorage(t);
+               merged = remappingFunction.apply((V) toStorage, value);
+            } else {
+               merged = remappingFunction.apply(t, value);
+            }
          }
          if (merged == null) {
             entry.set(merged);
+         } else if (remappingFunction instanceof BiFunctionMapper) {
+            BiFunctionMapper mapper = (BiFunctionMapper) this.remappingFunction;
+            Object fromStorage = mapper.getValueDataConversion().fromStorage(merged);
+            entry.set((V) fromStorage, metadata);
          } else {
             entry.set(merged, metadata);
          }

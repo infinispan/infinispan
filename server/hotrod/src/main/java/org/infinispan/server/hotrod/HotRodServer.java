@@ -353,7 +353,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    public EmbeddedMultimapCache<WrappedByteArray, WrappedByteArray> multimap(HotRodHeader header, Subject subject) {
-      return new EmbeddedMultimapCache(cache(getCacheInfo(header), header, subject));
+      AdvancedCache<byte[], byte[]> cache = cache(getCacheInfo(header), header, subject).withStorageMediaType();
+      return new EmbeddedMultimapCache(cache);
    }
 
    public CacheInfo getCacheInfo(HotRodHeader header) {

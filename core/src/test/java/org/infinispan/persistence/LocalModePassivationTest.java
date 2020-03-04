@@ -10,12 +10,14 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -143,9 +145,10 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       assertFalse("Data Container should not have all keys", numKeys == dc.size());
       Set<Object> keySet = flagCache.keySet();
       assertEquals(dc.size(), keySet.size());
+      DataConversion conversion = flagCache.getValueDataConversion();
       for (InternalCacheEntry<Object, Object> entry : dc) {
          Object key = entry.getKey();
-         assertTrue("Key: " + key + " was not found!", keySet.contains(key));
+         assertTrue("Key: " + key + " was not found!", keySet.contains(conversion.fromStorage(key)));
       }
    }
 
@@ -181,9 +184,13 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       Set<Map.Entry<Object, Object>> entrySet = flagCache.entrySet();
       assertEquals(dc.size(), entrySet.size());
 
-      Map<Object, Object> map = new HashMap<>(entrySet.size());
+      DataConversion keyDataConversion = flagCache.getAdvancedCache().getKeyDataConversion();
+      DataConversion valueDataConversion = flagCache.getAdvancedCache().getValueDataConversion();
+      Map<WrappedByteArray, WrappedByteArray> map = new HashMap<>(entrySet.size());
       for (Map.Entry<Object, Object> entry : entrySet) {
-         map.put(entry.getKey(), entry.getValue());
+         WrappedByteArray storedKey = (WrappedByteArray) keyDataConversion.toStorage(entry.getKey());
+         WrappedByteArray storedValue = (WrappedByteArray) valueDataConversion.toStorage(entry.getValue());
+         map.put(storedKey, storedValue);
       }
 
       for (InternalCacheEntry entry : dc) {
@@ -218,7 +225,8 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
 
       for (InternalCacheEntry<Object, Object> entry : dc) {
          Object dcValue = entry.getValue();
-         assertTrue("Value: " + dcValue + " was not found!", values.contains(dcValue));
+         DataConversion valueDataConversion = flagCache.getValueDataConversion();
+         assertTrue("Value: " + dcValue + " was not found!", values.contains(valueDataConversion.fromStorage(dcValue)));
       }
    }
 

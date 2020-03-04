@@ -1,4 +1,4 @@
-package org.infinispan.server.core.dataconversion;
+package org.infinispan.encoding;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
@@ -19,6 +19,7 @@ import java.util.Optional;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
@@ -28,12 +29,25 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Transcode between application/x-protostream and commons formats
+ *<p>
+ * Performs conversions between <b>application/x-protostream</b> and commons formats.
+ *</p>
+ *
+ * <br/><p>When converting to <b>application/x-protostream</b>, it will produce payloads
+ * with {@link org.infinispan.protostream.WrappedMessage} by default, unless the param
+ * <b>wrapped</b> is supplied in the destination {@link MediaType} with value <b>false</b></p>
+ *<br/><p>
+ * Converting back to <b>application/x-java-object</b> requires either a payload that is
+ * a {@link org.infinispan.protostream.WrappedMessage} or an unwrapped payload plus the
+ * type of the java object to convert to, specified using the <b>type</b> parameter in
+ * the <b>application/x-java-object</b> {@link MediaType}.
+ *</p>
  *
  * @since 10.0
  */
 public class ProtostreamTranscoder extends OneToManyTranscoder {
 
+   public static final String WRAPPED_PARAM = "wrapped";
    protected final static Log logger = LogFactory.getLog(ProtostreamTranscoder.class, Log.class);
    private volatile SerializationContextRegistry ctxRegistry;
    private final ClassLoader classLoader;
@@ -79,7 +93,7 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
             return marshall(decoded, destinationType);
          }
          if (destinationType.match(MediaType.APPLICATION_OCTET_STREAM)) {
-            Object unmarshalled = content instanceof byte[] ? unmarshall((byte[]) content, destinationType) : content;
+            Object unmarshalled = content instanceof byte[] ? unmarshall((byte[]) content, contentType, destinationType) : content;
             if (unmarshalled instanceof byte[]) {
                return unmarshalled;
             }
@@ -87,11 +101,11 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
          }
          if (destinationType.match(MediaType.TEXT_PLAIN)) {
             Object decoded = ProtobufUtil.fromWrappedByteArray(ctx(), (byte[]) content);
-            if(decoded == null) return null;
+            if (decoded == null) return null;
             return decoded.toString().getBytes(destinationType.getCharset());
          }
          if (destinationType.match(MediaType.APPLICATION_OBJECT)) {
-            return unmarshall((byte[]) content, destinationType);
+            return unmarshall((byte[]) content, contentType, destinationType);
          }
          if (destinationType.match(MediaType.APPLICATION_JSON)) {
             String converted = ProtobufUtil.toCanonicalJSON(ctx(), (byte[]) content);
@@ -112,20 +126,33 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
       }
    }
 
-   private byte[] marshall(Object decoded, MediaType destinationType) throws IOException {
-      Optional<String> wrappedParam = destinationType.getParameter("wrapped");
-      if (!wrappedParam.isPresent() || !wrappedParam.get().equals("false"))
-         return ProtobufUtil.toWrappedByteArray(ctx(), decoded);
-      return ProtobufUtil.toByteArray(ctx(), decoded);
+   private boolean isWrapped(MediaType mediaType) {
+      Optional<String> wrappedParam = mediaType.getParameter("wrapped");
+      return (!wrappedParam.isPresent() || !wrappedParam.get().equals("false"));
    }
 
-   private Object unmarshall(byte[] bytes, MediaType destinationType) throws IOException {
-      String type = destinationType.getClassType();
-      if (type == null) {
-         return ProtobufUtil.fromWrappedByteArray(ctx(), bytes);
+   private byte[] marshall(Object decoded, MediaType destinationType) throws IOException {
+      try {
+         if (isWrapped(destinationType)) return ProtobufUtil.toWrappedByteArray(ctx(), decoded);
+         return ProtobufUtil.toByteArray(ctx(), decoded);
+      } catch (IllegalArgumentException iae) {
+         throw new MarshallingException(iae.getMessage());
       }
-      Class<?> destination = Util.loadClass(type, classLoader);
-      return ProtobufUtil.fromByteArray(ctx(), bytes, destination);
+   }
+
+   private Object unmarshall(byte[] bytes, MediaType contentType, MediaType destinationType) throws IOException {
+      try {
+         String type = destinationType.getClassType();
+         boolean wrapped = isWrapped(contentType);
+         if (type == null) {
+            if(wrapped) return ProtobufUtil.fromWrappedByteArray(ctx(), bytes);
+            throw logger.missingTypeForUnwrappedPayload();
+         }
+         Class<?> destination = Util.loadClass(type, classLoader);
+         return ProtobufUtil.fromByteArray(ctx(), bytes, destination);
+      } catch (IllegalArgumentException iae) {
+         throw new MarshallingException(iae.getMessage());
+      }
    }
 
    private Object addTypeIfNeeded(Object content) {

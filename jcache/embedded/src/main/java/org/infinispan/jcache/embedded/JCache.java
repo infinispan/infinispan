@@ -134,6 +134,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       PersistenceManagerImpl persistenceManager =
             (PersistenceManagerImpl) cache.getComponentRegistry().getComponent(PersistenceManager.class);
       JCacheLoaderAdapter<K, V> adapter = getCacheLoaderAdapter(persistenceManager);
+      adapter.setDataConversion(cache.getKeyDataConversion(), cache.getValueDataConversion());
       adapter.setCacheLoader(jcacheLoader);
       adapter.setExpiryPolicy(expiryPolicy);
    }
@@ -143,6 +144,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       PersistenceManagerImpl persistenceManager =
             (PersistenceManagerImpl) cache.getComponentRegistry().getComponent(PersistenceManager.class);
       JCacheWriterAdapter<K, V> ispnCacheStore = getCacheWriterAdapter(persistenceManager);
+      ispnCacheStore.setDataConversion(cache.getKeyDataConversion(), cache.getValueDataConversion());
       ispnCacheStore.setCacheWriter(jcacheWriter);
    }
 
