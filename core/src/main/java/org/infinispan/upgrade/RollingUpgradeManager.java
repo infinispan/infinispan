@@ -22,14 +22,14 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * This component handles the control hooks to handle migrating from one version of Infinispan to
- * another.
+ * RollingUpgradeManager handles the synchronization of data between Infinispan
+ * clusters when performing rolling upgrades.
  *
  * @author Manik Surtani
  * @author Tristan Tarrant
  * @since 5.2
  */
-@MBean(objectName = "RollingUpgradeManager", description = "This component handles the control hooks to handle migrating data from one version of Infinispan to another")
+@MBean(objectName = "RollingUpgradeManager", description = "Handles the migration of data when upgrading between versions.")
 @Scope(value = Scopes.NAMED_CACHE)
 @SurvivesRestarts
 public class RollingUpgradeManager {
@@ -40,10 +40,10 @@ public class RollingUpgradeManager {
    @Inject GlobalConfiguration globalConfiguration;
 
    @ManagedOperation(
-         description = "Synchronizes data from the old cluster to this using the specified migrator",
-         displayName = "Synchronizes data from the old cluster to this using the specified migrator"
+         description = "Synchronizes data from source clusters to target clusters with the specified migrator.",
+         displayName = "Synchronizes data from source clusters to target clusters with the specified migrator."
    )
-   public long synchronizeData(@Parameter(name="migratorName", description="The name of the migrator to use") String migratorName) throws Exception {
+   public long synchronizeData(@Parameter(name="migratorName", description="Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName) throws Exception {
       TargetMigrator migrator = getMigrator(migratorName);
       long start = timeService.time();
       long count = migrator.synchronizeData(cache);
@@ -53,12 +53,12 @@ public class RollingUpgradeManager {
    }
 
    @ManagedOperation(
-           description = "Synchronizes data from the old cluster to this using the specified migrator",
-           displayName = "Synchronizes data from the old cluster to this using the specified migrator"
+           description = "Synchronizes data from source clusters to target clusters with the specified migrator.",
+           displayName = "Synchronizes data from source clusters to target clusters with the specified migrator."
    )
-   public long synchronizeData(@Parameter(name = "migratorName", description = "The name of the migrator to use") String migratorName,
-                               @Parameter(name = "readBatch", description = "Numbers of entries transferred at a time from the old cluster") int readBatch,
-                               @Parameter(name = "threads", description = "Number of threads per node used to write data to the new cluster") int threads) throws Exception {
+   public long synchronizeData(@Parameter(name = "migratorName", description = "Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName,
+                               @Parameter(name = "readBatch", description = "Specifies how many entries to read at a time from source clusters. Default is 10000.") int readBatch,
+                               @Parameter(name = "threads", description = "Specifies the number of threads to use per node when writing data to target clusters. Defaults to number of available processors.") int threads) throws Exception {
       TargetMigrator migrator = getMigrator(migratorName);
       long start = timeService.time();
       long count = migrator.synchronizeData(cache, readBatch, threads);
@@ -67,10 +67,10 @@ public class RollingUpgradeManager {
    }
 
    @ManagedOperation(
-         description = "Disconnects the target cluster from the source cluster according to the specified migrator",
-         displayName = "Disconnects the target cluster from the source cluster"
+         description = "Disconnects target clusters from source clusters.",
+         displayName = "Disconnects target clusters from source clusters."
    )
-   public void disconnectSource(@Parameter(name="migratorName", description="The name of the migrator to use") String migratorName) throws Exception {
+   public void disconnectSource(@Parameter(name="migratorName", description="Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName) throws Exception {
       TargetMigrator migrator = getMigrator(migratorName);
       migrator.disconnectSource(cache);
    }

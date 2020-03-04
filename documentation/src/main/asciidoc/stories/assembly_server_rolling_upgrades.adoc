@@ -1,17 +1,13 @@
-[id='server_rolling_upgrade']
-:context: rolling_upgrades
-= Performing Rolling Upgrades
+[id='rolling_server_upgrades']
+:context: upgrade
+= Upgrading {brandname} Servers
+Perform rolling upgrades of your {brandname} clusters to change between
+versions without downtime or data loss. Rolling upgrades migrate both your
+{brandname} servers and your data to the target version over Hot Rod.
 
-Upgrade {brandname} without downtime or data loss. You can perform rolling upgrades for {brandname} servers to start using a more recent version of {brandname}.
-
-[NOTE]
-====
-This section explains how to upgrade {brandname} servers, see the appropriate documentation for your Hot Rod client for upgrade procedures.
-====
-
-include::{topics}/con_rolling_upgrades.adoc[leveloffset=+1]
-include::{topics}/proc_setting_up_target_clusters.adoc[leveloffset=+1]
-include::{topics}/proc_syncing_data_source_clusters.adoc[leveloffset=+1]
+include::{topics}/proc_upgrading_setup_target.adoc[leveloffset=+1]
+include::{topics}/ref_rolling_upgrade_remote_store.adoc[leveloffset=+2]
+include::{topics}/proc_upgrading_sync_data.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
