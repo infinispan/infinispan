@@ -1,15 +1,15 @@
-[id='data_migration']
+[id='offline_data_migration']
 :context: upgrade
-= Migrating Data Between {brandname} Versions
-Upgrading to the latest {brandname} version typically involves creating new
-clusters with the target version running in parallel to the version from which
-you are migrating. You can then create a shared persistent cache store between
-the two clusters and switch client connections to the target.
+= Migrating Data Between Cache Stores
+{brandname} provides a Java utility for migrating persisted data between cache
+stores.
 
-However, functional differences between major {brandname} versions mean that
-backwards compatibility between cache stores is not possible.
+In the case of upgrading {brandname}, functional differences between major
+versions do not allow backwards compatibility between cache stores. You can use
+`StoreMigrator` to convert your data so that it is compatible with the target
+version.
 
-For example, {brandname}
+For example, upgrading to {brandname}
 ifndef::productized[]
 10.0
 endif::productized[]
@@ -28,10 +28,9 @@ endif::productized[]
 cannot read from cache stores with previous {brandname} versions.
 
 In other cases {brandname} versions deprecate or remove cache store
-implementations, such as JDBC Mixed and Binary stores.
-
-To overcome incompatibilities with cache stores, {brandname} provides a utility
-to migrate data from one cache store to another.
+implementations, such as JDBC Mixed and Binary stores. You can use
+`StoreMigrator` in these cases to convert to different cache store
+implementations.
 
 include::{topics}/con_store_migrator.adoc[leveloffset=+1]
 include::{topics}/proc_getting_store_migrator.adoc[leveloffset=+1]

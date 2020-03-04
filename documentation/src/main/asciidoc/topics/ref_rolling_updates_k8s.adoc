@@ -1,6 +1,5 @@
-= Performing Rolling Updates on Kubernetes
-
-Rolling updates replace existing pods with new ones.
+= Replacing {brandname} Pods on Kubernetes
+As an alternative to rolling upgrades, you can do a rolling update on Kubernetes that replaces existing pods with new ones.
 
 * link:https://docs.openshift.org/latest/dev_guide/deployments/deployment_strategies.html#rolling-strategy[Rolling Updates]
 * link:https://docs.openshift.org/latest/dev_guide/deployments/deployment_strategies.html#when-to-use-a-rolling-deployment[When to Use a Rolling Deployment]

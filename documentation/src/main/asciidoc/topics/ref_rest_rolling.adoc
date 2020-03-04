@@ -1,19 +1,20 @@
 [id='rest_v2_sync_data']
-= Synchronize Data
-
-To synchronize data from the source cluster to the target cluster, do a `GET` request:
+= Synchronizing Data
+Synchronize data from a source cluster to a target cluster with `GET` requests
+and the `?action=sync-data` parameter:
 
 [source,options="nowrap",subs=attributes+]
 ----
 GET /v2/caches/{cacheName}?action=sync-data
 ----
 
-{brandname} responds with the total number of the entries copied
+When the operation completes, {brandname} responds with the total number of
+entries copied to the target cluster.
 
 [id='rest_v2_disconnect_source']
-= Disconnect the source cluster
-
-To disconnect the cache from the source cluster, do a `GET` request:
+= Disconnecting Source Clusters
+After you synchronize data to target clusters, disconnect from the source
+cluster with `GET` requests and the `?action=disconnect-source` parameter:
 
 [source,options="nowrap",subs=attributes+]
 ----
