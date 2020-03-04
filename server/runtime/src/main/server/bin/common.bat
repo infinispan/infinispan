@@ -38,9 +38,10 @@ set DEBUG_MODE=false
 set DEBUG_PORT=8787
 set "JAVA_OPTS_EXTRA="
 :ARGS_LOOP_START
-if "%~1" == "" (
+set "ARG=%~1"
+if "%ARG%" == "" (
    goto ARGS_LOOP_END
-) else if "%~1" == "--debug" (
+) else if "%ARG%" == "--debug" (
    set DEBUG_MODE=true
    if "%~2"=="" goto ARGS_LOOP_END
    set "var="&for /f "delims=0123456789" %%i in ("%~2") do set var=%%i
@@ -50,16 +51,17 @@ if "%~1" == "" (
       set DEBUG_PORT=%2
       shift
    )
-) else if "%~1:~0,2" == "-D" (
-   set "JAVA_OPTS_EXTRA=%JAVA_OPTS_EXTRA% %1"
+) else if "%ARG:~0,2%"=="-D" (
+   set "JAVA_OPTS_EXTRA=%JAVA_OPTS_EXTRA% %ARG%=%2"
+   shift
 ) else (
-   set "ARGUMENTS=%ARGUMENTS% %1"
+   set "ARGUMENTS=%ARGUMENTS% %ARG%"
 )
 shift
 goto ARGS_LOOP_START
 
 :ARGS_LOOP_END
-
+set "JAVA_OPTS=%JAVA_OPTS% %JAVA_OPTS_EXTRA%"
 rem Set debug settings if not already set
 if "%DEBUG_MODE%" == "true" (
    echo "%JAVA_OPTS%" | findstr /I "\-agentlib:jdwp" > nul
