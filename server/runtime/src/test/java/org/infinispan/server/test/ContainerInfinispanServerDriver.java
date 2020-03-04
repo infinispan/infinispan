@@ -129,7 +129,7 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
                .label("architecture", "x86_64")
                .user("root");
 
-         if (OS.getCurrentOs() != OS.WINDOWS) {
+         if (OS.getCurrentOs() != OS.WINDOWS && !usePrebuiltServerFromImage) {
             // We need to remap the UID/GID of the jboss user inside the container to the ones of the user outside so that files created on volume mounts have the correct ownership/permissions
             String uid = runProcess("id", "-u");
             String gid = runProcess("id", "-g");
