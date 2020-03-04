@@ -16,10 +16,10 @@ import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.externalizers.ExternalizerIds;
-import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
+import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 
 /**
- * Function that initializes the {@link CounterValue} and {@link ConfigurationMetadata} if they don't exists.
+ * Function that initializes the {@link CounterValue} and {@link CounterConfigurationMetaParam} if they don't exists.
  *
  * @author Pedro Ruivo
  * @since 9.0
@@ -41,7 +41,7 @@ public class InitializeCounterFunction<K extends CounterKey> implements
          return currentValue.get();
       }
       CounterValue newValue = newCounterValue(counterConfiguration);
-      entryView.set(newValue, new ConfigurationMetadata(counterConfiguration));
+      entryView.set(newValue, new CounterConfigurationMetaParam(counterConfiguration));
       return newValue;
    }
 
@@ -56,12 +56,12 @@ public class InitializeCounterFunction<K extends CounterKey> implements
 
       @Override
       public void writeObject(ObjectOutput output, InitializeCounterFunction object) throws IOException {
-         CounterConfiguration.EXTERNALIZER.writeObject(output, object.counterConfiguration);
+         output.writeObject(object.counterConfiguration);
       }
 
       @Override
-      public InitializeCounterFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new InitializeCounterFunction<>(CounterConfiguration.EXTERNALIZER.readObject(input));
+      public InitializeCounterFunction<?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new InitializeCounterFunction<>((CounterConfiguration) input.readObject());
       }
 
       @Override

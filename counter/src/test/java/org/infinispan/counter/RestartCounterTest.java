@@ -74,6 +74,10 @@ public class RestartCounterTest extends BaseCounterTest {
       shutdownAndRestart();
       assertDefined(defaultCounters);
       assertCounterValue(defaultCounters, counterManager(0), 0, 1);
+
+      incrementAll(defaultCounters, counterManager(0));
+
+      assertCounterValue(defaultCounters, counterManager(0), 1, 2);
    }
 
    public void testRuntimeCounters() {
@@ -105,6 +109,12 @@ public class RestartCounterTest extends BaseCounterTest {
       assertNotDefined(otherVolatile);
       assertCounterValue(defaultCounters, counterManager2, 0, 2);
       assertCounterValue(othersPersisted, counterManager2, -1 /*doesn't mather*/, 1);
+
+      incrementAll(defaultCounters, counterManager2);
+      incrementAll(othersPersisted, counterManager2);
+
+      assertCounterValue(defaultCounters, counterManager2, 1, 3);
+      assertCounterValue(othersPersisted, counterManager2, -1 /*doesn't mather*/, 2);
    }
 
    @Override

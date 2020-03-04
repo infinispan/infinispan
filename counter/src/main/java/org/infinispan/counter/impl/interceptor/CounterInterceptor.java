@@ -10,7 +10,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.counter.api.Storage;
-import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
+import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
@@ -35,13 +35,13 @@ public class CounterInterceptor extends BaseCustomAsyncInterceptor {
    private static final Collection<Flag> FLAGS_TO_SKIP_PERSISTENCE = EnumSet
          .of(Flag.SKIP_CACHE_LOAD, Flag.SKIP_CACHE_STORE);
 
-   private static ConfigurationMetadata extract(Metadata metadata) {
+   private static CounterConfigurationMetaParam extract(Metadata metadata) {
       return metadata instanceof MetaParamsInternalMetadata ?
-            ((MetaParamsInternalMetadata) metadata).findMetaParam(ConfigurationMetadata.class).orElse(null) :
+            ((MetaParamsInternalMetadata) metadata).findMetaParam(CounterConfigurationMetaParam.class).orElse(null) :
             null;
    }
 
-   private static boolean isVolatile(ConfigurationMetadata metadata) {
+   private static boolean isVolatile(CounterConfigurationMetaParam metadata) {
       return metadata != null && metadata.get().storage() == Storage.VOLATILE;
    }
 
@@ -51,8 +51,8 @@ public class CounterInterceptor extends BaseCustomAsyncInterceptor {
       //State Transfer puts doesn't use the skip_cache_load/store and the volatile counters are stored.
       //interceptor should be between the entry wrapping and the cache loader/writer interceptors.
       CacheEntry entry = ctx.lookupEntry(command.getKey());
-      ConfigurationMetadata entryMetadata = entry == null ? null : extract(entry.getMetadata());
-      ConfigurationMetadata commandMetadata = extract(command.getMetadata());
+      CounterConfigurationMetaParam entryMetadata = entry == null ? null : extract(entry.getMetadata());
+      CounterConfigurationMetaParam commandMetadata = extract(command.getMetadata());
       if (isVolatile(entryMetadata) || isVolatile(commandMetadata)) {
          if (trace) {
             log.tracef("Setting skip persistence for %s", command.getKey());

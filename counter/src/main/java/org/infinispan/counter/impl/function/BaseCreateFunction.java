@@ -5,7 +5,7 @@ import java.util.function.Function;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
-import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
+import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 import org.infinispan.functional.EntryView;
 
 /**
@@ -33,7 +33,7 @@ abstract class BaseCreateFunction<K extends CounterKey, R> implements
    }
 
    private R checkMetadataAndApply(EntryView.ReadWriteEntryView<K, CounterValue> entryView) {
-      ConfigurationMetadata metadata = entryView.findMetaParam(ConfigurationMetadata.class)
+      CounterConfigurationMetaParam metadata = entryView.findMetaParam(CounterConfigurationMetaParam.class)
             .orElseGet(this::createMetadata);
       return apply(entryView, entryView.get(), metadata);
    }
@@ -44,9 +44,9 @@ abstract class BaseCreateFunction<K extends CounterKey, R> implements
    }
 
    abstract R apply(EntryView.ReadWriteEntryView<K, CounterValue> entryView, CounterValue currentValue,
-         ConfigurationMetadata metadata);
+         CounterConfigurationMetaParam metadata);
 
-   private ConfigurationMetadata createMetadata() {
-      return new ConfigurationMetadata(configuration);
+   private CounterConfigurationMetaParam createMetadata() {
+      return new CounterConfigurationMetaParam(configuration);
    }
 }

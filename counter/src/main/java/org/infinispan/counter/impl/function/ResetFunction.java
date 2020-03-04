@@ -14,7 +14,7 @@ import org.infinispan.commons.marshall.exts.NoStateExternalizer;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.externalizers.ExternalizerIds;
-import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
+import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 import org.infinispan.counter.logging.Log;
 
 /**
@@ -39,7 +39,7 @@ public class ResetFunction<K extends CounterKey> extends BaseFunction<K, Void> {
    }
 
    @Override
-   Void apply(EntryView.ReadWriteEntryView<K, CounterValue> entryView, ConfigurationMetadata metadata) {
+   Void apply(EntryView.ReadWriteEntryView<K, CounterValue> entryView, CounterConfigurationMetaParam metadata) {
       entryView.set(newCounterValue(metadata.get()), metadata);
       return null;
    }
