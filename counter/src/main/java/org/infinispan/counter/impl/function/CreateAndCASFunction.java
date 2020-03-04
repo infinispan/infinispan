@@ -11,7 +11,7 @@ import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.externalizers.ExternalizerIds;
-import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
+import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 import org.infinispan.functional.EntryView;
 
 /**
@@ -38,7 +38,7 @@ public class CreateAndCASFunction<K extends CounterKey> extends BaseCreateFuncti
 
    @Override
    Object apply(EntryView.ReadWriteEntryView<K, CounterValue> entryView, CounterValue currentValue,
-         ConfigurationMetadata metadata) {
+         CounterConfigurationMetaParam metadata) {
       return FunctionHelper.compareAndSwap(entryView, currentValue, metadata, expect, value);
    }
 
@@ -56,15 +56,14 @@ public class CreateAndCASFunction<K extends CounterKey> extends BaseCreateFuncti
 
       @Override
       public void writeObject(ObjectOutput output, CreateAndCASFunction object) throws IOException {
-         CounterConfiguration.EXTERNALIZER.writeObject(output, object.configuration);
+         output.writeObject(object.configuration);
          output.writeLong(object.expect);
          output.writeLong(object.value);
       }
 
       @Override
-      public CreateAndCASFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new CreateAndCASFunction(CounterConfiguration.EXTERNALIZER.readObject(input), input.readLong(),
-               input.readLong());
+      public CreateAndCASFunction<?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new CreateAndCASFunction<>((CounterConfiguration) input.readObject(), input.readLong(), input.readLong());
       }
    }
 }

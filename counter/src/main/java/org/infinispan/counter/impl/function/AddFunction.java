@@ -11,7 +11,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.externalizers.ExternalizerIds;
-import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
+import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 
@@ -32,7 +32,7 @@ public final class AddFunction<K extends CounterKey> extends BaseFunction<K, Cou
    }
 
    @Override
-   CounterValue apply(ReadWriteEntryView<K, CounterValue> entry, ConfigurationMetadata metadata) {
+   CounterValue apply(ReadWriteEntryView<K, CounterValue> entry, CounterConfigurationMetaParam metadata) {
       return FunctionHelper.add(entry, entry.get(), metadata, delta);
    }
 
