@@ -110,7 +110,8 @@ public class RemoteStoreTest extends BaseStoreTest {
    }
 
    void countWithSegments(ToIntBiFunction<SegmentedAdvancedLoadWriteStore<?, ?>, IntSet> countFunction) {
-      Cache<byte[], byte[]> cache = localCacheManager.getCache(REMOTE_CACHE);
+      Cache<byte[], byte[]> cache = localCacheManager.<byte[], byte[]>getCache(REMOTE_CACHE).getAdvancedCache().withStorageMediaType();
+
       RemoteStore rs = (RemoteStore) cl;
 
       rs.write(marshalledEntry(internalCacheEntry("k1", "v1", 100)));

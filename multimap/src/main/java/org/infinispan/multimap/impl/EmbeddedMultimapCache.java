@@ -71,7 +71,8 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    private final InternalEntryFactory entryFactory;
 
    public EmbeddedMultimapCache(Cache<K, Bucket<V>> cache) {
-      this.cache = cache.getAdvancedCache();
+      //TODO: ISPN-11452 Multimaps don't support transcoding, so disable data conversions
+      this.cache = cache.getAdvancedCache().withStorageMediaType();
       FunctionalMapImpl<K, Bucket<V>> functionalMap = FunctionalMapImpl.create(this.cache);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
       this.entryFactory = this.cache.getComponentRegistry().getInternalEntryFactory().running();

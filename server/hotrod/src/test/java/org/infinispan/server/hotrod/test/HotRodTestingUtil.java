@@ -13,36 +13,31 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
-import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
@@ -53,7 +48,6 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.SingleByteFrameDecoderChannelInitializer;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.util.KeyValuePair;
 
 import io.netty.channel.Channel;
@@ -71,8 +65,6 @@ public class HotRodTestingUtil {
 
    private static final Log log = LogFactory.getLog(HotRodTestingUtil.class, Log.class);
    private static final UniquePortThreadLocal uptl = new UniquePortThreadLocal();
-
-   public static final byte EXPECTED_HASH_FUNCTION_VERSION = 2;
 
    public static String host() {
       return "127.0.0.1";
@@ -277,14 +269,14 @@ public class HotRodTestingUtil {
       assertStatus(resp, Success);
       boolean isArrayEquals = Arrays.equals(expected, resp.data.get());
       assertTrue("Retrieved data should have contained " + Util.printArray(expected, true) + " (" + new String(expected)
-            + "), but instead we received " + Util.printArray(resp.data.get(), true) + " (" +  new String(resp.data.get()) +")", isArrayEquals);
+            + "), but instead we received " + Util.printArray(resp.data.get(), true) + " (" + new String(resp.data.get()) + ")", isArrayEquals);
       return isArrayEquals;
    }
 
    public static void assertByteArrayEquals(byte[] expected, byte[] actual) {
       boolean isArrayEquals = Arrays.equals(expected, actual);
       assertTrue("Retrieved data should have contained " + Util.printArray(expected, true) + " (" + new String(expected)
-            + "), but instead we received " + Util.printArray(actual, true) + " (" +  new String(actual) +")", isArrayEquals);
+            + "), but instead we received " + Util.printArray(actual, true) + " (" + new String(actual) + ")", isArrayEquals);
    }
 
    public static boolean assertSuccess(TestGetWithVersionResponse resp, byte[] expected, int expectedVersion) {
@@ -306,7 +298,7 @@ public class HotRodTestingUtil {
    }
 
    public static void assertTopologyReceived(AbstractTestTopologyAwareResponse resp, List<HotRodServer> servers,
-                                             int expectedTopologyId ) {
+                                             int expectedTopologyId) {
       assertEquals(resp.topologyId, expectedTopologyId);
       if (resp instanceof TestHashDistAware10Response) {
          TestHashDistAware10Response h10 = (TestHashDistAware10Response) resp;
@@ -352,117 +344,6 @@ public class HotRodTestingUtil {
       }
    }
 
-   public static void assertHashTopology10Received(AbstractTestTopologyAwareResponse topoResp, List<HotRodServer> servers,
-                                                   String cacheName, int expectedTopologyId) {
-      assertHashTopology10Received(topoResp, servers, cacheName, 2,
-            EXPECTED_HASH_FUNCTION_VERSION, Integer.MAX_VALUE, expectedTopologyId);
-   }
-
-   public static void assertNoHashTopologyReceived(AbstractTestTopologyAwareResponse topoResp, List<HotRodServer> servers,
-                                                   String cacheName, int expectedTopologyId) {
-      if (topoResp instanceof TestHashDistAware10Response) {
-         assertHashTopology10Received(topoResp, servers, cacheName, 0, 0, 0, expectedTopologyId);
-      } else if (topoResp instanceof TestHashDistAware20Response) {
-         TestHashDistAware20Response t = (TestHashDistAware20Response) topoResp;
-         assertEquals(t.topologyId, expectedTopologyId);
-         assertEquals(new HashSet<>(t.members),
-                      servers.stream().map(HotRodServer::getAddress).collect(Collectors.toSet()));
-         assertEquals(t.hashFunction, 0);
-         assertEquals(t.segments.size(), 0);
-      } else {
-         throw new IllegalArgumentException("Unsupported response!");
-      }
-   }
-
-   public static void assertHashTopology10Received(AbstractTestTopologyAwareResponse topoResp,
-                                                   List<HotRodServer> servers, String cacheName,
-                                                   int expectedNumOwners, int expectedHashFct, int expectedHashSpace,
-                                                   int expectedTopologyId) {
-      TestHashDistAware10Response hashTopologyResp = (TestHashDistAware10Response) topoResp;
-      assertEquals(hashTopologyResp.topologyId, expectedTopologyId);
-      assertEquals(new HashSet<>(hashTopologyResp.members),
-                   servers.stream().map(HotRodServer::getAddress).collect(Collectors.toSet()));
-      assertEquals(hashTopologyResp.numOwners, expectedNumOwners);
-      assertEquals(hashTopologyResp.hashFunction, expectedHashFct);
-      assertEquals(hashTopologyResp.hashSpace, expectedHashSpace);
-      if (expectedNumOwners != 0) // Hash ids worth comparing
-         assertHashIds(hashTopologyResp.hashIds, servers, cacheName);
-   }
-
-   public static void assertHashTopologyReceived(AbstractTestTopologyAwareResponse topoResp,
-                                                 List<HotRodServer> servers, String cacheName,
-                                                 int expectedNumOwners, int expectedVirtualNodes,
-                                                 int expectedTopologyId) {
-      TestHashDistAware11Response hashTopologyResp = (TestHashDistAware11Response) topoResp;
-      assertEquals(hashTopologyResp.topologyId, expectedTopologyId);
-      assertEquals(new HashSet<>(hashTopologyResp.members),
-                   servers.stream().map(HotRodServer::getAddress).collect(Collectors.toSet()));
-      assertEquals(hashTopologyResp.numOwners, expectedNumOwners);
-      assertEquals(hashTopologyResp.hashFunction,
-            expectedNumOwners != 0 ? EXPECTED_HASH_FUNCTION_VERSION : 0);
-      assertEquals(hashTopologyResp.hashSpace,
-            expectedNumOwners != 0 ? Integer.MAX_VALUE : 0);
-      assertEquals(hashTopologyResp.numVirtualNodes, expectedVirtualNodes);
-   }
-
-   public static void assertHashIds(Map<ServerAddress, List<Integer>> hashIds, List<HotRodServer> servers, String cacheName) {
-      Cache cache = servers.get(0).getCacheManager().getCache(cacheName);
-      DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
-      ConsistentHash consistentHash = distributionManager.getCacheTopology().getCurrentCH();
-      int numSegments = consistentHash.getNumSegments();
-      int numOwners = cache.getCacheConfiguration().clustering().hash().numOwners();
-      assertEquals(hashIds.size(), servers.size());
-
-      int segmentSize = (int) Math.ceil((double) Integer.MAX_VALUE / numSegments);
-      Map<Integer, ServerAddress>[] owners = new Map[numSegments];
-
-      for (Map.Entry<ServerAddress, List<Integer>> entry : hashIds.entrySet()) {
-         ServerAddress serverAddress = entry.getKey();
-         List<Integer> serverHashIds = entry.getValue();
-         for (Integer hashId : serverHashIds) {
-            int segmentIdx = (hashId / segmentSize + numSegments - 1) % numSegments;
-            int ownerIdx = hashId % segmentSize;
-            if (owners[segmentIdx] == null) {
-               owners[segmentIdx] = new HashMap<>();
-            }
-            owners[segmentIdx].put(ownerIdx, serverAddress);
-         }
-      }
-
-      for (int i = 0; i < numSegments; ++i) {
-         List<ServerAddress> segmentOwners = owners[i].entrySet().stream().sorted(Comparator.comparing(Map.Entry::getKey))
-               .map(Map.Entry::getValue).collect(Collectors.toList());
-         assertEquals(segmentOwners.size(), numOwners);
-         List<ServerAddress> chOwners = consistentHash.locateOwnersForSegment(i).stream()
-               .map(a -> clusterAddressToServerAddress(servers, a)).collect(Collectors.toList());
-         assertEquals(segmentOwners, chOwners);
-      }
-   }
-
-   public static void assertReplicatedHashIds(Map<ServerAddress, List<Integer>> hashIds, List<HotRodServer> servers,
-                                              String cacheName) {
-      Cache cache = servers.get(0).getCacheManager().getCache(cacheName);
-      DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
-      ConsistentHash consistentHash = distributionManager.getCacheTopology().getCurrentCH();
-      int numSegments = consistentHash.getNumSegments();
-      int numOwners = cache.getCacheConfiguration().clustering().hash().numOwners();
-
-      // replicated responses have just one segment, and each server should have only one hash id: 0
-      assertEquals(hashIds.size(), servers.size());
-      assertEquals(numSegments, 1);
-
-      for (Map.Entry<ServerAddress, List<Integer>> entry : hashIds.entrySet()) {
-         List<Integer> serverHashIds = entry.getValue();
-         assertEquals(serverHashIds.size(), 1);
-         assertEquals(serverHashIds.get(0).intValue(), 0);
-      }
-   }
-
-   private static ServerAddress clusterAddressToServerAddress(List<HotRodServer> servers, Address clusterAddress ) {
-      Optional<HotRodServer> match = servers.stream().filter(a -> a.getCacheManager().getAddress().equals(clusterAddress)).findFirst();
-      return match.get().getAddress();
-   }
-
    public static int getServerTopologyId(EmbeddedCacheManager cm, String cacheName) {
       return cm.getCache(cacheName).getAdvancedCache().getRpcManager().getTopologyId();
    }
@@ -472,54 +353,52 @@ public class HotRodTestingUtil {
          if (client != null) {
             client.stop().await();
          }
-      }
-      catch (Throwable t) {
+      } catch (Throwable t) {
          log.error("Error stopping client", t);
       }
    }
 
-   public static GlobalConfigurationBuilder hotRodGlobalConfiguration(Class<?> klass) {
-      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
-      globalConfigurationBuilder.defaultCacheName(klass.getSimpleName());
-      return globalConfigurationBuilder;
-   }
-
-   public static GlobalConfigurationBuilder hotRodClusteredGlobalConfiguration(Class<?> klass) {
-      GlobalConfigurationBuilder globalConfigurationBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfigurationBuilder.defaultCacheName(klass.getSimpleName());
-      return globalConfigurationBuilder;
-   }
-
    public static ConfigurationBuilder hotRodCacheConfiguration() {
-      return new ConfigurationBuilder();
+      return hotRodCacheConfiguration(new ConfigurationBuilder());
    }
 
    public static ConfigurationBuilder hotRodCacheConfiguration(ConfigurationBuilder builder) {
-      return builder;
+      return hotRodCacheConfiguration(builder, MediaType.APPLICATION_PROTOSTREAM);
+   }
+
+   public static ConfigurationBuilder hotRodCacheConfiguration(ConfigurationBuilder cfg, MediaType types) {
+      cfg.encoding().key().mediaType(types.toString());
+      cfg.encoding().value().mediaType(types.toString());
+      return cfg;
+   }
+
+   public static ConfigurationBuilder hotRodCacheConfiguration(MediaType types) {
+      return hotRodCacheConfiguration(new ConfigurationBuilder(), types);
    }
 
    public static CacheEntry assertHotRodEquals(EmbeddedCacheManager cm, byte[] key, byte[] expectedValue) {
-      return assertHotRodEquals(cm, cm.getCache(), key, expectedValue);
+      return assertHotRodEquals(cm.getCache(), key, expectedValue);
    }
 
    public static CacheEntry assertHotRodEquals(EmbeddedCacheManager cm, String cacheName,
-                                                       byte[] key, byte[] expectedValue) {
-      return assertHotRodEquals(cm, cm.getCache(cacheName), key, expectedValue);
+                                               byte[] key, byte[] expectedValue) {
+      return assertHotRodEquals(cm.getCache(cacheName), key, expectedValue);
    }
 
    public static CacheEntry assertHotRodEquals(EmbeddedCacheManager cm, String key, String expectedValue) {
-      return assertHotRodEquals(cm, cm.getCache(), marshall(key), marshall(expectedValue));
+      return assertHotRodEquals(cm.getCache(), marshall(key), marshall(expectedValue));
    }
 
 
    public static CacheEntry assertHotRodEquals(EmbeddedCacheManager cm, String cacheName,
-                                                       String key, String expectedValue) {
-      return assertHotRodEquals(cm, cm.getCache(cacheName), marshall(key), marshall(expectedValue));
+                                               String key, String expectedValue) {
+      return assertHotRodEquals(cm.getCache(cacheName), marshall(key), marshall(expectedValue));
    }
 
-   private static CacheEntry assertHotRodEquals(EmbeddedCacheManager cm, Cache<byte[], byte[]> cache,
-                                                        byte[] key, byte[] expectedValue) {
-      CacheEntry<byte[], byte[]> entry = cache.getAdvancedCache().getCacheEntry(key);
+   private static CacheEntry assertHotRodEquals(Cache<byte[], byte[]> cache,
+                                                byte[] key, byte[] expectedValue) {
+      AdvancedCache advancedCache = cache.getAdvancedCache().withStorageMediaType();
+      CacheEntry<byte[], byte[]> entry = advancedCache.getCacheEntry(key);
       // Assert based on passed parameters
       if (expectedValue == null) {
          assertNull(entry);
@@ -571,21 +450,6 @@ public class HotRodTestingUtil {
          fn.run();
       } finally {
          assertStatus(client.removeClientListener(listener.getId()), Success);
-      }
-   }
-
-   @Listener
-   public static class AddressRemovalListener {
-      private final CountDownLatch latch;
-
-      private AddressRemovalListener(CountDownLatch latch) {
-         this.latch = latch;
-      }
-
-      @CacheEntryRemoved
-      public void addressRemoved(CacheEntryRemovedEvent<Address, ServerAddress> event) {
-         if (!event.isPre()) // Only count down latch after address has been removed
-            latch.countDown();
       }
    }
 

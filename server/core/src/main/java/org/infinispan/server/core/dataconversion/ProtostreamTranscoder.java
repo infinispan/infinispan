@@ -86,8 +86,9 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
             return StandardConversions.convertJavaToProtoStream(unmarshalled, MediaType.APPLICATION_OBJECT, ctx());
          }
          if (destinationType.match(MediaType.TEXT_PLAIN)) {
-            String decoded = ProtobufUtil.fromWrappedByteArray(ctx(), (byte[]) content).toString();
-            return decoded.getBytes(destinationType.getCharset());
+            Object decoded = ProtobufUtil.fromWrappedByteArray(ctx(), (byte[]) content);
+            if(decoded == null) return null;
+            return decoded.toString().getBytes(destinationType.getCharset());
          }
          if (destinationType.match(MediaType.APPLICATION_OBJECT)) {
             return unmarshall((byte[]) content, destinationType);

@@ -1,5 +1,7 @@
 package org.infinispan.integrationtests.spring.boot.session.remote;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.integrationtests.spring.boot.session.AbstractSpringSessionTCK;
@@ -16,7 +18,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = RemoteConfiguration.class, webEnvironment= SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = RemoteConfiguration.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class RemoteSpringSessionTest extends AbstractSpringSessionTCK {
 
@@ -27,9 +29,9 @@ public class RemoteSpringSessionTest extends AbstractSpringSessionTCK {
    @BeforeClass
    public static void beforeClass() {
       GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
-
       ConfigurationBuilder cacheConfiguration = new ConfigurationBuilder();
-
+      cacheConfiguration.encoding().key().mediaType(APPLICATION_SERIALIZED_OBJECT_TYPE);
+      cacheConfiguration.encoding().value().mediaType(APPLICATION_SERIALIZED_OBJECT_TYPE);
       serverCache = new DefaultCacheManager(globalConfigurationBuilder.build());
       serverCache.defineConfiguration(EnableInfinispanRemoteHttpSession.DEFAULT_CACHE_NAME, cacheConfiguration.build());
 

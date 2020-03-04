@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -596,6 +597,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    @Override
    public AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType) {
       return cache.withMediaType(keyMediaType, valueMediaType);
+   }
+
+   @Override
+   public AdvancedCache<K, V> withStorageMediaType() {
+      return cache.withStorageMediaType();
    }
 
    @Override

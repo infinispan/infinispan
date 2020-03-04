@@ -37,11 +37,15 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
    private final SearchIntegrator searchFactory;
    private final QueryInterceptor queryInterceptor;
    private final KeyTransformationHandler keyTransformationHandler;
-   private final QueryEngine<Class<?>> queryEngine;
+   private final QueryEngine<?> queryEngine;
    private final MassIndexer massIndexer;
    private TimeoutExceptionFactory timeoutExceptionFactory;
 
    public SearchManagerImpl(AdvancedCache<?, ?> cache) {
+      this(cache, ComponentRegistryUtils.getEmbeddedQueryEngine(cache));
+   }
+
+   public SearchManagerImpl(AdvancedCache<?, ?> cache, QueryEngine<?> queryEngine) {
       if (cache == null) {
          throw new IllegalArgumentException("cache parameter shall not be null");
       }
@@ -49,7 +53,7 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
       this.searchFactory = ComponentRegistryUtils.getSearchIntegrator(cache);
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       this.keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
-      this.queryEngine = ComponentRegistryUtils.getEmbeddedQueryEngine(cache);
+      this.queryEngine = queryEngine;
       this.massIndexer = ComponentRegistryUtils.getMassIndexer(cache);
    }
 

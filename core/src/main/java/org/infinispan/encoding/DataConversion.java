@@ -27,10 +27,13 @@ import org.infinispan.configuration.cache.EncodingConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.registry.InternalCacheRegistry;
 
 /**
  * Handle conversions for Keys or values.
@@ -86,7 +89,8 @@ public final class DataConversion {
       this.encoderClass = encoder.getClass();
       this.wrapperClass = wrapper.getClass();
       this.isKey = isKey;
-      this.storageMediaType = MediaType.APPLICATION_UNKNOWN;
+      this.storageMediaType = MediaType.APPLICATION_OBJECT;
+      this.requestMediaType = MediaType.APPLICATION_OBJECT;
    }
 
    public DataConversion withRequestMediaType(MediaType requestMediaType) {
@@ -116,7 +120,7 @@ public final class DataConversion {
    /**
     * Obtain the configured {@link MediaType} for this instance, or assume sensible defaults.
     */
-   private MediaType getStorageMediaType(Configuration configuration, boolean embeddedMode) {
+   private MediaType getStorageMediaType(Configuration configuration, boolean embeddedMode, boolean internalCache) {
       EncodingConfiguration encodingConfiguration = configuration.encoding();
       ContentTypeConfiguration contentTypeConfiguration = isKey ? encodingConfiguration.keyDataType() : encodingConfiguration.valueDataType();
       // If explicitly configured, use the value provided
@@ -127,6 +131,9 @@ public final class DataConversion {
       if (!embeddedMode && configuration.indexing().enabled() && contentTypeConfiguration.mediaType() == null) {
          return MediaType.APPLICATION_PROTOSTREAM;
       }
+
+      if (embeddedMode || internalCache) return MediaType.APPLICATION_OBJECT;
+
       return MediaType.APPLICATION_UNKNOWN;
    }
 
@@ -149,15 +156,17 @@ public final class DataConversion {
    }
 
    @Inject
-   public void injectDependencies(GlobalConfiguration gcr, EncoderRegistry encoderRegistry, Configuration configuration) {
+   public void injectDependencies(@ComponentName(KnownComponentNames.CACHE_NAME) String cacheName,
+                                  InternalCacheRegistry icr, GlobalConfiguration gcr,
+                                  EncoderRegistry encoderRegistry, Configuration configuration) {
+      this.encoderRegistry = encoderRegistry;
       if (this.encoder != null && this.wrapper != null) {
          // This must be one of the static encoders, we can't inject any component in it
          return;
       }
-
-      this.encoderRegistry = encoderRegistry;
+      boolean internalCache = icr.isInternalCache(cacheName);
       boolean embeddedMode = Configurations.isEmbeddedMode(gcr);
-      this.storageMediaType = getStorageMediaType(configuration, embeddedMode);
+      this.storageMediaType = getStorageMediaType(configuration, embeddedMode, internalCache);
 
       lookupEncoder(encoderRegistry, configuration, embeddedMode);
       this.lookupWrapper();
@@ -252,10 +261,6 @@ public final class DataConversion {
       return wrapperClass;
    }
 
-   public boolean isStorageFormatFilterable() {
-      return storageMediaType != null && storageMediaType.equals(MediaType.APPLICATION_OBJECT);
-   }
-
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -290,11 +295,11 @@ public final class DataConversion {
    }
 
    public static DataConversion newKeyDataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass, MediaType storageType) {
-      return new DataConversion(encoderClass, wrapperClass, null, storageType, true);
+      return new DataConversion(encoderClass, wrapperClass, MediaType.APPLICATION_OBJECT, storageType, true);
    }
 
    public static DataConversion newValueDataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass, MediaType storageType) {
-      return new DataConversion(encoderClass, wrapperClass, null, storageType, false);
+      return new DataConversion(encoderClass, wrapperClass, MediaType.APPLICATION_OBJECT, storageType, false);
    }
 
    private static boolean isDefault(DataConversion dataConversion) {

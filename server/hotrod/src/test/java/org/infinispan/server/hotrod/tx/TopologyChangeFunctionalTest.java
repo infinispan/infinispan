@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod.tx;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
@@ -192,7 +193,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
 
    @Override
    protected ConfigurationBuilder createCacheConfig() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       builder.transaction().lockingMode(lockingMode);
       switch (transactionMode) {

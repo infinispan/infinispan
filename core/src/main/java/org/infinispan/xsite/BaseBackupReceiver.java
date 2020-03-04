@@ -242,7 +242,7 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
 
       TransactionHandler(Cache<Object, Object> backup) {
          //ignore return values on the backup
-         this.backupCache = backup.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES, Flag.SKIP_XSITE_BACKUP);
+         this.backupCache = backup.getAdvancedCache().withStorageMediaType().withFlags(Flag.IGNORE_RETURN_VALUES, Flag.SKIP_XSITE_BACKUP);
          this.writeOnlyMap = WriteOnlyMapImpl.create(FunctionalMapImpl.create(backupCache));
          this.remote2localTx = new ConcurrentHashMap<>();
       }

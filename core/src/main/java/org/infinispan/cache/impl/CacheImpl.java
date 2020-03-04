@@ -753,6 +753,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return new EncoderCache<>(this, getKeyDataConversion().withRequestMediaType(km), getValueDataConversion().withRequestMediaType(vm));
    }
 
+   @Override
+   public AdvancedCache<K, V> withStorageMediaType() {
+      MediaType keyStorage = getKeyDataConversion().getStorageMediaType();
+      MediaType valueStorage = getValueDataConversion().getStorageMediaType();
+      DataConversion newKeyDataConversion = getKeyDataConversion().withRequestMediaType(keyStorage);
+      DataConversion newValueDataConversion = getKeyDataConversion().withRequestMediaType(valueStorage);
+      return new EncoderCache<>(this,newKeyDataConversion, newValueDataConversion);
+   }
 
    @Override
    public Encoder getKeyEncoder() {

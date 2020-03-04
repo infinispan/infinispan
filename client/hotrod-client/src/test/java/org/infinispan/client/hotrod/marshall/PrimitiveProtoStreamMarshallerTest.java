@@ -34,7 +34,7 @@ public class PrimitiveProtoStreamMarshallerTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
-      cache = cacheManager.getCache();
+      cache = cacheManager.getCache().getAdvancedCache().withStorageMediaType();
 
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 

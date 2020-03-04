@@ -8,6 +8,7 @@ import static org.infinispan.api.client.impl.SearchUtil.OIHANA;
 import static org.infinispan.api.client.impl.SearchUtil.PEOPLE;
 import static org.infinispan.api.client.impl.SearchUtil.UNAI;
 import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -50,7 +51,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
    protected HotRodServer createHotRodServer() {
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
-      cacheManager.administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).getOrCreateCache(PEOPLE, new org.infinispan.configuration.cache.ConfigurationBuilder().build());
+      cacheManager.administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).getOrCreateCache(PEOPLE, hotRodCacheConfiguration().build());
       return HotRodClientTestingUtil.startHotRodServer(cacheManager, serverBuilder);
    }
 
