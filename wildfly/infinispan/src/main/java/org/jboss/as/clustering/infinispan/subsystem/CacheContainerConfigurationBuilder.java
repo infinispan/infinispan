@@ -211,8 +211,6 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
                 transportBuilder.siteId(topology.getSite()).rackId(topology.getRack()).machineId(topology.getMachine());
             }
 
-
-            transportBuilder.transportThreadPool().read(this.transportThreadPool.getValue());
             transportBuilder.remoteCommandThreadPool().read(this.remoteCommandThreadPool.getValue());
         }
 
