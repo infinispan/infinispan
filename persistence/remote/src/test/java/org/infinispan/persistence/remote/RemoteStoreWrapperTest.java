@@ -8,6 +8,7 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
@@ -38,7 +39,7 @@ public class RemoteStoreWrapperTest extends AbstractInfinispanTest {
    public void setup() throws Exception {
       ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       serverCacheManager = TestCacheManagerFactory
-            .createCacheManager(hotRodCacheConfiguration(serverBuilder));
+            .createCacheManager(hotRodCacheConfiguration(serverBuilder, MediaType.APPLICATION_JBOSS_MARSHALLING));
       serverCache = serverCacheManager.getCache();
       sourceServer = HotRodClientTestingUtil.startHotRodServer(serverCacheManager);
 
@@ -53,7 +54,7 @@ public class RemoteStoreWrapperTest extends AbstractInfinispanTest {
             .host(sourceServer.getHost())
             .port(sourceServer.getPort());
       targetCacheManager = TestCacheManagerFactory
-            .createCacheManager(hotRodCacheConfiguration(clientBuilder));
+            .createCacheManager(hotRodCacheConfiguration(clientBuilder, MediaType.APPLICATION_JBOSS_MARSHALLING));
       targetCache = targetCacheManager.getCache();
       targetServer = HotRodClientTestingUtil.startHotRodServer(targetCacheManager);
 

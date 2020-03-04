@@ -12,8 +12,10 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.functional.EntryView;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.registry.InternalCacheRegistry;
 
 /**
  * Helper class for marshalling, also hiding implementations of {@link Mutation} from the interface.
@@ -88,8 +90,10 @@ final class Mutations {
          GlobalConfiguration globalConfiguration = registry.getGlobalComponentRegistry().getGlobalConfiguration();
          EncoderRegistry encoderRegistry = registry.getComponent(EncoderRegistry.class);
          Configuration configuration = registry.getComponent(Configuration.class);
-         keyDataConversion.injectDependencies(globalConfiguration, encoderRegistry, configuration);
-         valueDataConversion.injectDependencies(globalConfiguration, encoderRegistry, configuration);
+         InternalCacheRegistry icr = registry.getComponent(InternalCacheRegistry.class);
+         String cacheName = registry.getComponent(String.class, KnownComponentNames.CACHE_NAME);
+         keyDataConversion.injectDependencies(cacheName, icr, globalConfiguration, encoderRegistry, configuration);
+         valueDataConversion.injectDependencies(cacheName, icr, globalConfiguration, encoderRegistry, configuration);
       }
    }
 

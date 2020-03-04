@@ -127,7 +127,7 @@ class AssertsNearCache<K, V> {
    AssertsNearCache<K, V> expectNearGetValueVersion(K key, V value) {
       MockGetEvent get = assertGetKeyValue(key, value);
       if (value != null) {
-         long serverVersion = entryVersion(server, key);
+         long serverVersion = entryVersion(server.getAdvancedCache().withStorageMediaType(), key);
          assertEquals(serverVersion, get.value.getVersion());
       }
       return this;

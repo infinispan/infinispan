@@ -8,7 +8,6 @@ import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
 import java.lang.reflect.Method;
-import java.util.Properties;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -49,7 +48,6 @@ public class ServerErrorTest extends SingleCacheManagerTest {
    }
 
    protected RemoteCacheManager getRemoteCacheManager() {
-      Properties config = new Properties();
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
@@ -62,8 +60,8 @@ public class ServerErrorTest extends SingleCacheManagerTest {
       killServers(hotrodServer);
    }
 
-   public void testErrorWhileDoingPut(Method m) throws Exception {
-      cache.addListener(new ErrorInducingListener());
+   public void testErrorWhileDoingPut(Method m) {
+      cache.getAdvancedCache().withStorageMediaType().addListener(new ErrorInducingListener());
       remoteCache = remoteCacheManager.getCache();
 
       remoteCache.put(k(m), v(m));

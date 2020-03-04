@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -520,6 +521,16 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public AdvancedCache<K, V> withMediaType(String keyMediaType, String valueMediaType) {
       AdvancedCache encoderCache = this.cache.withMediaType(keyMediaType, valueMediaType);
+      if (encoderCache != cache) {
+         return wrapper.wrap(this, encoderCache);
+      } else {
+         return this;
+      }
+   }
+
+   @Override
+   public AdvancedCache<K, V> withStorageMediaType() {
+      AdvancedCache encoderCache = this.cache.withStorageMediaType();
       if (encoderCache != cache) {
          return wrapper.wrap(this, encoderCache);
       } else {

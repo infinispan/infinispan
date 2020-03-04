@@ -1,6 +1,10 @@
 package org.infinispan.spring.remote.provider.sample;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT;
+
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -41,16 +45,18 @@ public class SampleHotrodServerLifecycleBean implements InitializingBean, Dispos
 
    @Override
    public void afterPropertiesSet() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManager(HotRodTestingUtil.hotRodCacheConfiguration());
-      cacheManager.defineConfiguration(remoteCacheName, HotRodTestingUtil.hotRodCacheConfiguration().build());
-      cacheManager.defineConfiguration(remoteBackupCacheName, HotRodTestingUtil.hotRodCacheConfiguration().build());
-      cacheManager.defineConfiguration(customCacheName, HotRodTestingUtil.hotRodCacheConfiguration().build());
+      ConfigurationBuilder builder = HotRodTestingUtil.hotRodCacheConfiguration(APPLICATION_SERIALIZED_OBJECT);
+      cacheManager = TestCacheManagerFactory.createCacheManager(builder);
+      Configuration configuration = builder.build();
+      cacheManager.defineConfiguration(remoteCacheName, configuration);
+      cacheManager.defineConfiguration(remoteBackupCacheName, configuration);
+      cacheManager.defineConfiguration(customCacheName, configuration);
       HotRodServerConfigurationBuilder hcb = new HotRodServerConfigurationBuilder();
       hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager, 15233, hcb);
    }
 
    @Override
-   public void destroy() throws Exception {
+   public void destroy() {
       cacheManager.stop();
       hotrodServer.stop();
    }

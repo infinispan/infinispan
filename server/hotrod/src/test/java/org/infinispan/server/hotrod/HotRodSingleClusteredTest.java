@@ -81,7 +81,7 @@ public class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
       InternalCacheRegistry internalCacheRegistry =
             manager(0).getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       internalCacheRegistry.registerInternalCache("MyInternalCache",
-                                                  new ConfigurationBuilder().build(),
+                                                  hotRodCacheConfiguration().build(),
                                                   EnumSet.of(InternalCacheRegistry.Flag.USER,
                                                              InternalCacheRegistry.Flag.PROTECTED));
       TestResponse resp = hotRodClient.execute(0xA0, (byte) 0x01, "MyInternalCache", k(m), 0, 0, v(m), 0, (byte) 1, 0);

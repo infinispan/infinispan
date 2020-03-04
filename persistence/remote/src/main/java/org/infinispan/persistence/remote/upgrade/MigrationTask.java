@@ -74,7 +74,8 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
       DefaultThreadFactory threadFactory = new DefaultThreadFactory(null, 1, THREAD_NAME + "-%t", null, null);
       ExecutorService executorService = Executors.newFixedThreadPool(threads, threadFactory);
       RemoveListener listener = null;
-      Cache<Object, Object> cache = embeddedCacheManager.getCache(cacheName);
+      AdvancedCache<Object, Object> advancedCache = embeddedCacheManager.getCache(cacheName).getAdvancedCache();
+      Cache cache = advancedCache.withStorageMediaType();
       try {
          ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
          PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);

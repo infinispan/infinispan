@@ -34,7 +34,16 @@ public final class DirectoryBuilder {
     */
    public static BuildContext newDirectoryInstance(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
       validateIndexCaches(indexName, metadataCache, chunksCache, distLocksCache);
-      return new DirectoryBuilderImpl(metadataCache, chunksCache, distLocksCache, indexName);
+      return new DirectoryBuilderImpl(decorateCache(metadataCache), decorateCache(chunksCache), decorateCache(distLocksCache), indexName);
+   }
+
+   /**
+    * Make sure no transcoding is done for the internal lucene caches, since the default config is defined by Hibernate
+    * Search
+    */
+   private static Cache<?, ?> decorateCache(Cache<?, ?> cache) {
+      if (cache == null) return null;
+      return cache.getAdvancedCache().withStorageMediaType();
    }
 
    private static void validateIndexCaches(String indexName, Cache<?, ?>... caches) {

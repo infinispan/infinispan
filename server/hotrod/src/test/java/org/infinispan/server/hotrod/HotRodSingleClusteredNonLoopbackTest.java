@@ -72,7 +72,7 @@ public class HotRodSingleClusteredNonLoopbackTest extends MultipleCacheManagersT
       InternalCacheRegistry internalCacheRegistry =
             manager(0).getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       internalCacheRegistry.registerInternalCache("MyInternalCache",
-                                                  new ConfigurationBuilder().build(),
+                                                  hotRodCacheConfiguration().build(),
                                                   EnumSet.of(InternalCacheRegistry.Flag.USER,
                                                              InternalCacheRegistry.Flag.PROTECTED));
       TestResponse resp = hotRodClient

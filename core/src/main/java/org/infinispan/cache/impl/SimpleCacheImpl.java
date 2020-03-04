@@ -619,6 +619,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public AdvancedCache<K, V> withStorageMediaType() {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapper, Class<? extends Wrapper> valueWrapper) {
       throw new UnsupportedOperationException();
    }

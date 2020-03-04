@@ -62,7 +62,7 @@ public class HotRodEntryMarshaller implements Marshaller {
 
    @Override
    public MediaType mediaType() {
-      return MediaType.APPLICATION_OCTET_STREAM;
+      return MediaType.APPLICATION_JBOSS_MARSHALLING;
    }
 
    class IdentityBufferSizePredictor implements BufferSizePredictor {

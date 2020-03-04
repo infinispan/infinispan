@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod;
 
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertHotRodEquals;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -8,6 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -63,7 +63,9 @@ public class DefaultExpirationTest extends SingleCacheManagerTest {
    @Test
    public void testDefaultExpiration() throws Exception {
       remoteCache.put("Key", "Value");
-      InternalCacheEntry entry = (InternalCacheEntry) assertHotRodEquals(cacheManager, "Key", "Value");
+      AdvancedCache<String, String> embeddedCache = cacheManager.<String, String>getCache().getAdvancedCache();
+      InternalCacheEntry entry = (InternalCacheEntry) embeddedCache.getCacheEntry("Key");
+      assertEquals("Value", entry.getValue());
       assertTrue(entry.canExpire());
       assertEquals(3000, entry.getLifespan());
       assertEquals(2000, entry.getMaxIdle());

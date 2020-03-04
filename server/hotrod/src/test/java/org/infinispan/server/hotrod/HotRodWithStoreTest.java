@@ -2,6 +2,7 @@ package org.infinispan.server.hotrod;
 
 import static org.infinispan.server.hotrod.OperationStatus.Success;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertStatus;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.lang.reflect.Method;
@@ -20,7 +21,7 @@ public class HotRodWithStoreTest extends HotRodSingleNodeTest {
 
    @Override
    public EmbeddedCacheManager createCacheManager() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.persistence()
              .addStore(DummyInMemoryStoreConfigurationBuilder.class)
              .storeName(getClass().getName());
