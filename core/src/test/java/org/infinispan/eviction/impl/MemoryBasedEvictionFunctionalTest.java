@@ -9,9 +9,12 @@ import java.util.stream.IntStream;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.global.SerializationConfigurationBuilder;
 import org.infinispan.container.offheap.OffHeapConcurrentMap;
 import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.eviction.impl.protostream.PrimitiveArrayCtx;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
@@ -43,7 +46,13 @@ public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
          builder.memory().size(CACHE_SIZE + UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(OffHeapConcurrentMap.INITIAL_SIZE << 3));
       }
       configure(builder);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE, builder);
+
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      SerializationConfigurationBuilder serialization = globalBuilder.serialization();
+      serialization.addContextInitializer(new PrimitiveArrayCtx());
+      serialization.addContextInitializer(TestDataSCI.INSTANCE);
+
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
       cache = cm.getCache();
       return cm;
    }

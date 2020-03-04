@@ -1,17 +1,19 @@
 package org.infinispan.eviction.impl;
 
+import static org.infinispan.protostream.FileDescriptorSource.fromString;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.UncheckedIOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.util.Util;
@@ -22,7 +24,6 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
 
    private static final int CACHE_SIZE = 128;
 
-
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
@@ -30,13 +31,13 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
             .expiration().wakeUpInterval(100L)
             .locking().useLockStriping(false) // to minimise chances of deadlock in the unit test
             .build();
-      cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
+      cacheManager = TestCacheManagerFactory.createCacheManager(new ContextInitializer(), cfg);
       cache = cacheManager.getCache();
       return cacheManager;
    }
 
    public void testEvictCustomKeyValue() {
-      EvictionPojo.Externalizer.resetStats();
+      EvictionPojoMarshaller.resetStats();
       int expectedWrites = 0;
       int expectedReads = 0;
       for (int i = 0; i < CACHE_SIZE * 2; i++) {
@@ -51,12 +52,13 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       }
 
       assertEquals(CACHE_SIZE, cache.getAdvancedCache().getDataContainer().size());
-      assertEquals(expectedWrites, EvictionPojo.Externalizer.writes.get());
-      assertEquals(expectedReads, EvictionPojo.Externalizer.reads.get());
+
+      assertEquals(expectedWrites, EvictionPojoMarshaller.writes.get());
+      assertEquals(expectedReads, EvictionPojoMarshaller.reads.get());
    }
 
    public void testEvictPrimitiveKeyCustomValue() {
-      EvictionPojo.Externalizer.resetStats();
+      EvictionPojoMarshaller.resetStats();
       int expectedWrites = 0;
       int expectedReads = 0;
       for (int i = 0; i < CACHE_SIZE * 2; i++) {
@@ -67,12 +69,68 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
             expectedReads++; // unmarshall old value if overwritten
          expectedWrites++; // just the value
       }
-      assertEquals(expectedWrites, EvictionPojo.Externalizer.writes.get());
-      assertEquals(expectedReads, EvictionPojo.Externalizer.reads.get());
+      assertEquals(expectedWrites, EvictionPojoMarshaller.writes.get());
+      assertEquals(expectedReads, EvictionPojoMarshaller.reads.get());
    }
 
-   @SerializeWith(EvictionPojo.Externalizer.class)
+   static class EvictionPojoMarshaller implements org.infinispan.protostream.MessageMarshaller<EvictionPojo> {
+      static AtomicInteger writes = new AtomicInteger();
+      static AtomicInteger reads = new AtomicInteger();
+
+      public static void resetStats() {
+         reads.set(0);
+         writes.set(0);
+      }
+
+      @Override
+      public EvictionPojo readFrom(ProtoStreamReader reader) throws IOException {
+         EvictionPojo o = new EvictionPojo();
+         o.i = reader.readInt("i");
+         reads.incrementAndGet();
+         return o;
+      }
+
+      @Override
+      public void writeTo(ProtoStreamWriter writer, EvictionPojo evictionPojo) throws IOException {
+         writer.writeInt("i", evictionPojo.i);
+         writes.incrementAndGet();
+      }
+
+      @Override
+      public Class<? extends EvictionPojo> getJavaClass() {
+         return EvictionPojo.class;
+      }
+
+      @Override
+      public String getTypeName() {
+         return "EvictionPojo";
+      }
+   }
+
+   private static class ContextInitializer implements SerializationContextInitializer {
+      @Override
+      public String getProtoFileName() {
+         return EvictionPojo.class.getName();
+      }
+
+      @Override
+      public String getProtoFile() throws UncheckedIOException {
+         return "message EvictionPojo {optional int32 i=1;}";
+      }
+
+      @Override
+      public void registerSchema(SerializationContext serCtx) {
+         serCtx.registerProtoFiles(fromString(getProtoFileName(), getProtoFile()));
+      }
+
+      @Override
+      public void registerMarshallers(SerializationContext serCtx) {
+         serCtx.registerMarshaller(new EvictionPojoMarshaller());
+      }
+   }
+
    public static class EvictionPojo {
+      @ProtoField(number = 1, defaultValue = "0")
       int i;
 
       @Override
@@ -88,30 +146,6 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
          int result;
          result = i;
          return result;
-      }
-
-      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<EvictionPojo> {
-         static AtomicInteger writes = new AtomicInteger();
-         static AtomicInteger reads = new AtomicInteger();
-
-         public static void resetStats() {
-            reads.set(0);
-            writes.set(0);
-         }
-
-         @Override
-         public void writeObject(ObjectOutput out, EvictionPojo pojo) throws IOException {
-            out.writeInt(pojo.i);
-            writes.incrementAndGet();
-         }
-
-         @Override
-         public EvictionPojo readObject(ObjectInput in) throws IOException, ClassNotFoundException {
-            EvictionPojo pojo = new EvictionPojo();
-            pojo.i = in.readInt();
-            reads.incrementAndGet();
-            return pojo;
-         }
       }
 
    }

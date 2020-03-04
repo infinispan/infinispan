@@ -39,7 +39,7 @@ public enum CQCommandType {
    public QueryResponse perform(AdvancedCache<?, ?> cache, QueryDefinition queryDefinition,
                                 UUID queryId, int docIndex, BitSet segments) {
       CQWorker worker = workerSupplier.get();
-      worker.initialize(cache, queryDefinition, queryId, docIndex);
+      worker.initialize(cache.withStorageMediaType(), queryDefinition, queryId, docIndex);
       return worker.perform(segments);
    }
 }

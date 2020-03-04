@@ -3,28 +3,6 @@
     {
       "protopath": "generated:/:global.commons.proto",
       "def": {
-        "messages": [
-          {
-            "name": "KeyValueWithPrevious",
-            "fields": [
-              {
-                "id": 1,
-                "name": "wrappedKey",
-                "type": "org.infinispan.protostream.WrappedMessage"
-              },
-              {
-                "id": 2,
-                "name": "wrappedValue",
-                "type": "org.infinispan.protostream.WrappedMessage"
-              },
-              {
-                "id": 3,
-                "name": "wrappedPrev",
-                "type": "org.infinispan.protostream.WrappedMessage"
-              }
-            ]
-          }
-        ],
         "imports": [
           {
             "path": "org/infinispan/protostream/message-wrapping.proto"
@@ -64,26 +42,6 @@
                 "id": 1,
                 "name": "tree",
                 "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "KeyValueWithPrevious",
-            "fields": [
-              {
-                "id": 1,
-                "name": "wrappedKey",
-                "type": "org.infinispan.protostream.WrappedMessage"
-              },
-              {
-                "id": 2,
-                "name": "wrappedValue",
-                "type": "org.infinispan.protostream.WrappedMessage"
-              },
-              {
-                "id": 3,
-                "name": "wrappedPrev",
-                "type": "org.infinispan.protostream.WrappedMessage"
               }
             ]
           },

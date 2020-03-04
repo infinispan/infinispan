@@ -70,7 +70,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
       protected final FlagAffectedCommand command;
 
       private BackingEntrySet(Cache cache, CacheSet<CacheEntry<K, V>> entrySet, FlagAffectedCommand command) {
-         super(cache);
+         super(cache.getAdvancedCache().withStorageMediaType());
          this.entrySet = entrySet;
          this.command = command;
       }
@@ -210,7 +210,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
       protected final FlagAffectedCommand command;
 
       public BackingKeySet(Cache<K, V> cache, CacheSet<K> keySet, FlagAffectedCommand command) {
-         super(cache);
+         super(cache.getAdvancedCache().withStorageMediaType());
          this.keySet = keySet;
          this.command = command;
       }

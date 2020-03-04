@@ -1,7 +1,5 @@
 package org.infinispan.query.impl.massindex;
 
-import static org.infinispan.configuration.cache.StorageType.OBJECT;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -17,13 +15,9 @@ import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.commons.dataconversion.ByteArrayWrapper;
-import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -67,42 +61,37 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
 
    @Override
    public Void apply(EmbeddedCacheManager embeddedCacheManager) {
-      Cache<Object, Object> cache = embeddedCacheManager.getCache(cacheName).getAdvancedCache().withStorageMediaType();
-      AdvancedCache<Object, Object> unwrapped = SecurityActions.getUnwrappedCache(cache).getAdvancedCache();
-      StorageType storageType = unwrapped.getCacheConfiguration().memory().storageType();
-      if (storageType == StorageType.OBJECT) {
-         cache = unwrapped.withWrapping(ByteArrayWrapper.class, IdentityWrapper.class);
-      } else {
-         cache = cache;  //todo [anistor] why not `unwrapped` instead ? do we need security for mass indexing ?
-      }
+      AdvancedCache<Object, Object> cache = SecurityActions.getUnwrappedCache(embeddedCacheManager.getCache(cacheName)).getAdvancedCache();
+      DataConversion valueDataConversion = cache.getValueDataConversion();
+      Wrapper valueWrapper = valueDataConversion.getWrapper();
+      boolean valueFilterable = valueWrapper.isFilterable();
 
-      SearchIntegrator searchIntegrator = ComponentRegistryUtils.getSearchIntegrator(unwrapped);
-      KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(unwrapped);
-      TimeService timeService = ComponentRegistryUtils.getTimeService(unwrapped);
+      AdvancedCache<Object, Object> reindexCache = valueFilterable ? cache.withStorageMediaType() : cache;
+
+      SearchIntegrator searchIntegrator = ComponentRegistryUtils.getSearchIntegrator(cache);
+      KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
+      TimeService timeService = ComponentRegistryUtils.getTimeService(cache);
 
       IndexUpdater indexUpdater = new IndexUpdater(searchIntegrator, keyTransformationHandler, timeService);
-      ClusteringDependentLogic clusteringDependentLogic = SecurityActions.getClusteringDependentLogic(unwrapped);
+      ClusteringDependentLogic clusteringDependentLogic = SecurityActions.getClusteringDependentLogic(cache);
       KeyPartitioner keyPartitioner = ComponentRegistryUtils.getKeyPartitioner(cache);
-
-      DataConversion keyDataConversion = unwrapped.getKeyDataConversion();
-      DataConversion valueDataConversion = unwrapped.getValueDataConversion();
 
       if (keys == null || keys.size() == 0) {
          preIndex(indexUpdater);
          if (!skipIndex) {
-            KeyValueFilter filter = getFilter(clusteringDependentLogic, keyDataConversion);
-            try (Stream<CacheEntry<Object, Object>> stream = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
+            KeyValueFilter filter = getFilter(clusteringDependentLogic, reindexCache.getKeyDataConversion());
+            try (Stream<CacheEntry<Object, Object>> stream = reindexCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
                   .cacheEntrySet().stream()) {
                Iterator<CacheEntry<Object, Object>> iterator = stream.filter(CacheFilters.predicate(filter)).iterator();
-               Wrapper wrapper = unwrapped.getValueDataConversion().getWrapper();
                while (iterator.hasNext()) {
                   CacheEntry<Object, Object> next = iterator.next();
-                  Object value = extractValue(next.getValue(), valueDataConversion);
-                  Object storedKey = keyDataConversion.toStorage(next.getKey());
-                  int segment = keyPartitioner.getSegment(storedKey);
-                  if (value instanceof byte[] && storageType != OBJECT) {
-                     value = wrapper.wrap(value);
+                  Object key = next.getKey();
+                  Object storedKey = reindexCache.getKeyDataConversion().toStorage(key);
+                  Object value = next.getValue();
+                  if (valueFilterable) {
+                     value = valueWrapper.wrap(value);
                   }
+                  int segment = keyPartitioner.getSegment(storedKey);
                   if (value != null && indexedTypes.contains(PojoIndexedTypeIdentifier.convertFromLegacy(value.getClass()))) {
                      indexUpdater.updateIndex(next.getKey(), value, segment);
                   }
@@ -113,9 +102,11 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       } else {
          Set<Class<?>> classSet = new HashSet<>();
          for (Object key : keys) {
-            Object value = extractValue(cache.get(key), valueDataConversion);
+            Object storedKey = reindexCache.getKeyDataConversion().toStorage(key);
+            Object unwrappedKey = reindexCache.getKeyDataConversion().getWrapper().unwrap(storedKey);
+            Object value = cache.get(key);
             if (value != null) {
-               indexUpdater.updateIndex(key, value, keyPartitioner.getSegment(keyDataConversion.toStorage(key)));
+               indexUpdater.updateIndex(unwrappedKey, value, keyPartitioner.getSegment(storedKey));
                classSet.add(value.getClass());
             }
          }
@@ -136,10 +127,6 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
 
    private KeyValueFilter getFilter(ClusteringDependentLogic clusteringDependentLogic, DataConversion keyDataConversion) {
       return primaryOwner ? new PrimaryOwnersKeyValueFilter(clusteringDependentLogic, keyDataConversion) : AcceptAllKeyValueFilter.getInstance();
-   }
-
-   private Object extractValue(Object storageValue, DataConversion valueDataConversion) {
-      return valueDataConversion.extractIndexable(storageValue);
    }
 
    public static final class Externalizer extends AbstractExternalizer<IndexWorker> {

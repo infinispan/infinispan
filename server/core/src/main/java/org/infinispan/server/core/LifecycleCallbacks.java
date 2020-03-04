@@ -20,7 +20,6 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.core.dataconversion.JBossMarshallingTranscoder;
 import org.infinispan.server.core.dataconversion.JavaSerializationTranscoder;
 import org.infinispan.server.core.dataconversion.JsonTranscoder;
-import org.infinispan.server.core.dataconversion.ProtostreamTranscoder;
 import org.infinispan.server.core.dataconversion.XMLTranscoder;
 
 /**
@@ -55,7 +54,6 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       encoderRegistry.registerTranscoder(jsonTranscoder);
       encoderRegistry.registerTranscoder(new XMLTranscoder(classLoader, classWhiteList));
       encoderRegistry.registerTranscoder(new JavaSerializationTranscoder(classWhiteList));
-      encoderRegistry.registerTranscoder(new ProtostreamTranscoder(ctxRegistry, classLoader));
 
       if (jbossMarshaller != null) {
          encoderRegistry.registerTranscoder(new JBossMarshallingTranscoder(jsonTranscoder, jbossMarshaller));

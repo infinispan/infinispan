@@ -6,12 +6,10 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.Set;
 
-import org.infinispan.commons.dataconversion.BinaryEncoder;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.EncoderIds;
 import org.infinispan.commons.dataconversion.EncodingException;
-import org.infinispan.commons.dataconversion.GlobalMarshallerEncoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -19,6 +17,7 @@ import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
@@ -33,6 +32,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.registry.InternalCacheRegistry;
 
 /**
@@ -40,7 +40,7 @@ import org.infinispan.registry.InternalCacheRegistry;
  *
  * @since 9.2
  */
-@Scope(Scopes.NAMED_CACHE)
+@Scope(Scopes.NONE)
 public final class DataConversion {
 
    public static final DataConversion DEFAULT_KEY = new DataConversion(IdentityEncoder.INSTANCE, ByteArrayWrapper.INSTANCE, true);
@@ -120,9 +120,12 @@ public final class DataConversion {
    /**
     * Obtain the configured {@link MediaType} for this instance, or assume sensible defaults.
     */
-   private MediaType getStorageMediaType(Configuration configuration, boolean embeddedMode, boolean internalCache) {
+   private MediaType getStorageMediaType(Configuration configuration, boolean embeddedMode, boolean internalCache, PersistenceMarshaller persistenceMarshaller) {
       EncodingConfiguration encodingConfiguration = configuration.encoding();
       ContentTypeConfiguration contentTypeConfiguration = isKey ? encodingConfiguration.keyDataType() : encodingConfiguration.valueDataType();
+      Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
+      MediaType mediaType = userMarshaller.mediaType();
+      boolean heap = configuration.memory().storageType() == StorageType.OBJECT;
       // If explicitly configured, use the value provided
       if (contentTypeConfiguration.isMediaTypeChanged()) {
          return contentTypeConfiguration.mediaType();
@@ -131,8 +134,11 @@ public final class DataConversion {
       if (!embeddedMode && configuration.indexing().enabled() && contentTypeConfiguration.mediaType() == null) {
          return MediaType.APPLICATION_PROTOSTREAM;
       }
+      if (internalCache) return MediaType.APPLICATION_OBJECT;
 
-      if (embeddedMode || internalCache) return MediaType.APPLICATION_OBJECT;
+      if (embeddedMode) {
+         return heap ? MediaType.APPLICATION_OBJECT : mediaType;
+      }
 
       return MediaType.APPLICATION_UNKNOWN;
    }
@@ -156,7 +162,8 @@ public final class DataConversion {
    }
 
    @Inject
-   public void injectDependencies(@ComponentName(KnownComponentNames.CACHE_NAME) String cacheName,
+   public void injectDependencies(@ComponentName(KnownComponentNames.PERSISTENCE_MARSHALLER) PersistenceMarshaller persistenceMarshaller,
+                                  @ComponentName(KnownComponentNames.CACHE_NAME) String cacheName,
                                   InternalCacheRegistry icr, GlobalConfiguration gcr,
                                   EncoderRegistry encoderRegistry, Configuration configuration) {
       this.encoderRegistry = encoderRegistry;
@@ -166,28 +173,17 @@ public final class DataConversion {
       }
       boolean internalCache = icr.isInternalCache(cacheName);
       boolean embeddedMode = Configurations.isEmbeddedMode(gcr);
-      this.storageMediaType = getStorageMediaType(configuration, embeddedMode, internalCache);
+      this.storageMediaType = getStorageMediaType(configuration, embeddedMode, internalCache, persistenceMarshaller);
 
-      lookupEncoder(encoderRegistry, configuration, embeddedMode);
+      lookupEncoder(encoderRegistry);
       this.lookupWrapper();
       this.lookupTranscoder();
    }
 
-   private void lookupEncoder(EncoderRegistry encoderRegistry, Configuration configuration, boolean embeddedMode) {
-      StorageType storageType = configuration.memory().storageType();
-      boolean offheap = storageType == StorageType.OFF_HEAP;
-      boolean binary = storageType == StorageType.BINARY;
+   private void lookupEncoder(EncoderRegistry encoderRegistry) {
       boolean isEncodingEmpty = encoderClass == null && encoderId == EncoderIds.NO_ENCODER;
       if (isEncodingEmpty) {
          encoderClass = IdentityEncoder.class;
-         if (offheap) {
-            if (embeddedMode) {
-               encoderClass = GlobalMarshallerEncoder.class;
-            }
-         }
-         if (binary && embeddedMode) {
-            encoderClass = BinaryEncoder.class;
-         }
       }
       this.encoder = encoderRegistry.getEncoder(encoderClass, encoderId);
    }
@@ -229,12 +225,21 @@ public final class DataConversion {
       return wrapper.wrap(encoder.toStorage(toStore));
    }
 
+   /**
+    * Convert the stored object in a format suitable to be indexed.
+    */
    public Object extractIndexable(Object stored) {
       if (stored == null) return null;
-      if (encoder.isStorageFormatFilterable()) {
-         return wrapper.isFilterable() ? stored : wrapper.unwrap(stored);
-      }
-      return encoder.fromStorage(wrapper.isFilterable() ? stored : wrapper.unwrap(stored));
+
+      // Keys are indexed as stored, without the wrapper
+      if(isKey) return wrapper.unwrap(stored);
+
+      // If the value wrapper is indexable, just use it
+      if (wrapper.isFilterable()) return stored;
+
+      // Otherwise convert to the request format
+      Object unencoded = encoder.fromStorage(wrapper.unwrap(stored));
+      return transcoder == null ? unencoded : transcoder.transcode(unencoded, storageMediaType, requestMediaType);
    }
 
    public MediaType getRequestMediaType() {

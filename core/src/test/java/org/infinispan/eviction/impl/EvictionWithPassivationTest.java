@@ -11,12 +11,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
@@ -294,15 +293,9 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
 
    private void assertEntryInStore(String key, boolean expectPresent) throws Exception {
       assertNotNull(key);
-      Cache<String, String> testCache = cacheManager.getCache(CACHE_NAME);
+      AdvancedCache<String, String> testCache = cacheManager.<String, String>getCache(CACHE_NAME).getAdvancedCache();
 
-      Object loaderKey;
-      if (storage == StorageType.OFF_HEAP) {
-         GlobalMarshaller gm = TestingUtil.extractGlobalMarshaller(testCache.getCacheManager());
-         loaderKey = new WrappedByteArray(gm.objectToByteBuffer(key));
-      } else {
-         loaderKey = key;
-      }
+      Object loaderKey = testCache.getKeyDataConversion().toStorage(key);
 
       CompletionStage<MarshallableEntry<String, String>> stage = TestingUtil.extractComponent(testCache, PersistenceManager.class)
             .loadFromAllStores(loaderKey, true, true);
@@ -320,16 +313,11 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       }
    }
 
-   private void putIntoStore(String key, String value) throws Exception {
-      Cache<String, String> testCache = cacheManager.getCache(CACHE_NAME);
+   private void putIntoStore(String key, String value) {
+      AdvancedCache<String, String> testCache = cacheManager.<String, String>getCache(CACHE_NAME).getAdvancedCache();
       CacheWriter<String, String> writer = TestingUtil.getFirstWriter(testCache);
-      Object writerKey = key;
-      Object writerValue = value;
-      if (storage == StorageType.OFF_HEAP) {
-         GlobalMarshaller gm = TestingUtil.extractGlobalMarshaller(testCache.getCacheManager());
-         writerKey = new WrappedByteArray(gm.objectToByteBuffer(key));
-         writerValue = new WrappedByteArray(gm.objectToByteBuffer(value));
-      }
+      Object writerKey = testCache.getKeyDataConversion().toStorage(key);
+      Object writerValue = testCache.getValueDataConversion().toStorage(value);
       MarshallableEntry entry = MarshalledEntryUtil.create(writerKey, writerValue, testCache);
       writer.write(entry);
    }

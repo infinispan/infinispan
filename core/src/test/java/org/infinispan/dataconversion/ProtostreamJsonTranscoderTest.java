@@ -1,4 +1,4 @@
-package org.infinispan.server.core.dataconversion;
+package org.infinispan.dataconversion;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -6,6 +6,7 @@ import static org.testng.Assert.assertTrue;
 import java.nio.charset.StandardCharsets;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.encoding.ProtostreamTranscoder;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ProtobufUtil;

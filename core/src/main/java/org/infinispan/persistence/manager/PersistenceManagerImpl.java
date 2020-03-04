@@ -1338,7 +1338,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          flags.add(SKIP_INDEXING);
       }
 
-      return cache.wired().withFlags(flags.toArray(new Flag[flags.size()]));
+      return cache.wired().withStorageMediaType().withFlags(flags.toArray(new Flag[flags.size()]));
    }
 
    private boolean indexShareable() {

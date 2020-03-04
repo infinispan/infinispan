@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.infinispan.AdvancedCache;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.query.backend.KeyTransformationHandler;
 
 /**
@@ -18,14 +19,16 @@ final class EntityLoader implements QueryResultLoader {
 
    private final AdvancedCache<?, ?> cache;
    private final KeyTransformationHandler keyTransformationHandler;
+   private final DataConversion keyDataConversion;
 
    EntityLoader(AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
       this.keyTransformationHandler = keyTransformationHandler;
       this.cache = cache;
+      this.keyDataConversion = cache.getKeyDataConversion();
    }
 
    private Object decodeKey(EntityInfo entityInfo) {
-      return keyTransformationHandler.stringToKey(entityInfo.getId().toString());
+      return keyDataConversion.fromStorage(keyTransformationHandler.stringToKey(entityInfo.getId().toString()));
    }
 
    @Override

@@ -11,10 +11,12 @@ import javax.cache.CacheException;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.processor.EntryProcessor;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.MetaParam;
@@ -22,14 +24,13 @@ import org.infinispan.jcache.Exceptions;
 import org.infinispan.jcache.Expiration;
 import org.infinispan.jcache.embedded.Durations;
 import org.infinispan.jcache.embedded.ExternalizerIds;
-import org.infinispan.marshall.persistence.PersistenceMarshaller;
 
 public class Invoke<K, V, R> implements Function<EntryView.ReadWriteEntryView<K, V>, R>, InjectableComponent {
    private final EntryProcessor<K, V, R> processor;
    private final Object[] arguments;
    private final boolean storeByReference;
-   private PersistenceMarshaller marshaller;
    private ExpiryPolicy expiryPolicy;
+   private DataConversion valueDataConversion;
 
    public Invoke(EntryProcessor<K, V, R> processor, Object[] arguments, boolean storeByReference) {
       this.processor = processor;
@@ -39,7 +40,8 @@ public class Invoke<K, V, R> implements Function<EntryView.ReadWriteEntryView<K,
 
    @Override
    public void inject(ComponentRegistry registry) {
-      this.marshaller = registry.getPersistenceMarshaller();
+      AdvancedCache<?, ?> advancedCache = registry.getCache().wired().getAdvancedCache();
+      this.valueDataConversion = advancedCache.getValueDataConversion();
       this.expiryPolicy = registry.getComponent(ExpiryPolicy.class);
    }
 
@@ -81,8 +83,8 @@ public class Invoke<K, V, R> implements Function<EntryView.ReadWriteEntryView<K,
          return original;
       }
       try {
-         byte[] bytes = marshaller.objectToByteBuffer(original);
-         Object o = marshaller.objectFromByteBuffer(bytes);
+         Object asStored =  valueDataConversion.toStorage(original);
+         Object o = valueDataConversion.fromStorage(asStored);
          return (V) o;
       } catch (Exception e) {
          throw new CacheException(
