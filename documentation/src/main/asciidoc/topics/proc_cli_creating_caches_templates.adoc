@@ -33,7 +33,8 @@ Press the tab key after the `--template=` argument to list available cache templ
       "concurrency-level" : 1000,
       "acquire-timeout" : 15000,
       "striping" : false
-    }
+    },
+    "statistics" : true
   }
 }
 ----

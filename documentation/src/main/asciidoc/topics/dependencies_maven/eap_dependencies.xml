@@ -2,16 +2,12 @@
   <dependency>
     <groupId>org.infinispan</groupId>
     <artifactId>infinispan-core</artifactId>
-    <!-- Replace ${version.infinispan} with the
-    version of {brandname} that you're using. -->
     <version>${version.infinispan}</version>
     <scope>provided</scope>
   </dependency>
   <dependency>
     <groupId>org.infinispan</groupId>
     <artifactId>infinispan-cachestore-jdbc</artifactId>
-    <!-- Replace ${version.infinispan} with the
-    version of {brandname} that you're using. -->
     <version>${version.infinispan}</version>
     <scope>provided</scope>
   </dependency>

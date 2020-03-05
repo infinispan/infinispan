@@ -2,11 +2,10 @@
       <dependency>
          <groupId>io.netty</groupId>
          <artifactId>netty-bom</artifactId>
-         <!-- Pulled from Infinispan BOM -->
+         <!-- Pulled from the Infinispan BOM -->
          <version>${version.netty}</version>
          <type>pom</type>
          <scope>import</scope>
       </dependency>
    </dependencies>
 </dependencyManagement>
-

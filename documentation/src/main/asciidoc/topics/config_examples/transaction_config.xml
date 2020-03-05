@@ -1,6 +1,5 @@
 <locking
-   isolation="READ_COMMITTED"
-   write-skew="false"/>
+   isolation="READ_COMMITTED"/>
 <transaction
    locking="OPTIMISTIC"
    auto-commit="true"
@@ -12,5 +11,3 @@
    recovery-cache="__recoveryInfoCacheName__"
    stop-timeout="30000"
    transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"/>
-<versioning
-   scheme="NONE"/>
