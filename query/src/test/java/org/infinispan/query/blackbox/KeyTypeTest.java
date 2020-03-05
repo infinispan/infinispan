@@ -8,7 +8,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -74,7 +73,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       cache.put(key9, person1);
 
       // Going to search the 'blurb' field for 'owns'
-      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(getQuery(), IndexedQueryMode.FETCH);
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(getQuery());
       assertEquals(9, cacheQuery.getResultSize());
 
       List<Person> found = cacheQuery.list();
@@ -96,7 +95,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       cache.put(key2, person1);
       cache.put(key3, person1);
 
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(getQuery(), IndexedQueryMode.FETCH);
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(getQuery());
       assertEquals(3, cacheQuery.getResultSize());
    }
 }

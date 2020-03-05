@@ -14,7 +14,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -65,7 +64,7 @@ public class SearchMappingTest extends AbstractInfinispanTest {
             cache.put(bond.getId(), bond);
 
             String q = String.format("FROM %s WHERE name:'Test'", BondPVO.class.getName());
-            CacheQuery<?> cq = sm.getQuery(q, IndexedQueryMode.FETCH);
+            CacheQuery<?> cq = sm.getQuery(q);
             Assert.assertEquals(cq.getResultSize(), 1);
          }
       });
@@ -132,7 +131,7 @@ public class SearchMappingTest extends AbstractInfinispanTest {
             BondPVO2 bond = new BondPVO2(1, "Test", "DE000123");
             cache.put(bond.getId(), bond);
             String q = String.format("FROM %s WHERE name:'Test'", BondPVO2.class.getName());
-            CacheQuery<?> cq = sm.getQuery(q, IndexedQueryMode.FETCH);
+            CacheQuery<?> cq = sm.getQuery(q);
             Assert.assertEquals(cq.getResultSize(), 1);
          }
       });

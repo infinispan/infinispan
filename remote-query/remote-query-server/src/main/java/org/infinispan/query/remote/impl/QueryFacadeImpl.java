@@ -46,8 +46,8 @@ public final class QueryFacadeImpl implements QueryFacade {
          int startOffset = request.getStartOffset().intValue();
          int maxResults = request.getMaxResults();
 
-         IndexedQueryMode queryMode = request.getIndexedQueryMode() == null ?
-               IndexedQueryMode.FETCH : IndexedQueryMode.valueOf(request.getIndexedQueryMode());
+         IndexedQueryMode queryMode = request.getIndexedQueryMode() != null ?
+               IndexedQueryMode.valueOf(request.getIndexedQueryMode()) : null;
 
          return remoteQueryManager.executeQuery(request.getQueryString(),
                request.getNamedParametersMap(), startOffset, maxResults, queryMode, cache, requestMediaType);

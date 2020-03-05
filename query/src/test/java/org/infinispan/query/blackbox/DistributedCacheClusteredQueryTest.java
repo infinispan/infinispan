@@ -14,4 +14,9 @@ public class DistributedCacheClusteredQueryTest extends ClusteredQueryTest {
    public CacheMode getCacheMode() {
       return CacheMode.DIST_SYNC;
    }
+
+   @Override
+   protected int numOwners() {
+      return 1;
+   }
 }

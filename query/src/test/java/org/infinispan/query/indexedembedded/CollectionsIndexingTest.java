@@ -1,6 +1,5 @@
 package org.infinispan.query.indexedembedded;
 
-import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertSame;
 
@@ -55,12 +54,12 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
 
    private CacheQuery<?> getCountryQuery() {
       String q = String.format("FROM %s where countryName:'Italy'", Country.class.getName());
-      return searchManager.getQuery(q, FETCH);
+      return searchManager.getQuery(q);
    }
 
    private CacheQuery<?> getMatchAllQuery() {
       String q = String.format("FROM %s", Country.class.getName());
-      return searchManager.getQuery(q, FETCH);
+      return searchManager.getQuery(q);
    }
 
    @Test
@@ -101,7 +100,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       cache.put("UK", uk);
       cache.put("UK", uk);
       String q = String.format("FROM %s c where c.cities.name:'Newcastle'", Country.class.getName());
-      List<?> list = searchManager.getQuery(q, FETCH).list();
+      List<?> list = searchManager.getQuery(q).list();
       assertEquals(1, list.size());
       assertSame(uk, list.get(0));
    }

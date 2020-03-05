@@ -1,6 +1,5 @@
 package org.infinispan.query.blackbox;
 
-import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Serializable;
@@ -71,14 +70,14 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
 
       SearchManager sm2 = Search.getSearchManager(cache2);
       String q = String.format("FROM %s WHERE name:'value*'",ClassWithLongIndexName.class.getName());
-      CacheQuery<?> cq = sm2.getQuery(q, FETCH);
+      CacheQuery<?> cq = sm2.getQuery(q);
       assertEquals(100, cq.getResultSize());
 
       addClusterEnabledCacheManager(SCI.INSTANCE, getDefaultConfiguration());
       TestingUtil.waitForNoRebalance(cache(0), cache(1), cache(2), cache(3));
 
       SearchManager sm3 = Search.getSearchManager(cache(3));
-      cq = sm3.getQuery(q, FETCH);
+      cq = sm3.getQuery(q);
       assertEquals(100, cq.getResultSize());
    }
 

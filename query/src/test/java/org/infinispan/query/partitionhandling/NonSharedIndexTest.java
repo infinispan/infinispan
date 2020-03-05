@@ -2,7 +2,6 @@ package org.infinispan.query.partitionhandling;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.Test;
 
@@ -21,11 +20,6 @@ public class NonSharedIndexTest extends SharedIndexTest {
                           .addProperty("default.directory_provider", "local-heap")
                           .addProperty("lucene_version", "LUCENE_CURRENT");
       return configurationBuilder;
-   }
-
-   @Override
-   protected IndexedQueryMode getIndexedQueryMode() {
-      return IndexedQueryMode.BROADCAST;
    }
 
    @Override

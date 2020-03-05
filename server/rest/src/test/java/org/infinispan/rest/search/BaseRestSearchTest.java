@@ -27,6 +27,7 @@ import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -37,7 +38,6 @@ import org.infinispan.rest.RestTestSCI;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -449,19 +449,21 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    private ContentResponse executeQueryRequest(String cacheName, HttpMethod method, String q, int offset, int maxResults) throws Exception {
       Request request;
       String searchUrl = getUrl(pickServer(), cacheName);
-      String mode = getQueryMode().toString();
+      IndexedQueryMode queryMode = getQueryMode();
       if (method == POST) {
          ObjectNode queryReq = MAPPER.createObjectNode();
          queryReq.put("query", q);
          queryReq.put("offset", offset);
          queryReq.put("max_results", maxResults);
-         queryReq.put(QUERY_MODE, mode);
+         if (queryMode != null) queryReq.put(QUERY_MODE, queryMode.toString());
          request = client.newRequest(searchUrl).method(POST).content(new StringContentProvider(queryReq.toString()));
       } else {
          String queryReq = searchUrl + "&query=" + URLEncoder.encode(q, "UTF-8") +
                "&offset=" + offset +
-               "&max_results=" + maxResults +
-               "&" + QUERY_MODE + "=" + mode;
+               "&max_results=" + maxResults;
+         if (queryMode != null) {
+            queryReq = queryReq + "&" + QUERY_MODE + "=" + queryMode.toString();
+         }
          request = client.newRequest(queryReq).method(GET);
       }
       return request.send();

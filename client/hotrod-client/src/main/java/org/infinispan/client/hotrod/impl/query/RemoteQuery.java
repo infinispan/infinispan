@@ -42,7 +42,7 @@ public final class RemoteQuery extends BaseQuery {
       super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
       this.cache = cache;
       this.serializationContext = serializationContext;
-      this.indexedQueryMode = IndexedQueryMode.FETCH;
+      this.indexedQueryMode = null;
    }
 
    @Override

@@ -14,15 +14,6 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.blackbox.ClusteredCacheWithElasticsearchIndexManagerIT")
 public class ClusteredCacheWithElasticsearchIndexManagerIT extends ClusteredCacheTest {
 
-    @Override
-    public void testCombinationOfFilters() {
-        // Not supported by hibernate search
-    }
-
-    @Override
-    public void testFullTextFilterOnOff() {
-        // Not supported by hibernate search
-    }
 
     @Override
     public void testSearchKeyTransformer() {

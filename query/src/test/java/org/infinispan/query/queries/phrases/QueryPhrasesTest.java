@@ -10,7 +10,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.queries.NumericType;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
@@ -59,7 +58,7 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
 
    private <T> CacheQuery<T> createCacheQuery(Class<T> clazz, String predicate) {
       String queryStr = String.format("FROM %s WHERE %s", clazz.getName(), predicate);
-      return Search.getSearchManager(cache).getQuery(queryStr, IndexedQueryMode.FETCH);
+      return Search.getSearchManager(cache).getQuery(queryStr);
    }
 
    public void testBooleanQueriesMustNot() {

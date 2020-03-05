@@ -23,7 +23,7 @@ public final class EmbeddedQueryFactory extends BaseQueryFactory {
 
    @Override
    public BaseQuery create(String queryString) {
-      return new DelegatingQuery<>(queryEngine, this, queryString, IndexedQueryMode.FETCH);
+      return new DelegatingQuery<>(queryEngine, this, queryString, null);
    }
 
    @Override

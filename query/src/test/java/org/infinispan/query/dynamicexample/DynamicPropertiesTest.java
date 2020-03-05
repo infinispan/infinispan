@@ -6,7 +6,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -55,7 +54,7 @@ public class DynamicPropertiesTest extends SingleCacheManagerTest {
 
       // Searching for a specific entity:
       String query = String.format("FROM %s WHERE city:'London'", DynamicPropertiesEntity.class.getName());
-      List<?> list = qf.getQuery(query, IndexedQueryMode.FETCH).list();
+      List<?> list = qf.getQuery(query).list();
       assert list.size() == 1;
       DynamicPropertiesEntity result = (DynamicPropertiesEntity) list.get(0);
       assert result.getProperties().get("name").equals("JUDCon London 2011");
@@ -63,13 +62,13 @@ public class DynamicPropertiesTest extends SingleCacheManagerTest {
       // Search for all of them:
       String dateQuery = String.format("FROM %s WHERE name:'2011'", DynamicPropertiesEntity.class.getName());
 
-      list = qf.getQuery(dateQuery, IndexedQueryMode.FETCH).list();
+      list = qf.getQuery(dateQuery).list();
       assert list.size() == 3;
 
       // Now search for a property define on a single entity only:
       String awardsQuery = String.format("FROM %s WHERE awards:'Duke'", DynamicPropertiesEntity.class.getName());
 
-      list = qf.getQuery(awardsQuery, IndexedQueryMode.FETCH).list();
+      list = qf.getQuery(awardsQuery).list();
       assert list.size() == 1;
       result = (DynamicPropertiesEntity) list.get(0);
       assert result.getProperties().get("city").equals("San Francisco");

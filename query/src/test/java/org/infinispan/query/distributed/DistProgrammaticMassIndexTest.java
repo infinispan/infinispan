@@ -1,6 +1,5 @@
 package org.infinispan.query.distributed;
 
-import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
@@ -49,7 +48,7 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
 
    protected void verifyFindsCar(Cache cache, int count, String carMake) {
       String q = String.format("FROM %s where make:'%s'", Car.class.getName(), carMake);
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(q, FETCH);
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(q);
 
       assertEquals(count, cacheQuery.getResultSize());
 

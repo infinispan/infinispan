@@ -23,7 +23,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
@@ -109,7 +108,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          assertEquals(0L, mBeanServer.getAttribute(name, "SearchQueryExecutionCount"));
 
          String q = String.format("FROM %s WHERE blurb:'value'", Person.class.getName());
-         CacheQuery<?> cacheQuery = searchManager.getQuery(q, IndexedQueryMode.FETCH);
+         CacheQuery<?> cacheQuery = searchManager.getQuery(q);
          List<?> found = cacheQuery.list(); //Executing first query
 
          assertEquals(1L, mBeanServer.getAttribute(name, "SearchQueryExecutionCount"));

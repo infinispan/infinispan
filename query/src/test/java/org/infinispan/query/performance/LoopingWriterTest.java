@@ -10,7 +10,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -73,7 +72,7 @@ public class LoopingWriterTest extends AbstractInfinispanTest {
 
    private void countElementsViaQuery(Cache<Object, Object> cache, int expectedElements) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      int resultSize = searchManager.getQuery("FROM " + Person.class.getName(), IndexedQueryMode.FETCH).getResultSize();
+      int resultSize = searchManager.getQuery("FROM " + Person.class.getName()).getResultSize();
       Assert.assertEquals(resultSize, expectedElements);
       System.out.println("Query OK! found (as expected) " + resultSize + " elements");
    }

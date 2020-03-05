@@ -37,7 +37,7 @@ public class JsonQueryRequest {
    }
 
    private JsonQueryRequest(String query) {
-      this(query, DEFAULT_OFFSET, DEFAULT_MAX_RESULTS, IndexedQueryMode.FETCH);
+      this(query, DEFAULT_OFFSET, DEFAULT_MAX_RESULTS, null);
    }
 
    private JsonQueryRequest() {

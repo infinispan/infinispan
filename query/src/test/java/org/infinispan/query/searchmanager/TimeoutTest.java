@@ -11,7 +11,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -41,7 +40,7 @@ public class TimeoutTest extends SingleCacheManagerTest {
       searchManager.setTimeoutExceptionFactory(new MyTimeoutExceptionFactory());
 
       String q = String.format("FROM %s WHERE bar:'1'", Foo.class.getName());
-      CacheQuery<?> cacheQuery = searchManager.getQuery(q, IndexedQueryMode.FETCH);
+      CacheQuery<?> cacheQuery = searchManager.getQuery(q);
       cacheQuery.timeout(1, TimeUnit.NANOSECONDS);
 
       try {

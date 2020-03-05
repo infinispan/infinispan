@@ -1,6 +1,5 @@
 package org.infinispan.query.distributed;
 
-import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
@@ -40,7 +39,7 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
 
    private int indexSize(Cache<?, ?> cache) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      CacheQuery<Person> query = searchManager.getQuery("FROM " + Person.class.getName(), FETCH);
+      CacheQuery<Person> query = searchManager.getQuery("FROM " + Person.class.getName());
       return query.getResultSize();
    }
 
@@ -74,7 +73,7 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
    protected void verifyFindsPerson(int expectedCount, String name) {
       SearchManager searchManager = Search.getSearchManager(cache);
       String q = String.format("FROM %s where name:'%s'", Person.class.getName(), name);
-      CacheQuery<Car> cacheQuery = searchManager.getQuery(q, FETCH);
+      CacheQuery<Car> cacheQuery = searchManager.getQuery(q);
       assertEquals(expectedCount, cacheQuery.getResultSize());
    }
 }

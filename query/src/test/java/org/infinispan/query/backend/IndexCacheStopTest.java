@@ -16,7 +16,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
@@ -172,7 +171,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
 
    private <T> void assertIndexPopulated(Cache<Integer, T> cache, Class<T> clazz) {
       String q = "FROM " + clazz.getName();
-      CacheQuery<T> query = Search.getSearchManager(cache).getQuery(q, IndexedQueryMode.FETCH);
+      CacheQuery<T> query = Search.getSearchManager(cache).getQuery(q);
       assertEquals(query.list().size(), CACHE_SIZE);
    }
 

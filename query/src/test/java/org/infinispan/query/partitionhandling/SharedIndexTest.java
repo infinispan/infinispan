@@ -18,7 +18,6 @@ import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.test.Person;
@@ -95,15 +94,11 @@ public class SharedIndexTest extends BasePartitionHandlingTest {
    private void executeQueries() {
       String q = getQuery();
       caches().forEach(c -> {
-         Query allNodesQuery = Search.getQueryFactory(c).create(q, getIndexedQueryMode());
+         Query allNodesQuery = Search.getQueryFactory(c).create(q);
          assertAllNodesQueryResults(allNodesQuery.getResultSize());
       });
       Query singleNodeQuery = Search.getQueryFactory(cache(0)).create(q);
       assertSingleNodeQueryResults(singleNodeQuery.list().size());
-   }
-
-   protected IndexedQueryMode getIndexedQueryMode() {
-      return IndexedQueryMode.FETCH;
    }
 
    protected String getQuery() {

@@ -17,7 +17,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -34,11 +33,11 @@ public class TestQueryHelperFactory {
    public static <E> CacheQuery<E> createCacheQuery(Class<?> entity, Cache<?, ?> cache, String fieldName, String searchString) {
       SearchManager queryFactory = Search.getSearchManager(cache);
       String q = String.format("FROM %s WHERE %s:'%s'", entity.getName(), fieldName, searchString);
-      return queryFactory.getQuery(q, IndexedQueryMode.FETCH);
+      return queryFactory.getQuery(q);
    }
 
    public static <T> List<T> queryAll(SearchManager sm, Class<T> entityType) {
-      return sm.<T>getQuery("FROM " + entityType.getName(), IndexedQueryMode.FETCH).list();
+      return sm.<T>getQuery("FROM " + entityType.getName()).list();
    }
 
    public static SearchIntegrator extractSearchFactory(Cache cache) {

@@ -14,7 +14,6 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.indexedembedded.City;
 import org.infinispan.query.indexedembedded.Country;
 import org.infinispan.query.test.QueryTestSCI;
@@ -108,7 +107,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
 
    private void verifyFullTextHasMatches(int i) {
       String query = String.format("FROM %s WHERE countryName:'Italy'", Country.class.getName());
-      List<Object> list = search.getQuery(query, IndexedQueryMode.FETCH).list();
+      List<Object> list = search.getQuery(query).list();
       assertEquals(i, list.size());
    }
 

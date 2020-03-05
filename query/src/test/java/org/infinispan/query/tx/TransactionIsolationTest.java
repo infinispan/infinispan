@@ -22,7 +22,6 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -134,7 +133,7 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
 
    private List<Object> getYoungerThan(SearchManager sm, int age) {
       String q = String.format("FROM %s where age:[* to %s]", Person.class.getName(), age);
-      return sm.getQuery(q, IndexedQueryMode.FETCH).list();
+      return sm.getQuery(q).list();
    }
 
    private String getStringKeyForCache(Cache cache) {

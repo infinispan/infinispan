@@ -1,6 +1,5 @@
 package org.infinispan.query.distributed;
 
-import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
@@ -68,7 +67,7 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
 
    protected void assertIndexSize(int expectedIndexSize) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      CacheQuery<Person> query = searchManager.getQuery("FROM " + Person.class.getName(), FETCH);
+      CacheQuery<Person> query = searchManager.getQuery("FROM " + Person.class.getName());
       assertEquals(expectedIndexSize, query.list().size());
       StaticTestingErrorHandler.assertAllGood(cache);
    }

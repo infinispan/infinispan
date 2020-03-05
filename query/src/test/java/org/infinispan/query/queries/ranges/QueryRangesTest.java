@@ -1,6 +1,5 @@
 package org.infinispan.query.queries.ranges;
 
-import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.text.DateFormat;
@@ -47,7 +46,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
    protected CacheQuery<Person> createQuery(String predicate) {
       SearchManager searchManager = Search.getSearchManager(cache);
       String query = String.format("FROM %s WHERE %s", Person.class.getName(), predicate);
-      return searchManager.getQuery(query, FETCH);
+      return searchManager.getQuery(query);
    }
 
    @Override

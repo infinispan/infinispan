@@ -3,7 +3,6 @@ package org.infinispan.query.blackbox;
 import static org.infinispan.distribution.Ownership.BACKUP;
 import static org.infinispan.distribution.Ownership.NON_OWNER;
 import static org.infinispan.distribution.Ownership.PRIMARY;
-import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -20,7 +19,6 @@ import java.util.function.Predicate;
 
 import javax.transaction.TransactionManager;
 
-import org.hibernate.search.filter.FullTextFilter;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -140,12 +138,12 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    protected CacheQuery<Person> createQuery(Cache<?, ?> cache, String predicate) {
       SearchManager searchManager = Search.getSearchManager(cache);
       String query = String.format("FROM %s WHERE %s", Person.class.getName(), predicate);
-      return searchManager.getQuery(query, FETCH);
+      return searchManager.getQuery(query);
    }
 
    protected CacheQuery<Person> createSelectAllQuery(Cache<?, ?> cache) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      return searchManager.getQuery("FROM " + Person.class.getName(), FETCH);
+      return searchManager.getQuery("FROM " + Person.class.getName());
    }
 
    protected void prepareTestData() throws Exception {
@@ -269,7 +267,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    }
 
    protected int countIndex(Cache<?, ?> cache) {
-      return Search.getSearchManager(cache).getQuery("FROM " + Person.class.getName(), FETCH).getResultSize();
+      return Search.getSearchManager(cache).getQuery("FROM " + Person.class.getName()).getResultSize();
    }
 
    private Optional<Cache<Object, Person>> findCache(Ownership ownership, Object key) {
@@ -544,57 +542,57 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
    }
 
-   public void testFullTextFilterOnOff() throws Exception {
-      prepareTestData();
+//   public void testFullTextFilterOnOff() throws Exception {
+//      prepareTestData();
+//
+//      CacheQuery<Person> query = createQuery(cache1, "blurb:'eats'");
+//      FullTextFilter filter = query.enableFullTextFilter("personFilter");
+//      filter.setParameter("blurbText", "cheese");
+//
+//      assertEquals(1, query.getResultSize());
+//      List<Person> result = query.list();
+//
+//      Person person = result.get(0);
+//      assertEquals("MiniGoat", person.getName());
+//      assertEquals("Eats cheese", person.getBlurb());
+//
+//      //Disabling the fullTextFilter.
+//      query.disableFullTextFilter("personFilter");
+//      assertEquals(2, query.getResultSize());
+//      StaticTestingErrorHandler.assertAllGood(cache1, cache2);
+//   }
 
-      CacheQuery<Person> query = createQuery(cache1, "blurb:'eats'");
-      FullTextFilter filter = query.enableFullTextFilter("personFilter");
-      filter.setParameter("blurbText", "cheese");
-
-      assertEquals(1, query.getResultSize());
-      List<Person> result = query.list();
-
-      Person person = result.get(0);
-      assertEquals("MiniGoat", person.getName());
-      assertEquals("Eats cheese", person.getBlurb());
-
-      //Disabling the fullTextFilter.
-      query.disableFullTextFilter("personFilter");
-      assertEquals(2, query.getResultSize());
-      StaticTestingErrorHandler.assertAllGood(cache1, cache2);
-   }
-
-   public void testCombinationOfFilters() throws Exception {
-      prepareTestData();
-
-      person4 = new Person();
-      person4.setName("ExtraGoat");
-      person4.setBlurb("Eats grass and is retired");
-      person4.setAge(70);
-      cache1.put("ExtraGoat", person4);
-
-      CacheQuery<Person> query = createQuery(cache1, "blurb:'eats'");
-      FullTextFilter filter = query.enableFullTextFilter("personFilter");
-      filter.setParameter("blurbText", "grass");
-
-      assertEquals(2, query.getResultSize());
-
-      FullTextFilter ageFilter = query.enableFullTextFilter("personAgeFilter");
-      ageFilter.setParameter("age", 70);
-
-      assertEquals(1, query.getResultSize());
-      List<Person> result = query.list();
-
-      Person person = result.get(0);
-      assertEquals("ExtraGoat", person.getName());
-      assertEquals(70, person.getAge());
-
-      //Disabling the fullTextFilter.
-      query.disableFullTextFilter("personFilter");
-      query.disableFullTextFilter("personAgeFilter");
-      assertEquals(3, query.getResultSize());
-      StaticTestingErrorHandler.assertAllGood(cache1, cache2);
-   }
+//   public void testCombinationOfFilters() throws Exception {
+//      prepareTestData();
+//
+//      person4 = new Person();
+//      person4.setName("ExtraGoat");
+//      person4.setBlurb("Eats grass and is retired");
+//      person4.setAge(70);
+//      cache1.put("ExtraGoat", person4);
+//
+//      CacheQuery<Person> query = createQuery(cache1, "blurb:'eats'");
+//      FullTextFilter filter = query.enableFullTextFilter("personFilter");
+//      filter.setParameter("blurbText", "grass");
+//
+//      assertEquals(2, query.getResultSize());
+//
+//      FullTextFilter ageFilter = query.enableFullTextFilter("personAgeFilter");
+//      ageFilter.setParameter("age", 70);
+//
+//      assertEquals(1, query.getResultSize());
+//      List<Person> result = query.list();
+//
+//      Person person = result.get(0);
+//      assertEquals("ExtraGoat", person.getName());
+//      assertEquals(70, person.getAge());
+//
+//      //Disabling the fullTextFilter.
+//      query.disableFullTextFilter("personFilter");
+//      query.disableFullTextFilter("personAgeFilter");
+//      assertEquals(3, query.getResultSize());
+//      StaticTestingErrorHandler.assertAllGood(cache1, cache2);
+//   }
 
    public void testSearchKeyTransformer() throws Exception {
       caches().forEach(cache -> {
