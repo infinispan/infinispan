@@ -25,8 +25,8 @@ include::transaction-attributes.adoc[]
 
 //
 // Product names and versions
-// These attributes should always be conditional for product only
 //
+
 :RedHat: Red Hat
 :portal: Red Hat customer portal
 
@@ -34,29 +34,22 @@ include::transaction-attributes.adoc[]
 :ProductName: Data Grid
 :ProductShortName: RHDG
 :ProductVersion: 8.0
-
-:ProductRelease: 8.0
-:FullProductRelease: 8.0.0
 :FullProductVersion: 8.0.0
-:DocInfoProductNumber: 8.0
-:ProductPreviousVersion: 7.3
-:ProductNextVersion: 8.0
-:ProductPreviousRelease: 7
-:ProductPreviousPreviousRelease: 6
 
 :keycloak: Red Hat SSO
 
 //
 // Special characters
 //
+
 :plusplus: ++
 :underscores: ___
 
 //
 // Community attributes
-// In the main Infinispan repo, these attributes are defined in
-// documentation/pom.xml
+// Defined in documentation/pom.xml
 //
+
 :brandname: Data Grid
 :fullbrandname: Red Hat Data Grid
 :wildflybrandname: EAP
@@ -68,12 +61,15 @@ include::transaction-attributes.adoc[]
 :moduleprefix: jdg
 :infinispanslot: jdg-8.0
 
-:download_url: https://access.redhat.com/downloads
-:javadocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/7.3/api
+:download_url: https://access.redhat.com/jbossnetwork/restricted/listSoftware.html?product=data.grid&downloadType=distributions
+:javadocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/8.0/api
 :configdocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/8.0/configdocs/
 :wildflydocroot: https://docs.jboss.org/author/display/WFLY11
 :jdkdocroot: https://docs.oracle.com/javase/8/docs/api
 :javaeedocroot: https://docs.oracle.com/javaee/7/api
+
+//JGroups
+:jgroups_docs: http://www.jgroups.org/manual4/index.html
 
 //
 // Server artifacts
@@ -87,7 +83,7 @@ include::transaction-attributes.adoc[]
 // Operator
 //
 :ispn_operator: Data Grid Operator
-:k8s: Kubernetes
+:k8s: OpenShift
 :okd: OKD
 
 //
@@ -99,38 +95,7 @@ include::transaction-attributes.adoc[]
 :ocp: OpenShift Container Platform
 :osweb: OpenShift Web Console
 
-//
-// Product Only OpenShift
-//
 :osproduct: Red Hat Data Grid for OpenShift
 :osproductshort: Data Grid for OpenShift
-:datagridservice: datagrid-service
-:cacheservice: cache-service
-
-//
-// Product Doc URLs
-//
-
-//Doc Home
-:doc_home: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
-
-//Dev
-:dev_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
-
-//Server
-:server_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/8.0/html-single/running_data_grid_servers/index
-
-//REST
-:rest_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/8.0/html-single/using_the_data_grid_rest_api/index
-
-//HotRod Server
-:hotrod_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
-
-//CLI
-:cli_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/8.0/html-single/using_the_data_grid_command_line_interface/index
-
-//Configuration
-:config_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/8.0/html-single/configuring_data_grid/index
-
-//Jgroups
-:jgroups_docs: http://www.jgroups.org/manual4/index.html
+:datagridservice: Data Grid service
+:cacheservice: Cache service

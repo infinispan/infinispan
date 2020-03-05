@@ -1,7 +1,5 @@
 <dependency>
   <groupId>org.infinispan</groupId>
   <artifactId>infinispan-hibernate-cache</artifactId>
-  <!-- Replace ${version.infinispan} with a
-  9.2.x version of {brandname}. -->
   <version>${version.infinispan}</version>
 </dependency>

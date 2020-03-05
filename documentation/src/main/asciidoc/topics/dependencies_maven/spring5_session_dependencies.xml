@@ -6,8 +6,6 @@
     <dependency>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-spring5-remote</artifactId>
-        <!-- Replace ${version.infinispan} with the
-        version of {brandname} that you're using. -->
         <version>${version.infinispan}</version>
     </dependency>
     <dependency>
@@ -23,7 +21,6 @@
    <dependency>
        <groupId>org.springframework</groupId>
        <artifactId>spring-web</artifactId>
-       <!-- Replace ${version.spring} with your Spring version. -->
        <version>${version.spring}</version>
    </dependency>
 </dependencies>

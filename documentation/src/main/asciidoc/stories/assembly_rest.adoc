@@ -1,10 +1,8 @@
 [id='rest_server']
 :context: rest
-= {brandname} REST Server
+= {brandname} REST Endpoint
 {brandname} servers provide link:http://en.wikipedia.org/wiki/Representational_State_Transfer[RESTful] HTTP
-access to data via a REST module built on https://github.com/netty/netty[Netty].
-
-REST endpoints listen on port `11222` by default.
+access to data through a REST endpoint built on https://github.com/netty/netty[Netty].
 
 include::{topics}/ref_rest_security.adoc[leveloffset=+1]
 include::{topics}/ref_rest_protocols.adoc[leveloffset=+1]

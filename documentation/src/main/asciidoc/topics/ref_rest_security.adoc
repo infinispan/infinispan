@@ -1,6 +1,7 @@
 [id='rest_security']
 = REST Authentication
-You can configure authentication to the REST endpoint with the `user-tool.sh` script in the {brandname} server distribution.
+Configure authentication to the REST endpoint with the `bin/user-tool.sh`
+script in the {brandname} server distribution.
 
 When running the Docker image, configure authentication with the `APP_USER` and
 `APP_PASS` command line arguments.

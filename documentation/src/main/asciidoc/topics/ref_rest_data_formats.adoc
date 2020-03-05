@@ -1,7 +1,7 @@
-[id='rest_server_data_format_config']
-= Configuring Data Formats via the REST API
-
-Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[MediaType].
+[id='rest_data_formats']
+= Data Formats and the REST API
+{brandname} caches store data in formats that you can define with a
+https://en.wikipedia.org/wiki/Media_type[MediaType].
 
 //Community Link
 ifndef::productized[]
@@ -9,30 +9,30 @@ See the link:../developing/developing.html#data_encoding[Encoding] section for
 more information about MediaTypes and encoding data with {brandname}.
 endif::productized[]
 
-An example of storage configuration is as follows:
+The following example configures storage format for entries:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/encoding_media_type.xml[]
 ----
 
-When no MediaType is configured, {brandname} assumes "application/octet-stream" for both keys and values, with the following exceptions:
-
-* If the cache is indexed, it assumes "application/x-protostream"
+If you do not configure a MediaType, {brandname} defaults to
+`application/octet-stream` for both keys and values. However, if the cache is
+indexed, {brandname} defaults to `application/x-protostream`.
 
 [id='rest_server_data_format_support']
 == Supported Formats
+You can write and read data in different formats and {brandname} can convert
+between those formats when required.
 
-Data can be written and read in different formats than the storage format; {brandname} can convert between those formats when required.
-
-The following "standard" formats can be converted interchangeably:
+The following "standard" formats are interchangeable:
 
 * _application/x-java-object_
 * _application/octet-stream_
 * _application/x-www-form-urlencoded_
 * _text/plain_
 
-The following formats can be converted to/from the formats above:
+You can also convert the preceding data formats into the following formats:
 
 * __application/xml__
 * _application/json_
@@ -40,45 +40,45 @@ The following formats can be converted to/from the formats above:
 * _application/x-protostream_
 * _application/x-java-serialized_
 
-Finally, the following conversion is also supported:
+{brandname} also lets you convert between _application/x-protostream_ and _application/json_.
 
-* Between _application/x-protostream_ and _application/json_
-
-All the REST API calls can provide headers describing the content written or the required format of the content
-when reading. {brandname} supports the standard HTTP/1.1 headers "Content-Type" and "Accept" that are applied for values,
-plus the "Key-Content-Type" with similar effect for keys.
-
+All calls to the REST API can provide headers describing the content written or
+the required format of the content when reading. {brandname} supports the
+standard HTTP/1.1 headers "Content-Type" and "Accept" that are applied for
+values, plus the "Key-Content-Type" with similar effect for keys.
 
 [id='rest_accept']
 == Accept Headers
+The {brandname} REST endpoint is compliant with the link:https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html[RFC-2616] Accept
+header and negotiates the correct MediaType based on the conversions supported.
 
-The REST server is compliant with the link:https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html[RFC-2616] Accept header,
-and will negotiate the correct MediaType based on the conversions supported. Example, sending the following header when reading data:
+For example, send the following header when reading data:
 
 [source,options=nowrap]
 ----
 Accept: text/plain;q=0.7, application/json;q=0.8, */*;q=0.6
 ----
 
-will cause {brandname} to try first to return content in JSON format (higher priority 0.8). If it's not possible to convert the storage format
-to JSON, next format tried will be _text/plain_ (second highest priority 0.7), and finally it falls back to _*/*_, that will pick a format
-suitable for displaying automatically based on the cache configuration.
+The preceding header causes {brandname} to first return content in JSON format
+(higher priority 0.8). If it is not possible to convert the storage format
+to JSON, {brandname} attempts the next format of _text/plain_ (second highest
+priority 0.7). Finally, {brandname} falls back to _*/*_, which picks a suitable
+format based on the cache configuration.
 
 [id='rest_encoded_names']
-== Names with special chars
-
+== Names with Special Characters
 The creation of any REST resource requires a name that is part of the URL,
 and in case this name contains any special characters as defined in
-link:https://tools.ietf.org/html/rfc3986#section-2.2[Section 2.2 of the RFC 3986 spec],
-it is necessary to encode it with the link:https://en.wikipedia.org/wiki/Percent-encoding[Percent encoding] mechanism.
+link:https://tools.ietf.org/html/rfc3986#section-2.2[Section 2.2 of the RFC 3986 spec], it is necessary to encode it with the link:https://en.wikipedia.org/wiki/Percent-encoding[Percent encoding] mechanism.
 
 [id='rest_key_content_type']
 == Key-Content-Type Headers
 
-Most REST API calls have the Key included in the URL. {brandname} will assume the Key is a _java.lang.String_ when handling those calls, but
-it's possible to use a specific header _Key-Content-Type_ for keys in different formats.
+Most REST API calls have the Key included in the URL. {brandname} assumes the
+Key is a _java.lang.String_ when handling those calls, but you can use a
+specific header _Key-Content-Type_ for keys in different formats.
 
-Examples:
+.Key-Content-Type Header Examples
 
 * Specifying a byte[] Key as a Base64 string:
 
@@ -124,19 +124,19 @@ The _type_ parameter for _application/x-java-object_ is restricted to:
 
 [id='rest_json_proto_conversion']
 == JSON/Protostream Conversion
+When caches are indexed, or specifically configured to store _application/x-protostream_, you can send and receive
+JSON documents that are automatically converted to and from Protostream.
 
-When caches are indexed, or specifically configured to store _application/x-protostream_, it's possible to send and receive
-JSON documents that are automatically converted to/from protostream. In order for the conversion to work, a protobuf schema must be registered.
+You must register a protobuf schema for the conversion to work.
 
-The registration can be done via REST, by doing a POST/PUT in the ____protobuf_metadata_ cache. Example using cURL:
+To register protobuf schemas via REST, invoke a POST or PUT in the ____protobuf_metadata_ cache as in the following example:
 
 [source,bash]
 ----
-curl -u user:password -X POST --data-binary @./schema.proto http://127.0.0.1:8080/rest/v2/caches/___protobuf_metadata/schema.proto
+curl -u user:password -X POST --data-binary @./schema.proto http://127.0.0.1:11222/rest/v2/caches/___protobuf_metadata/schema.proto
 ----
 
-When writing a JSON document, a special field *__type_* must be present in the document to identity the protobuf _Message_
-corresponding to the document.
+When writing JSON documents, a special field *__type_* must be present in the document to identity the protobuf _Message_  that corresponds to the document.
 
 For example, consider the following schema:
 
@@ -148,8 +148,7 @@ message Person  {
 }
 ----
 
-A conformant JSON document would be:
-
+The corresponding JSON document is as follows:
 
 [source,json]
 ----

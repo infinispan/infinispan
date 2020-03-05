@@ -1,7 +1,5 @@
 <dependency>
   <groupId>org.jgroups.google</groupId>
   <artifactId>jgroups-google</artifactId>
-  <!-- Replace ${version.jgroups.google} with the
-  version of the jgroups-goole module you want to use. -->
   <version>${version.jgroups.google}</version>
 </dependency>

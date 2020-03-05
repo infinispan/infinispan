@@ -594,54 +594,68 @@
 
    <xs:complexType name="cors-rule">
       <xs:annotation>
-         <xs:documentation>A Cors rule for one or more origins</xs:documentation>
+         <xs:documentation>
+           Defines a CORS rule for one or more origins.
+         </xs:documentation>
       </xs:annotation>
       <xs:all>
          <xs:element name="allowed-origins" type="xs:string">
             <xs:annotation>
-               <xs:documentation>A comma separated list used to set the CORS 'Access-Control-Allow-Origin' to indicate
-                  the response can be shared with a certain origin
+               <xs:documentation>
+                 Specifies a comma-separated list that sets the CORS
+                 'Access-Control-Allow-Origin' header that controls which
+                 origins can access resources.
                </xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element name="allowed-methods" type="xs:string">
             <xs:annotation>
-               <xs:documentation>A comma separated list used to set the CORS 'Access-Control-Allow-Methods' in the
-                  preflight response to specify the methods allowed for the configured origin(s)
+               <xs:documentation>
+                 Specifies a comma-separated list that sets the CORS
+                 'Access-Control-Allow-Methods' header in the preflight
+                 response. Controls the methods that origins can access.
                </xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element name="allowed-headers" type="xs:string" minOccurs="0">
             <xs:annotation>
-               <xs:documentation>A comma separated list used to set the CORS 'Access-Control-Allow-Headers' in the
-                  preflight response to specify which headers can be used by the configured origin(s)
+               <xs:documentation>
+                 Specifies a comma-separated list that sets the CORS
+                 'Access-Control-Allow-Headers' header in the preflight
+                 response. Controls the headers that origins can access.
                </xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element name="expose-headers" type="xs:string" minOccurs="0">
             <xs:annotation>
-               <xs:documentation>A comma separated list used to set the CORS 'Access-Control-Expose-Headers' in the
-                  preflight response to specify which headers can be exposed to the configured origin(s)
+               <xs:documentation>
+                 Specifies a comma-separated list that sets the CORS
+                 'Access-Control-Expose-Headers' header in the preflight
+                 response. Controls the headers that are exposed to origins.
                </xs:documentation>
             </xs:annotation>
          </xs:element>
       </xs:all>
       <xs:attribute name="name" type="xs:string">
          <xs:annotation>
-            <xs:documentation>The rule name</xs:documentation>
+            <xs:documentation>
+              Defines a name for a CORS rule.
+            </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="allow-credentials" type="xs:boolean" default="false">
          <xs:annotation>
-            <xs:documentation>Sets the CORS 'Access-Control-Allow-Credentials' response header to true. Enable CORS
-               requests to use credentials
+            <xs:documentation>
+              Configures if CORS requests use credentials and sets the CORS
+              'Access-Control-Allow-Credentials' response header.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="max-age-seconds" type="xs:int" default="0">
          <xs:annotation>
-            <xs:documentation>Sets the CORS 'Access-Control-Max-Age' response header with the amount of time CORS
-               preflight request headers can be cached
+            <xs:documentation>
+              Configures how long CORS preflight request headers can be caches
+              and sets the CORS 'Access-Control-Max-Age' response header.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>

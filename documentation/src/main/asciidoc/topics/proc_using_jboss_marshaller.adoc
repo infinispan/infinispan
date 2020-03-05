@@ -5,8 +5,8 @@ default marshaller in previous {brandname} versions.
 
 [NOTE]
 ====
-* You should use serialization-based marshalling with {brandname} but use
-Protostream instead, which is a high-performance binary wire format that
+* You should not use serialization-based marshalling with {brandname}. Instead
+you should use Protostream, which is a high-performance binary wire format that
 ensures backwards compatibility.
 
 * JBoss Marshalling and the `AdvancedExternalizer` interface are deprecated and

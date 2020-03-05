@@ -17,12 +17,12 @@ schemas
 {brandname} cache instances. The default cache container is empty. Use the CLI to create caches from templates or `infinispan.xml` files.
 `counters`::
 `Strong` or `Weak` counters that record the count of objects.
-//dnaro: need to ask
 `configurations`::
-Configuration files.
+{brandname} configurations.
 `schemas`::
 Protocol Buffers (Protobuf) schemas that structure data in the cache.
-
+`tasks`::
+Remote tasks creating and managing {brandname} cache definitions.
 
 .Cluster Resources
 ----

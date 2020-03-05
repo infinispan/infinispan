@@ -15,6 +15,7 @@ caches
 counters
 configurations
 schemas
+tasks
 ----
 
 * Use `cd` to navigate the resource tree.

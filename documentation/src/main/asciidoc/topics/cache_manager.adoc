@@ -1,14 +1,13 @@
 [[cache_manager]]
-= The Embedded CacheManager
-The CacheManager is {brandname}'s main entry point. You use a CacheManager to
+= Cache Manager
+The `CacheManager` interface is the main entry point to {brandname} and lets you:
 
 * configure and obtain caches
 * manage and monitor your nodes
 * execute code across a cluster
 * more...
 
-Depending on whether you are embedding {brandname} in your application or you are using it remotely, you will be
-dealing with either an `EmbeddedCacheManager` or a `RemoteCacheManager`. While they share some methods and properties,
+Depending on whether you embed {brandname} in applications or run it as a remote server, you use either an `EmbeddedCacheManager` or a `RemoteCacheManager`. While they share some methods and properties,
 be aware that there are semantic differences between them. The following chapters focus mostly on the _embedded_
 implementation.
 

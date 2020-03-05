@@ -3,8 +3,6 @@ Launch {brandname} server with the startup script.
 
 .Procedure
 . Open a terminal in `{server_home}`.
-//Community
-ifndef::productized[]
 . Run the `server` script.
 +
 Linux::
@@ -20,31 +18,19 @@ Microsoft Windows::
 ----
 include::cmd_examples/server_win.adoc[]
 ----
-endif::productized[]
-//Product
-ifdef::productized[]
-. Run the `server.sh` script.
++
+Server logs display the following messages:
 +
 [source,options="nowrap",subs=attributes+]
 ----
-include::cmd_examples/server_nix.adoc[]
-----
-endif::productized[]
-+
-The server gives you these messages when it starts:
-+
-[source,options="nowrap",subs=attributes+]
-----
-INFO  [org.infinispan.SERVER] (main) ISPN080004: Protocol SINGLE_PORT listening
-on 127.0.0.1:11222
-INFO  [org.infinispan.SERVER] (main) ISPN080001: Infinispan Server ${version}
-started in 7453ms
+ISPN080004: Protocol SINGLE_PORT listening on 127.0.0.1:11222
+
+ISPN080001: Infinispan Server started in 7453ms
 ----
 
 _Hello {brandname}!_
 
-* Open `127.0.0.1:11222` in any browser to see the {brandname} server welcome
-message.
+* Open `127.0.0.1:11222` in any browser to access the {brandname} console.
 
 .Reference
 link:{runtime_readme}[{brandname} Server README] describes command line
