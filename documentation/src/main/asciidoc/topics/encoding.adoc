@@ -1,5 +1,5 @@
 [[data_encoding]]
-= Encoding
+= Data Encoding and MediaTypes
 Encoding is the data conversion operation done by {brandname} caches before storing data, and when reading back from storage.
 
 == Overview

@@ -216,26 +216,13 @@ If you plan to store entries in the cache as custom Java objects or POJOs, you m
 
 To make entity classes available to the server, do the following:
 
-* Create a `JAR` file that contains the entities and dependencies.
-* Stop {brandname} if it is running.
+. Create a JAR file that contains the entities and dependencies.
+. Stop {brandname} if it is running. {brandname} only loads entity classes at
+boot time.
+. Copy the JAR to the `server/lib` directory of your {brandname} server installation.
 +
-{brandname} loads entity classes during boot. You cannot make entity classes available to {brandname} if the server is running.
-+
-ifdef::productized[]
-* Copy the `JAR` file to the *_$RHDG_HOME/standalone/deployments/_* directory.
-endif::productized[]
-ifndef::productized[]
-* Copy the `JAR` file to the *_$INFINISPAN_HOME/standalone/deployments/_* directory.
-endif::productized[]
-* Specify the `JAR` file as a module in the cache manager configuration, as in the following example:
-
-[source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/custom_deployment_jar.xml[]
+├── server
+│   ├── lib
+│       ├── deployment.my-entities.jar
 ----
-
-ifndef::productized[]
-== Trying the Interoperability Demo
-
-Try the demo for protocol interoperability using the {brandname} Docker image at: https://github.com/infinispan-demos/endpoint-interop
-endif::productized[]

@@ -1,7 +1,5 @@
 <dependency>
   <groupId>org.jgroups.aws.s3</groupId>
   <artifactId>native-s3-ping</artifactId>
-  <!-- Replace ${version.jgroups.native_s3_ping} with the
-  version of the native-s3-ping module you want to use. -->
   <version>${version.jgroups.native_s3_ping}</version>
 </dependency>

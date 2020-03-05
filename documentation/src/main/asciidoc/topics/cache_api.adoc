@@ -1,12 +1,11 @@
 [[cache_api]]
-= The Cache API
+= {brandname} Cache Interface
 
-== The Cache interface
-{brandname}'s Caches are manipulated through the link:{javadocroot}/org/infinispan/Cache.html[Cache] interface.
+{brandname} provides a link:{javadocroot}/org/infinispan/Cache.html[Cache] interface that exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things to happen, potentially even including replicating an entry to a remote node or looking up an entry from a remote node, or potentially a cache store.
 
-A Cache exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things to happen, potentially even including replicating an entry to a remote node or looking up an entry from a remote node, or potentially a cache store.
+== Cache API
 
-NOTE: For simple usage, using the Cache API should be no different from using the JDK Map API, and hence migrating from simple in-memory caches based on a Map to {brandname}'s Cache should be trivial.
+For simple usage, using the Cache API should be no different from using the JDK Map API, and hence migrating from simple in-memory caches based on a Map to {brandname}'s Cache should be trivial.
 
 === Performance Concerns of Certain Map Methods
 Certain methods exposed in Map have certain performance consequences when used with {brandname}, such as
@@ -37,10 +36,10 @@ To understand how to use this operation, let's look at basic example. Imagine a 
 include::code_examples/PersonId.java[]
 ----
 
-Please note that link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead] should never be used as a mechanism to update the cache with a new Person instance originating from application execution (i.e. from a transaction that modifies a Person's address). When updating cached values, please use the standard link:{jdkdocroot}/java/util/Map.html#put-K-V-[put] operation, otherwise the possibility of caching corrupt data is likely.
+Note that link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead] should never be used as a mechanism to update the cache with a new Person instance originating from application execution (i.e. from a transaction that modifies a Person's address). When updating cached values, please use the standard link:{jdkdocroot}/java/util/Map.html#put-K-V-[put] operation, otherwise the possibility of caching corrupt data is likely.
 
-== The AdvancedCache interface
-In addition to the simple Cache interface, {brandname} offers an link:{javadocroot}/org/infinispan/AdvancedCache.html[AdvancedCache] interface, geared towards extension authors.  The AdvancedCache offers the ability to inject custom interceptors, access certain internal components and to apply flags to alter the default behavior of certain cache methods.  The following code snippet depicts how an AdvancedCache can be obtained:
+== AdvancedCache API
+In addition to the simple Cache interface, {brandname} offers an link:{javadocroot}/org/infinispan/AdvancedCache.html[AdvancedCache] interface, geared towards extension authors.  The AdvancedCache offers the ability to access certain internal components and to apply flags to alter the default behavior of certain cache methods.  The following code snippet depicts how an AdvancedCache can be obtained:
 
 [source,java]
 ----
@@ -56,14 +55,8 @@ Flags are applied to regular cache methods to alter the behavior of certain meth
 include::code_examples/AdvancedCacheWithFlags.java[]
 ----
 
-=== Custom Interceptors
-
-The AdvancedCache interface also offers advanced developers a mechanism with which to attach custom interceptors.  Custom interceptors allow developers to alter the behavior of the cache API methods, and the AdvancedCache interface allows developers to attach these interceptors programmatically, at run-time.  See the AdvancedCache Javadocs for more details.
-
-//old_link: For more information on writing custom interceptors, see link:#custom_interceptors_chapter[Custom Interceptors].
-
 [[listeners_and_notifications]]
-==  Listeners and Notifications
+== Listeners and Notifications
 
 {brandname} offers a listener API, where clients can register for and get notified when events take place.  This annotation-driven API applies to 2 different levels: cache level events and cache manager level events.
 

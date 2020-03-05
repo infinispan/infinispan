@@ -1,28 +1,40 @@
-[id='rest_server_cors']
+[id='rest_cors']
 = Cross-Origin Resource Sharing (CORS) Requests
+The {brandname} REST connector supports
+https://en.wikipedia.org/wiki/Cross-origin_resource_sharing[CORS], including
+preflight and rules based on the request origin.
 
-The REST server supports https://en.wikipedia.org/wiki/Cross-origin_resource_sharing[CORS] including preflight and rules based on the request origin.
-
-Example:
+The following shows an example REST connector configuration with CORS rules:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/rest_connector_cors.xml[]
+<rest-connector name="rest1" socket-binding="rest" cache-container="default">
+   <cors-rules>
+      <cors-rule name="restrict host1"
+                 allow-credentials="false">
+         <allowed-origins>http://host1,https://host1</allowed-origins>
+         <allowed-methods>GET</allowed-methods>
+      </cors-rule>
+      <cors-rule name="allow ALL"
+                 allow-credentials="true"
+                 max-age-seconds="2000">
+         <allowed-origins>*</allowed-origins>
+         <allowed-methods>GET,OPTIONS,POST,PUT,DELETE</allowed-methods>
+         <allowed-headers>Key-Content-Type</allowed-headers>
+      </cors-rule>
+   </cors-rules>
+</rest-connector>
 ----
 
-The rules are evaluated sequentially based on the "Origin" header set by the browser; in the example above if the origin is either "http://host1" or "https://host1" the rule "restrict host1" will apply,
-otherwise the next rule will be tested. Since the rule "allow ALL" permits all origins, any script coming from a different origin will be able to perform the methods specified and use the headers supplied.
+{brandname} evaluates CORS rules sequentially based on the "Origin" header set
+by the browser.
 
-The <cors-rule> element can be configured as follows:
+In the preceding example, if the origin is either "http://host1" or
+"https://host1", then the rule "restrict host1" applies. If the origin is
+different, then the next rule is tested.
 
-|===
-| Config   | Description  | Mandatory
+Because the "allow ALL" rule permits all origins, any script that has an origin
+other than "http://host1" or "https://host1" can perform the allowed methods
+and use the supplied headers.
 
-| name  | The name of the rule | yes
-| allow-credentials | Enable CORS requests to use credentials | no
-| allowed-origins | A comma separated list used to set the CORS 'Access-Control-Allow-Origin' header to indicate the response can be shared with the origins | yes
-| allowed-methods | A comma separated list used to set the CORS 'Access-Control-Allow-Methods' header in the preflight response to specify the methods allowed for the configured origin(s) | yes
-| allowed-headers | A comma separated list used to set the CORS 'Access-Control-Allow-Headers' in the preflight response to specify which headers can be used by the configured origin(s) | no
-| max-age-seconds | The amount of time CORS preflight request headers can be cached | no
-| expose-headers | A comma separated list used to set the CORS 'Access-Control-Expose-Headers' in the preflight response to specify which headers can be exposed to the configured origin(s) | no
-|===
+For information about configuring CORS rules, see the link:{configdocroot}[{brandname} Server Configuration Schema].

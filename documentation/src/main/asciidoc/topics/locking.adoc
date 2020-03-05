@@ -61,7 +61,7 @@ This approach _may_ give you greater concurrent throughput, but it will be at th
 .Default lock striping settings
 IMPORTANT: lock striping is disabled by default, due to potential deadlocks that can happen if locks for different keys end up in the same lock stripe.
 
-The size of the shared lock collection used by lock striping can be tuned using the `concurrencyLevel` attribute of the `<locking /> configuration element.
+The size of the shared lock collection used by lock striping can be tuned using the `concurrencyLevel` attribute of the `<locking />` configuration element.
 
 *Configuration example:*
 

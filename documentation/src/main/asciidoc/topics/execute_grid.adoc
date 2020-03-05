@@ -1,6 +1,5 @@
 [[execute_code_grid]]
-= Executing code in the Grid
-
+= Executing Code in the Grid
 The main benefit of a Cache is the ability to very quickly lookup a value
 by its key, even across machines. In fact this use alone is probably the reason
 many users use {brandname}. However {brandname} can provide many more benefits

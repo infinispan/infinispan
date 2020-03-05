@@ -6,7 +6,6 @@ how to create cache definitions to store your data.
 
 include::{topics}/proc_starting_server.adoc[leveloffset=+1]
 include::{topics}/proc_forming_clusters.adoc[leveloffset=+1]
-include::assembly_server_quickstart_cli.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

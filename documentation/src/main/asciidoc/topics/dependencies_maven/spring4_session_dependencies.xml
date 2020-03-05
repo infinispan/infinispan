@@ -6,26 +6,21 @@
     <dependency>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-spring4-embedded</artifactId>
-        <!-- Replace ${version.infinispan} with the
-        version of {brandname} that you're using. -->
         <version>${version.infinispan}</version>
     </dependency>
     <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-context</artifactId>
-        <!-- Replace ${version.spring} with your Spring version. -->
         <version>${version.spring}</version>
     </dependency>
     <dependency>
        <groupId>org.springframework</groupId>
        <artifactId>spring-session</artifactId>
-       <!-- Replace ${version.spring} with your Spring version. -->
        <version>${version.spring}</version>
    </dependency>
    <dependency>
        <groupId>org.springframework</groupId>
        <artifactId>spring-web</artifactId>
-       <!-- Replace ${version.spring} with your Spring version. -->
        <version>${version.spring}</version>
    </dependency>
 </dependencies>

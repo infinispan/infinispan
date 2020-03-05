@@ -1,7 +1,7 @@
 [[functional_map_api]]
 = Functional Map API
 
-{brandname} 8 introduces a new experimental API for interacting with your
+{brandname} provides an experimental API for interacting with your
 data which takes advantage of the functional programming additions and
 improved asynchronous programming capabilities available in Java 8.
 

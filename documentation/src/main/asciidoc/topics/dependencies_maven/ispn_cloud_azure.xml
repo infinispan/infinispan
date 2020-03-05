@@ -1,7 +1,5 @@
 <dependency>
   <groupId>org.jgroups.azure</groupId>
   <artifactId>jgroups-azure</artifactId>
-  <!-- Replace ${version.jgroups.azure} with the
-  version of the jgroups-azure module you want to use. -->
   <version>${version.jgroups.azure}</version>
 </dependency>

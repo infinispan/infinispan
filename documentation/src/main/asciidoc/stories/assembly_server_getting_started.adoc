@@ -7,6 +7,7 @@ include::{topics}/ref_server_requirements.adoc[leveloffset=+1]
 include::{topics}/proc_downloading_server.adoc[leveloffset=+1]
 include::{topics}/proc_installing_server.adoc[leveloffset=+1]
 include::assembly_server_quickstart.adoc[leveloffset=+1]
+include::assembly_server_quickstart_cli.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

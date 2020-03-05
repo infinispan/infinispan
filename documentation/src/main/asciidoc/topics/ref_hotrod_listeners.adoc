@@ -462,9 +462,8 @@ instances that work on typed objects. By default, filters and converter will use
 method `format()` from the filter/converter. If the format returns `null`, the filter/converter will receive
 data as it's stored.
 
-As indicated in the link:#hot_rod_marshalling_data[Marshalling Data] section, Hot Rod
-Java clients can be configured to use a different `org.infinispan.commons.marshall.Marshaller`
-instance. If doing this and deploying `CacheEventConverter` or `CacheEventFilter` instances,
+Hot Rod Java clients can be configured to use different `org.infinispan.commons.marshall.Marshaller` instances.
+If doing this and deploying `CacheEventConverter` or `CacheEventFilter` instances,
 to be able to present filters/converter with Java Objects rather than marshalled content,
 the server needs to be able to convert between objects and the binary format produced
 by the marshaller.
