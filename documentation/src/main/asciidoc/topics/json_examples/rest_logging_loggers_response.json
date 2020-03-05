@@ -1,0 +1,17 @@
+[ {
+  "name" : "",
+  "level" : "INFO",
+  "appenders" : [ "STDOUT", "FILE" ]
+}, {
+  "name" : "org.infinispan.HOTROD_ACCESS_LOG",
+  "level" : "INFO",
+  "appenders" : [ "HR-ACCESS-FILE" ]
+}, {
+  "name" : "com.arjuna",
+  "level" : "WARN",
+  "appenders" : [ ]
+}, {
+  "name" : "org.infinispan.REST_ACCESS_LOG",
+  "level" : "INFO",
+  "appenders" : [ "REST-ACCESS-FILE" ]
+} ]

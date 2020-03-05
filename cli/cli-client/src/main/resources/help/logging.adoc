@@ -1,0 +1,40 @@
+LOGGING(1)
+=========
+:doctype: manpage
+
+
+NAME
+----
+logging - inspects and manipulates the ${infinispan.brand.name} server runtime logging configuration.
+
+
+SYNOPSIS
+--------
+*logging list-loggers*
+
+*logging list-appenders*
+
+*logging set*  ['OPTIONS'] [`LOGGER_NAME`]
+
+*logging remove* `LOGGER_NAME`
+
+
+LOGGING SET OPTIONS
+-------------------
+*-l, --level*='OFF|TRACE|DEBUG|INFO|WARN|ERROR|ALL'::
+Specifies the logging level for the specific logger.
+
+*-a, --appender*='APPENDER'::
+Specifies an appenders to set on the specific logger. The option can be repeated for multiple appenders.
+
+NOTE: calling *logging set* without a logger name will modify the root logger.
+
+
+EXAMPLES
+--------
+`logging list-loggers` +
+Lists all available loggers
+
+`logging set --level=DEBUG --appenders=FILE org.infinispan` +
+Sets the log level for the `org.infinispan` logger to `DEBUG` and configures it to use the `FILE` appender.
+

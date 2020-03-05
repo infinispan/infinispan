@@ -1,0 +1,17 @@
+{
+  "STDOUT" : {
+    "name" : "STDOUT"
+  },
+  "JSON-FILE" : {
+    "name" : "JSON-FILE"
+  },
+  "HR-ACCESS-FILE" : {
+    "name" : "HR-ACCESS-FILE"
+  },
+  "FILE" : {
+    "name" : "FILE"
+  },
+  "REST-ACCESS-FILE" : {
+    "name" : "REST-ACCESS-FILE"
+  }
+}

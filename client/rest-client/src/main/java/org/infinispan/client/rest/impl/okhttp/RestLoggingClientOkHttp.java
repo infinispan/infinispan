@@ -38,7 +38,11 @@ public class RestLoggingClientOkHttp implements RestLoggingClient {
    public CompletionStage<RestResponse> setLogger(String name, String level, String... appenders) {
       Request.Builder builder = new Request.Builder();
       StringBuilder sb = new StringBuilder(baseLoggingURL);
-      sb.append("/loggers/").append(sanitize(name)).append("?");
+      sb.append("/loggers/");
+      if (name != null) {
+         sb.append(sanitize(name));
+      }
+      sb.append("?");
       boolean amp = false;
       if (level != null) {
          sb.append("level=").append(level);
