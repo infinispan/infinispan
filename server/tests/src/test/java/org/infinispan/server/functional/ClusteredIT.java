@@ -26,6 +26,9 @@ import org.junit.runners.Suite;
  **/
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+      // This needs to be first as it collects all metrics and all the tests below add a lot which due to inefficiencies
+      // in small rye can be very very slow!
+      RestMetricsResource.class,
       HotRodCacheOperations.class,
       RestOperations.class,
       RestRouter.class,
@@ -38,7 +41,6 @@ import org.junit.runners.Suite;
       HotRodCacheContinuousQueries.class,
       HotRodListenerWithDslFilter.class,
       IgnoreCaches.class,
-      RestMetricsResource.class
 })
 public class ClusteredIT {
 
