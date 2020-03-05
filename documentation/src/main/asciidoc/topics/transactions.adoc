@@ -61,8 +61,7 @@ or programmatically:
 ----
 ConfigurationBuilder builder = new ConfigurationBuilder();
 builder.locking()
-    .isolationLevel(IsolationLevel.READ_COMMITTED)
-    .writeSkewCheck(false);
+    .isolationLevel(IsolationLevel.READ_COMMITTED);
 builder.transaction()
     .lockingMode(LockingMode.OPTIMISTIC)
     .autoCommit(true)
@@ -76,15 +75,11 @@ builder.transaction()
     .recovery()
     .enabled(false)
     .recoveryInfoCacheName("__recoveryInfoCacheName__");
-builder.versioning()
-    .enabled(false)
-    .scheme(VersioningScheme.NONE);
 ----
 
 
 * `isolation` - configures the isolation level. Check section link:#tx_isolation_levels[Isolation Levels] for more details.
 Default is `REPEATABLE_READ`.
-* `write-skew` - enables write skew checks (deprecated). {brandname} automatically sets this attribute in Library Mode. Default is `false` for `READ_COMMITTED`. Default is `true` for `REPEATABLE_READ`. See link:#tx_write_skew[Write Skews] for more details.
 * `locking` - configures whether the cache uses optimistic or pessimistic locking. Check section link:#tx_locking[Transaction Locking] for more details.
 Default is `OPTIMISTIC`.
 * `auto-commit` - if enable, the user does not need to start a transaction manually for a single operation. The transaction is automatically started and committed.
@@ -105,8 +100,6 @@ Default is `__recoveryInfoCacheName__`.
 * `stop-timeout` - the time in millisecond to wait for ongoing transaction when the cache is stopping. Default is  `30000`.
 * `transaction-manager-lookup` - configures the fully qualified class name of a class that looks up a reference to a `javax.transaction.TransactionManager`.
 Default is `org.infinispan.transaction.lookup.GenericTransactionManagerLookup`.
-* Versioning `scheme` - configure the version scheme to use when write skew is enabled with optimistic.
-Check section link:#tx_write_skew[Write Skews] for more details. Default is `NONE`.
 
 
 For more details on how Two-Phase-Commit (2PC) is implemented in {brandname} and how locks are being acquired see the section below.
@@ -216,32 +209,15 @@ Pessimistic transactions are more costly by their nature: each write operation p
 
 Write skews occur when two transactions independently and simultaneously read and write to the same key. The result of a write skew is that both transactions successfully commit updates to the same key but with different values.
 
-In Library Mode, {brandname} automatically performs write skew checks to ensure data consistency for `REPEATABLE_READ` isolation levels in optimistic transactions. This allows {brandname} to detect and roll back one of the transactions.
+{brandname} automatically performs write skew checks to ensure data consistency for `REPEATABLE_READ` isolation levels in optimistic transactions. This allows {brandname} to detect and roll back one of the transactions.
 
-[NOTE]
-====
-The `write-skew` attribute is deprecated for Library Mode. In Remote Client/Server Mode, this attribute is not a valid declaration.
-====
-
-When operating in `LOCAL` mode, write skew checks rely on Java object references to compare differences, which provides a reliable technique for checking for write skews.
-
-In clustered environments, you should configure data versioning to ensure reliable write skew checks. {brandname} provides an implementation of the `EntryVersion` interface called `SIMPLE` versioning, which is backed by a long that is incremented each time the entry is updated.
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::config_examples/versioning_scheme.xml[]
-----
-
-Or
-
-[source,java]
-----
-new ConfigurationBuilder().versioning().scheme(SIMPLE);
-----
+When operating in `LOCAL` mode, write skew checks rely on Java object
+references to compare differences, which provides a reliable technique for
+checking for write skews.
 
 === Forcing write locks on keys in pessimitic transactions
 
-To avoid write-skews with pessimistic transactions, lock keys at read-time with `Flag.FORCE_WRITE_LOCK`.
+To avoid write skews with pessimistic transactions, lock keys at read-time with `Flag.FORCE_WRITE_LOCK`.
 
 [NOTE]
 ====

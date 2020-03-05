@@ -1,7 +1,5 @@
 <dependency>
   <groupId>org.infinispan</groupId>
   <artifactId>infinispan-multimap</artifactId>
-  <!-- Replace ${version.infinispan} with the
-  version of {brandname} that you're using. -->
   <version>${version.infinispan}</version>
 </dependency>

@@ -14,7 +14,8 @@ Indexing configuration relies on a schema definition, and for that {brandname} c
 and protobuf schemas for remote clients written in other languages. By standardizing on protobuf, {brandname} allows full interoperability
 between Java and non-Java clients.
 
-Apart from indexed queries, {brandname} can run queries over non-indexed data (link:#query_indexless[indexless queries]) and over partially indexed data (link:#query_hybrid[hybrid queries]).
+Apart from indexed queries, {brandname} can run queries over non-indexed or
+partially indexed data.
 
 In terms of Search APIs, {brandname} has its own query language called _link:#query_ickle[Ickle]_, which is string-based and adds support for full-text
 querying. The link:#query_dsl[Query DSL] can be used for both embedded and remote java clients when full-text is not required; for Java embedded clients
@@ -803,11 +804,9 @@ Example:
 
 [source,java]
 ----
-
 CacheQuery<Person> broadcastQuery = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), IndexedQueryMode.BROADCAST);
 
 List<Person> result = broadcastQuery.list();
-
 ----
 
 [[query_dsl]]
@@ -842,6 +841,7 @@ org.infinispan.query.dsl.Query query = qf.from(Book.class)
 // get the results:
 List<Book> list = query.list();
 ----
+
 The API is located in the _org.infinispan.query.dsl_ package. A query is created with the help of the _QueryFactory_
 instance which is obtained from the per-cache _SearchManager_. Each _QueryFactory_ instance is bound to the same _Cache_
 instance as the _SearchManager_, but it is otherwise a stateless and thread-safe object that can be used for creating
@@ -1195,7 +1195,7 @@ Ickle is string-based and has the following characteristics:
 * Does not support computations in expressions, such as `user.age > sqrt(user.shoeSize+3)`.
 * Does not support joins.
 * Does not support subqueries.
-* Is supported across various {{brandname}} APIs. Whenever a Query is produced by the QueryBuilder is accepted, including continuous queries or in event filters for listeners.
+* Is supported across various {brandname} APIs. Whenever a Query is produced by the QueryBuilder is accepted, including continuous queries or in event filters for listeners.
 
 To use the API, first obtain a QueryFactory to the cache and then call the .create() method, passing in the string to use in the query. For instance:
 
@@ -1236,13 +1236,19 @@ Query fuzzyQuery = qf.create("from sample_bank_account.Transaction where descrip
 
 To execute a range query define the given boundaries within a pair of braces, as seen in the following example:
 
+[source,java,tile="Range queries with Ickle"]
+----
 Query rangeQuery = qf.create("from sample_bank_account.Transaction where amount : [20 to 50]");
+----
 
 ===== Phrase Queries
 
 A group of words may be searched by surrounding them in quotation marks, as seen in the following example:
 
+[source,java,tile="Phrase queries with Ickle"]
+----
 Query q = qf.create("from sample_bank_account.Transaction where description : 'bus fare'");
+----
 
 ===== Proximity Queries
 
@@ -1429,8 +1435,8 @@ of new matching events from the cache it listens to.
 [[query_remote]]
 == Remote Querying
 
-Apart from supporting indexing and searching of Java entities to embedded clients, {brandname} introduced support for remote,
-language neutral, querying.
+Apart from supporting indexing and searching of Java entities to embedded
+clients, {brandname} introduced support for remote, language neutral, querying.
 
 This leap required two major changes:
 
@@ -1446,7 +1452,7 @@ support and support for schema evolution.
 
 [[storing_protobuf]]
 === Storing Protobuf encoded entities
-Remote clients that want to be able to index and query their stored entities must do so using the <<protostream,ProtoStream>>
+Remote clients that want to be able to index and query their stored entities must do so using the ProtoStream
 marshaller. This is _key_ for the search capability to work. But it's also possible to store Protobuf entities just for
 gaining the benefit of platform independence and not enable indexing if you do not need it.
 
@@ -1632,7 +1638,6 @@ If using multiple threads does not result in the required performance, an altern
 [source,java]
 ----
 cache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put("key","value");
-
 ----
 
 === Writing using async mode

@@ -51,6 +51,9 @@ include::transaction-attributes.adoc[]
 //Doc Home
 :doc_home: https://infinispan.org/documentation/
 
+//Migration Guide
+:migration_docs: ../upgrading/upgrading.html
+
 //Dev
 :dev_docs: ../developing/developing.html
 
@@ -60,5 +63,29 @@ include::transaction-attributes.adoc[]
 //REST
 :rest_docs: ../rest/rest.html
 
-//HotRod Server
+//HotRod Java client
 :hotrod_docs: ../hotrod_java/hotrod_java.html
+
+//Operator Getting Started
+:k8s_start: https://infinispan.org/infinispan-operator/master/operator.html#start_operator
+
+//Operator
+:k8s_docs: https://infinispan.org/infinispan-operator/master/operator.html
+
+//Library
+:library_docs: ../embedding/embedding.html
+
+//Configuration Guide
+:config_docs: ../configuring/configuring.html
+
+//REST
+:rest_docs: ../rest/rest.html
+
+//CLI
+:cli_docs: ../cli/cli.html
+
+//Cross-Site REPL
+:xsite_docs: ../xsite/xsite.html
+
+//SB Starter
+:sb_starter: https://infinispan.org/infinispan-spring-boot/master/spring_boot_starter.html

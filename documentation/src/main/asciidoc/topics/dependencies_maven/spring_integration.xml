@@ -2,8 +2,6 @@
     <dependency>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-spring5-embedded</artifactId>
-        <!-- Replace ${version.infinispan} with the
-        version of {brandname} that you're using. -->
         <version>${version.infinispan}</version>
     </dependency>
     <!-- Tip: Use the Spring Boot starter
@@ -11,7 +9,6 @@
     <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-context</artifactId>
-        <!-- Replace ${version.spring} with your Spring version. -->
         <version>${version.spring}</version>
     </dependency>
 </dependencies>

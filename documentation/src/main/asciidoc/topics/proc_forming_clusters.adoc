@@ -1,11 +1,12 @@
 = Verifying {brandname} Cluster Discovery
-{brandname} servers running on the same network discover each other with the `MPING` protocol.
+By default {brandname} servers running on the same network discover each other
+with the `MPING` protocol.
 
-This procedure shows you how to use {brandname} server command arguments to
-start two instances on the same host and verify that the cluster view forms.
+This procedure shows you how to start two {brandname} servers on the same host
+and verify that the cluster view.
 
 .Prerequisites
-Start a {brandname} server.
+Start a {brandname} server instance on your host.
 
 .Procedure
 
@@ -27,28 +28,14 @@ include::cmd_examples/start_server2.adoc[]
 
 .Verification
 
-Running servers return the following messages when new servers join clusters:
+Check the server logs for the following messages:
 
 [source,options="nowrap",subs=attributes+]
 ----
 INFO  [org.infinispan.CLUSTER] (jgroups-11,<server_hostname>)
 ISPN000094: Received new cluster view for channel cluster:
 [<server_hostname>|3] (2) [<server_hostname>, <server2_hostname>]
+
 INFO  [org.infinispan.CLUSTER] (jgroups-11,<server_hostname>)
 ISPN100000: Node <server2_hostname> joined the cluster
 ----
-
-Servers return the following messages when they join clusters:
-
-[source,options="nowrap",subs=attributes+]
-----
-INFO  [org.infinispan.remoting.transport.jgroups.JGroupsTransport] (main)
-ISPN000078: Starting JGroups channel cluster
-INFO  [org.infinispan.CLUSTER] (main)
-ISPN000094: Received new cluster view for channel cluster:
-[<server_hostname>|3] (2) [<server_hostname>, <server2_hostname>]
-----
-
-.Reference
-link:{runtime_readme}[{brandname} Server README] describes command line
-arguments for the `server` script.
