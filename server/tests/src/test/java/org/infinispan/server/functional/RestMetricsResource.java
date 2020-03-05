@@ -8,7 +8,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -170,7 +169,7 @@ public class RestMetricsResource {
    @Test
    public void testMicroprofileMetricsMetadata() throws Exception {
       RestMetricsClient metricsClient = SERVER_TEST.rest().create().metrics();
-      RestResponse response = sync(metricsClient.metricsMetadata(), 30, TimeUnit.SECONDS);
+      RestResponse response = sync(metricsClient.metricsMetadata());
 
       assertEquals(200, response.getStatus());
       assertEquals(MediaType.APPLICATION_JSON, response.contentType());
