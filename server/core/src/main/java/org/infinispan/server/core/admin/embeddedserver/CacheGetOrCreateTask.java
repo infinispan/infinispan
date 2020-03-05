@@ -1,6 +1,7 @@
 package org.infinispan.server.core.admin.embeddedserver;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
@@ -32,7 +33,7 @@ public class CacheGetOrCreateTask extends CacheCreateTask {
    }
 
    @Override
-   protected Void execute(EmbeddedCacheManager cacheManager, Map<String, String> parameters, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   protected Void execute(EmbeddedCacheManager cacheManager, Map<String, List<String>> parameters, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       String name = requireParameter(parameters, "name");
       String template = getParameter(parameters, "template");
       String configuration = getParameter(parameters, "configuration");

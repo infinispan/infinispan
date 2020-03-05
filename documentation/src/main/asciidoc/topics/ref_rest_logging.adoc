@@ -1,0 +1,57 @@
+[id='rest_v2_logging_list_appenders']
+= Listing the logging appenders
+View a list of all configured appenders with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/logging/appenders
+----
+
+{brandname} responds with a list of appenders in JSON format as in the following example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_logging_appenders_response.json[]
+----
+
+
+[id='rest_v2_logging_list_loggers']
+= Listing the loggers
+View a list of all configured loggers with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/logging/loggers
+----
+
+{brandname} responds with a list of loggers in JSON format as in the following example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_logging_loggers_response.json[]
+----
+
+[id='rest_v2_logging_set_logger']
+= Creating/modifying a logger
+Create a new logger or modify an existing one with `PUT` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+PUT /rest/v2/logging/loggers/{loggerName}&level={level}&appender={appender}&appender={appender}...
+----
+
+{brandname} sets the level of the logger identified by `{loggerName}` to `{level}`.
+Optionally, it is possible to set one or more appenders for the logger.
+If no appenders are specified, those specified in the root logger will be used.
+
+
+[id='rest_v2_logging_remove_logger']
+= Removing a logger
+Remove an existing logger with `DELETE` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+DELETE /rest/v2/logging/loggers/{loggerName}
+----
+
+{brandname} removes the logger identified by `{loggerName}`, effectively reverting to the use of the root logger configuration.

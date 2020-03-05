@@ -2,8 +2,10 @@ package org.infinispan.server.core.admin;
 
 import java.lang.invoke.MethodHandles;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -36,40 +38,45 @@ public abstract class AdminServerTask<T> implements Task {
 
    public final T execute(TaskContext taskContext) {
       Map<String, ?> raw = taskContext.getParameters().orElse(Collections.emptyMap());
-      Map<String, String> parameters = raw.entrySet().stream().collect(
+      Map<String, List<String>> parameters = raw.entrySet().stream().collect(
             Collectors.toMap(Map.Entry::getKey, entry -> {
                Object value = entry.getValue();
                if (value instanceof String) {
-                  return (String) value;
+                  return Collections.singletonList((String) value);
+               } else if (value instanceof String[]) {
+                  return Arrays.asList((String[]) value);
+               } else if (value instanceof List) {
+                  return (List)value;
                } else if (value instanceof byte[]) {
-                  return new String((byte[]) value, StandardCharsets.UTF_8);
+                  return Collections.singletonList(new String((byte[]) value, StandardCharsets.UTF_8));
                } else {
                   throw log.illegalParameterType(entry.getKey(), value.getClass());
                }
             }));
-      String sFlags = parameters.remove("flags");
+      List<String> sFlags = parameters.remove("flags");
       T result = execute(
             taskContext.getCacheManager(),
             parameters,
-            AdminFlag.fromString(sFlags)
+            sFlags != null ? AdminFlag.fromString(sFlags.get(0)) : EnumSet.noneOf(AdminFlag.class)
       );
       return result;
    }
 
-   protected String requireParameter(Map<String, String> parameters, String parameter) {
-      String v = parameters.get(parameter);
+   protected String requireParameter(Map<String, List<String>> parameters, String parameter) {
+      List<String> v = parameters.get(parameter);
       if (v == null) {
          throw log.missingRequiredAdminTaskParameter(getName(), parameter);
       } else {
-         return v;
+         return v.get(0);
       }
    }
 
-   protected String getParameter(Map<String, String> parameters, String parameter) {
-      return parameters.get(parameter);
+   protected String getParameter(Map<String, List<String>> parameters, String parameter) {
+      List<String> v = parameters.get(parameter);
+      return v == null ? null : v.get(0);
    }
 
-   protected abstract T execute(EmbeddedCacheManager cacheManager, Map<String, String> parameters, EnumSet<AdminFlag> adminFlags);
+   protected abstract T execute(EmbeddedCacheManager cacheManager, Map<String, List<String>> parameters, EnumSet<AdminFlag> adminFlags);
 
    public abstract String getTaskContextName();
 

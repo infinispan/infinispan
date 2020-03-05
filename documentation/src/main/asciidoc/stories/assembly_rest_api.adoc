@@ -67,6 +67,14 @@ Monitor and perform administrative tasks on {brandname} clusters.
 
 include::{topics}/ref_rest_clusters.adoc[leveloffset=+2]
 
+
+[id='rest_v2_logging']
+== {brandname} Server logging configuration
+View and modify the logging configuration on {brandname} clusters at runtime.
+
+include::{topics}/ref_rest_logging.adoc[leveloffset=+2]
+
+
 [[rest_v2_tasks]]
 == Using Server Tasks
 Retrieve, execute, and upload {brandname} server tasks.

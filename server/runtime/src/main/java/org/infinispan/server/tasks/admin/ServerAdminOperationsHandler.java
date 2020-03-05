@@ -1,4 +1,4 @@
-package org.infinispan.server.configuration.admin;
+package org.infinispan.server.tasks.admin;
 
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
@@ -18,7 +18,9 @@ public class ServerAdminOperationsHandler extends AdminOperationsHandler {
             new CacheGetOrCreateTask(defaultsHolder),
             new CacheNamesTask(),
             new CacheRemoveTask(),
-            new CacheReindexTask()
+            new CacheReindexTask(),
+            new LoggingSetTask(),
+            new LoggingRemoveTask()
       );
    }
 }

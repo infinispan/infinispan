@@ -16,6 +16,7 @@ import org.infinispan.rest.resources.CacheManagerResource;
 import org.infinispan.rest.resources.CacheResourceV2;
 import org.infinispan.rest.resources.ClusterResource;
 import org.infinispan.rest.resources.CounterResource;
+import org.infinispan.rest.resources.LoggingResource;
 import org.infinispan.rest.resources.LoginResource;
 import org.infinispan.rest.resources.MetricsResource;
 import org.infinispan.rest.resources.RedirectResource;
@@ -132,6 +133,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
          resourceManager.registerResource(restContext, new ServerResource(invocationHelper));
          resourceManager.registerResource(restContext, new ClusterResource(invocationHelper));
          resourceManager.registerResource(restContext, new LoginResource(invocationHelper, rootContext + "console/", rootContext + "console/forbidden.html"));
+         resourceManager.registerResource(restContext, new LoggingResource(invocationHelper));
       }
       this.restDispatcher = new RestDispatcherImpl(resourceManager);
    }

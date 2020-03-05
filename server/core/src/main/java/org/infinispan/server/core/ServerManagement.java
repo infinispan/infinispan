@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.tasks.TaskManager;
 
 /**
  * @since 10.0
@@ -25,4 +26,6 @@ public interface ServerManagement {
    CacheIgnoreManager getIgnoreManager(String cacheManager);
 
    Map<String, String> getLoginConfiguration();
+
+   TaskManager getTaskManager();
 }

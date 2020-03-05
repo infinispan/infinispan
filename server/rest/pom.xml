@@ -72,6 +72,12 @@
          <optional>true</optional>
       </dependency>
 
+      <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-core</artifactId>
+         <optional>true</optional>
+      </dependency>
+
        <!-- and now for unit and integration tests -->
        <dependency>
            <groupId>org.infinispan.protostream</groupId>

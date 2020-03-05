@@ -136,4 +136,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.INFO)
    @Message(value = "Server '%s' listening on %s://%s:%d", id = 80034)
    void endpointUrl(Object name, String proto, String host, int port);
+
+   @Message(value = "Unknown appender `%s`", id = 80035)
+   IllegalArgumentException unknownAppender(String appender);
+
+   @Message(value = "Invalid level `%s`", id = 80036)
+   IllegalArgumentException invalidLevel(String level);
 }

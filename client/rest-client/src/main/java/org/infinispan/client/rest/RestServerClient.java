@@ -36,4 +36,6 @@ public interface RestServerClient {
    CompletionStage<RestResponse> unIgnoreCache(String cacheManagerName, String cacheName);
 
    CompletionStage<RestResponse> listIgnoredCaches(String cacheManagerName);
+
+   RestLoggingClient logging();
 }

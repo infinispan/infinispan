@@ -3,6 +3,7 @@ package org.infinispan.server.core.admin.embeddedserver;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,7 +34,7 @@ public class CacheNamesTask extends AdminServerTask<byte[]> {
    }
 
    @Override
-   protected byte[] execute(EmbeddedCacheManager cacheManager, Map<String, String> parameters, EnumSet<CacheContainerAdmin.AdminFlag> adminFlags) {
+   protected byte[] execute(EmbeddedCacheManager cacheManager, Map<String, List<String>> parameters, EnumSet<CacheContainerAdmin.AdminFlag> adminFlags) {
       Set<String> cacheNames = cacheManager.getCacheNames();
       StringBuilder sb = new StringBuilder("[");
       for(String s : cacheNames) {
