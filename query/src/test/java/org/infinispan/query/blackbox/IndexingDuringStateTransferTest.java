@@ -40,6 +40,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.blackbox.IndexingDuringStateTransferTest")
@@ -68,6 +69,11 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       createClusteredCaches(2, QueryTestSCI.INSTANCE, builder);
    }
 
+   @BeforeMethod
+   public void cleanData() {
+      caches().forEach(Cache::clear);
+   }
+
    public void testPut() {
       test(c -> c.put(KEY, FLUFFY), this::assertFluffyIndexed);
    }
@@ -84,6 +90,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       test(c -> c.replace(KEY, FLUFFY), this::assertFluffyIndexed);
    }
 
+   @Test(enabled = false, description = "ISPN-11299")
    public void testRemove() {
       test(c -> c.remove(KEY), sm -> {
       });

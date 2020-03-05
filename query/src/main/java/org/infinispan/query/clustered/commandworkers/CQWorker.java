@@ -12,7 +12,6 @@ import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
-import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.impl.ComponentRegistryUtils;
@@ -54,7 +53,7 @@ abstract class CQWorker {
 
    void setFilter(BitSet segments) {
       HSQuery query = queryDefinition.getHsQuery();
-      if (segments.cardinality() != HashConfiguration.NUM_SEGMENTS.getDefaultValue()) {
+      if (segments.cardinality() != cache.getCacheConfiguration().clustering().hash().numSegments()) {
          query.enableFullTextFilter(SEGMENT_FILTER_NAME).setParameter(SEGMENT_PARAMETERS_NAME, segments);
       } else {
          query.disableFullTextFilter(SEGMENT_FILTER_NAME);

@@ -1,6 +1,5 @@
 package org.infinispan.query.blackbox;
 
-import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
@@ -54,7 +53,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
    private CacheQuery<Person> createQuery(String predicate, Class<?> entity) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      return searchManager.getQuery(String.format("FROM %s WHERE %s", entity.getName(), predicate), FETCH);
+      return searchManager.getQuery(String.format("FROM %s WHERE %s", entity.getName(), predicate));
    }
 
    public void testSimple() {

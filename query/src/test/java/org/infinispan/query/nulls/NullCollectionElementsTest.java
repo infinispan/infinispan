@@ -24,7 +24,6 @@ import org.infinispan.query.ProjectionConstants;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -67,7 +66,7 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
 
    CacheQuery<?> createCacheQuery() {
       String q = String.format("FROM %s WHERE bar:1", Foo.class.getName());
-      return searchManager.getQuery(q, IndexedQueryMode.FETCH);
+      return searchManager.getQuery(q);
    }
 
    @Test

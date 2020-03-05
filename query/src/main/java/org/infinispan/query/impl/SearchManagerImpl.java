@@ -69,6 +69,11 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
    }
 
    @Override
+   public <E> CacheQuery<E> getQuery(String queryString) {
+      return getQuery(queryString, null);
+   }
+
+   @Override
    public <E> CacheQuery<E> getQuery(QueryDefinition queryDefinition, IndexedQueryMode indexedQueryMode, IndexedTypeMap<CustomTypeMetadata> indexedTypeMap) {
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
       return queryEngine.buildCacheQuery(queryDefinition, indexedQueryMode, keyTransformationHandler, asyncExecutor, indexedTypeMap);

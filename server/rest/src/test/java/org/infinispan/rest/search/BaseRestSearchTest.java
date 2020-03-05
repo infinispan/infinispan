@@ -449,19 +449,21 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    private ContentResponse executeQueryRequest(String cacheName, HttpMethod method, String q, int offset, int maxResults) throws Exception {
       Request request;
       String searchUrl = getUrl(pickServer(), cacheName);
-      String mode = getQueryMode().toString();
+      IndexedQueryMode queryMode = getQueryMode();
       if (method == POST) {
          ObjectNode queryReq = MAPPER.createObjectNode();
          queryReq.put("query", q);
          queryReq.put("offset", offset);
          queryReq.put("max_results", maxResults);
-         queryReq.put(QUERY_MODE, mode);
+         if(getQueryMode() != null) queryReq.put(QUERY_MODE, queryMode.toString());
          request = client.newRequest(searchUrl).method(POST).content(new StringContentProvider(queryReq.toString()));
       } else {
          String queryReq = searchUrl + "&query=" + URLEncoder.encode(q, "UTF-8") +
                "&offset=" + offset +
-               "&max_results=" + maxResults +
-               "&" + QUERY_MODE + "=" + mode;
+               "&max_results=" + maxResults;
+         if(queryMode != null) {
+            queryReq = queryReq +  "&" + QUERY_MODE + "=" + queryMode.toString();
+         }
          request = client.newRequest(queryReq).method(GET);
       }
       return request.send();

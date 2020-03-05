@@ -86,7 +86,7 @@ class CacheResourceQueryAction {
       String strMaxResults = getParameterValue(restRequest, MAX_RESULTS);
       Integer offset = strOffset != null ? Integer.valueOf(strOffset) : null;
       Integer maxResults = strMaxResults != null ? Integer.valueOf(strMaxResults) : null;
-      IndexedQueryMode qm = queryMode == null ? IndexedQueryMode.FETCH : IndexedQueryMode.valueOf(queryMode);
+      IndexedQueryMode qm = queryMode != null ? IndexedQueryMode.valueOf(queryMode) : null;
       return new JsonQueryRequest(queryString, offset, maxResults, qm);
    }
 

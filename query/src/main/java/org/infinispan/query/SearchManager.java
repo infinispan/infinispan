@@ -22,10 +22,19 @@ public interface SearchManager {
    <E> CacheQuery<E> getQuery(String queryString, IndexedQueryMode indexedQueryMode);
 
    /**
+    * Builds a {@link CacheQuery} from an Ickle query string, assuming the correct value for {@link IndexedQueryMode} to
+    * query all data in the cluster
+    * @param queryString the Ickle query
+    * @return
+    */
+
+   <E> CacheQuery<E> getQuery(String queryString);
+   /**
     * The MassIndexer can be used to rebuild the Lucene indexes from the entries stored in Infinispan.
     *
     * @return the MassIndexer component
     */
+
    MassIndexer getMassIndexer();
 
    /**

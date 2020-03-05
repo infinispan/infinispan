@@ -1,6 +1,5 @@
 package org.infinispan.query.distributed;
 
-import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
 import javax.transaction.TransactionManager;
@@ -94,7 +93,7 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
       for (Cache cache : cluster.iterateAllCaches()) {
          StaticTestingErrorHandler.assertAllGood(cache);
          SearchManager searchManager = Search.getSearchManager(cache);
-         CacheQuery<Person> query = searchManager.getQuery("FROM " + Person.class.getName(), FETCH);
+         CacheQuery<Person> query = searchManager.getQuery("FROM " + Person.class.getName());
          assertEquals(expectedIndexSize, query.list().size());
       }
    }

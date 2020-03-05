@@ -22,7 +22,6 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -105,7 +104,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
 
     private List searchByName(String name, Cache c) {
         SearchManager sm = Search.getSearchManager(c);
-        CacheQuery<?> q = sm.getQuery(SEntity.searchByName(name), IndexedQueryMode.FETCH);
+        CacheQuery<?> q = sm.getQuery(SEntity.searchByName(name));
         int resultSize = q.getResultSize();
         List<?> l = q.list();
         assert l.size() == resultSize;

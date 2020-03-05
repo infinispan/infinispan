@@ -1,6 +1,5 @@
 package org.infinispan.query.distributed;
 
-import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
@@ -45,13 +44,13 @@ public class DegeneratedClusterMassIndexingTest extends MultipleCacheManagersTes
 
       // ensure these were not indexed
       String q = String.format("FROM %s where make:'ford'", Car.class.getName());
-      CacheQuery<Object> query = searchManager.getQuery(q, FETCH);
+      CacheQuery<Object> query = searchManager.getQuery(q);
       assertEquals(0, query.getResultSize());
 
       //reindex
       searchManager.getMassIndexer().start();
 
       // check that the indexing is complete immediately
-      assertEquals(3, searchManager.getQuery(q, FETCH).getResultSize());
+      assertEquals(3, searchManager.getQuery(q).getResultSize());
    }
 }

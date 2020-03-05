@@ -13,7 +13,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -71,7 +70,7 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
    private static void assertFind(Cache cache, String keyword, int expectedCount) {
       SearchManager queryFactory = Search.getSearchManager(cache);
       String q = String.format("FROM %s WHERE blurb:'%s'", Person.class.getName(), keyword);
-      CacheQuery<?> cacheQuery = queryFactory.getQuery(q, IndexedQueryMode.FETCH);
+      CacheQuery<?> cacheQuery = queryFactory.getQuery(q);
       int resultSize = cacheQuery.getResultSize();
       Assert.assertEquals(resultSize, expectedCount);
    }

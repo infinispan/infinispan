@@ -1,7 +1,5 @@
 package org.infinispan.query.distributed;
 
-import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.context.Flag;
@@ -70,7 +68,7 @@ public class MassIndexerAsyncBackendTest extends MultipleCacheManagersTest {
 
    private void assertAllIndexed(final Cache cache) {
       eventually(() -> {
-         int size = Search.getSearchManager(cache).getQuery("FROM " + Transaction.class.getName(), FETCH).list().size();
+         int size = Search.getSearchManager(cache).getQuery("FROM " + Transaction.class.getName()).list().size();
          return size == NUM_ENTRIES;
       });
    }

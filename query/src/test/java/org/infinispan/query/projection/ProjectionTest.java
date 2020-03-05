@@ -17,7 +17,6 @@ import org.infinispan.query.ProjectionConstants;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -86,7 +85,7 @@ public class ProjectionTest extends SingleCacheManagerTest {
 
    private CacheQuery<?> createProjectionQuery(String... projection) {
       String q = String.format("FROM %s WHERE bar:'bar1'", Foo.class.getName());
-      return searchManager.getQuery(q, IndexedQueryMode.FETCH).projection(projection);
+      return searchManager.getQuery(q).projection(projection);
    }
 
    private void assertQueryReturns(CacheQuery<?> cacheQuery, Object[] expected) {

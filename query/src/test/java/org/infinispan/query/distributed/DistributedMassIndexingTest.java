@@ -1,6 +1,5 @@
 package org.infinispan.query.distributed;
 
-import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
@@ -96,7 +95,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
    protected void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
       SearchManager searchManager = Search.getSearchManager(cache);
       String q = String.format("FROM %s where make:'%s'", Car.class.getName(), carMake);
-      CacheQuery<Car> cacheQuery = searchManager.getQuery(q, FETCH);
+      CacheQuery<Car> cacheQuery = searchManager.getQuery(q);
       assertEquals(expectedCount, cacheQuery.getResultSize());
    }
 }

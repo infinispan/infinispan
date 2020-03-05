@@ -10,7 +10,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -70,7 +69,7 @@ public class NonLocalIndexingTest extends MultipleCacheManagersTest {
    private static void assertFind(Cache cache, String keyword, int expectedCount) {
       SearchManager queryFactory = Search.getSearchManager(cache);
       String q = String.format("FROM %s WHERE blurb:'%s'", Person.class.getName(), keyword);
-      CacheQuery<Object> cacheQuery = queryFactory.getQuery(q, IndexedQueryMode.FETCH);
+      CacheQuery<Object> cacheQuery = queryFactory.getQuery(q);
       int resultSize = cacheQuery.getResultSize();
       Assert.assertEquals(resultSize, expectedCount);
    }

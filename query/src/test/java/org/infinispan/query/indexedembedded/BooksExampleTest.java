@@ -1,7 +1,5 @@
 package org.infinispan.query.indexedembedded;
 
-import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
-
 import java.util.List;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -51,7 +49,7 @@ public class BooksExampleTest extends SingleCacheManagerTest {
       SearchManager qf = Search.getSearchManager(cache);
 
       String query = String.format("FROM %s WHERE title:'in action'", Book.class.getName());
-      List<?> list = qf.getQuery(query, FETCH).list();
+      List<?> list = qf.getQuery(query).list();
       assert list.size() == 2;
    }
 

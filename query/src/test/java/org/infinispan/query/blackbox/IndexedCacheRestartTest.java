@@ -19,7 +19,6 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.indexedembedded.Book;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -101,7 +100,7 @@ public class IndexedCacheRestartTest extends AbstractInfinispanTest {
    private static void assertFindBook(Cache<?, ?> cache) {
       SearchManager searchManager = Search.getSearchManager(cache);
       String q = String.format("FROM %s WHERE title:'infinispan'", Book.class.getName());
-      CacheQuery<Book> cacheQuery = searchManager.getQuery(q, IndexedQueryMode.FETCH);
+      CacheQuery<Book> cacheQuery = searchManager.getQuery(q);
       List<Book> list = cacheQuery.list();
       assertEquals(1, list.size());
    }

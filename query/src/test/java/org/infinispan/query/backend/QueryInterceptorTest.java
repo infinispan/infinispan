@@ -27,7 +27,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent
 import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
@@ -241,7 +240,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
    }
 
    private int countIndex(Class<?> entityType, Cache<?, ?> cache) {
-      return Search.getSearchManager(cache).getQuery("FROM " + entityType.getName(), IndexedQueryMode.FETCH).getResultSize();
+      return Search.getSearchManager(cache).getQuery("FROM " + entityType.getName()).getResultSize();
    }
 
    private static final class LuceneIndexTracker {

@@ -1,6 +1,5 @@
 package org.infinispan.query.distributed;
 
-import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.Assert.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -100,7 +99,7 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
       for (Cache<?, ?> cache : caches()) {
          StaticTestingErrorHandler.assertAllGood(cache);
          SearchManager searchManager = Search.getSearchManager(cache);
-         CacheQuery<?> cacheQuery = searchManager.getQuery(q, FETCH);
+         CacheQuery<?> cacheQuery = searchManager.getQuery(q);
          assertEquals(expectedCount, cacheQuery.getResultSize());
       }
    }
