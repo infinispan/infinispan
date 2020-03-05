@@ -64,4 +64,8 @@ public interface Connection extends Closeable {
    String getServerVersion();
 
    Collection<String> getClusterNodes();
+
+   Collection<String> getAvailableLogAppenders() throws IOException;
+
+   Collection<String> getAvailableLoggers() throws IOException;
 }

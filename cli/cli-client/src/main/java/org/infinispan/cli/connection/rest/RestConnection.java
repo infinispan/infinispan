@@ -40,6 +40,7 @@ import org.infinispan.cli.commands.End;
 import org.infinispan.cli.commands.Evict;
 import org.infinispan.cli.commands.Get;
 import org.infinispan.cli.commands.Grant;
+import org.infinispan.cli.commands.Logging;
 import org.infinispan.cli.commands.Ls;
 import org.infinispan.cli.commands.Put;
 import org.infinispan.cli.commands.Query;
@@ -525,6 +526,32 @@ public class RestConnection implements Connection, Closeable {
                   throw MSG.invalidResource(name.isEmpty() ? "/" : name);
                }
             }
+            case Logging.CMD: {
+               switch (command.arg(Logging.TYPE)) {
+                  case Logging.Loggers.CMD: {
+                     response = client.server().logging().listLoggers();
+                     break;
+                  }
+                  case Logging.Appenders.CMD: {
+                     response = client.server().logging().listAppenders();
+                     break;
+                  }
+                  case Logging.Set.CMD: {
+                     if (command.hasArg(Logging.Set.APPENDERS)) {
+                        List<String> appenders = command.argAs(Logging.Set.APPENDERS);
+                        response = client.server().logging().setLogger(command.arg(Logging.NAME), command.option(Logging.Set.LEVEL), appenders.toArray(new String[0]));
+                     } else {
+                        response = client.server().logging().setLogger(command.arg(Logging.NAME), command.option(Logging.Set.LEVEL));
+                     }
+                     break;
+                  }
+                  case Logging.Remove.CMD: {
+                     response = client.server().logging().removeLogger(command.arg(Logging.NAME));
+                     break;
+                  }
+               }
+               break;
+            }
             case Abort.CMD:
             case Begin.CMD:
             case End.CMD:
@@ -659,6 +686,18 @@ public class RestConnection implements Connection, Closeable {
       List<Map<String, Object>> list = parseBody(fetch(() -> client.tasks().list(ResultType.ALL)), List.class);
       Optional<Map<String, Object>> task = list.stream().filter(i -> taskName.equals(i.get("name"))).findFirst();
       return task.map(Object::toString).orElseThrow(() -> MSG.noSuchResource(taskName));
+   }
+
+   @Override
+   public Collection<String> getAvailableLogAppenders() throws IOException {
+      Map<String, Object> map = parseBody(fetch(() -> client.server().logging().listAppenders()), Map.class);
+      return map.keySet();
+   }
+
+   @Override
+   public Collection<String> getAvailableLoggers() throws IOException {
+      List<Map<String, Object>> list = parseBody(fetch(() -> client.server().logging().listLoggers()), List.class);
+      return list.stream().map(i -> i.get("name").toString()).collect(Collectors.toList());
    }
 
    @Override
