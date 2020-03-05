@@ -2,6 +2,7 @@ package org.infinispan.client.rest.impl.okhttp;
 
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.client.rest.RestLoggingClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestServerClient;
 
@@ -71,5 +72,10 @@ public class RestServerClientOkHttp implements RestServerClient {
    public CompletionStage<RestResponse> listIgnoredCaches(String cacheManagerName) {
       String url = String.format("%s/ignored-caches/%s", baseServerURL, cacheManagerName);
       return client.execute(new Request.Builder().url(url));
+   }
+
+   @Override
+   public RestLoggingClient logging() {
+      return new RestLoggingClientOkHttp(client);
    }
 }

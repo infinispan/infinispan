@@ -1,5 +1,6 @@
 package org.infinispan.client.rest.impl.okhttp;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
@@ -10,6 +11,7 @@ import okhttp3.FormBody;
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+import okhttp3.internal.Util;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -23,13 +25,22 @@ public class RestRawClientOkHttp implements RestRawClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> postForm(String url, Map<String, String> headers, Map<String, String> formParameters) {
+   public CompletionStage<RestResponse> postForm(String url, Map<String, String> headers, Map<String, List<String>> formParameters) {
       Request.Builder builder = new Request.Builder();
       builder.url(restClient.getBaseURL() + url);
-      headers.forEach((k, v) -> builder.header(k, v));
+      headers.forEach(builder::header);
       FormBody.Builder form = new FormBody.Builder();
-      formParameters.forEach((k, v) -> form.add(k, v));
+      formParameters.forEach((k, vs) -> vs.forEach(v -> form.add(k, v)));
       builder.post(form.build());
+      return restClient.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> post(String url, Map<String, String> headers) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(restClient.getBaseURL() + url);
+      headers.forEach(builder::header);
+      builder.post(Util.EMPTY_REQUEST);
       return restClient.execute(builder);
    }
 
@@ -43,9 +54,27 @@ public class RestRawClientOkHttp implements RestRawClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> put(String url, Map<String, String> headers) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(restClient.getBaseURL() + url);
+      headers.forEach(builder::header);
+      builder.put(Util.EMPTY_REQUEST);
+      return restClient.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> get(String url, Map<String, String> headers) {
       Request.Builder builder = new Request.Builder().get().url(restClient.getBaseURL() + url);
       headers.forEach(builder::header);
+      return restClient.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> delete(String url, Map<String, String> headers) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(restClient.getBaseURL() + url);
+      headers.forEach(builder::header);
+      builder.delete();
       return restClient.execute(builder);
    }
 }

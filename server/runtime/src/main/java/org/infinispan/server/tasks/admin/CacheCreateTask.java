@@ -1,4 +1,4 @@
-package org.infinispan.server.configuration.admin;
+package org.infinispan.server.tasks.admin;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

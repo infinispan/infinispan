@@ -83,6 +83,17 @@ public class TaskContext {
    }
 
    /**
+    * Adds a named parameter to the task context only if it is non-null
+    */
+   public TaskContext addOptionalParameter(String name, Object value) {
+      if (value != null) {
+         return addParameter(name, value);
+      } else {
+         return this;
+      }
+   }
+
+   /**
     * Whether execution will generate an event in the event log
     */
    public TaskContext logEvent(boolean logEvent) {

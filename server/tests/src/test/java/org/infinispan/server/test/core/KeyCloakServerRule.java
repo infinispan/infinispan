@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -84,12 +85,12 @@ public class KeyCloakServerRule implements TestRule {
       builder.addServer().host(container.getContainerIpAddress()).port(container.getMappedPort(8080)).connectionTimeout(5000).socketTimeout(5000);
       try (RestClient c = RestClient.forConfiguration(builder.build())) {
          String url = String.format("/auth/realms/%s/protocol/openid-connect/token", realm);
-         Map<String, String> form = new HashMap<>();
-         form.put("client_id", client);
-         form.put("client_secret", secret);
-         form.put("username", username);
-         form.put("password", password);
-         form.put("grant_type", "password");
+         Map<String, List<String>> form = new HashMap<>();
+         form.put("client_id", Collections.singletonList(client));
+         form.put("client_secret", Collections.singletonList(secret));
+         form.put("username", Collections.singletonList(username));
+         form.put("password", Collections.singletonList(password));
+         form.put("grant_type", Collections.singletonList("password"));
          RestResponse response = c.raw().postForm(url, Collections.singletonMap("Content-Type", "application/x-www-form-urlencoded"), form).toCompletableFuture().get(5, TimeUnit.SECONDS);
          ObjectMapper mapper = new ObjectMapper();
          Map<String, String> map = mapper.readValue(response.getBody(), Map.class);

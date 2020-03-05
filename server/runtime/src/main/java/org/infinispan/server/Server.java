@@ -43,7 +43,6 @@ import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
-import org.infinispan.server.configuration.admin.ServerAdminOperationsHandler;
 import org.infinispan.server.configuration.security.TokenRealmConfiguration;
 import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.server.core.ProtocolServer;
@@ -60,6 +59,7 @@ import org.infinispan.server.router.routes.RouteSource;
 import org.infinispan.server.router.routes.hotrod.HotRodServerRouteDestination;
 import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
+import org.infinispan.server.tasks.admin.ServerAdminOperationsHandler;
 import org.infinispan.tasks.TaskManager;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
@@ -150,6 +150,7 @@ public class Server implements ServerManagement, AutoCloseable {
    private Extensions extensions;
    private CacheIgnoreManager cacheIgnoreManager;
    private ScheduledExecutorService scheduler;
+   private TaskManager taskManager;
 
    /**
     * Initializes a server with the default server root, the default configuration file and system properties
@@ -288,7 +289,7 @@ public class Server implements ServerManagement, AutoCloseable {
          cacheIgnoreManager = bcr.getComponent(CacheIgnoreManager.class).running();
 
          // Register the task manager
-         TaskManager taskManager = bcr.getComponent(TaskManager.class).running();
+         taskManager = bcr.getComponent(TaskManager.class).running();
          taskManager.registerTaskEngine(extensions.getServerTaskEngine(cm));
 
          // Start the protocol servers
@@ -491,5 +492,10 @@ public class Server implements ServerManagement, AutoCloseable {
 
    public ComponentStatus getStatus() {
       return status;
+   }
+
+   @Override
+   public TaskManager getTaskManager() {
+      return taskManager;
    }
 }

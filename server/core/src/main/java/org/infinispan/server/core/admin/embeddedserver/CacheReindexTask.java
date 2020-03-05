@@ -2,6 +2,7 @@ package org.infinispan.server.core.admin.embeddedserver;
 
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,7 +42,7 @@ public class CacheReindexTask extends AdminServerTask<Void> {
    }
 
    @Override
-   protected Void execute(EmbeddedCacheManager cacheManager, Map<String, String> parameters, EnumSet<CacheContainerAdmin.AdminFlag> adminFlags) {
+   protected Void execute(EmbeddedCacheManager cacheManager, Map<String, List<String>> parameters, EnumSet<CacheContainerAdmin.AdminFlag> adminFlags) {
       if(!adminFlags.isEmpty())
          throw new UnsupportedOperationException();
 
