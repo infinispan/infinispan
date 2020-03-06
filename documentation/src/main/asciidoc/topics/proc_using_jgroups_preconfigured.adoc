@@ -3,22 +3,7 @@
 Use default JGroups stacks with recommended settings as a starting point for
 your cluster transport layer.
 
-[NOTE]
-====
-Default JGroups stacks are included in `infinispan-core.jar` and, as a result,
-are on the classpath.
-====
-
-.Programmatic procedure
-
-* Specify default JGroups stacks with the `addProperty()` method.
-+
-[source,java]
-----
-include::code_examples/ConfigureTransportDefault.java[]
-----
-
-.Declarative procedure
+.Declaratively
 
 * Specify default JGroups stacks with the `stack` attribute.
 +
@@ -26,6 +11,17 @@ include::code_examples/ConfigureTransportDefault.java[]
 ----
 include::config_examples/config_transport_stack.xml[]
 ----
+<1> uses the `default-jgroups-udp.xml` stack for cluster transport.
+
+.Programmatically
+
+* Specify default JGroups stacks with the `addProperty()` method.
++
+[source,java]
+----
+include::code_examples/ConfigureTransportDefault.java[]
+----
+<1> uses the `default-jgroups-udp.xml` stack for cluster transport.
 
 [TIP]
 ====

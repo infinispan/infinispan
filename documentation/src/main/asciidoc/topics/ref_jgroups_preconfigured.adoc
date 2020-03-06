@@ -1,5 +1,8 @@
 [id='preconfigured_jgroups_stacks-{context}']
 = Default JGroups Stacks
+Default JGroups stacks are included in `infinispan-core.jar` and on the
+classpath. You can locate the default JGroups stacks in the `default-configs`
+directory.
 
 [%header,cols="2,1,3"]
 |===
@@ -9,11 +12,12 @@
 
 | `default-jgroups-udp.xml`
 | `udp`
-| Uses UDP for transport and UDP multicast for discovery. Suitable for larger clusters (over 100 nodes) or if you are using replicated caches or invalidation mode. Minimises the number of open sockets.
+| Uses UDP for transport and UDP multicast for discovery. Suitable for larger clusters (over 100 nodes) or if you are using replicated caches or invalidation mode. Minimizes the number of open sockets.
 
 | `default-jgroups-tcp.xml`
 | `tcp`
-| Uses TCP for transport and UDP multicast for discovery. Suitable for smaller clusters (under 100 nodes) _only if_ you are using distributed caches because TCP is more efficient than UDP as a point-to-point protocol.
+| Uses TCP for transport and the `MPING` protocol for discovery, which uses
+`UDP` multicast. Suitable for smaller clusters (under 100 nodes) _only if_ you are using distributed caches because TCP is more efficient than UDP as a point-to-point protocol.
 
 | `default-jgroups-ec2.xml`
 | `ec2`
@@ -21,7 +25,7 @@
 
 | `default-jgroups-kubernetes.xml`
 | `kubernetes`
-| Uses TCP for transport and `DNS_PING` for discovery. Suitable for Kubernetes and Red Hat OpenShift nodes where UDP multicast is not always available.
+| Uses TCP for transport and `DNS_PING` for discovery. Suitable for Kubernetes and {openshift} nodes where UDP multicast is not always available.
 
 | `default-jgroups-google.xml`
 | `google`
@@ -33,8 +37,7 @@
 
 |===
 
-.Next Steps
+.Reference
 
-After you get up and running with the default JGroups stacks, use inheritance
-to combine, extend, remove, and replace stack properties. See
-link:#jgroups_inline-{context}[Adjusting and Tuning JGroups Stacks].
+* link:http://www.jgroups.org/manual/html/protlist.html[JGroups Protocol]
+* link:http://www.jgroups.org/manual/html/protlist.html#DiscoveryProtocols[JGroups Discovery Protocols]
