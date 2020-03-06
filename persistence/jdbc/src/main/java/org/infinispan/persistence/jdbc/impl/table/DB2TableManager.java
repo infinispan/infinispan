@@ -28,7 +28,7 @@ class DB2TableManager extends AbstractTableManager {
                config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
       } else {
          return String.format("INSERT INTO %s (%s,%s,%s,%s) VALUES (?,?,?,?)", tableName,
-               config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
+               config.idColumnName(), config.timestampColumnName(), config.dataColumnName(), config.segmentColumnName());
       }
    }
 
