@@ -4,7 +4,7 @@ import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.metrics.impl.InfinispanMetricRegistry;
+import org.infinispan.metrics.impl.MetricsCollector;
 
 import io.smallrye.metrics.MetricsRegistryImpl;
 
@@ -15,26 +15,26 @@ import io.smallrye.metrics.MetricsRegistryImpl;
  * @author anistor@redhat.com
  * @since 10.1
  */
-final class InfinispanMetricRegistryTestHelper {
+final class MetricsCollectorTestHelper {
 
    @Scope(Scopes.GLOBAL)
-   static class TestInfinispanMetricRegistry extends InfinispanMetricRegistry {
+   static class TestMetricsCollector extends MetricsCollector {
 
-      TestInfinispanMetricRegistry() {
+      TestMetricsCollector() {
          // executed once for each cache manager
          super(new MetricsRegistryImpl());
       }
    }
 
    /**
-    * Replaces InfinispanMetricRegistry component with one that uses a private MetricRegistry to allow isolation between
+    * Replaces the MetricsCollector component with one that uses a private MetricRegistry to allow isolation between
     * cache managers and avoid unintended metric collisions.
     */
    static void replace(GlobalConfigurationBuilder gcb) {
       if (gcb.metrics().enabled()) {
          try {
             gcb.addModule(TestGlobalConfigurationBuilder.class)
-               .testGlobalComponent(InfinispanMetricRegistry.class.getName(), new TestInfinispanMetricRegistry());
+               .testGlobalComponent(MetricsCollector.class.getName(), new TestMetricsCollector());
          } catch (LinkageError ignored) {
             // missing metrics related dependency
          }
