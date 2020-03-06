@@ -1,13 +1,7 @@
 [id='jgroups_inline-{context}']
 = Using Inline JGroups Stacks
-Use inline JGroups stack definitions to customize cluster transport for optimal
-network performance.
-
-[TIP]
-====
-Use inheritance with inline JGroups stacks to tune and customize specific
-transport properties.
-====
+Custom JGroups stacks can help you optimize network performance for {brandname}
+clusters compared to using the default stacks.
 
 .Procedure
 
@@ -19,6 +13,19 @@ following example:
 include::config_examples/config_inline_jgroups.xml[]
 ----
 
+<1> root element of `infinispan.xml`.
+<2> contains JGroups stack definitions.
+<3> defines a JGroups stack named "prod".
+<4> configures a {brandname} Cache Manager and names the "replicatedCache" cache definition as the default.
+<5> uses the "prod" JGroups stack for cluster transport.
+
+[TIP]
+====
+Use inheritance with inline JGroups stacks to tune and customize specific
+transport properties.
+====
+
 .Reference
 
-link:{configdocroot}[{brandname} Configuration Schema]
+* link:#jgroups_inheritance-configuring[Adjusting and Tuning JGroups Stacks]
+* link:{configdocroot}[{brandname} Configuration Schema]
