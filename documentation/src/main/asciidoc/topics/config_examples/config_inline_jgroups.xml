@@ -1,8 +1,6 @@
-<infinispan>
-  <!-- jgroups is the parent for stack declarations. -->
-  <jgroups>
-    <!-- Add JGroups stacks for {brandname} clustering. -->
-    <stack name="prod">
+<infinispan> <1>
+  <jgroups> <2>
+    <stack name="prod"> <3>
       <TCP bind_port="7800" port_range="30" recv_buf_size="20000000" send_buf_size="640000"/>
       <MPING bind_addr="127.0.0.1" break_on_coord_rsp="true"
              mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
@@ -24,9 +22,8 @@
       <FRAG3 />
     </stack>
   </jgroups>
-  <cache-container default-cache="replicatedCache">
-    <!-- Add JGroups stacks to clustered caches. -->
-    <transport stack="prod" />
+  <cache-container default-cache="replicatedCache"> <4>
+    <transport stack="prod" /> <5>
     ...
   </cache-container>
 </infinispan>
