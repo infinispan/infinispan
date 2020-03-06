@@ -30,16 +30,16 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * Keeps a reference to the microprofile MetricRegistry. Optional component in component registry. Availability based on
- * available jars in classpath! See {@link InfinispanMetricRegistryFactory}.
+ * available jars in classpath! See {@link MetricsCollectorFactory}.
  *
  * @author anistor@redhat.com
  * @since 10.1.3
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
-public class InfinispanMetricRegistry {
+public class MetricsCollector {
 
-   private static final Log log = LogFactory.getLog(InfinispanMetricRegistry.class);
+   private static final Log log = LogFactory.getLog(MetricsCollector.class);
 
    public static final String NODE_TAG_NAME = "node";
 
@@ -50,7 +50,7 @@ public class InfinispanMetricRegistry {
    @Inject
    GlobalConfiguration globalConfig;
 
-   protected InfinispanMetricRegistry(MetricRegistry registry) {
+   protected MetricsCollector(MetricRegistry registry) {
       this.registry = registry;
    }
 
