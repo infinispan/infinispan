@@ -1059,7 +1059,7 @@
             <version>${version.io.agroal}</version>
          </dependency>
          <dependency>
-            <groupId>io.smallrye</groupId>
+            <groupId>io.smallrye.config</groupId>
             <artifactId>smallrye-config</artifactId>
             <version>${version.smallrye-config}</version>
          </dependency>
