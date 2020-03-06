@@ -71,7 +71,7 @@ public class TestCacheManagerFactory {
          amendDefaultCache(gcb);
       }
       setNodeName(gcb);
-      InfinispanMetricRegistryTestHelper.replace(gcb);
+      MetricsCollectorTestHelper.replace(gcb);
       GlobalConfiguration globalConfiguration = gcb.build();
       checkJmx(globalConfiguration);
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(globalConfiguration, c == null ? null : c.build(globalConfiguration), start);
@@ -83,7 +83,7 @@ public class TestCacheManagerFactory {
       GlobalConfigurationBuilder gcb = holder.getGlobalConfigurationBuilder();
       amendDefaultCache(gcb);
       setNodeName(gcb);
-      InfinispanMetricRegistryTestHelper.replace(gcb);
+      MetricsCollectorTestHelper.replace(gcb);
       checkJmx(gcb.build());
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
       TestResourceTracker.addResource(new CacheManagerCleaner(defaultCacheManager));

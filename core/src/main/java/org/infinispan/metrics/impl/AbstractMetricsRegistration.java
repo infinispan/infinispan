@@ -33,7 +33,7 @@ abstract class AbstractMetricsRegistration {
    BasicComponentRegistry basicComponentRegistry;
 
    @Inject
-   InfinispanMetricRegistry infinispanMetricRegistry;
+   MetricsCollector metricsCollector;
 
    protected String namePrefix;
 
@@ -61,9 +61,13 @@ abstract class AbstractMetricsRegistration {
    }
 
    public boolean metricsEnabled() {
-      return infinispanMetricRegistry != null && globalConfig.metrics().enabled();
+      return metricsCollector != null && globalConfig.metrics().enabled();
    }
 
+   /**
+    * Subclasses must implement this and return the metric prefix to be used for registration. This is invoked only if
+    * metrics are enabled.
+    */
    protected abstract String initNamePrefix();
 
    private void processComponents() {
@@ -99,7 +103,7 @@ abstract class AbstractMetricsRegistration {
             metricPrefix += '_' + NameUtils.decamelize(suffix);
          }
       }
-      return infinispanMetricRegistry.registerMetrics(instance, beanMetadata, metricPrefix);
+      return metricsCollector.registerMetrics(instance, beanMetadata, metricPrefix);
    }
 
    /**
@@ -107,7 +111,7 @@ abstract class AbstractMetricsRegistration {
     * ids will be tracked and unregistration will be performed automatically on stop.
     */
    public void registerMetrics(Object instance, String type, String componentName) {
-      if (infinispanMetricRegistry == null) {
+      if (metricsCollector == null) {
          throw new IllegalStateException("Microprofile metrics are not initialized");
       }
       MBeanMetadata beanMetadata = basicComponentRegistry.getMBeanMetadata(instance.getClass().getName());
@@ -123,7 +127,7 @@ abstract class AbstractMetricsRegistration {
     * ids will <b>NOT</b> be tracked and unregistration will <b>NOT</b> be performed automatically on stop.
     */
    public Set<MetricID> registerExternalMetrics(Object instance, String suffix) {
-      if (infinispanMetricRegistry == null) {
+      if (metricsCollector == null) {
          throw new IllegalStateException("Microprofile metrics are not initialized");
       }
       MBeanMetadata beanMetadata = basicComponentRegistry.getMBeanMetadata(instance.getClass().getName());
@@ -134,12 +138,12 @@ abstract class AbstractMetricsRegistration {
    }
 
    public void unregisterMetrics(Set<MetricID> metricIds) {
-      if (infinispanMetricRegistry == null) {
+      if (metricsCollector == null) {
          throw new IllegalStateException("Microprofile metrics are not initialized");
       }
       try {
          for (MetricID metricId : metricIds) {
-            infinispanMetricRegistry.unregisterMetric(metricId);
+            metricsCollector.unregisterMetric(metricId);
          }
       } catch (Exception e) {
          throw new CacheException("Failure while unregistering metrics", e);

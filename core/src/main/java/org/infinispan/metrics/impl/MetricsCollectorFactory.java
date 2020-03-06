@@ -15,17 +15,18 @@ import org.infinispan.util.logging.LogFactory;
 import io.smallrye.metrics.MetricRegistries;
 
 /**
- * Produces instances of InfinispanMetricsRegistry. InfinispanMetricsRegistry is optional, based on the presence of
- * microprofile metrics API and the Smallrye implementation in classpath.
+ * Produces instances of {@link MetricsCollector}. MetricsCollector is optional, based on the presence of the
+ * optional microprofile metrics API and the Smallrye implementation in classpath and the enabling of metrics in
+ * config.
  *
  * @author anistor@redhat.com
  * @since 10.1.3
  */
-@DefaultFactoryFor(classes = InfinispanMetricRegistry.class)
+@DefaultFactoryFor(classes = MetricsCollector.class)
 @Scope(Scopes.GLOBAL)
-public final class InfinispanMetricRegistryFactory implements ComponentFactory, AutoInstantiableFactory {
+public final class MetricsCollectorFactory implements ComponentFactory, AutoInstantiableFactory {
 
-   private static final Log log = LogFactory.getLog(InfinispanMetricRegistryFactory.class);
+   private static final Log log = LogFactory.getLog(MetricsCollectorFactory.class);
 
    @Inject
    GlobalConfiguration globalConfig;
@@ -35,13 +36,13 @@ public final class InfinispanMetricRegistryFactory implements ComponentFactory, 
       if (globalConfig.metrics().enabled()) {
          // try cautiously
          try {
-            // ensure microprofile config dependencies exist
+            // ensure microprofile config dependencies exist and static initialization either succeeds or fails early
             ConfigProvider.getConfig();
 
             // ensure microprofile metrics dependencies exist
             MetricRegistry registry = MetricRegistries.get(MetricRegistry.Type.VENDOR);
 
-            return new InfinispanMetricRegistry(registry);
+            return new MetricsCollector(registry);
          } catch (Throwable e) {
             // missing dependency
             log.debug("Microprofile metrics are not available due to missing classpath dependencies.", e);
