@@ -2,19 +2,28 @@ package org.infinispan.manager;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractGlobalComponentRegistry;
+import static org.infinispan.test.TestingUtil.getDefaultCacheName;
+import static org.infinispan.test.TestingUtil.getFirstLoader;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
+import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.v;
+import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.TestingUtil.withCacheManagers;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -28,6 +37,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
@@ -41,6 +51,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -60,10 +71,8 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestException;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -80,27 +89,41 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
       try {
          assertEquals(ComponentStatus.RUNNING, cm.getCache().getStatus());
-         assertTrue(cm.getCache().getName().equals(TestingUtil.getDefaultCacheName(cm)));
+         assertEquals(getDefaultCacheName(cm), cm.getCache().getName());
 
          expectException(CacheConfigurationException.class,
-                         () -> cm.defineConfiguration(TestingUtil.getDefaultCacheName(cm),
+                         () -> cm.defineConfiguration(getDefaultCacheName(cm),
                                                       new ConfigurationBuilder().build()));
 
          expectException(CacheConfigurationException.class, () -> cm.getCache("non-existent-cache"));
       } finally {
-         TestingUtil.killCacheManagers(cm);
+         killCacheManagers(cm);
+      }
+   }
+
+   public void testDefaultCacheStartedAutomatically() {
+      EmbeddedCacheManager cm = createCacheManager(new ConfigurationBuilder());
+      try {
+         assertEquals(new HashSet<>(Arrays.asList(getDefaultCacheName(cm))), cm.getCacheNames());
+
+         ComponentRegistry cr = extractGlobalComponentRegistry(cm).getNamedComponentRegistry(getDefaultCacheName(cm));
+         assertEquals(ComponentStatus.RUNNING, cr.getStatus());
+         assertEquals(getDefaultCacheName(cm), cr.getCacheName());
+
+      } finally {
+         killCacheManagers(cm);
       }
    }
 
    public void testUnstartedCachemanager() {
-      withCacheManager(new CacheManagerCallable(createCacheManager(false)){
+      withCacheManager(new CacheManagerCallable(createCacheManager(false)) {
          @Override
          public void call() {
-            assertTrue(cm.getStatus().equals(ComponentStatus.INSTANTIATED));
+            assertEquals(ComponentStatus.INSTANTIATED, cm.getStatus());
             assertFalse(cm.getStatus().allowInvocations());
             Cache<Object, Object> cache = cm.getCache();
-            cache.put("k","v");
-            assertTrue(cache.get("k").equals("v"));
+            cache.put("k", "v");
+            assertEquals(cache.get("k"), "v");
          }
       });
    }
@@ -113,7 +136,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          cm.defineConfiguration("aCache", c.build());
          cm.defineConfiguration("aCache", c.build());
       } finally {
-         TestingUtil.killCacheManagers(cm);
+         killCacheManagers(cm);
       }
    }
 
@@ -137,7 +160,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          assertEquals(ComponentStatus.TERMINATED, c2.getStatus());
          assertEquals(ComponentStatus.TERMINATED, c3.getStatus());
       } finally {
-         TestingUtil.killCacheManagers(cm);
+         killCacheManagers(cm);
       }
    }
 
@@ -221,7 +244,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          cache.stop();
          cache.stop();
       } finally {
-         TestingUtil.killCacheManagers(localCacheManager);
+         killCacheManagers(localCacheManager);
       }
    }
 
@@ -233,7 +256,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          localCacheManager.stop();
          localCacheManager.stop();
       } finally {
-         TestingUtil.killCacheManagers(localCacheManager);
+         killCacheManagers(localCacheManager);
       }
    }
 
@@ -247,7 +270,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          localCacheManager.stop();
          localCacheManager.getCache();
       } finally {
-         TestingUtil.killCacheManagers(localCacheManager);
+         killCacheManagers(localCacheManager);
       }
    }
 
@@ -261,24 +284,24 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          localCacheManager.stop();
          cache.put("k", "v2");
       } finally {
-         TestingUtil.killCacheManagers(localCacheManager);
+         killCacheManagers(localCacheManager);
       }
    }
 
    public void testConcurrentCacheManagerStopAndGetCache() throws Exception {
-      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalBuilder.defaultCacheName(CACHE_NAME);
-      EmbeddedCacheManager manager = createCacheManager(globalBuilder, new ConfigurationBuilder(), false);
+      EmbeddedCacheManager manager = createCacheManager(false);
       CompletableFuture<Void> cacheStartBlocked = new CompletableFuture<>();
       CompletableFuture<Void> cacheStartResumed = new CompletableFuture<>();
       CompletableFuture<Void> managerStopBlocked = new CompletableFuture<>();
       CompletableFuture<Void> managerStopResumed = new CompletableFuture<>();
       try {
          manager.addListener(new MyListener(CACHE_NAME, cacheStartBlocked, cacheStartResumed));
-         TestingUtil.replaceComponent(manager, GlobalMarshaller.class,
-                                      new LatchGlobalMarshaller(managerStopBlocked, managerStopResumed), true);
+         replaceComponent(manager, GlobalMarshaller.class,
+                          new LatchGlobalMarshaller(managerStopBlocked, managerStopResumed), true);
+         // Need to start after replacing the global marshaller because we can't delegate to the old GlobalMarshaller
+         manager.start();
 
-         Future<?> cacheStartFuture = fork(() -> manager.getCache(CACHE_NAME));
+         Future<?> cacheStartFuture = fork(() -> manager.createCache(CACHE_NAME, new ConfigurationBuilder().build()));
          cacheStartBlocked.get(10, SECONDS);
 
          Future<?> managerStopFuture = fork(() -> manager.stop());
@@ -299,7 +322,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          managerStopBlocked.complete(null);
          managerStopResumed.complete(null);
 
-         TestingUtil.killCacheManagers(manager);
+         killCacheManagers(manager);
       }
    }
 
@@ -379,12 +402,12 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          public void call() {
             EmbeddedCacheManager cm1 = cms[0];
             EmbeddedCacheManager cm2 = cms[1];
-            TestingUtil.waitForNoRebalance(cm1.getCache(), cm2.getCache());
+            waitForNoRebalance(cm1.getCache(), cm2.getCache());
             Cache<Object, Object> c1 = cm1.getCache();
 
             GlobalConfiguration globalCfg = cm1.getCacheManagerConfiguration();
             Configuration cfg = c1.getCacheConfiguration();
-            TestingUtil.killCacheManagers(cm1);
+            killCacheManagers(cm1);
             globalCfg = new GlobalConfigurationBuilder().read(globalCfg).build();
 
             withCacheManager(new CacheManagerCallable(
@@ -495,8 +518,8 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
             Cache<String, String> cache1 = manager1.getCache("cache", true);
             Cache<String, String> cache2 = manager2.getCache("cache", true);
-            assertTrue(cache1 != null);
-            assertTrue(cache2 != null);
+            assertNotNull(cache1);
+            assertNotNull(cache2);
             assertTrue(manager1.cacheExists("cache"));
             assertTrue(manager2.cacheExists("cache"));
             cache1.put(k(m, 1), v(m, 1));
@@ -527,11 +550,11 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    private DummyInMemoryStore getDummyStore(Cache<String, String> cache1) {
-      return (DummyInMemoryStore) TestingUtil.getFirstLoader(cache1);
+      return (DummyInMemoryStore) getFirstLoader(cache1);
    }
 
    private DataContainer getDataContainer(Cache<String, String> cache) {
-      return TestingUtil.extractComponent(cache, InternalDataContainer.class);
+      return extractComponent(cache, InternalDataContainer.class);
    }
 
    public static class UnreliableCacheStore implements ExternalStore {

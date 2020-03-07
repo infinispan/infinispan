@@ -155,7 +155,7 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
          value.setAge(i + 25);
          cache(0).put(i, value);
          if (i == 4)
-            addClusterEnabledCacheManager(buildConfiguration());
+            addClusterEnabledCacheManager(QueryTestSCI.INSTANCE, buildConfiguration());
       }
 
       assertEquals(6, joined.size());

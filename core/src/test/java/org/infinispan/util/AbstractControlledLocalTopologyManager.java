@@ -2,8 +2,10 @@ package org.infinispan.util;
 
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -32,6 +34,21 @@ import org.infinispan.util.concurrent.CompletableFutures;
 public abstract class AbstractControlledLocalTopologyManager implements LocalTopologyManager {
 
    private final LocalTopologyManager delegate;
+
+   @Inject
+   void inject(BasicComponentRegistry bcr) {
+      bcr.wireDependencies(delegate, false);
+   }
+
+   @Start
+   void start() {
+      TestingUtil.startComponent(delegate);
+   }
+
+   @Stop
+   void stop() {
+      TestingUtil.stopComponent(delegate);
+   }
 
    protected AbstractControlledLocalTopologyManager(LocalTopologyManager delegate) {
       this.delegate = delegate;

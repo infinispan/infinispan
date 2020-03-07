@@ -45,7 +45,7 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
             public void call() {
                Directory directory = null;
                try {
-                  Cache cache = cacheManager.getCache();
+                  Cache cache = cacheManager.getCache(CACHE_NAME);
                   directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
                } finally {
                   if(directory != null) {
@@ -71,7 +71,7 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
             @Override
             public void call() {
                try {
-                  Cache cache = cacheManager.getCache();
+                  Cache cache = cacheManager.getCache(CACHE_NAME);
                   DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
                } catch(Exception ex) {
                   assert ex instanceof CacheException;
@@ -92,7 +92,7 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
          TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
             @Override
             public void call() throws Exception {
-               Cache cache = cacheManager.getCache();
+               Cache cache = cacheManager.getCache(CACHE_NAME);
                Directory directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
 
                TestHelper.createIndex(rootDir, indexName, elementCount, true);
@@ -100,7 +100,7 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
 
                String[] fileNamesFromIndexDir = TestHelper.getFileNamesFromDir(rootDir, indexName);
 
-               LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.getFirstLoader(cacheManager.getCache());
+               LuceneCacheLoader cacheLoader = TestingUtil.getFirstLoader(cacheManager.getCache(CACHE_NAME));
                for(String fileName : fileNamesFromIndexDir) {
                   FileCacheKey key = new FileCacheKey(indexName, fileName, -1);
                   assert cacheLoader.contains(key);

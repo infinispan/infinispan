@@ -80,7 +80,7 @@ public class TestCacheManagerFactory {
       return defaultCacheManager;
    }
 
-   private static DefaultCacheManager newDefaultCacheManager(boolean start, ConfigurationBuilderHolder holder) {
+   public static DefaultCacheManager newDefaultCacheManager(boolean start, ConfigurationBuilderHolder holder) {
       GlobalConfigurationBuilder gcb = holder.getGlobalConfigurationBuilder();
       if (holder.getDefaultConfigurationBuilder() != null) {
          amendDefaultCache(gcb);

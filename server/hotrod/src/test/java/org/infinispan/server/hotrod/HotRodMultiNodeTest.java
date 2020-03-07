@@ -40,15 +40,15 @@ public abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
          EmbeddedCacheManager cm = createCacheManager();
          cacheManagers.add(cm);
       }
-      defineCaches(cacheName());
+      startCaches(cacheName());
    }
 
    protected EmbeddedCacheManager createCacheManager() {
       return TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration());
    }
 
-   void defineCaches(String cacheName) {
-      cacheManagers.forEach(cm -> cm.defineConfiguration(cacheName, createCacheConfig().build()));
+   void startCaches(String cacheName) {
+      cacheManagers.forEach(cm -> cm.createCache(cacheName, createCacheConfig().build()));
    }
 
    @BeforeClass(alwaysRun = true)
@@ -56,7 +56,7 @@ public abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    public void createBeforeClass() throws Throwable {
       super.createBeforeClass();
 
-      Integer nextServerPort = serverPort();
+      int nextServerPort = serverPort();
       for (int i = 0; i < nodeCount(); i++) {
          hotRodServers.add(startTestHotRodServer(cacheManagers.get(i), nextServerPort));
          nextServerPort += 50;
@@ -90,7 +90,7 @@ public abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    protected HotRodServer startClusteredServer(int port) {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration());
       cacheManagers.add(cm);
-      cm.defineConfiguration(cacheName(), createCacheConfig().build());
+      cm.createCache(cacheName(), createCacheConfig().build());
 
       HotRodServer newServer;
       try {

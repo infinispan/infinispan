@@ -114,8 +114,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       String otherJmxDomain = JMX_DOMAIN + "_" + m.getName();
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
       gc.jmx().enabled(true).domain(otherJmxDomain).mBeanServerLookup(mBeanServerLookup);
-      ConfigurationBuilder c = new ConfigurationBuilder();
-      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManager(gc, c);
+      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManager(gc, null);
       ObjectName otherName = getCacheManagerObjectName(otherJmxDomain);
       try {
          assertEquals("0", mBeanServerLookup.getMBeanServer().getAttribute(otherName, "CreatedCacheCount"));
@@ -131,8 +130,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
       gc.jmx().enabled(true).domain(otherJmxDomain).mBeanServerLookup(mBeanServerLookup);
       gc.cacheManagerName("Hibernate2LC");
-      ConfigurationBuilder c = new ConfigurationBuilder();
-      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManager(gc, c);
+      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManager(gc, null);
       try {
          ObjectName otherName = getCacheManagerObjectName(otherJmxDomain, "Hibernate2LC");
          assertEquals("0", mBeanServerLookup.getMBeanServer().getAttribute(otherName, "CreatedCacheCount"));

@@ -15,6 +15,6 @@ public class StrongCounterWithZeroCapacityNodesTest extends StrongCounterTest {
 
    @Override
    protected GlobalConfigurationBuilder configure(int nodeId) {
-      return GlobalConfigurationBuilder.defaultClusteredBuilder().zeroCapacityNode(nodeId % 2 == 0);
+      return GlobalConfigurationBuilder.defaultClusteredBuilder().zeroCapacityNode(nodeId % 2 == 1);
    }
 }
