@@ -7,6 +7,8 @@ import java.util.function.Consumer;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -19,6 +21,11 @@ import org.infinispan.metadata.Metadata;
  */
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractDelegatingInternalDataContainer<K, V> implements InternalDataContainer<K, V> {
+   @Inject
+   void inject(ComponentRegistry componentRegistry) {
+      componentRegistry.wireDependencies(delegate());
+   }
+
    protected abstract InternalDataContainer<K, V> delegate();
 
    @Override

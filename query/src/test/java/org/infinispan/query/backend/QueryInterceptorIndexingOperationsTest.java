@@ -12,8 +12,9 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -95,21 +96,30 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       final ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       builder.indexing().enable()
-            .addIndexedEntity(Entity1.class)
-            .addIndexedEntity(Entity2.class)
-            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, builder);
-      Configuration nonIndexed = nonIndexed();
-      cm.defineConfiguration("LuceneIndexesMetadata", nonIndexed);
-      cm.defineConfiguration("LuceneIndexesData", nonIndexed);
-      cm.defineConfiguration("LuceneIndexesLocking", nonIndexed);
-      return cm;
+             .addIndexedEntity(Entity1.class)
+             .addIndexedEntity(Entity2.class)
+             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+             .addProperty("lucene_version", "LUCENE_CURRENT");
+      ConfigurationBuilder nonIndexed = nonIndexed();
+
+      ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+      holder.getGlobalConfigurationBuilder()
+            .clusteredDefault()
+            .defaultCacheName(TestCacheManagerFactory.DEFAULT_CACHE_NAME)
+            .serialization().addContextInitializer(QueryTestSCI.INSTANCE);
+
+      holder.getNamedConfigurationBuilders().put(TestCacheManagerFactory.DEFAULT_CACHE_NAME, builder);
+      holder.getNamedConfigurationBuilders().put(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, nonIndexed);
+      holder.getNamedConfigurationBuilders().put(InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME, nonIndexed);
+      holder.getNamedConfigurationBuilders().put(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, nonIndexed);
+      return TestCacheManagerFactory.newDefaultCacheManager(true, holder);
    }
 
-   private Configuration nonIndexed() {
-      return new ConfigurationBuilder().indexing().enabled(false)
-              .addProperty("lucene_version", "LUCENE_CURRENT").build();
+   private ConfigurationBuilder nonIndexed() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.indexing().enabled(false)
+             .addProperty("lucene_version", "LUCENE_CURRENT");
+      return builder;
    }
 
    interface Operation {

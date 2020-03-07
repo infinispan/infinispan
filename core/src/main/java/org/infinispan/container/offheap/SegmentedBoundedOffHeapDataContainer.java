@@ -76,7 +76,6 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
 
    @Start
    public void start() {
-      componentRegistry.wireDependencies(dataContainer);
       dataContainer.start();
    }
 

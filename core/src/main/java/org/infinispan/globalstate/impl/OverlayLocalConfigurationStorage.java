@@ -77,6 +77,7 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
             Configuration configuration = entry.getValue().build();
             configurations.put(name, configuration);
          }
+         log.tracef("Loaded configurations from local persistence: %s", configurations.keySet());
          return configurations;
       } catch (FileNotFoundException e) {
          // Ignore

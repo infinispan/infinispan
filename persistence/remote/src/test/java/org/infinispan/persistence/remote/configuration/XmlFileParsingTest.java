@@ -4,7 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
 import org.infinispan.commons.util.Version;
@@ -52,9 +51,9 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(store.async().enabled());
    }
 
-   private StoreConfiguration buildCacheManagerWithCacheStore(final String config) throws IOException {
+   private StoreConfiguration buildCacheManagerWithCacheStore(final String config) {
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      cacheManager = TestCacheManagerFactory.fromStream(is);
+      cacheManager = TestCacheManagerFactory.fromStream(is, true, false);
       assert cacheManager.getDefaultCacheConfiguration().persistence().stores().size() == 1;
       return cacheManager.getDefaultCacheConfiguration().persistence().stores().get(0);
    }

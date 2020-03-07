@@ -1,5 +1,6 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -21,12 +22,14 @@ import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseClusteredReadCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.functional.FunctionalMap;
@@ -35,15 +38,16 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.ControlledRpcManager;
@@ -94,8 +98,6 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       cb.clustering().cacheMode(CacheMode.DIST_SYNC).hash().consistentHashFactory(chFactory).numSegments(2);
       cb.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       createCluster(TestDataSCI.INSTANCE, cb, 3);
-      // make sure the caches are started in proper order
-      for (int i = 0; i < 3; ++i) cache(i);
    }
 
    @Test(dataProvider = "operations")
@@ -131,7 +133,9 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       // node 2 should become backup for both segment 0 (new) and segment 1 (already there)
       chFactory.setOwnerIndexes(new int[][]{{0, 2}, {0, 2}});
 
-      addClusterEnabledCacheManager(cb);
+      EmbeddedCacheManager cm = createClusteredCacheManager(false, GlobalConfigurationBuilder.defaultClusteredBuilder(),
+                                                            cb, new TransportFlags());
+      registerCacheManager(cm);
       Future<?> newNode = fork(() -> cache(3));
 
       // block sending segment 0 to node 2

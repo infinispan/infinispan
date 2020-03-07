@@ -2,6 +2,7 @@ package org.infinispan.tx.recovery;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -13,22 +14,20 @@ public class RecoveryWithCustomCacheDistTest extends RecoveryWithDefaultCacheDis
 
    private static final String CUSTOM_CACHE = "customCache";
 
-   private ConfigurationBuilder recoveryCache;
+   private ConfigurationBuilder recoveryCacheConfig;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       configuration = super.configure();
       configuration.transaction().recovery().recoveryInfoCacheName(CUSTOM_CACHE);
 
-      registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(configuration));
-      registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(configuration));
-
-      recoveryCache = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
-      recoveryCache.transaction().transactionManagerLookup(null);
+      recoveryCacheConfig = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
+      recoveryCacheConfig.transaction().transactionManagerLookup(null);
       // Explicitly disable recovery in recovery cache per se.
-      recoveryCache.transaction().recovery().disable();
-      manager(0).defineConfiguration(CUSTOM_CACHE, recoveryCache.build());
-      manager(1).defineConfiguration(CUSTOM_CACHE, recoveryCache.build());
+      recoveryCacheConfig.transaction().recovery().disable();
+
+      startCacheManager();
+      startCacheManager();
 
       manager(0).startCaches(getDefaultCacheName(), CUSTOM_CACHE);
       manager(1).startCaches(getDefaultCacheName(), CUSTOM_CACHE);
@@ -44,7 +43,12 @@ public class RecoveryWithCustomCacheDistTest extends RecoveryWithDefaultCacheDis
    }
 
    @Override
-   protected void defineRecoveryCache(int cacheManagerIndex) {
-      manager(1).defineConfiguration(CUSTOM_CACHE, recoveryCache.build());
+   protected void startCacheManager() {
+      ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+      holder.getGlobalConfigurationBuilder().clusteredDefault().defaultCacheName(getDefaultCacheName());
+      holder.getNamedConfigurationBuilders().put(getDefaultCacheName(), configuration);
+      holder.getNamedConfigurationBuilders().put(CUSTOM_CACHE, recoveryCacheConfig);
+
+      registerCacheManager(TestCacheManagerFactory.createClusteredCacheManager(holder));
    }
 }

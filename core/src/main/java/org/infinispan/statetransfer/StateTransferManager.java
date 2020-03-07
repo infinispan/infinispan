@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.configuration.cache.StateTransferConfiguration;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.responses.Response;
@@ -40,6 +41,11 @@ public interface StateTransferManager {
 
    void start() throws Exception;
 
+   /**
+    * Wait for the local cache to receive initial state from the other members.
+    *
+    * <p>Does nothing if {@link StateTransferConfiguration#awaitInitialTransfer()} is disabled.</p>
+    */
    void waitForInitialStateTransferToComplete();
 
    void stop();

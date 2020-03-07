@@ -127,7 +127,7 @@ public class HotRodDistributionTest extends HotRodMultiNodeTest {
       // Cache contents not cleared between methods to avoid deleting
       // topology information, so just use a different cache
       String newCacheName = "dist-size";
-      defineCaches(newCacheName);
+      startCaches(newCacheName);
       List<HotRodClient> newClients = createClients(newCacheName);
       try {
          TestSizeResponse sizeStart = newClients.get(0).size();

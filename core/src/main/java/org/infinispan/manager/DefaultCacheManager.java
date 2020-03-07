@@ -904,8 +904,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       // Get the XML/programmatically defined caches
       Set<String> names = new HashSet<>(configurationManager.getDefinedCaches());
       // Add the caches created dynamically without explicit config
-      // Since caches could be modified dynamically, make a safe copy of keys
-      names.addAll(Immutables.immutableSetConvert(caches.keySet()));
+      names.addAll(caches.keySet());
       InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
       internalCacheRegistry.filterPrivateCaches(names);
       if (names.isEmpty())

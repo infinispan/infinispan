@@ -86,7 +86,7 @@ public class TopologyManagementHelper {
             if (trace)
                log.tracef("Attempting to execute command on self: %s", command);
             bcr.wireDependencies(command, true);
-            responseStage = invokeAsync(command).handle((v, t) -> makeResponse(v, t, transport.getAddress()));
+            responseStage = invokeAsync(command).thenApply(v -> makeResponse(v, null, transport.getAddress()));
          } catch (Throwable t) {
             throw CompletableFutures.asCompletionException(t);
          }

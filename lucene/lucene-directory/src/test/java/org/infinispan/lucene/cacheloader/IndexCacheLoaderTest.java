@@ -31,8 +31,9 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "lucene.cachestore.IndexCacheLoaderTest")
 public class IndexCacheLoaderTest extends AbstractInfinispanTest {
+   public static final String CACHE_NAME = "testCache";
+   private static final int SCALE = 10;
 
-   private static final int SCALE = 600;
    protected final String parentDir = CommonsTestingUtil.tmpDirectory(this.getClass());
    protected File rootDir = null;
 
@@ -87,7 +88,7 @@ public class IndexCacheLoaderTest extends AbstractInfinispanTest {
       TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
          @Override
          public void call() throws IOException {
-            Cache<Object, Object> cache = cacheManager.getCache();
+            Cache<Object, Object> cache = cacheManager.getCache(CACHE_NAME);
             Directory directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
 
             TestHelper.verifyOnDirectory(directory, termsAdded, inverted);
@@ -96,14 +97,17 @@ public class IndexCacheLoaderTest extends AbstractInfinispanTest {
    }
 
    protected EmbeddedCacheManager initializeInfinispan(File rootDir) {
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager();
+
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder
-         .persistence()
+            .persistence()
             .addStore(LuceneLoaderConfigurationBuilder.class)
-               .autoChunkSize(1024)
-               .preload(true)
-               .location(rootDir.getAbsolutePath())
-               .segmented(false);
-      return TestCacheManagerFactory.createCacheManager(builder);
+            .autoChunkSize(1024)
+            .preload(true)
+            .location(rootDir.getAbsolutePath())
+            .segmented(false);
+      manager.defineConfiguration(CACHE_NAME, builder.build());
+      return manager;
    }
 }

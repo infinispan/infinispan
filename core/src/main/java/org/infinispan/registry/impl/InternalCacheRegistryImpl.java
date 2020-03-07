@@ -19,6 +19,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * InternalCacheRegistryImpl.
@@ -28,6 +30,8 @@ import org.infinispan.registry.InternalCacheRegistry;
  */
 @Scope(Scopes.GLOBAL)
 public class InternalCacheRegistryImpl implements InternalCacheRegistry {
+   private static final Log log = LogFactory.getLog(InternalCacheRegistryImpl.class);
+
    @Inject EmbeddedCacheManager cacheManager;
    @Inject CacheManagerJmxRegistration cacheManagerJmxRegistration;
    @Inject ConfigurationManager configurationManager;
@@ -44,6 +48,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    // Synchronized to prevent users from registering the same configuration at the same time
    @Override
    public synchronized void registerInternalCache(String name, Configuration configuration, EnumSet<Flag> flags) {
+      log.debugf("Registering internal cache %s %s", name, flags);
       boolean configPresent = configurationManager.getConfiguration(name, true) != null;
       // check if it already has been defined. Currently we don't support existing user-defined configuration.
       if ((flags.contains(Flag.EXCLUSIVE) || !internalCaches.containsKey(name)) && configPresent) {
@@ -83,6 +88,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
 
    @Override
    public synchronized void unregisterInternalCache(String name) {
+      log.debugf("Unregistering internal cache %s", name);
       if (isInternalCache(name)) {
          Cache<Object, Object> cache = cacheManager.getCache(name, false);
          if (cache != null) {
