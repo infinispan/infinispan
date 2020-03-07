@@ -232,7 +232,8 @@ public class Server implements ServerManagement, AutoCloseable {
          }
 
          // then load the user configuration
-         configurationBuilderHolder = parser.parse(config, configurationBuilderHolder);
+         parser.parse(config, configurationBuilderHolder);
+         log.tracef("Parsed cache configurations: %s", configurationBuilderHolder.getNamedConfigurationBuilders().keySet());
 
          // Set the operation handler on all endpoints
          ServerAdminOperationsHandler adminOperationsHandler = new ServerAdminOperationsHandler(defaultsHolder);

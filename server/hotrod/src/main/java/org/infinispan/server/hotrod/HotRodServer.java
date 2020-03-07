@@ -284,26 +284,14 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    @Override
    protected void startTransport() {
-      // Start predefined caches
-      preStartCaches();
-
       super.startTransport();
    }
 
    @Override
-   protected void startDefaultCache() {
-      if (hasDefaultCache) {
-         getCacheInfo("", (byte) 0, 0, false);
-      }
-   }
+   protected void startCaches() {
+      super.startCaches();
 
-   private void preStartCaches() {
-      // Start defined caches to avoid issues with lazily started caches
-      // Skip internal caches
-      for (String cacheName : cacheManager.getCacheNames()) {
-         getCacheInfo(cacheName, (byte) 0, 0, false);
-      }
-
+      // Periodically update cache info about potentially blocking operations
       scheduledExecutor.scheduleWithFixedDelay(new CacheInfoUpdateTask(),
                                                LISTENERS_CHECK_INTERVAL, LISTENERS_CHECK_INTERVAL, TimeUnit.SECONDS);
    }

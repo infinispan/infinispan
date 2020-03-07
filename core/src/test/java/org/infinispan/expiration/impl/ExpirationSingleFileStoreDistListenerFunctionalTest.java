@@ -1,6 +1,7 @@
 package org.infinispan.expiration.impl;
 
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 
 import java.util.concurrent.TimeUnit;
 
@@ -10,9 +11,10 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Factory;
@@ -70,14 +72,18 @@ public class ExpirationSingleFileStoreDistListenerFunctionalTest extends Expirat
 
    @Override
    protected EmbeddedCacheManager createCacheManager(ConfigurationBuilder builder) {
-      extraManager = TestCacheManagerFactory.createClusteredCacheManager(builder);
+      extraManager = createClusteredCacheManager(false, GlobalConfigurationBuilder.defaultClusteredBuilder(),
+                                                 builder, new TransportFlags());
       // Inject our time service into the new CacheManager as well
       TestingUtil.replaceComponent(extraManager, TimeService.class, timeService, true);
       extraCache = extraManager.getCache();
-      SingleFileStoreConfigurationBuilder sfsBuilder = (SingleFileStoreConfigurationBuilder) builder.persistence().stores().get(0);
+      SingleFileStoreConfigurationBuilder sfsBuilder =
+            (SingleFileStoreConfigurationBuilder) builder.persistence().stores().get(0);
       // Make sure each cache writes to a different location
       sfsBuilder.location(tmpDirectory(this.getClass().getSimpleName() + "2"));
-      EmbeddedCacheManager returned = TestCacheManagerFactory.createClusteredCacheManager(builder);
+      EmbeddedCacheManager returned =
+            createClusteredCacheManager(false, GlobalConfigurationBuilder.defaultClusteredBuilder(),
+                                        builder, new TransportFlags());
       // Unfortunately we can't reinject timeservice once a cache has been started, thus we have to inject
       // here as well, since we need the cache to verify the cluster was formed
       TestingUtil.replaceComponent(returned, TimeService.class, timeService, true);

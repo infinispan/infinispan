@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "statetransfer.ReplCommandForwardingTest")
 @CleanupAfterMethod
 public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
+   private static final String CACHE_NAME = "testCache";
 
    @Override
    protected void createCacheManagers() {
@@ -60,21 +61,20 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
    }
 
    public void testForwardToJoinerNonTransactional() throws Exception {
-      EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(buildConfig(PutKeyValueCommand.class));
-      final Cache<Object, Object> c1 = cm1.getCache();
+      EmbeddedCacheManager cm1 = addClusterEnabledCacheManager();
+      final Cache<Object, Object> c1 = cm1.createCache(CACHE_NAME, buildConfig(PutKeyValueCommand.class).build());
       DelayInterceptor di1 = findInterceptor(c1, DelayInterceptor.class);
       int initialTopologyId = c1.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
 
-      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(PutKeyValueCommand.class));
-      Cache<Object, Object> c2 = cm2.getCache();
+      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager();
+      Cache<Object, Object> c2 = cm2.createCache(CACHE_NAME, buildConfig(PutKeyValueCommand.class).build());
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 4, c1, c2);
 
       // Start a 3rd node, but start a different cache there so that the topology stays the same.
       // Otherwise the put command blocked on node 1 could block the view message (as both are broadcast by node 0).
-      EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(PutKeyValueCommand.class));
-      cm3.defineConfiguration("differentCache", getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC).build());
-      cm3.getCache("differentCache");
+      EmbeddedCacheManager cm3 = addClusterEnabledCacheManager();
+      cm3.createCache("differentCache", getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC).build());
 
       Future<Object> f = fork(() -> {
          log.tracef("Initiating a put command on %s", c1);
@@ -87,7 +87,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       di2.waitUntilBlocked(1);
 
       // c3 joins the cache, topology id changes
-      Cache<Object, Object> c3 = cm3.getCache();
+      Cache<Object, Object> c3 = cm3.createCache(CACHE_NAME, buildConfig(PutKeyValueCommand.class).build());
       DelayInterceptor di3 = findInterceptor(c3, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 8, c1, c2, c3);
 

@@ -64,7 +64,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       registerAdminOperationsHandler();
 
       // Start default cache
-      startDefaultCache();
+      startCaches();
 
       if (configuration.startTransport())
          startTransport();
@@ -131,6 +131,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    }
 
    protected void startTransport() {
+      log.debugf("Starting Netty transport on %s:%s", configuration.host(), configuration.port());
       InetSocketAddress address = new InetSocketAddress(configuration.host(), configuration.port());
       transport = new NettyTransport(address, configuration, getQualifiedName(), cacheManager);
       transport.initializeHandler(getInitializer());
@@ -243,10 +244,15 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       return configuration;
    }
 
-   protected void startDefaultCache() {
+   protected void startCaches() {
+      // DefaultCacheManager already starts all the defined/persisted/global state caches
+      // But the default cache may not be defined (e.g. it might be using a wildcard template)
       String name = defaultCacheName();
       if (name != null) {
+         log.debugf("Starting default cache: %s", configuration.defaultCacheName());
          cacheManager.getCache(name);
+      } else {
+         log.debugf("No default cache to start");
       }
    }
 

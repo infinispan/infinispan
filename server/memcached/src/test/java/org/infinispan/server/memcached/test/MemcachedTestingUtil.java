@@ -8,12 +8,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.memcached.MemcachedDecoder;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.infinispan.server.memcached.logging.Log;
-import org.infinispan.commons.test.TestResourceTracker;
 
 import io.netty.channel.ChannelInboundHandler;
 import net.spy.memcached.DefaultConnectionFactory;
@@ -73,7 +73,7 @@ public class MemcachedTestingUtil {
          }
 
          @Override
-         protected void startDefaultCache() {
+         protected void startCaches() {
             getCacheManager().getCache(cacheName);
          }
 

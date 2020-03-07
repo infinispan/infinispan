@@ -1,5 +1,6 @@
 package org.infinispan.distribution.rehash;
 
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
@@ -20,6 +21,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.BlockingInterceptor;
@@ -35,6 +37,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.TransactionMode;
@@ -123,7 +126,12 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       } else {
          stateTransferLatch.countDown();
       }
-      addClusterEnabledCacheManager(DistributionRehashSCI.INSTANCE, c);
+
+      // Add a new cache manager, but don't start it yet
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.serialization().addContextInitializer(DistributionRehashSCI.INSTANCE);
+      EmbeddedCacheManager cm = createClusteredCacheManager(false, globalBuilder, c, new TransportFlags());
+      registerCacheManager(cm);
       addBlockingLocalTopologyManager(manager(2), checkPoint, preJoinTopologyId);
 
 

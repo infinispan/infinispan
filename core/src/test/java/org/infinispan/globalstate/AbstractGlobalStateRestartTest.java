@@ -17,6 +17,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -26,9 +27,11 @@ import org.infinispan.topology.PersistentUUIDManager;
 
 public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManagersTest {
 
-   protected abstract int getClusterSize();
-
    public static int DATA_SIZE = 100;
+
+   private static final String CACHE_NAME = "testCache";
+
+   protected abstract int getClusterSize();
 
    @Override
    protected boolean cleanupAfterMethod() {
@@ -46,7 +49,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       createStatefulCacheManagers(true, -1, false);
    }
 
-   protected void createStatefulCacheManagers(boolean clear, int extraneousNodePosition, boolean reverse) throws Throwable {
+   protected void createStatefulCacheManagers(boolean clear, int extraneousNodePosition, boolean reverse) {
       int totalNodes = getClusterSize() + ((extraneousNodePosition < 0) ? 0 : 1);
       int node = reverse ? getClusterSize() - 1 : 0;
       int step = reverse ? -1 : 1;
@@ -71,7 +74,8 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       ConfigurationBuilder config = new ConfigurationBuilder();
       applyCacheManagerClusteringConfiguration(config);
       config.persistence().addSingleFileStore().location(stateDirectory);
-      addClusterEnabledCacheManager(global, config);
+      EmbeddedCacheManager manager = addClusterEnabledCacheManager(global, null);
+      manager.defineConfiguration(CACHE_NAME, config.build());
    }
 
    protected abstract void applyCacheManagerClusteringConfiguration(ConfigurationBuilder config);
@@ -79,10 +83,10 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
    protected void shutdownAndRestart(int extraneousNodePosition, boolean reverse) throws Throwable {
       Map<JGroupsAddress, PersistentUUID> addressMappings = createInitialCluster();
 
-      ConsistentHash oldConsistentHash = cache(0).getAdvancedCache().getDistributionManager().getWriteConsistentHash();
+      ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
 
       // Shutdown the cache cluster-wide
-      cache(0).shutdown();
+      cache(0, CACHE_NAME).shutdown();
 
       TestingUtil.killCacheManagers(this.cacheManagers);
 
@@ -104,13 +108,13 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       switch (extraneousNodePosition) {
          case -1: {
             // Healthy cluster
-            waitForClusterToForm();
+            waitForClusterToForm(CACHE_NAME);
 
             checkClusterRestartedCorrectly(addressMappings);
             checkData();
 
             ConsistentHash newConsistentHash =
-                  cache(0).getAdvancedCache().getDistributionManager().getWriteConsistentHash();
+                  advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
             PersistentUUIDManager persistentUUIDManager = TestingUtil.extractGlobalComponent(manager(0), PersistentUUIDManager.class);
             assertEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager);
             break;
@@ -119,10 +123,11 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
             // Coordinator without state, all other nodes will break
             for(int i = 1; i < cacheManagers.size(); i++) {
                try {
-                  cache(i);
+                  cache(i, CACHE_NAME);
                   fail("Cache with state should not have joined coordinator without state");
                } catch (CacheException e) {
                   // Ignore
+                  log.debugf("Got expected exception: %s", e);
                }
             }
             break;
@@ -130,7 +135,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
          default: {
             // Other node without state
             try {
-               cache(extraneousNodePosition);
+               cache(extraneousNodePosition, CACHE_NAME);
                fail("Cache without state should not have joined coordinator with state");
             } catch (CacheException e) {
                // Ignore
@@ -152,20 +157,20 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
          // Ensure that nodes have the old UUID
          assertEquals(addressIterator.next().getValue(), ltm.getPersistentUUID());
          // Ensure that rebalancing is enabled for the cache
-         assertTrue(ltm.isCacheRebalancingEnabled(cache(0).getName()));
+         assertTrue(ltm.isCacheRebalancingEnabled(CACHE_NAME));
       }
    }
 
    private void checkData() {
       // Ensure that the cache contains the right data
-      assertEquals(DATA_SIZE, cache(0).size());
+      assertEquals(DATA_SIZE, cache(0, CACHE_NAME).size());
       for (int i = 0; i < DATA_SIZE; i++) {
-         assertEquals(cache(0).get(String.valueOf(i)), String.valueOf(i));
+         assertEquals(cache(0, CACHE_NAME).get(String.valueOf(i)), String.valueOf(i));
       }
    }
 
    private Map<JGroupsAddress, PersistentUUID> createInitialCluster() {
-      waitForClusterToForm();
+      waitForClusterToForm(CACHE_NAME);
       Map<JGroupsAddress, PersistentUUID> addressMappings = new LinkedHashMap<>();
 
       for (int i = 0; i < getClusterSize(); i++) {
@@ -184,7 +189,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
    private void fillData() {
       // Fill some data
       for (int i = 0; i < DATA_SIZE; i++) {
-         cache(0).put(String.valueOf(i), String.valueOf(i));
+         cache(0, CACHE_NAME).put(String.valueOf(i), String.valueOf(i));
       }
    }
 

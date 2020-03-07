@@ -6,6 +6,7 @@ import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.rm;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 import java.util.List;
 import java.util.Set;
@@ -40,8 +41,8 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       waitForClusterToForm();
 
       //check that a default cache has been created
-      manager(0).getCacheNames().contains(getRecoveryCacheName());
-      manager(1).getCacheNames().contains(getRecoveryCacheName());
+      assertNotNull(manager(0).getCache(getRecoveryCacheName(), false));
+      assertNotNull(manager(1).getCache(getRecoveryCacheName(), false));
    }
 
    protected ConfigurationBuilder configure() {
@@ -117,8 +118,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       assert inDoubtTransactions.contains(t1_3.getXid());
 
       configuration.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      addClusterEnabledCacheManager(configuration);
-      defineRecoveryCache(1);
+      startCacheManager();
       TestingUtil.blockUntilViewsReceived(60000, cache(0), cache(1));
       EmbeddedTransaction t1_4 = beginAndSuspendTx(cache(1));
       prepareTransaction(t1_4);
@@ -153,7 +153,8 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       assertEquals(0, rm(cache(0)).getInDoubtTransactionInfo().size());
    }
 
-   protected void defineRecoveryCache(int cacheManagerIndex) {
+   protected void startCacheManager() {
+      addClusterEnabledCacheManager(configuration);
    }
 
    protected String getRecoveryCacheName() {

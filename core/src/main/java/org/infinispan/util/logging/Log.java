@@ -1630,11 +1630,11 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Error processing request %d@%s", id = 474)
-   void errorProcessingRequest(long requestId, org.jgroups.Address origin);
+   void errorProcessingRequest(long requestId, org.jgroups.Address origin, @Cause Throwable t);
 
    @LogMessage(level = ERROR)
    @Message(value = "Error processing response for request %d from %s", id = 475)
-   void errorProcessingResponse(long requestId, org.jgroups.Address sender);
+   void errorProcessingResponse(long requestId, org.jgroups.Address sender, @Cause Throwable t);
 
    @Message(value = "Timed out waiting for responses for request %d from %s", id = 476)
    TimeoutException requestTimedOut(long requestId, String targetsWithoutResponses);
@@ -1940,4 +1940,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "RELAY2 not found in ProtocolStack. Unable to do cross-site requests.", id = 571)
    CacheConfigurationException crossSiteUnavailable();
+
+   @Message(value = "Cannot recreate persisted configuration for cache '%s' because configuration %n%s%n is incompatible with the existing configuration %n%s", id = 573)
+   CacheConfigurationException incompatiblePersistedConfiguration(String cacheName, Configuration configuration, Configuration existing);
 }
