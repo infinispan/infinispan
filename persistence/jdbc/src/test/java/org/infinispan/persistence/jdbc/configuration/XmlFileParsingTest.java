@@ -48,7 +48,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       );
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      cacheManager = TestCacheManagerFactory.fromStream(is);
+      cacheManager = TestCacheManagerFactory.fromStream(is, true, false);
       assertEquals(1, cacheManager.getDefaultCacheConfiguration().persistence().stores().size());
       JdbcStringBasedStoreConfiguration store = (JdbcStringBasedStoreConfiguration) cacheManager.getDefaultCacheConfiguration().persistence().stores().get(0);
 

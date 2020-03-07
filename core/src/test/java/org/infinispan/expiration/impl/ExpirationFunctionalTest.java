@@ -11,11 +11,13 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.ControlledTimeService;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -54,6 +56,7 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       configure(builder);
+      // Create the cache manager, but don't start it until we replace the time service
       EmbeddedCacheManager cm = createCacheManager(builder);
       TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
       cache = cm.getCache();
@@ -64,9 +67,11 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager(ConfigurationBuilder builder) {
       if (builder.clustering().cacheMode().isClustered()) {
-         return TestCacheManagerFactory.createClusteredCacheManager(builder);
+         return TestCacheManagerFactory.createClusteredCacheManager(false,
+               GlobalConfigurationBuilder.defaultClusteredBuilder(), builder, new TransportFlags());
       } else {
-         return TestCacheManagerFactory.createCacheManager(builder);
+         return TestCacheManagerFactory.createCacheManager(new GlobalConfigurationBuilder().nonClusteredDefault(),
+                                                           builder, false);
       }
    }
 

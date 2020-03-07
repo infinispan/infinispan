@@ -94,7 +94,9 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          // Attempt to restart the second cache manager
          global2 = statefulGlobalBuilder(state2, false);
          EmbeddedCacheManager newCm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
-         expectException(EmbeddedCacheManagerStartupException.class, "(?s)org.infinispan.commons.CacheConfigurationException: ISPN000500: Cannot create clustered configuration for cache.*", () -> newCm2.start());
+         expectException(EmbeddedCacheManagerStartupException.class,
+                         "(?s)org.infinispan.commons.CacheConfigurationException: ISPN000500: Cannot create clustered configuration for cache.*",
+                         () -> newCm2.start());
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
       }

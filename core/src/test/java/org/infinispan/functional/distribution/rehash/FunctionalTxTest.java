@@ -1,6 +1,7 @@
 package org.infinispan.functional.distribution.rehash;
 
 import static org.infinispan.test.TestingUtil.withTx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -17,12 +18,14 @@ import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.DelegatingStateConsumer;
 import org.infinispan.statetransfer.StateChunk;
@@ -30,6 +33,7 @@ import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
@@ -108,7 +112,9 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
 
       chf.setOwnerIndexes(0, 2);
 
-      addClusterEnabledCacheManager(cb);
+      EmbeddedCacheManager cm = createClusteredCacheManager(false, GlobalConfigurationBuilder.defaultClusteredBuilder(),
+                                                            cb, new TransportFlags());
+      registerCacheManager(cm);
       Future<?> future = fork(() -> {
          cache(3);
       });
@@ -140,14 +146,17 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       BlockingStateConsumer bsc2 = TestingUtil.wrapComponent(cache(2), StateConsumer.class, BlockingStateConsumer::new);
 
       chf.setOwnerIndexes(0, 2);
-      addClusterEnabledCacheManager(cb);
+      EmbeddedCacheManager cm = createClusteredCacheManager(false, GlobalConfigurationBuilder.defaultClusteredBuilder(),
+                                                            cb, new TransportFlags());
+      registerCacheManager(cm);
       Future<?> future = fork(() -> {
          cache(3);
       });
 
       bsc2.await();
 
-      DistributionInfo distributionInfo = cache(2).getAdvancedCache().getDistributionManager().getCacheTopology().getDistribution("key");
+      DistributionInfo distributionInfo = cache(2).getAdvancedCache().getDistributionManager().getCacheTopology()
+                                                  .getDistribution("key");
       assertFalse(distributionInfo.isReadOwner());
       assertTrue(distributionInfo.isWriteBackup());
 

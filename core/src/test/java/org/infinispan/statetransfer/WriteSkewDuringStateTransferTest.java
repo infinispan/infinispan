@@ -4,6 +4,7 @@ import static org.infinispan.distribution.DistributionTestHelper.hasOwners;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.withTx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.infinispan.util.BlockingLocalTopologyManager.confirmTopologyUpdate;
 import static org.infinispan.util.logging.Log.CLUSTER;
 import static org.testng.AssertJUnit.assertEquals;
@@ -31,6 +32,7 @@ import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -41,6 +43,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.infinispan.util.BlockingLocalTopologyManager;
@@ -59,7 +62,7 @@ import org.testng.annotations.Test;
 public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest {
 
    private final List<BlockingLocalTopologyManager> topologyManagerList =
-         Collections.synchronizedList(new ArrayList<BlockingLocalTopologyManager>(4));
+         Collections.synchronizedList(new ArrayList<>(4));
 
    @AfterMethod(alwaysRun = true)
    public final void unblockAll() {
@@ -190,7 +193,11 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       newNode.controller = new NodeController();
       newNode.controller.interceptor = new ControlledCommandInterceptor();
       builder.customInterceptors().addInterceptor().index(0).interceptor(newNode.controller.interceptor);
-      EmbeddedCacheManager embeddedCacheManager = addClusterEnabledCacheManager(WriteSkewDuringStateTransferSCI.INSTANCE, builder);
+
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.serialization().addContextInitializer(WriteSkewDuringStateTransferSCI.INSTANCE);
+      EmbeddedCacheManager embeddedCacheManager = createClusteredCacheManager(false, globalBuilder, builder, new TransportFlags());
+      registerCacheManager(embeddedCacheManager);
       newNode.controller.topologyManager = replaceTopologyManager(embeddedCacheManager);
 
       newNode.controller.interceptor.addAction(new Action() {
@@ -225,7 +232,8 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       });
 
       newNode.joinerFuture = fork(() -> {
-         waitForClusterToForm();
+         // Starts the default cache
+         embeddedCacheManager.start();
          return null;
       });
       return newNode;

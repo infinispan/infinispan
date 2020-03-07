@@ -1411,7 +1411,7 @@ public class JGroupsTransport implements Transport {
             invocationHandler.handleFromCluster(fromJGroupsAddress(src), command, reply, deliverOrder);
          }
       } catch (Throwable t) {
-         CLUSTER.errorProcessingRequest(requestId, src);
+         CLUSTER.errorProcessingRequest(requestId, src, t);
          Exception e = t instanceof Exception ? ((Exception) t) : new CacheException(t);
          sendResponse(src, new ExceptionResponse(e), requestId, null);
       }
@@ -1434,7 +1434,7 @@ public class JGroupsTransport implements Transport {
          Address address = fromJGroupsAddress(src);
          requests.addResponse(requestId, address, response);
       } catch (Throwable t) {
-         CLUSTER.errorProcessingResponse(requestId, src);
+         CLUSTER.errorProcessingResponse(requestId, src, t);
       }
    }
 

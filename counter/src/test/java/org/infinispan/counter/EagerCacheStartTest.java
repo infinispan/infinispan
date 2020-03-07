@@ -1,8 +1,7 @@
 package org.infinispan.counter;
 
-import static org.testng.AssertJUnit.assertFalse;
-
-import java.util.concurrent.TimeUnit;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterType;
@@ -17,18 +16,14 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 9.2
  */
-@Test(groups = "functional", testName = "counter.LazyCacheStartTest")
-public class LazyCacheStartTest extends BaseCounterTest {
+@Test(groups = "functional", testName = "counter.EagerCacheStartTest")
+public class EagerCacheStartTest extends BaseCounterTest {
    public void testLazyStart() {
       for (EmbeddedCacheManager manager : cacheManagers) {
-         assertFalse(manager.isRunning(CounterModuleLifecycle.COUNTER_CACHE_NAME));
+         assertTrue(manager.isRunning(CounterModuleLifecycle.COUNTER_CACHE_NAME));
       }
       counterManager(0).defineCounter("some-counter", CounterConfiguration.builder(CounterType.WEAK).build());
-      for (EmbeddedCacheManager manager : cacheManagers) {
-         eventually(() -> "counter cache didn't start in " + manager.getTransport().getAddress(),
-               () -> manager.isRunning(CounterModuleLifecycle.COUNTER_CACHE_NAME),
-               30, TimeUnit.SECONDS);
-      }
+      assertEquals(0, counterManager(0).getWeakCounter("some-counter").getValue());
    }
 
    @Override
