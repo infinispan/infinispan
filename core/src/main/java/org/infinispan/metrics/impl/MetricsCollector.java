@@ -22,9 +22,11 @@ import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -45,10 +47,13 @@ public class MetricsCollector {
 
    private final MetricRegistry registry;
 
-   private Tag nodeTag;     //todo [anistor] also set tag _app with the cache manager name
+   private Tag nodeTag;
 
    @Inject
    GlobalConfiguration globalConfig;
+
+   @Inject
+   ComponentRef<Transport> transportRef;
 
    protected MetricsCollector(MetricRegistry registry) {
       this.registry = registry;
@@ -56,9 +61,10 @@ public class MetricsCollector {
 
    @Start
    protected void start() {
-      String nodeName = globalConfig.transport().nodeName();
-      if (nodeName == null || nodeName.isEmpty()) {
-         //TODO [anistor] ensure unique node name is set in all tests and also in real life usage
+      Transport transport = transportRef.running();
+      String nodeName = transport != null ? transport.getAddress().toString() : globalConfig.transport().nodeName();
+      if (nodeName == null) {
+         //TODO [anistor] Maybe we should just ensure a unique node name was set in all tests and also in real life usage, even for local cache managers
          nodeName = generateRandomName();
          //throw new CacheConfigurationException("Node name must always be specified in configuration if metrics are enabled.");
       }
@@ -66,6 +72,9 @@ public class MetricsCollector {
       nodeTag = new Tag(NODE_TAG_NAME, nodeName);
    }
 
+   /**
+    * Generate a not so random name based on host name.
+    */
    private static String generateRandomName() {
       String hostName = null;
       try {
