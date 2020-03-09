@@ -26,6 +26,7 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.metrics.Constants;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -35,19 +36,19 @@ import org.infinispan.util.logging.LogFactory;
  * available jars in classpath! See {@link MetricsCollectorFactory}.
  *
  * @author anistor@redhat.com
- * @since 10.1.3
+ * @since 10.1
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
-public class MetricsCollector {
+public class MetricsCollector implements Constants {
 
    private static final Log log = LogFactory.getLog(MetricsCollector.class);
-
-   public static final String NODE_TAG_NAME = "node";
 
    private final MetricRegistry registry;
 
    private Tag nodeTag;
+
+   private Tag cacheManagerTag;
 
    @Inject
    GlobalConfiguration globalConfig;
@@ -59,6 +60,10 @@ public class MetricsCollector {
       this.registry = registry;
    }
 
+   public MetricRegistry getRegistry() {
+      return registry;
+   }
+
    @Start
    protected void start() {
       Transport transport = transportRef.running();
@@ -68,8 +73,11 @@ public class MetricsCollector {
          nodeName = generateRandomName();
          //throw new CacheConfigurationException("Node name must always be specified in configuration if metrics are enabled.");
       }
-      nodeName = NameUtils.filterIllegalChars(nodeName);
       nodeTag = new Tag(NODE_TAG_NAME, nodeName);
+
+      if (globalConfig.metrics().namesAsTags()) {
+         cacheManagerTag = new Tag(CACHE_MANAGER_TAG_NAME, globalConfig.cacheManagerName());
+      }
    }
 
    /**
@@ -99,7 +107,7 @@ public class MetricsCollector {
       return hostName + '-' + rand;
    }
 
-   public Set<MetricID> registerMetrics(Object instance, MBeanMetadata beanMetadata, String namePrefix) {
+   public Set<MetricID> registerMetrics(Object instance, MBeanMetadata beanMetadata, String namePrefix, String cacheName) {
       Set<MetricID> metricIds = new HashSet<>();
 
       GlobalMetricsConfiguration metricsCfg = globalConfig.metrics();
@@ -108,8 +116,23 @@ public class MetricsCollector {
          Consumer<Metric> setter = (Consumer<Metric>) attr.setter(instance);
 
          if (getter != null || setter != null) {
-            String metricName = namePrefix + '_' + NameUtils.decamelize(attr.getName());
-            MetricID metricId = new MetricID(metricName, nodeTag);
+            String metricName = namePrefix + NameUtils.decamelize(attr.getName());
+            int numTags = 1;
+            if (cacheManagerTag != null) {
+               numTags++;
+               if (cacheName != null) {
+                  numTags++;
+               }
+            }
+            Tag[] tags = new Tag[numTags];
+            tags[0] = nodeTag;
+            if (cacheManagerTag != null) {
+               tags[1] = cacheManagerTag;
+               if (cacheName != null) {
+                  tags[2] = new Tag(CACHE_TAG_NAME, cacheName);
+               }
+            }
+            MetricID metricId = new MetricID(metricName, tags);
 
             if (getter != null) {
                if (metricsCfg.gauges()) {
@@ -125,7 +148,7 @@ public class MetricsCollector {
                   if (log.isTraceEnabled()) {
                      log.tracef("Registering gauge metric %s", metricId);
                   }
-                  registry.register(metadata, gaugeMetric, nodeTag);
+                  registry.register(metadata, gaugeMetric, tags);
                   metricIds.add(metricId);
                }
             } else {
@@ -141,7 +164,7 @@ public class MetricsCollector {
                   if (log.isTraceEnabled()) {
                      log.tracef("Registering histogram metric %s", metricId);
                   }
-                  Timer timerMetric = registry.timer(metadata, nodeTag);
+                  Timer timerMetric = registry.timer(metadata, tags);
                   setter.accept(timerMetric);
                   metricIds.add(metricId);
                }

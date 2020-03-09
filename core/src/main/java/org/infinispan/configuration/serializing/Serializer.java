@@ -478,6 +478,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          attributes.write(writer, GlobalMetricsConfiguration.GAUGES, Attribute.GAUGES);
          attributes.write(writer, GlobalMetricsConfiguration.HISTOGRAMS, Attribute.HISTOGRAMS);
          attributes.write(writer, GlobalMetricsConfiguration.PREFIX, Attribute.PREFIX);
+         attributes.write(writer, GlobalMetricsConfiguration.NAMES_AS_TAGS, Attribute.NAMES_AS_TAGS);
          writer.writeEndElement();
       }
    }

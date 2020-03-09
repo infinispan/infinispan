@@ -1,10 +1,14 @@
 package org.infinispan.metrics.impl;
 
+import java.util.Set;
+
+import org.eclipse.microprofile.metrics.MetricID;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -35,6 +39,15 @@ public final class CacheMetricsRegistration extends AbstractMetricsRegistration 
 
    @Override
    protected String initNamePrefix() {
-      return globalMetricsRegistration.namePrefix + "_cache_" + NameUtils.filterIllegalChars(cacheName);
+      String prefix = globalMetricsRegistration.namePrefix;
+      if (!globalConfig.metrics().namesAsTags()) {
+         prefix += "cache_" + NameUtils.filterIllegalChars(cacheName) + '_';
+      }
+      return prefix;
+   }
+
+   @Override
+   protected Set<MetricID> internalRegisterMetrics(Object instance, MBeanMetadata beanMetadata, String metricPrefix) {
+      return metricsCollector.registerMetrics(instance, beanMetadata, metricPrefix, cacheName);
    }
 }
