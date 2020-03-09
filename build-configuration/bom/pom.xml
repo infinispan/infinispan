@@ -424,6 +424,11 @@
                 <version>${version.protostream}</version>
             </dependency>
             <dependency>
+                <groupId>org.infinispan.protostream</groupId>
+                <artifactId>protostream-processor</artifactId>
+                <version>${version.protostream}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.infinispan.wildfly</groupId>
                 <artifactId>infinispan-wildfly-infinispan</artifactId>
                 <version>${version.infinispan}</version>
