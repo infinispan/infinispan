@@ -884,6 +884,10 @@ public class Parser implements ConfigurationParser {
                builder.metrics().prefix(value);
                break;
             }
+            case NAMES_AS_TAGS: {
+               builder.metrics().namesAsTags(Boolean.parseBoolean(value));
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }

@@ -13,9 +13,10 @@ public class GlobalMetricsConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<Boolean> GAUGES = AttributeDefinition.builder("gauges", true).immutable().build();
    public static final AttributeDefinition<Boolean> HISTOGRAMS = AttributeDefinition.builder("histograms", false).immutable().build();
    public static final AttributeDefinition<String> PREFIX = AttributeDefinition.builder("prefix", "").immutable().build();
+   public static final AttributeDefinition<Boolean> NAMES_AS_TAGS = AttributeDefinition.builder("namesAsTags", false).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(GlobalMetricsConfiguration.class, GAUGES, HISTOGRAMS, PREFIX);
+      return new AttributeSet(GlobalMetricsConfiguration.class, GAUGES, HISTOGRAMS, PREFIX, NAMES_AS_TAGS);
    }
 
    private static final ElementDefinition<GlobalMetricsConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(Element.METRICS.getLocalName());
@@ -28,11 +29,14 @@ public class GlobalMetricsConfiguration implements ConfigurationInfo {
 
    private final Attribute<String> prefix;
 
+   private final Attribute<Boolean> namesAsTags;
+
    GlobalMetricsConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
       this.gauges = attributes.attribute(GAUGES);
       this.histograms = attributes.attribute(HISTOGRAMS);
       this.prefix = attributes.attribute(PREFIX);
+      this.namesAsTags = attributes.attribute(NAMES_AS_TAGS);
    }
 
    @Override
@@ -62,6 +66,10 @@ public class GlobalMetricsConfiguration implements ConfigurationInfo {
 
    public String prefix() {
       return prefix.get();
+   }
+
+   public boolean namesAsTags() {
+      return namesAsTags.get();
    }
 
    @Override

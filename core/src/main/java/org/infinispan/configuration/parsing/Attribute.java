@@ -98,6 +98,7 @@ public enum Attribute {
     MODULE,
     NAME,
     NAMES,
+    NAMES_AS_TAGS("namesAsTags"),
     NOTIFICATIONS,
     ON_REHASH("onRehash"),
     OWNERS,
