@@ -16,7 +16,8 @@ public final class CacheManagerMetricsRegistration extends AbstractMetricsRegist
 
    @Override
    protected String initNamePrefix() {
-      String prefix = "cache_manager_" + NameUtils.filterIllegalChars(globalConfig.cacheManagerName());
+      String prefix = globalConfig.metrics().namesAsTags() ?
+            "" : "cache_manager_" + NameUtils.filterIllegalChars(globalConfig.cacheManagerName()) + '_';
       String globalPrefix = globalConfig.metrics().prefix();
       return globalPrefix != null && !globalPrefix.isEmpty() ? globalPrefix + '_' + prefix : prefix;
    }

@@ -15,12 +15,11 @@ import org.infinispan.util.logging.LogFactory;
 import io.smallrye.metrics.MetricRegistries;
 
 /**
- * Produces instances of {@link MetricsCollector}. MetricsCollector is optional, based on the presence of the
- * optional microprofile metrics API and the Smallrye implementation in classpath and the enabling of metrics in
- * config.
+ * Produces instances of {@link MetricsCollector}. MetricsCollector is optional, based on the presence of the optional
+ * microprofile metrics API and the Smallrye implementation in classpath and the enabling of metrics in config.
  *
  * @author anistor@redhat.com
- * @since 10.1.3
+ * @since 10.1
  */
 @DefaultFactoryFor(classes = MetricsCollector.class)
 @Scope(Scopes.GLOBAL)

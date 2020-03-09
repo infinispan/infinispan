@@ -1,6 +1,6 @@
 /**
- * Eclipse microprofile based metrics.
+ * Eclipse microprofile based metrics. All exported metrics are placed in VENDOR scope.
  *
- * @private
+ * @public
  */
 package org.infinispan.metrics;
