@@ -749,7 +749,7 @@
       <versionx.org.wildfly.extras.creaper.creaper-core>1.1.0</versionx.org.wildfly.extras.creaper.creaper-core>
       <versionx.org.wildfly.legacy.test.wildfly-legacy-spi>3.0.0.Final</versionx.org.wildfly.legacy.test.wildfly-legacy-spi>
       <versionx.org.wildfly.legacy.test.wildfly-legacy-versions>3.0.0.Final</versionx.org.wildfly.legacy.test.wildfly-legacy-versions>
-      <versionx.org.wildfly.maven.plugins.licenses-plugin>2.0.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
+      <versionx.org.wildfly.maven.plugins.licenses-plugin>2.1.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
       <versionx.org.wildfly.openssl.natives>${version.org.wildfly.openssl}</versionx.org.wildfly.openssl.natives>
       <versionx.org.wildfly.openssl.wildfly-openssl-linux-i386>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-linux-i386>
       <versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>

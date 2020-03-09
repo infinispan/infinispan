@@ -18,6 +18,9 @@
          <fileset refid="maven.project.dependencies"/>
          <fileset file="${project.build.directory}/${project.artifactId}-${project.version}.jar"/>
       </copy>
+      <delete dir="${output.dir}/lib">
+         <include name="jcip-annotations*.jar"/>
+      </delete>
       <copy todir="${test.lib.dir}" flatten="true">
          <fileset refid="maven.test.dependencies"/>
       </copy>
