@@ -61,7 +61,7 @@ abstract class AbstractMetricsRegistration {
    }
 
    public boolean metricsEnabled() {
-      return metricsCollector != null && globalConfig.metrics().enabled();
+      return metricsCollector != null;
    }
 
    /**
@@ -85,7 +85,7 @@ abstract class AbstractMetricsRegistration {
       }
    }
 
-   private Set<MetricID> registerMetrics(Object instance, MBeanMetadata beanMetadata, String type, String componentName, String suffix) {
+   private Set<MetricID> registerMetrics(Object instance, MBeanMetadata beanMetadata, String type, String componentName, String prefix) {
       String jmxObjectName = beanMetadata.getJmxObjectName();
       if (jmxObjectName == null) {
          jmxObjectName = componentName;
@@ -95,15 +95,19 @@ abstract class AbstractMetricsRegistration {
       }
       String metricPrefix = namePrefix;
       if (!jmxObjectName.equals("Cache") && !jmxObjectName.equals("CacheManager")) {
+         if (prefix != null) {
+            metricPrefix += NameUtils.decamelize(prefix) + '_';
+         }
          if (type != null && !type.equals(jmxObjectName)) {
-            metricPrefix += '_' + NameUtils.decamelize(type);
+            metricPrefix += NameUtils.decamelize(type) + '_';
          }
-         metricPrefix += '_' + NameUtils.decamelize(jmxObjectName);
-         if (suffix != null) {
-            metricPrefix += '_' + NameUtils.decamelize(suffix);
-         }
+         metricPrefix += NameUtils.decamelize(jmxObjectName) + '_';
       }
-      return metricsCollector.registerMetrics(instance, beanMetadata, metricPrefix);
+      return internalRegisterMetrics(instance, beanMetadata, metricPrefix);
+   }
+
+   protected Set<MetricID> internalRegisterMetrics(Object instance, MBeanMetadata beanMetadata, String metricPrefix) {
+      return metricsCollector.registerMetrics(instance, beanMetadata, metricPrefix, null);
    }
 
    /**
@@ -126,7 +130,7 @@ abstract class AbstractMetricsRegistration {
     * Register metrics for a component that was manually registered later, after component registry startup. The metric
     * ids will <b>NOT</b> be tracked and unregistration will <b>NOT</b> be performed automatically on stop.
     */
-   public Set<MetricID> registerExternalMetrics(Object instance, String suffix) {
+   public Set<MetricID> registerExternalMetrics(Object instance, String prefix) {
       if (metricsCollector == null) {
          throw new IllegalStateException("Microprofile metrics are not initialized");
       }
@@ -134,7 +138,7 @@ abstract class AbstractMetricsRegistration {
       if (beanMetadata == null) {
          throw new IllegalArgumentException("No MBean metadata available for " + instance.getClass().getName());
       }
-      return registerMetrics(instance, beanMetadata, null, null, suffix);
+      return registerMetrics(instance, beanMetadata, null, null, prefix);
    }
 
    public void unregisterMetrics(Set<MetricID> metricIds) {
