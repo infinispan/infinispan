@@ -331,6 +331,7 @@
                      <sortByGroupIdAndArtifactId>true</sortByGroupIdAndArtifactId>
                      <licensesOutputFile>${server.output.dir}/docs/licenses/licenses.xml</licensesOutputFile>
                      <excludedArtifacts>.*jcip.*</excludedArtifacts>
+                     <includeSelfArtifact>true</includeSelfArtifact>
                   </configuration>
                </execution>
             </executions>
