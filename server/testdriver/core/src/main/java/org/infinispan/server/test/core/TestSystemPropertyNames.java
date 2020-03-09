@@ -10,10 +10,6 @@ public class TestSystemPropertyNames {
     */
    public static final String INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME = "org.infinispan.test.server.container.baseImageName";
    /**
-    * Specifies whether to use the ports exposed by the container
-    */
-   public static final String INFINISPAN_TEST_SERVER_CONTAINER_PREFER_CONTAINER_EXPOSED_PORTS = "org.infinispan.test.server.container.preferContainerExposedPorts";
-   /**
     * Specifies whether the base image contains a prebuilt server to use instead of using the one built locally
     */
    public static final String INFINISPAN_TEST_SERVER_PRESERVE_IMAGE = "org.infinispan.test.server.container.preserveImage";

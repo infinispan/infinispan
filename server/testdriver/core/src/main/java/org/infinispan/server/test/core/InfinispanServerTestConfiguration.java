@@ -63,4 +63,8 @@ public class InfinispanServerTestConfiguration {
    public boolean isParallelStartup() {
       return parallelStartup;
    }
+
+   public InfinispanServerDriver newDriver() {
+      return runMode().newDriver(this);
+   }
 }

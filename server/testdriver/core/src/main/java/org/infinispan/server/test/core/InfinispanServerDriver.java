@@ -41,6 +41,8 @@ public interface InfinispanServerDriver {
     */
    void stop(String name);
 
+   void stop();
+
    /**
     * Determines whether a specific server is running as part of a server configuration
     * @param server the

@@ -1,7 +1,5 @@
 package org.infinispan.server.test.core;
 
-import static org.infinispan.server.test.core.ContainerUtil.getIpAddressFromContainer;
-
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -36,20 +34,21 @@ import org.infinispan.commons.test.skip.OS;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.Server;
+import org.infinispan.server.test.core.container.TestDriverContainer;
+import org.infinispan.server.test.core.container.TestDriverGenericContainer;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 import org.testcontainers.DockerClientFactory;
-import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.utility.Base58;
+import org.testcontainers.utility.MountableFile;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.Network;
 
 /**
@@ -64,20 +63,18 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    public static final int JMX_PORT = 9999;
    public static final String JDK_BASE_IMAGE_NAME = "jboss/base-jdk:11";
-   private final List<GenericContainer> containers;
-   private final boolean preferContainerExposedPorts;
+   protected final List<TestDriverContainer> containers;
    private String name;
    CountdownLatchLoggingConsumer latch;
    ImageFromDockerfile image;
    private File rootDir;
 
-   protected ContainerInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
+   public ContainerInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(
             configuration,
             getDockerBridgeAddress()
       );
       this.containers = new ArrayList<>(configuration.numServers());
-      this.preferContainerExposedPorts = Boolean.getBoolean(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_PREFER_CONTAINER_EXPOSED_PORTS);
    }
 
    static InetAddress getDockerBridgeAddress() {
@@ -219,7 +216,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    private void createContainer(int i, String name, File rootDir) {
       GenericContainer container = createContainer(i, rootDir);
-      containers.add(i, container);
+      containers.add(i, new TestDriverGenericContainer(container));
       log.infof("Starting container %s-%d", name, i);
       container.start();
    }
@@ -277,7 +274,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    }
 
    @Override
-   protected void stop() {
+   public void stop() {
       for (int i = 0; i < containers.size(); i++) {
          log.infof("Stopping container %s-%d", name, i);
          containers.get(i).stop();
@@ -301,22 +298,20 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    @Override
    public InetAddress getServerAddress(int server) {
-      GenericContainer container = containers.get(server);
-      // We talk directly to the container, and not through forwarded addresses on localhost because of
-      // https://github.com/testcontainers/testcontainers-java/issues/452
-      return Exceptions.unchecked(() -> InetAddress.getByName(getIpAddressFromContainer(container)));
+      TestDriverContainer container = containers.get(server);
+      return container.getServerAddress();
    }
 
    @Override
    public void pause(int server) {
-      Container.ExecResult result = Exceptions.unchecked(() -> containers.get(server).execInContainer(INFINISPAN_SERVER_HOME + "/bin/pause.sh"));
-      System.out.printf("[%d] PAUSE %s\n", server, result);
+      TestDriverContainer container = containers.get(server);
+      container.execInContainer(INFINISPAN_SERVER_HOME + "/bin/pause.sh");
    }
 
    @Override
    public void resume(int server) {
-      Container.ExecResult result = Exceptions.unchecked(() -> containers.get(server).execInContainer(INFINISPAN_SERVER_HOME + "/bin/resume.sh"));
-      System.out.printf("[%d] RESUME %s\n", server, result);
+      TestDriverContainer container = containers.get(server);
+      container.execInContainer(INFINISPAN_SERVER_HOME + "/bin/resume.sh");
    }
 
    @Override
@@ -326,16 +321,16 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    @Override
    public void kill(int server) {
-      Exceptions.unchecked(() -> containers.get(server).execInContainer(INFINISPAN_SERVER_HOME + "/bin/kill.sh"));
+      TestDriverContainer container = containers.get(server);
+      container.execInContainer(INFINISPAN_SERVER_HOME + "/bin/kill.sh");
    }
 
    // TODO should this just replace stop?
    public void sigterm(int server) {
-      GenericContainer container = containers.get(server);
+      TestDriverContainer container = containers.get(server);
       CountdownLatchLoggingConsumer latch = new CountdownLatchLoggingConsumer(1, SHUTDOWN_MESSAGE_REGEX);
       container.withLogConsumer(latch);
-      Container.ExecResult result = Exceptions.unchecked(() -> container.execInContainer(INFINISPAN_SERVER_HOME + "/bin/term.sh"));
-      System.out.printf("[%d] TERM %s\n", server, result);
+      container.execInContainer(INFINISPAN_SERVER_HOME + "/bin/term.sh");
       Eventually.eventually(() -> !container.isRunning());
    }
 
@@ -346,7 +341,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
       latch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
       GenericContainer container = createContainer(server, rootDir);
-      containers.set(server, container);
+      containers.set(server, new TestDriverGenericContainer(container));
       log.infof("Restarting container %s-%d", name, server);
       container.start();
       Exceptions.unchecked(() -> latch.awaitStrict(TIMEOUT_SECONDS, TimeUnit.SECONDS));
@@ -357,7 +352,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       latch = new CountdownLatchLoggingConsumer(configuration.numServers(), STARTUP_MESSAGE_REGEX);
       for (int i = 0; i < configuration.numServers(); i++) {
          GenericContainer container = createContainer(i, rootDir);
-         containers.set(i, container);
+         containers.set(i, new TestDriverGenericContainer(container));
          log.infof("Restarting container %s-%d", name, i);
          container.start();
       }
@@ -367,9 +362,8 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    @Override
    public MBeanServerConnection getJmxConnection(int server) {
       return Exceptions.unchecked(() -> {
-         GenericContainer container = containers.get(server);
-         ContainerNetwork network = container.getContainerInfo().getNetworkSettings().getNetworks().values().iterator().next();
-         JMXServiceURL url = new JMXServiceURL(String.format("service:jmx:rmi:///jndi/rmi://%s:%d/jmxrmi", network.getIpAddress(), JMX_PORT));
+         TestDriverContainer container = containers.get(server);
+         JMXServiceURL url = new JMXServiceURL(String.format("service:jmx:rmi:///jndi/rmi://%s:%d/jmxrmi", container.getIpAddress(), JMX_PORT));
          JMXConnector jmxConnector = JMXConnectorFactory.connect(url);
          return jmxConnector.getMBeanServerConnection();
       });
@@ -377,17 +371,13 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    @Override
    public String getLog(int server) {
-      GenericContainer container = containers.get(server);
+      TestDriverContainer container = containers.get(server);
       return container.getLogs();
    }
 
    @Override
    public RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder) {
-      if (preferContainerExposedPorts) {
-         return new ContainerRemoteCacheManager(containers).wrap(builder);
-      } else {
-         return new RemoteCacheManager(builder.build());
-      }
+      return new RemoteCacheManager(builder.build());
    }
 
    @Override

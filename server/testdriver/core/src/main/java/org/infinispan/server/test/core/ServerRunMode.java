@@ -17,6 +17,13 @@ public enum ServerRunMode {
          return new ContainerInfinispanServerDriver(configuration);
       }
    },
+   // When running the test in the server side, it is only allowed to do remote call to a remote container
+   REMOTE_CONTAINER {
+      @Override
+      public AbstractInfinispanServerDriver newDriver(InfinispanServerTestConfiguration configuration) {
+         return new RemoteContainerInfinispanServerDriver(configuration);
+      }
+   },
    DEFAULT {
       @Override
       public AbstractInfinispanServerDriver newDriver(InfinispanServerTestConfiguration configuration) {

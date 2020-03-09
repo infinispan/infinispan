@@ -35,7 +35,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    List<Server> servers;
    List<CompletableFuture<ExitStatus>> serverFutures;
 
-   protected EmbeddedInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
+   public EmbeddedInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(configuration, InetAddress.getLoopbackAddress());
    }
 
@@ -63,7 +63,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    }
 
    @Override
-   protected void stop() {
+   public void stop() {
       RuntimeException aggregate = new RuntimeException();
       if (servers != null) {
          for (int i = 0; i < servers.size(); i++) {

@@ -52,6 +52,10 @@ public class InfinispanServerTestMethodRule implements TestRule {
       this.infinispanServerRule = Objects.requireNonNull(infinispanServerRule);
    }
 
+   public InfinispanServerRule getInfinispanServerRule() {
+      return infinispanServerRule;
+   }
+
    public <T extends Closeable> T registerResource(T resource) {
       resources.add(resource);
       return resource;
@@ -62,10 +66,10 @@ public class InfinispanServerTestMethodRule implements TestRule {
       return new Statement() {
          @Override
          public void evaluate() throws Throwable {
-            before();
+            before(description.getTestClass().getSimpleName(), description.getMethodName());
             try {
-               methodName = description.getTestClass().getSimpleName() + "." + description.getMethodName();
                base.evaluate();
+               methodName = description.getTestClass().getSimpleName() + "." + description.getMethodName();
             } finally {
                after();
             }
@@ -73,14 +77,15 @@ public class InfinispanServerTestMethodRule implements TestRule {
       };
    }
 
-   private void before() {
-      resources = new ArrayList<>();
+   public void before(String simpleClassName, String methodName) {
+      this.methodName = simpleClassName + "." + methodName;
+      this.resources = new ArrayList<>();
    }
 
-   private void after() {
-      if (resources != null) {
-         resources.forEach(Util::close);
-         resources.clear();
+   public void after() {
+      if (this.resources != null) {
+         this.resources.forEach(Util::close);
+         this.resources.clear();
       }
    }
 
@@ -180,8 +185,12 @@ public class InfinispanServerTestMethodRule implements TestRule {
       }
 
       public <K, V> RemoteCache<K, V> create() {
-         RemoteCacheManager remoteCacheManager = registerResource(infinispanServerRule.newHotRodClient(clientConfiguration));
          String name = getMethodName(qualifier);
+         return create(name);
+      }
+
+      public <K, V> RemoteCache<K, V> create(String name) {
+         RemoteCacheManager remoteCacheManager = registerResource(infinispanServerRule.newHotRodClient(clientConfiguration));
          if (serverConfiguration != null) {
             return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, serverConfiguration);
          } else if (mode != null) {

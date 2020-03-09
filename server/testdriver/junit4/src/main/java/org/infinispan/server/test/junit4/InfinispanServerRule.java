@@ -36,8 +36,8 @@ import net.spy.memcached.MemcachedClient;
  * @since 10.0
  **/
 public class InfinispanServerRule implements TestRule {
-   private InfinispanServerDriver serverDriver;
-   private InfinispanServerTestConfiguration configuration;
+   protected InfinispanServerDriver serverDriver;
+   protected InfinispanServerTestConfiguration configuration;
    protected final List<Consumer<File>> configurationEnhancers = new ArrayList<>();
 
    public InfinispanServerRule(InfinispanServerTestConfiguration configuration) {
@@ -60,6 +60,7 @@ public class InfinispanServerRule implements TestRule {
       return serverDriver;
    }
 
+   private boolean manageServer;
    @Override
    public Statement apply(Statement base, Description description) {
       return new Statement() {
@@ -71,25 +72,11 @@ public class InfinispanServerRule implements TestRule {
             if (!inSuite) {
                TestResourceTracker.testStarted(testName);
             }
-            // Don't manage the server when a test is using the same InfinispanServerRule instance as the parent suite
-            boolean manageServer = serverDriver == null;
             try {
-               if (manageServer) {
-                  serverDriver = configuration.runMode().newDriver(configuration);
-                  serverDriver.prepare(testName);
-
-                  configurationEnhancers.forEach(c -> c.accept(serverDriver.getConfDir()));
-
-                  serverDriver.start(testName);
-               }
                InfinispanServerRule.this.before(testName);
-
                base.evaluate();
             } finally {
                InfinispanServerRule.this.after(testName);
-               if (manageServer && serverDriver != null) {
-                  serverDriver.stop(testName);
-               }
                if (!inSuite) {
                   TestResourceTracker.testFinished(testName);
                }
@@ -98,10 +85,25 @@ public class InfinispanServerRule implements TestRule {
       };
    }
 
-   private void before(String name) {
+   public void before(String testName) {
+      // Don't manage the server when a test is using the same InfinispanServerRule instance as the parent suite
+      this.manageServer = serverDriver == null;
+      if (manageServer) {
+         createAndStartServerDriver(testName);
+      }
    }
 
-   private void after(String name) {
+   public void after(String testName) {
+      if (manageServer && serverDriver != null) {
+         serverDriver.stop(testName);
+      }
+   }
+
+   protected void createAndStartServerDriver(String testName) {
+      this.serverDriver = configuration.newDriver();
+      this.serverDriver.prepare(testName);
+      this.configurationEnhancers.forEach(c -> c.accept(this.serverDriver.getConfDir()));
+      this.serverDriver.start(testName);
    }
 
    /**

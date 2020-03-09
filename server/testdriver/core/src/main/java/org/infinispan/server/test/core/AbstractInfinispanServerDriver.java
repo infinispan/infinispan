@@ -69,8 +69,6 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
 
    protected abstract void start(String name, File rootDir, String configurationFile);
 
-   protected abstract void stop();
-
    /**
     * Prepare a server layout
     */
