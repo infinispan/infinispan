@@ -48,6 +48,11 @@ Create caches from {brandname} templates with `POST` requests and the
 POST /rest/v2/caches/{cacheName}?template={templateName}
 ----
 
+[TIP]
+====
+See link:#rest_v2_cache_manager_cache_templates[Listing Available Cache Templates].
+====
+
 [id='rest_v2_cache_configuration']
 = Retrieving Cache Configuration
 Retrieve {brandname} cache configurations with `GET` requests.
