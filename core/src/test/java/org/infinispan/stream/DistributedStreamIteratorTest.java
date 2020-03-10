@@ -1,8 +1,8 @@
 package org.infinispan.stream;
 
 import static org.infinispan.commons.test.Exceptions.unchecked;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -38,7 +38,6 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.reactive.publisher.impl.PublisherHandler;
@@ -46,6 +45,7 @@ import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
@@ -220,7 +220,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       CheckPoint checkPoint = new CheckPoint();
       checkPoint.triggerForever(Mocks.AFTER_RELEASE);
 
-      ClusterPublisherManager<Object, String> spy = replaceComponentWithSpy(cache0, ClusterPublisherManager.class);
+      ClusterPublisherManager<Object, String> spy = Mocks.replaceComponentWithSpy(cache0, ClusterPublisherManager.class);
 
       doAnswer(invocation -> {
          SegmentCompletionPublisher<?> result = (SegmentCompletionPublisher<?>) invocation.callRealMethod();
@@ -437,7 +437,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
    private void testStayLocalIfAllSegmentsPresentLocally(boolean rehashAware) {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
 
-      RpcManager rpcManager = replaceComponentWithSpy(cache0, RpcManager.class);
+      RpcManager rpcManager = Mocks.replaceComponentWithSpy(cache0, RpcManager.class);
 
       putValueInEachCache(3);
 
