@@ -2,13 +2,15 @@ package org.infinispan.test;
 
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.withSettings;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -167,11 +169,14 @@ public class Mocks {
     * Note this method returns another Callable as we may not want to always block the invoking thread.
     * @param completableFutureCallable callable to invoke between blocking
     * @param checkPoint the checkpoint to use
+    * @param executor the executor to run the after the stage has completed - this allows the caller to control which
+    *                 thread this is ran on - as it is nondeterministic since the stage may or not be complete
+    *                 when applying chained methods to it
     * @param <V> the answer from the future
     * @return a callable that will block
     */
    public static <V> Callable<CompletableFuture<V>> blockingCompletableFuture(Callable<CompletableFuture<V>> completableFutureCallable,
-         CheckPoint checkPoint) {
+         CheckPoint checkPoint, Executor executor) {
       return () -> {
          checkPoint.trigger(BEFORE_INVOCATION);
          try {
@@ -180,13 +185,10 @@ public class Mocks {
             throw new AssertionError(e);
          }
          CompletableFuture<V> completableFuture = completableFutureCallable.call();
-         return completableFuture.whenComplete((v, t) -> {
+         return completableFuture.thenCompose(v -> {
             checkPoint.trigger(AFTER_INVOCATION);
-            try {
-               checkPoint.awaitStrict(AFTER_RELEASE, 20, TimeUnit.SECONDS);
-            } catch (InterruptedException | TimeoutException e) {
-               throw new AssertionError(e);
-            }
+            return checkPoint.future(AFTER_RELEASE, 20, TimeUnit.SECONDS, executor)
+                  .thenApply(ignore -> v);
          });
       };
    }
@@ -207,5 +209,21 @@ public class Mocks {
       return (s, complete) -> {
          blockingPublisher((Subscriber<? super E> innerSubscriber) -> publisher.subscribe(innerSubscriber, complete), checkPoint).subscribe(s);
       };
+   }
+
+   /**
+    * Replaces the given component with a spy and returns it for further mocking as needed. Note the original component
+    * is not retrieved and thus requires retrieving before invoking this method if needed.
+    * @param cache the cache to get the component from
+    * @param componentClass the class of the component to retrieve
+    * @param <C> the component class
+    * @return the spied component which has already been replaced and wired in the cache
+    */
+   public static <C> C replaceComponentWithSpy(Cache<?,?> cache, Class<C> componentClass) {
+      C component = TestingUtil.extractComponent(cache, componentClass);
+      C spiedComponent = spy(component);
+      TestingUtil.replaceComponent(cache, componentClass, spiedComponent, true);
+      reset(spiedComponent);
+      return spiedComponent;
    }
 }

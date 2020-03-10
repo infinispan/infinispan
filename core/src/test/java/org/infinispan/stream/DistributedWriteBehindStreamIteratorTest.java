@@ -18,6 +18,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.Mocks;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -90,7 +91,7 @@ public class DistributedWriteBehindStreamIteratorTest extends BaseSetupStreamIte
    public void testBackupSegmentsOptimizationWithWriteBehindStore (boolean rehashAware) {
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
 
-      RpcManager rpcManager = replaceComponentWithSpy(cache1, RpcManager.class);
+      RpcManager rpcManager = Mocks.replaceComponentWithSpy(cache1, RpcManager.class);
 
       for (Cache<Object, String> cache : this.<Object, String>caches(CACHE_NAME)) {
          MagicKey key = new MagicKey(cache);
