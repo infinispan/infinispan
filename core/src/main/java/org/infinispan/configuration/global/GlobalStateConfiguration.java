@@ -83,11 +83,15 @@ public class GlobalStateConfiguration implements ConfigurationInfo {
 
    /**
     * Returns the filesystem path where shared persistent state data which needs to survive container
-    * restarts should be stored. Defaults to the user.dir system property which usually is where the
-    * application was started. This path may be shared among multiple instances.
+    * restarts should be stored. Defaults to the {@link #persistentLocation()}.
+    * This path may be shared among multiple instances.
     */
    public String sharedPersistentLocation() {
-      return sharedPersistenceLocationConfiguration.getLocation();
+      if (sharedPersistenceLocationConfiguration.isModified()) {
+         return sharedPersistenceLocationConfiguration.getLocation();
+      } else {
+         return persistentLocation();
+      }
    }
 
    public GlobalStatePathConfiguration sharedPersistenceConfiguration() {

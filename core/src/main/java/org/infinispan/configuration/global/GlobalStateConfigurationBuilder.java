@@ -55,11 +55,13 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
    }
 
    /**
-    * Defines the filesystem path where persistent state data which needs to survive container restarts
-    * should be stored. The data stored at this location is required for graceful
-    * shutdown and restore. This path must NOT be shared among multiple instances.
-    * Defaults to the user.dir system property which usually is where the
-    * application was started. This value should be overridden to a more appropriate location.
+    * Defines the filesystem path where node-specific persistent data which needs to survive container restarts
+    * should be stored. This path will be used as the default storage location for file-based cache stores such as
+    * the default {@link org.infinispan.persistence.file.SingleFileStore} as well as the consistent hash for all caches
+    * which enables graceful shutdown and restart. Because the data stored in the persistent
+    * location is specific to the node that owns it, this path <b>MUST NOT</b> be shared among multiple instances.
+    * Defaults to the user.dir system property which usually is where the application was started.
+    * This value should be overridden to a more appropriate location.
     */
    public GlobalStateConfigurationBuilder persistentLocation(String location) {
       persistentLocation.location(location, null);
@@ -73,9 +75,11 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
 
    /**
     * Defines the filesystem path where shared persistent state data which needs to survive container restarts
-    * should be stored. This path can be safely shared among multiple instances.
-    * Defaults to the user.dir system property which usually is where the
-    * application was started. This value should be overridden to a more appropriate location.
+    * should be stored. In particular this path will contain persistent dynamic configuration, as that managed by the
+    * {@link org.infinispan.globalstate.impl.OverlayLocalConfigurationStorage}.
+    * This path <b>MAY</b> be safely shared among multiple instances.
+    * If not set, this will use the {@link #persistentLocation} value.
+    * This value should be overridden to a more appropriate location.
     */
    public GlobalStateConfigurationBuilder sharedPersistentLocation(String location) {
       sharedPersistentLocation.location(location, null);
