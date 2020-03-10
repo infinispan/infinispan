@@ -34,10 +34,11 @@ public class StripedLockContainer implements LockContainer {
    }
 
    @Inject
-   void inject(@ComponentName(KnownComponentNames.BLOCKING_EXECUTOR) Executor executor, TimeService timeService) {
+   void inject(@ComponentName(KnownComponentNames.BLOCKING_EXECUTOR) Executor blockingExecutor,
+         @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR) Executor nonBlockingExecutor, TimeService timeService) {
       for (int i = 0; i < sharedLocks.length; i++) {
          if (sharedLocks[i] == null) {
-            sharedLocks[i] = new InfinispanLock(executor, timeService);
+            sharedLocks[i] = new InfinispanLock(blockingExecutor, nonBlockingExecutor, timeService);
          } else {
             sharedLocks[i].setTimeService(timeService);
          }

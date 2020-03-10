@@ -65,7 +65,7 @@ public class LockManagerTest extends AbstractInfinispanTest {
    public void testSingleCounterPerKey() throws ExecutionException, InterruptedException {
       DefaultLockManager lockManager = new DefaultLockManager();
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
-      TestingUtil.inject(lockContainer, asyncExecutor, AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockContainer, AbstractCacheTest.TIME_SERVICE);
       TestingUtil.inject(lockManager, lockContainer, named(NON_BLOCKING_EXECUTOR, asyncExecutor),
                          named(TIMEOUT_SCHEDULE_EXECUTOR, mockScheduledExecutor));
       doSingleCounterTest(lockManager);
@@ -74,7 +74,7 @@ public class LockManagerTest extends AbstractInfinispanTest {
    public void testSingleCounterStripped() throws ExecutionException, InterruptedException {
       DefaultLockManager lockManager = new DefaultLockManager();
       StripedLockContainer lockContainer = new StripedLockContainer(16);
-      TestingUtil.inject(lockContainer, asyncExecutor, AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockContainer, AbstractCacheTest.TIME_SERVICE);
       TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
       doSingleCounterTest(lockManager);
    }
@@ -82,7 +82,7 @@ public class LockManagerTest extends AbstractInfinispanTest {
    public void testMultipleCounterPerKey() throws ExecutionException, InterruptedException {
       DefaultLockManager lockManager = new DefaultLockManager();
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
-      TestingUtil.inject(lockContainer, asyncExecutor, AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockContainer, AbstractCacheTest.TIME_SERVICE);
       TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
       doMultipleCounterTest(lockManager);
    }
@@ -90,7 +90,7 @@ public class LockManagerTest extends AbstractInfinispanTest {
    public void testMultipleCounterStripped() throws ExecutionException, InterruptedException {
       DefaultLockManager lockManager = new DefaultLockManager();
       StripedLockContainer lockContainer = new StripedLockContainer(16);
-      TestingUtil.inject(lockContainer, asyncExecutor, AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockContainer, AbstractCacheTest.TIME_SERVICE);
       TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
       doMultipleCounterTest(lockManager);
    }
@@ -98,7 +98,7 @@ public class LockManagerTest extends AbstractInfinispanTest {
    public void testTimeoutPerKey() throws ExecutionException, InterruptedException {
       DefaultLockManager lockManager = new DefaultLockManager();
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
-      TestingUtil.inject(lockContainer, asyncExecutor, AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockContainer, AbstractCacheTest.TIME_SERVICE);
       TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
       doTestWithFailAcquisition(lockManager);
    }
@@ -106,7 +106,7 @@ public class LockManagerTest extends AbstractInfinispanTest {
    public void testTimeoutStripped() throws ExecutionException, InterruptedException {
       DefaultLockManager lockManager = new DefaultLockManager();
       StripedLockContainer lockContainer = new StripedLockContainer(16);
-      TestingUtil.inject(lockContainer, asyncExecutor, AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lockContainer, AbstractCacheTest.TIME_SERVICE);
       TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
       doTestWithFailAcquisition(lockManager);
    }
