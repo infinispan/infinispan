@@ -4,6 +4,7 @@ import org.infinispan.affinity.impl.KeyAffinityServiceImpl;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commons.internal.CommonsBlockHoundIntegration;
 import org.infinispan.container.offheap.OffHeapConcurrentMap;
+import org.infinispan.container.offheap.SegmentedBoundedOffHeapDataContainer;
 import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.expiration.impl.ClusterExpirationManager;
 import org.infinispan.factories.impl.BasicComponentRegistryImpl;
@@ -30,6 +31,8 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       // Block designates methods that should only hold a lock very briefly
       {
          CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, OffHeapConcurrentMap.class);
+         // This acquires the lruLock and also OffHeapConcurrentMap stampedLocks when processing eviction
+         builder.allowBlockingCallsInside(SegmentedBoundedOffHeapDataContainer.class.getName(), "ensureSize");
          CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, StateTransferLockImpl.class);
 
          // LimitedExecutor just submits a task to another thread pool
