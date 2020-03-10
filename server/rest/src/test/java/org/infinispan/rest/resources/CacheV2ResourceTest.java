@@ -37,7 +37,6 @@ import org.infinispan.globalstate.impl.CacheState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.rest.assertion.ResponseAssertion;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -47,8 +46,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    private static final String PERSISTENT_LOCATION = tmpDirectory(CacheV2ResourceTest.class.getName());
-   private static final String TMP_LOCATION = PERSISTENT_LOCATION + File.separator + "tmp";
-   private static final String SHARED_LOCATION = PERSISTENT_LOCATION + File.separator + "shared";
 
    @Override
    protected void defineCaches(EmbeddedCacheManager cm) {
@@ -64,9 +61,10 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       return builder;
    }
 
-   @AfterMethod
-   public void tearDown() {
-      Util.recursiveFileRemove(SHARED_LOCATION);
+   @Override
+   protected void createCacheManagers() throws Exception {
+      Util.recursiveFileRemove(PERSISTENT_LOCATION);
+      super.createCacheManagers();
    }
 
    @Override
@@ -74,9 +72,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       GlobalConfigurationBuilder config = super.getGlobalConfigForNode(id);
       config.globalState().enable()
             .configurationStorage(ConfigurationStorage.OVERLAY)
-            .persistentLocation(PERSISTENT_LOCATION + File.separator + id)
-            .temporaryLocation(TMP_LOCATION + File.separator + id)
-            .sharedPersistentLocation(SHARED_LOCATION + File.separator + id);
+            .persistentLocation(PERSISTENT_LOCATION + File.separator + id);
       return config;
    }
 
@@ -195,6 +191,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       ContentResponse response = client.newRequest(url)
             .method(HttpMethod.POST)
             .header(CONTENT_TYPE, APPLICATION_JSON_TYPE)
+            .header("flags", "VOLATILE")
             .content(new StringContentProvider(cacheJson))
             .send();
       ResponseAssertion.assertThat(response).isOk();
