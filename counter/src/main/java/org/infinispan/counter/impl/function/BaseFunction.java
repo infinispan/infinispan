@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
-import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
+import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.functional.EntryView;
 
@@ -24,14 +24,14 @@ abstract class BaseFunction<K extends CounterKey, R> implements
       if (!value.isPresent()) {
          return null;
       }
-      Optional<ConfigurationMetadata> metadata = entryView.findMetaParam(ConfigurationMetadata.class);
+      Optional<CounterConfigurationMetaParam> metadata = entryView.findMetaParam(CounterConfigurationMetaParam.class);
       if (!metadata.isPresent()) {
          throw getLog().metadataIsMissing(entryView.key().getCounterName());
       }
       return apply(entryView, metadata.get());
    }
 
-   abstract R apply(EntryView.ReadWriteEntryView<K, CounterValue> entryView, ConfigurationMetadata metadata);
+   abstract R apply(EntryView.ReadWriteEntryView<K, CounterValue> entryView, CounterConfigurationMetaParam metadata);
 
    protected abstract Log getLog();
 }

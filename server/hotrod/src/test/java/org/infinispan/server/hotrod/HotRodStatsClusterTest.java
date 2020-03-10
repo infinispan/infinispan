@@ -37,9 +37,8 @@ public class HotRodStatsClusterTest extends HotRodMultiNodeTest {
 
    @Override
    protected ConfigurationBuilder createCacheConfig() {
-      ConfigurationBuilder config = hotRodCacheConfiguration(
-            getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      config.jmxStatistics().enable();
+      ConfigurationBuilder config = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
+      config.statistics().enable();
       config.clustering().hash().numOwners(1);
       return config;
    }

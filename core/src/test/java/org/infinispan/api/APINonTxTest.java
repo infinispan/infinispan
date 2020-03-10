@@ -1,6 +1,6 @@
 package org.infinispan.api;
 
-import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.assertNoLocks;
 import static org.infinispan.test.TestingUtil.createMapEntry;
 import static org.testng.Assert.assertFalse;
@@ -40,7 +40,7 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
@@ -686,6 +686,15 @@ public class APINonTxTest extends SingleCacheManagerTest {
       }));
    }
 
+   public void testMergeWithExpirationParameters() {
+      BiFunction<Object, Object, String> mappingFunction = (v1, v2) -> v1 + " " + v2;
+      cache.put("es", "hola");
+
+      assertEquals("hola guy", cache.merge("es", "guy", mappingFunction, 1_000_000, TimeUnit.SECONDS));
+
+      assertEquals("hola guy and good bye", cache.merge("es", "and good bye", mappingFunction, 1_000_000, TimeUnit.SECONDS, -1, TimeUnit.SECONDS));
+   }
+
    public void testForEach() {
       cache.put("A", "B");
       cache.put("C", "D");
@@ -723,6 +732,15 @@ public class APINonTxTest extends SingleCacheManagerTest {
       expectException(RuntimeException.class, "hi there", () -> cache.computeIfAbsent("es", functionMapsToException));
    }
 
+   public void testComputeIfAbsentWithExpirationParameters() {
+      Function<Object, String> mappingFunction = k -> k + " world";
+      assertEquals("hello world", cache.computeIfAbsent("hello", mappingFunction, 1_000_000, TimeUnit.SECONDS));
+      assertEquals("hello world", cache.get("hello"));
+
+      assertEquals("hello world", cache.computeIfAbsent("hello", mappingFunction, 1_000_000, TimeUnit.SECONDS,
+            -1, TimeUnit.SECONDS));
+   }
+
    public void testComputeIfPresent() {
       BiFunction<Object, Object, String> mappingFunction = (k, v) -> "hello_" + k + ":" + v;
       cache.put("es", "hola");
@@ -743,6 +761,17 @@ public class APINonTxTest extends SingleCacheManagerTest {
       BiFunction<Object, Object, String> mappingToNull = (k, v) -> null;
       assertNull("mapping to null returns null", cache.computeIfPresent("es", mappingToNull));
       assertNull("the key is removed", cache.get("es"));
+   }
+
+   public void testComputeIfPresentWithExpirationParameters() {
+      BiFunction<Object, Object, String> mappingFunction = (k, v) -> "hello_" + k + ":" + v;
+      cache.put("es", "hola");
+
+      assertEquals("hello_es:hola", cache.computeIfPresent("es", mappingFunction, 1_000_000, TimeUnit.SECONDS));
+      assertEquals("hello_es:hola", cache.get("es"));
+
+      assertEquals("hello_es:hello_es:hola", cache.computeIfPresent("es", mappingFunction, 1_000_000, TimeUnit.SECONDS, -1, TimeUnit.SECONDS));
+      assertEquals("hello_es:hello_es:hola", cache.get("es"));
    }
 
    public void testCompute() {
@@ -770,6 +799,18 @@ public class APINonTxTest extends SingleCacheManagerTest {
          throw computeRaisedException;
       };
       expectException(RuntimeException.class, "hi there", () -> cache.compute("es", mappingToException));
+   }
+
+   public void testComputeWithExpirationParameters() {
+      BiFunction<Object, Object, String> mappingFunction = (k, v) -> "hello_" + k + ":" + v;
+      cache.put("es", "hola");
+
+      assertEquals("hello_es:hola", cache.compute("es", mappingFunction, 1_000_000, TimeUnit.SECONDS));
+      assertEquals("hello_es:hola", cache.get("es"));
+
+      assertEquals("hello_es:hello_es:hola", cache.compute("es", mappingFunction, 1_000_000, TimeUnit.SECONDS,
+            -1, TimeUnit.SECONDS));
+      assertEquals("hello_es:hello_es:hola", cache.get("es"));
    }
 
    public void testReplaceAll() {

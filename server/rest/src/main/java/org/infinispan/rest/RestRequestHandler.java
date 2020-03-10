@@ -6,7 +6,6 @@ import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_
 import static io.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-import java.io.UnsupportedEncodingException;
 import java.util.Objects;
 
 import javax.security.auth.Subject;
@@ -68,16 +67,15 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
       }
 
       NettyRestRequest restRequest;
+      LookupResult invocationLookup;
       try {
          restRequest = new NettyRestRequest(request);
-      } catch (UnsupportedEncodingException | IllegalArgumentException e) {
+         invocationLookup = restServer.getRestDispatcher().lookupInvocation(restRequest);
+      } catch (Exception e) {
          NettyRestResponse restResponse = new NettyRestResponse.Builder().status(BAD_REQUEST).build();
          sendResponse(ctx, request, restResponse);
          return;
       }
-
-
-      LookupResult invocationLookup = restServer.getRestDispatcher().lookupInvocation(restRequest);
 
       if (authenticator == null || isAnon(invocationLookup)) {
          handleRestRequest(ctx, restRequest, invocationLookup);

@@ -1,5 +1,6 @@
 package org.infinispan.scripting;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 import static org.infinispan.scripting.utils.ScriptingUtils.loadData;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -16,7 +17,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.tasks.TaskContext;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
@@ -74,7 +74,7 @@ public class ScriptingTest extends AbstractScriptingTest {
 
       //Replacing the existing script with new one.
       InputStream is = this.getClass().getResourceAsStream("/test1.js");
-      String script = TestingUtil.loadFileAsString(is);
+      String script = loadFileAsString(is);
 
       scriptingManager.addScript("test.js", script);
       result = (String) scriptingManager.runScript("test.js").get();
@@ -82,7 +82,7 @@ public class ScriptingTest extends AbstractScriptingTest {
 
       //Rolling back the replacement.
       is = this.getClass().getResourceAsStream("/test.js");
-      script = TestingUtil.loadFileAsString(is);
+      script = loadFileAsString(is);
 
       scriptingManager.addScript("test.js", script);
    }
@@ -104,7 +104,7 @@ public class ScriptingTest extends AbstractScriptingTest {
 
       //Replacing the existing script with new one.
       InputStream is = this.getClass().getResourceAsStream("/test1.js");
-      String script = TestingUtil.loadFileAsString(is);
+      String script = loadFileAsString(is);
 
       cache(ScriptingManager.SCRIPT_CACHE).replace("test.js", script);
 
@@ -113,7 +113,7 @@ public class ScriptingTest extends AbstractScriptingTest {
 
       //Rolling back the replacement.
       is = this.getClass().getResourceAsStream("/test.js");
-      script = TestingUtil.loadFileAsString(is);
+      script = loadFileAsString(is);
 
       scriptingManager.addScript("test.js", script);
    }
@@ -155,7 +155,7 @@ public class ScriptingTest extends AbstractScriptingTest {
       assertNull(cacheManager.getCache(ScriptingManager.SCRIPT_CACHE).get("test.js"));
 
       InputStream is = this.getClass().getResourceAsStream("/test.js");
-      String script = TestingUtil.loadFileAsString(is);
+      String script = loadFileAsString(is);
 
       scriptingManager.addScript("test.js", script);
       assertNotNull(scriptingManager.getScript("test.js"));
@@ -164,7 +164,7 @@ public class ScriptingTest extends AbstractScriptingTest {
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*Script execution error.*")
    public void testWrongJavaRef() throws Exception {
       InputStream is = this.getClass().getResourceAsStream("/testWrongJavaRef.js");
-      String script = TestingUtil.loadFileAsString(is);
+      String script = loadFileAsString(is);
 
       scriptingManager.addScript("testWrongJavaRef.js", script);
 
@@ -175,7 +175,7 @@ public class ScriptingTest extends AbstractScriptingTest {
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*Script execution error.*")
    public void testWrongPropertyRef() throws Exception {
       InputStream is = this.getClass().getResourceAsStream("/testWrongPropertyRef.js");
-      String script = TestingUtil.loadFileAsString(is);
+      String script = loadFileAsString(is);
 
       scriptingManager.addScript("testWrongPropertyRef.js", script);
 
@@ -186,7 +186,7 @@ public class ScriptingTest extends AbstractScriptingTest {
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*Compiler error for script.*")
    public void testJsCompilationError() throws Exception {
       InputStream is = this.getClass().getResourceAsStream("/testJsCompilationError.js");
-      String script = TestingUtil.loadFileAsString(is);
+      String script = loadFileAsString(is);
 
       scriptingManager.addScript("testJsCompilationError.js", script);
 
@@ -213,7 +213,7 @@ public class ScriptingTest extends AbstractScriptingTest {
 
    public void testMapReduceScript() throws IOException, ExecutionException, InterruptedException {
       InputStream is = this.getClass().getResourceAsStream("/wordCountStream.js");
-      String script = TestingUtil.loadFileAsString(is);
+      String script = loadFileAsString(is);
       loadData(cache(), "/macbeth.txt");
 
       scriptingManager.addScript("wordCountStream.js", script);

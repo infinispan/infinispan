@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-jcache-parent</artifactId>
-      <version>10.1.3-SNAPSHOT</version>
+      <version>10.1.4-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -75,7 +75,6 @@
       <dependency>
          <groupId>org.hamcrest</groupId>
          <artifactId>hamcrest-library</artifactId>
-         <version>1.2</version>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -225,14 +224,19 @@
                   <javax.cache.Cache>${remote.CacheImpl}</javax.cache.Cache>
                   <javax.cache.Cache.Entry>${remote.CacheEntryImpl}</javax.cache.Cache.Entry>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
-                  <infinispan.module-suffix>-${project.artifactId}-remote</infinispan.module-suffix>
 
                   <javax.management.builder.initial>${tck.mbean.builder}</javax.management.builder.initial>
                   <org.jsr107.tck.management.agentId>${tck.mbean.server}</org.jsr107.tck.management.agentId>
-                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
                   <infinispan.test.checkThreadLeaks>false</infinispan.test.checkThreadLeaks>
+
+                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+                  <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>
+                  <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
+                  <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
+                  <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
+                  <ansi.strip>${ansi.strip}</ansi.strip>
                </systemPropertyVariables>
                <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                <properties>

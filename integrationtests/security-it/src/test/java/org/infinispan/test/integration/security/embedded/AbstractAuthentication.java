@@ -74,8 +74,6 @@ public abstract class AbstractAuthentication {
    public void setupCache() throws Exception {
       //global setup
       globalConfig = new GlobalConfigurationBuilder();
-      globalConfig.globalJmxStatistics().disable();
-      globalConfig.globalJmxStatistics().mBeanServerLookup(null); //TODO remove once WFLY-3124 is fixed, for now fail JMX registration
 
       GlobalAuthorizationConfigurationBuilder globalRoles = globalConfig.security().authorization().enable()
             .principalRoleMapper(getPrincipalRoleMapper());
@@ -84,7 +82,6 @@ public abstract class AbstractAuthentication {
       cacheConfig = new ConfigurationBuilder();
       cacheConfig.transaction().lockingMode(LockingMode.PESSIMISTIC);
       cacheConfig.invocationBatching().enable();
-      cacheConfig.jmxStatistics().disable();
       AuthorizationConfigurationBuilder authConfig = cacheConfig.security().authorization().enable();
 
       //authorization setup
@@ -99,7 +96,7 @@ public abstract class AbstractAuthentication {
 
       Subject admin = getAdminSubject();
       Security.doAs(admin, new PrivilegedExceptionAction<Void>() {
-         public Void run() throws Exception {
+         public Void run() {
             manager = new DefaultCacheManager(globalConfig.build());
             manager.defineConfiguration(CACHE_NAME, cacheConfig.build());
             secureCache = manager.getCache(CACHE_NAME);
@@ -114,7 +111,7 @@ public abstract class AbstractAuthentication {
       if (manager != null) {
          Subject admin = getAdminSubject();
          Security.doAs(admin, new PrivilegedExceptionAction<Void>() {
-            public Void run() throws Exception {
+            public Void run() {
                manager.stop();
                return null;
             }
@@ -126,7 +123,7 @@ public abstract class AbstractAuthentication {
    public void testAdminCRUD() throws Exception {
       Subject admin = getAdminSubject();
       Security.doAs(admin, new PrivilegedExceptionAction<Void>() {
-         public Void run() throws Exception {
+         public Void run() {
             assertEquals(TEST_ENTRY_VALUE, secureCache.get(TEST_ENTRY_KEY));
             secureCache.putIfAbsent("test", "test value");
             assertEquals("test value", secureCache.get("test"));
@@ -145,7 +142,7 @@ public abstract class AbstractAuthentication {
    public void testWriterWrite() throws Exception {
       Subject writer = getWriterSubject();
       Security.doAs(writer, new PrivilegedExceptionAction<Void>() {
-         public Void run() throws Exception {
+         public Void run() {
             secureCache.put("test", "test value");
             return null;
          }
@@ -156,7 +153,7 @@ public abstract class AbstractAuthentication {
    public void testWriterRemove() throws Exception {
       Subject writer = getWriterSubject();
       Security.doAs(writer, new PrivilegedExceptionAction<Void>() {
-         public Void run() throws Exception {
+         public Void run() {
             secureCache.remove(TEST_ENTRY_KEY);
             return null;
          }
@@ -167,7 +164,7 @@ public abstract class AbstractAuthentication {
    public void testWriterRead() throws Exception {
       Subject writer = getWriterSubject();
       Security.doAs(writer, new PrivilegedExceptionAction<Void>() {
-         public Void run() throws Exception {
+         public Void run() {
             secureCache.get(TEST_ENTRY_KEY);
             return null;
          }
@@ -178,7 +175,7 @@ public abstract class AbstractAuthentication {
    public void testReaderRead() throws Exception {
       Subject reader = getReaderSubject();
       Security.doAs(reader, new PrivilegedExceptionAction<Void>() {
-         public Void run() throws Exception {
+         public Void run() {
             assertEquals(TEST_ENTRY_VALUE, secureCache.get(TEST_ENTRY_KEY));
             return null;
          }
@@ -189,7 +186,7 @@ public abstract class AbstractAuthentication {
    public void testReaderWrite() throws Exception {
       Subject reader = getReaderSubject();
       Security.doAs(reader, new PrivilegedExceptionAction<Void>() {
-         public Void run() throws Exception {
+         public Void run() {
             secureCache.put("test", "test value");
             return null;
          }
@@ -200,7 +197,7 @@ public abstract class AbstractAuthentication {
    public void testReaderRemove() throws Exception {
       Subject reader = getReaderSubject();
       Security.doAs(reader, new PrivilegedExceptionAction<Void>() {
-         public Void run() throws Exception {
+         public Void run() {
             secureCache.remove(TEST_ENTRY_KEY);
             return null;
          }
@@ -211,7 +208,7 @@ public abstract class AbstractAuthentication {
    public void testUnprivilegedRead() throws Exception {
       Subject unprivileged = getUnprivilegedSubject();
       Security.doAs(unprivileged, new PrivilegedExceptionAction<Void>() {
-         public Void run() throws Exception {
+         public Void run() {
             secureCache.get(TEST_ENTRY_KEY);
             return null;
          }
@@ -222,7 +219,7 @@ public abstract class AbstractAuthentication {
    public void testUnprivilegedWrite() throws Exception {
       Subject unprivileged = getUnprivilegedSubject();
       Security.doAs(unprivileged, new PrivilegedExceptionAction<Void>() {
-         public Void run() throws Exception {
+         public Void run() {
             secureCache.put("test", "test value");
             return null;
          }
@@ -233,7 +230,7 @@ public abstract class AbstractAuthentication {
    public void testUnprivilegedRemove() throws Exception {
       Subject unprivileged = getUnprivilegedSubject();
       Security.doAs(unprivileged, new PrivilegedExceptionAction<Void>() {
-         public Void run() throws Exception {
+         public Void run() {
             secureCache.remove(TEST_ENTRY_KEY);
             return null;
          }
@@ -241,18 +238,17 @@ public abstract class AbstractAuthentication {
    }
 
    @Test(expected = java.lang.SecurityException.class)
-   public void testUnauthenticatedRead() throws Exception {
+   public void testUnauthenticatedRead() {
       secureCache.get(TEST_ENTRY_KEY);
    }
 
    @Test(expected = java.lang.SecurityException.class)
-   public void testUnauthenticatedWrite() throws Exception {
+   public void testUnauthenticatedWrite() {
       secureCache.put("test", "value");
    }
 
    @Test(expected = java.lang.SecurityException.class)
-   public void testUnauthenticatedRemove() throws Exception {
+   public void testUnauthenticatedRemove() {
       secureCache.remove(TEST_ENTRY_KEY);
    }
-
 }

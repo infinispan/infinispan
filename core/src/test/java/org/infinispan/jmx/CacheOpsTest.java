@@ -22,18 +22,17 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "jmx.CacheOpsTest")
 public class CacheOpsTest extends SingleCacheManagerTest {
 
-   public static final String JMX_DOMAIN = CacheOpsTest.class.getSimpleName();
+   private static final String JMX_DOMAIN = CacheOpsTest.class.getSimpleName();
 
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-      gcb.globalJmxStatistics().jmxDomain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup).enable();
+      gcb.jmx().enabled(true).domain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.transaction().autoCommit(false)
-            .memory().size(1000)
-            .jmxStatistics().enable();
+         .memory().size(1000);
       return TestCacheManagerFactory.createCacheManager(gcb, cfg);
    }
 
@@ -43,7 +42,7 @@ public class CacheOpsTest extends SingleCacheManagerTest {
       cache().put("k", "v");
       tm().commit();
       assertFalse(cache().isEmpty());
-      mBeanServerLookup.getMBeanServer().invoke(cacheObjectName, "clear", new Object[]{}, new String[]{});
+      mBeanServerLookup.getMBeanServer().invoke(cacheObjectName, "clear", new Object[0], new String[0]);
       assertTrue(cache().isEmpty());
    }
 }

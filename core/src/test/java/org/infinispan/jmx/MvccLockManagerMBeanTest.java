@@ -34,7 +34,6 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(true);
       configuration
-            .jmxStatistics().enable()
             .locking()
                .concurrencyLevel(CONCURRENCY_LEVEL)
                .useLockStriping(true)
@@ -43,9 +42,8 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
 
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
       globalConfiguration
-            .cacheContainer().statistics(true)
-            .globalJmxStatistics()
-            .jmxDomain(JMX_DOMAIN)
+            .jmx().enabled(true)
+            .domain(JMX_DOMAIN)
             .mBeanServerLookup(mBeanServerLookup);
 
       cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);

@@ -1,7 +1,7 @@
 package org.infinispan.manager;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.infinispan.test.TestingUtil.v;
@@ -16,16 +16,15 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -61,7 +60,7 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
@@ -186,7 +185,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000436:.*")
    public void testMissingDefaultConfiguration() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-      gcb.globalJmxStatistics().jmxDomain("infinispan-" + UUID.randomUUID());
+      gcb.jmx().enabled(false);
       EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build());
       try {
          cm.getCache("someCache");

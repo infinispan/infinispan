@@ -39,7 +39,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.infinispan.test.Exceptions.expectExceptionNonStrict;
+import static org.infinispan.commons.test.Exceptions.expectExceptionNonStrict;
 import static org.testng.Assert.assertEquals;
 
 /**

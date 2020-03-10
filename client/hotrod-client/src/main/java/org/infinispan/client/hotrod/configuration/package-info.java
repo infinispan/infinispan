@@ -187,6 +187,12 @@
  *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#consistentHashImpl(int, String) hash&nbsp;function} to use.</td>
  *       </tr>
  *       <tr>
+ *          <td><b>infinispan.client.hotrod.context-initializers</b></td>
+ *          <td>String (class names)</td>
+ *          <td>(empty)</td>
+ *          <td>A list of {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#addContextInitializers(org.infinispan.protostream.SerializationContextInitializer... contextInitializers) SerializationContextInitializer implementation}</td>
+ *       </tr>
+ *       <tr>
  *          <th colspan="4">Encryption (TLS/SSL) properties</th>
  *       </tr>
  *       <tr>

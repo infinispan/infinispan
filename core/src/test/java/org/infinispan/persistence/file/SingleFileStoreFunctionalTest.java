@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.List;
 
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
@@ -33,7 +34,7 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @BeforeClass
    protected void setUpTempDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
+      tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
       Util.recursiveFileRemove(tmpDirectory);
    }
 

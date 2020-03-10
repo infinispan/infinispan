@@ -1,0 +1,13 @@
+[id='download_java_client']
+= Downloading the Hot Rod Java Client
+{brandname} provides a reference Hot Rod Java client implementation.
+
+//Community
+ifndef::productized[]
+Visit the link:http://infinispan.org/hotrod-clients[Hot Rod clients] page on _infinispan.org_ to download the Java client and find client implementations in other languages.
+endif::productized[]
+
+//Product
+ifdef::productized[]
+Visit the link:{download_url}[{brandname} downloads] page on the {portal} to download the Java client and find client implementations in other languages.
+endif::productized[]

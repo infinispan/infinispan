@@ -27,8 +27,6 @@ import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -39,7 +37,7 @@ import org.infinispan.rest.RestTestSCI;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -59,8 +57,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @Test(groups = "functional")
 public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
-   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
-
    private static final int ENTRIES = 50;
 
    private static final String CACHE_NAME = "search-rest";
@@ -78,9 +74,8 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() {
       GlobalConfigurationBuilder globalCfg = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalCfg.serialization().addContextInitializer(RestTestSCI.INSTANCE);
-      globalCfg.cacheContainer().statistics(true).globalJmxStatistics().mBeanServerLookup(mBeanServerLookup).jmxDomain(getClass().getName());
       ConfigurationBuilder builder = getConfigBuilder();
-      builder.jmxStatistics().enabled(true);
+      builder.statistics().enabled(true);
       createClusteredCaches(getNumNodes(), globalCfg, builder, isServerMode(), CACHE_NAME, "default");
       waitForClusterToForm(CACHE_NAME);
    }

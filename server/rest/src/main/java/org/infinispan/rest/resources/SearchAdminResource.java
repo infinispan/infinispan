@@ -14,7 +14,6 @@ import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.InfinispanQueryStatisticsInfo;
@@ -40,12 +39,9 @@ public class SearchAdminResource implements ResourceHandler {
    private final static Log LOG = LogFactory.getLog(SearchAdminResource.class, Log.class);
 
    private final InvocationHelper invocationHelper;
-   private final boolean globalStatsEnabled;
 
    public SearchAdminResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
-      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
-      this.globalStatsEnabled = cacheManager.getCacheManagerConfiguration().globalJmxStatistics().enabled();
    }
 
    @Override
@@ -113,16 +109,16 @@ public class SearchAdminResource implements ResourceHandler {
                }
             });
          } catch (Exception e) {
-            responseBuilder.status(INTERNAL_SERVER_ERROR.code()).entity("Error executing the MassIndexer " + e.getCause()).build();
+            responseBuilder.status(INTERNAL_SERVER_ERROR.code()).entity("Error executing the MassIndexer " + e.getCause());
          }
          return CompletableFuture.completedFuture(responseBuilder.build());
       }
 
       return op.apply(massIndexer).exceptionally(e -> {
          if (e instanceof MassIndexerAlreadyStartedException) {
-            responseBuilder.status(BAD_REQUEST.code()).entity("MassIndexer Already Started").build();
+            responseBuilder.status(BAD_REQUEST.code()).entity("MassIndexer already started");
          } else {
-            responseBuilder.status(INTERNAL_SERVER_ERROR.code()).entity("Error executing the MassIndexer " + e.getCause()).build();
+            responseBuilder.status(INTERNAL_SERVER_ERROR.code()).entity("Error executing the MassIndexer " + e.getCause());
          }
          return null;
       }).thenApply(v -> responseBuilder.build());
@@ -147,24 +143,21 @@ public class SearchAdminResource implements ResourceHandler {
       String cacheName = request.variables().get("cacheName");
       AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       if (cache == null) {
-         builder.status(HttpResponseStatus.NOT_FOUND.code()).build();
+         builder.status(HttpResponseStatus.NOT_FOUND.code());
          return null;
       }
       Configuration cacheConfiguration = cache.getCacheConfiguration();
       if (!cacheConfiguration.indexing().index().isEnabled()) {
-         builder.entity("cache is not indexed").status(BAD_REQUEST.code()).build();
+         builder.entity("cache is not indexed").status(BAD_REQUEST.code());
       }
       return cache;
    }
 
    private AdvancedCache<?, ?> lookupCacheWithStats(RestRequest request, NettyRestResponse.Builder builder) {
       AdvancedCache<?, ?> cache = lookupIndexedCache(request, builder);
-
-      if (!globalStatsEnabled) builder.entity("statistics not enabled").status(BAD_REQUEST.code()).build();
-
       if (cache != null) {
          Configuration cacheConfiguration = cache.getCacheConfiguration();
-         if (!cacheConfiguration.jmxStatistics().enabled()) {
+         if (!cacheConfiguration.statistics().enabled()) {
             builder.entity("statistics not enabled").status(BAD_REQUEST.code());
          }
       }

@@ -1,15 +1,12 @@
 package org.infinispan.test;
 
-import static java.io.File.separator;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.fail;
 
-import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -71,6 +68,7 @@ import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -148,10 +146,6 @@ import io.reactivex.Flowable;
 public class TestingUtil {
    private static final Log log = LogFactory.getLog(TestingUtil.class);
    private static final Random random = new Random();
-   public static final String TEST_PATH = "infinispanTempFiles";
-   public static final String JGROUPS_CONFIG = "<jgroups>\n" +
-         "      <stack-file name=\"tcp\" path=\"jgroups-tcp.xml\"/>\n" +
-         "   </jgroups>";
    private static final int SHORT_TIMEOUT_MILLIS = Integer.getInteger("infinispan.test.shortTimeoutMillis", 500);
    private static ScheduledExecutorService timeoutExecutor;
 
@@ -1329,32 +1323,6 @@ public class TestingUtil {
       return delay;
    }
 
-   /**
-    * Creates a path to a unique (per test) temporary directory.
-    * By default, the directory is created in the platform's temp directory, but the location
-    * can be overridden with the {@code infinispan.test.tmpdir} system property.
-    *
-    * @param test  test that requires this directory.
-    *
-    * @return an absolute path
-    */
-   public static String tmpDirectory(Class<?> test) {
-      return tmpDirectory() + separator + TEST_PATH + separator + test.getSimpleName();
-   }
-
-   /**
-    * See {@link #tmpDirectory(Class)}
-    *
-    * @return an absolute path
-    */
-   public static String tmpDirectory(String folder) {
-      return tmpDirectory() + separator + TEST_PATH + separator + folder;
-   }
-
-   public static String tmpDirectory() {
-      return System.getProperty("infinispan.test.tmpdir", System.getProperty("java.io.tmpdir"));
-   }
-
    public static String k(Method method, int index) {
       return "k" + index + '-' + method.getName();
    }
@@ -1419,9 +1387,13 @@ public class TestingUtil {
       }
    }
 
-   public static ObjectName getJGroupsChannelObjectName(String jmxDomain, String clusterName) {
+   public static ObjectName getJGroupsChannelObjectName(EmbeddedCacheManager cacheManager) {
+      GlobalConfiguration cfg = cacheManager.getCacheManagerConfiguration();
       try {
-         return new ObjectName(String.format("%s:type=channel,cluster=%s", jmxDomain, ObjectName.quote(clusterName)));
+         return new ObjectName(String.format("%s:type=channel,cluster=%s,manager=%s",
+                                             cfg.jmx().domain(),
+                                             ObjectName.quote(cacheManager.getClusterName()),
+                                             ObjectName.quote(cfg.cacheManagerName())));
       } catch (MalformedObjectNameException e) {
          throw new RuntimeException(e);
       }
@@ -1683,16 +1655,6 @@ public class TestingUtil {
          set.add(new TestingUtil.TestPrincipal(principal));
       }
       return new Subject(true, set, Collections.emptySet(), Collections.emptySet());
-   }
-
-   public static String loadFileAsString(InputStream is) throws IOException {
-      StringBuilder sb = new StringBuilder();
-      BufferedReader r = new BufferedReader(new InputStreamReader(is));
-      for (String line = r.readLine(); line != null; line = r.readLine()) {
-         sb.append(line);
-         sb.append("\n");
-      }
-      return sb.toString();
    }
 
    static public void assertAnyEquals(Object expected, Object actual) {

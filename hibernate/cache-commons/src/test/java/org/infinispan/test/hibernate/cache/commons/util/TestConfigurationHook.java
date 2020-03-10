@@ -11,7 +11,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.transaction.TransactionMode;
 
 public class TestConfigurationHook {
@@ -61,7 +61,7 @@ public class TestConfigurationHook {
          }
       }
       if (stats) {
-         configurationBuilder.jmxStatistics().available(true).enable();
+         configurationBuilder.statistics().available(true).enable();
       }
    }
 }

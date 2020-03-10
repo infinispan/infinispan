@@ -1,4 +1,6 @@
 //Reference user stories or topics.
 //Please review authoring guidelines in the Contributors Guide.
 
-include::{stories}/assembly_hotrod_java.adoc[leveloffset=+1]
+include::{stories}/assembly_hotrod_clients.adoc[leveloffset=+1]
+include::{stories}/assembly_hotrod_client_configuration.adoc[leveloffset=+1]
+include::{stories}/assembly_hotrod_client_api.adoc[leveloffset=+1]

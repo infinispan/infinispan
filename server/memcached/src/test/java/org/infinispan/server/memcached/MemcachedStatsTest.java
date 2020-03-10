@@ -30,7 +30,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.jgroups.util.Triple;
 import org.testng.annotations.Test;
 
@@ -54,12 +54,10 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
    @Override
    public EmbeddedCacheManager createTestCacheManager() {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalConfiguration.globalJmxStatistics().enable()
-            .jmxDomain(jmxDomain)
-            .mBeanServerLookup(mBeanServerLookup);
+      globalConfiguration.jmx().enabled(true).domain(jmxDomain).mBeanServerLookup(mBeanServerLookup);
 
       ConfigurationBuilder configuration = new ConfigurationBuilder();
-      configuration.jmxStatistics().enabled(true);
+      configuration.statistics().enabled(true);
 
       return TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);
    }

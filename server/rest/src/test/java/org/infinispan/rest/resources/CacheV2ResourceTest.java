@@ -7,6 +7,7 @@ import static org.eclipse.jetty.http.HttpMethod.POST;
 import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.VOLATILE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.commons.util.Util.getResourceAsString;
 import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
 import static org.infinispan.context.Flag.SKIP_INDEXING;
@@ -16,6 +17,8 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
 import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -35,8 +38,7 @@ import org.infinispan.globalstate.impl.CacheState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.rest.assertion.ResponseAssertion;
-import org.infinispan.test.TestingUtil;
-import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -45,7 +47,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Test(groups = "functional", testName = "rest.CacheV2ResourceTest")
 public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
-   private static final String PERSISTENT_LOCATION = TestingUtil.tmpDirectory(CacheV2ResourceTest.class.getName());
+   private static final String PERSISTENT_LOCATION = tmpDirectory(CacheV2ResourceTest.class.getName());
    private static final String TMP_LOCATION = PERSISTENT_LOCATION + File.separator + "tmp";
    private static final String SHARED_LOCATION = PERSISTENT_LOCATION + File.separator + "shared";
 
@@ -58,14 +60,14 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    private ConfigurationBuilder getIndexedPersistedCache() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.indexing().index(Index.PRIMARY_OWNER).autoConfig(true)
-            .jmxStatistics().enable()
+            .statistics().enable()
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
       return builder;
    }
 
-   @AfterClass
+   @AfterMethod
    public void tearDown() {
-      Util.recursiveFileRemove(PERSISTENT_LOCATION);
+      Util.recursiveFileRemove(SHARED_LOCATION);
    }
 
    @Override
@@ -104,6 +106,39 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       response = client.newRequest(urlWithoutCM + "/key").method(HttpMethod.GET).send();
       ResponseAssertion.assertThat(response).isNotFound();
+   }
+
+   @Test
+   public void testCreateCacheEncodedName() throws Exception {
+      testCreateAndUseCache("a/");
+      testCreateAndUseCache("a/b/c");
+      testCreateAndUseCache("a-b-c");
+      testCreateAndUseCache("áb\\ćé/+-$");
+      testCreateAndUseCache("org.infinispan.cache");
+   }
+
+   private void testCreateAndUseCache(String name) throws Exception {
+      String baseURL = String.format("http://localhost:%d/rest/v2/caches/", restServer().getPort());
+      String cacheName = URLEncoder.encode(name, "UTF-8");
+      String url = baseURL + cacheName;
+      String cacheConfig = "{\"distributed-cache\":{\"mode\":\"SYNC\"}}";
+
+      ContentResponse response = client.newRequest(url)
+            .method(HttpMethod.POST)
+            .header("Content-type", APPLICATION_JSON_TYPE)
+            .content(new StringContentProvider(cacheConfig))
+            .send();
+
+      ResponseAssertion.assertThat(response).isOk();
+
+      ContentResponse sizeResponse = client.newRequest(url + "?action=size").send();
+      ResponseAssertion.assertThat(sizeResponse).isOk();
+      ResponseAssertion.assertThat(sizeResponse).containsReturnedText("0");
+
+      ContentResponse namesResponse = client.newRequest(baseURL).send();
+      ResponseAssertion.assertThat(namesResponse).isOk();
+      List<String> names = Arrays.asList(new ObjectMapper().readValue(namesResponse.getContentAsString(), String[].class));
+      assertTrue(names.contains(name));
    }
 
    @Test
@@ -318,7 +353,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       assertEquals(200, checkCache("indexedCache"));
    }
 
-   private int checkCache(String name)  throws Exception {
+   private int checkCache(String name) throws Exception {
       String url = String.format("http://localhost:%d/rest/v2/caches/%s", restServer().getPort(), name);
       ContentResponse response = client.newRequest(url).method(HEAD).send();
       return response.getStatus();

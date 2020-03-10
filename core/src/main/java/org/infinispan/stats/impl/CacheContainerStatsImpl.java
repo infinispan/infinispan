@@ -1,7 +1,7 @@
 package org.infinispan.stats.impl;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -28,9 +28,12 @@ import org.infinispan.stats.Stats;
  *
  * @author Vladimir Blagojevic
  * @since 7.1
+ * @deprecated Since 10.1.3. This mixes statistics across unrelated caches so the reported numbers don't have too much
+ * relevance. Please use {@link org.infinispan.stats.Stats} or {@link org.infinispan.stats.ClusterCacheStats} instead.
  */
-@MBean(objectName = CacheContainerStats.OBJECT_NAME, description = "General cache container statistics such as timings, hit/miss ratio, etc.")
+@MBean(objectName = CacheContainerStats.OBJECT_NAME, description = "General cache container statistics such as timings, hit/miss ratio, etc. for a single node.")
 @Scope(Scopes.GLOBAL)
+@Deprecated
 public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisticsExposer {
 
    private final EmbeddedCacheManager cm;
@@ -134,6 +137,9 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       return totalAverageReadTime;
    }
 
+   @ManagedAttribute(description = "Required minimum number of nodes to hold current cache data",
+         displayName = "Required minimum number of nodes"
+   )
    @Override
    public int getRequiredMinimumNumberOfNodes() {
       int result = -1;
@@ -519,6 +525,12 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       return totalStores;
    }
 
+   @ManagedAttribute(
+         description = "Number of seconds since cache started",
+         displayName = "Seconds since cache started",
+         units = Units.SECONDS,
+         measurementType = MeasurementType.TRENDSUP
+   )
    @Override
    public long getTimeSinceStart() {
       long result = -1;
@@ -599,24 +611,24 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       resetStatistics();
    }
 
-   private Set<Stats> getStats() {
-      Set<Stats> stats = new HashSet<>();
+   private List<Stats> getStats() {
+      List<Stats> stats = new ArrayList<>();
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            AdvancedCache cache = SecurityActions.getUnwrappedCache(cm.getCache(cn)).getAdvancedCache();
+            AdvancedCache<?, ?> cache = SecurityActions.getUnwrappedCache(cm.getCache(cn)).getAdvancedCache();
             stats.add(cache.getStats());
          }
       }
       return stats;
    }
 
-   private Set<Stats> getEnabledStats() {
-      Set<Stats> stats = new HashSet<>();
+   private List<Stats> getEnabledStats() {
+      List<Stats> stats = new ArrayList<>();
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            AdvancedCache cache = SecurityActions.getUnwrappedCache(cm.getCache(cn)).getAdvancedCache();
+            AdvancedCache<?, ?> cache = SecurityActions.getUnwrappedCache(cm.getCache(cn)).getAdvancedCache();
             Configuration cfg = cache.getCacheConfiguration();
-            if (cfg.jmxStatistics().enabled()) {
+            if (cfg.statistics().enabled()) {
                stats.add(cache.getStats());
             }
          }

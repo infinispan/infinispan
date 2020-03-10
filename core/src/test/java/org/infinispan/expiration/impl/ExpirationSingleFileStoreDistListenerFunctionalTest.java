@@ -1,5 +1,7 @@
 package org.infinispan.expiration.impl;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -36,13 +38,13 @@ public class ExpirationSingleFileStoreDistListenerFunctionalTest extends Expirat
               // Prevent the reaper from running, reaperEnabled(false) doesn't work when a store is present
               .expiration().wakeUpInterval(Long.MAX_VALUE)
               .clustering().cacheMode(cacheMode)
-              .persistence().addSingleFileStore().location(TestingUtil.tmpDirectory(this.getClass()));
+              .persistence().addSingleFileStore().location(tmpDirectory(this.getClass()));
    }
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
-      Util.recursiveFileRemove(TestingUtil.tmpDirectory(this.getClass()));
-      Util.recursiveFileRemove(TestingUtil.tmpDirectory(this.getClass().getSimpleName() + "2"));
+      Util.recursiveFileRemove(tmpDirectory(this.getClass()));
+      Util.recursiveFileRemove(tmpDirectory(this.getClass().getSimpleName() + "2"));
    }
 
    protected void removeFromContainer(String key) {
@@ -74,7 +76,7 @@ public class ExpirationSingleFileStoreDistListenerFunctionalTest extends Expirat
       extraCache = extraManager.getCache();
       SingleFileStoreConfigurationBuilder sfsBuilder = (SingleFileStoreConfigurationBuilder) builder.persistence().stores().get(0);
       // Make sure each cache writes to a different location
-      sfsBuilder.location(TestingUtil.tmpDirectory(this.getClass().getSimpleName() + "2"));
+      sfsBuilder.location(tmpDirectory(this.getClass().getSimpleName() + "2"));
       EmbeddedCacheManager returned = TestCacheManagerFactory.createClusteredCacheManager(builder);
       // Unfortunately we can't reinject timeservice once a cache has been started, thus we have to inject
       // here as well, since we need the cache to verify the cluster was formed

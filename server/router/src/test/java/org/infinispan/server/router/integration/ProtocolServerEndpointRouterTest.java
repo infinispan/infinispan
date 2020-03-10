@@ -15,7 +15,7 @@ import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.hotrod.HotRodServerRouteDestination;
 import org.infinispan.server.router.routes.hotrod.SniNettyRouteSource;
 import org.infinispan.server.router.utils.HotRodClientTestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

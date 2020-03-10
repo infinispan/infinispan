@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -24,8 +23,6 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
-import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
@@ -44,6 +41,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.metrics.impl.CacheMetricsRegistration;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.cluster.impl.ClusterEventManagerStub;
@@ -51,7 +49,6 @@ import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.upgrade.RollingUpgradeManager;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.xsite.XSiteAdminOperations;
 
@@ -103,7 +100,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
             && !configuration.transaction().transactionMode().isTransactional() && configuration.clustering().stateTransfer().awaitInitialTransfer()) {
          usedBuilder = (kc, kv) -> {
             AbstractGetAdvancedCache<K, V, ?> cache = new GetReplCache<>(actualBuilder.apply(kc, kv));
-            if (configuration.jmxStatistics().available()) {
+            if (configuration.statistics().available()) {
                cache = new StatsCache<>(cache);
             }
             if (configuration.clustering().partitionHandling().whenSplit() != PartitionHandling.ALLOW_READ_WRITES) {
@@ -140,10 +137,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    private AdvancedCache<K, V> createSimpleCache(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
                                                  String cacheName) {
       AdvancedCache<K, V> cache;
-
-      JMXStatisticsConfiguration jmxStatistics = configuration.jmxStatistics();
-      boolean statisticsAvailable = jmxStatistics != null && jmxStatistics.available();
-      if (statisticsAvailable) {
+      if (configuration.statistics().available()) {
          cache = buildEncodingCache((kc, vc) -> new StatsCollectingCache<>(cacheName, kc, vc), configuration);
       } else {
          cache = buildEncodingCache((kc, vc) -> new SimpleCacheImpl<>(cacheName, kc, vc), configuration);
@@ -157,11 +151,11 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       basicComponentRegistry.registerComponent(AdvancedCache.class, cache, false);
 
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class);
+      componentRegistry.registerComponent(new CacheMetricsRegistration(), CacheMetricsRegistration.class);
       componentRegistry.registerComponent(new RollingUpgradeManager(), RollingUpgradeManager.class);
 
       return cache;
    }
-
 
    /**
     * Bootstraps this factory with a Configuration and a ComponentRegistry.
@@ -185,6 +179,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       basicComponentRegistry.registerComponent(AdvancedCache.class.getName(), cache, false);
 
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class.getName(), true);
+      componentRegistry.registerComponent(new CacheMetricsRegistration(), CacheMetricsRegistration.class.getName(), true);
       if (configuration.transaction().recovery().enabled()) {
          componentRegistry.registerComponent(new RecoveryAdminOperations(), RecoveryAdminOperations.class.getName(), true);
       }
@@ -274,56 +269,18 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
 
       @Override
-      public CompletableFuture<V> getAsync(K key) {
-         return getCacheEntryAsync(key)
-               .thenApply(ice -> ice != null ? ice.getValue() : null);
-      }
-
-      private InternalCacheEntry<K, V> internalPeekCacheEntry(Object key, int segment) {
+      public InternalCacheEntry<K, V> getCacheEntry(Object key) {
          assertKeyNotNull(key);
          checkCanRun(cache, cache.getName());
-         return getDataContainer().peek(segment, key);
-      }
-
-      @Override
-      public InternalCacheEntry<K, V> getCacheEntry(Object key) {
          int segment = keyPartitioner.getSegment(key);
-         InternalCacheEntry<K, V> ice = internalPeekCacheEntry(key, segment);
-         if (ice != null) {
-            if (ice.canExpire()) {
-               CompletionStage<Boolean> stage = expirationManager.handlePossibleExpiration(ice, segment, false);
-               if (CompletionStages.join(stage)) {
-                  ice = null;
-               }
+         InternalCacheEntry<K, V> ice = getDataContainer().peek(segment, key);
+         if (ice != null && ice.canExpire()) {
+            CompletionStage<Boolean> stage = expirationManager.handlePossibleExpiration(ice, segment, false);
+            if (CompletionStages.join(stage)) {
+               ice = null;
             }
          }
          return ice;
-      }
-
-      @Override
-      public CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key) {
-         int segment = keyPartitioner.getSegment(key);
-         InternalCacheEntry<K, V> ice = internalPeekCacheEntry(key, segment);
-         if (ice == null) {
-            return CompletableFutures.completedNull();
-         }
-         if (ice.canExpire()) {
-            CompletionStage<Boolean> stage = expirationManager.handlePossibleExpiration(ice, segment, false);
-            if (CompletionStages.isCompletedSuccessfully(stage)) {
-               if (CompletionStages.join(stage)) {
-                  return CompletableFutures.completedNull();
-               }
-               return CompletableFuture.completedFuture(ice);
-            } else {
-               return stage.thenApply(expired -> {
-                  if (expired == Boolean.TRUE) {
-                     return null;
-                  }
-                  return (CacheEntry<K, V>) ice;
-               }).toCompletableFuture();
-            }
-         }
-         return CompletableFuture.completedFuture(ice);
       }
    }
 

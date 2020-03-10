@@ -63,7 +63,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    @Start
    void start() {
-      switch(configurationManager.getGlobalConfiguration().globalState().configurationStorage()) {
+      switch (configurationManager.getGlobalConfiguration().globalState().configurationStorage()) {
          case IMMUTABLE:
             this.localConfigurationManager = new ImmutableLocalConfigurationStorage();
             break;
@@ -85,18 +85,42 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       parserRegistry = new ParserRegistry();
 
       localConfigurationManager.initialize(cacheManager, configurationManager, executorService);
+
+      // Load any state we previously had
+      Map<String, Configuration> persistedConfigurations = localConfigurationManager.loadAll();
+
+      // Check if any caches are present in our persistent state and validate against any configuration inconsistencies to prevent data loss
+      for (Map.Entry<ScopedState, Object> e : getStateCache().entrySet()) {
+         if (CACHE_SCOPE.equals(e.getKey().getScope())) {
+            String cacheName = e.getKey().getName();
+            CacheState cacheState = (CacheState) e.getValue();
+            Configuration persisted = persistedConfigurations.get(cacheName);
+            if (persisted != null) {
+               Configuration configuration = buildConfiguration(cacheName, cacheState);
+               if (!persisted.matches(configuration)) {
+                  throw CONFIG.incompatibleClusterConfiguration(cacheName, configuration, persisted);
+               } else {
+                  // The cache configuration matches, we can skip it when iterating the ones from the local state
+                  persistedConfigurations.remove(cacheName);
+               }
+            }
+         }
+      }
+
       // Initialize caches which are present in the initial state. We do this before installing the listener.
       for (Map.Entry<ScopedState, Object> e : getStateCache().entrySet()) {
-         if (CACHE_SCOPE.equals(e.getKey().getScope()))
-            uncheckedAwait(createCacheLocally(e.getKey().getName(), (CacheState) e.getValue()));
+         if (CACHE_SCOPE.equals(e.getKey().getScope())) {
+            String cacheName = e.getKey().getName();
+            CacheState cacheState = (CacheState) e.getValue();
+            uncheckedAwait(createCacheLocally(cacheName, cacheState));
+         }
       }
       // Install the listener
       GlobalConfigurationStateListener stateCacheListener = new GlobalConfigurationStateListener(this);
       getStateCache().addListener(stateCacheListener, new ScopeFilter(CACHE_SCOPE));
 
       // Tell the LocalConfigurationManager that it can load any persistent caches
-
-      List<CompletableFuture<Configuration>> all = localConfigurationManager.loadAll().entrySet().stream().map((entry) ->
+      List<CompletableFuture<Configuration>> all = persistedConfigurations.entrySet().stream().map((entry) ->
             // The cache configuration was permanent, it still needs to be
             getOrCreateCache(entry.getKey(), entry.getValue(), EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class))
       ).collect(Collectors.toList());
@@ -172,9 +196,13 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    CompletableFuture<Void> createCacheLocally(String name, CacheState state) {
       log.debugf("Create cache %s", name);
-      ConfigurationBuilderHolder builderHolder = parserRegistry.parse(state.getConfiguration());
-      Configuration configuration = builderHolder.getNamedConfigurationBuilders().get(name).build();
+      Configuration configuration = buildConfiguration(name, state);
       return localConfigurationManager.createCache(name, state.getTemplate(), configuration, state.getFlags());
+   }
+
+   private Configuration buildConfiguration(String name, CacheState state) {
+      ConfigurationBuilderHolder builderHolder = parserRegistry.parse(state.getConfiguration());
+      return builderHolder.getNamedConfigurationBuilders().get(name).build(configurationManager.getGlobalConfiguration());
    }
 
    @Override

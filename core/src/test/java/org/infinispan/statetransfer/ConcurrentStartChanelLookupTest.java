@@ -19,7 +19,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.JGroupsConfigBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.jgroups.JChannel;
 import org.testng.annotations.DataProvider;
@@ -48,7 +48,7 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
 
    @Test(timeOut = 60000, dataProvider = "startOrder")
    public void testConcurrentStart(int eagerManager, int lazyManager) throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       String name1 = TestResourceTracker.getNextNodeName();
       String name2 = TestResourceTracker.getNextNodeName();
 

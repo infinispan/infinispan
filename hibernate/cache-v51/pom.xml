@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-hibernate-parent</artifactId>
-      <version>10.1.3-SNAPSHOT</version>
+      <version>10.1.4-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -14,7 +14,7 @@
    <description>Infinispan Hibernate 5.1 Cache module</description>
 
    <properties>
-      <version.hibernate.core>5.1.11.Final</version.hibernate.core>
+      <version.hibernate.core>${version.hibernate.core_v51}</version.hibernate.core>
    </properties>
 
    <dependencies>

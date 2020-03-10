@@ -60,7 +60,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
 
    @Start
    public void start() {
-      statisticsEnabled = configuration.jmxStatistics().enabled();
+      statisticsEnabled = configuration.statistics().enabled();
    }
 
    // probably it's not *that* important to have perfect stats to make this variable volatile
@@ -227,6 +227,9 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
       return removeTimes.sum() / removes;
    }
 
+   @ManagedAttribute(description = "Required minimum number of nodes to hold current cache data",
+         displayName = "Required minimum number of nodes"
+   )
    @Override
    public int getRequiredMinimumNumberOfNodes() {
       return CacheMgmtInterceptor.calculateRequiredMinimumNumberOfNodes(cache.wired(), componentRegistry);

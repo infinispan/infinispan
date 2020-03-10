@@ -27,6 +27,7 @@ import javax.transaction.TransactionSynchronizationRegistry;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.as.clustering.infinispan.TransactionManagerProvider;
 import org.jboss.as.clustering.infinispan.TransactionSynchronizationRegistryProvider;
@@ -71,8 +72,8 @@ public class CacheConfigurationService extends AbstractCacheConfigurationService
         builder.read(configuration);
         builder.template(configuration.isTemplate());
 
-       boolean jmxEnabled = SecurityActions.getCacheManagerConfiguration(dependencies.getCacheContainer()).statistics();
-       builder.jmxStatistics().enabled(jmxEnabled);
+        GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(dependencies.getCacheContainer());
+        builder.statistics().enabled(globalConfiguration.statistics());
         TransactionManager tm = this.dependencies.getTransactionManager();
         if (tm != null) {
             builder.transaction().transactionManagerLookup(new TransactionManagerProvider());

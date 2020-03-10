@@ -1,6 +1,7 @@
 package org.infinispan.persistence.jpa;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -16,7 +17,7 @@ public class JpaStoreAsyncFunctionalTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().persistentLocation(TestingUtil.tmpDirectory(this.getClass()));
+      global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       global.serialization().addContextInitializer(JpaSCI.INSTANCE);
       return TestCacheManagerFactory.newDefaultCacheManager(false, global, new ConfigurationBuilder());
    }

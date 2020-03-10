@@ -70,7 +70,8 @@ public class JCacheManager extends AbstractJCacheManager {
       // Set cache manager class loader and apply name to cache manager MBean
       globalBuilder.classLoader(classLoader)
                    .cacheManagerName(cacheManagerName)
-                   .globalJmxStatistics().enable();
+                   .cacheContainer().statistics(true)
+                   .jmx().enabled(true);
 
       cm = new DefaultCacheManager(cbh, true);
       icr = SecurityActions.getGlobalComponentRegistry(cm).getComponent(InternalCacheRegistry.class);

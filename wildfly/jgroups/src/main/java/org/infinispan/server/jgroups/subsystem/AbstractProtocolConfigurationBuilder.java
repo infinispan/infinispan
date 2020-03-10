@@ -44,6 +44,8 @@ import org.jboss.msc.value.Value;
  */
 public abstract class AbstractProtocolConfigurationBuilder<P extends ProtocolConfiguration> implements Builder<P>, Value<P>, ProtocolConfiguration {
 
+    public static final String PROTOCOL_PREFIX = "org.jgroups.protocols";
+
     final String stackName;
     final String name;
 
@@ -95,8 +97,8 @@ public abstract class AbstractProtocolConfigurationBuilder<P extends ProtocolCon
     @Override
     public String getProtocolClassName() {
         StringBuilder builder = new StringBuilder();
-        if (module.getName().equals(ProtocolConfiguration.DEFAULT_MODULE.getName()) && !this.name.startsWith(org.jgroups.conf.ProtocolConfiguration.protocol_prefix)) {
-            builder.append(org.jgroups.conf.ProtocolConfiguration.protocol_prefix).append('.');
+        if (module.getName().equals(ProtocolConfiguration.DEFAULT_MODULE.getName()) && !this.name.startsWith(PROTOCOL_PREFIX)) {
+            builder.append(PROTOCOL_PREFIX).append('.');
         }
         return builder.append(this.name).toString();
     }

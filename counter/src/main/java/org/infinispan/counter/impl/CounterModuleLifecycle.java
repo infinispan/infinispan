@@ -11,7 +11,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.configuration.CounterManagerConfiguration;
 import org.infinispan.counter.configuration.CounterManagerConfigurationBuilder;
@@ -27,7 +26,6 @@ import org.infinispan.counter.impl.function.ResetFunction;
 import org.infinispan.counter.impl.interceptor.CounterInterceptor;
 import org.infinispan.counter.impl.listener.CounterKeyFilter;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
-import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
 import org.infinispan.counter.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.factories.ComponentRegistry;
@@ -94,7 +92,7 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       EmbeddedCounterManager counterManager = new EmbeddedCounterManager(cacheManager);
       // This must happen before CacheManagerJmxRegistration starts
       registry.registerComponent(CounterManager.class, counterManager, true);
-      if (cacheManager.getCacheManagerConfiguration().statistics()) {
+      if (cacheManager.getCacheManagerConfiguration().jmx().enabled()) {
          try {
             CacheManagerJmxRegistration jmxRegistration = registry.getComponent(CacheManagerJmxRegistration.class).running();
             jmxRegistration.registerMBean(counterManager);
@@ -123,9 +121,7 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       addAdvancedExternalizer(externalizerMap, ResetFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, CounterKeyFilter.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, ReadFunction.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, CounterConfiguration.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, InitializeCounterFunction.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, ConfigurationMetadata.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, AddFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, CompareAndSwapFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, CreateAndCASFunction.EXTERNALIZER);

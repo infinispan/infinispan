@@ -57,13 +57,13 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
 
    private Configuration getCache1Config() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.jmxStatistics().enable().clustering().cacheMode(DIST_SYNC).partitionHandling().whenSplit(DENY_READ_WRITES);
+      builder.statistics().enable().clustering().cacheMode(DIST_SYNC).partitionHandling().whenSplit(DENY_READ_WRITES);
       return builder.build();
    }
 
    private Configuration getCache2Config() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.jmxStatistics().enable().clustering().cacheMode(LOCAL).encoding().key().mediaType(TEXT_PLAIN_TYPE);
+      builder.statistics().enable().clustering().cacheMode(LOCAL).encoding().key().mediaType(TEXT_PLAIN_TYPE);
       return builder.build();
    }
 
@@ -213,6 +213,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       assertFalse(cmInfo.get("version").asText().isEmpty());
       assertEquals(2, cmInfo.get("cluster_members").size());
       assertEquals(2, cmInfo.get("cluster_members_physical_addresses").size());
+      assertEquals("LON-1", cmInfo.get("local_site").asText());
    }
 
    @Test

@@ -31,7 +31,7 @@ class NettyTransportConnectionStats {
 
    public NettyTransportConnectionStats(EmbeddedCacheManager cacheManager, ChannelGroup acceptedChannels, String threadNamePrefix) {
       this.cacheManager = cacheManager;
-      this.isGlobalStatsEnabled = cacheManager != null && SecurityActions.getCacheManagerConfiguration(cacheManager).globalJmxStatistics().enabled();
+      this.isGlobalStatsEnabled = cacheManager != null && SecurityActions.getCacheManagerConfiguration(cacheManager).jmx().enabled();
       this.acceptedChannels = acceptedChannels;
       this.threadNamePrefix = threadNamePrefix;
    }
@@ -95,22 +95,26 @@ class NettyTransportConnectionStats {
       public Integer apply(EmbeddedCacheManager embeddedCacheManager) {
          CacheManagerJmxRegistration jmxRegistration = SecurityActions.getGlobalComponentRegistry(embeddedCacheManager)
                .getComponent(CacheManagerJmxRegistration.class);
-         try {
-            ObjectName transportNamePattern = new ObjectName(jmxRegistration.getDomain() + ":type=Server,component=Transport,name=*");
-            Set<ObjectName> objectNames = jmxRegistration.getMBeanServer().queryNames(transportNamePattern, null);
+         if (jmxRegistration.enabled()) {
+            try {
+               ObjectName transportNamePattern = new ObjectName(jmxRegistration.getDomain() + ":type=Server,component=Transport,name=*");
+               Set<ObjectName> objectNames = jmxRegistration.getMBeanServer().queryNames(transportNamePattern, null);
 
-            // sum the NumberOfLocalConnections from all transport MBeans that match the pattern
-            int total = 0;
-            for (ObjectName name : objectNames) {
-               if (name.getKeyProperty("name").startsWith(serverName)) {
-                  Integer connections = (Integer) jmxRegistration.getMBeanServer().getAttribute(name, "NumberOfLocalConnections");
-                  total += connections;
+               // sum the NumberOfLocalConnections from all transport MBeans that match the pattern
+               int total = 0;
+               for (ObjectName name : objectNames) {
+                  if (name.getKeyProperty("name").startsWith(serverName)) {
+                     Integer connections = (Integer) jmxRegistration.getMBeanServer().getAttribute(name, "NumberOfLocalConnections");
+                     total += connections;
+                  }
                }
+               return total;
+            } catch (JMException e) {
+               throw new RuntimeException(e);
             }
-            return total;
-         } catch (JMException e) {
-            throw new RuntimeException(e);
          }
+
+         return 0; // jmx not enabled. computer says no.
       }
 
       public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<ConnectionAdderTask> {

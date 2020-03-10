@@ -1,19 +1,23 @@
 package org.infinispan.server.core;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.ObjectName;
 
-import org.infinispan.commons.IllegalLifecycleStateException;
+import org.eclipse.microprofile.metrics.MetricID;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.metrics.impl.CacheManagerMetricsRegistration;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyTransport;
@@ -29,7 +33,7 @@ import io.netty.util.concurrent.DefaultThreadFactory;
  * @author wburns
  * @since 4.1
  */
-public abstract class AbstractProtocolServer<A extends ProtocolServerConfiguration> implements ProtocolServer<A> {
+public abstract class AbstractProtocolServer<C extends ProtocolServerConfiguration> implements ProtocolServer<C> {
 
    private static final Log log = LogFactory.getLog(AbstractProtocolServer.class, Log.class);
 
@@ -37,12 +41,15 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
 
    protected NettyTransport transport;
    protected EmbeddedCacheManager cacheManager;
-   protected A configuration;
+   protected C configuration;
    private CacheIgnoreManager cacheIgnore;
    private ObjectName transportObjName;
    private CacheManagerJmxRegistration jmxRegistration;
    private ThreadPoolExecutor executor;
+   private ManageableThreadPoolExecutorService manageableThreadPoolExecutorService;
    private ObjectName executorObjName;
+   private CacheManagerMetricsRegistration metricsRegistration;
+   private Set<MetricID> metricIds;
 
    protected AbstractProtocolServer(String protocolName) {
       this.protocolName = protocolName;
@@ -53,14 +60,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       return protocolName;
    }
 
-   protected void startInternal(A configuration, EmbeddedCacheManager cacheManager) {
-      this.configuration = configuration;
-      this.cacheManager = cacheManager;
-
-      if (log.isDebugEnabled()) {
-         log.debugf("Starting server with configuration: %s", configuration);
-      }
-
+   protected void startInternal() {
       registerAdminOperationsHandler();
 
       // Start default cache
@@ -90,15 +90,40 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    }
 
    @Override
-   public final void start(A configuration, EmbeddedCacheManager cacheManager) {
-      start(configuration, cacheManager, new CacheIgnoreManager(cacheManager));
-   }
+   public void start(C configuration, EmbeddedCacheManager cacheManager) {
+      if (log.isDebugEnabled()) {
+         log.debugf("Starting server with configuration: %s", configuration);
+      }
 
-   @Override
-   public void start(A configuration, EmbeddedCacheManager cacheManager, CacheIgnoreManager cacheIgnore) {
-      this.cacheIgnore = cacheIgnore;
+      this.configuration = configuration;
+      this.cacheManager = cacheManager;
+
+      BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(BasicComponentRegistry.class.getName());
+      cacheIgnore = bcr.getComponent(CacheIgnoreManager.class).running();
+      if (cacheIgnore == null) {
+         throw new IllegalStateException("CacheIgnoreManager is a required component");
+      }
+
+      executor = new ThreadPoolExecutor(
+            configuration.workerThreads(),
+            configuration.workerThreads(),
+            0L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(),
+            new DefaultThreadFactory(getQualifiedName() + "-ServerHandler"),
+            new ThreadPoolExecutor.AbortPolicy() {
+               @Override
+               public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+                  if (e.isShutdown())
+                     throw new IllegalLifecycleStateException("Server has been stopped");
+                  else
+                     super.rejectedExecution(r, e);
+               }
+            });
+
+      manageableThreadPoolExecutorService = new ManageableThreadPoolExecutorService(executor);
+
       try {
-         startInternal(configuration, cacheManager);
+         startInternal();
       } catch (RuntimeException t) {
          stop();
          throw t;
@@ -123,42 +148,22 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
          }
          throw re;
       }
+
+      registerMetrics();
    }
 
    public ThreadPoolExecutor getExecutor() {
-      if (this.executor == null || this.executor.isShutdown()) {
-         DefaultThreadFactory factory = new DefaultThreadFactory(getQualifiedName() + "-ServerHandler");
-         int workerThreads = configuration.workerThreads();
-         this.executor = new ThreadPoolExecutor(
-               workerThreads,
-               workerThreads,
-               0L, TimeUnit.MILLISECONDS,
-               new LinkedBlockingQueue<>(),
-               factory,
-               abortPolicy);
-      }
       return executor;
    }
 
-   private ThreadPoolExecutor.AbortPolicy abortPolicy = new ThreadPoolExecutor.AbortPolicy() {
-      @Override
-      public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
-         if (executor.isShutdown())
-            throw new IllegalLifecycleStateException("Server has been stopped");
-         else
-            super.rejectedExecution(r, e);
-      }
-   };
-
    protected void registerServerMBeans() {
       GlobalConfiguration globalCfg = SecurityActions.getCacheManagerConfiguration(cacheManager);
-      GlobalJmxStatisticsConfiguration jmxConfig = globalCfg.globalJmxStatistics();
-      if (jmxConfig.enabled()) {
+      if (globalCfg.jmx().enabled()) {
          jmxRegistration = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(CacheManagerJmxRegistration.class);
          String groupName = String.format("type=Server,name=%s-%d", getQualifiedName(), configuration.port());
          try {
             transportObjName = jmxRegistration.registerExternalMBean(transport, groupName);
-            executorObjName = jmxRegistration.registerExternalMBean(new ManageableThreadPoolExecutorService(getExecutor()), groupName);
+            executorObjName = jmxRegistration.registerExternalMBean(manageableThreadPoolExecutorService, groupName);
          } catch (Exception e) {
             throw new RuntimeException(e);
          }
@@ -174,6 +179,22 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       }
    }
 
+   protected void registerMetrics() {
+      metricsRegistration = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(CacheManagerMetricsRegistration.class);
+      if (metricsRegistration.metricsEnabled()) {
+         String protocol = "server_" + getQualifiedName() + '_' + configuration.port();
+         metricIds = Collections.synchronizedSet(metricsRegistration.registerExternalMetrics(transport, protocol));
+         metricIds.addAll(metricsRegistration.registerExternalMetrics(manageableThreadPoolExecutorService, protocol));
+      }
+   }
+
+   protected void unregisterMetrics() {
+      if (metricIds != null) {
+         metricsRegistration.unregisterMetrics(metricIds);
+         metricIds = null;
+      }
+   }
+
    public final String getQualifiedName() {
       return protocolName + (configuration.name().length() > 0 ? "-" : "") + configuration.name();
    }
@@ -184,7 +205,8 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       if (isDebug && configuration != null)
          log.debugf("Stopping server %s listening at %s:%d", getQualifiedName(), configuration.host(), configuration.port());
 
-      if (executor != null) executor.shutdownNow();
+      if (executor != null)
+         executor.shutdownNow();
 
       if (transport != null)
          transport.stop();
@@ -195,9 +217,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
          throw new CacheException(e);
       }
 
-      if (cacheIgnore != null) {
-         cacheIgnore.stop();
-      }
+      unregisterMetrics();
 
       if (isDebug)
          log.debug("Server stopped");
@@ -219,7 +239,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    }
 
    @Override
-   public A getConfiguration() {
+   public C getConfiguration() {
       return configuration;
    }
 

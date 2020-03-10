@@ -322,8 +322,8 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
     void processModelNode(OperationContext context, String containerName, String cacheName, ModelNode cache,
                           ConfigurationBuilder builder, List<Dependency<?>> dependencies) throws OperationFailedException {
 
-        builder.jmxStatistics().enabled(CacheConfigurationResource.STATISTICS.resolveModelAttribute(context, cache).asBoolean());
-        builder.jmxStatistics().available(CacheConfigurationResource.STATISTICS_AVAILABLE.resolveModelAttribute(context, cache).asBoolean());
+        builder.statistics().enabled(CacheConfigurationResource.STATISTICS.resolveModelAttribute(context, cache).asBoolean());
+        builder.statistics().available(CacheConfigurationResource.STATISTICS_AVAILABLE.resolveModelAttribute(context, cache).asBoolean());
 
         final boolean batching = CacheConfigurationResource.BATCHING.resolveModelAttribute(context, cache).asBoolean();
         builder.simpleCache(CacheConfigurationResource.SIMPLE_CACHE.resolveModelAttribute(context, cache).asBoolean());

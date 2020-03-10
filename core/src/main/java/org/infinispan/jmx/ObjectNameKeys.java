@@ -8,7 +8,7 @@ public interface ObjectNameKeys {
 
    String NAME = "name";
 
-   String TYPE = "type";   // Cache, CacheManager, Query, RemoteQuery, etc.
+   String TYPE = "type";   // Cache, CacheManager, Query, RemoteQuery, Server, etc.
 
    String COMPONENT = "component";
 

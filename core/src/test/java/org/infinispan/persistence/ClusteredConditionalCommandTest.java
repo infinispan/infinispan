@@ -66,7 +66,7 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
    private ConfigurationBuilder createConfiguration(String storeName, boolean shared, boolean transactional,
                                                            boolean passivation, int storePrefix) {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, transactional);
-      builder.jmxStatistics().enable();
+      builder.statistics().enable();
       builder.persistence()
             .passivation(passivation)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)

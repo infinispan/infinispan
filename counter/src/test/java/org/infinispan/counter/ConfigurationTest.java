@@ -1,12 +1,14 @@
 package org.infinispan.counter;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterManager;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 
 import java.io.File;
 
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -28,7 +30,6 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.test.AbstractCacheTest;
-import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -45,7 +46,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "counter.ConfigurationTest")
 public class ConfigurationTest extends AbstractCacheTest {
 
-   private static final String PERSISTENT_FOLDER = TestingUtil.tmpDirectory(ConfigurationTest.class.getSimpleName());
+   private static final String PERSISTENT_FOLDER = tmpDirectory(ConfigurationTest.class.getSimpleName());
    private static final String TEMP_PERSISTENT_FOLDER = PERSISTENT_FOLDER + File.separator + "temp";
    private static final String SHARED_PERSISTENT_FOLDER = PERSISTENT_FOLDER + File.separator + "shared";
 

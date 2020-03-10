@@ -24,6 +24,7 @@
 <!-- This file supplies the internal defaults per protocol -->
 <config xmlns="urn:org:jgroups">
    <UDP
+      tos="0"
       ucast_send_buf_size="1m"
       mcast_send_buf_size="1m"
       ucast_recv_buf_size="20m"
@@ -80,10 +81,10 @@
       print_local_addr="false"
       join_timeout="${jgroups.join_timeout:2000}"/>
    <UFC
-      max_credits="3m"
+      max_credits="4m"
       min_threshold="0.40"/>
    <MFC
-      max_credits="3m"
+      max_credits="4m"
       min_threshold="0.40"/>
    <UFC_NB
       max_credits="3m"

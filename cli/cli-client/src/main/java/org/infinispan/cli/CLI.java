@@ -217,6 +217,7 @@ public class CLI {
       cliRunner
             .args(new String[]{"run", inputFile})
             .execute();
+      context.disconnect();
    }
 
    private void interactiveRun() {

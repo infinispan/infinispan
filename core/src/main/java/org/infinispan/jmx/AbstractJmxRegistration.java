@@ -16,14 +16,13 @@ import javax.management.ObjectName;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
+import org.infinispan.configuration.global.GlobalJmxConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.metrics.impl.ApplicationMetricsRegistry;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -43,9 +42,6 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
 
    @Inject
    BasicComponentRegistry basicComponentRegistry;
-
-   @Inject
-   ApplicationMetricsRegistry applicationMetricsRegistry;
 
    volatile MBeanServer mBeanServer;
 
@@ -72,10 +68,10 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
       if (mBeanServer == null) {
          MBeanServer mBeanServer = null;
          try {
-            GlobalJmxStatisticsConfiguration globalJmxConfig = globalConfig.globalJmxStatistics();
-            MBeanServerLookup lookup = globalJmxConfig.mbeanServerLookup();
-            if (lookup != null) {
-               mBeanServer = lookup.getMBeanServer(globalJmxConfig.properties());
+            GlobalJmxConfiguration jmx = globalConfig.jmx();
+            MBeanServerLookup lookup = jmx.mbeanServerLookup();
+            if (jmx.enabled() && lookup != null) {
+               mBeanServer = lookup.getMBeanServer(jmx.properties());
             }
          } catch (Exception e) {
             CONTAINER.warn("Ignoring exception in MBean server lookup", e);
@@ -90,7 +86,7 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
             ResourceDMBean first = it.next();
 
             // register first bean to reserve the domain
-            this.jmxDomain = findVirginDomain(mBeanServer, first, globalConfig.globalJmxStatistics());
+            this.jmxDomain = findVirginDomain(mBeanServer, first, globalConfig.jmx());
             this.mBeanServer = mBeanServer;
 
             // register remaining beans
@@ -119,19 +115,19 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
    }
 
    //TODO remove support for allowDuplicateDomains in Infinispan 11. https://issues.jboss.org/browse/ISPN-10900
-   private String findVirginDomain(MBeanServer mBeanServer, ResourceDMBean first, GlobalJmxStatisticsConfiguration globalJmxConfig) {
-      String jmxDomain = globalJmxConfig.domain();
+   private String findVirginDomain(MBeanServer mBeanServer, ResourceDMBean first, GlobalJmxConfiguration jmx) {
+      String jmxDomain = jmx.domain();
       int counter = 2;
       while (true) {
          try {
             register(first, getObjectName(jmxDomain, groupName, first.getMBeanName()), mBeanServer);
             break;
          } catch (InstanceAlreadyExistsException | IllegalArgumentException e) {
-            if (globalJmxConfig.allowDuplicateDomains()) {
+            if (jmx.allowDuplicateDomains()) {
                // add 'unique' suffix and retry
-               jmxDomain = globalJmxConfig.domain() + counter++;
+               jmxDomain = jmx.domain() + counter++;
             } else {
-               throw CONTAINER.jmxMBeanAlreadyRegistered(groupName, globalJmxConfig.domain());
+               throw CONTAINER.jmxMBeanAlreadyRegistered(groupName, jmx.domain());
             }
          } catch (Exception e) {
             throw new CacheException("Failure while registering MBeans", e);
@@ -163,6 +159,13 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
     * Subclasses must implement this hook to initialize {@link #groupName} during start.
     */
    protected abstract String initGroup();
+
+   /**
+    * Checks that JMX is effectively enabled.
+    */
+   public final boolean enabled() {
+      return mBeanServer != null;
+   }
 
    /**
     * Gets the domain name. This should not be called unless JMX is enabled.
@@ -246,8 +249,8 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
    }
 
    private ResourceDMBean getResourceDMBean(Object instance, String componentName) {
-      MBeanMetadata md = basicComponentRegistry.getMBeanMetadata(instance.getClass().getName());
-      return md == null ? null : new ResourceDMBean(instance, md, componentName);
+      MBeanMetadata beanMetadata = basicComponentRegistry.getMBeanMetadata(instance.getClass().getName());
+      return beanMetadata == null ? null : new ResourceDMBean(instance, beanMetadata, componentName);
    }
 
    /**
@@ -306,9 +309,6 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
       if (log.isTraceEnabled()) {
          log.tracef("Registered MBean %s under %s", resourceDMBean, objectName);
       }
-      if (applicationMetricsRegistry != null) {
-         applicationMetricsRegistry.register(resourceDMBean);
-      }
    }
 
    /**
@@ -322,9 +322,6 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
          SecurityActions.unregisterMBean(objectName, mBeanServer);
          if (log.isTraceEnabled()) {
             log.tracef("Unregistered MBean: %s", objectName);
-         }
-         if (applicationMetricsRegistry != null) {
-            applicationMetricsRegistry.unregister(objectName);
          }
       } else {
          log.debugf("MBean not registered: %s", objectName);

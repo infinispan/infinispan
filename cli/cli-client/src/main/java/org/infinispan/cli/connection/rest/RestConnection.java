@@ -511,7 +511,20 @@ public class RestConnection implements Connection, Closeable {
                }
                break;
             }
-            case Stats.CMD:
+            case Stats.CMD: {
+               Resource resource = activeResource;
+               if (command.hasArg(CliCommand.NAME)) {
+                  resource = pathToResource(command.arg(CliCommand.NAME));
+               }
+               if (resource instanceof CacheResource) {
+                  response = client.cache(resource.getName()).stats();
+               } else if (resource instanceof ContainerResource) {
+                  response = client.cacheManager(resource.getName()).stats();
+               } else {
+                  String name = resource.getName();
+                  throw MSG.invalidResource(name.isEmpty() ? "/" : name);
+               }
+            }
             case Abort.CMD:
             case Begin.CMD:
             case End.CMD:

@@ -3,11 +3,11 @@ package org.infinispan.it.osgi.persistence.file;
 import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
 import static org.ops4j.pax.exam.CoreOptions.options;
 
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.it.osgi.util.CustomPaxExamRunner;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -36,7 +36,7 @@ public class SingleFileStoreFunctionalTest extends org.infinispan.persistence.fi
 
    @BeforeClass
    public static void setUpTmpDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(SingleFileStoreFunctionalTest.class);
+      tmpDirectory = CommonsTestingUtil.tmpDirectory(SingleFileStoreFunctionalTest.class);
    }
 
    @AfterClass
@@ -47,7 +47,7 @@ public class SingleFileStoreFunctionalTest extends org.infinispan.persistence.fi
    @Before
    @Override
    public void setup() throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       super.setup();
    }
 

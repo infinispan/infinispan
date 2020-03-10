@@ -203,7 +203,7 @@ public interface Log extends BasicLogger {
    @Message(value = "There's already a JMX MBean instance %s registered under " +
          "'%s' JMX domain. If you want to allow multiple instances configured " +
          "with same JMX domain enable 'allowDuplicateDomains' attribute in " +
-         "'globalJmxStatistics' config element", id = 34)
+         "'jmx' config element", id = 34)
    JmxDomainConflictException jmxMBeanAlreadyRegistered(String mBeanName, String jmxDomain);
 
 //   @LogMessage(level = WARN)
@@ -1704,7 +1704,6 @@ public interface Log extends BasicLogger {
    @Message(value = "%s encountered unsupported content '%s' during transcoding", id = 497)
    EncodingException unsupportedContent(String transcoderName, Object content);
 
-
    @LogMessage(level = WARN)
    @Message(value = "Indexing mode ALL without owning all data locally (replicated mode).", id = 498)
    void allIndexingInNonReplicatedCache();
@@ -1928,8 +1927,8 @@ public interface Log extends BasicLogger {
    @Message(value = "SerializationConfiguration Version is deprecated since version 10.1 and will be removed in the future. The configured value has no affect on Infinispan marshalling.", id = 567)
    void serializationVersionDeprecated();
 
-   @Message(value = "Failed to initialize base and vendor metrics from JMX MBeans", id = 568)
-   IllegalStateException failedToInitBaseAndVendorMetrics(@Cause Exception e);
+//   @Message(value = "Failed to initialize base and vendor metrics from JMX MBeans", id = 568)
+//   IllegalStateException failedToInitBaseAndVendorMetrics(@Cause Exception e);
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to persist Infinispan internal caches as no global state enabled", id = 569)

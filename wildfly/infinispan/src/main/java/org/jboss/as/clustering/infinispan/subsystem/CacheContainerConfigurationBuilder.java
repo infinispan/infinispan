@@ -232,7 +232,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
             if (configurationStorageClass != null) {
                 try {
                     LocalConfigurationStorage localConfigurationStorage = Class.forName(configurationStorageClass, true, loader).asSubclass(LocalConfigurationStorage.class).newInstance();
-                    if (localConfigurationStorage != null && localConfigurationStorage instanceof ServerLocalConfigurationStorage) {
+                    if (localConfigurationStorage instanceof ServerLocalConfigurationStorage) {
                         ServerLocalConfigurationStorage serverLocalConfigurationManager = (ServerLocalConfigurationStorage)localConfigurationStorage;
                         serverLocalConfigurationManager.setRootPath(PathAddress.pathAddress(InfinispanExtension.SUBSYSTEM_PATH).append("cache-container", name));
                         serverLocalConfigurationManager.setModelControllerClient(modelController.getValue().createClient(Executors.newCachedThreadPool()));
@@ -257,10 +257,10 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
         builder.persistenceThreadPool().read(this.persistenceThreadPool.getValue());
 
         builder.cacheManagerName(this.name)
-                .globalJmxStatistics()
-                .enabled(this.statisticsEnabled)
-                .mBeanServerLookup(new MBeanServerProvider(this.server.getValue()))
-                .jmxDomain(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(CacheServiceNameFactory.DEFAULT_CACHE).getParent().getCanonicalName());
+               .cacheContainer().statistics(this.statisticsEnabled)
+               .jmx().enabled(this.statisticsEnabled)
+               .mBeanServerLookup(new MBeanServerProvider(this.server.getValue()))
+               .domain(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(CacheServiceNameFactory.DEFAULT_CACHE).getParent().getCanonicalName());
 
         builder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
         return builder.build();

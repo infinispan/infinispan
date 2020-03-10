@@ -70,6 +70,7 @@ public enum Element {
     LOCKING,
     MANAGED_CONFIGURATION_STORAGE,
     MEMORY,
+    METRICS,
     MODULES,
     OBJECT,
     OFF_HEAP,

@@ -1,0 +1,41 @@
+[id='hotrod_auth_tgt']
+= Creating GSSAPI Login Contexts
+To use the GSSAPI mechanism, you must create a _LoginContext_ so your Hot Rod client can obtain a Ticket Granting Ticket (TGT).
+
+.Procedure
+
+. Define a login module in a login configuration file.
++
+.gss.conf
++
+[source]
+----
+GssExample {
+    com.sun.security.auth.module.Krb5LoginModule required client=TRUE;
+};
+----
++
+For the IBM JDK:
++
+.gss-ibm.conf
++
+[source]
+----
+GssExample {
+    com.ibm.security.auth.module.Krb5LoginModule required client=TRUE;
+};
+----
++
+. Set the following system properties:
++
+----
+java.security.auth.login.config=gss.conf
+
+java.security.krb5.conf=/etc/krb5.conf
+----
++
+[NOTE]
+====
+`krb5.conf` provides the location of your KDC. Use the _kinit_ command to
+authenticate with Kerberos and verify `krb5.conf`.
+====

@@ -27,7 +27,7 @@ public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {
    @Override
    public CompletionStage<Void> onEntryEviction(Map<K, Map.Entry<K,V>> evicted, FlagAffectedCommand command) {
       CompletionStage<Void> stage = cacheNotifier.notifyCacheEntriesEvicted(evicted.values(), ImmutableContext.INSTANCE, command);
-      if (cfg.jmxStatistics().enabled()) {
+      if (cfg.statistics().enabled()) {
          updateEvictionStatistics(evicted);
       }
 

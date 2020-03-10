@@ -2,6 +2,7 @@ package org.infinispan.persistence.file;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
@@ -9,7 +10,6 @@ import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.PersistenceMockUtil;
 import org.testng.annotations.AfterClass;
@@ -33,7 +33,7 @@ public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setUpTempDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
+      tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
    }
 
    @AfterClass

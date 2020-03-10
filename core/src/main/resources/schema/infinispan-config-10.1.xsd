@@ -234,6 +234,11 @@
           <xs:documentation>Specifies how data serialization will be performed by the cache container.</xs:documentation>
         </xs:annotation>
       </xs:element>
+      <xs:element name="metrics" type="tns:metrics" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Defines microprofile metrics configuration.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
       <xs:element name="jmx" type="tns:jmx" minOccurs="0">
         <xs:annotation>
           <xs:documentation>Defines JMX management details.</xs:documentation>
@@ -618,6 +623,37 @@
     </xs:attribute>
   </xs:complexType>
 
+  <xs:complexType name="metrics">
+    <xs:attribute name="gauges" type="xs:boolean" default="${GlobalMetrics.gauges}">
+      <xs:annotation>
+        <xs:documentation>
+          Enables exporting of gauge metrics. These are exported by default if statistics are enabled.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="histograms" type="xs:boolean" default="${GlobalMetrics.histograms}">
+      <xs:annotation>
+        <xs:documentation>
+          Enables exporting of histograms. These are costly to compute so are not enabled by default.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="prefix" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          Global name prefix for metrics.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="namesAsTags" type="xs:boolean" default="${GlobalMetrics.namesAsTags}">
+      <xs:annotation>
+        <xs:documentation>
+          Put the cache manager and cache name in tags rather then include them in the metric name.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
   <xs:complexType name="jmx">
     <xs:sequence>
       <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded">
@@ -626,7 +662,7 @@
         </xs:annotation>
       </xs:element>
     </xs:sequence>
-    <xs:attribute name="domain" type="xs:string" default="${GlobalJmxStatistics.domain}">
+    <xs:attribute name="domain" type="xs:string" default="${GlobalJmx.domain}">
       <xs:annotation>
         <xs:documentation>
           If JMX statistics are enabled then all 'published' JMX objects will appear under this name. This is optional, if not specified an object name will be created for you by default.
@@ -640,10 +676,18 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="duplicate-domains" type="xs:boolean" default="${GlobalJmxStatistics.duplicateDomains}">
+    <xs:attribute name="duplicate-domains" type="xs:boolean" default="${GlobalJmx.duplicateDomains}">
       <xs:annotation>
         <xs:documentation>
+          Deprecated since 10.1; please set a unique domain or cache manager name instead.
           If true, multiple cache manager instances could be configured under the same configured JMX domain. Each cache manager will in practice use a different JMX domain that has been calculated based on the configured one by adding an incrementing index to it.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="enabled" type="xs:boolean" default="${GlobalJmx.enabled}">
+      <xs:annotation>
+        <xs:documentation>
+          Enables exporting of MBeans.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -905,12 +949,12 @@
     <xs:attribute name="module" type="xs:string">
       <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
     </xs:attribute>
-    <xs:attribute name="statistics" type="xs:boolean" default="${JMXStatistics.enabled}">
+    <xs:attribute name="statistics" type="xs:boolean" default="${Statistics.enabled}">
       <xs:annotation>
         <xs:documentation>Determines whether or not the cache should collect statistics.  Keep disabled for optimal performance.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="statistics-available" type="xs:boolean" default="${JMXStatistics.available}">
+    <xs:attribute name="statistics-available" type="xs:boolean" default="${Statistics.available}">
       <xs:annotation>
         <xs:documentation>If set to false, statistics gathering cannot be enabled during runtime. Keep disabled for optimal performance.</xs:documentation>
       </xs:annotation>

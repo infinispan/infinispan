@@ -23,7 +23,9 @@ public interface SearchManager {
     * @param indexedQueryMode The {@link IndexedQueryMode} used when executing the query.
     * @param classes          Optionally only return results of type that matches this list of acceptable types.
     * @return the CacheQuery object which can be used to iterate through results.
+    * @deprecated Support for Lucene queries is deprecated. Use  {@link #getQuery(String, IndexedQueryMode, Class[])} instead.
     */
+   @Deprecated
    <E> CacheQuery<E> getQuery(Query luceneQuery, IndexedQueryMode indexedQueryMode, Class<?>... classes);
 
    /**
@@ -38,14 +40,18 @@ public interface SearchManager {
 
    /**
     * @see #getQuery(Query, IndexedQueryMode, Class...)
+    * @deprecated Support for Lucene queries is deprecated. Use  {@link #getQuery(String, IndexedQueryMode, Class[])}  instead.
     */
+   @Deprecated
    <E> CacheQuery<E> getQuery(Query luceneQuery, Class<?>... classes);
 
    /**
     * Provides the Hibernate Search DSL entrypoint to build full text queries.
     *
     * @return {@link EntityContext}
+    * @deprecated Support for Hibernate Search queries is deprecated. Use  {@link #getQuery(String, IndexedQueryMode, Class[])} instead.
     */
+   @Deprecated
    EntityContext buildQueryBuilderForClass(Class<?> entityType);
 
    /**

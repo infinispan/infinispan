@@ -35,6 +35,7 @@ public class UserTool extends Main {
    private String groupsFileName = DEFAULT_GROUPS_PROPERTIES_FILE;
    private List<String> addGroups = new ArrayList<>();
    private boolean batchMode = false;
+   private boolean plainText = true;
 
    public static void main(String[] args) {
       UserTool userTool = new UserTool();
@@ -58,6 +59,10 @@ public class UserTool extends Main {
             // Fall through
          case "--password":
             password = parameter;
+            break;
+         case "-d":
+         case "--digest":
+            plainText = false;
             break;
          case "-g":
             parameter = args.next();
@@ -146,7 +151,7 @@ public class UserTool extends Main {
             exit(1);
          }
       }
-      users.put(username, hashPassword(username, password, realm));
+      users.put(username, plainText ? password : hashPassword(username, password, realm));
       groups.put(username, addGroups.stream().collect(Collectors.joining(",")));
 
       try (FileWriter writer = new FileWriter(usersFile)) {
@@ -183,6 +188,7 @@ public class UserTool extends Main {
       out.printf("Usage:\n");
       out.printf("  -u, --user=<name>                  %s\n", MSG.userToolHelpUser());
       out.printf("  -p, --password=<password>          %s\n", MSG.userToolHelpPassword());
+      out.printf("  -d, --digest                       %s\n", MSG.userToolHelpDigestPassword());
       out.printf("  -g, --groups=<group1[,group2...]>  %s\n", MSG.userToolHelpGroups());
       out.printf("  -f, --users-file=<file>            %s\n", MSG.userToolHelpUsersFile(DEFAULT_USERS_PROPERTIES_FILE));
       out.printf("  -w, --groups-file=<file>           %s\n", MSG.userToolHelpGroupsFile(DEFAULT_GROUPS_PROPERTIES_FILE));

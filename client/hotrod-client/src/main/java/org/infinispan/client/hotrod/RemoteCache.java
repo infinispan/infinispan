@@ -29,12 +29,7 @@ import org.infinispan.query.dsl.Query;
  * is returned instead. E.g. {@link java.util.Map#put(Object, Object)} returns the previous value associated to the
  * supplied key. In case of RemoteCache, this returns null.
  * <p/>
- * <b>Synthetic operations</b>: aggregate operations are being implemented based on other Hot Rod operations. E.g. all
- * the {@link java.util.Map#putAll(java.util.Map)} is implemented through multiple individual puts. This means that the
- * these operations are not atomic and that they are costly, e.g. as the number of network round-trips is not one, but
- * the size of the added map. All these synthetic operations are documented as such.
- * <p/>
- * <b>changing default behavior through {@link org.infinispan.client.hotrod.Flag}s</b>: it is possible to change the
+ * <b>Changing default behavior through {@link org.infinispan.client.hotrod.Flag}s</b>: it is possible to change the
  * default cache behaviour by using flags on an per invocation basis. E.g.
  * <pre>
  *      RemoteCache cache = getRemoteCache();
@@ -352,15 +347,13 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    CloseableIteratorSet<Entry<K, V>> entrySet(IntSet segments);
 
    /**
-    * Synthetic operation. The client iterates over the set of keys and calls put for each one of them. This results in
-    * operation not being atomic (if a failure happens after few puts it is not rolled back) and costly (for each key in
-    * the parameter map a remote call is performed).
+    * Adds or overrides each specified entry in the remote cache. This operation provides better performance than calling put() for each entry.
     */
    @Override
    void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit);
 
    /**
-    * Synthetic operation.
+    * Adds or overrides each specified entry in the remote cache. This operation provides better performance than calling put() for each entry.
     *
     * @see #putAll(java.util.Map, long, java.util.concurrent.TimeUnit)
     */
@@ -368,7 +361,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
 
    /**
-    * Synthetic operation.
+    * Adds or overrides each specified entry in the remote cache. This operation provides better performance than calling put() for each entry.
     *
     * @see #putAll(java.util.Map, long, java.util.concurrent.TimeUnit)
     */
@@ -376,7 +369,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data);
 
    /**
-    * Synthetic operation.
+    * Adds or overrides each specified entry in the remote cache. This operation provides better performance than calling put() for each entry.
     *
     * @see #putAll(java.util.Map, long, java.util.concurrent.TimeUnit)
     */
@@ -384,7 +377,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit);
 
    /**
-    * Synthetic operation.
+    * Adds or overrides each specified entry in the remote cache. This operation provides better performance than calling put() for each entry.
     *
     * @see #putAll(java.util.Map, long, java.util.concurrent.TimeUnit)
     */
@@ -392,7 +385,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
-    * Synthetic operation.
+    * Adds or overrides each specified entry in the remote cache. This operation provides better performance than calling put() for each entry.
     *
     * @see #putAll(java.util.Map, long, java.util.concurrent.TimeUnit)
     */

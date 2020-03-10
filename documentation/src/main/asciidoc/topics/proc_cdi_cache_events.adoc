@@ -1,0 +1,25 @@
+[id='cache_events']
+= Receiving Cache and Cache Manager Events
+You can use CDI Events to receive Cache and cache manager level events.
+
+* Use the `@Observes` annotation as in the following example:
+
+[source,java]
+----
+import javax.enterprise.event.Observes;
+import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
+import org.infinispan.notifications.cachelistener.event.*;
+
+public class GreetingService {
+
+    // Cache level events
+    private void entryRemovedFromCache(@Observes CacheEntryCreatedEvent event) {
+        ...
+    }
+
+    // Cache manager level events
+    private void cacheStarted(@Observes CacheStartedEvent event) {
+        ...
+    }
+}
+----

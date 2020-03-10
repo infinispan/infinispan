@@ -64,7 +64,7 @@ public class WarmCacheTest extends MultipleCacheManagersTest {
       createIndex(indexDir, INDEX_NAME, TERMS_NUMBER, false);
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       c.clustering().hash().numOwners(1);
-      c.jmxStatistics().enable();
+      c.statistics().enable();
       c.persistence()
             .addStore(LuceneLoaderConfigurationBuilder.class)
             .segmented(false)

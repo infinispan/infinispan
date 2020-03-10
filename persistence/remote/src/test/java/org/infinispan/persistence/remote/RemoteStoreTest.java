@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.function.ToIntBiFunction;
 
@@ -46,14 +45,14 @@ public class RemoteStoreTest extends BaseStoreTest {
    private HotRodServer hrServer;
 
    @Override
-   protected AdvancedLoadWriteStore createStore() throws Exception {
+   protected AdvancedLoadWriteStore createStore() {
       ConfigurationBuilder localBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       localBuilder.memory().evictionType(EvictionType.COUNT).size(WRITE_DELETE_BATCH_MAX_ENTRIES).expiration().wakeUpInterval(10L);
       // Set it to dist so it has segments
       localBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
 
       GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder().clusteredDefault();
-      globalConfig.globalJmxStatistics().defaultCacheName(REMOTE_CACHE);
+      globalConfig.defaultCacheName(REMOTE_CACHE);
 
       localCacheManager = TestCacheManagerFactory.createClusteredCacheManager(
             globalConfig, hotRodCacheConfiguration(localBuilder));
@@ -99,7 +98,7 @@ public class RemoteStoreTest extends BaseStoreTest {
    }
 
    @Override
-   public void testReplaceExpiredEntry() throws Exception {
+   public void testReplaceExpiredEntry() {
       cl.write(marshalledEntry(internalCacheEntry("k1", "v1", 100)));
       // Hot Rod does not support milliseconds, so 100ms is rounded to the nearest second,
       // and so data is stored for 1 second here. Adjust waiting time accordingly.
@@ -141,7 +140,7 @@ public class RemoteStoreTest extends BaseStoreTest {
       assertEquals(0, countFunction.applyAsInt(rs, intSet));
    }
 
-   public void testPublishKeysWithSegments() throws IOException, InterruptedException {
+   public void testPublishKeysWithSegments() {
       countWithSegments((salws, intSet) ->
          Flowable.fromPublisher(salws.publishKeys(intSet, null))
                .count()
@@ -149,7 +148,7 @@ public class RemoteStoreTest extends BaseStoreTest {
       );
    }
 
-   public void testPublishEntriesWithSegments() throws IOException, InterruptedException {
+   public void testPublishEntriesWithSegments() {
       countWithSegments((salws, intSet) ->
             Flowable.fromPublisher(salws.entryPublisher(intSet, null, true, true))
                   .count()

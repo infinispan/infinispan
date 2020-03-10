@@ -1,103 +1,41 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.JMXStatisticsConfiguration.AVAILABLE;
-import static org.infinispan.configuration.cache.JMXStatisticsConfiguration.ELEMENT_DEFINITION;
-import static org.infinispan.configuration.cache.JMXStatisticsConfiguration.ENABLED;
-import static org.infinispan.util.logging.Log.CONFIG;
-
-import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
-import org.infinispan.commons.configuration.attributes.Attribute;
-import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.configuration.global.GlobalConfiguration;
+
 /**
- * Determines whether statistics are gather and reported.
+ * Determines whether cache statistics are gathered.
  *
  * @author pmuir
- *
+ * @deprecated since 10.1.3. Use {@link StatisticsConfigurationBuilder} instead. This will be removed in next major
+ * version.
  */
-public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<JMXStatisticsConfiguration>, ConfigurationBuilderInfo {
-   private final AttributeSet attributes;
+@Deprecated
+public abstract class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChildBuilder implements ConfigurationBuilderInfo {
 
    JMXStatisticsConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
-      this.attributes = JMXStatisticsConfiguration.attributeDefinitionSet();
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
    }
 
    /**
     * Enable statistics gathering and reporting
     */
-   public JMXStatisticsConfigurationBuilder enable() {
-      attributes.attribute(ENABLED).set(true);
-      return this;
-   }
+   public abstract JMXStatisticsConfigurationBuilder enable();
 
    /**
     * Disable statistics gathering and reporting
     */
-   public JMXStatisticsConfigurationBuilder disable() {
-      attributes.attribute(ENABLED).set(false);
-      return this;
-   }
+   public abstract JMXStatisticsConfigurationBuilder disable();
 
    /**
     * Enable or disable statistics gathering and reporting
     */
-   public JMXStatisticsConfigurationBuilder enabled(boolean enabled) {
-      attributes.attribute(ENABLED).set(enabled);
-      return this;
-   }
+   public abstract JMXStatisticsConfigurationBuilder enabled(boolean enabled);
 
    /**
     * If set to false, statistics gathering cannot be enabled during runtime. Performance optimization.
-    * @param available
-    * @return
+    *
+    * @deprecated since 10.1.3. This method will be removed in a future version.
     */
-   public JMXStatisticsConfigurationBuilder available(boolean available) {
-      attributes.attribute(AVAILABLE).set(available);
-      return this;
-   }
-
-   @Override
-   public void validate() {
-      Attribute<Boolean> enabled = attributes.attribute(ENABLED);
-      Attribute<Boolean> available = attributes.attribute(AVAILABLE);
-      if (enabled.isModified() && available.isModified()) {
-         if (enabled.get() && !available.get()) {
-            throw CONFIG.statisticsEnabledNotAvailable();
-         }
-      }
-   }
-
-   @Override
-   public void validate(GlobalConfiguration globalConfig) {
-   }
-
-   @Override
-   public JMXStatisticsConfiguration create() {
-      return new JMXStatisticsConfiguration(attributes.protect());
-   }
-
-   @Override
-   public JMXStatisticsConfigurationBuilder read(JMXStatisticsConfiguration template) {
-      this.attributes.read(template.attributes());
-
-      return this;
-   }
-
-   @Override
-   public String toString() {
-      return "JMXStatisticsConfigurationBuilder [attributes=" + attributes + "]";
-   }
+   @Deprecated
+   public abstract JMXStatisticsConfigurationBuilder available(boolean available);
 }

@@ -5,7 +5,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**
@@ -41,7 +41,7 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
 
    @Test(timeOut = 10000)
    public void writeOnStorage() {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       cache = cacheManager.getCache(CACHE_NAME);
       cache.put("key1", "value");
       cache.stop();

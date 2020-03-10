@@ -5,7 +5,7 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 
 import org.infinispan.it.osgi.util.CustomPaxExamRunner;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,7 +28,7 @@ public class JpaStoreUserEntityTest extends org.infinispan.persistence.jpa.JpaSt
    @Before
    @Override
    public void setUp() throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       super.setUp();
    }
 

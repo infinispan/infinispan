@@ -21,7 +21,7 @@ import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.Handle;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.server.hotrod.counter.impl.BaseCounterImplTest;
-import org.infinispan.test.ExceptionRunnable;
+import org.infinispan.commons.test.ExceptionRunnable;
 import org.testng.annotations.Test;
 
 /**

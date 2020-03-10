@@ -71,7 +71,7 @@ import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-@MBean(objectName = ClusterCacheStats.OBJECT_NAME, description = "General cluster statistics such as timings, hit/miss ratio, etc.")
+@MBean(objectName = ClusterCacheStats.OBJECT_NAME, description = "General cluster statistics such as timings, hit/miss ratio, etc. for a cache.")
 @Scope(Scopes.NAMED_CACHE)
 public class ClusterCacheStatsImpl extends AbstractClusterStats implements ClusterCacheStats {
 
@@ -82,7 +82,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    private static final Log log = LogFactory.getLog(ClusterCacheStatsImpl.class);
 
    private ClusterExecutor clusterExecutor;
-   private AdvancedCache cache;
+   private AdvancedCache<?, ?> cache;
    private double readWriteRatio;
    private double hitRatio;
 
@@ -93,7 +93,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    @Inject
    public void injectDependencies(Cache<?, ?> cache, Configuration configuration) {
       this.cache = cache.getAdvancedCache();
-      this.statisticsEnabled = configuration.jmxStatistics().enabled();
+      this.statisticsEnabled = configuration.statistics().enabled();
    }
 
    public void start() {
@@ -199,6 +199,9 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       return getStatAsLong(AVERAGE_WRITE_TIME_NANOS);
    }
 
+   @ManagedAttribute(description = "Required minimum number of nodes to hold current cache data",
+         displayName = "Required minimum number of nodes"
+   )
    @Override
    public int getRequiredMinimumNumberOfNodes() {
       return getStatAsInt(REQUIRED_MIN_NODES);

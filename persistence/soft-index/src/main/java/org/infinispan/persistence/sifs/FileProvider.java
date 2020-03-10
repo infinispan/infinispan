@@ -205,22 +205,25 @@ public class FileProvider {
 
    public void clear() throws IOException {
       lock.writeLock().lock();
-      log.debug("Dropping all data");
-      while (currentOpenFiles.get() > 0) {
-         if (tryCloseFile()) {
-            if (currentOpenFiles.decrementAndGet() == 0) {
-               break;
+      try {
+         log.debug("Dropping all data");
+         while (currentOpenFiles.get() > 0) {
+            if (tryCloseFile()) {
+               if (currentOpenFiles.decrementAndGet() == 0) {
+                  break;
+               }
             }
          }
-      }
-      if (!recordQueue.isEmpty()) throw new IllegalStateException();
-      if (!openFiles.isEmpty()) throw new IllegalStateException();
-      for (File file : dataDir.listFiles()) {
-         if (!file.delete()) {
-            throw new IOException("Cannot delete file " + file);
+         if (!recordQueue.isEmpty()) throw new IllegalStateException();
+         if (!openFiles.isEmpty()) throw new IllegalStateException();
+         for (File file : dataDir.listFiles()) {
+            if (!file.delete()) {
+               throw new IOException("Cannot delete file " + file);
+            }
          }
+      } finally {
+         lock.writeLock().unlock();
       }
-      lock.writeLock().unlock();
    }
 
    public void deleteFile(int fileId) {

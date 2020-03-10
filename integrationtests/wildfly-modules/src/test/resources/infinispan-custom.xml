@@ -1,12 +1,20 @@
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:infinispan:config:10.1 https://infinispan.org/schemas/infinispan-config-10.1.xsd
-                            urn:infinispan:server:10.1 https://infinispan.org/schemas/infinispan-server-10.1.xsd"
+                            urn:infinispan:server:10.1 https://infinispan.org/schemas/infinispan-server-10.1.xsd
+                            urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.1.xsd"
         xmlns="urn:infinispan:config:10.1"
+        xmlns:ispn="urn:infinispan:config:10.1"
         xmlns:server="urn:infinispan:server:10.1">
 
+    <jgroups>
+        <stack name="wildfly-modules-it" extends="tcp">
+            <LOCAL_PING ispn:stack.combine="REPLACE" ispn:stack.position="MPING" xmlns="urn:org:jgroups"/>
+        </stack>
+    </jgroups>
+
     <cache-container default-cache="default" statistics="true">
-        <transport cluster="${infinispan.cluster.name}" stack="${infinispan.cluster.stack:tcp}"/>
+        <transport cluster="${infinispan.cluster.name}" stack="wildfly-modules-it"/>
         <global-state />
         <local-cache name="default" />
     </cache-container>

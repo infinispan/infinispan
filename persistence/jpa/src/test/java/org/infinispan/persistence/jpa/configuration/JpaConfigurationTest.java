@@ -29,7 +29,7 @@ public class JpaConfigurationTest {
 
    public void testConfigBuilder() {
       GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-            .globalJmxStatistics().transport().defaultTransport()
+            .transport().defaultTransport()
             .serialization().addContextInitializer(JpaSCI.INSTANCE).build();
 
       Configuration cacheConfig = new ConfigurationBuilder().persistence()

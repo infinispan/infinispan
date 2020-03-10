@@ -28,8 +28,6 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Version;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.eviction.impl.PassivationManager;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -103,7 +101,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Start(priority = 0)
    public void preStart() {
       helper = new TopologyManagementHelper(gcr.getComponent(BasicComponentRegistry.class));
-      actionSequencer = new ActionSequencer(asyncTransportExecutor, true);
+      actionSequencer = new ActionSequencer(asyncTransportExecutor, true, timeService);
 
       if (globalStateManager != null) {
          globalStateManager.registerStateProvider(this);
@@ -738,14 +736,6 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
    @Override
    public CompletionStage<Void> handleCacheShutdown(String cacheName) {
-      ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
-      // Perform any orderly shutdown operations here
-      PassivationManager passivationManager = cr.getComponent(PassivationManager.class);
-      if (passivationManager != null) {
-         return passivationManager.passivateAllAsync()
-                                  .thenRun(() -> writeCHState(cacheName));
-      }
-
       // The cache has shutdown, write the CH state
       writeCHState(cacheName);
       return completedNull();

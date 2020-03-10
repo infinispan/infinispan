@@ -3,13 +3,13 @@ package org.infinispan.it.osgi.persistence.rocksdb;
 import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
 import static org.ops4j.pax.exam.CoreOptions.options;
 
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.it.osgi.util.CustomPaxExamRunner;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -39,7 +39,7 @@ public class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @BeforeClass
    public static void setUpTempDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(RocksDBStoreFunctionalTest.class);
+      tmpDirectory = CommonsTestingUtil.tmpDirectory(RocksDBStoreFunctionalTest.class);
    }
 
    @AfterClass
@@ -50,7 +50,7 @@ public class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest {
    @Before
    @Override
    public void setup() throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       super.setup();
    }
 

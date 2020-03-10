@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod.query;
 
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 /**
@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
 @Test(testName = "client.hotrod.query.HotRodNonIndexedSingleFileStoreQueryTest", groups = "functional")
 public class HotRodNonIndexedSingleFileStoreQueryTest extends HotRodNonIndexedQueryTest {
 
-   private final String tmpDirectory = TestingUtil.tmpDirectory(getClass());
+   private final String tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
 
    @Override
    protected void setup() throws Exception {

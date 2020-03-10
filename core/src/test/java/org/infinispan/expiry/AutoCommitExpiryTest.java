@@ -74,7 +74,7 @@ public abstract class AutoCommitExpiryTest extends SingleCacheManagerTest {
          builder.clustering().cacheMode(mode);
       }
       builder
-            .jmxStatistics().enable()
+            .statistics().enable()
             .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())

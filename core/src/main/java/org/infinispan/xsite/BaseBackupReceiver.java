@@ -75,7 +75,7 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
       ExecutorService executor = registry.getComponent(ExecutorService.class, REMOTE_COMMAND_EXECUTOR);
       TransactionHandler txHandler = new TransactionHandler(cache);
       this.defaultHandler = new DefaultHandler(txHandler, executor);
-      this.asyncBackupHandler = new AsyncBackupHandler(txHandler, executor);
+      this.asyncBackupHandler = new AsyncBackupHandler(txHandler, executor, timeService);
    }
 
    static XSiteStatePushCommand newStatePushCommand(AdvancedCache<?, ?> cache, List<XSiteState> stateList) {
@@ -182,9 +182,9 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
 
       private final ActionSequencer sequencer;
 
-      private AsyncBackupHandler(TransactionHandler txHandler, ExecutorService executor) {
+      private AsyncBackupHandler(TransactionHandler txHandler, ExecutorService executor, TimeService timeService) {
          super(txHandler, executor);
-         sequencer = new ActionSequencer(executor, false);
+         sequencer = new ActionSequencer(executor, false, timeService);
       }
 
       @Override

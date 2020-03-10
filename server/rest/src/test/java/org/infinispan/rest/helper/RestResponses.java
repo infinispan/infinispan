@@ -1,12 +1,10 @@
 package org.infinispan.rest.helper;
 
-import static org.testng.AssertJUnit.assertEquals;
-
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.rest.RestResponse;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,5 +50,12 @@ public class RestResponses {
 
    private static <T> T sync(CompletionStage<T> stage) {
       return Exceptions.unchecked(() -> stage.toCompletableFuture().get(10, TimeUnit.SECONDS));
+   }
+
+   private static void assertEquals(int expectedStatus, int status) {
+      // Create the AssertionError manually so it works in both TestNG and JUnit
+      if (status != expectedStatus) {
+         throw new AssertionError("Expected: <" + expectedStatus + ">, but was: <" + status + ">");
+      }
    }
 }

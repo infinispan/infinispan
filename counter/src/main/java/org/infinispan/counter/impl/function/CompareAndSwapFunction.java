@@ -12,7 +12,7 @@ import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.externalizers.ExternalizerIds;
-import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
+import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.functional.EntryView;
 
@@ -41,7 +41,7 @@ public class CompareAndSwapFunction<K extends CounterKey> extends BaseFunction<K
    }
 
    @Override
-   Object apply(EntryView.ReadWriteEntryView<K, CounterValue> entryView, ConfigurationMetadata metadata) {
+   Object apply(EntryView.ReadWriteEntryView<K, CounterValue> entryView, CounterConfigurationMetaParam metadata) {
       return FunctionHelper.compareAndSwap(entryView, entryView.get(), metadata, expect, value);
    }
 

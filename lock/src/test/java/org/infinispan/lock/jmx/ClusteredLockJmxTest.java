@@ -1,7 +1,7 @@
 package org.infinispan.lock.jmx;
 
 import static org.infinispan.functional.FunctionalTestUtils.await;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -101,7 +101,7 @@ public class ClusteredLockJmxTest extends BaseClusteredLockTest {
    protected GlobalConfigurationBuilder configure(int nodeId) {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       String jmxDomain = getClass().getSimpleName() + nodeId;
-      configureGlobalJmx(builder, jmxDomain, mBeanServerLookup);
+      configureJmx(builder, jmxDomain, mBeanServerLookup);
       return builder;
    }
 
@@ -122,7 +122,7 @@ public class ClusteredLockJmxTest extends BaseClusteredLockTest {
    }
 
    private ObjectName clusteredLockObjectName(int managerIndex) {
-      final String domain = manager(managerIndex).getCacheManagerConfiguration().globalJmxStatistics().domain();
+      final String domain = manager(managerIndex).getCacheManagerConfiguration().jmx().domain();
       return TestingUtil.getCacheManagerObjectName(domain, "DefaultCacheManager", EmbeddedClusteredLockManager.OBJECT_NAME);
    }
 }

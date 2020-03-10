@@ -21,7 +21,7 @@ import org.infinispan.persistence.manager.PassivationPersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
@@ -189,7 +189,7 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
    @Override
    protected void configurePersistence(ConfigurationBuilder builder) {
       // Enable stats so we can count passivations
-      builder.jmxStatistics().enable();
+      builder.statistics().enable();
       builder.persistence().passivation(true)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .storeName(storeName + storeNamePrefix.getAndIncrement());

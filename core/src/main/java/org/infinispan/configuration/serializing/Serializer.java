@@ -37,7 +37,6 @@ import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.GroupsConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
-import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.MemoryStorageConfiguration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
@@ -45,13 +44,15 @@ import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.RecoveryConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.SitesConfiguration;
+import org.infinispan.configuration.cache.StatisticsConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
 import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
+import org.infinispan.configuration.global.GlobalJmxConfiguration;
+import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.configuration.global.GlobalStatePathConfiguration;
 import org.infinispan.configuration.global.SerializationConfiguration;
@@ -203,7 +204,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          if (globalConfiguration.shutdown().hookBehavior() != ShutdownHookBehavior.DEFAULT) {
             writer.writeAttribute(Attribute.SHUTDOWN_HOOK, globalConfiguration.shutdown().hookBehavior().name());
          }
-         writer.writeAttribute(Attribute.STATISTICS, String.valueOf(globalConfiguration.globalJmxStatistics().enabled()));
+         writer.writeAttribute(Attribute.STATISTICS, String.valueOf(globalConfiguration.statistics()));
 
          if (globalConfiguration.asyncThreadPool().threadPoolFactory() != null) {
             writer.writeAttribute(Attribute.ASYNC_EXECUTOR, globalConfiguration.asyncThreadPoolName());
@@ -223,6 +224,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          writeTransport(writer, globalConfiguration);
          writeSecurity(writer, globalConfiguration);
          writeSerialization(writer, globalConfiguration);
+         writeMetrics(writer, globalConfiguration);
          writeJMX(writer, globalConfiguration);
          writeGlobalState(writer, globalConfiguration);
          writeExtraConfiguration(writer, globalConfiguration.modules());
@@ -475,15 +477,29 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       }
    }
 
+   private void writeMetrics(XMLExtendedStreamWriter writer, GlobalConfiguration globalConfiguration) throws XMLStreamException {
+      GlobalMetricsConfiguration metrics = globalConfiguration.metrics();
+      AttributeSet attributes = metrics.attributes();
+      if (attributes.isModified()) {
+         writer.writeStartElement(Element.METRICS);
+         attributes.write(writer, GlobalMetricsConfiguration.GAUGES, Attribute.GAUGES);
+         attributes.write(writer, GlobalMetricsConfiguration.HISTOGRAMS, Attribute.HISTOGRAMS);
+         attributes.write(writer, GlobalMetricsConfiguration.PREFIX, Attribute.PREFIX);
+         attributes.write(writer, GlobalMetricsConfiguration.NAMES_AS_TAGS, Attribute.NAMES_AS_TAGS);
+         writer.writeEndElement();
+      }
+   }
+
    private void writeJMX(XMLExtendedStreamWriter writer, GlobalConfiguration globalConfiguration) throws XMLStreamException {
-      GlobalJmxStatisticsConfiguration globalJmxStatistics = globalConfiguration.globalJmxStatistics();
-      AttributeSet attributes = globalJmxStatistics.attributes();
+      GlobalJmxConfiguration jmx = globalConfiguration.jmx();
+      AttributeSet attributes = jmx.attributes();
       if (attributes.isModified()) {
          writer.writeStartElement(Element.JMX);
-         attributes.write(writer, GlobalJmxStatisticsConfiguration.JMX_DOMAIN, Attribute.JMX_DOMAIN);
-         attributes.write(writer, GlobalJmxStatisticsConfiguration.ALLOW_DUPLICATE_DOMAINS, Attribute.ALLOW_DUPLICATE_DOMAINS);
-         attributes.write(writer, GlobalJmxStatisticsConfiguration.MBEAN_SERVER_LOOKUP, Attribute.MBEAN_SERVER_LOOKUP);
-         writeTypedProperties(writer, attributes.attribute(GlobalJmxStatisticsConfiguration.PROPERTIES).get());
+         attributes.write(writer, GlobalJmxConfiguration.ENABLED, Attribute.ENABLED);
+         attributes.write(writer, GlobalJmxConfiguration.DOMAIN, Attribute.DOMAIN);
+         attributes.write(writer, GlobalJmxConfiguration.ALLOW_DUPLICATE_DOMAINS, Attribute.ALLOW_DUPLICATE_DOMAINS);
+         attributes.write(writer, GlobalJmxConfiguration.MBEAN_SERVER_LOOKUP, Attribute.MBEAN_SERVER_LOOKUP);
+         writeTypedProperties(writer, attributes.attribute(GlobalJmxConfiguration.PROPERTIES).get());
          writer.writeEndElement();
       }
    }
@@ -527,7 +543,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
 
    private void writeCommonCacheAttributesElements(XMLExtendedStreamWriter writer, String name, Configuration configuration) throws XMLStreamException {
       writer.writeAttribute(Attribute.NAME, name);
-      configuration.jmxStatistics().attributes().write(writer, JMXStatisticsConfiguration.ENABLED, Attribute.STATISTICS);
+      configuration.statistics().attributes().write(writer, StatisticsConfiguration.ENABLED, Attribute.STATISTICS);
       configuration.unsafe().attributes().write(writer);
       writeBackup(writer, configuration);
       writeEncoding(writer, configuration);

@@ -7,7 +7,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.assertNo
 import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.BYTE_ARRAY_GENERATOR;
 import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.GENERIC_ARRAY_GENERATOR;
 import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.STRING_GENERATOR;
-import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -32,6 +34,7 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.client.hotrod.tx.util.KeyValueGenerator;
 import org.infinispan.client.hotrod.tx.util.TransactionSetup;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.transaction.LockingMode;
@@ -153,19 +156,20 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
       tm.commit();
    }
 
-   public void testCompute(Method method) throws Exception {
-      doApiTest(method, this::empty, this::compute, this::checkInitValue, this::checkNoKeys, 1, 1, true);
-   }
-
-   public void testComputeIfAbsent(Method method) throws Exception {
-      doApiTest(method, this::empty, this::computeIfAbsent, this::checkInitValue, this::checkNoKeys, 1, 1, true);
-   }
-
-   public void testComputeIfPresent(Method method) throws Exception {
-      doApiTest(method, this::initKeys, this::computeIfPresent,
-            (keys, values, inTx) -> checkInitValue(keys, values.subList(1, 2), inTx), this::checkInitValue, 1, 2,
-            true);
-   }
+   // Commented out until we properly support compute variants on remote cache
+//   public void testCompute(Method method) throws Exception {
+//      doApiTest(method, this::empty, this::compute, this::checkInitValue, this::checkNoKeys, 1, 1, true);
+//   }
+//
+//   public void testComputeIfAbsent(Method method) throws Exception {
+//      doApiTest(method, this::empty, this::computeIfAbsent, this::checkInitValue, this::checkNoKeys, 1, 1, true);
+//   }
+//
+//   public void testComputeIfPresent(Method method) throws Exception {
+//      doApiTest(method, this::initKeys, this::computeIfPresent,
+//            (keys, values, inTx) -> checkInitValue(keys, values.subList(1, 2), inTx), this::checkInitValue, 1, 2,
+//            true);
+//   }
 
    public void testContainsKeyAndValue(Method method) throws Exception {
       RemoteCache<K, V> cache = txRemoteCache();
@@ -233,6 +237,75 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
       assertTrue(cache.containsValue(value));
       assertTrue(cache.containsKey(key1));
       assertTrue(cache.containsValue(value1));
+   }
+
+   public void testComputeMethods(Method method) {
+      RemoteCache<K, V> cache = txRemoteCache();
+
+      final K targetKey = kvGenerator.generateKey(method, 0);
+
+      BiFunction<? super K, ? super V, ? extends V> remappingFunction = (key, value) ->
+            kvGenerator.generateValue(method, 1);
+
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.compute(targetKey, remappingFunction));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.compute(targetKey, remappingFunction, 1, TimeUnit.SECONDS));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.compute(targetKey, remappingFunction, 1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS));
+
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeAsync(targetKey, remappingFunction));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeAsync(targetKey, remappingFunction, 1, TimeUnit.SECONDS));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeAsync(targetKey, remappingFunction, 1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS));
+   }
+
+   public void testComputeIfAbsentMethods(Method method) {
+      RemoteCache<K, V> cache = txRemoteCache();
+
+      final K targetKey = kvGenerator.generateKey(method, 0);
+
+      Function<? super K, ? extends V> remappingFunction = key ->
+            kvGenerator.generateValue(method, 1);
+
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfAbsent(targetKey, remappingFunction));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfAbsent(targetKey, remappingFunction, 1, TimeUnit.SECONDS));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfAbsent(targetKey, remappingFunction, 1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS));
+
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfAbsentAsync(targetKey, remappingFunction));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfAbsentAsync(targetKey, remappingFunction, 1, TimeUnit.SECONDS));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfAbsentAsync(targetKey, remappingFunction, 1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS));
+   }
+
+   public void testComputeIfPresentMethods(Method method) {
+      RemoteCache<K, V> cache = txRemoteCache();
+
+      final K targetKey = kvGenerator.generateKey(method, 0);
+
+      BiFunction<? super K, ? super V, ? extends V> remappingFunction = (key, value) ->
+            kvGenerator.generateValue(method, 1);
+
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfPresent(targetKey, remappingFunction));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfPresent(targetKey, remappingFunction, 1, TimeUnit.SECONDS));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfPresent(targetKey, remappingFunction, 1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS));
+
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfPresentAsync(targetKey, remappingFunction));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfPresentAsync(targetKey, remappingFunction, 1, TimeUnit.SECONDS));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfPresentAsync(targetKey, remappingFunction, 1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS));
+   }
+
+   public void testMergeMethods(Method method) {
+      RemoteCache<K, V> cache = txRemoteCache();
+
+      final K targetKey = kvGenerator.generateKey(method, 0);
+      V targetValue = kvGenerator.generateValue(method, 0);
+
+      BiFunction<? super V, ? super V, ? extends V> remappingFunction = (value1, value2) ->
+            kvGenerator.generateValue(method, 2);
+
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.merge(targetKey, targetValue, remappingFunction));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.merge(targetKey, targetValue, remappingFunction, 1, TimeUnit.SECONDS));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.merge(targetKey, targetValue, remappingFunction, 1, TimeUnit.SECONDS,  10, TimeUnit.SECONDS));
+
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.mergeAsync(targetKey, targetValue, remappingFunction));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.mergeAsync(targetKey, targetValue, remappingFunction, 1, TimeUnit.SECONDS));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.mergeAsync(targetKey, targetValue, remappingFunction, 1, TimeUnit.SECONDS,  10, TimeUnit.SECONDS));
    }
 
    @Override

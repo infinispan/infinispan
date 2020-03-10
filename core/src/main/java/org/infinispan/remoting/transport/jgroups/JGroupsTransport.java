@@ -32,10 +32,12 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.IllegalLifecycleStateException;
+import javax.management.ObjectName;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
@@ -54,6 +56,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
+import org.infinispan.jmx.ObjectNameKeys;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
@@ -177,7 +180,6 @@ public class JGroupsTransport implements Transport {
    // ------------------------------------------------------------------------------------------------------------------
    // Lifecycle and setup stuff
    // ------------------------------------------------------------------------------------------------------------------
-   private boolean globalStatsEnabled;
    private boolean running;
 
    /**
@@ -523,25 +525,28 @@ public class JGroupsTransport implements Transport {
          } catch (Exception e) {
             throw new CacheException("Unable to start JGroups Channel", e);
          }
-
-         try {
-            // Normally this would be done by CacheManagerJmxRegistration but
-            // the channel is not started when the cache manager starts but
-            // when first cache starts, so it's safer to do it here.
-            globalStatsEnabled = configuration.statistics();
-            if (globalStatsEnabled) {
-               // TODO Use the overloaded variant when available: https://issues.jboss.org/browse/JGRP-2394
-               JmxConfigurator.registerChannel(channel, jmxRegistration.getMBeanServer(), jmxRegistration.getDomain(), clusterName, true);
-            }
-         } catch (Exception e) {
-            throw new CacheException("Channel connected, but unable to register MBeans", e);
-         }
       }
+      registerMBeansIfNeeded(clusterName);
       if (!connectChannel) {
          // the channel was already started externally, we need to initialize our member list
          receiveClusterView(channel.getView());
       }
       CLUSTER.localAndPhysicalAddress(clusterName, getAddress(), getPhysicalAddresses());
+   }
+
+   // This needs to stay as a separate method to allow for substitution for Substrate
+   private void registerMBeansIfNeeded(String clusterName) {
+      try {
+         // Normally this would be done by CacheManagerJmxRegistration but
+         // the channel is not started when the cache manager starts but
+         // when first cache starts, so it's safer to do it here.
+         if (jmxRegistration.enabled()) {
+            ObjectName namePrefix = new ObjectName(jmxRegistration.getDomain() + ":" + ObjectNameKeys.MANAGER + "=" + ObjectName.quote(configuration.cacheManagerName()));
+            JmxConfigurator.registerChannel(channel, jmxRegistration.getMBeanServer(), namePrefix, clusterName, true);
+         }
+      } catch (Exception e) {
+         throw new CacheException("Channel connected, but unable to register MBeans", e);
+      }
    }
 
    private void waitForInitialNodes() {
@@ -773,9 +778,7 @@ public class JGroupsTransport implements Transport {
             channel.close();
          }
 
-         if (globalStatsEnabled && channel != null) {
-            JmxConfigurator.unregisterChannel(channel, jmxRegistration.getMBeanServer(), jmxRegistration.getDomain(), clusterName);
-         }
+         unregisterMBeansIfNeeded(clusterName);
       } catch (Exception toLog) {
          CLUSTER.problemClosingChannel(toLog, clusterName);
       }
@@ -804,6 +807,14 @@ public class JGroupsTransport implements Transport {
          if (oldFuture != null) {
             oldFuture.complete(null);
          }
+      }
+   }
+
+   // This needs to stay as a separate method to allow for substitution for Substrate
+   private void unregisterMBeansIfNeeded(String clusterName) throws Exception {
+      if (jmxRegistration.enabled() && channel != null) {
+         ObjectName namePrefix = new ObjectName(jmxRegistration.getDomain() + ":" + ObjectNameKeys.MANAGER + "=" + ObjectName.quote(configuration.cacheManagerName()));
+         JmxConfigurator.unregisterChannel(channel, jmxRegistration.getMBeanServer(), namePrefix, clusterName);
       }
    }
 

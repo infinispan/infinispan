@@ -27,6 +27,8 @@ class SegmentKeyTracker implements KeyTracker {
    private final AtomicReferenceArray<Set<WrappedByteArray>> keysPerSegment;
    private final SegmentConsistentHash segmentConsistentHash;
    private final DataFormat dataFormat;
+   private volatile boolean trackSegments = true;
+   private Set<WrappedByteArray> keyOnlyTracker = new HashSet<>();
 
    public SegmentKeyTracker(DataFormat dataFormat, SegmentConsistentHash segmentConsistentHash, Set<Integer> segments) {
       this.dataFormat = dataFormat;
@@ -40,13 +42,26 @@ class SegmentKeyTracker implements KeyTracker {
       segmentStream.forEach(i -> keysPerSegment.set(i, new HashSet<>()));
    }
 
+   private void drainKeys() {
+      for (int i = 0; i < keysPerSegment.length(); i++) {
+         Set<WrappedByteArray> keys = keysPerSegment.get(i);
+         if (keys != null) keyOnlyTracker.addAll(keys);
+         keysPerSegment.set(i, null);
+      }
+   }
+
    public boolean track(byte[] key, short status, ClassWhiteList whitelist) {
+      if (!trackSegments) return keyOnlyTracker.add(new WrappedByteArray(key));
+
       int segment = HotRodConstants.isObjectStorage(status) ?
             segmentConsistentHash.getSegment(dataFormat.keyToObj(key, whitelist)) :
             segmentConsistentHash.getSegment(key);
       Set<WrappedByteArray> keys = keysPerSegment.get(segment);
-      // TODO: this assertion may fail due to ISPN
-      assert keys != null : "Segment " + segment + " not initialized, tracking key " + Util.toStr(key);
+      if (keys == null) {
+         trackSegments = false;
+         this.drainKeys();
+         return keyOnlyTracker.add(new WrappedByteArray(key));
+      }
       boolean result = keys.add(new WrappedByteArray(key));
       if (trace)
          log.trackingSegmentKey(Util.printArray(key), segment, !result);
@@ -54,6 +69,7 @@ class SegmentKeyTracker implements KeyTracker {
    }
 
    public Set<Integer> missedSegments() {
+      if (!trackSegments) return null;
       int length = keysPerSegment.length();
       if (length == 0) return null;
       Set<Integer> missed = new HashSet<>(length);
@@ -66,7 +82,7 @@ class SegmentKeyTracker implements KeyTracker {
    }
 
    public void segmentsFinished(byte[] finishedSegments) {
-      if (finishedSegments != null) {
+      if (trackSegments && finishedSegments != null) {
          BitSet bitSet = BitSet.valueOf(finishedSegments);
          if (trace)
             log.tracef("Removing completed segments %s", bitSet);

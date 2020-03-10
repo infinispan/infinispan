@@ -1,7 +1,10 @@
 package org.infinispan.util.concurrent;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -21,7 +24,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
  * @author Dan Berindei
  */
 public class ConditionFuture<T> {
-   private final Map<Predicate<T>, Data> futures = new IdentityHashMap<>();
+   private final Map<Predicate<T>, Data> futures = Collections.synchronizedMap(new IdentityHashMap<>());
    private final ScheduledExecutorService timeoutExecutor;
    private volatile T lastValue;
    private volatile boolean running = true;
@@ -96,35 +99,47 @@ public class ConditionFuture<T> {
 
       try {
          executor.execute(() -> checkConditions(value));
-      } catch (Exception e) {
-         for (Data data : futures.values()) {
-            data.cancelFuture.cancel(false);
-            data.completeExceptionally(e);
-         }
+      } catch (Throwable t) {
+         completeAllExceptionally(t);
+      }
+   }
+
+   private void completeAllExceptionally(Throwable t) {
+      List<Data> completed;
+      synchronized (futures) {
+         completed = new ArrayList<>(futures.values());
+      }
+      for (Data data : completed) {
+         data.cancelFuture.cancel(false);
+         data.completeExceptionally(t);
       }
    }
 
    private void checkConditions(T value) {
-      for (Iterator<Map.Entry<Predicate<T>, Data>> iterator = futures.entrySet().iterator(); iterator.hasNext(); ) {
-         Map.Entry<Predicate<T>, Data> e = iterator.next();
-         if (e.getKey().test(value)) {
-            Data data = e.getValue();
-            data.cancelFuture.cancel(false);
-            data.complete(null);
-            iterator.remove();
+      List<Data> completed;
+      synchronized (futures) {
+         completed = new ArrayList<>(futures.size());
+         for (Iterator<Map.Entry<Predicate<T>, Data>> iterator = futures.entrySet().iterator(); iterator.hasNext(); ) {
+            Map.Entry<Predicate<T>, Data> e = iterator.next();
+            if (e.getKey().test(value)) {
+               Data data = e.getValue();
+               completed.add(data);
+               iterator.remove();
+            }
          }
+      }
+      for (Data data : completed) {
+         data.cancelFuture.cancel(false);
+         data.complete(null);
       }
    }
 
    public void stop() {
       running = false;
       lastValue = null;
+
       IllegalLifecycleStateException exception = new IllegalLifecycleStateException();
-      for (Data data : futures.values()) {
-         data.cancelFuture.cancel(false);
-         data.completeExceptionally(exception);
-      }
-      futures.clear();
+      completeAllExceptionally(exception);
    }
 
    private static class Data extends CompletableFuture<Void> {

@@ -33,6 +33,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.DefaultCacheManager;
@@ -281,10 +282,12 @@ public class Server implements ServerManagement, AutoCloseable {
          DefaultCacheManager cm = new DefaultCacheManager(configurationBuilderHolder, false);
          cacheManagers.put(cm.getName(), cm);
          SecurityActions.startCacheManager(cm);
-         cacheIgnoreManager = new CacheIgnoreManager(cm);
+
+         BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cm).getComponent(BasicComponentRegistry.class.getName());
+         cacheIgnoreManager = bcr.getComponent(CacheIgnoreManager.class).running();
 
          // Register the task manager
-         TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cm).getComponent(TaskManager.class);
+         TaskManager taskManager = bcr.getComponent(TaskManager.class).running();
          taskManager.registerTaskEngine(extensions.getServerTaskEngine(cm));
 
          // Start the protocol servers
@@ -300,7 +303,7 @@ public class Server implements ServerManagement, AutoCloseable {
                ProtocolServer protocolServer = Util.getInstance(protocolServerClass);
                if (protocolServer instanceof RestServer) ((RestServer) protocolServer).setServer(this);
                protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
-               SecurityActions.startProtocolServer(protocolServer, configuration, cm, cacheIgnoreManager);
+               SecurityActions.startProtocolServer(protocolServer, configuration, cm);
                ProtocolServerConfiguration protocolConfig = protocolServer.getConfiguration();
                if (protocolConfig.startTransport()) {
                   log.protocolStarted(protocolServer.getName(), protocolConfig.host(), protocolConfig.port());
@@ -406,8 +409,11 @@ public class Server implements ServerManagement, AutoCloseable {
       protocolServers.values().parallelStream().forEach(ProtocolServer::stop);
       cacheManagers.values().forEach(cm -> SecurityActions.stopCacheManager(cm));
       this.status = ComponentStatus.TERMINATED;
+      // Don't wait for the scheduler to finish
+      if (scheduler != null) {
+         scheduler.shutdown();
+      }
    }
-
 
    private void serverStopHandler(ExitStatus exitStatus) {
       scheduler = Executors.newSingleThreadScheduledExecutor();

@@ -40,7 +40,7 @@ import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
@@ -144,7 +144,7 @@ public class InfinispanRegionFactoryTestCase  {
 		TestRegionFactory factory = createRegionFactory(p);
 		try {
 			EmbeddedCacheManager manager = factory.getCacheManager();
-			assertFalse(manager.getCacheManagerConfiguration().globalJmxStatistics().enabled());
+			assertFalse(manager.getCacheManagerConfiguration().jmx().enabled());
 			assertNotNull(factory.getBaseConfiguration(person));
 			assertFalse(isDefinedCache(factory, person));
 			assertNotNull(factory.getBaseConfiguration(addresses));
@@ -162,7 +162,7 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(5000, cacheCfg.memory().size());
 			assertEquals(60000, cacheCfg.expiration().lifespan());
 			assertEquals(30000, cacheCfg.expiration().maxIdle());
-			assertFalse(cacheCfg.jmxStatistics().enabled());
+			assertFalse(cacheCfg.statistics().enabled());
 
          region = factory.buildEntityRegion(address, AccessType.TRANSACTIONAL);
 			assertTrue(isDefinedCache(factory, person));
@@ -171,7 +171,7 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(3000, cacheCfg.expiration().wakeUpInterval());
 			assertEquals(20000, cacheCfg.memory().size());
-			assertFalse(cacheCfg.jmxStatistics().enabled());
+			assertFalse(cacheCfg.statistics().enabled());
 
          region = factory.buildEntityRegion(car, AccessType.TRANSACTIONAL);
 			assertTrue(isDefinedCache(factory, person));
@@ -180,7 +180,7 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(3000, cacheCfg.expiration().wakeUpInterval());
 			assertEquals(20000, cacheCfg.memory().size());
-			assertFalse(cacheCfg.jmxStatistics().enabled());
+			assertFalse(cacheCfg.statistics().enabled());
 
 			InfinispanBaseRegion collectionRegion = factory.buildCollectionRegion(addresses, AccessType.TRANSACTIONAL);
 			assertTrue(isDefinedCache(factory, person));
@@ -192,7 +192,7 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(5500, cacheCfg.memory().size());
 			assertEquals(65000, cacheCfg.expiration().lifespan());
 			assertEquals(35000, cacheCfg.expiration().maxIdle());
-			assertFalse(cacheCfg.jmxStatistics().enabled());
+			assertFalse(cacheCfg.statistics().enabled());
 
 			collectionRegion = factory.buildCollectionRegion(parts, AccessType.TRANSACTIONAL);
 			assertTrue(isDefinedCache(factory, addresses));
@@ -201,7 +201,7 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(3500, cacheCfg.expiration().wakeUpInterval());
 			assertEquals(25000, cacheCfg.memory().size());
-			assertFalse(cacheCfg.jmxStatistics().enabled());
+			assertFalse(cacheCfg.statistics().enabled());
 
 			collectionRegion = factory.buildCollectionRegion(parts, AccessType.TRANSACTIONAL);
 			assertTrue(isDefinedCache(factory, addresses));
@@ -210,7 +210,7 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(3500, cacheCfg.expiration().wakeUpInterval());
 			assertEquals(25000, cacheCfg.memory().size());
-			assertFalse(cacheCfg.jmxStatistics().enabled());
+			assertFalse(cacheCfg.statistics().enabled());
 		} finally {
 			factory.stop();
 		}
@@ -331,7 +331,7 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(timestamps, cache.getName());
 			Configuration cacheCfg = cache.getCacheConfiguration();
 			assertEquals( CacheMode.REPL_ASYNC, cacheCfg.clustering().cacheMode() );
-			assertFalse( cacheCfg.jmxStatistics().enabled() );
+			assertFalse( cacheCfg.statistics().enabled() );
 		} finally {
 			factory.stop();
 		}
@@ -360,7 +360,7 @@ public class InfinispanRegionFactoryTestCase  {
 			Configuration cacheCfg = cache.getCacheConfiguration();
 			assertEquals(CacheMode.REPL_SYNC, cacheCfg.clustering().cacheMode());
 			assertTrue(cacheCfg.memory().storageType() != StorageType.BINARY);
-			assertFalse(cacheCfg.jmxStatistics().enabled());
+			assertFalse(cacheCfg.statistics().enabled());
 		} finally {
 			factory.stop();
 		}
@@ -432,7 +432,7 @@ public class InfinispanRegionFactoryTestCase  {
 			AdvancedCache cache = region.getCache();
 			Configuration cacheCfg = cache.getCacheConfiguration();
 			assertEquals( CacheMode.LOCAL, cacheCfg.clustering().cacheMode() );
-			assertFalse( cacheCfg.jmxStatistics().enabled() );
+			assertFalse( cacheCfg.statistics().enabled() );
 		} finally {
 			factory.stop();
 		}
@@ -475,28 +475,28 @@ public class InfinispanRegionFactoryTestCase  {
 		TestRegionFactory factory = createRegionFactory(p);
 		try {
 			EmbeddedCacheManager manager = factory.getCacheManager();
-			assertTrue(manager.getCacheManagerConfiguration().globalJmxStatistics().enabled());
+			assertTrue(manager.getCacheManagerConfiguration().jmx().enabled());
 			InfinispanBaseRegion region = factory.buildEntityRegion("com.acme.Address", AccessType.TRANSACTIONAL);
 			AdvancedCache cache = region.getCache();
-			assertTrue(cache.getCacheConfiguration().jmxStatistics().enabled());
+			assertTrue(cache.getCacheConfiguration().statistics().enabled());
 
 			region = factory.buildEntityRegion("com.acme.Person", AccessType.TRANSACTIONAL);
 			cache = region.getCache();
-			assertTrue(cache.getCacheConfiguration().jmxStatistics().enabled());
+			assertTrue(cache.getCacheConfiguration().statistics().enabled());
 
 			final String query = "org.hibernate.cache.internal.StandardQueryCache";
 			InfinispanBaseRegion queryRegion = factory.buildQueryResultsRegion(query);
 			cache = queryRegion.getCache();
-			assertTrue(cache.getCacheConfiguration().jmxStatistics().enabled());
+			assertTrue(cache.getCacheConfiguration().statistics().enabled());
 
 			final String timestamps = "org.hibernate.cache.spi.UpdateTimestampsCache";
 			InfinispanBaseRegion timestampsRegion = factory.buildTimestampsRegion(timestamps);
 			cache = timestampsRegion.getCache();
-			assertTrue(cache.getCacheConfiguration().jmxStatistics().enabled());
+			assertTrue(cache.getCacheConfiguration().statistics().enabled());
 
 			InfinispanBaseRegion collectionRegion = factory.buildCollectionRegion("com.acme.Person.addresses", AccessType.TRANSACTIONAL);
 			cache = collectionRegion.getCache();
-			assertTrue(cache.getCacheConfiguration().jmxStatistics().enabled());
+			assertTrue(cache.getCacheConfiguration().statistics().enabled());
 		} finally {
 			factory.stop();
 		}
@@ -516,25 +516,25 @@ public class InfinispanRegionFactoryTestCase  {
 		try {
 			InfinispanBaseRegion region = factory.buildEntityRegion("com.acme.Address", AccessType.TRANSACTIONAL);
 			AdvancedCache cache = region.getCache();
-			assertFalse( cache.getCacheConfiguration().jmxStatistics().enabled() );
+			assertFalse( cache.getCacheConfiguration().statistics().enabled() );
 
 			region = factory.buildEntityRegion("com.acme.Person", AccessType.TRANSACTIONAL);
 			cache = region.getCache();
-			assertFalse( cache.getCacheConfiguration().jmxStatistics().enabled() );
+			assertFalse( cache.getCacheConfiguration().statistics().enabled() );
 
 			final String query = "org.hibernate.cache.internal.StandardQueryCache";
 			InfinispanBaseRegion queryRegion = factory.buildQueryResultsRegion(query);
 			cache = queryRegion.getCache();
-			assertFalse( cache.getCacheConfiguration().jmxStatistics().enabled() );
+			assertFalse( cache.getCacheConfiguration().statistics().enabled() );
 
 			final String timestamps = "org.hibernate.cache.spi.UpdateTimestampsCache";
 			InfinispanBaseRegion timestampsRegion = factory.buildTimestampsRegion(timestamps);
 			cache = timestampsRegion.getCache();
-			assertFalse( cache.getCacheConfiguration().jmxStatistics().enabled() );
+			assertFalse( cache.getCacheConfiguration().statistics().enabled() );
 
 			InfinispanBaseRegion collectionRegion = factory.buildCollectionRegion("com.acme.Person.addresses", AccessType.TRANSACTIONAL);
 			cache = collectionRegion.getCache();
-			assertFalse( cache.getCacheConfiguration().jmxStatistics().enabled() );
+			assertFalse( cache.getCacheConfiguration().statistics().enabled() );
 		} finally {
 			factory.stop();
 		}
@@ -552,8 +552,8 @@ public class InfinispanRegionFactoryTestCase  {
 			assertTrue(ppConfig.simpleCache());
 			assertEquals(TransactionMode.NON_TRANSACTIONAL, ppConfig.transaction().transactionMode());
 			assertEquals(60000, ppConfig.expiration().maxIdle());
-			assertFalse(ppConfig.jmxStatistics().enabled());
-			assertFalse(ppConfig.jmxStatistics().available());
+			assertFalse(ppConfig.statistics().enabled());
+			assertFalse(ppConfig.statistics().available());
 		} finally {
 			factory.stop();
 		}

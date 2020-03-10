@@ -214,10 +214,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    @Override
-   protected void startInternal(HotRodServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
-      // These are also initialized by super.startInternal, but we need them before
-      this.configuration = configuration;
-      this.cacheManager = cacheManager;
+   protected void startInternal() {
       GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
       this.iterationManager = new DefaultIterationManager(gcr.getTimeService());
       this.hasDefaultCache = configuration.defaultCacheName() != null || cacheManager.getCacheManagerConfiguration().defaultCacheName().isPresent();
@@ -248,7 +245,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       // Start default cache and the endpoint before adding self to
       // topology in order to avoid topology updates being used before
       // endpoint is available.
-      super.startInternal(configuration, cacheManager);
+      super.startInternal();
 
       // Add self to topology cache last, after everything is initialized
       if (Configurations.isClustered(SecurityActions.getCacheManagerConfiguration(cacheManager))) {

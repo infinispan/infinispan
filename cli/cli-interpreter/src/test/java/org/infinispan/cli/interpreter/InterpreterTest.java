@@ -35,10 +35,10 @@ public class InterpreterTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
       gcb.defaultCacheName("default");
-      TestCacheManagerFactory.configureGlobalJmx(gcb, getClass().getSimpleName(), mBeanServerLookup);
+      TestCacheManagerFactory.configureJmx(gcb, getClass().getSimpleName(), mBeanServerLookup);
 
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
-      c.jmxStatistics().enable().invocationBatching().enable().locking().isolationLevel(IsolationLevel.READ_COMMITTED);
+      c.statistics().enable().invocationBatching().enable().locking().isolationLevel(IsolationLevel.READ_COMMITTED);
 
       return TestCacheManagerFactory.createCacheManager(gcb, c);
    }

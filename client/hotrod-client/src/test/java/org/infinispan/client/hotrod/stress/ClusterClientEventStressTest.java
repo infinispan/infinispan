@@ -39,7 +39,7 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 @Test(groups = "stress", testName = "client.hotrod.event.ClusterClientEventStressTest", timeOut = 15*60*1000)
@@ -80,7 +80,7 @@ public class ClusterClientEventStressTest extends MultiHotRodServersTest {
       builder.clustering().hash().numOwners(NUM_OWNERS)
 //            .expiration().lifespan(1000).maxIdle(1000).wakeUpInterval(5000)
             .expiration().maxIdle(1000).wakeUpInterval(5000)
-            .jmxStatistics().enable();
+            .statistics().enable();
       return hotRodCacheConfiguration(builder);
    }
 
@@ -102,7 +102,7 @@ public class ClusterClientEventStressTest extends MultiHotRodServersTest {
    }
 
    public void testAddClientListenerDuringOperations() {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       CyclicBarrier barrier = new CyclicBarrier((NUM_CLIENTS * NUM_THREADS_PER_CLIENT) + 1);
       List<Future<Void>> futures = new ArrayList<>(NUM_CLIENTS * NUM_THREADS_PER_CLIENT);
       List<ClientEntryListener> listeners = new ArrayList<>(NUM_CLIENTS);

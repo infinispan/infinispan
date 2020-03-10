@@ -1,5 +1,6 @@
 package org.infinispan.counter;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -18,7 +19,6 @@ import org.infinispan.counter.configuration.CounterManagerConfigurationBuilder;
 import org.infinispan.counter.impl.BaseCounterTest;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class RestartCounterTest extends BaseCounterTest {
 
-   private static final String PERSISTENT_FOLDER = TestingUtil.tmpDirectory(RestartCounterTest.class.getSimpleName());
+   private static final String PERSISTENT_FOLDER = tmpDirectory(RestartCounterTest.class.getSimpleName());
    private static final String TEMP_PERSISTENT_FOLDER = PERSISTENT_FOLDER + File.separator + "temp";
    private static final String SHARED_PERSISTENT_FOLDER = PERSISTENT_FOLDER + File.separator + "shared";
    private static final int CLUSTER_SIZE = 4;
@@ -74,6 +74,10 @@ public class RestartCounterTest extends BaseCounterTest {
       shutdownAndRestart();
       assertDefined(defaultCounters);
       assertCounterValue(defaultCounters, counterManager(0), 0, 1);
+
+      incrementAll(defaultCounters, counterManager(0));
+
+      assertCounterValue(defaultCounters, counterManager(0), 1, 2);
    }
 
    public void testRuntimeCounters() {
@@ -105,6 +109,12 @@ public class RestartCounterTest extends BaseCounterTest {
       assertNotDefined(otherVolatile);
       assertCounterValue(defaultCounters, counterManager2, 0, 2);
       assertCounterValue(othersPersisted, counterManager2, -1 /*doesn't mather*/, 1);
+
+      incrementAll(defaultCounters, counterManager2);
+      incrementAll(othersPersisted, counterManager2);
+
+      assertCounterValue(defaultCounters, counterManager2, 1, 3);
+      assertCounterValue(othersPersisted, counterManager2, -1 /*doesn't mather*/, 2);
    }
 
    @Override

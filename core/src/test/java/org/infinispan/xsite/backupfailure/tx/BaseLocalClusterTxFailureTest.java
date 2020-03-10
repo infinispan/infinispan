@@ -5,7 +5,7 @@ import static org.testng.AssertJUnit.assertNull;
 import javax.transaction.RollbackException;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.xsite.AbstractTwoSitesTest;
 import org.infinispan.xsite.backupfailure.BaseBackupFailureTest;
 import org.testng.annotations.Test;

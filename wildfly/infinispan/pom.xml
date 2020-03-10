@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan.wildfly</groupId>
       <artifactId>infinispan-wildfly</artifactId>
-      <version>10.1.3-SNAPSHOT</version>
+      <version>10.1.4-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -214,16 +214,15 @@
                        <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
                        <jgroups.join_timeout>2000</jgroups.join_timeout>
                        <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
-                       <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                        <build.directory>${project.build.directory}</build.directory>
                        <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
 
+                       <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+                       <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>
+                       <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
                        <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
                        <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                        <ansi.strip>${ansi.strip}</ansi.strip>
-                       <!-- Log the correct thread name after we call Thread.setName(),
-                            see https://issues.apache.org/jira/browse/LOG4J2-2052 -->
-                       <AsyncLogger.ThreadNameStrategy>UNCACHED</AsyncLogger.ThreadNameStrategy>
                     </systemPropertyVariables>
                     <trimStackTrace>false</trimStackTrace>
                     <properties>
