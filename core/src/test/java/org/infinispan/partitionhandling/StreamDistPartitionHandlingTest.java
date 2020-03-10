@@ -1,5 +1,7 @@
 package org.infinispan.partitionhandling;
 
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
@@ -12,6 +14,7 @@ import static org.testng.AssertJUnit.fail;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -21,6 +24,8 @@ import org.infinispan.commons.util.Closeables;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
+import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -81,13 +86,13 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
       // We let the completeable future be returned - but don't let it process the values yet
       iteratorCP.triggerForever(Mocks.BEFORE_RELEASE);
       // This must be before the stream is generated or else it won't see the update
-      blockUntilRemoteNodesRespond(iteratorCP, cache0);
+      registerBlockingRpcManagerOnInitialPublisherCommand(iteratorCP, cache0, testExecutor());
       try (CloseableIterator<?> iterator = Closeables.iterator(cache0.entrySet().stream())) {
 
          CheckPoint partitionCP = new CheckPoint();
          // Now we replace the notifier so we know when the notifier was told of the partition change so we know
          // our iterator should have been notified
-         blockNotifierPartitionStatusChanged(partitionCP, cache0);
+         registerBlockingCacheNotifierOnDegradedMode(partitionCP, cache0);
 
          // We don't want to block the notifier
          partitionCP.triggerForever(Mocks.BEFORE_RELEASE);
@@ -119,15 +124,25 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
       cache0.put(new MagicKey(cache(1), cache(2)), "not-local");
       cache0.put(new MagicKey(cache(0), cache(1)), "local");
 
+      CheckPoint iteratorCP = new CheckPoint();
+
+      registerBlockingPublisher(iteratorCP, cache0);
+
+      // Let the iterator continue without blocking below
+      iteratorCP.triggerForever(Mocks.BEFORE_RELEASE);
+      iteratorCP.triggerForever(Mocks.AFTER_RELEASE);
+
       // Just retrieving the iterator will spawn the remote command
       try (CloseableIterator<?> iterator = Closeables.iterator(cache0.entrySet().stream())) {
          // Make sure we got one value
          assertTrue(iterator.hasNext());
 
+         iteratorCP.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
+
          CheckPoint partitionCP = new CheckPoint();
          // Now we replace the notifier so we know when the notifier was told of the partition change so we know
          // our iterator should have been notified
-         blockNotifierPartitionStatusChanged(partitionCP, cache0);
+         registerBlockingCacheNotifierOnDegradedMode(partitionCP, cache0);
 
          // Now split the cluster
          splitCluster(new int[]{0, 1}, new int[]{2, 3});
@@ -143,13 +158,22 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
       }
    }
 
-   private static <K, V> void blockNotifierPartitionStatusChanged(final CheckPoint checkPoint,
+   private static <K, V> void registerBlockingCacheNotifierOnDegradedMode(final CheckPoint checkPoint,
                                                                                  Cache<K, V> cache) {
       Mocks.blockingMock(checkPoint, CacheNotifier.class, cache, (stub, m) ->
             stub.when(m).notifyPartitionStatusChanged(eq(AvailabilityMode.DEGRADED_MODE), eq(false)));
    }
 
-   private static void blockUntilRemoteNodesRespond(final CheckPoint checkPoint, Cache<?, ?> cache) {
+   private static void registerBlockingPublisher(final CheckPoint checkPoint, Cache<?, ?> cache) {
+      ClusterPublisherManager<Object, String> spy = Mocks.replaceComponentWithSpy(cache, ClusterPublisherManager.class);
+
+      doAnswer(invocation -> {
+         SegmentCompletionPublisher<?> result = (SegmentCompletionPublisher<?>) invocation.callRealMethod();
+         return Mocks.blockingPublisher(result, checkPoint);
+      }).when(spy).entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any());
+   }
+
+   private static void registerBlockingRpcManagerOnInitialPublisherCommand(final CheckPoint checkPoint, Cache<?, ?> cache, Executor completionExecutor) {
       RpcManager realManager = TestingUtil.extractComponent(cache, RpcManager.class);
       RpcManager spy = spy(realManager);
 
@@ -159,7 +183,7 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
                } catch (Throwable throwable) {
                   throw new AssertionError(throwable);
                }
-            }, checkPoint).call()
+            }, checkPoint, completionExecutor).call()
       ).when(spy).invokeCommand(any(Address.class), any(InitialPublisherCommand.class), any(), any());
 
       TestingUtil.replaceComponent(cache, RpcManager.class, spy, true);

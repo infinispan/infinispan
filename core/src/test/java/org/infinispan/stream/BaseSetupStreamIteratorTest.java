@@ -1,8 +1,5 @@
 package org.infinispan.stream;
 
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.spy;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -11,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -33,7 +29,6 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionMode;
@@ -164,14 +159,6 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
                return new int[][]{{0}, {1}, {2}};
          }
       }
-   }
-
-   protected <C> C replaceComponentWithSpy(Cache<?,?> cache, Class<C> componentClass) {
-      C component = TestingUtil.extractComponent(cache, componentClass);
-      C spiedComponent = spy(component);
-      TestingUtil.replaceComponent(cache, componentClass, spiedComponent, true);
-      reset(spiedComponent);
-      return spiedComponent;
    }
 
    protected Map<Integer, Set<Map.Entry<Object, String>>> generateEntriesPerSegment(KeyPartitioner keyPartitioner,
