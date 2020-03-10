@@ -62,4 +62,8 @@ public class GlobalStatePathConfiguration implements ConfigurationInfo {
    String elementName() {
       return elementName;
    }
+
+   public boolean isModified() {
+      return path.isModified() || relativeTo.isModified();
+   }
 }
