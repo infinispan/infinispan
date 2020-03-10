@@ -9,9 +9,10 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
- * Configures the types of metrics gathered and exported via microprofile metrics for all caches under this cache
+ * Configures the types of metrics gathered and exported via microprofile metrics for all caches owned by this cache
  * manager. Gauges do not have any performance penalty so are enabled by default. Histograms are more expensive to
- * compute so should be enabled manually when needed.
+ * compute so should be enabled manually when needed. Enabling metrics in config has no effect unless the necessary
+ * microprofile metrics API and provider (SmallRye) jars are present in classpath.
  */
 public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalMetricsConfiguration> {
 
@@ -29,6 +30,9 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
       return gauges() || histograms();
    }
 
+   /**
+    * Are gauges enabled?
+    */
    public boolean gauges() {
       return attributes.attribute(GAUGES).get();
    }
@@ -41,6 +45,9 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
       return this;
    }
 
+   /**
+    * Are histograms enabled?
+    */
    public boolean histograms() {
       return attributes.attribute(HISTOGRAMS).get();
    }
@@ -53,6 +60,9 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
       return this;
    }
 
+   /**
+    * The global prefix to add to all metric names.
+    */
    public String prefix() {
       return attributes.attribute(PREFIX).get();
    }
@@ -65,6 +75,9 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
       return this;
    }
 
+   /**
+    * Put the cache manager and cache name in tags rather then include them in the metric name.
+    */
    public boolean namesAsTags() {
       return attributes.attribute(NAMES_AS_TAGS).get();
    }

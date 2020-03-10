@@ -8,6 +8,9 @@ import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.parsing.Element;
 
+/**
+ * Configuration for microprofile metrics. See {@link GlobalMetricsConfigurationBuilder}.
+ */
 public class GlobalMetricsConfiguration implements ConfigurationInfo {
 
    public static final AttributeDefinition<Boolean> GAUGES = AttributeDefinition.builder("gauges", true).immutable().build();
@@ -56,18 +59,30 @@ public class GlobalMetricsConfiguration implements ConfigurationInfo {
       return gauges() || histograms();
    }
 
+   /**
+    * Are gauges enabled?
+    */
    public boolean gauges() {
       return gauges.get();
    }
 
+   /**
+    * Are histograms enabled?
+    */
    public boolean histograms() {
       return histograms.get();
    }
 
+   /**
+    * The global prefix to add to all metric names.
+    */
    public String prefix() {
       return prefix.get();
    }
 
+   /**
+    * Put the cache manager and cache name in tags rather then include them in the metric name.
+    */
    public boolean namesAsTags() {
       return namesAsTags.get();
    }
