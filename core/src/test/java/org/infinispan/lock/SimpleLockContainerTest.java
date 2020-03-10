@@ -20,7 +20,7 @@ public class SimpleLockContainerTest extends AbstractInfinispanTest {
    PerKeyLockContainer lc = new PerKeyLockContainer();
 
    public void simpleTest() throws Exception {
-      TestingUtil.inject(lc, executor, AbstractCacheTest.TIME_SERVICE);
+      TestingUtil.inject(lc, AbstractCacheTest.TIME_SERVICE);
       final String k1 = ab();
       final String k2 = ab2();
       assert k1 != k2 && k1.equals(k2);

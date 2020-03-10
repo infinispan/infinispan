@@ -26,7 +26,8 @@ public class PerKeyLockContainer implements LockContainer {
 
    private static final int INITIAL_CAPACITY = 32;
    private final ConcurrentMap<Object, InfinispanLock> lockMap;
-   private Executor executor;
+   private Executor blockingExecutor;
+   private Executor nonBlockingExecutor;
    private TimeService timeService;
 
    public PerKeyLockContainer() {
@@ -34,8 +35,10 @@ public class PerKeyLockContainer implements LockContainer {
    }
 
    @Inject
-   void inject(@ComponentName(KnownComponentNames.BLOCKING_EXECUTOR) Executor executor, TimeService timeService) {
-      this.executor = executor;
+   void inject(@ComponentName(KnownComponentNames.BLOCKING_EXECUTOR) Executor blockingExecutor,
+         @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR) Executor nonBlockingExecutor, TimeService timeService) {
+      this.blockingExecutor = blockingExecutor;
+      this.nonBlockingExecutor = nonBlockingExecutor;
       this.timeService = timeService;
       for (InfinispanLock lock : lockMap.values()) {
          lock.setTimeService(timeService);
@@ -103,7 +106,7 @@ public class PerKeyLockContainer implements LockContainer {
    }
 
    private InfinispanLock createInfinispanLock(Object key) {
-      return new InfinispanLock(executor, timeService, () -> lockMap.computeIfPresent(key, (ignoredKey, lock) -> lock.isLocked() ? lock : null));
+      return new InfinispanLock(blockingExecutor, nonBlockingExecutor, timeService, () -> lockMap.computeIfPresent(key, (ignoredKey, lock) -> lock.isLocked() ? lock : null));
    }
 
 }
