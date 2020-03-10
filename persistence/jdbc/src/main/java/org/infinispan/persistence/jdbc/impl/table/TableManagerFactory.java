@@ -133,7 +133,8 @@ public class TableManagerFactory {
          type = DatabaseType.MYSQL;
       } else if (name.contains("mariadb")) {
          type = DatabaseType.MARIA_DB;
-      } else if (name.contains("postgres")) {
+         //postgresqlplus example jdbc:edb://localhost:5444/edb
+      } else if (name.contains("postgres") || name.contains("edb")) {
          type = DatabaseType.POSTGRES;
       } else if (name.contains("derby")) {
          type = DatabaseType.DERBY;
