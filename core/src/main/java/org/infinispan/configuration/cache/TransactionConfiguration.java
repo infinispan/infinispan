@@ -42,7 +42,7 @@ public class TransactionConfiguration implements Matchable<TransactionConfigurat
          .serializer(new AttributeSerializer<TransactionMode, TransactionConfiguration, TransactionConfigurationBuilder>() {
             @Override
             public Object getSerializationValue(Attribute<TransactionMode> attribute, TransactionConfiguration transactionConfiguration) {
-               Parser.TransactionMode mode = fromConfiguration(transactionConfiguration.transactionMode(), !transactionConfiguration.useSynchronization(), transactionConfiguration.recovery().enabled(), transactionConfiguration.invocationBatching);
+               Parser.TransactionMode mode = fromConfiguration(transactionConfiguration, transactionConfiguration.invocationBatching);
                return mode.toString();
             }
 
