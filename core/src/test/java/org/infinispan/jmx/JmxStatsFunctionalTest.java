@@ -174,7 +174,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       GlobalConfigurationBuilder globalConfiguration3 = GlobalConfigurationBuilder.defaultClusteredBuilder();
       configureJmx(globalConfiguration3, jmxDomain, mBeanServerLookup);
       globalConfiguration3.jmx().allowDuplicateDomains(true);
-      CacheContainer duplicateAllowedContainer = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration3, new ConfigurationBuilder());
+      CacheContainer duplicateAllowedContainer = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration3, null);
       try {
          final String duplicateName = jmxDomain + "2";
          ObjectName duplicateObjectName = getCacheManagerObjectName(duplicateName);
