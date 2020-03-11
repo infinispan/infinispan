@@ -48,47 +48,54 @@ import org.infinispan.stats.CacheContainerStats;
 public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closeable {
 
    /**
-    * Defines a named cache's configuration by using the provided configuration
+    * Register a cache configuration in the cache manager.
     * <p/>
-    * Unlike previous versions of Infinispan, this method does not build on an existing configuration (default or named).
-    * If you want this behavior, then use {@link ConfigurationBuilder#read(org.infinispan.configuration.cache.Configuration)}.
+    * The configuration will be automatically used when creating a cache with the same name,
+    * unless it is a template.
+    * If it is a template and it contains wildcards (`*` or `?`), it will be automatically used
+    * when creating caches that match the template.
     * <p/>
-    * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache
+    * In order to extend an existing configuration,
+    * use {@link ConfigurationBuilder#read(org.infinispan.configuration.cache.Configuration)}.
+    * <p/>
+    * The other way to define a cache configuration is declaratively, in the XML file passed in to the cache
     * manager.
-    * <p/>
-    * If this cache was already configured either declaritively or programmatically this method will throw a
-    * {@link org.infinispan.commons.CacheConfigurationException}.
-    * @param cacheName             name of cache whose configuration is being defined
-    * @param configuration configuration overrides to use
-    * @return a cloned configuration instance
+    *
+    * @param cacheName     name of the cache configuration
+    * @param configuration the cache configuration
+    * @return the cache configuration
+    * @throws org.infinispan.commons.CacheConfigurationException if a configuration with the same name already exists.
     */
    Configuration defineConfiguration(String cacheName, Configuration configuration);
 
    /**
-    * Defines a named cache's configuration using by first reading the template configuration and then applying
-    * the override afterwards to generate a configuration.
+    * Defines a cache configuration by first reading the template configuration and then applying the override.
     * <p/>
-    * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache
+    * The configuration will be automatically used when creating a cache with the same name,
+    * unless it is a template.
+    * If it is a template and it contains wildcards (`*` or `?`), it will be automatically used
+    * when creating caches that match the template.
+    * <p/>
+    * The other way to define a cache configuration is declaratively, in the XML file passed in to the cache
     * manager.
     * <p/>
-    * If templateName is null or there isn't any named cache with that name, this methods works exactly like {@link
-    * #defineConfiguration(String, Configuration)}.
-    * <p/>
-    * If this cache was already configured either declaratively or programmatically this method will throw a
-    * {@link org.infinispan.commons.CacheConfigurationException}.
+    * If templateName is null, this method works exactly like {@link #defineConfiguration(String, Configuration)}.
+    *
     * @param cacheName             name of cache whose configuration is being defined
-    * @param templateCacheName     name of cache to use as a template before overrides are applied to it
-    * @param configurationOverride configuration overrides to use
-    * @return a cloned configuration instance
+    * @param templateCacheName     configuration to use as a template
+    * @param configurationOverride configuration overrides on top of the template
+    * @return the configuration
+    * @throws org.infinispan.commons.CacheConfigurationException if a configuration with the same name already exists.
     */
    Configuration defineConfiguration(String cacheName, String templateCacheName, Configuration configurationOverride);
 
    /**
-    * Removes a configuration from the set of defined configurations. If the configuration is currently in use by one of the
-    * caches, an {@link IllegalStateException} is thrown. If the named configuration does not exist, nothing
-    * happens
+    * Removes a configuration from the set of defined configurations.
+    * <p/>
+    * If the named configuration does not exist, nothing happens.
     *
     * @param configurationName     the named configuration
+    * @throws IllegalStateException if the configuration is in use
     */
    void undefineConfiguration(String configurationName);
 
@@ -140,24 +147,21 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    Configuration getCacheConfiguration(String name);
 
    /**
-    * Returns default configuration for this CacheManager
-    *
-    * @return the default configuration associated with this CacheManager
+    * @return the default cache's configuration, or {@code null} if there is no default cache.
     */
    org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration();
 
    /**
-    * This method returns a collection of cache configuration names which contains the
-    * cache configurations that have been defined via XML or programmatically, and the
-    * cache configurations that have been defined at runtime via this cache manager
-    * instance.
+    * This method returns a collection of all cache configuration names.
+    * <p/>
+    * The configurations may have been defined via XML,
+    * programmatically via {@link org.infinispan.configuration.parsing.ConfigurationBuilderHolder},
+    * or at runtime via {@link #defineConfiguration(String, Configuration)}.
+    * <p/>
+    * Internal caches defined via {@link org.infinispan.registry.InternalCacheRegistry}
+    * are not included.
     *
-    * If no cache configurations are registered or no caches have been created, this
-    * method returns an empty set.  The default cache is never included in this
-    * set of cache names, as well a caches for internal-only use {@link org.infinispan.registry.InternalCacheRegistry}
-    *
-    * @return an immutable set of non-default named caches registered or
-    * created with this cache manager.
+    * @return an immutable set of configuration names registered in this cache manager.
     *
     * @since 8.2
     */
@@ -166,9 +170,9 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    }
 
    /**
-    * Tests whether a named cache is running.
+    * Tests whether a cache is running.
     * @param cacheName name of cache to test.
-    * @return true if the named cache exists and is running; false otherwise.
+    * @return true if the cache exists and is running; false otherwise.
     */
    boolean isRunning(String cacheName);
 
@@ -188,15 +192,40 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
     * not been started, or if it was started, whether it's been removed already
     * or not.
     *
-    * @param cacheName
+    * @param cacheName cache to check
     * @return <tt>true</tt> if the cache with the given name has not yet been
     *         started, or if it was started, whether it's been removed or not.
     */
    boolean cacheExists(String cacheName);
 
    /**
-    * Creates a cache on the local node using the supplied configuration. The cache may be clustered, but this
-    * method (or an equivalent combination of {@link #defineConfiguration(String, Configuration)} and
+    * Retrieves the default cache associated with this cache container.
+    *
+    * @return the default cache.
+    * @throws org.infinispan.commons.CacheConfigurationException if a default cache does not exist.
+    */
+   <K, V> Cache<K, V> getCache();
+
+   /**
+    * Retrieves a cache by name.
+    * <p/>
+    * If the cache has been previously created with the same name, the running
+    * cache instance is returned.
+    * Otherwise, this method attempts to create the cache first.
+    * <p/>
+    * When creating a new cache, this method requires a defined configuration that either has exactly the same name,
+    * or is a template with wildcards and matches the cache name.
+    *
+    * @param cacheName name of cache to retrieve
+    * @return a cache instance identified by cacheName
+    */
+   <K, V> Cache<K, V> getCache(String cacheName);
+
+   /**
+    * Creates a cache on the local node using the supplied configuration.
+    * <p/>
+    * The cache may be clustered, but this method (or the equivalent combination of
+    * {@link #defineConfiguration(String, Configuration)} and
     * {@link #getCache(String, boolean)}) needs to be invoked on all nodes.
     *
     * @param name the name of the cache
@@ -208,54 +237,45 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    <K, V> Cache<K, V> createCache(String name, Configuration configuration);
 
    /**
-    * Retrieves a named cache from the system in the same way that {@link
-    * #getCache(String)} does except that if offers the possibility for the
-    * named cache not to be retrieved if it has not yet been started, or if
-    * it's been removed after being started. If a non-template configuration
-    * exists with the same name, it will be used to configure the cache.
-    *
+    * Similar to {@link #getCache(String)}, except if has the option
+    * to not create the cache if it is not already running.
     *
     * @param cacheName name of cache to retrieve
-    * @param createIfAbsent if <tt>false</tt>, the named cache will not be
-    *        retrieved if it hasn't been retrieved previously or if it's been
-    *        removed. If <tt>true</tt>, this methods works just like {@link
-    *        #getCache(String)}
-    * @return null if no named cache exists as per rules set above, otherwise
-    *         returns a cache instance identified by cacheName
+    * @param createIfAbsent If <tt>true</tt>, this methods works just like {@link #getCache(String)}.
+    *                       If <tt>false</tt>, return the already running cache or <tt>null</tt>.
+    * @return <tt>null</tt> if the cache does not exist and <tt>createIfAbsent == false</tt>,
+    *        otherwise a cache instance identified by cacheName
     */
    <K, V> Cache<K, V> getCache(String cacheName, boolean createIfAbsent);
 
    /**
-    * Retrieves a named cache from the system in the same way that {@link
-    * #getCache(String)} does except that if offers the possibility to specify
-    * a specific configuration template. Multiple caches can be created using
-    * the same configuration.
+    * Similar to {@link #getCache(String)}, only with an explicit configuration template name.
+    * <p/>
+    * Multiple caches can be created using the same configuration.
     *
     * @param cacheName name of cache to retrieve
     * @param configurationName name of the configuration template to use
-    * @return null if no configuration exists as per rules set above, otherwise
-    *         returns a cache instance identified by cacheName
+    * @return a cache instance identified by cacheName
+    * @throws org.infinispan.commons.CacheConfigurationException if the configuration does not exist
+    *         or if a configuration named <tt>cacheName</tt> already exists.
     * @deprecated as of 9.0. Use {@link EmbeddedCacheManager#defineConfiguration(String, String, Configuration)} and
     * {@link EmbeddedCacheManager#getCache(String)} instead
     */
    <K, V> Cache<K, V> getCache(String cacheName, String configurationName);
 
    /**
-    * Retrieves a named cache from the system in the same way that {@link
-    * #getCache(String)} does except that if offers the possibility to specify
-    * a specific configuration template. Multiple caches can be created using
-    * the same configuration. Tihs method also offers the possibility for the
-    * named cache not to be retrieved if it has not yet been started, or if
-    * it's been removed after being started.
+    * Similar to {@link #getCache(String, boolean)}, only with an explicit configuration template name.
+    * <p/>
+    * Multiple caches can be created using the same configuration.
     *
     * @param cacheName name of cache to retrieve
     * @param configurationTemplate name of the configuration template to use
-    * @param createIfAbsent if <tt>false</tt>, the named cache will not be
-    *        retrieved if it hasn't been retrieved previously or if it's been
-    *        removed. If <tt>true</tt>, this methods works just like {@link
-    *        #getCache(String, String)}
-    * @return null if no configuration exists as per rules set above, otherwise
-    *         returns a cache instance identified by cacheName
+    * @param createIfAbsent If <tt>true</tt>, this methods works just like {@link #getCache(String)}.
+    *                       If <tt>false</tt>, return the already running cache or <tt>null</tt>.
+    * @return <tt>null</tt> if the cache does not exist and <tt>createIfAbsent == false</tt>,
+    *        otherwise a cache instance identified by cacheName
+    * @throws org.infinispan.commons.CacheConfigurationException if the configuration does not exist
+    *         or if a configuration named <tt>cacheName</tt> already exists.
     * @deprecated as of 9.0. Use {@link EmbeddedCacheManager#defineConfiguration(String, String, Configuration)} and
     * {@link EmbeddedCacheManager#getCache(String, boolean)} instead
     */
