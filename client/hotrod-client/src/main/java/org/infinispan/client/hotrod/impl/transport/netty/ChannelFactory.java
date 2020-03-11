@@ -309,7 +309,7 @@ public class ChannelFactory {
       // we'd create another pool for this resolved address. Therefore we need to find out appropriate pool this
       // channel belongs using the attribute.
       ChannelRecord record = ChannelRecord.of(channel);
-      record.getChannelPool().release(channel, record);
+      record.release(channel);
    }
 
    public void updateServers(Collection<SocketAddress> newServers, byte[] cacheName, boolean quiet) {

@@ -41,10 +41,6 @@ public class ChannelRecord extends CompletableFuture<Channel> implements Generic
       return unresolvedAddress;
    }
 
-   public ChannelPool getChannelPool() {
-      return channelPool;
-   }
-
    @Override
    public boolean complete(Channel channel) {
       channel.closeFuture().addListener(this);
@@ -60,7 +56,7 @@ public class ChannelRecord extends CompletableFuture<Channel> implements Generic
          }
       }
       // We need to release the channel to update its internal channel count
-      channelPool.release(future.channel(), this);
+      release(future.channel());
    }
 
    void setAcquired() {
@@ -75,5 +71,9 @@ public class ChannelRecord extends CompletableFuture<Channel> implements Generic
 
    public boolean isIdle() {
       return !acquired;
+   }
+
+   public void release(Channel channel) {
+      channelPool.release(channel, this);
    }
 }
