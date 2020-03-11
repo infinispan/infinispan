@@ -69,7 +69,6 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
 
    @Override
    public void invoke(Channel channel) {
-      assert channel.isActive();
       try {
          if (trace) {
             log.tracef("About to start executing operation %s on %s", this, channel);
@@ -244,6 +243,11 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
       channelFactory.fetchChannelAndInvoke(failedServers, cacheName, this);
    }
 
+   /**
+    * Perform the operation-specific request/response I/O on the specified channel.
+    * If an error occurs during I/O, this class will detect it and retry the operation with a different channel by invoking the executeOperation method again.
+    * @param channel the channel to use for I/O
+    */
    protected abstract void executeOperation(Channel channel);
 
 }
