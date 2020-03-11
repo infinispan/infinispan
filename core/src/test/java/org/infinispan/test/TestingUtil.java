@@ -442,11 +442,15 @@ public class TestingUtil {
       log.debugf("waitForNoRebalance with managers %s, for caches %s", Arrays.toString(managers), testCaches);
 
       for (String cacheName : testCaches) {
-         Cache<?, ?>[] caches = new Cache[numberOfManagers];
-         for (int i = 0; i < numberOfManagers; i++)
-            caches[i] = managers[i].getCache(cacheName);
+         ArrayList<Cache<?, ?>> caches = new ArrayList<>(numberOfManagers);
+         for (EmbeddedCacheManager manager : managers) {
+            Cache<?, ?> cache = manager.getCache(cacheName, false);
+            if (cache != null) {
+               caches.add(cache);
+            }
+         }
 
-         TestingUtil.waitForNoRebalance(caches);
+         TestingUtil.waitForNoRebalance(caches.toArray(new Cache[0]));
       }
    }
 
