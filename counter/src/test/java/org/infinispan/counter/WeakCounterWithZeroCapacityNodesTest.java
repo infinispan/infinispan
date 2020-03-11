@@ -15,6 +15,6 @@ public class WeakCounterWithZeroCapacityNodesTest extends WeakCounterTest {
 
    @Override
    protected GlobalConfigurationBuilder configure(int nodeId) {
-      return GlobalConfigurationBuilder.defaultClusteredBuilder().zeroCapacityNode(nodeId % 2 == 0);
+      return GlobalConfigurationBuilder.defaultClusteredBuilder().zeroCapacityNode(nodeId % 2 == 1);
    }
 }

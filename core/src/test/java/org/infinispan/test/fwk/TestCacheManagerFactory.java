@@ -243,7 +243,9 @@ public class TestCacheManagerFactory {
                                                                   ConfigurationBuilder defaultCacheConfig,
                                                                   TransportFlags flags) {
       amendGlobalConfiguration(gcb, flags);
-      amendJTA(defaultCacheConfig);
+      if (defaultCacheConfig != null) {
+         amendJTA(defaultCacheConfig);
+      }
       return newDefaultCacheManager(true, gcb, defaultCacheConfig);
    }
 
