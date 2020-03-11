@@ -501,8 +501,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       AttributeSet attributes = transaction.attributes();
       if (attributes.isModified()) {
          writer.writeStartElement(Element.TRANSACTION);
-         TransactionMode mode = TransactionMode.fromConfiguration(transaction.transactionMode(), !transaction.useSynchronization(), transaction.recovery().enabled(), configuration
-               .invocationBatching().enabled());
+         TransactionMode mode = TransactionMode.fromConfiguration(transaction, configuration.invocationBatching().enabled());
          writer.writeAttribute(Attribute.MODE, mode.toString());
          attributes.write(writer);
          if (mode != TransactionMode.NONE) {

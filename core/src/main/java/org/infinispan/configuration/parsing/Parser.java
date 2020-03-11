@@ -53,6 +53,7 @@ import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
+import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
@@ -2787,8 +2788,12 @@ public class Parser implements ConfigurationParser {
          this.batchingEnabled = batchingEnabled;
       }
 
-      public static TransactionMode fromConfiguration(org.infinispan.transaction.TransactionMode mode, boolean xaEnabled, boolean recoveryEnabled, boolean batchingEnabled) {
-         if (mode==org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL) {
+      public static TransactionMode fromConfiguration(TransactionConfiguration transactionConfiguration, boolean batchingEnabled) {
+         org.infinispan.transaction.TransactionMode mode = transactionConfiguration.transactionMode();
+         boolean recoveryEnabled = transactionConfiguration.recovery().enabled();
+         boolean xaEnabled = !batchingEnabled && !transactionConfiguration.useSynchronization();
+
+         if (mode == org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL) {
             return NONE;
          }
          for(TransactionMode txMode : TransactionMode.values()) {
