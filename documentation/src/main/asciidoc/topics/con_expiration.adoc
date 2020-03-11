@@ -9,13 +9,11 @@ Sets the maximum amount of time that entries can exist.
 Maximum idle::
 Specifies how long entries can remain idle. If operations do not occur for
 entries, they become idle.
-
++
 [IMPORTANT]
 ====
-Maximum idle expiration does not currently support:
-
-* Entries stored in off-heap memory.
-* Cache configurations with persistent cache stores.
+Maximum idle expiration does not currently support cache configurations with
+persistent cache stores.
 
 When using expiration with an exception-based eviction policy, entries that are
 expired but not yet removed from the cache count towards the size of the data
