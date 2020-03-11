@@ -1,10 +1,12 @@
 package org.infinispan.rest.resources;
 
+import static org.eclipse.jetty.http.HttpHeader.ACCEPT;
 import static org.eclipse.jetty.http.HttpHeader.CONTENT_TYPE;
 import static org.eclipse.jetty.http.HttpMethod.GET;
 import static org.eclipse.jetty.http.HttpMethod.HEAD;
 import static org.eclipse.jetty.http.HttpMethod.POST;
 import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.VOLATILE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
@@ -27,6 +29,7 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpMethod;
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -316,6 +319,18 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       String contentAsString = response.getContentAsString();
       Set keys = new ObjectMapper().readValue(contentAsString, Set.class);
       assertEquals(2, keys.size());
+   }
+
+   @Test
+   public void testGetProtoCacheConfig() throws Exception {
+      testGetProtoCacheConfig(APPLICATION_XML_TYPE);
+      testGetProtoCacheConfig(APPLICATION_JSON_TYPE);
+   }
+
+   private void testGetProtoCacheConfig(String accept) throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/___protobuf_metadata?action=config", restServer().getPort());
+      ContentResponse response = client.newRequest(url).header(ACCEPT, accept).send();
+      ResponseAssertion.assertThat(response).isOk();
    }
 
    @Test
