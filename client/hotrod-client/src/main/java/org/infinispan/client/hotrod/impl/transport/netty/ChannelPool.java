@@ -22,15 +22,13 @@ import io.netty.util.internal.PlatformDependent;
 
 /**
  * This is a custom implementation of {@link io.netty.channel.Channel} pooling.
- * Compared to {@link io.netty.channel.pool.ChannelPool} implementations in Netty it does not enforce
- * context switch before writing to the channel.
- * **Update**: Netty enforces going through event loop later on by delegating the write through
- * {@link io.netty.channel.AbstractChannelHandlerContext.WriteAndFlushTask}. So writing the socket in caller
- * thread is still TODO.
- *
- * It should be also more allocation-efficient since it does not create futures and invokes the callback directly
- * if the channel is available.
- *
+ * Compared to {@link io.netty.channel.pool.ChannelPool} implementations in Netty it does not enforce context switch before writing to the channel.
+ * **Update**: Netty enforces going through event loop later on by delegating the write through {@link io.netty.channel.AbstractChannelHandlerContext.WriteTask}.
+ * So writing the socket in caller thread is still TODO.
+ * <p>
+ * It should be also more allocation-efficient since it does not create futures and invokes the callback directly if the
+ * channel is available.
+ * <p>
  * The connections are handled LIFO, pending requests are handled FIFO.
  */
 class ChannelPool {
@@ -47,7 +45,7 @@ class ChannelPool {
    private final long maxWait;
    private final int maxConnections;
    private final int maxPendingRequests;
-   private final AtomicInteger created  = new AtomicInteger();
+   private final AtomicInteger created = new AtomicInteger();
    private final AtomicInteger active = new AtomicInteger();
    private final ReadWriteLock lock = new ReentrantReadWriteLock();
    private volatile boolean terminated = false;
