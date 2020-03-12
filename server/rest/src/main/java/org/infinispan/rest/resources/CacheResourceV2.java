@@ -331,7 +331,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return completedFuture(responseBuilder.build());
    }
 
-   class CacheFullDetail {
+   static class CacheFullDetail {
       public Stats stats;
       public int size;
       @JsonRawValue
@@ -346,5 +346,4 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       public boolean indexingInProgress;
       public boolean statistics;
    }
-
 }
