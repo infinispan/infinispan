@@ -1,0 +1,16 @@
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-bom</artifactId>
+      <version>${version.infinispan}</version>
+      <type>pom</type>
+    </dependency>
+    <dependency>
+      <groupId>org.infinispan.protostream</groupId>
+      <artifactId>protostream-processor</artifactId>
+      <version>${version.infinispan}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>

@@ -1,0 +1,40 @@
+[id='jboss_marshalling']
+= Using JBoss Marshalling
+JBoss Marshalling is a serialization-based marshalling library and was the
+default marshaller in previous {brandname} versions.
+
+[NOTE]
+====
+* You should use serialization-based marshalling with {brandname} but use
+Protostream instead, which is a high-performance binary wire format that
+ensures backwards compatibility.
+
+* JBoss Marshalling and the `AdvancedExternalizer` interface are deprecated and
+will be removed in a future release. However, {brandname} ignores
+`AdvancedExternalizer` implementations when persisting data unless you use
+JBoss Marshalling.
+====
+
+.Procedure
+
+. Add the `infinispan-jboss-marshalling` dependency to your classpath.
+. Configure {brandname} to use the `JBossUserMarshaller`.
++
+* Programmatically:
++
+[source,java]
+----
+include::code_examples/JBossUserMarshaller.java[]
+----
++
+* Declaratively:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/jboss_user_marshaller.xml[]
+----
+
+.Reference
+
+* link:#deserialization_whitelist[Adding Java Classes to Deserialization White Lists]
+* link:{javadocroot}/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer]
