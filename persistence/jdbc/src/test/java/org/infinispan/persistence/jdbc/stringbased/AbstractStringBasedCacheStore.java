@@ -120,7 +120,7 @@ public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTe
                 .preload(preload);
 
         connectionFactory = getConnectionFactory(storeBuilder);
-        buildTableManipulation(storeBuilder.table());
+        setTableManipulation(storeBuilder);
 
         if (eviction) {
             builder.memory().evictionType(EvictionType.COUNT).size(2);
@@ -134,6 +134,10 @@ public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTe
         tableManager = TableManagerFactory.getManager(connectionFactory, storeBuilder.create(), cacheName);
 
         return defaultCacheManager;
+    }
+
+    protected void setTableManipulation(JdbcStringBasedStoreConfigurationBuilder storeBuilder) {
+        buildTableManipulation(storeBuilder.table());
     }
 
     protected abstract ConnectionFactory getConnectionFactory(JdbcStringBasedStoreConfigurationBuilder storeBuilder);
