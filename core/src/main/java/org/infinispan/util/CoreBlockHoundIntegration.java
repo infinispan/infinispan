@@ -2,6 +2,7 @@ package org.infinispan.util;
 
 import org.infinispan.affinity.impl.KeyAffinityServiceImpl;
 import org.infinispan.cache.impl.CacheImpl;
+import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commons.internal.CommonsBlockHoundIntegration;
 import org.infinispan.container.offheap.OffHeapConcurrentMap;
 import org.infinispan.container.offheap.SegmentedBoundedOffHeapDataContainer;
@@ -72,10 +73,24 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       builder.allowBlockingCallsInside(ForkChannel.class.getName(), "send");
    }
 
+   /**
+    * Various methods that need to be removed as they are essentially bugs. Please ensure that a JIRA is created and
+    * referenced here for any such method
+    * @param builder the block hound builder to register methods
+    */
    private static void methodsToBeRemoved(BlockHound.Builder builder) {
       // The internal map only supports local mode - we need to replace with Caffeine
       // https://issues.redhat.com/browse/ISPN-11272
       builder.allowBlockingCallsInside(RecoveryManagerImpl.class.getName(), "registerInDoubtTransaction");
+
+      // This should be done on blocking thread as we can't change Transaction API
+      // https://issues.redhat.com/browse/ISPN-11473
+      builder.allowBlockingCallsInside(InvocationHelper.class.getName(), "executeCommandAsyncWithInjectedTx");
+
+      // This can be called requesting blocking from different areas - this should really be non blocking an each
+      // invocation can handle if it needs to block or not
+      // https://issues.redhat.com/browse/ISPN-11474
+      builder.allowBlockingCallsInside(RecoveryManagerImpl.class.getName(), "sendTxCompletionNotification");
    }
 
    private static void registerBlockingMethods(BlockHound.Builder builder) {
