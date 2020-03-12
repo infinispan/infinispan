@@ -1,6 +1,10 @@
 package org.infinispan.metrics.impl;
 
+import java.util.Set;
+
+import org.eclipse.microprofile.metrics.MetricID;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -15,10 +19,12 @@ import org.infinispan.factories.scopes.Scopes;
 public final class CacheManagerMetricsRegistration extends AbstractMetricsRegistration {
 
    @Override
-   protected String initNamePrefix() {
-      String prefix = globalConfig.metrics().namesAsTags() ?
-            "" : "cache_manager_" + NameUtils.filterIllegalChars(globalConfig.cacheManagerName()) + '_';
-      String globalPrefix = globalConfig.metrics().prefix();
-      return globalPrefix != null && !globalPrefix.isEmpty() ? globalPrefix + '_' + prefix : prefix;
+   public boolean metricsEnabled() {
+      return metricsCollector != null && globalConfig.statistics();
+   }
+
+   @Override
+   protected Set<MetricID> internalRegisterMetrics(Object instance, MBeanMetadata beanMetadata, String metricPrefix) {
+      return metricsCollector.registerMetrics(instance, beanMetadata, metricPrefix, null);
    }
 }
