@@ -19,7 +19,6 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.interceptors.ExceptionSyncInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.DeadlockChecker;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
@@ -56,7 +55,6 @@ public class InfinispanLock {
    private final Queue<LockPlaceHolder> pendingRequest;
    private final ConcurrentMap<Object, LockPlaceHolder> lockOwners;
    private final Runnable releaseRunnable;
-   private final Executor blockingExecutor;
    private final Executor nonBlockingExecutor;
    private TimeService timeService;
    @SuppressWarnings("CanBeFinal")
@@ -65,12 +63,10 @@ public class InfinispanLock {
    /**
     * Creates a new instance.
     *
-    * @param blockingExecutor
-    * @param nonBlockingExecutor
+    * @param nonBlockingExecutor executor that is resumed upon after a lock has been acquired or times out if waiting
     * @param timeService the {@link TimeService} to check for timeouts.
     */
-   public InfinispanLock(Executor blockingExecutor, Executor nonBlockingExecutor, TimeService timeService) {
-      this.blockingExecutor = blockingExecutor;
+   public InfinispanLock(Executor nonBlockingExecutor, TimeService timeService) {
       this.nonBlockingExecutor = nonBlockingExecutor;
       this.timeService = timeService;
       pendingRequest = new ConcurrentLinkedQueue<>();
@@ -82,13 +78,11 @@ public class InfinispanLock {
    /**
     * Creates a new instance.
     *
-    * @param blockingExecutor
-    * @param nonBlockingExecutor
+    * @param nonBlockingExecutor executor that is resumed upon after a lock has been acquired or times out if waiting
     * @param timeService     the {@link TimeService} to check for timeouts.
     * @param releaseRunnable a {@link Runnable} that is invoked every time this lock is released.
     */
-   public InfinispanLock(Executor blockingExecutor, Executor nonBlockingExecutor, TimeService timeService, Runnable releaseRunnable) {
-      this.blockingExecutor = blockingExecutor;
+   public InfinispanLock(Executor nonBlockingExecutor, TimeService timeService, Runnable releaseRunnable) {
       this.nonBlockingExecutor = nonBlockingExecutor;
       this.timeService = timeService;
       pendingRequest = new ConcurrentLinkedQueue<>();
@@ -418,13 +412,13 @@ public class InfinispanLock {
             return checkState(notifier.getNow(lockState), InvocationStage::completedNullStage,
                   ExceptionSyncInvocationStage::new, timeoutSupplier);
          }
-         return new SimpleAsyncInvocationStage(CompletionStages.continueOnExecutor(notifier.thenApplyAsync(state -> {
+         return new SimpleAsyncInvocationStage(notifier.thenApplyAsync(state -> {
             Object rv = checkState(state, () -> null, throwable -> throwable, timeoutSupplier);
             if (rv != null) {
                throw (RuntimeException) rv;
             }
             return null;
-         }, blockingExecutor), nonBlockingExecutor, this));
+         }, nonBlockingExecutor));
       }
 
       @Override
