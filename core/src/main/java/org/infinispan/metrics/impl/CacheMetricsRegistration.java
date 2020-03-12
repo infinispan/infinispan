@@ -29,17 +29,14 @@ public final class CacheMetricsRegistration extends AbstractMetricsRegistration 
    @Inject
    String cacheName;
 
-   @Inject
-   CacheManagerMetricsRegistration globalMetricsRegistration;
-
    @Override
    public boolean metricsEnabled() {
-      return globalMetricsRegistration.metricsEnabled() && cacheConfiguration.statistics().enabled();
+      return metricsCollector != null && cacheConfiguration.statistics().enabled();
    }
 
    @Override
    protected String initNamePrefix() {
-      String prefix = globalMetricsRegistration.namePrefix;
+      String prefix = super.initNamePrefix();
       if (!globalConfig.metrics().namesAsTags()) {
          prefix += "cache_" + NameUtils.filterIllegalChars(cacheName) + '_';
       }
