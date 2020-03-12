@@ -90,14 +90,14 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       return configurationFiles;
    }
 
-   @Test(dataProvider = "configurationFiles", dependsOnMethods = { "testRemoveLastSeparator" })
+   @Test(dataProvider = "configurationFiles")
    public void testParseAndConstructUnifiedXmlFile(Path config) throws IOException {
       String[] parts = config.getFileName().toString().split("\\.");
       int major = Integer.parseInt(parts[0]);
       int minor = Integer.parseInt(parts[1]);
 
       Properties properties = new Properties();
-      properties.put("jboss.server.temp.dir", removeLastSeparator(System.getProperty("java.io.tmpdir"), File.separator));
+      properties.put("jboss.server.temp.dir", System.getProperty("java.io.tmpdir"));
 
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
       URL url = FileLookupFactory.newInstance().lookupFileLocation(config.toString(), Thread.currentThread().getContextClassLoader());
@@ -107,22 +107,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             check.check(holder);
          }
       }
-   }
-
-   @Test()
-   public void testRemoveLastSeparator() {
-      assertEquals(removeLastSeparator("tmp", "\\"), "tmp");
-      assertEquals(removeLastSeparator("tmp\\", "\\"), "tmp");
-      assertEquals(removeLastSeparator("tmp1\\tmp", "\\"), "tmp1\\tmp");
-      assertEquals(removeLastSeparator("tmp1\\tmp\\", "\\"), "tmp1\\tmp");
-      assertEquals(removeLastSeparator("C:\\tmp", "\\"), "C:\\tmp");
-      assertEquals(removeLastSeparator("C:\\tmp\\", "\\"), "C:\\tmp");
-      assertEquals(removeLastSeparator("tmp", "/"), "tmp");
-      assertEquals(removeLastSeparator("tmp/", "/"), "tmp");
-      assertEquals(removeLastSeparator("tmp1/tmp", "/"), "tmp1/tmp");
-      assertEquals(removeLastSeparator("tmp1/tmp/", "/"), "tmp1/tmp");
-      assertEquals(removeLastSeparator("/tmp", "/"), "/tmp");
-      assertEquals(removeLastSeparator("/tmp/", "/"), "/tmp");
    }
 
    public enum ParserVersionCheck {
@@ -215,7 +199,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          public void check(ConfigurationBuilderHolder holder) {
             GlobalStateConfiguration gs = getGlobalConfiguration(holder).globalState();
             assertEquals(ConfigurationStorage.OVERLAY, gs.configurationStorage());
-            assertEquals(removeLastSeparator(System.getProperty("java.io.tmpdir"), File.separator) + File.separator + "sharedPath", gs.sharedPersistentLocation());
+            assertEquals(System.getProperty("java.io.tmpdir") + File.separator + "sharedPath", gs.sharedPersistentLocation());
 
             EncodingConfiguration encoding = getConfiguration(holder, "local").encoding();
             assertEquals(MediaType.APPLICATION_OBJECT, encoding.keyDataType().mediaType());
@@ -272,7 +256,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          public void check(ConfigurationBuilderHolder holder) {
             GlobalStateConfiguration gs = getGlobalConfiguration(holder).globalState();
             assertEquals(ConfigurationStorage.OVERLAY, gs.configurationStorage());
-            assertEquals(removeLastSeparator(System.getProperty("java.io.tmpdir"), File.separator) + File.separator + "sharedPath", gs.sharedPersistentLocation());
+            assertEquals(System.getProperty("java.io.tmpdir") + File.separator + "sharedPath", gs.sharedPersistentLocation());
 
             EncodingConfiguration encoding = getConfiguration(holder, "local").encoding();
             assertEquals(MediaType.APPLICATION_OBJECT, encoding.keyDataType().mediaType());
@@ -330,8 +314,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          public void check(ConfigurationBuilderHolder holder) {
             GlobalConfiguration globalConfiguration = getGlobalConfiguration(holder);
             assertTrue(globalConfiguration.globalState().enabled());
-            assertEquals(removeLastSeparator(System.getProperty("java.io.tmpdir"), File.separator) + File.separator + "persistentPath", globalConfiguration.globalState().persistentLocation());
-            assertEquals(removeLastSeparator(System.getProperty("java.io.tmpdir"), File.separator) + File.separator + "tmpPath", globalConfiguration.globalState().temporaryLocation());
+            assertEquals(System.getProperty("java.io.tmpdir") + File.separator + "persistentPath", globalConfiguration.globalState().persistentLocation());
+            assertEquals(System.getProperty("java.io.tmpdir") + File.separator + "tmpPath", globalConfiguration.globalState().temporaryLocation());
          }
       },
 
@@ -461,7 +445,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertFalse(c.persistence().passivation());
             SingleFileStoreConfiguration fileStore = (SingleFileStoreConfiguration) c.persistence().stores().get(0);
             assertFalse(fileStore.fetchPersistentState());
-            assertEquals(removeLastSeparator(System.getProperty("java.io.tmpdir"), File.separator) + File.separator + "path", fileStore.location());
+            assertEquals(System.getProperty("java.io.tmpdir") + File.separator + "path", fileStore.location());
             assertFalse(fileStore.purgeOnStartup());
             assertTrue(fileStore.preload());
             assertFalse(fileStore.shared());
@@ -745,13 +729,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
    private static GlobalConfiguration getGlobalConfiguration(ConfigurationBuilderHolder holder) {
       return holder.getGlobalConfigurationBuilder().build();
-   }
-
-   private static String removeLastSeparator(String path, String separator) {
-      if (path.endsWith(separator)) {
-         return path.substring(0, path.length() - separator.length());
-      }
-      return path;
    }
 
 }
