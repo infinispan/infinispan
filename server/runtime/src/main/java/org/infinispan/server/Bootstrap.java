@@ -65,7 +65,6 @@ public class Bootstrap extends Main {
             // Fall through
          case "--bind-address":
             properties.setProperty(Server.INFINISPAN_BIND_ADDRESS, parameter);
-            properties.setProperty(Server.JGROUPS_BIND_ADDRESS, parameter);
             break;
          case "-p":
             parameter = args.next();
@@ -87,6 +86,11 @@ public class Bootstrap extends Main {
             parameter = args.next();
          case "--cluster-stack":
             properties.setProperty(Server.INFINISPAN_CLUSTER_STACK, parameter);
+            break;
+         case "-k":
+            parameter = args.next();
+         case "--cluster-address":
+            properties.setProperty(Server.JGROUPS_BIND_ADDRESS, parameter);
             break;
          case "-o":
             parameter = args.next();
@@ -144,9 +148,10 @@ public class Bootstrap extends Main {
       out.printf("  -b, --bind-address=<address>  %s\n", MSG.serverHelpBindAddress());
       out.printf("  -c, --server-config=<config>  %s\n", MSG.serverHelpServerConfig(Server.DEFAULT_CONFIGURATION_FILE));
       out.printf("  -l, --logging-config=<config> %s\n", MSG.serverHelpLoggingConfig(Server.DEFAULT_LOGGING_FILE));
-      out.printf("  -h, --help                    %s\n", MSG.toolHelpHelp());
       out.printf("  -g, --cluster-name=<name>     %s\n", MSG.serverHelpClusterName(Server.DEFAULT_CLUSTER_NAME));
+      out.printf("  -h, --help                    %s\n", MSG.toolHelpHelp());
       out.printf("  -j, --cluster-stack=<name>    %s\n", MSG.serverHelpClusterStack(Server.DEFAULT_CLUSTER_STACK));
+      out.printf("  -k, --cluster-address=<name>  %s\n", MSG.serverHelpClusterAddress());
       out.printf("  -n, --node-name=<name>        %s\n", MSG.serverHelpNodeName());
       out.printf("  -o, --port-offset=<offset>    %s\n", MSG.serverHelpPortOffset());
       out.printf("  -p, --bind-port=<port>        %s\n", MSG.serverHelpBindPort(Server.DEFAULT_BIND_PORT));

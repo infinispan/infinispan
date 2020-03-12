@@ -34,14 +34,16 @@ a transport and, therefore, will not cluster with other nodes on the same networ
 Bind address and port
 ---------------------
 Once started, the server will be listening on port 11222 on your first interface (usually the loopback interface).
-You can make it listen on another interface by using the `-b` argument:
+You can make it listen on another address by using the `-b` argument:
 
 ```
 <HOME>/bin/server.sh -b 0.0.0.0     (Unix / Linux)
 
 <HOME>\bin\server.bat -b 0.0.0.0    (Windows)
 ```
-The above commands will make the server bind on all addresses.
+The above commands will make the server's endpoint bind on all addresses.
+
+Note that the the `-b` argument does not affect the clustering address.
 
 You can also choose an alternate port by using the `-p` argument:
 
@@ -49,6 +51,17 @@ You can also choose an alternate port by using the `-p` argument:
 <HOME>/bin/server.sh -p 30000     (Unix / Linux)
 
 <HOME>\bin\server.bat -p 30000    (Windows)
+```
+
+Clustering address
+------------------
+It is also possible to change the address used to communicate with the other members in the cluster by using the
+`-k` argument:  
+
+```
+<HOME>/bin/server.sh -k 192.168.1.100     (Unix / Linux)
+
+<HOME>\bin\server.bat -k 192.168.1.100    (Windows)
 ```
 
 Clustering stacks
