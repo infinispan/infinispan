@@ -34,7 +34,7 @@ public interface Messages {
    @Message(value = "Cannot add user `%s` without a password.")
    String userToolNoPassword(String username);
 
-   @Message(value = "Binds the server to a specific address.")
+   @Message(value = "Binds the server endpoint to a specific address.")
    String serverHelpBindAddress();
 
    @Message(value = "Binds the server to a specific port. Defaults to `%d`.")
@@ -54,6 +54,9 @@ public interface Messages {
 
    @Message("Specifies the JGroups stack for clustering. Defaults to `%s`.")
    String serverHelpClusterStack(String defaultStack);
+
+   @Message("Specifies the JGroups bind address for clustering.")
+   String serverHelpClusterAddress();
 
    @Message("Sets the name of this node. Must be unique across the cluster.")
    String serverHelpNodeName();
