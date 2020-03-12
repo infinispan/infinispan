@@ -35,7 +35,7 @@ abstract class AbstractMetricsRegistration {
    @Inject
    MetricsCollector metricsCollector;
 
-   protected String namePrefix;
+   private String namePrefix;
 
    private Set<MetricID> metricIds;
 
@@ -60,15 +60,18 @@ abstract class AbstractMetricsRegistration {
       }
    }
 
-   public boolean metricsEnabled() {
-      return metricsCollector != null;
-   }
+   public abstract boolean metricsEnabled();
 
    /**
-    * Subclasses must implement this and return the metric prefix to be used for registration. This is invoked only if
+    * Subclasses should override this and return the metric prefix to be used for registration. This is invoked only if
     * metrics are enabled.
     */
-   protected abstract String initNamePrefix();
+   protected String initNamePrefix() {
+      String prefix = globalConfig.metrics().namesAsTags() ?
+            "" : "cache_manager_" + NameUtils.filterIllegalChars(globalConfig.cacheManagerName()) + '_';
+      String globalPrefix = globalConfig.metrics().prefix();
+      return globalPrefix != null && !globalPrefix.isEmpty() ? globalPrefix + '_' + prefix : prefix;
+   }
 
    private void processComponents() {
       for (ComponentRef<?> component : basicComponentRegistry.getRegisteredComponents()) {
@@ -106,9 +109,7 @@ abstract class AbstractMetricsRegistration {
       return internalRegisterMetrics(instance, beanMetadata, metricPrefix);
    }
 
-   protected Set<MetricID> internalRegisterMetrics(Object instance, MBeanMetadata beanMetadata, String metricPrefix) {
-      return metricsCollector.registerMetrics(instance, beanMetadata, metricPrefix, null);
-   }
+   protected abstract Set<MetricID> internalRegisterMetrics(Object instance, MBeanMetadata beanMetadata, String metricPrefix);
 
    /**
     * Register metrics for a component that was manually registered later, after component registry startup. The metric

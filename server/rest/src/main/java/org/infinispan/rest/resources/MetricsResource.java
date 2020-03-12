@@ -42,6 +42,11 @@ public final class MetricsResource implements ResourceHandler {
    private final MetricsRequestHandler requestHandler = new MetricsRequestHandler();
 
    public MetricsResource() {
+      registerBaseMetrics();
+   }
+
+   // this is kept separate just in case Quarkus needs to replace it with nil
+   private void registerBaseMetrics() {
       try {
          new JmxRegistrar().init();
       } catch (IOException | IllegalArgumentException e) {
