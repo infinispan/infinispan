@@ -164,6 +164,11 @@
                     "value": "-1"
                   }
                 ]
+              },
+              {
+                "id": 7,
+                "name": "counterConfiguration",
+                "type": "org.infinispan.persistence.commons.CounterConfiguration"
               }
             ]
           },
@@ -333,6 +338,11 @@
                 "type": "bytes"
               }
             ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "persistence.commons.proto"
           }
         ],
         "package": {
