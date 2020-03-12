@@ -8,20 +8,11 @@ import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.parsing.Element;
 
-import java.io.File;
-
 public class TemporaryGlobalStatePathConfiguration implements ConfigurationInfo {
 
    public static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", null, String.class)
-         .initializer(() -> removeLastSeparator(SecurityActions.getSystemProperty("java.io.tmpdir"), File.separator))
+         .initializer(() -> SecurityActions.getSystemProperty("java.io.tmpdir"))
          .immutable().build();
-
-   private static String removeLastSeparator(String path, String separator) {
-      if (path.endsWith(separator)) {
-         return path.substring(0, path.length() - separator.length());
-      }
-      return path;
-   }
 
    public static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder("relativeTo", null, String.class).immutable().build();
 
