@@ -2,6 +2,7 @@ package org.infinispan.expiration.impl;
 
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -42,7 +43,9 @@ public class ExpirationSingleFileStoreDistListenerFunctionalTest extends Expirat
    }
 
    @AfterClass(alwaysRun = true)
-   protected void clearTempDir() {
+   protected void clearTempDir() throws IOException {
+      this.cacheManager.close();
+      this.extraManager.close();
       Util.recursiveFileRemove(tmpDirectory(this.getClass()));
       Util.recursiveFileRemove(tmpDirectory(this.getClass().getSimpleName() + "2"));
    }

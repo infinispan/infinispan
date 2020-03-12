@@ -8,6 +8,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+
 @Test(groups = "functional", testName = "expiration.impl.ExpirationSingleFileStoreListenerFunctionalTest")
 public class ExpirationSingleFileStoreListenerFunctionalTest extends ExpirationStoreListenerFunctionalTest {
 
@@ -34,7 +36,8 @@ public class ExpirationSingleFileStoreListenerFunctionalTest extends ExpirationS
    }
 
    @AfterClass(alwaysRun = true)
-   protected void clearTempDir() {
+   protected void clearTempDir() throws IOException {
+      this.cacheManager.close();
       Util.recursiveFileRemove(CommonsTestingUtil.tmpDirectory(this.getClass()));
    }
 }

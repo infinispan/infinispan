@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -46,7 +47,8 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    private String location;
 
    @AfterClass
-   protected void clearTempDir() {
+   protected void clearTempDir() throws IOException {
+      this.cacheManager.close();
       Util.recursiveFileRemove(this.location);
    }
 

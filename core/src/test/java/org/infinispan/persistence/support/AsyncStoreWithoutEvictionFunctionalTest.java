@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.CommonsTestingUtil;
@@ -42,7 +43,8 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
    private File tmpDirectory;
 
    @AfterClass(alwaysRun = true)
-   public void clearTempDir() {
+   public void clearTempDir() throws IOException {
+      this.dcm.close();
       if (tmpDirectory != null) {
          Util.recursiveFileRemove(tmpDirectory);
       }
