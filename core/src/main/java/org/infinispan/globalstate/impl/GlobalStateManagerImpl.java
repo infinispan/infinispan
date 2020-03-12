@@ -29,12 +29,12 @@ import org.infinispan.globalstate.GlobalStateProvider;
 import org.infinispan.globalstate.ScopedPersistentState;
 
 /**
- * GlobalStateManagerImpl. This global component manages persistent state across restarts as well as global configurations.
- * The information is stored in a Properties file. On a graceful shutdown it persists the following
+ * GlobalStateManagerImpl. This global component manages persistent state across restarts as well as global
+ * configurations. The information is stored in a Properties file. On a graceful shutdown it persists the following
  * information:
- *
+ * <p>
  * version = full version (e.g. major.minor.micro.qualifier) timestamp = timestamp using ISO-8601
- *
+ * <p>
  * as well as any additional information contributed by registered {@link GlobalStateProvider}s
  *
  * @author Tristan Tarrant
@@ -46,8 +46,10 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    public static final String TIMESTAMP = "@timestamp";
    public static final String VERSION_MAJOR = "version-major";
 
-   @Inject GlobalConfiguration globalConfiguration;
-   @Inject TimeService timeService;
+   @Inject
+   GlobalConfiguration globalConfiguration;
+   @Inject
+   TimeService timeService;
 
    private List<GlobalStateProvider> stateProviders = new ArrayList<>();
    private boolean persistentState;
@@ -119,14 +121,21 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    @Override
    public void writeGlobalState() {
       if (persistentState) {
-         ScopedPersistentState state = new ScopedPersistentStateImpl(GLOBAL_SCOPE);
-         state.setProperty(VERSION, Version.getVersion());
-         state.setProperty(VERSION_MAJOR, Version.getMajor());
-         state.setProperty(TIMESTAMP, timeService.instant().toString());
-         // ask any state providers to contribute to the global state
-         stateProviders.forEach(provider -> provider.prepareForPersist(state));
-         writeScopedState(state);
-         CONTAINER.globalStateWrite(state.getProperty(VERSION), state.getProperty(TIMESTAMP));
+         if (stateProviders.isEmpty()) {
+            // If no state providers were registered, we cannot persist
+            CONTAINER.incompleteGlobalState();
+         } else {
+            ScopedPersistentState state = new ScopedPersistentStateImpl(GLOBAL_SCOPE);
+            state.setProperty(VERSION, Version.getVersion());
+            state.setProperty(VERSION_MAJOR, Version.getMajor());
+            state.setProperty(TIMESTAMP, timeService.instant().toString());
+            // ask any state providers to contribute to the global state
+            for (GlobalStateProvider provider : stateProviders) {
+               provider.prepareForPersist(state);
+            }
+            writeScopedState(state);
+            CONTAINER.globalStateWrite(state.getProperty(VERSION), state.getProperty(TIMESTAMP));
+         }
       }
    }
 
@@ -156,7 +165,7 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
          for (String line = r.readLine(); line != null; line = r.readLine()) {
             if (!line.startsWith("#")) { // Skip comment lines
                int eq = line.indexOf('=');
-               while (eq > 0 && line.charAt(eq-1) == '\\') {
+               while (eq > 0 && line.charAt(eq - 1) == '\\') {
                   eq = line.indexOf('=', eq + 1);
                }
                if (eq > 0) {

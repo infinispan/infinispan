@@ -2,6 +2,8 @@ package org.infinispan.globalstate;
 
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.fail;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -14,6 +16,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -107,5 +110,30 @@ public class GlobalStateTest extends AbstractInfinispanTest {
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
       global.globalState().enable().persistentLocation(stateDirectory).sharedPersistentLocation(stateDirectory).configurationStorage(ConfigurationStorage.OVERLAY);
       return global;
+   }
+
+   public void testFailStartup(Method m) throws Exception {
+      String state = tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName());
+      GlobalConfigurationBuilder global = statefulGlobalBuilder(state, true);
+      global.transport().transport(new FailingJGroupsTransport());
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, global, new ConfigurationBuilder(), new TransportFlags());
+      try {
+         cm.start();
+         fail("Should not reach here");
+      } catch (Exception e) {
+         // Ensure there is no global state file
+         File globalStateFile = new File(state, ScopedPersistentState.GLOBAL_SCOPE + ".state");
+         assertFalse(globalStateFile.exists());
+      } finally {
+         TestingUtil.killCacheManagers(cm);
+      }
+   }
+
+   public static class FailingJGroupsTransport extends JGroupsTransport {
+
+      @Override
+      public void start() {
+         throw new RuntimeException("fail");
+      }
    }
 }

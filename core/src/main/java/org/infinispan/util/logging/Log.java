@@ -1943,4 +1943,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot recreate persisted configuration for cache '%s' because configuration %n%s%n is incompatible with the existing configuration %n%s", id = 573)
    CacheConfigurationException incompatiblePersistedConfiguration(String cacheName, Configuration configuration, Configuration existing);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Global state cannot persisted because it is incomplete (usually caused by errors at startup).", id = 574)
+   void incompleteGlobalState();
 }
