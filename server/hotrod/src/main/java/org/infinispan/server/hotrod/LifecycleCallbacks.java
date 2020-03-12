@@ -131,6 +131,8 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       InternalCacheRegistry registry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       //we can't lose transactions. distributed cache can lose data is num_owner nodes crash at the same time
+      // If this cache is changed from REPL/LOCAL it will also become blocking - and the blockhound exception in
+      // ServerHotrodBlockHoundIntegration will no longer be correct
       builder.clustering().cacheMode(globalCfg.isClustered() ?
             CacheMode.REPL_SYNC :
             CacheMode.LOCAL);

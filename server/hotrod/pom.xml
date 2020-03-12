@@ -55,6 +55,11 @@
          <artifactId>protostream</artifactId>
       </dependency>
       <dependency>
+         <groupId>io.projectreactor.tools</groupId>
+         <artifactId>blockhound</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
          <groupId>org.infinispan.protostream</groupId>
          <artifactId>protostream-processor</artifactId>
          <scope>test</scope>
