@@ -1,0 +1,29 @@
+[id='java_serialization']
+= Using Java Serialization
+You can use Java serialization with {brandname} to marshall your objects, but
+only if your Java objects implement Java's `Serializable` interface.
+
+.Procedure
+
+. Configure {brandname} to use `JavaSerializationMarshaller` as the marshaller.
+. Add your Java classes to the deserialization white list.
++
+* Programmatically:
++
+[source,java]
+----
+include::code_examples/SerializationMarshaller.java[]
+----
++
+* Declaratively:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/serialization_marshaller.xml[]
+----
+
+.Reference
+
+* link:#deserialization_whitelist[Adding Java Classes to Deserialization White Lists]
+* link:https://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html[Serializable]
+* link:{javadocroot}/org/infinispan/commons/marshall/JavaSerializationMarshaller.html[org.infinispan.commons.marshall.JavaSerializationMarshaller]

@@ -1,0 +1,27 @@
+[id='custom_marshallers']
+= Using Custom Marshallers
+{brandname} provides a `Marshaller` interface for custom marshallers.
+
+.Programmatic procedure
+
+[source,java]
+----
+include::code_examples/CustomMarshaller.java[]
+----
+
+.Declarative procedure
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/custom_marshaller.xml[]
+----
+
+[TIP]
+====
+Custom marshaller implementations can access a configured white list via the
+link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html#initialize[initialize()] method, which is called during startup.
+====
+
+.Reference
+
+* link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[org.infinispan.commons.marshall.Marshaller]
