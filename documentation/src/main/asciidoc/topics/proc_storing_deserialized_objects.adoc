@@ -1,0 +1,20 @@
+[id='store_deserialiized_objects']
+= Storing Deserialized Objects in {brandname} Servers
+You can configure {brandname} to use the `application/x-java-object` MediaType
+as the format for your data. In other words, {brandname} stores your data as
+Plain Old Java Objects (POJOs) instead of binary content.
+
+If you store POJOs, you must put class files for all custom objects on the
+{brandname} server classpath.
+
+.Procedure
+
+* Add JAR files that contain custom classes and/or service providers for
+marshaller implementations in the `server/lib` directory.
+
+----
+├── server
+│   ├── lib
+│   │   ├── UserObjects.jar
+│       └── README.txt
+----

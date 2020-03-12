@@ -1507,8 +1507,8 @@ the _@Indexed_ and _@Field_ protobuf schema documentation annotations in order t
 indexed.
 
 === A remote query example
-In this example, we will show you how to configure the client to utilise the example <<protostream_usage,LibraryInitializerImpl>>,
-put some data in the cache and then try to search for it. Note, the following example assumes that <<enable_indexing,Indexing has been enabled>>
+In this example, we will show you how to configure the client to utilise the example link:#protostream[LibraryInitializerImpl],
+put some data in the cache and then try to search for it. Note, the following example assumes that link:#enable_indexing[Indexing has been enabled]
 by registering the required .proto files with the `___protobuf_metadata` cache.
 
 [source,java]
