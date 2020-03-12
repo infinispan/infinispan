@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.query.api.continuous.ContinuousQueryListener;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * {@link ContinuousQueryListener} which counts number of calls for each key.
@@ -12,6 +14,7 @@ import org.infinispan.query.api.continuous.ContinuousQueryListener;
  * @since 8.0
  */
 public class CallCountingCQResultListener<K, V> implements ContinuousQueryListener<K, V> {
+   private static final Log log = LogFactory.getLog(CallCountingCQResultListener.class);
 
    private final Map<K, Integer> joined = new HashMap<>();
    private final Map<K, Integer> updated = new HashMap<>();
@@ -19,16 +22,19 @@ public class CallCountingCQResultListener<K, V> implements ContinuousQueryListen
 
    @Override
    public void resultJoining(K key, V value) {
+      log.debugf("Key %s joined", key);
       incrementNumberOfCalls(key, joined);
    }
 
    @Override
    public void resultUpdated(K key, V value) {
+      log.debugf("Key %s updated", key);
       incrementNumberOfCalls(key, updated);
    }
 
    @Override
    public void resultLeaving(K key) {
+      log.debugf("Key %s left", key);
       incrementNumberOfCalls(key, left);
    }
 
