@@ -238,6 +238,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       cache0.addListener(clusterListener);
 
       addClusteredCacheManager();
+      waitForClusterToForm(CACHE_NAME);
 
       Cache<Object, String> cache3 = cache(3, CACHE_NAME);
       MagicKey key = new MagicKey(cache3);
@@ -255,6 +256,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
               new CollectionKeyFilter<Object>(Collections.singleton(keyToFilter), true)), new StringTruncator(0, 3));
 
       addClusteredCacheManager();
+      waitForClusterToForm(CACHE_NAME);
 
       Cache<Object, String> cache3 = cache(3, CACHE_NAME);
       MagicKey key = new MagicKey(cache3);

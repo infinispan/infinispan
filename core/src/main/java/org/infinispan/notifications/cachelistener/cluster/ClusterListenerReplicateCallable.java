@@ -181,11 +181,11 @@ public class ClusterListenerReplicateCallable<K, V> implements Function<Embedded
             converter = (CacheEventConverter) input.readObject();
          }
          boolean sync = input.readBoolean();
-         Set<Class<? extends Annotation>> listenerAnnots = MarshallUtil.unmarshallCollection(input, HashSet::new);
+         Set<Class<? extends Annotation>> filterAnnotations = MarshallUtil.unmarshallCollection(input, HashSet::new);
          DataConversion keyDataConversion = DataConversion.readFrom(input);
          DataConversion valueDataConversion = DataConversion.readFrom(input);
          boolean raw = input.readBoolean();
-         return new ClusterListenerReplicateCallable(cacheName, id, address, filter, converter, sync, listenerAnnots,
+         return new ClusterListenerReplicateCallable(cacheName, id, address, filter, converter, sync, filterAnnotations,
                keyDataConversion, valueDataConversion, raw);
       }
 
