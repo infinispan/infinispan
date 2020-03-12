@@ -730,7 +730,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
    private CompletionStage<Void> doNotifyPassivated(K key, V value, boolean pre) {
       EventImpl<K, V> e = EventImpl.createEvent(cache.wired(), CACHE_ENTRY_PASSIVATED);
-      boolean isLocalNodePrimaryOwner = isLocalNodePrimaryOwner((K) key);
+      boolean isLocalNodePrimaryOwner = isLocalNodePrimaryOwner(key);
       AggregateCompletionStage aggregateCompletionStage = null;
       for (CacheEntryListenerInvocation<K, V> listener : cacheEntryPassivatedListeners) {
          // Need a wrapper per invocation since converter could modify the entry in it
@@ -1022,42 +1022,22 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       // We use identity for null as this means it was invoked by a non encoder cache
       DataConversion keyConversion = keyDataConversion == null ? DataConversion.IDENTITY_KEY : keyDataConversion;
       DataConversion valueConversion = valueDataConversion == null ? DataConversion.IDENTITY_VALUE : valueDataConversion;
+      Set<Class<? extends Annotation>> filterAnnotations = findListenerCallbacks(listener);
       if (filter instanceof IndexedFilter) {
          indexingProvider = findIndexingServiceProvider((IndexedFilter) filter);
          if (indexingProvider != null) {
             DelegatingCacheInvocationBuilder builder = new DelegatingCacheInvocationBuilder(indexingProvider);
-            builder
-                  .setIncludeCurrentState(l.includeCurrentState())
-                  .setClustered(l.clustered())
-                  .setOnlyPrimary(l.clustered() ? isClusterListenerAvailable(cacheMode) : l.primaryOnly())
-                  .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
-                  .setFilter(filter)
-                  .setConverter(converter)
-                  .setIdentifier(generatedId)
-                  .setKeyDataConversion(keyConversion)
-                  .setValueDataConversion(valueConversion)
-                  .setClassLoader(classLoader);
+            adjustCacheInvocationBuilder(builder, filter, converter, filterAnnotations, l, useStorageFormat, generatedId,
+                                         keyConversion, valueConversion, classLoader);
             foundMethods = validateAndAddListenerInvocations(listener, builder);
             builder.registerListenerInvocations();
          }
       }
       if (indexingProvider == null) {
          CacheInvocationBuilder builder = new CacheInvocationBuilder();
-         builder
-               .setIncludeCurrentState(l.includeCurrentState())
-               .setClustered(l.clustered())
-               .setOnlyPrimary(l.clustered() ? isClusterListenerAvailable(cacheMode) : l.primaryOnly())
-               .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
-               .setFilter(filter)
-               .setConverter(converter)
-               .setKeyDataConversion(keyConversion)
-               .setValueDataConversion(valueConversion)
-               .setIdentifier(generatedId)
-               .setClassLoader(classLoader);
+         adjustCacheInvocationBuilder(builder, filter, converter, filterAnnotations, l, useStorageFormat, generatedId,
+                                      keyConversion, valueConversion, classLoader);
 
-         if (l.clustered()) {
-            builder.setFilterAnnotations(findListenerCallbacks(listener));
-         }
 
          foundMethods = validateAndAddListenerInvocations(listener, builder);
       }
@@ -1178,13 +1158,6 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
     * Adds the listener using the provided filter converter and class loader.  The provided builder is used to add
     * additional configuration including (clustered, onlyPrimary & identifier) which can be used after this method is
     * completed to see what values were used in the addition of this listener
-    *
-    * @param listener
-    * @param filter
-    * @param converter
-    * @param classLoader
-    * @param <C>
-    * @return
     */
    @Override
    public <C> CompletionStage<Void> addListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter,
@@ -1314,42 +1287,16 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          indexingProvider = findIndexingServiceProvider((IndexedFilter) filter);
          if (indexingProvider != null) {
             DelegatingCacheInvocationBuilder builder = new DelegatingCacheInvocationBuilder(indexingProvider);
-            builder
-                  .setFilterAnnotations(filterAnnotations)
-                  .setIncludeCurrentState(l.includeCurrentState())
-                  .setClustered(l.clustered())
-                  .setOnlyPrimary(l.clustered() ? isClusterListenerAvailable(cacheMode) : l.primaryOnly())
-                  .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
-                  .setFilter(filter)
-                  .setConverter(converter)
-                  .useStorageFormat(useStorageFormat)
-                  .setKeyDataConversion(keyConversion)
-                  .setValueDataConversion(valueConversion)
-                  .setIdentifier(generatedId)
-                  .setClassLoader(null);
+            adjustCacheInvocationBuilder(builder, filter, converter, filterAnnotations, l, useStorageFormat, generatedId,
+                                         keyConversion, valueConversion, null);
             foundMethods = validateAndAddFilterListenerInvocations(listener, builder, filterAnnotations);
             builder.registerListenerInvocations();
          }
       }
       if (indexingProvider == null) {
          CacheInvocationBuilder builder = new CacheInvocationBuilder();
-         builder
-               .setFilterAnnotations(filterAnnotations)
-               .setIncludeCurrentState(l.includeCurrentState())
-               .setClustered(l.clustered())
-               .setOnlyPrimary(l.clustered() ? isClusterListenerAvailable(cacheMode) : l.primaryOnly())
-               .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
-               .setFilter(filter)
-               .setKeyDataConversion(keyConversion)
-               .setValueDataConversion(valueConversion)
-               .setConverter(converter)
-               .useStorageFormat(useStorageFormat)
-               .setIdentifier(generatedId)
-               .setClassLoader(null);
-
-         if (l.clustered()) {
-            builder.setFilterAnnotations(findListenerCallbacks(listener));
-         }
+         adjustCacheInvocationBuilder(builder, filter, converter, filterAnnotations, l, useStorageFormat, generatedId,
+                                      keyConversion, valueConversion, null);
 
          foundMethods = validateAndAddFilterListenerInvocations(listener, builder, filterAnnotations);
       }
@@ -1467,13 +1414,35 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                log.tracef("Listener %s initial state for cache completed", generatedId);
             }
 
-            if (t != null) {
-               CompletableFutures.rethrowException(t);
-            }
+            CompletableFutures.rethrowException(t);
          });
       }
 
       return stage;
+   }
+
+   private <C> void adjustCacheInvocationBuilder(CacheInvocationBuilder builder,
+                                                 CacheEventFilter<? super K, ? super V> filter,
+                                                 CacheEventConverter<? super K, ? super V, C> converter,
+                                                 Set<Class<? extends Annotation>> filterAnnotations,
+                                                 Listener l, boolean useStorageFormat, UUID generatedId,
+                                                 DataConversion keyConversion, DataConversion valueConversion,
+                                                 ClassLoader classLoader) {
+      CacheMode cacheMode = config.clustering().cacheMode();
+      builder
+            .setIncludeCurrentState(l.includeCurrentState())
+            .setClustered(l.clustered())
+            .setOnlyPrimary(l.clustered() ? isClusterListenerAvailable(cacheMode) : l.primaryOnly())
+            .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
+            .setFilter(filter)
+            .setConverter(converter)
+            .useStorageFormat(useStorageFormat)
+            .setKeyDataConversion(keyConversion)
+            .setValueDataConversion(valueConversion)
+            .setIdentifier(generatedId)
+            .setClassLoader(classLoader);
+
+      builder.setFilterAnnotations(filterAnnotations);
    }
 
    CompletionStage<Void> batchIterator(Iterator<CacheEntry<K, V>> iterator, QueueingSegmentListener handler,

@@ -133,8 +133,11 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
          value.setName("John");
          value.setAge(i + 25);
          cache(0).put(i, value);
-         if (i == 4)
+         if (i == 2) {
+            // The listener matches entries with age <= 30
+            // It will receive entries 0..2 before the node is killed, and entries 3..5 after
             killMember(1);
+         }
       }
 
       assertEquals(6, joined.size());
@@ -154,8 +157,11 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
          value.setName("John");
          value.setAge(i + 25);
          cache(0).put(i, value);
-         if (i == 4)
+         if (i == 2) {
+            // The listener matches entries with age <= 30
+            // It will receive entries 0..2 before the node joins, and entries 3..5 after
             addClusterEnabledCacheManager(QueryTestSCI.INSTANCE, buildConfiguration());
+         }
       }
 
       assertEquals(6, joined.size());
