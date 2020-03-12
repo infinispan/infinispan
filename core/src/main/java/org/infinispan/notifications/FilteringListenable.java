@@ -93,12 +93,6 @@ public interface FilteringListenable<K, V> extends Listenable {
 
    /**
     * Asynchronous version of {@link #addFilteredListener(Object, CacheEventFilter, CacheEventConverter, Set)}
-    * @param listener listener to add, must not be null
-    * @param filter
-    * @param converter
-    * @param filterAnnotations
-    * @param <C>
-    * @return CompletionStage that when complete the listener is fully installed
     */
    <C> CompletionStage<Void> addFilteredListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
          Set<Class<? extends Annotation>> filterAnnotations);
@@ -114,12 +108,6 @@ public interface FilteringListenable<K, V> extends Listenable {
 
    /**
     * Asynchronous version of {@link #addStorageFormatFilteredListener(Object, CacheEventFilter, CacheEventConverter, Set)}
-    * @param listener listener to add, must not be null
-    * @param filter
-    * @param converter
-    * @param filterAnnotations
-    * @param <C>
-    * @return CompletionStage that when complete the listener is fully installed
     */
    <C> CompletionStage<Void> addStorageFormatFilteredListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
                                 Set<Class<? extends Annotation>> filterAnnotations);
