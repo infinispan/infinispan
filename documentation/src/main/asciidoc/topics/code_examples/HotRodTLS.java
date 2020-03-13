@@ -6,11 +6,11 @@ clientBuilder
    .security()
       .ssl()
          // Server SNI hostname.
-         .sniHostName("myservername") <1>
+         .sniHostName("myservername")
          // Server certificate keystore.
-         .trustStoreFileName("/path/to/truststore") <2>
+         .trustStoreFileName("/path/to/truststore")
          .trustStorePassword("truststorepassword".toCharArray())
          // Client certificate keystore.
-         .keyStoreFileName("/path/to/client/keystore") <3>
+         .keyStoreFileName("/path/to/client/keystore")
          .keyStorePassword("keystorepassword".toCharArray());
 RemoteCache<String, String> cache=remoteCacheManager.getCache("secured");

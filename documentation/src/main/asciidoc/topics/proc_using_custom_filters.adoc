@@ -1,0 +1,57 @@
+[id='custom_filters']
+= Deploying Custom Filters to {brandname} Server
+Deploy custom filters to {brandname} server instances.
+
+.Procedure
+
+. Create a factory that extends `KeyValueFilterConverterFactory`.
++
+[source,java]
+----
+import java.io.Serializable;
+
+import org.infinispan.filter.AbstractKeyValueFilterConverter;
+import org.infinispan.filter.KeyValueFilterConverter;
+import org.infinispan.filter.KeyValueFilterConverterFactory;
+import org.infinispan.filter.NamedFactory;
+import org.infinispan.metadata.Metadata;
+
+//@NamedFactory annotation defines the factory name
+@NamedFactory(name = "myFilterConverterFactory")
+public class MyKeyValueFilterConverterFactory implements KeyValueFilterConverterFactory {
+
+   @Override
+   public KeyValueFilterConverter<String, SampleEntity1, SampleEntity2> getFilterConverter() {
+      return new MyKeyValueFilterConverter();
+   }
+   // Filter implementation. Should be serializable or externalizable for DIST caches
+   static class MyKeyValueFilterConverter extends AbstractKeyValueFilterConverter<String, SampleEntity1, SampleEntity2> implements Serializable {
+      @Override
+      public SampleEntity2 filterAndConvert(String key, SampleEntity1 entity, Metadata metadata) {
+         // returning null will case the entry to be filtered out
+         // return SampleEntity2 will convert from the cache type SampleEntity1
+      }
+
+      @Override
+      public MediaType format() {
+         // returns the MediaType that data should be presented to this converter.
+         // When ommitted, the server will use "application/x-java-object".
+         // Returning null will cause the filter/converter to be done in the storage format.
+      }
+   }
+}
+----
++
+. Create a JAR that contains a
+`META-INF/services/org.infinispan.filter.KeyValueFilterConverterFactory` file.
+This file should include the fully qualified class name of the filter factory
+class implementation.
++
+If the filter uses custom key/value classes, you must include them in your JAR file so that the filter can correctly unmarshall key and/or value instances.
++
+. Add the JAR file to the `server/lib` directory of your {brandname} server
+installation directory.
+
+.Reference
+
+* link:{javadocroot}/org/infinispan/filter/KeyValueFilterConverterFactory.html[KeyValueFilterConverterFactory]

@@ -1,10 +1,13 @@
 [id='hotrod_serializationcontextinitializer']
 = Configuring SerializationContextInitializer Implementations
-You can add implementations of the ProtoStream `SerializationContextInitializer` interface to Hot Rod client configurations.
+You can add implementations of the ProtoStream
+`SerializationContextInitializer` interface to Hot Rod client configurations so
+{brandname} marshalls custom Java objects.
 
 .Procedure
 
-* Configure `SerializationContextInitializer` as follows:
+* Add your `SerializationContextInitializer` implementations to your Hot Rod
+client configuration as follows:
 
 .`hotrod-client.properties`
 
@@ -19,3 +22,6 @@ infinispan.client.hotrod.context-initializers=org.infinispan.example.LibraryInit
 ----
 include::code_examples/ClientProtoStreamMarshaller.java[]
 ----
+
+* link:{dev_docs}#protostream_cm_config[Using the ProtoStream Marshaller]
+* link:{dev_docs}#protostream_ctx[ProtoStream Serialization Contexts]

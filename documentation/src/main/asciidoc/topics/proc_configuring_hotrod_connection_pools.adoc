@@ -10,13 +10,9 @@ the pool, rather than on application requests.
 
 .Procedure
 
-* Configure Hot Rod client connection pool settings  with the `ConnectionPoolConfigurationBuilder` class.
+* Configure Hot Rod client connection pool settings with the `ConnectionPoolConfigurationBuilder` class.
 
 [source,java]
 ----
 include::code_examples/HotRodConnectionPools.java[]
 ----
-
-<1> configures client connection pools.
-<2> sets the maximum number of active connections per server.
-<3> sets the minimum number of idle connections that must be available per server.
