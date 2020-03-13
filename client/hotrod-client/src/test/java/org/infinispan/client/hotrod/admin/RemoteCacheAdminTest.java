@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
@@ -58,6 +59,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
 
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(gcb, builder);
       cm.defineConfiguration("template", builder.build());
+      cm.defineConfiguration(DefaultTemplate.DIST_ASYNC.getTemplateName(), builder.build());
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm, serverBuilder);
@@ -73,6 +75,16 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    public void cacheCreateRemoveTest(Method m) {
       String cacheName = m.getName();
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
+      assertTrue(manager(0).cacheExists(cacheName));
+      assertTrue(manager(1).cacheExists(cacheName));
+      client(1).administration().removeCache(cacheName);
+      assertFalse(manager(0).cacheExists(cacheName));
+      assertFalse(manager(1).cacheExists(cacheName));
+   }
+
+   public void cacheCreateRemoveTestWithDefaultTemplateEnum(Method m) {
+      String cacheName = m.getName();
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, DefaultTemplate.DIST_ASYNC);
       assertTrue(manager(0).cacheExists(cacheName));
       assertTrue(manager(1).cacheExists(cacheName));
       client(1).administration().removeCache(cacheName);
