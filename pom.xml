@@ -2376,6 +2376,16 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-commons-jdk11</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-commons-loom</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-component-processor</artifactId>
             <version>${version.infinispan}</version>
             <!-- compile-only dependency -->
@@ -4301,7 +4311,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-assembly-plugin</artifactId>
-               <version>3.1.1</version>
+               <version>3.2.0</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -5061,136 +5071,6 @@
          </build>
       </profile>
       <profile>
-         <!-- Profile used to compile Java 11-specific classes. -->
-         <id>jdk11-compile</id>
-         <activation>
-            <file>
-               <exists>${basedir}/src/main/java11</exists>
-            </file>
-         </activation>
-         <build>
-            <plugins>
-               <plugin>
-                  <artifactId>maven-compiler-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>java11-compile</id>
-                        <phase>compile</phase>
-                        <goals>
-                           <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                           <release>11</release>
-                           <compileSourceRoots>${project.basedir}/src/main/java11</compileSourceRoots>
-                           <outputDirectory>${project.build.outputDirectory}/META-INF/versions/11</outputDirectory>
-                           <additionalClasspathElements>
-                              <additionalClasspathElement>${project.build.outputDirectory}</additionalClasspathElement>
-                           </additionalClasspathElements>
-                           <!-- Include method parameter debug info -->
-                           <parameters>true</parameters>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-               <plugin>
-                  <artifactId>maven-jar-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>default-jar</id>
-                        <goals>
-                           <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                           <archive>
-                              <manifestEntries>
-                                 <Multi-Release>true</Multi-Release>
-                              </manifestEntries>
-                           </archive>
-                        </configuration>
-                     </execution>
-                     <execution>
-                        <id>build-test-jar</id>
-                        <goals>
-                           <goal>test-jar</goal>
-                        </goals>
-                        <configuration>
-                           <archive>
-                              <manifestEntries>
-                                 <Multi-Release>true</Multi-Release>
-                              </manifestEntries>
-                           </archive>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-               <plugin>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>java11-test</id>
-                        <phase>test</phase>
-                        <goals>
-                           <goal>test</goal>
-                        </goals>
-                        <configuration>
-                           <groups>org.infinispan.commons.test.categories.Java11</groups>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-      <profile>
-         <id>jdk11-test-compile</id>
-         <activation>
-            <file>
-               <exists>${basedir}/src/test/java11</exists>
-            </file>
-         </activation>
-         <build>
-            <plugins>
-               <plugin>
-                  <artifactId>maven-compiler-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>java11-test-compile</id>
-                        <phase>test-compile</phase>
-                        <goals>
-                           <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                           <release>11</release>
-                           <compileSourceRoots>${project.basedir}/src/test/java11</compileSourceRoots>
-                           <outputDirectory>${project.build.testOutputDirectory}/META-INF/versions/11</outputDirectory>
-                           <!-- Include method parameter debug info -->
-                           <parameters>true</parameters>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-               <plugin>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <executions>
-                     <execution>
-                     </execution>
-                  </executions>
-               </plugin>
-               <plugin>
-                  <artifactId>maven-jar-plugin</artifactId>
-                  <configuration>
-                     <archive>
-                        <manifestEntries>
-                           <Multi-Release>true</Multi-Release>
-                        </manifestEntries>
-                     </archive>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-
-      <profile>
          <id>java8-test</id>
          <activation>
             <activeByDefault>false</activeByDefault>
@@ -5222,7 +5102,7 @@
                   </configuration>
                   <executions>
                      <execution>
-                        <!-- Do not run the JDK10+-specific tests with JDK8 -->
+                        <!-- Do not run the JDK11-specific tests with JDK8 -->
                         <id>java11-test</id>
                         <phase>none</phase>
                      </execution>
