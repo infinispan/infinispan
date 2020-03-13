@@ -10,6 +10,7 @@ import org.infinispan.factories.impl.BasicComponentRegistryImpl;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
 import org.jgroups.JChannel;
 import org.jgroups.fork.ForkChannel;
@@ -47,6 +48,8 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
 
          // This shouldn't block long when held - but it is a write lock which can be delayed
          builder.allowBlockingCallsInside(KeyAffinityServiceImpl.class.getName(), "handleViewChange");
+
+         builder.allowBlockingCallsInside(TransactionTable.class.getName(), "calculateMinTopologyId");
       }
       // This invokes the actual runnable - we have to make sure it doesn't block as normal
       builder.disallowBlockingCallsInside(LimitedExecutor.class.getName(), "actualRun");
