@@ -106,7 +106,8 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
    public final void sendToMany(Collection<Address> destinations, ReplicableCommand command,
                                 DeliverOrder deliverOrder) {
       setTopologyId(command);
-      performSend(destinations, command,
+      Collection<Address> targets = destinations != null ? destinations : getTransport().getMembers();
+      performSend(targets, command,
                   c -> {
                      realOne.sendToMany(destinations, command, deliverOrder);
                      return null;
