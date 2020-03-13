@@ -5,8 +5,7 @@
                             urn:infinispan:server:11.0 https://infinispan.org/schemas/infinispan-server-11.0.xsd"
         xmlns="urn:infinispan:config:11.0"
         xmlns:server="urn:infinispan:server:11.0">
-
-   <jgroups>
+<jgroups>
       <stack-file name="test" path="test-jgroups-tcp.xml"/>
    </jgroups>
 

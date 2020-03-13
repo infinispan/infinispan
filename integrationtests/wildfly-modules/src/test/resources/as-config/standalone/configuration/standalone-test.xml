@@ -339,7 +339,7 @@
                     <protocol type="PING" module="org.jgroups:${infinispan.module.slot}"/>
                     <protocol type="MERGE3" module="org.jgroups:${infinispan.module.slot}"/>
                     <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" module="org.jgroups:${infinispan.module.slot}"/>
-                    <protocol type="FD_ALL" module="org.jgroups:${infinispan.module.slot}"/>
+                    <protocol type="FD_ALL3" module="org.jgroups:${infinispan.module.slot}"/>
                     <protocol type="VERIFY_SUSPECT" module="org.jgroups:${infinispan.module.slot}"/>
                     <protocol type="pbcast.NAKACK2" module="org.jgroups:${infinispan.module.slot}"/>
                     <protocol type="UNICAST3" module="org.jgroups:${infinispan.module.slot}"/>
