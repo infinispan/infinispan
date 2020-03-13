@@ -154,7 +154,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
                ProtocolConfiguration proto1 = tcp.getProtocolStack().get(i);
                ProtocolConfiguration proto2 = mytcp.getProtocolStack().get(i);
                assertEquals(proto1.getProtocolName(), proto2.getProtocolName());
-               if (proto1.getProtocolName().equals("FD_ALL")) {
+               if (proto1.getProtocolName().equals("FD_ALL") || proto1.getProtocolName().equals("FD_ALL3")) {
                   assertEquals("tcp>FD_ALL>timeout", "3000", proto1.getProperties().get("timeout"));
                   assertEquals("tcp>FD_ALL>interval", "1000", proto1.getProperties().get("interval"));
                   assertEquals("mytcp>FD_ALL>timeout", "3500", proto2.getProperties().get("timeout"));

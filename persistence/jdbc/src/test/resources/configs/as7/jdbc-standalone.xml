@@ -155,7 +155,7 @@
                 </protocol>
                 <protocol type="MERGE3"/>
                 <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd"/>
-                <protocol type="FD_ALL"/>
+                <protocol type="FD_ALL3"/>
                 <protocol type="VERIFY_SUSPECT"/>
                 <protocol type="pbcast.NAKACK2"/>
                 <protocol type="UNICAST3">

@@ -2,7 +2,7 @@
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config:${infinispan.core.schema.version}
-                            urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.1.xsd"
+                            urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd"
         xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
    <jgroups>
       <stack name="bridge">
@@ -23,6 +23,10 @@
          <MERGE3 max_interval="5000"
                  min_interval="3000"/>
          <FD_SOCK bind_addr="127.0.0.1"/>
+         <FD_ALL3 timeout="3000"
+                  interval="1000"
+         />
+         <VERIFY_SUSPECT timeout="1000"/>
          <pbcast.NAKACK2 xmit_interval="100"
                          xmit_table_num_rows="50"
                          xmit_table_msgs_per_row="1024"

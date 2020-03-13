@@ -4,6 +4,7 @@ import static org.infinispan.commons.util.Immutables.immutableMapCopy;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL2;
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL3;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_SOCK;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.MERGE3;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TCP;
@@ -113,8 +114,9 @@ public class JGroupsConfigBuilder {
     * protocols from the given JGroups stack.
     */
    private static void removeFailureDetection(JGroupsProtocolCfg jgroupsCfg) {
-      jgroupsCfg.removeProtocol(FD).removeProtocol(FD_SOCK).removeProtocol(FD_ALL).removeProtocol(FD_ALL2)
-            .removeProtocol(VERIFY_SUSPECT);
+      jgroupsCfg.removeProtocol(FD).removeProtocol(FD_SOCK)
+                .removeProtocol(FD_ALL).removeProtocol(FD_ALL2).removeProtocol(FD_ALL3)
+                .removeProtocol(VERIFY_SUSPECT);
    }
 
    private static void removeRelay2(JGroupsProtocolCfg jgroupsCfg) {
@@ -262,7 +264,7 @@ public class JGroupsConfigBuilder {
       TCP, TCP_NIO2, UDP, SHARED_LOOPBACK,
       MPING, PING, TCPPING, LOCAL_PING, SHARED_LOOPBACK_PING,
       MERGE2, MERGE3,
-      FD_SOCK, FD, VERIFY_SUSPECT, FD_ALL, FD_ALL2,
+      FD_SOCK, FD, VERIFY_SUSPECT, FD_ALL, FD_ALL2, FD_ALL3,
       BARRIER,
       UNICAST, UNICAST2, UNICAST3,
       NAKACK, NAKACK2,

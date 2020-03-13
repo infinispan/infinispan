@@ -1,9 +1,9 @@
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:10.1 https://infinispan.org/schemas/infinispan-config-10.1.xsd
-                          urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.1.xsd"
-        xmlns="urn:infinispan:config:10.1"
-        xmlns:ispn="urn:infinispan:config:10.1">
+        xsi:schemaLocation="urn:infinispan:config:11.0 https://infinispan.org/schemas/infinispan-config-11.0.xsd
+                          urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd"
+        xmlns="urn:infinispan:config:11.0"
+        xmlns:ispn="urn:infinispan:config:11.0">
     <jgroups transport="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
         <!-- Load external JGroups stacks -->
         <stack-file name="udp-test" path="stacks/udp.xml"/>
@@ -22,7 +22,7 @@
                    xmlns="urn:org:jgroups"/>
             <MERGE3 xmlns="urn:org:jgroups"/>
             <FD_SOCK xmlns="urn:org:jgroups"/>
-            <FD_ALL timeout="3000"
+            <FD_ALL3 timeout="3000"
                     interval="1000"
                     timeout_check_interval="1000"
                     xmlns="urn:org:jgroups"
@@ -56,7 +56,7 @@
         </stack>
         <!-- Use the "tcp" stack but override some protocol attributes -->
         <stack name="mytcp" extends="tcp-test">
-            <FD_ALL timeout="3500" ispn:stack.combine="COMBINE" xmlns="urn:org:jgroups"/>
+            <FD_ALL3 timeout="3500" ispn:stack.combine="COMBINE" xmlns="urn:org:jgroups"/>
         </stack>
         <!-- Use the "tcp" stack but replace the discovery -->
         <stack name="tcpgossip" extends="tcp-test">

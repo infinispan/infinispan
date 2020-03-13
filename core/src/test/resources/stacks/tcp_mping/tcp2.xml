@@ -1,6 +1,6 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.1.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd">
    <TCP bind_port="7800"
         port_range="30"
         recv_buf_size="20000000"
@@ -27,9 +27,8 @@
    <MERGE3/>
    <FD_SOCK/>
    <!-- Suspect node `timeout` to `timeout + timeout_check_interval` millis after the last heartbeat -->
-   <FD_ALL timeout="3000"
+   <FD_ALL3 timeout="3000"
            interval="1000"
-           timeout_check_interval="1000"
    />
    <VERIFY_SUSPECT timeout="1000"/>
    <pbcast.NAKACK2
