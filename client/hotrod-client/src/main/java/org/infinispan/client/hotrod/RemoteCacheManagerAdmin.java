@@ -25,6 +25,16 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
    <K, V> RemoteCache<K, V> createCache(String name, String template) throws HotRodClientException;
 
    /**
+    * Creates a cache on the remote server cluster using the specified template.
+    *
+    * @param name the name of the cache to create
+    * @param template {@link DefaultTemplate} enum
+    * @return the cache
+    * @throws HotRodClientException
+    */
+   <K, V> RemoteCache<K, V> createCache(String name, DefaultTemplate template) throws HotRodClientException;
+
+   /**
     * Creates a cache on the remote server cluster using the specified configuration
     *
     * @param name the name of the cache to create
