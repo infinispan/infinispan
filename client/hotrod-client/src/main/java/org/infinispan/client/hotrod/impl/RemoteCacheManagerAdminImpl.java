@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCacheManagerAdmin;
@@ -46,6 +47,11 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
       await(operationsFactory.newAdminOperation("@@cache@create", params).execute());
       return cacheManager.getCache(name);
+   }
+
+   @Override
+   public <K, V> RemoteCache<K, V> createCache(String name, DefaultTemplate template) throws HotRodClientException {
+      return createCache(name, template.getTemplateName());
    }
 
    @Override
