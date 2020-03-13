@@ -2,6 +2,9 @@ package org.infinispan.commons.jdkspecific;
 
 import sun.reflect.Reflection;
 
+/**
+ * JDK 8 implementation which uses sun.reflect.Reflection
+ */
 public class CallerId {
    private static final boolean hasGetCallerClass;
    private static final int callerOffset;
