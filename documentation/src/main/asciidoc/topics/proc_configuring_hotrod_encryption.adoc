@@ -20,9 +20,6 @@ image::cert_chain.png[align="center", title="Certificate chain"]
 include::code_examples/HotRodTLS.java[]
 ----
 
-<1> specifies the {brandname} servers Server Name Indication (SNI). This configuration is required if {brandname} servers present multiple identities, which are typically bound to separate cache containers.
-<2> specifies the keystore that contains the server certificate.
-+
 [TIP]
 ====
 Specify a path that contains certificates in PEM format and Hot Rod clients
@@ -30,5 +27,3 @@ automatically generate trust stores.
 
 Use `.trustStorePath("/path/to/certificate")`.
 ====
-+
-<3> specifies the keystore that contains the client certificate. This configuration is required if Hot Rod client must present certificates to {brandname} servers.

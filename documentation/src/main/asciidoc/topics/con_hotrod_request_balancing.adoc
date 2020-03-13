@@ -18,4 +18,6 @@ request on the next available server.
 
 .Custom balancing policies
 You can implement link:{javadocroot}/org/infinispan/client/hotrod/FailoverRequestBalancingStrategy.html[FailoverRequestBalancingStrategy] and specify your class in your
-`hotrod-client.properties` configuration.
+`hotrod-client.properties` configuration with the following property:
+
+`infinispan.client.hotrod.request_balancing_strategy`

@@ -15,15 +15,14 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
 clientBuilder
    .statistics()
-    .enable() <1>
-   .jmxEnable() <2>
-    .jmxDomain("org.infinispan") <3>
+    //Enable client statistics.
+    .enable()
+   //Register JMX MBeans for RemoteCacheManager and each RemoteCache.
+   .jmxEnable()
+    //Set JMX domain name to which MBeans are exposed.
+    .jmxDomain("org.example")
    .addServer()
     .host("127.0.0.1")
     .port(11222);
 remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 ----
-
-<1> enables client statistics.
-<2> registers a JMX MBean for the `RemoteCacheManager` and each `RemoteCache`.
-<3> sets the JMX domain name to which MBeans are exposed.

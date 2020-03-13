@@ -110,31 +110,32 @@ which statically filter out all entries except the one whose key is `1`.
 
 To be able to register a listener with this cache event filter factory,
 the factory has to be given a unique name, and the Hot Rod server needs to be
-plugged with the name and the cache event filter factory instance. Plugging the
-{brandname} Server with a custom filter involves the following steps:
+plugged with the name and the cache event filter factory instance.
 
-1. Create a JAR file with the filter implementation within it.
-2. Optional: If the cache uses custom key/value classes, these must be
+. Create a JAR file that contains the filter implementation.
++
+If the cache uses custom key/value classes, these must be
 included in the JAR so that the callbacks can be executed with the correctly
 unmarshalled key and/or value instances. If the client listener has `useRawData`
 enabled, this is not necessary since the callback key/value instances will be
 provided in binary format.
-3. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory` file
++
+. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory` file
 within the JAR file and within it, write the fully qualified class name of the
 filter class implementation.
-4. Deploy the JAR file in the {brandname} Server.
-
-On top of that, the client listener needs to be linked with this cache event
-filter factory by adding the factory's name to the @ClientListener annotation:
-
+. Add the JAR file to the `server/lib` directory of your {brandname} server
+installation directory.
+. Link the client listener with this cache event filter factory by adding the
+factory name to the `@ClientListener` annotation:
++
 [source,java]
 ----
 @ClientListener(filterFactoryName = "static-filter")
 public class EventPrintListener { ... }
 ----
-
-And, register the listener with the server:
-
++
+. Register the listener with the server:
++
 [source,java]
 ----
 RemoteCache<?, ?> cache = ...
@@ -289,31 +290,32 @@ modification or removal.
 
 Similar to filtering, to be able to register a listener with this converter factory,
 the factory has to be given a unique name, and the Hot Rod server needs to be
-plugged with the name and the cache event converter factory instance. Plugging the
-{brandname} Server with an event converter involves the following steps:
+plugged with the name and the cache event converter factory instance.
 
-1. Create a JAR file with the converter implementation within it.
-2. Optional: If the cache uses custom key/value classes, these must be
+. Create a JAR file with the converter implementation within it.
++
+If the cache uses custom key/value classes, these must be
 included in the JAR so that the callbacks can be executed with the correctly
 unmarshalled key and/or value instances. If the client listener has `useRawData`
 enabled, this is not necessary since the callback key/value instances will be
 provided in binary format.
-3. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory` file
++
+. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory` file
 within the JAR file and within it, write the fully qualified class name of the
 converter class implementation.
-4. Deploy the JAR file in the {brandname} Server.
-
-On top of that, the client listener needs to be linked with this converter
-factory by adding the factory's name to the @ClientListener annotation:
-
+. Add the JAR file to the `server/lib` directory of your {brandname} server
+installation directory.
+. Link the client listener with this converter factory by adding the factory
+name to the `@ClientListener` annotation:
++
 [source,java]
 ----
 @ClientListener(converterFactoryName = "static-converter")
 public class CustomEventPrintListener { ... }
 ----
-
-And, register the listener with the server:
-
++
+. Register the listener with the server:
++
 [source,java]
 ----
 RemoteCache<?, ?> cache = ...
@@ -415,19 +417,21 @@ class DynamicCacheEventFilterConverter extends AbstractCacheEventFilterConverter
 Similar to filters and converters, to be able to register a listener with this
 combined filter/converter factory, the factory has to be given a unique name via the
 `@NamedFactory` annotation, and the Hot Rod server needs to be plugged with the
-name and the cache event converter factory instance. Plugging the {brandname}
-Server with an event converter involves the following steps:
+name and the cache event converter factory instance.
 
-1. Create a JAR file with the converter implementation within it.
-2. Optional: If the cache uses custom key/value classes, these must be
-included in the JAR so that the callbacks can be executed with the correctly
-unmarshalled key and/or value instances. If the client listener has `useRawData`
-enabled, this is not necessary since the callback key/value instances will be
-provided in binary format.
-3. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory` file
+. Create a JAR file with the converter implementation within it.
++
+If the cache uses custom key/value classes, these must be included in the JAR
+so that the callbacks can be executed with the correctly unmarshalled key
+and/or value instances. If the client listener has `useRawData` enabled, this
+is not necessary since the callback key/value instances will be provided in
+binary format.
++
+. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory` file
 within the JAR file and within it, write the fully qualified class name of the
 converter class implementation.
-4. Deploy the JAR file in the {brandname} Server.
+. Add the JAR file to the `server/lib` directory of your {brandname} server
+installation directory.
 
 From a client perspective, to be able to use the combined filter and
 converter class, the client listener must define the same filter factory and
@@ -468,11 +472,12 @@ by the marshaller.
 To deploy a Marshaller instance server-side, follow a similar method to the one
 used to deploy `CacheEventConverter` or `CacheEventFilter` instances:
 
-1. Create a JAR file with the converter implementation within it.
-2. Create a `META-INF/services/org.infinispan.commons.marshall.Marshaller` file
+. Create a JAR file with the converter implementation within it.
+. Create a `META-INF/services/org.infinispan.commons.marshall.Marshaller` file
 within the JAR file and within it, write the fully qualified class name of the
 marshaller class implementation.
-3. Deploy the JAR file in the {brandname} Server.
+. Add the JAR file to the `server/lib` directory of your {brandname} server
+installation directory.
 
 Note that the Marshaller could be deployed in either a separate jar, or in the
 same jar as the `CacheEventConverter` and/or `CacheEventFilter` instances.
@@ -489,11 +494,8 @@ binary Protobuf data, it's necessary to configure the extra ProtoStream marshall
 the data before filtering/converting. To do so, you must configure the required `SerializationContextInitializer(s)`
 as part of the {brandname} server configuration.
 
-//Community Only
-ifndef::productized[]
-See link:../developing/developing.html#protostream_cm_config[ProtoStream] for
-more information.
-endif::productized[]
+
+See link:{dev_docs}#protostream_cm_config[ProtoStream] for more information.
 
 == Listener State Handling
 

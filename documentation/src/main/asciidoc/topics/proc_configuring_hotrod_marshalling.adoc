@@ -1,16 +1,12 @@
 [id='hotrod_marshalling']
 = Configuring Custom Marshallers
-Hot Rod is a binary TCP protocol, which requires you to transform between user
-objects and byte arrays.
-
-By default, {brandname} uses a ProtoStream marshaller. However you can
-configure Hot Rod clients to use custom marshallers.
+Configure Hot Rod clients to use custom marshallers.
 
 .Procedure
 
 . Implement the `org.infinispan.commons.marshall.Marshaller` interface.
 . Specify the fully qualified name of your class in your Hot Rod client configuration.
-. Avoid potential injection attacks with custom marshallers by adding a whitelist of class names that can be read.
+. Add your Java classes to the {brandname} deserialization whitelist.
 +
 In the following example, only classes with fully qualified names that contain
 `Person` or `Employee` are allowed:
@@ -18,11 +14,13 @@ In the following example, only classes with fully qualified names that contain
 [source,java]
 ----
 ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder.marshaller("org.infinispan.example.marshall.CustomMarshaller");
+clientBuilder.marshaller("org.infinispan.example.marshall.CustomMarshaller")
   .addJavaSerialWhiteList(".*Person.*", ".*Employee.*");
   ...
 ----
 
 .Reference
 
-link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[Marshaller]
+* link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[org.infinispan.commons.marshall.Marshaller]
+* link:{dev_docs}#custom_marshallers[Using Custom Marshallers]
+* link:{dev_docs}#deserialization_whitelist[Adding Java Classes to Deserialization White Lists]

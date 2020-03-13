@@ -1,4 +1,4 @@
-[[hr_basic_api]]
+[id='hr_basic_api']
 = Basic API
 Below is a sample code snippet on how the client API can be used to store or retrieve information from a {brandname} server using the Java Hot Rod client. It assumes that a {brandname} server is running at `localhost:11222`.
 
@@ -17,7 +17,6 @@ assert cache.get("car").equals("ferrari");
 //remove the data
 cache.remove("car");
 assert !cache.containsKey("car") : "Value must have been removed!";
-
 ----
 
 The client API maps the local API: link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager] corresponds to link:{javadocroot}/org/infinispan/manager/DefaultCacheManager.html[DefaultCacheManager] (both implement link:{javadocroot}/org/infinispan/manager/CacheContainer.html[CacheContainer] ). This common API facilitates an easy migration from local calls to remote calls through Hot Rod: all one needs to do is switch between link:{javadocroot}/org/infinispan/manager/DefaultCacheManager.html[DefaultCacheManager] and link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager] - which is further simplified by the common link:{javadocroot}/org/infinispan/manager/CacheContainer.html[CacheContainer] interface that both inherit.
