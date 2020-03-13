@@ -1,8 +1,8 @@
 package org.infinispan.invalidation;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
@@ -13,27 +13,37 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import javax.transaction.RollbackException;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockAssert;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.tx.TransactionImpl;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional")
@@ -356,7 +366,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
    public void testPutForExternalRead() throws Exception {
       AdvancedCache<String, String> cache1 = advancedCache(0,"invalidation");
-      AdvancedCache<String, String> cache2 = advancedCache(1,"invalidation");
+      AdvancedCache<String, String> cache2 = advancedCache(1, "invalidation");
       cache1.putForExternalRead("key", "value1");
       Thread.sleep(500); // sleep so that async invalidation (result of PFER) is propagated
       cache2.putForExternalRead("key", "value2");
@@ -365,5 +375,38 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       assertEquals("value1", cache1.get("key"));
       assertNotNull(cache2.get("key"));
       assertEquals("value2", cache2.get("key"));
+   }
+
+   @DataProvider(name = "tx")
+   public Object[][] tx() {
+      return new Object[][]{{false}, {true}};
+   }
+
+   @Test(dataProvider = "tx")
+   public void testLeaveDuringInvalidation(boolean tx) throws Exception {
+      Cache<Object, Object> c0 = cache(0, tx ? "invalidationTx" : "invalidation");
+      ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(c0);
+      TestingUtil.replaceComponent(c0, RpcManager.class, controlledRpcManager, true);
+
+      Future<Object> future = fork(() -> c0.put("k1", "v1"));
+
+      if (tx) {
+         controlledRpcManager.expectCommand(PrepareCommand.class)
+                             .send()
+                             .expectResponse(address(1)).replace(CacheNotFoundResponse.INSTANCE)
+                             .finish();
+         controlledRpcManager.expectCommand(CommitCommand.class)
+                             .send()
+                             .expectResponse(address(1)).replace(CacheNotFoundResponse.INSTANCE)
+                             .finish();
+         controlledRpcManager.expectCommand(TxCompletionNotificationCommand.class)
+                             .send();
+      } else {
+         controlledRpcManager.expectCommand(InvalidateCommand.class).send().expectResponse(address(1)).replace(CacheNotFoundResponse.INSTANCE).finish();
+      }
+
+      future.get(10, TimeUnit.SECONDS);
+
+      controlledRpcManager.stopBlocking();
    }
 }
