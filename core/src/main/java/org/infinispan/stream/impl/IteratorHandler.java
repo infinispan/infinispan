@@ -19,8 +19,8 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
@@ -42,7 +42,7 @@ public class IteratorHandler {
    private final Map<Object, CloseableIterator<?>> currentRequests = new ConcurrentHashMap<>();
    private final Map<Address, Set<Object>> ownerRequests = new ConcurrentHashMap<>();
 
-   @Inject EmbeddedCacheManager manager;
+   @Inject CacheManagerNotifier cacheManagerNotifier;
 
    /**
     * A {@link CloseableIterator} that also allows callers to attach {@link Runnable} instances to it, so that when
@@ -79,13 +79,13 @@ public class IteratorHandler {
 
    @Start
    public void start() {
-      manager.addListener(this);
+      cacheManagerNotifier.addListener(this);
    }
 
    @Stop
    public void stop() {
       // If our cache is stopped we should remove our listener, since this doesn't mean the cache manager is stopped
-      manager.removeListener(this);
+      cacheManagerNotifier.removeListener(this);
    }
 
    /**
