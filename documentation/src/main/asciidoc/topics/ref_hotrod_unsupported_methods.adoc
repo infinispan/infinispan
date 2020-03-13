@@ -1,0 +1,28 @@
+[id='hotrod_unsupported_methods']
+= Unsupported Methods
+The {brandname} `RemoteCache` API does not support all methods available in the
+`Cache` API and throws `UnsupportedOperationException` when unsupported methods
+are invoked.
+
+Most of these methods do not make sense on the remote cache (e.g. listener management operations), or correspond to methods that are not supported by local cache as well (e.g. containsValue).
+
+Certain atomic operations inherited from `ConcurrentMap` are also not supported
+with the `RemoteCache` API, for example:
+
+[source,java]
+----
+boolean remove(Object key, Object value);
+boolean replace(Object key, Object value);
+boolean replace(Object key, Object oldValue, Object value);
+----
+
+However, `RemoteCache` offers alternative versioned methods for these atomic
+operations that send version identifiers over the network instead of whole
+value objects.
+
+.Reference
+
+* link:{javadocroot}/org/infinispan/Cache.html[Cache]
+* link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache]
+* link:{jdkdocroot}/java/lang/UnsupportedOperationException.html[UnsupportedOperationException]
+* link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[ConcurrentMap]

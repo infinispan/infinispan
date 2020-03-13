@@ -6,9 +6,11 @@ Manually switch Hot Rod Java client connections between {brandname} clusters.
 
 * Call one of the following methods in the `RemoteCacheManager` class:
 +
-`switchToCluster(clusterName)` switches to a specific cluster defined in the client configuration.
+`switchToCluster(clusterName)` switches to a specific cluster defined in the
+client configuration.
 +
-`switchToDefaultCluster()` switches to the default cluster defined in the client configuration.
+`switchToDefaultCluster()` switches to the default cluster in the client
+configuration, which is defined as a list of {brandname} servers.
 
 .Reference
 

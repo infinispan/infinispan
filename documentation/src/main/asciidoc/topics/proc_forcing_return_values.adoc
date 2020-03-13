@@ -1,0 +1,29 @@
+[id='hotrod_return_values']
+= Forcing Return Values
+Method calls that modify entries can return previous values for keys, for
+example:
+
+[source,java]
+----
+V remove(Object key);
+V put(K key, V value);
+----
+
+To reduce the amount of data sent across the network, `RemoteCache` operations
+always return `null` values.
+
+.Procedure
+
+* Use the `FORCE_RETURN_VALUE` flag for invocations that need return values.
+
+[source,java]
+----
+cache.put("aKey", "initialValue");
+assert null == cache.put("aKey", "aValue");
+assert "aValue".equals(cache.withFlags(Flag.FORCE_RETURN_VALUE).put("aKey",
+   "newValue"));
+----
+
+.Reference
+
+link:{javadocroot}/org/infinispan/client/hotrod/Flag.html#FORCE_RETURN_VALUE[org.infinispan.client.hotrod.Flag]

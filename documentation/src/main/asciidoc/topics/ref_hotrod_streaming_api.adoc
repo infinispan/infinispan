@@ -1,47 +1,60 @@
+[id='hotrod_streaming']
 = Streaming API
+{brandname} provides a Streaming API that implements methods that return
+instances of `InputStream` and `OutputStream` so you can stream large objects
+between Hot Rod clients and {brandname} servers.
 
-When sending / receiving large objects, it might make sense to stream them between the client and the server. The
-Streaming API implements methods similar to the link:#hr_basic_api[Hot Rod Basic API] and link:#hr_versioned_api[Hot Rod Versioned API] described above but, instead of taking the value as a parameter,
-they return instances of InputStream and OutputStream. The following example shows how one would write a potentially large
-object:
+Consider the following example of a large object:
 
 [source,java]
 ----
-RemoteStreamingCache<String> streamingCache = remoteCache.streaming();
+StreamingRemoteCache<String> streamingCache = remoteCache.streaming();
 OutputStream os = streamingCache.put("a_large_object");
 os.write(...);
 os.close();
 ----
 
-Reading such an object through streaming:
+You could read the object through streaming as follows:
 
 [source,java]
 ----
-RemoteStreamingCache<String> streamingCache = remoteCache.streaming();
+StreamingRemoteCache<String> streamingCache = remoteCache.streaming();
 InputStream is = streamingCache.get("a_large_object");
 for(int b = is.read(); b >= 0; b = is.read()) {
-   ...
+   // iterate
 }
 is.close();
 ----
 
-NOTE: The streaming API does *not* apply marshalling/unmarshalling to the values. For this reason you cannot access
-the same entries using both the streaming and non-streaming API at the same time, unless you provide your own
-marshaller to detect this situation.
+[NOTE]
+====
+The Streaming API does *not* marshall values, which means you cannot access the
+same entries using both the Streaming and Non-Streaming API at the same time.
+You can, however, implement a custom marshaller to handle this case.
+====
 
-The InputStream returned by the `RemoteStreamingCache.get(K key)` method implements the `VersionedMetadata` interface, so
-you can retrieve version and expiration information:
+The `InputStream` returned by the `RemoteStreamingCache.get(K key)` method
+implements the `VersionedMetadata` interface, so you can retrieve version and
+expiration information as follows:
 
 [source,java]
 ----
-RemoteStreamingCache<String> streamingCache = remoteCache.streaming();
+StreamingRemoteCache<String> streamingCache = remoteCache.streaming();
 InputStream is = streamingCache.get("a_large_object");
-int version = ((VersionedMetadata) is).getVersion();
+long version = ((VersionedMetadata) is).getVersion();
 for(int b = is.read(); b >= 0; b = is.read()) {
-   ...
+   // iterate
 }
 is.close();
 ----
 
-NOTE: Conditional write methods (`putIfAbsent`, `replace`) only perform the actual condition check once the value has
-been completely sent to the server (i.e. when the `close()` method has been invoked on the `OutputStream`.
+[NOTE]
+====
+Conditional write methods (`putIfAbsent()`, `replace()`) perform the actual
+condition check after the value is completely sent to the server. In other
+words, when the `close()` method is invoked on the `OutputStream`.
+====
+
+.Reference
+
+* link:{javadocroot}/org/infinispan/client/hotrod/StreamingRemoteCache.html[org.iinfinispan.client.hotrod.StreamingRemoteCache]

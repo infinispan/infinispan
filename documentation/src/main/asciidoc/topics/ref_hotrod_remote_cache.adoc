@@ -1,4 +1,5 @@
-= RemoteCache Interface
+[id='remotecache_api']
+= RemoteCache API
 
 The collection methods `keySet`, `entrySet` and `values` are backed by the
 remote cache. That is that every method is called back into the `RemoteCache`.
@@ -15,10 +16,10 @@ operate. You can check out the
 link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache]
 Javadoc to see more details about these and the other methods.
 
-*Iterator Usage*
+.Iterator Usage
 
 The iterator method of these collections uses `retrieveEntries` internally,
-which is described below. If you notice `retrieveEntries` takes an argument for 
+which is described below. If you notice `retrieveEntries` takes an argument for
 the batch size. There is no way to provide this to the iterator. As such the
 batch size can be configured via system property
 `infinispan.client.hotrod.batch_size` or through the link:{javadocroot}/org/infinispan/client/hotrod/configuraion/ConfigurationBuilder.html#batchSize-int-[ConfigurationBuilder] when configuring the
@@ -31,9 +32,9 @@ with them.
 
 [source,java]
 ----
-try (CloseableIterator<Entry<K, V>> iterator = remoteCache.entrySet().iterator) {
- ...
-}
+try (CloseableIterator<Map.Entry<K, V>> iterator = remoteCache.entrySet().iterator()) {
+
+      }
 ----
 
 *What if I want a deep copy and not a backing collection?*
@@ -46,12 +47,4 @@ have to copy the contents yourself. Also you can do this with `entrySet` and
 [source,java]
 ----
 Set<K> keysCopy = remoteCache.keySet().stream().collect(Collectors.toSet());
-----
-
-Please use extreme cautiong with this as a large number of keys can and will cause
-OutOfMemoryError in the client.
-
-[source,java]
-----
-Set keys = remoteCache.keySet();
 ----

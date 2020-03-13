@@ -14,14 +14,19 @@ are stored in the server:
 
 [source,java]
 ----
-// Existing Remote cache instance
+// Existing RemoteCache instance
 RemoteCache<String, Pojo> remoteCache = ...
 
 // IdentityMarshaller is a no-op marshaller
-DataFormat rawKeyAndValues = DataFormat.builder().keyMarshaller(IdentityMarshaller.INSTANCE).valueMarshaller(IdentityMarshaller.INSTANCE).build();
+DataFormat rawKeyAndValues =
+DataFormat.builder()
+          .keyMarshaller(IdentityMarshaller.INSTANCE)
+          .valueMarshaller(IdentityMarshaller.INSTANCE)
+          .build();
 
-// Will create a new instance of RemoteCache with the supplied DataFormat
-RemoteCache<byte[], byte[]> rawResultsCache = remoteCache.withDataFormat(rawKeyAndValues);
+// Creates a new instance of RemoteCache with the supplied DataFormat
+RemoteCache<byte[], byte[]> rawResultsCache =
+remoteCache.withDataFormat(rawKeyAndValues);
 ----
 
 [IMPORTANT]
@@ -33,30 +38,64 @@ operation. If performance is critical, you should use keys in the format stored
 by the server.
 ====
 
+.Returning XML Values
+
+[source,java]
+----
+Object xmlValue = remoteCache
+      .withDataFormat(DataFormat.builder()
+      .valueType(APPLICATION_XML)
+      .valueMarshaller(new UTF8StringMarshaller())
+      .build())
+      .get(key);
+----
+
+The preceding code example returns XML values as follows:
+
+[source,xml]
+----
+<?xml version="1.0" ?><string>Hello!</string>
+----
+
 .Reading data in different formats
 
-Request and send data in different formats specified by a `org.infinispan.commons.dataconversion.MediaType` as follows:
+Request and send data in different formats specified by a
+`org.infinispan.commons.dataconversion.MediaType` as follows:
 
 [source,java]
 ----
 // Existing remote cache using ProtostreamMarshaller
 RemoteCache<String, Pojo> protobufCache = ...
 
-// Request values returned as JSON, using the UTF8StringMarshaller that converts between UTF-8 to String:
-DataFormat jsonString = DataFormat.builder().valueType(MediaType.APPLICATION_JSON).valueMarshaller(new UTF8StringMarshaller().build();
-
-RemoteCache<String, String> jsonStrCache = remoteCache.withDataFormat(jsonString);
-
-// Alternatively, request JSON values but marshalled/unmarshalled with a custom value marshaller that returns `org.codehaus.jackson.JsonNode` objects:
-DataFormat jsonNode = DataFormat.builder().valueType(MediaType.APPLICATION_JSON).valueMarshaller(new CustomJacksonMarshaller().build();
-
-RemoteCache<String, JsonNode> jsonNodeCache = remoteCache.withDataFormat(jsonNode);
+// Request values returned as JSON
+// Use the UTF8StringMarshaller to convert UTF-8 to String
+DataFormat jsonString =
+DataFormat.builder()
+          .valueType(MediaType.APPLICATION_JSON)
+          .valueMarshaller(new UTF8StringMarshaller())
+          .build();
+RemoteCache<byte[], byte[]> rawResultsCache =
+protobufCache.withDataFormat(jsonString);
 ----
 
-In the preceding example, data conversion happens in the {brandname) server.
-{brandname} returns an error if it does not support conversion to and from a
+[source,java]
+----
+// Alternatively, use a custom value marshaller
+// that returns `org.codehaus.jackson.JsonNode` objects
+DataFormat jsonNode =
+DataFormat.builder()
+          .valueType(MediaType.APPLICATION_JSON)
+          .valueMarshaller(new CustomJacksonMarshaller()
+          .build();
+
+RemoteCache<String, JsonNode> jsonNodeCache =
+remoteCache.withDataFormat(jsonNode);
+----
+
+In the preceding example, data conversion happens in the {brandname} server.
+{brandname} throws an exception if it does not support conversion to and from a
 storage format.
 
 .Reference
 
-link:{javadocroot}/org/infinispan/client/hotrod/DataFormat.html[DataFormat]
+link:{javadocroot}/org/infinispan/client/hotrod/DataFormat.html[org.infinispan.client.hotrod.DataFormat]
