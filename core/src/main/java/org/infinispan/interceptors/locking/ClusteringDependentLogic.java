@@ -5,6 +5,7 @@ import static org.infinispan.transaction.impl.WriteSkewHelper.performWriteSkewCh
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -22,7 +23,7 @@ import org.infinispan.container.entries.ClearCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -173,7 +174,7 @@ public interface ClusteringDependentLogic {
    }
 
 
-   CompletionStage<EntryVersionsMap> createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand);
+   CompletionStage<Map<Object, IncrementableEntryVersion>> createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand);
 
    Address getAddress();
 
@@ -212,11 +213,11 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public CompletionStage<EntryVersionsMap> createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
+      public CompletionStage<Map<Object, IncrementableEntryVersion>> createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
          return createNewVersionsMap(versionGenerator, context, prepareCommand);
       }
 
-      private CompletionStage<EntryVersionsMap> createNewVersionsMap(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
+      private CompletionStage<Map<Object, IncrementableEntryVersion>> createNewVersionsMap(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
          return clusteredCreateNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand);
       }
 
@@ -286,15 +287,15 @@ public interface ClusteringDependentLogic {
 
       protected abstract WriteSkewHelper.KeySpecificLogic initKeySpecificLogic();
 
-      private CompletionStage<EntryVersionsMap> clusteredCreateNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context,
+      private CompletionStage<Map<Object, IncrementableEntryVersion>> clusteredCreateNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context,
                                                                                VersionedPrepareCommand prepareCommand) {
          // Perform a write skew check on mapped entries.
-         CompletionStage<EntryVersionsMap> uv = performWriteSkewCheckAndReturnNewVersions(prepareCommand, entryLoader, versionGenerator, context,
+         CompletionStage<Map<Object, IncrementableEntryVersion>> uv = performWriteSkewCheckAndReturnNewVersions(prepareCommand, entryLoader, versionGenerator, context,
                                                                          keySpecificLogic, keyPartitioner);
 
          return uv.thenApply(evm -> {
             CacheTransaction cacheTransaction = context.getCacheTransaction();
-            EntryVersionsMap uvOld = cacheTransaction.getUpdatedEntryVersions();
+            Map<Object, IncrementableEntryVersion> uvOld = cacheTransaction.getUpdatedEntryVersions();
             if (uvOld != null && !uvOld.isEmpty()) {
                uvOld.putAll(evm);
                evm = uvOld;

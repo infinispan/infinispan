@@ -2,10 +2,11 @@ package org.infinispan.partitionhandling.impl;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
@@ -58,7 +59,7 @@ public interface PartitionHandlingManager {
     * @return {@code true} if the {@link PartitionHandlingManager} will handle it, {@code false} otherwise.
     */
    boolean addPartialCommit2PCTransaction(GlobalTransaction globalTransaction, Collection<Address> affectedNodes,
-                                          Collection<Object> lockedKeys, EntryVersionsMap newVersions);
+                                          Collection<Object> lockedKeys, Map<Object, IncrementableEntryVersion> newVersions);
 
    /**
     * Adds a partially committed transaction.

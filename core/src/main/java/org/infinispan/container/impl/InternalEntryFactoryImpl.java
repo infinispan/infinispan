@@ -1,5 +1,8 @@
 package org.infinispan.container.impl;
 
+import java.util.Map;
+
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
@@ -22,7 +25,7 @@ import org.infinispan.container.entries.metadata.MetadataTransientCacheValue;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheValue;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -30,7 +33,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.commons.time.TimeService;
 
 /**
  * An implementation that generates non-versioned entries
@@ -210,7 +212,7 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
          return ((InternalCacheEntry) entry).toInternalCacheValue();
       } else if (entry != null) {
          if (ctx.isInTxScope()) {
-            EntryVersionsMap updatedVersions =
+            Map<Object, IncrementableEntryVersion> updatedVersions =
                   ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions();
             if (updatedVersions != null) {
                EntryVersion version = updatedVersions.get(entry.getKey());

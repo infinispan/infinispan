@@ -1,5 +1,6 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
@@ -9,7 +10,7 @@ import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -47,7 +48,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
 
    private Object prepareHandler(InvocationContext nonTxCtx, VersionedPrepareCommand command, Object nil) {
       TxInvocationContext ctx = (TxInvocationContext) nonTxCtx;
-      CompletionStage<EntryVersionsMap> originVersionData;
+      CompletionStage<Map<Object, IncrementableEntryVersion>> originVersionData;
       if (ctx.isOriginLocal() && !ctx.getCacheTransaction().isFromStateTransfer()) {
          originVersionData =
                cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, command);

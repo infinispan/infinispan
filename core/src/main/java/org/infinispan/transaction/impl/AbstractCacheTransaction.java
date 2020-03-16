@@ -20,7 +20,6 @@ import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
@@ -71,8 +70,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    protected final int topologyId;
 
-   private EntryVersionsMap updatedEntryVersions;
-   private EntryVersionsMap versionsSeenMap;
+   private Map<Object, IncrementableEntryVersion> updatedEntryVersions;
+   private Map<Object, IncrementableEntryVersion> versionsSeenMap;
 
    /** mark as volatile as this might be set from the tx thread code on view change*/
    private volatile boolean isMarkedForRollback;
@@ -254,12 +253,12 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public EntryVersionsMap getUpdatedEntryVersions() {
+   public Map<Object, IncrementableEntryVersion> getUpdatedEntryVersions() {
       return updatedEntryVersions;
    }
 
    @Override
-   public void setUpdatedEntryVersions(EntryVersionsMap updatedEntryVersions) {
+   public void setUpdatedEntryVersions(Map<Object, IncrementableEntryVersion> updatedEntryVersions) {
       this.updatedEntryVersions = updatedEntryVersions;
    }
 
@@ -269,7 +268,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
          return;
       }
       if (versionsSeenMap == null) {
-         versionsSeenMap = new EntryVersionsMap();
+         versionsSeenMap = new HashMap<>();
       }
       if (!versionsSeenMap.containsKey(key)) {
          if (trace) {
@@ -280,8 +279,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public EntryVersionsMap getVersionsRead() {
-      return versionsSeenMap == null ? new EntryVersionsMap() : versionsSeenMap;
+   public Map<Object, IncrementableEntryVersion> getVersionsRead() {
+      return versionsSeenMap == null ? new HashMap<>() : versionsSeenMap;
    }
 
    public final boolean isFromStateTransfer() {
