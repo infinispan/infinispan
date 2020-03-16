@@ -7,9 +7,7 @@ import javax.transaction.UserTransaction;
 
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -33,15 +31,6 @@ public class WildflyTransactionManagerLookup implements TransactionManagerLookup
    @Inject
    public void init(GlobalConfiguration globalCfg) {
       init(globalCfg.classLoader());
-   }
-
-   /**
-    * @deprecated Use {@link #init(GlobalConfiguration)} instead since {@link Configuration} has no access to
-    * classloader any more.
-    */
-   @Deprecated
-   public void init(Configuration configuration) {
-      init(new GlobalConfigurationBuilder().build());
    }
 
    @Override

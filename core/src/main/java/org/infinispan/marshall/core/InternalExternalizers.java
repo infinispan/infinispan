@@ -118,12 +118,9 @@ import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.ManagerStatusResponse;
 import org.infinispan.topology.PersistentUUID;
-import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.InDoubtTxInfoImpl;
-import org.infinispan.transaction.xa.recovery.RecoveryAwareDldGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
-import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.infinispan.util.IntSetExternalizer;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.xsite.statetransfer.XSiteState;
@@ -166,7 +163,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new CompositeKeyValueFilter.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new DefaultConsistentHash.Externalizer(), exts);
       addInternalExternalizer(new DefaultConsistentHashFactory.Externalizer(), exts); // TODO: Untested in core
-      addInternalExternalizer(new DldGlobalTransaction.Externalizer(), exts);
       addInternalExternalizer(new DoubleSummaryStatisticsExternalizer(), exts);
       addInternalExternalizer(new EmbeddedMetadata.Externalizer(), exts);
       addInternalExternalizer(new EntryViews.NoValueReadOnlyViewExternalizer(), exts);
@@ -218,14 +214,12 @@ final class InternalExternalizers {
       addInternalExternalizer(new NumericVersion.Externalizer(), exts);
       addInternalExternalizer(new OptionalExternalizer(), exts);
       addInternalExternalizer(new PersistentUUID.Externalizer(), exts);
-      addInternalExternalizer(new RecoveryAwareDldGlobalTransaction.Externalizer(), exts);
       addInternalExternalizer(new RecoveryAwareGlobalTransaction.Externalizer(), exts);
       addInternalExternalizer(new RemoteMetadata.Externalizer(), exts);
       addInternalExternalizer(new ReplicatedConsistentHash.Externalizer(), exts);
       addInternalExternalizer(new ReplicatedConsistentHashFactory.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new ScatteredConsistentHash.Externalizer(), exts);
       addInternalExternalizer(new ScatteredConsistentHashFactory.Externalizer(), exts);
-      addInternalExternalizer(new SerializableXid.XidExternalizer(), exts);
       addInternalExternalizer(new SimpleClusteredVersion.Externalizer(), exts);
       addInternalExternalizer(new StateChunk.Externalizer(), exts);
       addInternalExternalizer(new StatsEnvelope.Externalizer(), exts);

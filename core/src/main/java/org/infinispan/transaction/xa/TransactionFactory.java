@@ -1,10 +1,9 @@
 package org.infinispan.transaction.xa;
 
-import java.util.Random;
-
 import javax.transaction.Transaction;
 
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.VersionGenerator;
@@ -18,11 +17,9 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.synchronization.SyncLocalTransaction;
-import org.infinispan.transaction.xa.recovery.RecoveryAwareDldGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareLocalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -45,104 +42,6 @@ public class TransactionFactory {
    private boolean isClustered;
 
    public enum TxFactoryEnum {
-      @Deprecated
-      DLD_RECOVERY_XA {
-         @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction,
-                                                     int topologyId,
-                                                     long txCreationTime) {
-            return new RecoveryAwareLocalTransaction(tx, gtx, implicitTransaction, topologyId, txCreationTime);
-         }
-
-         @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
-            RecoveryAwareDldGlobalTransaction dldGlobalTransaction = new RecoveryAwareDldGlobalTransaction(addr, remote);
-            // TODO: Not ideal... but causes no issues so far. Could the internal id be an Object instead of a long?
-            dldGlobalTransaction.setInternalId(((NumericVersion) clusterIdGenerator.generateNew()).getVersion());
-            return addCoinToss(dldGlobalTransaction);
-         }
-
-         @Override
-         public GlobalTransaction newGlobalTransaction() {
-            return new RecoveryAwareDldGlobalTransaction();
-         }
-
-         @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx,
-                                                       int topologyId, long txCreationTime) {
-            return new RecoveryAwareRemoteTransaction(modifications, tx, topologyId, txCreationTime);
-         }
-
-         @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId,
-                                                       long txCreationTime) {
-            return new RecoveryAwareRemoteTransaction(tx, topologyId, txCreationTime);
-         }
-      },
-      @Deprecated
-      DLD_NORECOVERY_XA {
-         @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction,
-                                                     int topologyId,
-                                                     long txCreationTime) {
-            return new LocalXaTransaction(tx, gtx, implicitTransaction, topologyId, txCreationTime);
-         }
-
-         @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
-            return addCoinToss(new DldGlobalTransaction(addr, remote));
-         }
-
-         @Override
-         public GlobalTransaction newGlobalTransaction() {
-            return new DldGlobalTransaction();
-         }
-
-         @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx,
-                                                       int topologyId,
-                                                       long txCreationTime) {
-            return new RemoteTransaction(modifications, tx, topologyId, txCreationTime);
-         }
-
-         @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId,
-                                                       long txCreationTime) {
-            return new RemoteTransaction(tx, topologyId, txCreationTime);
-         }
-      },
-      @Deprecated
-      DLD_NORECOVERY_NOXA {
-         @Override
-         public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction,
-                                                     int topologyId,
-                                                     long txCreationTime) {
-            return new SyncLocalTransaction(tx, gtx, implicitTransaction, topologyId, txCreationTime);
-         }
-
-         @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
-            return addCoinToss(new DldGlobalTransaction(addr, remote));
-         }
-
-         @Override
-         public GlobalTransaction newGlobalTransaction() {
-            return new DldGlobalTransaction();
-         }
-
-         @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx,
-                                                       int topologyId,
-                                                       long txCreationTime) {
-            return new RemoteTransaction(modifications, tx, topologyId, txCreationTime);
-         }
-
-         @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId,
-                                                       long txCreationTime) {
-            return new RemoteTransaction(tx, topologyId, txCreationTime);
-         }
-      },
       NODLD_RECOVERY_XA {
          @Override
          public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction,
@@ -247,26 +146,11 @@ public class TransactionFactory {
       public abstract GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered);
       public abstract GlobalTransaction newGlobalTransaction();
 
-      protected long generateRandomId() {
-         return rnd.nextLong();
-      }
-
-      protected GlobalTransaction addCoinToss(DldGlobalTransaction dldGlobalTransaction) {
-         dldGlobalTransaction.setCoinToss(generateRandomId());
-         return dldGlobalTransaction;
-      }
-
-      /**
-       * this class is internally synchronized, so it can be shared between instances
-       */
-      private final Random rnd = new Random();
-
       public abstract RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx,
                                                              int topologyId, long txCreationTime);
 
       public abstract RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId, long txCreationTime);
    }
-
 
    public GlobalTransaction newGlobalTransaction() {
       return txFactoryEnum.newGlobalTransaction();
