@@ -3,9 +3,11 @@ package org.infinispan.commands.tx;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 
@@ -18,7 +20,7 @@ import org.infinispan.util.ByteString;
  */
 public class VersionedCommitCommand extends CommitCommand {
    public static final byte COMMAND_ID = 27;
-   private EntryVersionsMap updatedVersions;
+   private Map<Object, IncrementableEntryVersion> updatedVersions;
 
    public VersionedCommitCommand() {
       super(null);
@@ -32,11 +34,11 @@ public class VersionedCommitCommand extends CommitCommand {
       super(cacheName);
    }
 
-   public EntryVersionsMap getUpdatedVersions() {
+   public Map<Object, IncrementableEntryVersion> getUpdatedVersions() {
       return updatedVersions;
    }
 
-   public void setUpdatedVersions(EntryVersionsMap updatedVersions) {
+   public void setUpdatedVersions(Map<Object, IncrementableEntryVersion> updatedVersions) {
       this.updatedVersions = updatedVersions;
    }
 
@@ -54,7 +56,7 @@ public class VersionedCommitCommand extends CommitCommand {
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       super.readFrom(input);
-      updatedVersions = MarshallUtil.unmarshallMap(input, EntryVersionsMap::new);
+      updatedVersions = MarshallUtil.unmarshallMap(input, HashMap::new);
    }
 
    @Override

@@ -20,7 +20,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
@@ -145,7 +145,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
    @Override
    public boolean addPartialCommit2PCTransaction(GlobalTransaction globalTransaction, Collection<Address> affectedNodes,
-                                                 Collection<Object> lockedKeys, EntryVersionsMap newVersions) {
+                                                 Collection<Object> lockedKeys, Map<Object, IncrementableEntryVersion> newVersions) {
       if (trace) {
          log.tracef("Added partially committed (2PC) transaction %s", globalTransaction);
       }
@@ -382,9 +382,10 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
    private static class Commit2PCTransactionInfo extends BaseTransactionInfo {
 
-      private final EntryVersionsMap newVersions;
+      private final Map<Object, IncrementableEntryVersion> newVersions;
 
-      public Commit2PCTransactionInfo(GlobalTransaction globalTransaction, Collection<Address> affectedNodes, Collection<Object> lockedKeys, EntryVersionsMap newVersions) {
+      public Commit2PCTransactionInfo(GlobalTransaction globalTransaction, Collection<Address> affectedNodes,
+                                      Collection<Object> lockedKeys, Map<Object, IncrementableEntryVersion> newVersions) {
          super(globalTransaction, affectedNodes, lockedKeys);
          this.newVersions = newVersions;
       }

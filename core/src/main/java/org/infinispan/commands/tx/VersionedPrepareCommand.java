@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 
@@ -21,7 +23,7 @@ import org.infinispan.util.ByteString;
  */
 public class VersionedPrepareCommand extends PrepareCommand {
    public static final byte COMMAND_ID = 26;
-   private EntryVersionsMap versionsSeen = null;
+   private Map<Object, IncrementableEntryVersion> versionsSeen = null;
 
    public VersionedPrepareCommand() {
       super(null);
@@ -36,11 +38,11 @@ public class VersionedPrepareCommand extends PrepareCommand {
       super(cacheName);
    }
 
-   public EntryVersionsMap getVersionsSeen() {
+   public Map<Object, IncrementableEntryVersion> getVersionsSeen() {
       return versionsSeen;
    }
 
-   public void setVersionsSeen(EntryVersionsMap versionsSeen) {
+   public void setVersionsSeen(Map<Object, IncrementableEntryVersion> versionsSeen) {
       this.versionsSeen = versionsSeen;
    }
 
@@ -58,7 +60,7 @@ public class VersionedPrepareCommand extends PrepareCommand {
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       super.readFrom(input);
-      versionsSeen = MarshallUtil.unmarshallMap(input, EntryVersionsMap::new);
+      versionsSeen = MarshallUtil.unmarshallMap(input, HashMap::new);
    }
 
    @Override

@@ -47,7 +47,7 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -359,7 +359,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                                                                            Arrays.asList(((PrepareCommand) command).getModifications()));
          }
       } else if (command instanceof CommitCommand) {
-         EntryVersionsMap newVersion = null;
+         Map<Object, IncrementableEntryVersion> newVersion = null;
          if (command instanceof VersionedCommitCommand) {
             newVersion = ((VersionedCommitCommand) command).getUpdatedVersions();
          }

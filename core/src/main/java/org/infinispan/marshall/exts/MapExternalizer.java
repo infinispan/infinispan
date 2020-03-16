@@ -18,7 +18,6 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.FastCopyHashMap;
 import org.infinispan.commons.util.Util;
-import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.marshall.core.Ids;
 
@@ -28,6 +27,7 @@ import org.infinispan.marshall.core.Ids;
  *
  * @author Galder Zamarreño
  * @since 4.0
+ *
  */
 public class MapExternalizer extends AbstractExternalizer<Map> {
    private static final int HASHMAP = 0;
@@ -35,10 +35,10 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    private static final int FASTCOPYHASHMAP = 2;
    private static final int EQUIVALENTHASHMAP = 3;
    private static final int CONCURRENTHASHMAP = 4;
-   private static final int ENTRYVERSIONMAP = 5;
+   // 5 reserved for the removed EntryVersionsMap
    private static final int SINGLETONMAP = 6;
    private static final int EMPTYMAP = 7;
-   private final Map<Class<?>, Integer> numbers = new HashMap<>(9);
+   private final Map<Class<?>, Integer> numbers = new HashMap<>(8);
 
    public MapExternalizer() {
       numbers.put(HashMap.class, HASHMAP);
@@ -47,7 +47,6 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
       numbers.put(FastCopyHashMap.class, FASTCOPYHASHMAP);
       numbers.put(EquivalentHashMap.class, EQUIVALENTHASHMAP);
       numbers.put(ConcurrentHashMap.class, CONCURRENTHASHMAP);
-      numbers.put(EntryVersionsMap.class, ENTRYVERSIONMAP);
       numbers.put(getPrivateSingletonMapClass(), SINGLETONMAP);
       numbers.put(getPrivateEmptyMapClass(), EMPTYMAP);
    }
@@ -60,7 +59,6 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
          case HASHMAP:
          case TREEMAP:
          case CONCURRENTHASHMAP:
-         case ENTRYVERSIONMAP:
             MarshallUtil.marshallMap(map, output);
             break;
          case EQUIVALENTHASHMAP:
@@ -99,8 +97,6 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
             return MarshallUtil.unmarshallMap(input, size -> new EquivalentHashMap<>(keyEq, valueEq));
          case CONCURRENTHASHMAP:
             return MarshallUtil.unmarshallMap(input, ConcurrentHashMap::new);
-         case ENTRYVERSIONMAP:
-            return MarshallUtil.unmarshallMap(input, EntryVersionsMap::new);
          case SINGLETONMAP:
             return Collections.singletonMap(input.readObject(), input.readObject());
          case EMPTYMAP:
@@ -119,8 +115,7 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    public Set<Class<? extends Map>> getTypeClasses() {
       Set<Class<? extends Map>> typeClasses = Util.asSet(
             HashMap.class, TreeMap.class, FastCopyHashMap.class, EquivalentHashMap.class,
-            ReadOnlySegmentAwareMap.class, ConcurrentHashMap.class,
-            EntryVersionsMap.class);
+            ReadOnlySegmentAwareMap.class, ConcurrentHashMap.class);
       typeClasses.addAll(getSupportedPrivateClasses());
       return typeClasses;
    }

@@ -1,5 +1,7 @@
 package org.infinispan.transaction.impl;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -8,7 +10,6 @@ import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.VersionedRepeatableReadEntry;
-import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -29,27 +30,38 @@ import org.infinispan.util.concurrent.CompletionStages;
  */
 public class WriteSkewHelper {
 
+   @SuppressWarnings("unchecked")
    public static void readVersionsFromResponse(Response r, CacheTransaction ct) {
       if (r != null && r.isSuccessful()) {
-         SuccessfulResponse sr = (SuccessfulResponse) r;
-         EntryVersionsMap uv = (EntryVersionsMap) sr.getResponseValue();
-         if (uv != null) ct.setUpdatedEntryVersions(uv.merge(ct.getUpdatedEntryVersions()));
+         SuccessfulResponse<Map<Object, IncrementableEntryVersion>> sr = (SuccessfulResponse<Map<Object, IncrementableEntryVersion>>) r;
+         Map<Object, IncrementableEntryVersion> entryVersions = sr.getResponseValue();
+         if (entryVersions != null)
+            ct.setUpdatedEntryVersions(mergeEntryVersions(entryVersions, ct.getUpdatedEntryVersions()));
       }
    }
 
-   public static CompletionStage<EntryVersionsMap> performWriteSkewCheckAndReturnNewVersions(VersionedPrepareCommand prepareCommand,
-                                                                                            EntryLoader entryLoader,
-                                                                                            VersionGenerator versionGenerator,
-                                                                                            TxInvocationContext context,
-                                                                                            KeySpecificLogic ksl,
-                                                                                            KeyPartitioner keyPartitioner) {
-      EntryVersionsMap uv = new EntryVersionsMap();
+   public static Map<Object, IncrementableEntryVersion> mergeEntryVersions(Map<Object, IncrementableEntryVersion> entryVersions,
+                                                                           Map<Object, IncrementableEntryVersion> updatedEntryVersions) {
+      if (updatedEntryVersions != null && !updatedEntryVersions.isEmpty()){
+         updatedEntryVersions.putAll(entryVersions);
+         return updatedEntryVersions;
+      }
+      return entryVersions;
+   }
+
+   public static CompletionStage<Map<Object, IncrementableEntryVersion>> performWriteSkewCheckAndReturnNewVersions(VersionedPrepareCommand prepareCommand,
+                                                                                                                   EntryLoader entryLoader,
+                                                                                                                   VersionGenerator versionGenerator,
+                                                                                                                   TxInvocationContext context,
+                                                                                                                   KeySpecificLogic ksl,
+                                                                                                                   KeyPartitioner keyPartitioner) {
+      Map<Object, IncrementableEntryVersion> uv = new HashMap<>();
       if (prepareCommand.getVersionsSeen() == null) {
          // Do not perform the write skew check if this prepare command is being replayed for state transfer
          return CompletableFuture.completedFuture(uv);
       }
 
-      AggregateCompletionStage<EntryVersionsMap> aggregateCompletionStage = CompletionStages.aggregateCompletionStage(uv);
+      AggregateCompletionStage<Map<Object, IncrementableEntryVersion>> aggregateCompletionStage = CompletionStages.aggregateCompletionStage(uv);
 
       for (WriteCommand c : prepareCommand.getModifications()) {
          for (Object k : c.getAffectedKeys()) {

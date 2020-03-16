@@ -11,7 +11,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.impl.TxInvocationContext;
 
 /**
@@ -74,9 +74,9 @@ public interface CacheTransaction {
     */
    void notifyOnTransactionFinished();
 
-   EntryVersionsMap getUpdatedEntryVersions();
+   Map<Object, IncrementableEntryVersion> getUpdatedEntryVersions();
 
-   void setUpdatedEntryVersions(EntryVersionsMap updatedEntryVersions);
+   void setUpdatedEntryVersions(Map<Object, IncrementableEntryVersion> updatedEntryVersions);
 
    boolean isMarkedForRollback();
 
@@ -96,7 +96,7 @@ public interface CacheTransaction {
     * @return a non-null map between key and version. The map represents the version read for that key. If no version
     *         exists, the key has not been read.
     */
-   EntryVersionsMap getVersionsRead();
+   Map<Object, IncrementableEntryVersion> getVersionsRead();
 
    long getCreationTime();
 

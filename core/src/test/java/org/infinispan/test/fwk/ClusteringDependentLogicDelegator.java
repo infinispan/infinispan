@@ -1,11 +1,12 @@
 package org.infinispan.test.fwk;
 
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -44,7 +45,7 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    }
 
    @Override
-   public CompletionStage<EntryVersionsMap> createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
+   public CompletionStage<Map<Object, IncrementableEntryVersion>> createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
       return clusteringDependentLogic.createNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand);
    }
 
