@@ -6,7 +6,11 @@
  */
 package org.infinispan.test.hibernate.cache.commons.tm;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import java.util.Properties;
+
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.Name;
@@ -22,37 +26,30 @@ import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.resource.transaction.spi.TransactionStatus;
-import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.hibernate.cfg.Environment;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorBuilderImpl;
+import org.hibernate.resource.transaction.spi.TransactionStatus;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.stat.Statistics;
-
-import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
-import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
 import org.hibernate.testing.ServiceRegistryBuilder;
 import org.hibernate.testing.jta.JtaAwareConnectionProviderImpl;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
+import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
+import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
+import org.jboss.util.naming.NonSerializableFactory;
+import org.jnp.interfaces.NamingContext;
+import org.jnp.server.Main;
+import org.jnp.server.NamingServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
-
-import org.jboss.util.naming.NonSerializableFactory;
-
-import org.jnp.interfaces.NamingContext;
-import org.jnp.server.Main;
-import org.jnp.server.NamingServer;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 /**
  * This is an example test based on http://community.jboss.org/docs/DOC-14617 that shows how to interact with
@@ -79,7 +76,7 @@ public class JBossStandaloneJtaExampleTest {
 		jndiServer = startJndiServer();
 		ctx = createJndiContext();
 		// Inject configuration to initialise transaction manager from config classloader
-		lookup.init(new ConfigurationBuilder().build());
+		lookup.init(new GlobalConfigurationBuilder().build());
 		bindTransactionManager();
 		bindUserTransaction();
 	}
