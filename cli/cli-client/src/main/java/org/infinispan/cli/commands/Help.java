@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
@@ -16,10 +17,14 @@ import org.aesh.command.man.TerminalPage;
 import org.aesh.command.man.parser.ManFileParser;
 import org.aesh.command.option.Arguments;
 import org.aesh.command.settings.ManProvider;
+import org.aesh.command.shell.Shell;
+import org.aesh.readline.terminal.formatting.TerminalString;
+import org.aesh.readline.util.Parser;
 import org.aesh.terminal.utils.ANSI;
 import org.aesh.terminal.utils.Config;
 import org.infinispan.cli.completers.HelpCompleter;
 import org.infinispan.cli.impl.CliManProvider;
+import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices(Command.class)
@@ -63,18 +68,25 @@ public class Help extends AeshFileDisplayer {
 
    @Override
    public CommandResult execute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
+      Shell shell = commandInvocation.getShell();
       if (manPages == null || manPages.size() == 0) {
-         commandInvocation.getShell().write("What manual page do you want?" + Config.getLineSeparator());
+         shell.writeln("Call `help <command>` where command is one of:");
+         List<TerminalString> commandNames = ((ContextAwareCommandInvocation) commandInvocation).getContext().getRegistry()
+               .getAllCommandNames().stream().map(n -> new TerminalString(n)).collect(Collectors.toList());
+         //then we print out the completions
+         shell.write(Parser.formatDisplayListTerminalString(commandNames, shell.size().getHeight(), shell.size().getWidth()));
+         //then on the next line we write the line again
+         shell.writeln("");
          return CommandResult.SUCCESS;
       }
 
       if (manPages.size() <= 0) {
-         commandInvocation.getShell().write("No manual entry for " + manPages.get(0) + Config.getLineSeparator());
+         shell.write("No manual entry for " + manPages.get(0) + Config.getLineSeparator());
          return CommandResult.SUCCESS;
       }
 
       if (manProvider == null) {
-         commandInvocation.getShell().write("No manual provider defined");
+         shell.write("No manual provider defined");
          return CommandResult.SUCCESS;
       }
 
