@@ -853,13 +853,12 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028503:.*")
    public void testInvalidEmbeddedAttributeQuery() {
       QueryFactory qf = getQueryFactory();
-
       QueryBuilder queryBuilder = qf.from(getModelFactory().getUserImplClass())
             .select("addresses");
 
       Query q = queryBuilder.build();
 
-      q.list();  // exception expected
+      q.list();  // exception thrown only at execution time when in remote mode!
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014027: The property path 'addresses.postCode' cannot be projected because it is multi-valued")
@@ -868,7 +867,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .select("addresses.postCode")
             .build();
-      q.list();
+      q.list();  // exception thrown only at execution time
    }
 
    public void testIsNull1() {

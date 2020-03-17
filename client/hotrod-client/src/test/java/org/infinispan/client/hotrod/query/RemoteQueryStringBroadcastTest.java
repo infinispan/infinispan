@@ -15,7 +15,11 @@ public class RemoteQueryStringBroadcastTest extends RemoteQueryStringTest {
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
-      cfgBuilder.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      cfgBuilder.indexing().enable()
+                .addIndexedEntity("sample_bank_account.User")
+                .addIndexedEntity("sample_bank_account.Transaction")
+                .addIndexedEntity("sample_bank_account.AnalyzerTestEntity")
+                .addProperty("default.directory_provider", "local-heap");
       return cfgBuilder;
    }
 
@@ -23,5 +27,4 @@ public class RemoteQueryStringBroadcastTest extends RemoteQueryStringTest {
    protected int getNodesCount() {
       return 3;
    }
-
 }

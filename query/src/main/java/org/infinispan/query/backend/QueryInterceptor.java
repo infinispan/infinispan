@@ -106,12 +106,12 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private final InvocationSuccessAction<ClearCommand> processClearCommand = this::processClearCommand;
    private final boolean isManualIndexing;
    private final AdvancedCache<?, ?> cache;
-   private final Map<String, Class<?>> indexedEntities;
+   private final Map<String, Class<?>> indexedClasses;
    private SegmentListener segmentListener;
 
    public QueryInterceptor(SearchIntegrator searchFactory, KeyTransformationHandler keyTransformationHandler,
                            ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues,
-                           AdvancedCache<?, ?> cache) {
+                           AdvancedCache<?, ?> cache, Map<String, Class<?>> indexedClasses) {
       this.searchFactory = searchFactory;
       this.keyTransformationHandler = keyTransformationHandler;
       this.isManualIndexing = searchFactory.getIndexingMode() == IndexingMode.MANUAL;
@@ -120,18 +120,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       this.keyDataConversion = cache.getKeyDataConversion();
       this.isPersistenceEnabled = cache.getCacheConfiguration().persistence().usingStores();
       this.cache = cache;
-
-      Map<String, Class<?>> entities = new HashMap<>(2);
-      for (Class<?> c : cache.getCacheConfiguration().indexing().indexedEntities()) {
-         // include classes declared in indexing config
-         entities.put(c.getName(), c);
-      }
-      for (IndexedTypeIdentifier typeIdentifier : searchFactory.getIndexBindings().keySet()) {
-         // include possible programmatically declared classes via SearchMapping
-         Class<?> c = typeIdentifier.getPojoType();
-         entities.put(c.getName(), c);
-      }
-      indexedEntities = Collections.unmodifiableMap(entities);
+      this.indexedClasses = Collections.unmodifiableMap(indexedClasses);
    }
 
    @Start
@@ -401,13 +390,16 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    /**
     * The indexed classes.
+    *
+    * @deprecated since 11
     */
+   @Deprecated
    public Map<String, Class<?>> indexedEntities() {
-      return indexedEntities;
+      return indexedClasses;
    }
 
    private boolean isIndexedType(Object value) {
-      return value != null && indexedEntities.containsValue(value.getClass());
+      return value != null && indexedClasses.containsValue(value.getClass());
    }
 
    private Object extractValue(Object storedValue) {

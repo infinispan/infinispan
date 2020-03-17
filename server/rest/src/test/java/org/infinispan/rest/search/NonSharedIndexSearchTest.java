@@ -9,14 +9,15 @@ import org.testng.annotations.Test;
  *
  * @since 9.2
  */
-@Test(groups = "functional", testName = "rest.NonSharedIndexSearchTest")
+@Test(groups = "functional", testName = "rest.search.NonSharedIndexSearchTest")
 public class NonSharedIndexSearchTest extends BaseRestSearchTest {
 
    @Override
-   ConfigurationBuilder getConfigBuilder() {
+   protected ConfigurationBuilder getConfigBuilder() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
-      builder.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      builder.indexing().enable()
+             .addIndexedEntity("org.infinispan.rest.search.entity.Person")
+             .addProperty("default.directory_provider", "local-heap");
       return builder;
    }
-
 }

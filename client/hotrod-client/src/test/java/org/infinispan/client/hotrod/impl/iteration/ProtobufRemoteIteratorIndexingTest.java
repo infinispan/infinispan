@@ -32,7 +32,9 @@ public class ProtobufRemoteIteratorIndexingTest extends MultiHotRodServersTest i
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      cfg.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      cfg.indexing().enable()
+         .addIndexedEntity("sample_bank_account.Account")
+         .addProperty("default.directory_provider", "local-heap");
       createHotRodServers(NUM_NODES, hotRodCacheConfiguration(cfg));
 
       waitForClusterToForm();
@@ -79,5 +81,4 @@ public class ProtobufRemoteIteratorIndexingTest extends MultiHotRodServersTest i
          return value[0] == id && value[1].equals("description for " + id);
       });
    }
-
 }

@@ -125,8 +125,12 @@ public class RemoteQueryStringTest extends QueryStringTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addIndexedEntity("sample_bank_account.User")
+             .addIndexedEntity("sample_bank_account.Account")
+             .addIndexedEntity("sample_bank_account.Transaction")
+             .addIndexedEntity("sample_bank_account.AnalyzerTestEntity")
+             .addProperty("default.directory_provider", "local-heap")
+             .addProperty("lucene_version", "LUCENE_CURRENT");
       return builder;
    }
 

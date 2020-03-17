@@ -26,15 +26,17 @@ public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsF
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable()
-            .addProperty("default.indexmanager", "near-real-time")
-            .addProperty("default.indexBase", indexDirectory)
-            .addProperty("default.exclusive_index_use", "true")
-            .addProperty("default.indexwriter.merge_factor", "30")
-            .addProperty("default.indexwriter.merge_max_size", "4096")
-            .addProperty("default.indexwriter.ram_buffer_size", "220")
-            .addProperty("default.locking_strategy", "native")
-            .addProperty("default.sharding_strategy.nbr_of_shards", String.valueOf(NUM_SHARDS));
-
+             .addIndexedEntity("sample_bank_account.User")
+             .addIndexedEntity("sample_bank_account.Account")
+             .addIndexedEntity("sample_bank_account.Transaction")
+             .addProperty("default.indexmanager", "near-real-time")
+             .addProperty("default.indexBase", indexDirectory)
+             .addProperty("default.exclusive_index_use", "true")
+             .addProperty("default.indexwriter.merge_factor", "30")
+             .addProperty("default.indexwriter.merge_max_size", "4096")
+             .addProperty("default.indexwriter.ram_buffer_size", "220")
+             .addProperty("default.locking_strategy", "native")
+             .addProperty("default.sharding_strategy.nbr_of_shards", String.valueOf(NUM_SHARDS));
       return builder;
    }
 

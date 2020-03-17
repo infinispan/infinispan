@@ -79,15 +79,13 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
    }
 
    public void testQueryStats() throws Exception {
-      cacheManager.getCache(CACHE_NAME);
+      Cache<String, Object> cache = cacheManager.getCache(CACHE_NAME);  // start cache
       ObjectName name = getQueryStatsObjectName(TEST_JMX_DOMAIN, CACHE_NAME);
 
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       try {
          assertTrue(mBeanServer.isRegistered(name));
          mBeanServer.setAttribute(name, new Attribute("StatisticsEnabled", true));
-
-         Cache<String, Object> cache = cacheManager.getCache(CACHE_NAME);
 
          // check that our settings are not ignored
          QueryFactory queryFactory = Search.getQueryFactory(cache);

@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.event.ClientListenerWithIndexingAndProtobufTest")
 public class ClientListenerWithIndexingAndProtobufTest extends MultiHotRodServersTest {
 
-   private final int NUM_NODES = 2;
+   private static final int NUM_NODES = 2;
 
    private RemoteCache<Object, Object> remoteCache;
 
@@ -38,8 +38,9 @@ public class ClientListenerWithIndexingAndProtobufTest extends MultiHotRodServer
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       cfgBuilder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+                .addIndexedEntity("sample_bank_account.User")
+                .addProperty("default.directory_provider", "local-heap")
+                .addProperty("lucene_version", "LUCENE_CURRENT");
 
       createHotRodServers(NUM_NODES, cfgBuilder);
       waitForClusterToForm();

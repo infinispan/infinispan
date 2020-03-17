@@ -18,9 +18,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
@@ -45,6 +43,9 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
    protected RemoteCache<Object, Object> remoteCache;
    protected Cache<Object, Object> cache;
 
+   private static final int WRITE_LOOPS = 10000;
+   private static final int QUERY_LOOPS = 100000;
+
    @Override
    protected void clearContent() {
       // Don't clear, this is destroying the index
@@ -56,9 +57,9 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
       builder.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
       builder.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
       builder.indexing().enable()
-            .addIndexedEntity(UserHS.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addIndexedEntity(UserHS.class)
+             .addProperty("default.directory_provider", "local-heap")
+             .addProperty("lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(1, TestDomainSCI.INSTANCE, builder);
 
       cache = manager(0).getCache();
@@ -71,7 +72,6 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
       remoteCache = remoteCacheManager.getCache();
    }
 
-
    @AfterClass(alwaysRun = true)
    public void release() {
       killRemoteCacheManager(remoteCacheManager);
@@ -79,9 +79,8 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
    }
 
    @BeforeClass(alwaysRun = true)
-   protected void populateCache() throws Exception {
-      final int loops = 10000;
-      for (int i = 0; i < loops; i++) {
+   protected void populateCache() {
+      for (int i = 0; i < WRITE_LOOPS; i++) {
          // create the test objects
          User user1 = new UserHS();
          int id1 = i * 10 + 1;
@@ -111,57 +110,37 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
       }
    }
 
-   public void testRemoteQueryDslExecution() throws Exception {
+   public void testRemoteQueryDslExecution() {
       QueryFactory qf = org.infinispan.client.hotrod.Search.getQueryFactory(remoteCache);
-      QueryBuilder qb = qf.from("sample_bank_account.User")
-            .having("name").eq("John1");
+      String queryString = "FROM sample_bank_account.User WHERE name = 'John1'";
 
-      final int loops = 100000;
       final long startTs = System.nanoTime();
-      for (int i = 0; i < loops; i++) {
-         Query q = qb.build();
+      for (int i = 0; i < QUERY_LOOPS; i++) {
+         Query q = qf.create(queryString);
          List<User> list = q.list();
          assertEquals(1, list.size());
          assertEquals("John1", list.get(0).getName());
       }
-      final long duration = (System.nanoTime() - startTs) / loops;
+      final long duration = (System.nanoTime() - startTs) / QUERY_LOOPS;
 
       // this is around 600 us
       System.out.printf("Remote execution took %d us per query\n", TimeUnit.NANOSECONDS.toMicros(duration));
    }
 
-   public void testEmbeddedQueryDslExecution() throws Exception {
+   public void testEmbeddedQueryDslExecution() {
       QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
-      QueryBuilder qb = qf.from(UserHS.class)
-            .having("name").eq("John1");
+      String queryString = String.format("FROM %s WHERE name = 'John1'", UserHS.class.getName());
 
-      final int loops = 100000;
       final long startTs = System.nanoTime();
-      for (int i = 0; i < loops; i++) {
-         Query q = qb.build();
+      for (int i = 0; i < QUERY_LOOPS; i++) {
+         Query q = qf.create(queryString);
          List<User> list = q.list();
          assertEquals(1, list.size());
          assertEquals("John1", list.get(0).getName());
       }
-      final long duration = (System.nanoTime() - startTs) / loops;
+      final long duration = (System.nanoTime() - startTs) / QUERY_LOOPS;
 
       // this is around 300 us
       System.out.printf("Embedded execution took %d us per query\n", TimeUnit.NANOSECONDS.toMicros(duration));
-   }
-
-   public void testEmbeddedLuceneQueryExecution() throws Exception {
-      final int loops = 100000;
-      final long startTs = System.nanoTime();
-      for (int i = 0; i < loops; i++) {
-         QueryFactory queryFactory = Search.getQueryFactory(cache);
-         Query cacheQuery = queryFactory.create(String.format("From %s where name = 'John1'", UserHS.class.getName()));
-         List<User> list = cacheQuery.list();
-         assertEquals(1, list.size());
-         assertEquals("John1", list.get(0).getName());
-      }
-      final long duration = (System.nanoTime() - startTs) / loops;
-
-      // this is around 300 us
-      System.out.printf("Embedded HS execution took %d us per query\n", TimeUnit.NANOSECONDS.toMicros(duration));
    }
 }

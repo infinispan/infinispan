@@ -75,8 +75,9 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addIndexedEntity("sample_bank_account.User")
+             .addProperty("default.directory_provider", "local-heap")
+             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       cacheManager = TestCacheManagerFactory.createCacheManager(gcb, builder);
       cacheManager.defineConfiguration(TEST_CACHE_NAME, builder.build());

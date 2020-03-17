@@ -89,12 +89,13 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
    public Configuration buildIndexedConfig(String storeName) {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("default.worker.execution", "async")
-            .addProperty("default.index_flush_interval", "500")
-            .addProperty("default.indexwriter.merge_factor", "30")
-            .addProperty("default.indexwriter.merge_max_size", "1024")
-            .addProperty("default.indexwriter.ram_buffer_size", "256");
+             .addIndexedEntity("News")
+             .addProperty("default.directory_provider", "local-heap")
+             .addProperty("default.worker.execution", "async")
+             .addProperty("default.index_flush_interval", "500")
+             .addProperty("default.indexwriter.merge_factor", "30")
+             .addProperty("default.indexwriter.merge_max_size", "1024")
+             .addProperty("default.indexwriter.ram_buffer_size", "256");
       builder.memory().storageType(storageType);
       if (evictionSize > 0) {
          builder.memory().size(evictionSize);
@@ -110,6 +111,21 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
       ConfigurationBuilder defaultConfiguration = new ConfigurationBuilder();
       createHotRodServers(NODES, defaultConfiguration);
 
+      RemoteCacheManager remoteCacheManager = client(0);
+
+      //initialize client-side serialization context
+      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      String protoFile = protoSchemaBuilder.fileName("news.proto")
+                                           .addClass(News.class)
+                                           .addClass(NewsKey.class)
+                                           .build(serializationContext);
+
+      //initialize server-side serialization context
+      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      metadataCache.put("news.proto", protoFile);
+      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+
       for (int i = 0; i < cacheManagers.size(); i++) {
          EmbeddedCacheManager cm = cacheManagers.get(i);
          cm.defineConfiguration(USER_CACHE, buildIndexedConfig("News-" + i));
@@ -118,22 +134,7 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
 
       waitForClusterToForm(USER_CACHE);
 
-      RemoteCacheManager remoteCacheManager = client(0);
       userCache = remoteCacheManager.getCache(USER_CACHE);
-
-      //initialize client-side serialization context
-      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
-      String protoFile = protoSchemaBuilder.fileName("news.proto")
-            .addClass(News.class)
-            .addClass(NewsKey.class)
-            .build(serializationContext);
-
-      //initialize server-side serialization context
-      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("news.proto", protoFile);
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
-
    }
 
    public void testIndexing() {
@@ -168,7 +169,6 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
       assertEquals(news1, userCache.get(newsKey1));
       assertEquals(news2, userCache.get(newsKey2));
    }
-
 }
 
 class NewsKey {

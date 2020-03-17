@@ -2779,14 +2779,25 @@ public class Parser implements ConfigurationParser {
 
    private void parseIndexedEntities(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ConfigurationBuilder builder) throws XMLStreamException {
       ParseUtils.requireNoAttributes(reader);
+      boolean isProtobufStorage = builder.memory().encoding().value().isProtobufStorage();
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case INDEXED_ENTITY: {
                ParseUtils.requireNoAttributes(reader);
-               String className = reader.getElementText();
-               Class<?> indexedEntity = Util.loadClass(className, holder.getClassLoader());
-               builder.indexing().addIndexedEntity(indexedEntity);
+               String typeName = reader.getElementText();
+               builder.indexing().addIndexedEntity(typeName);
+
+               // Do not attempt to resolve type names to Java Classes if the cache uses Protobuf storage
+               if (!isProtobufStorage) {
+                  try {
+                     Class<?> indexedClass = Util.loadClass(typeName, holder.getClassLoader());
+                     builder.indexing().addIndexedEntity(indexedClass);
+                  } catch (Exception e) {
+                     // ignore
+                  }
+               }
+
                break;
             }
             default: {

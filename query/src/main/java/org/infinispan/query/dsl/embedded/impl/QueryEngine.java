@@ -118,15 +118,10 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
          throw new IllegalStateException("Cache is not indexed");
       }
       if (searchManager == null) {
-         searchManager = createSearchManager();
+         searchManager = new SearchManagerImpl(cache, this);
       }
       return searchManager;
    }
-
-   protected SearchManagerImplementor createSearchManager() {
-      return new SearchManagerImpl(cache);
-   }
-
 
    protected SearchIntegrator getSearchFactory() {
       if (searchFactory == null) {
