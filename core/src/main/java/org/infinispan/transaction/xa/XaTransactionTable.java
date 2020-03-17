@@ -16,6 +16,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -159,7 +160,7 @@ public class XaTransactionTable extends TransactionTable {
          log.tracef("forget called for xid %s", xid);
       try {
          if (isRecoveryEnabled()) {
-            recoveryManager.removeRecoveryInformation(null, xid, true, null, false);
+            CompletionStages.join(recoveryManager.removeRecoveryInformation(null, xid, null, false));
          } else {
             if (trace)
                log.trace("Recovery not enabled");
@@ -180,7 +181,7 @@ public class XaTransactionTable extends TransactionTable {
          LocalXaTransaction localTransaction, boolean committedInOnePhase) {
       final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
       if (isRecoveryEnabled()) {
-         recoveryManager.removeRecoveryInformation(localTransaction.getRemoteLocksAcquired(), xid, false, gtx,
+         recoveryManager.removeRecoveryInformation(localTransaction.getRemoteLocksAcquired(), xid, gtx,
                partitionHandlingManager.isTransactionPartiallyCommitted(gtx));
          removeLocalTransaction(localTransaction);
       } else {

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 import javax.transaction.xa.Xid;
 
@@ -53,22 +54,18 @@ public interface RecoveryManager {
     * Removes from the specified nodes (or all nodes if the value of 'where' is null) the recovery information
     * associated with these Xids.
     *
-    * @param skipTxCompletionCommand {@code true} if it must skip the {@link org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand}.
-    *                                Used when a partition happens.
     * @param where                   on which nodes should this be executed.
     * @param xid                     the list of xids to be removed.
-    * @param sync                    execute sync or async (false)
     * @param gtx                     the global transaction
     * @param fromCluster
     */
-   void removeRecoveryInformation(Collection<Address> where, Xid xid, boolean sync, GlobalTransaction gtx, boolean fromCluster);
+   CompletionStage<Void> removeRecoveryInformation(Collection<Address> where, Xid xid, GlobalTransaction gtx, boolean fromCluster);
 
    /**
-    * Same as {@link #removeRecoveryInformation(java.util.Collection, javax.transaction.xa.Xid, boolean,
-    * org.infinispan.transaction.xa.GlobalTransaction, boolean)} but the transaction is identified by its internal id,
-    * and not by its xid.
+    * Same as {@link #removeRecoveryInformation(Collection, Xid, GlobalTransaction, boolean)}
+    * but the transaction is identified by its internal id, and not by its xid.
     */
-   void removeRecoveryInformationFromCluster(Collection<Address> where, long internalId, boolean sync);
+   CompletionStage<Void> removeRecoveryInformationFromCluster(Collection<Address> where, long internalId);
 
    /**
     * Local call that returns a list containing:
@@ -95,7 +92,7 @@ public interface RecoveryManager {
     * @param xid    tx to commit or rollback
     * @param commit if true tx is committed, if false it is rolled back
     */
-   String forceTransactionCompletion(Xid xid, boolean commit);
+   CompletionStage<String> forceTransactionCompletion(Xid xid, boolean commit);
 
    /**
     * This method invokes {@link #forceTransactionCompletion(javax.transaction.xa.Xid, boolean)} on the specified node.
