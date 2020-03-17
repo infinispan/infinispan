@@ -1,6 +1,9 @@
 package org.infinispan.cache.impl;
 
+import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
+
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -14,11 +17,14 @@ import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -42,6 +48,10 @@ public class InvocationHelper {
    @Inject protected TransactionManager transactionManager;
    @Inject protected Configuration config;
    @Inject protected BatchContainer batchContainer;
+   @Inject @ComponentName(BLOCKING_EXECUTOR)
+   protected Executor blockingExecutor;
+   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
+   protected Executor nonBlockingExecutor;
    private final ContextBuilder defaultBuilder = i -> createInvocationContextWithImplicitTransaction(i, false);
 
    private static void checkLockOwner(InvocationContext context, VisitableCommand command) {
@@ -221,7 +231,7 @@ public class InvocationHelper {
          tryRollback();
          throw e;
       }
-      return cf.handle((result, throwable) -> {
+      return CompletionStages.continueOnExecutor(cf.handleAsync((result, throwable) -> {
          if (throwable != null) {
             try {
                implicitTransaction.rollback();
@@ -238,7 +248,7 @@ public class InvocationHelper {
             throw CompletableFutures.asCompletionException(e);
          }
          return result;
-      });
+      }, blockingExecutor), nonBlockingExecutor, ctx).toCompletableFuture();
    }
 
    private Transaction tryBegin() {
