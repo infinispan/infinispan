@@ -29,12 +29,12 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
-import org.infinispan.metrics.impl.CacheManagerMetricsRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.ModuleRepository;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.metrics.impl.CacheManagerMetricsRegistration;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
@@ -210,7 +210,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          shutdownHook = new Thread(() -> {
             try {
                invokedFromShutdownHook = true;
-               GlobalComponentRegistry.this.stop();
+               cacheManager.stop();
             } finally {
                invokedFromShutdownHook = false;
             }
