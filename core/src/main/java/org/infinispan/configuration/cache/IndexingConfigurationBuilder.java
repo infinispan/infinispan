@@ -8,12 +8,14 @@ import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXED_E
 import static org.infinispan.configuration.cache.IndexingConfiguration.KEY_TRANSFORMERS;
 import static org.infinispan.util.logging.Log.CONFIG;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -42,7 +44,10 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    private static final String FS_PROVIDER = "filesystem";
 
    /**
-    * Legacy name "ram" was replaced by "local-heap"
+    * Legacy name "ram" was replaced by "local-heap" many years ago.
+    *
+    * @deprecated To be removed after migration to hibernate search 6, if the version no longer supports this legacy
+    * name.
     */
    @Deprecated
    private static final String RAM_DIRECTORY_PROVIDER = "ram";
@@ -52,6 +57,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    private static final String LOCAL_HEAP_DIRECTORY_PROVIDER_FQN = "org.hibernate.search.store.impl.RAMDirectoryProvider";
 
    private final AttributeSet attributes;
+
+   private final Set<Class<?>> resolvedIndexedClasses = new HashSet<>();
 
    IndexingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -195,21 +202,45 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return attributes.attribute(AUTO_CONFIG).get();
    }
 
-   public IndexingConfigurationBuilder addIndexedEntity(Class<?> indexedEntity) {
-      Set<Class<?>> indexedEntitySet = indexedEntities();
+   public IndexingConfigurationBuilder addIndexedEntity(String indexedEntity) {
+      if (indexedEntity == null || indexedEntity.length() == 0) {
+         throw new CacheConfigurationException("Type name must not be null or empty");
+      }
+      Set<String> indexedEntitySet = indexedEntities();
       indexedEntitySet.add(indexedEntity);
       attributes.attribute(INDEXED_ENTITIES).set(indexedEntitySet);
       return this;
    }
 
-   public IndexingConfigurationBuilder addIndexedEntities(Class<?>... indexedEntities) {
-      Set<Class<?>> indexedEntitySet = indexedEntities();
-      Collections.addAll(indexedEntitySet, indexedEntities);
+   public IndexingConfigurationBuilder addIndexedEntities(String... indexedEntities) {
+      Set<String> indexedEntitySet = indexedEntities();
+      for (String typeName : indexedEntities) {
+         if (typeName == null || typeName.length() == 0) {
+            throw new CacheConfigurationException("Type name must not be null or empty");
+         }
+         indexedEntitySet.add(typeName);
+      }
       attributes.attribute(INDEXED_ENTITIES).set(indexedEntitySet);
       return this;
    }
 
-   private Set<Class<?>> indexedEntities() {
+   public IndexingConfigurationBuilder addIndexedEntity(Class<?> indexedEntity) {
+      addIndexedEntity(indexedEntity.getName());
+      resolvedIndexedClasses.add(indexedEntity);
+      return this;
+   }
+
+   public IndexingConfigurationBuilder addIndexedEntities(Class<?>... indexedEntities) {
+      addIndexedEntities(Arrays.stream(indexedEntities).map(Class::getName).toArray(String[]::new));
+      Collections.addAll(resolvedIndexedClasses, indexedEntities);
+      return this;
+   }
+
+   /**
+    * The set of fully qualified names of indexed entity types, either Java classes or protobuf type names. This
+    * configuration corresponds to the {@code <indexed-entities>} XML configuration element.
+    */
+   public Set<String> indexedEntities() {
       return attributes.attribute(INDEXED_ENTITIES).get();
    }
 
@@ -222,7 +253,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          }
          if (indexedEntities().isEmpty() && !getBuilder().template()) {
             //TODO  [anistor] This does not take into account eventual programmatically defined entity mappings
-            CONFIG.noIndexableClassesDefined();
+            CONFIG.noIndexableClassesDefined();  //todo [anistor]  really really remove autodetection in 11 !
          }
       } else {
          //TODO [anistor] Infinispan 10 must not allow definition of indexed entities or indexing properties if indexing is not enabled
@@ -298,7 +329,9 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
                                         return false;
                                      });
 
-      return new IndexingConfiguration(attributes.protect(), isVolatile);
+      // todo [anistor] if storage media type is not configured then log a warning because this is not supported with indexing
+
+      return new IndexingConfiguration(attributes.protect(), isVolatile, resolvedIndexedClasses);
    }
 
    @Override

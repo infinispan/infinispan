@@ -80,8 +80,9 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       cfgBuilder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+                .addIndexedEntity("sample_bank_account.User")
+                .addProperty("default.directory_provider", "local-heap")
+                .addProperty("lucene_version", "LUCENE_CURRENT");
       return cfgBuilder;
    }
 

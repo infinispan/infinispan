@@ -906,13 +906,13 @@
             </xs:element>
             <xs:element name="indexed-entities" minOccurs="0" maxOccurs="1">
               <xs:annotation>
-                <xs:documentation>Defines the indexed entity classes</xs:documentation>
+                <xs:documentation>Defines the set of indexed type names (fully qualified). If values of types that are not included in this set are put in the cache they will not be indexed.</xs:documentation>
               </xs:annotation>
               <xs:complexType>
                 <xs:sequence>
-                  <xs:element name="indexed-entity" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+                  <xs:element name="indexed-entity" type="xs:string" minOccurs="1" maxOccurs="unbounded">
                     <xs:annotation>
-                      <xs:documentation>Indexed entity class name</xs:documentation>
+                      <xs:documentation>Indexed entity type name. Must be either a fully qualified Java class name or a protobuf type name.</xs:documentation>
                     </xs:annotation>
                   </xs:element>
                 </xs:sequence>

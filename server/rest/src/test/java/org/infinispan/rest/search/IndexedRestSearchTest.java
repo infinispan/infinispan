@@ -18,15 +18,16 @@ import com.fasterxml.jackson.databind.JsonNode;
  *
  * @since 9.2
  */
-@Test(groups = "functional", testName = "rest.IndexedRestSearchTest")
+@Test(groups = "functional", testName = "rest.search.IndexedRestSearchTest")
 public class IndexedRestSearchTest extends BaseRestSearchTest {
 
    @Override
-   ConfigurationBuilder getConfigBuilder() {
+   protected ConfigurationBuilder getConfigBuilder() {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configurationBuilder.indexing()
-            .enable()
-            .addProperty("default.directory_provider", "local-heap");
+                          .enable()
+                          .addIndexedEntity("org.infinispan.rest.search.entity.Person")
+                          .addProperty("default.directory_provider", "local-heap");
       return configurationBuilder;
    }
 
@@ -51,7 +52,6 @@ public class IndexedRestSearchTest extends BaseRestSearchTest {
             .header(HttpHeader.ORIGIN, "http://localhost:" + server.getPort())
             .header("access-control-request-method", "GET")
             .send();
-
 
       ResponseAssertion.assertThat(preFlight).isOk();
       ResponseAssertion.assertThat(preFlight).hasNoContent();

@@ -23,11 +23,9 @@ import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.QueryDefinition;
-import org.infinispan.query.impl.SearchManagerImpl;
 import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
-import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.util.function.SerializableFunction;
 
 /**
@@ -109,12 +107,6 @@ final class RemoteQueryEngine extends ObjectRemoteQueryEngine {
       }
       queryDefinition.setNamedParameters(namedParameters);
       return (IndexedQuery<?>) getSearchManager().getQuery(queryDefinition, queryMode, queryMetadata);
-   }
-
-
-   @Override
-   protected SearchManagerImplementor createSearchManager() {
-      return new SearchManagerImpl(cache, this);
    }
 
    @Override

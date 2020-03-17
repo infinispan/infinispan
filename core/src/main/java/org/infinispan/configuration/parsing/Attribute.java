@@ -21,7 +21,7 @@ public enum Attribute {
     @Deprecated
     ALLOW_DUPLICATE_DOMAINS("duplicate-domains"),
     @Deprecated
-    ASYNC_EXECUTOR("async-executor"),
+    ASYNC_EXECUTOR,
     @Deprecated
     ASYNC_MARSHALLING,
     AUDIT_LOGGER,
@@ -187,7 +187,7 @@ public enum Attribute {
     WHEN_SPLIT,
     WHEN_FULL,
     WRITE_SKEW_CHECK("write-skew"),
-    ZERO_CAPACITY_NODE("zero-capacity-node")
+    ZERO_CAPACITY_NODE
     ;
 
     private final String name;

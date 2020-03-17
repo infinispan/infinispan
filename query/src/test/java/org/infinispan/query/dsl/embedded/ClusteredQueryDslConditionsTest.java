@@ -58,8 +58,7 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
       ConfigurationBuilder cfg = initialCacheConfiguration();
       IndexingConfigurationBuilder indexingConfigurationBuilder = cfg.clustering()
             .stateTransfer().fetchInMemoryState(true)
-            .indexing()
-            .enable()
+            .indexing().enable()
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
             .addIndexedEntity(getModelFactory().getTransactionImplClass());
@@ -82,7 +81,7 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
       checkIndexPresence(cache2);
    }
 
-   private void checkIndexPresence(Cache cache) {
+   private void checkIndexPresence(Cache<?, ?> cache) {
       SearchIntegrator searchIntegrator = TestingUtil.extractComponent(cache, SearchIntegrator.class);
 
       verifyClassIsIndexed(searchIntegrator, getModelFactory().getUserImplClass());

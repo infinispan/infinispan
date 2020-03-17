@@ -13,6 +13,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
@@ -60,12 +61,13 @@ public class ClusteredIT {
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
       if (indexed) {
          builder.indexing().enable()
-               .addProperty("default.directory_provider", "local-heap")
-               .addProperty("infinispan.query.lucene.max-boolean-clauses", "1025");
+                .addIndexedEntity("sample_bank_account.User")
+                .addProperty("default.directory_provider", "local-heap")
+                .addProperty("infinispan.query.lucene.max-boolean-clauses", "1025");
       }
 
-      RemoteCache<K, V> cache = testMethodRule.hotrod().withClientConfiguration(config).withServerConfiguration(builder).create();
-      RemoteCacheManager remoteCacheManager = cache.getRemoteCacheManager();
+      HotRodTestClientDriver hotRodTestClientDriver = testMethodRule.hotrod().withClientConfiguration(config);
+      RemoteCacheManager remoteCacheManager = hotRodTestClientDriver.createRemoteCacheManager();
 
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
       String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", testMethodRule.getClass().getClassLoader()));
@@ -75,6 +77,6 @@ public class ClusteredIT {
 
       Exceptions.unchecked(() -> MarshallerRegistration.registerMarshallers(MarshallerUtil.getSerializationContext(remoteCacheManager)));
 
-      return cache;
+      return hotRodTestClientDriver.withServerConfiguration(builder).create();
    }
 }

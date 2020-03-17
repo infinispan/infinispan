@@ -1,6 +1,5 @@
 package org.infinispan.server.functional;
 
-import static org.infinispan.query.dsl.Expression.param;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -107,10 +106,7 @@ public class HotRodListenerWithDslFilter {
       SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCache.getRemoteCacheManager());
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
-      Query query = qf.from(User.class)
-            .having("age").lte(param("ageParam"))
-            .select("age")
-            .build()
+      Query query = qf.create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
             .setParameter("ageParam", 32);
 
       ClientEntryListener listener = new ClientEntryListener(serCtx);

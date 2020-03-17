@@ -95,7 +95,7 @@ public final class Search {
          throw new IllegalArgumentException("The given cache must expose an AdvancedCache interface");
       }
       checkBulkReadPermission(advancedCache);
-      return new SearchManagerImpl(advancedCache);
+      return new SearchManagerImpl(advancedCache, ComponentRegistryUtils.getEmbeddedQueryEngine(advancedCache));
    }
 
    /**

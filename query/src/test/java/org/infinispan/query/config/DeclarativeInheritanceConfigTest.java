@@ -23,15 +23,14 @@ public class DeclarativeInheritanceConfigTest extends SingleCacheManagerTest {
 
    public void testIndexedConfigurationInheritance() {
       Configuration configuration = cacheManager.getCacheConfiguration("default");
-      Set<Class<?>> indexedEntities = configuration.indexing().indexedEntities();
+      Set<String> indexedEntities = configuration.indexing().indexedEntityTypes();
       assertEquals(1, indexedEntities.size());
-      assertTrue(indexedEntities.contains(Book.class));
+      assertTrue(indexedEntities.contains(Book.class.getName()));
 
       configuration = cacheManager.getCacheConfiguration("extended");
-      indexedEntities = configuration.indexing().indexedEntities();
+      indexedEntities = configuration.indexing().indexedEntityTypes();
       assertEquals(2, indexedEntities.size());
-      assertTrue(indexedEntities.contains(Book.class));
-      assertTrue(indexedEntities.contains(AnotherGrassEater.class));
+      assertTrue(indexedEntities.contains(Book.class.getName()));
+      assertTrue(indexedEntities.contains(AnotherGrassEater.class.getName()));
    }
-
 }

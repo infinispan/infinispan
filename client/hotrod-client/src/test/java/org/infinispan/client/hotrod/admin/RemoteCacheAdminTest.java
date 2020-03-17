@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.List;
@@ -45,7 +44,9 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
             getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      builder.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      builder.indexing().enable()
+             .addIndexedEntity("sample_bank_account.Transaction")
+             .addProperty("default.directory_provider", "local-heap");
       createHotRodServers(2, builder);
    }
 
@@ -155,7 +156,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       assertEquals(10, configuration.expiration().maxIdle());
    }
 
-   public void cacheReindexTest(Method m) throws IOException {
+   public void cacheReindexTest(Method m) {
       String cacheName = m.getName();
       // Create the cache
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");

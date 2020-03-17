@@ -21,9 +21,9 @@ public class MultiHotRodServerIspnDirReplQueryTest extends MultiHotRodServerIspn
       createHotRodServers(3, defaultConfiguration);
 
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      builder.indexing()
-            .enable()
-            .addProperty("default.directory_provider", "local-heap");
+      builder.indexing().enable()
+             .addIndexedEntity("sample_bank_account.User")
+             .addProperty("default.directory_provider", "local-heap");
 
       for (EmbeddedCacheManager cm : cacheManagers) {
          cm.defineConfiguration(TEST_CACHE, builder.build());

@@ -1,13 +1,11 @@
 package org.infinispan.query.remote.impl.indexing;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
-import org.infinispan.query.remote.impl.logging.Log;
 
 /**
  * Protostream tag handler for {@code org.infinispan.protostream.WrappedMessage} protobuf type defined in
@@ -18,8 +16,6 @@ import org.infinispan.query.remote.impl.logging.Log;
  * @since 6.0
  */
 class WrappedMessageTagHandler implements TagHandler {
-
-   protected static final Log log = LogFactory.getLog(WrappedMessageTagHandler.class, Log.class);
 
    protected final ProtobufValueWrapper valueWrapper;
    protected final SerializationContext serCtx;
@@ -82,12 +78,12 @@ class WrappedMessageTagHandler implements TagHandler {
 
    @Override
    public void onStartNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
-      throw new IllegalStateException("No nested message is expected");
+      throw new IllegalStateException("Invalid WrappedMessage! Nested messages are not expected.");
    }
 
    @Override
    public void onEndNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
-      throw new IllegalStateException("No nested message is expected");
+      throw new IllegalStateException("Invalid WrappedMessage! Nested messages are not expected.");
    }
 
    @Override
@@ -95,7 +91,7 @@ class WrappedMessageTagHandler implements TagHandler {
       if (messageBytes != null) {
          // it's a message, not a primitive value; we must have a type now
          if (descriptor == null) {
-            throw new IllegalStateException("Type name or type id is missing");
+            throw new IllegalStateException("Invalid WrappedMessage! Either type name or type id fields must be present but none was encountered.");
          }
 
          valueWrapper.setMessageDescriptor((Descriptor) descriptor);

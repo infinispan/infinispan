@@ -3,16 +3,16 @@ package org.infinispan.query.remote.impl.indexing;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
 import org.apache.lucene.search.Query;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
@@ -29,16 +29,20 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 6.0
  */
-@Test(groups = "functional", testName = "query.remote.impl.indexing.ProtobufWrapperIndexingTest")
-public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
+@Test(groups = "functional", testName = "query.remote.impl.indexing.ProtobufValueWrapperIndexingTest")
+public class ProtobufValueWrapperIndexingTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-            .indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
-      return TestCacheManagerFactory.createCacheManager(cfg);
+         .memory().encoding().value().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE)
+         .indexing().enable()
+         .addIndexedEntity("sample_bank_account.User")
+         .addProperty("default.directory_provider", "local-heap")
+         .addProperty("lucene_version", "LUCENE_CURRENT");
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.serialization().addContextInitializer(TestDomainSCI.INSTANCE);
+      return TestCacheManagerFactory.createCacheManager(globalBuilder, cfg);
    }
 
    public void testIndexingWithWrapper() throws Exception {
@@ -47,11 +51,8 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
       MarshallerRegistration.registerMarshallers(serCtx);
 
       // Store some test data:
-      byte[] value1 = createMarshalledUser(serCtx, "Adrian", "Nistor");
-      byte[] value2 = createMarshalledUser(serCtx, "John", "Batman");
-
-      cache.put(new byte[]{1, 2, 3}, value1);
-      cache.put(new byte[]{4, 5, 6}, value2);
+      cache.put(new byte[]{1, 2, 3}, createUser("Adrian", "Nistor"));
+      cache.put(new byte[]{4, 5, 6}, createUser("John", "Batman"));
 
       SearchIntegrator searchFactory = TestingUtil.extractComponent(cache, SearchIntegrator.class);
       assertNotNull(searchFactory.getIndexManager(ProgrammaticSearchMappingProviderImpl.getIndexName(cache.getName())));
@@ -73,7 +74,7 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
       assertEquals("Nistor", entityInfo.getProjection()[0]);
    }
 
-   private byte[] createMarshalledUser(SerializationContext serCtx, String name, String surname) throws IOException {
+   private User createUser(String name, String surname) {
       User user = new User();
       user.setId(1);
       user.setName(name);
@@ -85,7 +86,6 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
       address.setStreet("Dark Alley");
       address.setPostCode("1234");
       user.setAddresses(Collections.singletonList(address));
-
-      return ProtobufUtil.toWrappedByteArray(serCtx, user);
+      return user;
    }
 }

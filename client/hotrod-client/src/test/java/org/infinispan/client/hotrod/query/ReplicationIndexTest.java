@@ -18,11 +18,11 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.test.FixedServerBalancing;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
@@ -52,19 +52,7 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
       addHotRodServer(getDefaultClusteredCacheConfig(REPL_SYNC));
       EmbeddedCacheManager cacheManager = manager(index - 1);
 
-      // Add the test caches
-      org.infinispan.configuration.cache.ConfigurationBuilder builder = getDefaultClusteredCacheConfig(REPL_SYNC, isTransactional());
-      builder.indexing().enable().addProperty("default.directory_provider", "local-heap");
-      cacheManager.defineConfiguration(CACHE_NAME, builder.build());
-
-      // Wait for state transfer on the test caches
-      Cache<?, ?> cache = cacheManager.getCache(CACHE_NAME);
-      blockUntilViewReceived(cache, index);
-      blockUntilCacheStatusAchieved(cache, ComponentStatus.RUNNING, 10000);
-      Collection<Cache<?, ?>> caches = cacheManagers.stream().map(cm -> cm.getCache(CACHE_NAME)).collect(Collectors.toList());
-      TestingUtil.waitForNoRebalance(caches);
-
-      // Client a client that goes exclusively to the Hot Rod server
+      // Create a client that goes exclusively to the Hot Rod server
       RemoteCacheManager remoteCacheManager = createClient(index - 1);
       clients.add(remoteCacheManager);
 
@@ -76,6 +64,20 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.put(PROTO_FILE, protoFile);
       assertFalse(metadataCache.containsKey(ERRORS_KEY_SUFFIX));
+
+      // Add the test caches
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = getDefaultClusteredCacheConfig(REPL_SYNC, isTransactional());
+      builder.indexing().enable()
+             .addIndexedEntity("Entity")
+             .addProperty("default.directory_provider", "local-heap");
+      cacheManager.defineConfiguration(CACHE_NAME, builder.build());
+
+      // Wait for state transfer on the test caches
+      Cache<?, ?> cache = cacheManager.getCache(CACHE_NAME);
+      blockUntilViewReceived(cache, index);
+      blockUntilCacheStatusAchieved(cache, ComponentStatus.RUNNING, 10000);
+      Collection<Cache<?, ?>> caches = cacheManagers.stream().map(cm -> cm.getCache(CACHE_NAME)).collect(Collectors.toList());
+      TestingUtil.waitForNoRebalance(caches);
    }
 
    protected boolean isTransactional() {
@@ -120,7 +122,6 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
       public void setName(String name) {
          this.name = name;
       }
-
    }
 
    private long queryCount(String query, RemoteCache<?, ?> remoteCache) {
@@ -148,5 +149,4 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
       assertEquals(ENTRIES, queryCount("FROM Entity", remoteCache));
       assertEquals(1, queryCount("FROM Entity where name:'name1'", remoteCache));
    }
-
 }

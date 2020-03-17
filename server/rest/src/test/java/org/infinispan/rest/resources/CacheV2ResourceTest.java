@@ -43,7 +43,7 @@ import org.infinispan.globalstate.ScopedState;
 import org.infinispan.globalstate.impl.CacheState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.query.remote.ProtobufMetadataManager;
+import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.testng.annotations.Test;
 
@@ -59,6 +59,12 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    @Override
    protected void defineCaches(EmbeddedCacheManager cm) {
       cm.defineConfiguration("default", getDefaultCacheBuilder().build());
+
+      Cache<String, String> metadataCache = cm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      String proto = "/* @Indexed */ message Entity { /* @Field */ required int32 value=1; }";
+      metadataCache.putIfAbsent("sample.proto", proto);
+      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+
       cm.defineConfiguration("indexedCache", getIndexedPersistedCache().build());
    }
 
@@ -73,9 +79,10 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    private ConfigurationBuilder getIndexedPersistedCache() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .statistics().enable()
-            .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
+             .addIndexedEntity("Entity")
+             .addProperty("default.directory_provider", "local-heap")
+             .statistics().enable()
+             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
       return builder;
    }
 
@@ -418,13 +425,13 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       String url = String.format("http://localhost:%d/rest/v2/caches/default?action=%s", restServer().getPort(), "keys");
 
       ContentResponse response = client.newRequest(url).method(GET).send();
-      Set emptyKeys = objectMapper.readValue(response.getContentAsString(), Set.class);
+      Set<?> emptyKeys = objectMapper.readValue(response.getContentAsString(), Set.class);
       assertEquals(0, emptyKeys.size());
 
 
       putStringValueInCache("default", "1", "value");
       response = client.newRequest(url).method(GET).send();
-      Set singleSet = objectMapper.readValue(response.getContentAsString(), Set.class);
+      Set<?> singleSet = objectMapper.readValue(response.getContentAsString(), Set.class);
       assertEquals(1, singleSet.size());
 
       int entries = 1000;
@@ -432,16 +439,14 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
          putStringValueInCache("default", String.valueOf(i), "value");
       }
       response = client.newRequest(url).method(GET).send();
-      Set keys = objectMapper.readValue(response.getContentAsString(), Set.class);
+      Set<?> keys = objectMapper.readValue(response.getContentAsString(), Set.class);
       assertEquals(entries, keys.size());
       assertTrue(IntStream.range(0, entries).allMatch(keys::contains));
    }
 
    @Test
    public void testProtobufMetadataManipulation() throws Exception {
-      /**
-       * Special role {@link ProtobufMetadataManager#SCHEMA_MANAGER_ROLE} is needed for authz. Subject USER has it
-       */
+      // Special role {@link ProtobufMetadataManager#SCHEMA_MANAGER_ROLE} is needed for authz. Subject USER has it
       String cache = PROTOBUF_METADATA_CACHE_NAME;
       String url = String.format("http://localhost:%d/rest/v2/caches/%s?action=%s", restServer().getPort(), cache, "keys");
 
@@ -450,7 +455,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       ContentResponse response = client.newRequest(url).method(GET).send();
       String contentAsString = response.getContentAsString();
-      Set keys = objectMapper.readValue(contentAsString, Set.class);
+      Set<?> keys = objectMapper.readValue(contentAsString, Set.class);
       assertEquals(2, keys.size());
    }
 
@@ -535,7 +540,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    }
 
    private void assertIndex(int value, boolean present) throws Exception {
-      String query = URLEncoder.encode("FROM Entity where value = " + value);
+      String query = URLEncoder.encode("FROM Entity WHERE value = " + value, "UTF-8");
       String url = String.format("http://localhost:%d/rest/v2/caches/indexedCache?action=search&query=%s", restServer().getPort(), query);
       ContentResponse response = client.newRequest(url).method(GET).send();
       ResponseAssertion.assertThat(response).isOk();

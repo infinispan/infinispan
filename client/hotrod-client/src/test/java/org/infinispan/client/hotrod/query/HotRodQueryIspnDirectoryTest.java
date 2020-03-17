@@ -10,7 +10,6 @@ import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryResult;
 import org.testng.annotations.Test;
@@ -26,13 +25,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 @Test(testName = "client.hotrod.query.HotRodQueryIspnDirectoryTest", groups = "functional")
 public class HotRodQueryIspnDirectoryTest extends HotRodQueryTest {
-
-   @Override
-   protected ConfigurationBuilder getConfigurationBuilder() {
-      ConfigurationBuilder builder = super.getConfigurationBuilder();
-      builder.indexing().enable().addProperty("default.directory_provider", "local-heap");
-      return builder;
-   }
 
    public void testReadAsJSON() throws Exception {
       DataFormat acceptJSON = DataFormat.builder().valueType(APPLICATION_JSON).valueMarshaller(new UTF8StringMarshaller()).build();

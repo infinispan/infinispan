@@ -40,10 +40,6 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
    private final MassIndexer massIndexer;
    private TimeoutExceptionFactory timeoutExceptionFactory;
 
-   public SearchManagerImpl(AdvancedCache<?, ?> cache) {
-      this(cache, ComponentRegistryUtils.getEmbeddedQueryEngine(cache));
-   }
-
    public SearchManagerImpl(AdvancedCache<?, ?> cache, QueryEngine<?> queryEngine) {
       if (cache == null) {
          throw new IllegalArgumentException("cache parameter shall not be null");

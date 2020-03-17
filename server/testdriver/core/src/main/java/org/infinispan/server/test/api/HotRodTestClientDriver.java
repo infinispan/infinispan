@@ -18,14 +18,14 @@ import org.infinispan.server.test.core.TestServer;
 public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClientDriver> {
    private final TestServer testServer;
    private final TestClient testClient;
-   ConfigurationBuilder clientConfiguration;
+   private ConfigurationBuilder clientConfiguration;
 
    public HotRodTestClientDriver(TestServer testServer, TestClient testClient) {
       this.testServer = testServer;
       this.testClient = testClient;
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      if(testServer.isContainerRunWithDefaultServerConfig()) {
+      if (testServer.isContainerRunWithDefaultServerConfig()) {
          // Init with the admin user
          // Client intelligence basic by default
          builder.clientIntelligence(ClientIntelligence.BASIC);
@@ -75,7 +75,7 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     * @return {@link RemoteCache}, the cache
     */
    public <K, V> RemoteCache<K, V> create() {
-      RemoteCacheManager remoteCacheManager = testClient.registerResource(testServer.newHotRodClient(clientConfiguration));
+      RemoteCacheManager remoteCacheManager = createRemoteCacheManager();
       String name = testClient.getMethodName(qualifier);
       if (serverConfiguration != null) {
          return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, serverConfiguration);
@@ -84,6 +84,10 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
       } else {
          return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, "org.infinispan." + CacheMode.DIST_SYNC.name());
       }
+   }
+
+   public RemoteCacheManager createRemoteCacheManager() {
+      return testClient.registerResource(testServer.newHotRodClient(clientConfiguration));
    }
 
    @Override

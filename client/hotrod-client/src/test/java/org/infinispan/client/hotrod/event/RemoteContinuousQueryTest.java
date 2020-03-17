@@ -53,7 +53,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
 
    private RemoteCache<String, User> remoteCache;
 
-   private ControlledTimeService timeService = new ControlledTimeService();
+   private final ControlledTimeService timeService = new ControlledTimeService();
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -77,12 +77,12 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       return TestDomainSCI.INSTANCE;
    }
 
-
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       cfgBuilder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+                .addIndexedEntity("sample_bank_account.User")
+                .addProperty("default.directory_provider", "local-heap")
+                .addProperty("lucene_version", "LUCENE_CURRENT");
       cfgBuilder.expiration().disableReaper();
       return cfgBuilder;
    }

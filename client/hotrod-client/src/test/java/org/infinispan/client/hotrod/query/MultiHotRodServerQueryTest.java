@@ -53,8 +53,9 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, useTransactions()));
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addIndexedEntity("sample_bank_account.User")
+             .addProperty("default.directory_provider", "local-heap")
+             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       createHotRodServers(3, builder);
 
@@ -70,7 +71,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    }
 
    @BeforeClass(alwaysRun = true)
-   protected void populateCache() throws Exception {
+   protected void populateCache() {
       User user1 = new UserPB();
       user1.setId(1);
       user1.setName("Tom");

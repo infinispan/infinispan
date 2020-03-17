@@ -7,15 +7,16 @@ import org.testng.annotations.Test;
 /**
  * @since 9.2
  */
-@Test(groups = "functional", testName = "rest.SingleNodeLocalIndexTest")
+@Test(groups = "functional", testName = "rest.search.SingleNodeLocalIndexTest")
 public class SingleNodeLocalIndexTest extends BaseRestSearchTest {
 
    @Override
-   ConfigurationBuilder getConfigBuilder() {
+   protected ConfigurationBuilder getConfigBuilder() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.clustering().cacheMode(CacheMode.LOCAL);
       configurationBuilder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap");
+                          .addIndexedEntity("org.infinispan.rest.search.entity.Person")
+                          .addProperty("default.directory_provider", "local-heap");
       return configurationBuilder;
    }
 

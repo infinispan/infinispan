@@ -12,11 +12,11 @@ import org.testng.annotations.Test;
  *
  * @since 9.2
  */
-@Test(groups = "functional", testName = "rest.NonIndexedPojoQueryTest")
+@Test(groups = "functional", testName = "rest.search.NonIndexedPojoQueryTest")
 public class NonIndexedPojoQueryTest extends BaseRestSearchTest {
 
    @Override
-   ConfigurationBuilder getConfigBuilder() {
+   protected ConfigurationBuilder getConfigBuilder() {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configurationBuilder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       configurationBuilder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
@@ -24,11 +24,9 @@ public class NonIndexedPojoQueryTest extends BaseRestSearchTest {
    }
 
    @Override
-   protected void createCacheManagers() {
+   protected void createCacheManagers() throws Exception {
       super.createCacheManagers();
-      cacheManagers.forEach(cm -> {
-         cm.getClassWhiteList().addRegexps("org.infinispan.rest.search.entity.*");
-      });
+      cacheManagers.forEach(cm -> cm.getClassWhiteList().addRegexps("org.infinispan.rest.search.entity.*"));
    }
 
    @Override

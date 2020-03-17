@@ -37,9 +37,13 @@ public class ContentTypeConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    public boolean isObjectStorage() {
-      String mediaType = attributes.attribute(MEDIA_TYPE).get();
-      return mediaType != null && MediaType.fromString(mediaType)
-            .match(MediaType.APPLICATION_OBJECT);
+      String mediaType = mediaType();
+      return mediaType != null && MediaType.fromString(mediaType).match(MediaType.APPLICATION_OBJECT);
+   }
+
+   public boolean isProtobufStorage() {
+      String mediaType = mediaType();
+      return mediaType != null && MediaType.fromString(mediaType).match(MediaType.APPLICATION_PROTOSTREAM);
    }
 
    @Override
