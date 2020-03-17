@@ -381,7 +381,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return Flowable.fromPublisher(preloadCl.entryPublisher(null, true, true))
             .take(maxEntries)
             .observeOn(nonBlockingScheduler)
-            .flatMapSingle(me -> preloadKey(flaggedCache, me))
+            .concatMapSingle(me -> preloadKey(flaggedCache, me))
             .count()
             .subscribeOn(blockingScheduler)
             .to(RxJavaInterop.singleToCompletionStage())
