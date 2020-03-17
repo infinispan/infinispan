@@ -2,7 +2,6 @@ package org.infinispan.util;
 
 import org.infinispan.affinity.impl.KeyAffinityServiceImpl;
 import org.infinispan.cache.impl.CacheImpl;
-import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commons.internal.CommonsBlockHoundIntegration;
 import org.infinispan.container.offheap.OffHeapConcurrentMap;
 import org.infinispan.container.offheap.SegmentedBoundedOffHeapDataContainer;
@@ -86,10 +85,6 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       // The internal map only supports local mode - we need to replace with Caffeine
       // https://issues.redhat.com/browse/ISPN-11272
       builder.allowBlockingCallsInside(RecoveryManagerImpl.class.getName(), "registerInDoubtTransaction");
-
-      // This should be done on blocking thread as we can't change Transaction API
-      // https://issues.redhat.com/browse/ISPN-11473
-      builder.allowBlockingCallsInside(InvocationHelper.class.getName(), "executeCommandAsyncWithInjectedTx");
 
       // Scattered prefetch iteration is currently blocking - needs to be rewritten to be non blocking
       // https://issues.redhat.com/browse/ISPN-10864
