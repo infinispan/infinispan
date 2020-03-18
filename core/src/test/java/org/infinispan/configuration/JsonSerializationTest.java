@@ -84,8 +84,8 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
 
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
-   private JsonReader jsonReader = new JsonReader();
-   private JsonWriter jsonWriter = new JsonWriter();
+   private final JsonReader jsonReader = new JsonReader();
+   private final JsonWriter jsonWriter = new JsonWriter();
 
    @Test
    public void testMinimalCacheConfiguration() {
@@ -349,7 +349,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertEquals("20000000", tcp.get("recv_buf_size").asText());
       assertEquals("640000", tcp.get("send_buf_size").asText());
       assertEquals("300", tcp.get("sock_conn_timeout").asText());
-      assertEquals("no-bundler", tcp.get("bundler_type").asText());
+      assertEquals("org.infinispan.remoting.jgroups.NonBlockingTransferQueueBundler", tcp.get("bundler_type").asText());
       assertEquals("0", tcp.get("thread_pool.min_threads").asText());
       assertEquals("25", tcp.get("thread_pool.max_threads").asText());
       assertEquals("5000", tcp.get("thread_pool.keep_alive_time").asText());
