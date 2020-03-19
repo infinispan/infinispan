@@ -35,8 +35,28 @@
          <artifactId>jboss-logging</artifactId>
       </dependency>
       <dependency>
-         <groupId>com.fasterxml.jackson.core</groupId>
-         <artifactId>jackson-core</artifactId>
+         <groupId>io.fabric8</groupId>
+         <artifactId>kubernetes-client</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.yaml</groupId>
+         <artifactId>snakeyaml</artifactId>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-api</artifactId>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-core</artifactId>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-slf4j-impl</artifactId>
       </dependency>
       <dependency>
          <groupId>org.jboss.remotingjmx</groupId>
@@ -67,17 +87,13 @@
          <artifactId>wildfly-elytron</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.apache.logging.log4j</groupId>
-         <artifactId>log4j-core</artifactId>
+         <groupId>org.wildfly.openssl</groupId>
+         <artifactId>wildfly-openssl-java</artifactId>
+         <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
-         <optional>true</optional>
-      </dependency>
-      <dependency>
-         <groupId>org.wildfly.openssl</groupId>
-         <artifactId>wildfly-openssl-java</artifactId>
          <optional>true</optional>
       </dependency>
       <dependency>
@@ -107,14 +123,12 @@
       </resources>
       <plugins>
          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
             <configuration>
                <archive>
-                  <manifest>
-                     <addClasspath>true</addClasspath>
-                     <mainClass>${cli.main.class}</mainClass>
-                  </manifest>
+                  <manifestEntries>
+                     <Main-Class>${cli.main.class}</Main-Class>
+                  </manifestEntries>
                </archive>
             </configuration>
          </plugin>
@@ -155,6 +169,13 @@
    <profiles>
       <profile>
          <id>shade</id>
+         <dependencies>
+            <dependency>
+               <groupId>org.apache.logging.log4j</groupId>
+               <artifactId>log4j-slf4j-impl</artifactId>
+               <scope>compile</scope>
+            </dependency>
+         </dependencies>
          <build>
             <plugins>
                <plugin>
@@ -169,7 +190,10 @@
                         <configuration>
                            <transformers>
                               <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                 <mainClass>${cli.main.class}</mainClass>
+                                 <manifestEntries>
+                                    <Main-Class>${cli.main.class}</Main-Class>
+                                    <Multi-Release>true</Multi-Release>
+                                 </manifestEntries>
                               </transformer>
                            </transformers>
                         </configuration>
@@ -277,3 +301,4 @@
       </profile>
    </profiles>
 </project>
+

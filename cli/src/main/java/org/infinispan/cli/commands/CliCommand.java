@@ -37,7 +37,7 @@ public abstract class CliCommand implements Command<ContextAwareCommandInvocatio
       } catch (Throwable e) {
          // These are unhandled, show them in red
          Throwable cause = Util.getRootCause(e);
-         invocation.getShell().writeln(ANSI.RED_TEXT + cause.getClass().getName() +": " + cause.getLocalizedMessage() + ANSI.DEFAULT_TEXT);
+         invocation.getShell().writeln(ANSI.RED_TEXT + cause.getClass().getSimpleName() +": " + cause.getLocalizedMessage() + ANSI.DEFAULT_TEXT);
          return CommandResult.FAILURE;
       }
    }

@@ -1,5 +1,6 @@
 package org.infinispan.cli.impl;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -40,7 +41,7 @@ import org.infinispan.commons.util.Version;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class ContextImpl implements Context, AeshContext {
+public class ContextImpl implements Context, AeshContext, Closeable {
    private static final String CONFIG_FILE = "cli.properties";
    private Connection connection;
    private final Properties properties;
@@ -49,6 +50,7 @@ public class ContextImpl implements Context, AeshContext {
    private SSLContextSettings sslContext;
    private CommandRegistry<? extends CommandInvocation> registry;
    private final Path configPath;
+
 
    public ContextImpl(Properties defaults) {
       this.properties = new Properties(defaults);
@@ -68,6 +70,7 @@ public class ContextImpl implements Context, AeshContext {
             System.err.println(Messages.MSG.configLoadFailed(configFile.toString()));
          }
       }
+
    }
 
    @Override
@@ -208,10 +211,7 @@ public class ContextImpl implements Context, AeshContext {
 
    @Override
    public void disconnect() {
-      if (connection != null) {
-         Util.close(connection);
-         connection = null;
-      }
+      Util.close(connection);
       refreshPrompt();
    }
 
@@ -271,5 +271,10 @@ public class ContextImpl implements Context, AeshContext {
    @Override
    public String exportedVariable(String key) {
       return null;
+   }
+
+   @Override
+   public void close() {
+      disconnect();
    }
 }

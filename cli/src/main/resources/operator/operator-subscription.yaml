@@ -1,0 +1,11 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: infinispan
+  namespace: {{NAMESPACE}}
+spec:
+  channel: 2.0.x
+  installPlanApproval: Automatic
+  name: infinispan
+  source: community-operators
+  sourceNamespace: openshift-marketplace

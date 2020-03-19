@@ -100,5 +100,4 @@ public interface Context extends AeshContext {
          return name().toLowerCase().replace('_', '-');
       }
    }
-
 }

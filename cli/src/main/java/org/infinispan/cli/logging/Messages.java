@@ -21,15 +21,6 @@ import org.jboss.logging.annotations.MessageBundle;
 public interface Messages {
    Messages MSG = org.jboss.logging.Messages.getBundle(Messages.class);
 
-   @Message(value = "Unrecognized command-line argument `%s`.", id = 90001)
-   String unknownArgument(String argument);
-
-   @Message(value = "Invalid argument `%s`. Arguments must be prefixed with either - or --.", id = 90002)
-   String invalidArgument(String argument);
-
-   @Message(value = "Invalid argument `%s`. The - prefix must be used only for single-character arguments.", id = 90003)
-   String invalidShortArgument(String command);
-
    @Message(value = "Username: ")
    String username();
 
@@ -71,6 +62,9 @@ public interface Messages {
 
    @Message("Error: %s")
    IOException error(String s);
+
+   @Message("Error: %s")
+   RuntimeException genericError(String s, @Cause Throwable t);
 
    @Message("The user is not allowed to access the server resource: %s")
    AccessDeniedException forbidden(String s);
@@ -210,6 +204,25 @@ public interface Messages {
    @Message(value = "Wrong argument count: %d.")
    IllegalArgumentException wrongArgumentCount(int size);
 
+
    @Message(value = "Backup path on the server must be absolute")
    IllegalArgumentException backupAbsolutePathRequired();
+
+   @Message("No services found")
+   NoSuchElementException noServicesFound();
+
+   @Message("The service must be specified")
+   IllegalStateException specifyService();
+
+   @Message("The service '%s' is of the wrong type")
+   IllegalArgumentException wrongServiceType(String serviceName);
+
+   @Message("Cannot find service '%s'")
+   IllegalArgumentException noSuchService(String serviceName);
+
+   @Message("Cannot find generated secrets for service '%s'")
+   IllegalStateException noGeneratedSecret(String serviceName);
+
+   @Message("A namespace was not specified and a default has not been set")
+   IllegalStateException noDefaultNamespace();
 }
