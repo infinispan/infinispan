@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration name="InfinispanServerConfig" monitorInterval="60">
+<Configuration name="InfinispanServerConfig" monitorInterval="60" shutdownHook="disable">
   <Properties>
     <Property name="path">${sys:infinispan.server.log.path}</Property>
     <Property name="accessLogPattern">%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss Z}] &quot;%X{method} %m %X{protocol}&quot; %X{status} %X{requestSize} %X{responseSize} %X{duration}%n</Property>
