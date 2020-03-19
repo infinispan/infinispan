@@ -31,8 +31,12 @@ import org.infinispan.cli.connection.ConnectionFactory;
 import org.infinispan.cli.logging.Messages;
 import org.infinispan.cli.resources.Resource;
 import org.infinispan.cli.util.SystemUtils;
+import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
+
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
 
 /**
  * ContextImpl.
@@ -49,6 +53,7 @@ public class ContextImpl implements Context, AeshContext {
    private SSLContextSettings sslContext;
    private CommandRegistry<? extends CommandInvocation> registry;
    private final Path configPath;
+   private KubernetesClient kubernetesClient;
 
    public ContextImpl(Properties defaults) {
       this.properties = new Properties(defaults);
@@ -66,6 +71,12 @@ public class ContextImpl implements Context, AeshContext {
             properties.load(r);
          } catch (IOException e) {
             System.err.println(Messages.MSG.configLoadFailed(configFile.toString()));
+         }
+      }
+      for (ProcessInfo process = ProcessInfo.getInstance(); process != null ; process = process.getParent()) {
+         if (process.getName().contains("kubectl")) {
+            kubernetesClient = new DefaultKubernetesClient();
+            break;
          }
       }
    }
@@ -212,6 +223,7 @@ public class ContextImpl implements Context, AeshContext {
          Util.close(connection);
          connection = null;
       }
+      Util.close(kubernetesClient);
       refreshPrompt();
    }
 
@@ -271,5 +283,10 @@ public class ContextImpl implements Context, AeshContext {
    @Override
    public String exportedVariable(String key) {
       return null;
+   }
+
+   @Override
+   public KubernetesClient getKubernetesClient() {
+      return kubernetesClient;
    }
 }

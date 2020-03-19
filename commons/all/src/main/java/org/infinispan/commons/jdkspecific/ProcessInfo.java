@@ -48,7 +48,7 @@ public class ProcessInfo {
 
    @Override
    public String toString() {
-      return "Process{" +
+      return "Process[jdk8]{" +
             "name='" + name + '\'' +
             ", pid=" + pid +
             ", arguments=" + arguments +

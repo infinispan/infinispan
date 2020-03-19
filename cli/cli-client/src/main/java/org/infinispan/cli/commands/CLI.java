@@ -39,6 +39,7 @@ import org.infinispan.cli.impl.DefaultShell;
 import org.infinispan.cli.impl.SSLContextSettings;
 import org.infinispan.cli.util.ZeroSecurityHostnameVerifier;
 import org.infinispan.cli.util.ZeroSecurityTrustManager;
+import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.util.ServiceFinder;
 import org.wildfly.security.keystore.KeyStoreUtil;
 import org.wildfly.security.provider.util.ProviderUtil;
@@ -259,6 +260,7 @@ public class CLI extends CliCommand {
 
    public static void main(String[] args) {
       try {
+         System.out.println(ProcessInfo.getInstance());
          AeshCommandRuntimeBuilder runtimeBuilder = initialCommandRuntimeBuilder(new DefaultShell(), System.getProperties());
          AeshRuntimeRunner.builder().commandRuntime(runtimeBuilder.build()).args(args).execute();
       } catch (Exception e) {

@@ -15,6 +15,8 @@ import org.infinispan.cli.commands.CommandInputLine;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.impl.SSLContextSettings;
 
+import io.fabric8.kubernetes.client.KubernetesClient;
+
 /**
  * Context.
  *
@@ -78,6 +80,8 @@ public interface Context extends AeshContext {
 
    CommandRegistry<? extends CommandInvocation> getRegistry();
 
+   KubernetesClient getKubernetesClient();
+
    enum Property {
       TRUSTALL,
       TRUSTSTORE,
@@ -100,5 +104,4 @@ public interface Context extends AeshContext {
          return name().toLowerCase().replace('_', '-');
       }
    }
-
 }

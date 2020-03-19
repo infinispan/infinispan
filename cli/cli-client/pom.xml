@@ -35,8 +35,22 @@
          <artifactId>jboss-logging</artifactId>
       </dependency>
       <dependency>
-         <groupId>com.fasterxml.jackson.core</groupId>
-         <artifactId>jackson-core</artifactId>
+         <groupId>io.fabric8</groupId>
+         <artifactId>kubernetes-client</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.yaml</groupId>
+         <artifactId>snakeyaml</artifactId>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-core</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-slf4j-impl</artifactId>
       </dependency>
       <dependency>
          <groupId>org.jboss.remotingjmx</groupId>
@@ -67,6 +81,11 @@
          <artifactId>wildfly-elytron</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.wildfly.openssl</groupId>
+         <artifactId>wildfly-openssl-java</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
          <groupId>org.apache.logging.log4j</groupId>
          <artifactId>log4j-core</artifactId>
       </dependency>
@@ -85,6 +104,16 @@
          </resource>
       </resources>
       <plugins>
+         <plugin>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+               <archive>
+                  <manifestEntries>
+                     <Main-Class>${cli.main.class}</Main-Class>
+                  </manifestEntries>
+               </archive>
+            </configuration>
+         </plugin>
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
@@ -136,7 +165,10 @@
                         <configuration>
                            <transformers>
                               <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                 <mainClass>${cli.main.class}</mainClass>
+                                 <manifestEntries>
+                                    <Main-Class>${cli.main.class}</Main-Class>
+                                    <Multi-Release>true</Multi-Release>
+                                 </manifestEntries>
                               </transformer>
                            </transformers>
                         </configuration>
@@ -208,7 +240,7 @@
                            <arguments>
                               <argument>-cp</argument>
                               <classpath/>
-                              <argument>org.aesh.util.GraalReflectionGenerator</argument>
+                              <argument>org.infinispan.cli.util.aesh.graal.GraalReflectionFileGenerator</argument>
                               <argument>${cli.main.class}</argument>
                            </arguments>
                         </configuration>
@@ -224,9 +256,15 @@
                            <workingDirectory>${project.build.directory}</workingDirectory>
                            <arguments>
                               <argument>--verbose</argument>
+                              <argument>--no-fallback</argument>
+                              <argument>--allow-incomplete-classpath</argument>
+                              <argument>--enable-https</argument>
                               <argument>-H:+ReportUnsupportedElementsAtRuntime</argument>
                               <argument>-H:+ReportExceptionStackTraces</argument>
-                              <argument>-H:ReflectionConfigurationFiles=cli_reflection.json</argument>
+                              <argument>-H:ReflectionConfigurationFiles=cli_reflection.json,../cli.json</argument>
+                              <argument>-H:ResourceConfigurationFiles=../cli_resources.json</argument>
+                              <argument>-H:Log=registerResource:</argument>
+                              <argument>-H:+AddAllCharsets</argument>
                               <argument>-cp</argument>
                               <argument>${maven.compile.classpath}</argument>
                               <argument>-jar</argument>
