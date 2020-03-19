@@ -8,10 +8,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
 
-import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.commands.CommandsFactory;
@@ -37,6 +37,7 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -128,38 +129,45 @@ public class RecoveryManagerImpl implements RecoveryManager {
    }
 
    @Override
-   public void removeRecoveryInformation(Collection<Address> lockOwners, Xid xid, boolean sync, GlobalTransaction gtx,
+   public CompletionStage<Void> removeRecoveryInformation(Collection<Address> lockOwners, Xid xid, GlobalTransaction gtx,
                                          boolean fromCluster) {
       log.tracef("Forgetting tx information for %s", gtx);
       //todo make sure this gets broad casted or at least flushed
       if (rpcManager != null && !fromCluster) {
          TxCompletionNotificationCommand ftc = commandFactory.buildTxCompletionNotificationCommand(xid, gtx);
-         sendTxCompletionNotification(lockOwners, ftc, sync);
+         CompletionStage<Void> stage = sendTxCompletionNotification(lockOwners, ftc);
+         removeRecoveryInformation(xid);
+         return stage;
+      } else {
+         removeRecoveryInformation(xid);
+         return CompletableFutures.completedNull();
       }
-      removeRecoveryInformation(xid);
    }
 
    @Override
-   public void removeRecoveryInformationFromCluster(Collection<Address> where, long internalId, boolean sync) {
+   public CompletionStage<Void> removeRecoveryInformationFromCluster(Collection<Address> where, long internalId) {
       if (rpcManager != null) {
          TxCompletionNotificationCommand ftc = commandFactory.buildTxCompletionNotificationCommand(internalId);
-         sendTxCompletionNotification(where, ftc, sync);
+         CompletionStage<Void> stage = sendTxCompletionNotification(where, ftc);
+         removeRecoveryInformation(internalId);
+         return stage;
+      } else {
+         removeRecoveryInformation(internalId);
+         return CompletableFutures.completedNull();
       }
-      removeRecoveryInformation(internalId);
    }
 
-   private void sendTxCompletionNotification(Collection<Address> where, TxCompletionNotificationCommand ftc, boolean sync) {
-      if (sync) {
-         ftc.setTopologyId(rpcManager.getTopologyId());
-         CompletionStage<Void> completionStage;
-         if (where == null)
-            completionStage = rpcManager.invokeCommandOnAll(ftc, VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
-         else
-            completionStage = rpcManager.invokeCommand(where, ftc, VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
-         rpcManager.blocking(completionStage);
-      } else {
-         rpcManager.sendToMany(where, ftc, DeliverOrder.NONE);
-      }
+   private CompletionStage<Void> sendTxCompletionNotification(Collection<Address> where, TxCompletionNotificationCommand ftc) {
+      ftc.setTopologyId(rpcManager.getTopologyId());
+      CompletionStage<Void> completionStage;
+      if (where == null)
+         return rpcManager.invokeCommandOnAll(ftc, VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
+      else
+         return rpcManager.invokeCommand(where, ftc, VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
+   }
+
+   private void sendTxCompletionNotificationAsync(Collection<Address> where, TxCompletionNotificationCommand ftc) {
+      rpcManager.sendToMany(where, ftc, DeliverOrder.NONE);
    }
 
    @Override
@@ -284,7 +292,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    }
 
    @Override
-   public String forceTransactionCompletion(Xid xid, boolean commit) {
+   public CompletionStage<String> forceTransactionCompletion(Xid xid, boolean commit) {
       //this means that we have this as a local transaction that originated here
       LocalXaTransaction localTransaction = recoveryAwareTxTable().getLocalTransaction(xid);
       if (localTransaction != null) {
@@ -292,7 +300,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
          return completeTransaction(localTransaction, commit, xid);
       } else {
          RecoveryAwareRemoteTransaction tx = getPreparedTransaction(xid);
-         if (tx == null) return "Could not find transaction " + xid;
+         if (tx == null) return CompletableFuture.completedFuture("Could not find transaction " + xid);
          GlobalTransaction globalTransaction = tx.getGlobalTransaction();
          globalTransaction.setAddress(rpcManager.getAddress());
          globalTransaction.setRemote(false);
@@ -305,26 +313,27 @@ public class RecoveryManagerImpl implements RecoveryManager {
       }
    }
 
-   private String completeTransaction(LocalTransaction localTx, boolean commit, Xid xid) {
+   private CompletionStage<String> completeTransaction(LocalTransaction localTx, boolean commit, Xid xid) {
+      GlobalTransaction gtx = localTx.getGlobalTransaction();
       if (commit) {
-         try {
-            localTx.clearLookedUpEntries();
-            txCoordinator.prepare(localTx, true);
-            txCoordinator.commit(localTx, false);
-         } catch (XAException e) {
-            log.warnCouldNotCommitLocalTx(localTx, e);
-            return "Could not commit transaction " + xid + " : " + e.getMessage();
-         }
+         localTx.clearLookedUpEntries();
+         return txCoordinator.prepare(localTx, true)
+               .thenCompose(ignore -> txCoordinator.commit(localTx, false))
+               .thenCompose(ignore -> removeRecoveryInformation(null, xid, gtx, false))
+               .thenApply(ignore -> "Commit successful!")
+               .exceptionally(t -> {
+                  log.warnCouldNotCommitLocalTx(localTx, t);
+                  return "Could not commit transaction " + xid + " : " + t.getMessage();
+               });
       } else {
-         try {
-            txCoordinator.rollback(localTx);
-         } catch (XAException e) {
-            log.warnCouldNotRollbackLocalTx(localTx, e);
-            return "Could not commit transaction " + xid + " : " + e.getMessage();
-         }
+         return txCoordinator.rollback(localTx)
+               .thenCompose(ignore -> removeRecoveryInformation(null, xid, gtx, false))
+               .thenApply(ignore -> "Rollback successful")
+               .exceptionally(t -> {
+                  log.warnCouldNotRollbackLocalTx(localTx, t);
+                  return "Could not rollback transaction " + xid + " : " + t.getMessage();
+               });
       }
-      removeRecoveryInformation(null, xid, false, localTx.getGlobalTransaction(), false);
-      return commit ? "Commit successful!" : "Rollback successful";
    }
 
    @Override

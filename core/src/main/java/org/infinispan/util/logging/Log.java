@@ -983,15 +983,15 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Could not commit local tx %s", id = 270)
-   void warnCouldNotCommitLocalTx(Object transactionDescription, @Cause Exception e);
+   void warnCouldNotCommitLocalTx(Object transactionDescription, @Cause Throwable e);
 
    @LogMessage(level = WARN)
    @Message(value = "Could not rollback local tx %s", id = 271)
-   void warnCouldNotRollbackLocalTx(Object transactionDescription, @Cause Exception e);
+   void warnCouldNotRollbackLocalTx(Object transactionDescription, @Cause Throwable e);
 
    @LogMessage(level = WARN)
    @Message(value = "Exception removing recovery information", id = 272)
-   void warnExceptionRemovingRecovery(@Cause Exception e);
+   void warnExceptionRemovingRecovery(@Cause Throwable e);
 
    @Message(value = "Indexing can not be enabled on caches in Invalidation mode", id = 273)
    CacheConfigurationException invalidConfigurationIndexingWithInvalidation();

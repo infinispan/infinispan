@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 import javax.transaction.xa.Xid;
 
@@ -26,6 +27,7 @@ import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -95,17 +97,18 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public void removeRecoveryInformation(Collection<Address> where, Xid xid, boolean sync, GlobalTransaction gtx, boolean fromCluster) {
+      public CompletionStage<Void> removeRecoveryInformation(Collection<Address> where, Xid xid, GlobalTransaction gtx, boolean fromCluster) {
          if (swallowRemoveRecoveryInfoCalls){
             log.trace("PostCommitRecoveryStateTest$RecoveryManagerDelegate.removeRecoveryInformation");
+            return CompletableFutures.completedNull();
          } else {
-            this.rm.removeRecoveryInformation(where, xid, sync, null, false);
+            return this.rm.removeRecoveryInformation(where, xid, null, false);
          }
       }
 
       @Override
-      public void removeRecoveryInformationFromCluster(Collection<Address> where, long internalId, boolean sync) {
-         rm.removeRecoveryInformationFromCluster(where, internalId, sync);
+      public CompletionStage<Void> removeRecoveryInformationFromCluster(Collection<Address> where, long internalId) {
+         return rm.removeRecoveryInformationFromCluster(where, internalId);
       }
 
       @Override
@@ -140,7 +143,7 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public String forceTransactionCompletion(Xid xid, boolean commit) {
+      public CompletionStage<String> forceTransactionCompletion(Xid xid, boolean commit) {
          return rm.forceTransactionCompletion(xid, commit);
       }
 

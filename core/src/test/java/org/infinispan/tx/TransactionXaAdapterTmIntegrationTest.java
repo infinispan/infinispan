@@ -1,9 +1,12 @@
 package org.infinispan.tx;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.UUID;
+
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 
@@ -26,6 +29,8 @@ import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.XaTransactionTable;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -63,8 +68,10 @@ public class TransactionXaAdapterTmIntegrationTest {
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
       AsyncInterceptorChain invoker = mock(AsyncInterceptorChain.class);
 
+      when(invoker.invokeAsync(any(), any())).thenReturn(CompletableFutures.completedNull());
+
       TestingUtil.inject(txCoordinator, commandsFactory, icf, invoker, txTable, configuration);
-      xaAdapter = new TransactionXaAdapter(localTx, txTable);
+      xaAdapter = new TransactionXaAdapter(localTx, txTable, new WithinThreadExecutor());
 
       xaAdapter.start(xid, 0);
    }

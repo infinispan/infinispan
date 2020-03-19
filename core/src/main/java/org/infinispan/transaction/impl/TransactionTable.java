@@ -1,5 +1,6 @@
 package org.infinispan.transaction.impl;
 
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.util.logging.Log.CLUSTER;
 import static org.infinispan.util.logging.Log.CONTAINER;
@@ -13,9 +14,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +32,6 @@ import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
-import javax.transaction.xa.XAException;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
@@ -115,6 +117,8 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    @Inject TransactionOriginatorChecker transactionOriginatorChecker;
    @Inject TransactionManager transactionManager;
    @Inject ComponentRegistry componentRegistry;
+   @Inject @ComponentName(NON_BLOCKING_EXECUTOR)
+   Executor nonBlockingExecutor;
 
    /**
     * minTxTopologyId is the minimum topology ID across all ongoing local and remote transactions.
@@ -208,7 +212,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    public void enlist(Transaction transaction, LocalTransaction localTransaction) {
       if (!localTransaction.isEnlisted()) {
          SynchronizationAdapter sync =
-               new SynchronizationAdapter(localTransaction, this);
+               new SynchronizationAdapter(localTransaction, this, nonBlockingExecutor);
          if (transactionSynchronizationRegistry != null) {
             boolean needsSuspend = false;
             try {
@@ -250,7 +254,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    public void enlistClientTransaction(Transaction transaction, LocalTransaction localTransaction) {
       if (!localTransaction.isEnlisted()) {
-         SynchronizationAdapter sync = new SynchronizationAdapter(localTransaction, this);
+         SynchronizationAdapter sync = new SynchronizationAdapter(localTransaction, this, nonBlockingExecutor);
          try {
             transaction.registerSynchronization(sync);
          } catch (Exception e) {
@@ -888,35 +892,31 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       }
    }
 
-   public int beforeCompletion(LocalTransaction localTransaction) {
+   public CompletionStage<Integer> beforeCompletion(LocalTransaction localTransaction) {
       if (trace)
          log.tracef("beforeCompletion called for %s", localTransaction);
-      try {
-         txCoordinator.prepare(localTransaction);
-      } catch (XAException e) {
-         throw new CacheException("Could not prepare. ", e);//todo shall we just swallow this exception?
-      }
-      return 0;
+      return txCoordinator.prepare(localTransaction)
+            .exceptionally(t -> {
+                  throw new CacheException("Could not prepare. ", t);
+            });
    }
 
-   public void afterCompletion(LocalTransaction localTransaction, int status) {
+   public CompletionStage<Void> afterCompletion(LocalTransaction localTransaction, int status) {
       if (trace) {
          log.tracef("afterCompletion(%s) called for %s.", (Integer) status, localTransaction);
       }
-      boolean isOnePhase;
       if (status == Status.STATUS_COMMITTED) {
-         try {
-            isOnePhase = txCoordinator.commit(localTransaction, false);
-         } catch (XAException e) {
-            throw new CacheException("Could not commit.", e);
-         }
-         releaseLocksForCompletedTransaction(localTransaction, isOnePhase);
+         return txCoordinator.commit(localTransaction, false).handle((isOnePhase, t) -> {
+            if (t != null) {
+               throw new CacheException("Could not commit.", t);
+            }
+            releaseLocksForCompletedTransaction(localTransaction, isOnePhase);
+            return null;
+         });
       } else if (status == Status.STATUS_ROLLEDBACK) {
-         try {
-            txCoordinator.rollback(localTransaction);
-         } catch (XAException e) {
-            throw new CacheException("Could not commit.", e);
-         }
+         return txCoordinator.rollback(localTransaction).exceptionally(t -> {
+            throw new CacheException("Could not commit.", t);
+         });
       } else {
          throw new IllegalArgumentException("Unknown status: " + status);
       }
