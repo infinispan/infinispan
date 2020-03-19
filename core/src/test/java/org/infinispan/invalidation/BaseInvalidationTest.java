@@ -379,7 +379,11 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
    @DataProvider(name = "tx")
    public Object[][] tx() {
-      return new Object[][]{{false}, {true}};
+      if (isSync) {
+         return new Object[][]{{false}, {true}};
+      } else {
+         return new Object[][]{{false}};
+      }
    }
 
    @Test(dataProvider = "tx")
@@ -401,8 +405,14 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
                              .finish();
          controlledRpcManager.expectCommand(TxCompletionNotificationCommand.class)
                              .send();
+      } else if (isSync) {
+         controlledRpcManager.expectCommand(InvalidateCommand.class)
+                             .send()
+                             .expectResponse(address(1)).replace(CacheNotFoundResponse.INSTANCE)
+                             .finish();
       } else {
-         controlledRpcManager.expectCommand(InvalidateCommand.class).send().expectResponse(address(1)).replace(CacheNotFoundResponse.INSTANCE).finish();
+         controlledRpcManager.expectCommand(InvalidateCommand.class)
+                             .send();
       }
 
       future.get(10, TimeUnit.SECONDS);
