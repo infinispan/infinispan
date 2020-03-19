@@ -119,7 +119,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
          return CompletableFuture.completedFuture(response);
       }
       return future.handle((rv, throwable) -> {
-         CompletableFutures.rethrowException(throwable);
+         CompletableFutures.rethrowExceptionIfPresent(throwable);
 
          return responseGenerator.getResponse(cmd, rv);
       });

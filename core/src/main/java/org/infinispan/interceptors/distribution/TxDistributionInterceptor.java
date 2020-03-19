@@ -255,7 +255,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          localTx.locksAcquired(writeOwners);
          Collection<Address> recipients = isReplicated ? null : localTx.getCommitNodes(writeOwners, cacheTopology);
          CompletionStage<Object> remotePrepare =
-               prepareOnAffectedNodes(localTxCtx, (PrepareCommand) rCommand, recipients);
+               prepareOnAffectedNodes(localTxCtx, rCommand, recipients);
          return asyncValue(remotePrepare);
       });
    }
@@ -275,7 +275,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          }
          return remoteInvocation.handle((responses, t) -> {
             transactionRemotelyPrepared(ctx);
-            CompletableFutures.rethrowException(t);
+            CompletableFutures.rethrowExceptionIfPresent(t);
 
             checkTxCommandResponses(responses, command, (LocalTxInvocationContext) ctx, recipients);
             return null;

@@ -163,7 +163,7 @@ public class StateConsumerImpl implements StateConsumer {
    protected volatile CacheTopology cacheTopology;
    // The first topology in which the local node was a member. Any command with a lower
    // topology id will be ignored.
-   private volatile int firstTopologyAsMember = Integer.MAX_VALUE;
+   private final int firstTopologyAsMember = Integer.MAX_VALUE;
 
    /**
     * Indicates if there is a state transfer in progress. It is set to the new topology id when onTopologyUpdate with
@@ -491,12 +491,12 @@ public class StateConsumerImpl implements StateConsumer {
                      conflictManager.restartVersionRequests();
 
                      // rethrow the original exception, if any
-                     CompletableFutures.rethrowException(throwable);
+                     CompletableFutures.rethrowExceptionIfPresent(throwable);
                      return stateTransferFuture;
                   });
          }
 
-         CompletableFutures.rethrowException(throwable);
+         CompletableFutures.rethrowExceptionIfPresent(throwable);
          return CompletableFuture.completedFuture(stateTransferFuture);
       });
    }

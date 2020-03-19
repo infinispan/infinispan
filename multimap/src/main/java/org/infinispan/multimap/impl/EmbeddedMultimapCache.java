@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static org.infinispan.util.concurrent.CompletableFutures.rethrowException;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -128,7 +127,7 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
             cf = runAsync(() -> this.removeInternal(p));
          }
       } catch (SystemException e) {
-         rethrowException(e);
+         throw CompletableFutures.asCompletionException(e);
       }
       return cf;
    }
@@ -151,7 +150,7 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
             cf = supplyAsync(() -> containsEntryInternal(value));
          }
       } catch (SystemException e) {
-         rethrowException(e);
+         throw CompletableFutures.asCompletionException(e);
       }
       return cf;
    }
@@ -174,7 +173,7 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
             cf = supplyAsync(() -> sizeInternal());
          }
       } catch (SystemException e) {
-         rethrowException(e);
+         throw CompletableFutures.asCompletionException(e);
       }
       return cf;
    }

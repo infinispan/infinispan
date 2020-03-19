@@ -146,7 +146,7 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
       }
       return remoteInvocation.handle((responses, t) -> {
          transactionRemotelyPrepared(ctx);
-         CompletableFutures.rethrowException(t);
+         CompletableFutures.rethrowExceptionIfPresent(t);
 
          checkTxCommandResponses(responses, command, (TxInvocationContext<LocalTransaction>) ctx, recipients);
 
