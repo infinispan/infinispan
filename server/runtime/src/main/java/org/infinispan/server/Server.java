@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.apache.logging.log4j.LogManager;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.ConfigurationInfo;
@@ -409,12 +410,16 @@ public class Server implements ServerManagement, AutoCloseable {
       }
       // Shutdown the protocol servers in parallel
       protocolServers.values().parallelStream().forEach(ProtocolServer::stop);
-      cacheManagers.values().forEach(cm -> SecurityActions.stopCacheManager(cm));
+      cacheManagers.values().forEach(SecurityActions::stopCacheManager);
       this.status = ComponentStatus.TERMINATED;
       // Don't wait for the scheduler to finish
       if (scheduler != null) {
          scheduler.shutdown();
       }
+      // Shutdown Log4jk context manually as we set shutdownHook="disable"
+      // Log4j's shutdownHook may run concurrently with our shutdownHook,
+      // disabling logging before the server has finished stopping.
+      LogManager.shutdown();
    }
 
    private void serverStopHandler(ExitStatus exitStatus) {
