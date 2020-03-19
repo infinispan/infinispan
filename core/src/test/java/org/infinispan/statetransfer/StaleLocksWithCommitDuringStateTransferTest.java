@@ -20,6 +20,7 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 @Test(testName = "statetransfer.StaleLocksWithCommitDuringStateTransferTest", groups = "functional")
@@ -177,9 +178,9 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       try {
          // finally commit or rollback the transaction
          if (commit) {
-            txCoordinator.commit(localTx, false);
+            CompletionStages.join(txCoordinator.commit(localTx, false));
          } else {
-            txCoordinator.rollback(localTx);
+            CompletionStages.join(txCoordinator.rollback(localTx));
          }
 
          // make the transaction manager forget about our tx so that we don't get rollback exceptions in the log

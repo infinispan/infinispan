@@ -4,6 +4,9 @@ import static javax.transaction.xa.XAResource.XA_OK;
 import static javax.transaction.xa.XAResource.XA_RDONLY;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
@@ -26,6 +29,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -55,6 +60,9 @@ public class TransactionCoordinator {
 
    private boolean defaultOnePhaseCommit;
    private boolean use1PcForAutoCommitTransactions;
+
+   private static final CompletableFuture<Integer> XA_OKAY_STAGE = CompletableFuture.completedFuture(XA_OK);
+   private static final Function<Object, Integer> XA_RDONLY_APPLY = ignore -> XA_RDONLY;
 
    @Start(priority = 1)
    void setStartStatus() {
@@ -99,16 +107,19 @@ public class TransactionCoordinator {
       }
    }
 
-   public final int prepare(LocalTransaction localTransaction) throws XAException {
+   public final CompletionStage<Integer> prepare(LocalTransaction localTransaction) {
       return prepare(localTransaction, false);
    }
 
-   public final int prepare(LocalTransaction localTransaction, boolean replayEntryWrapping) throws XAException {
-      validateNotMarkedForRollback(localTransaction);
+   public final CompletionStage<Integer> prepare(LocalTransaction localTransaction, boolean replayEntryWrapping) {
+      CompletionStage<Integer> markRollbackStage = validateNotMarkedForRollback(localTransaction);
+      if (markRollbackStage != null) {
+         return markRollbackStage;
+      }
 
       if (isOnePhaseCommit(localTransaction)) {
          if (trace) log.tracef("Received prepare for tx: %s. Skipping call as 1PC will be used.", localTransaction);
-         return XA_OK;
+         return XA_OKAY_STAGE;
       }
 
       PrepareCommand prepareCommand = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), false);
@@ -116,75 +127,92 @@ public class TransactionCoordinator {
 
       LocalTxInvocationContext ctx = icf.running().createTxInvocationContext(localTransaction);
       prepareCommand.setReplayEntryWrapping(replayEntryWrapping);
-      try {
-         invoker.running().invoke(ctx, prepareCommand);
+      CompletionStage<Object> prepareStage = invoker.running().invokeAsync(ctx, prepareCommand);
+      return CompletionStages.handleAndCompose(prepareStage, (ignore, prepareThrowable) -> {
+         if (prepareThrowable != null) {
+            if (shuttingDown)
+               log.trace("Exception while preparing back, probably because we're shutting down.");
+            else
+               log.errorProcessingPrepare(prepareThrowable);
+
+            //rollback transaction before throwing the exception as there's no guarantee the TM calls XAResource.rollback
+            //after prepare failed.
+            return CompletionStages.handleAndCompose(rollback(localTransaction), (ignore2, rollbackThrowable) -> {
+               // XA_RBROLLBACK tells the TM that we've rolled back already: the TM shouldn't call rollback after this.
+               XAException xe = new XAException(XAException.XA_RBROLLBACK);
+               if (rollbackThrowable != null) {
+                  rollbackThrowable.addSuppressed(prepareThrowable);
+                  xe.initCause(rollbackThrowable);
+               } else {
+                  xe.initCause(prepareThrowable);
+               }
+               return CompletableFutures.completedExceptionFuture(xe);
+            });
+         }
          if (localTransaction.isReadOnly()) {
             if (trace) log.tracef("Readonly transaction: %s", localTransaction.getGlobalTransaction());
             // force a cleanup to release any objects held.  Some TMs don't call commit if it is a READ ONLY tx.  See ISPN-845
-            commitInternal(ctx);
-            return XA_RDONLY;
+            return commitInternal(ctx)
+                  .thenApply(XA_RDONLY_APPLY);
          } else {
             txTable.running().localTransactionPrepared(localTransaction);
-            return XA_OK;
+            return XA_OKAY_STAGE;
          }
-      } catch (Throwable e) {
-         if (shuttingDown)
-            log.trace("Exception while preparing back, probably because we're shutting down.");
-         else
-            log.errorProcessingPrepare(e);
-
-         //rollback transaction before throwing the exception as there's no guarantee the TM calls XAResource.rollback
-         //after prepare failed.
-         rollback(localTransaction);
-         // XA_RBROLLBACK tells the TM that we've rolled back already: the TM shouldn't call rollback after this.
-         XAException xe = new XAException(XAException.XA_RBROLLBACK);
-         xe.initCause(e);
-         throw xe;
-      }
+      });
    }
 
-   public boolean commit(LocalTransaction localTransaction, boolean isOnePhase) throws XAException {
+   public CompletionStage<Boolean> commit(LocalTransaction localTransaction, boolean isOnePhase) {
       if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
       LocalTxInvocationContext ctx = icf.running().createTxInvocationContext(localTransaction);
       if (isOnePhaseCommit(localTransaction) || isOnePhase) {
-         validateNotMarkedForRollback(localTransaction);
+         CompletionStage<Boolean> markRollbackStage = validateNotMarkedForRollback(localTransaction);
+         if (markRollbackStage != null) {
+            return markRollbackStage;
+         }
 
          if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
          List<WriteCommand> modifications = localTransaction.getModifications();
          PrepareCommand command = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), modifications, true);
-         try {
-            invoker.running().invoke(ctx, command);
-         } catch (Throwable e) {
-            handleCommitFailure(e, true, ctx);
-         }
-         return true;
+         return CompletionStages.handleAndCompose(invoker.running().invokeAsync(ctx, command),
+               (ignore, t) -> {
+                  if (t != null) {
+                     return handleCommitFailure(t, true, ctx);
+                  }
+                  return CompletableFutures.completedTrue();
+               });
       } else if (!localTransaction.isReadOnly()) {
-         commitInternal(ctx);
+         return commitInternal(ctx);
       }
-      return false;
+      return CompletableFutures.completedFalse();
    }
 
-   public void rollback(LocalTransaction localTransaction) throws XAException {
-      try {
-         rollbackInternal(icf.running().createTxInvocationContext(localTransaction));
-      } catch (Throwable e) {
-         if (shuttingDown)
-            log.trace("Exception while rolling back, probably because we're shutting down.");
-         else
-            log.errorRollingBack(e);
-
-         final Transaction transaction = localTransaction.getTransaction();
-         //this might be possible if the cache has stopped and TM still holds a reference to the XAResource
-         if (transaction != null) {
-            txTable.running().failureCompletingTransaction(transaction);
-         }
-         XAException xe = new XAException(XAException.XAER_RMERR);
-         xe.initCause(e);
-         throw xe;
-      }
+   public CompletionStage<Void> rollback(LocalTransaction localTransaction) {
+      return CompletionStages.handleAndCompose(rollbackInternal(icf.running().createTxInvocationContext(localTransaction)),
+            (ignore, t) -> {
+               if (t != null) {
+                  return handleRollbackFailure(t, localTransaction);
+               }
+               return CompletableFutures.completedNull();
+            });
    }
 
-   private void handleCommitFailure(Throwable e, boolean onePhaseCommit, LocalTxInvocationContext ctx) throws XAException {
+   private <T> CompletionStage<T> handleRollbackFailure(Throwable t, LocalTransaction localTransaction) {
+      if (shuttingDown)
+         log.trace("Exception while rolling back, probably because we're shutting down.");
+      else
+         log.errorRollingBack(t);
+
+      final Transaction transaction = localTransaction.getTransaction();
+      //this might be possible if the cache has stopped and TM still holds a reference to the XAResource
+      if (transaction != null) {
+         txTable.running().failureCompletingTransaction(transaction);
+      }
+      XAException xe = new XAException(XAException.XAER_RMERR);
+      xe.initCause(t);
+      return CompletableFutures.completedExceptionFuture(t);
+   }
+
+   private <T> CompletionStage<T> handleCommitFailure(Throwable e, boolean onePhaseCommit, LocalTxInvocationContext ctx) {
       if (trace) log.tracef("Couldn't commit transaction %s, trying to rollback.", ctx.getCacheTransaction());
       if (onePhaseCommit) {
          log.errorProcessing1pcPrepareCommand(e);
@@ -203,38 +231,44 @@ public class TransactionCoordinator {
          // inform the TM that a resource manager error has occurred in the transaction branch (XAER_RMERR).
          XAException xe = new XAException(XAException.XAER_RMERR);
          xe.initCause(e);
-         throw xe;
+         return CompletableFutures.completedExceptionFuture(xe);
       } finally {
          txTable.running().failureCompletingTransaction(ctx.getTransaction());
       }
       XAException xe = new XAException(XAException.XA_HEURRB);
       xe.initCause(e);
-      throw xe; //this is a heuristic rollback
+      return CompletableFutures.completedExceptionFuture(xe); //this is a heuristic rollback
    }
 
-   private void commitInternal(LocalTxInvocationContext ctx) throws XAException {
+   private CompletionStage<Boolean> commitInternal(LocalTxInvocationContext ctx) {
       CommitCommand commitCommand = commandCreator.createCommitCommand(ctx.getGlobalTransaction());
-      try {
-         invoker.running().invoke(ctx, commitCommand);
+      CompletableFuture<Object> commitStage = invoker.running().invokeAsync(ctx, commitCommand);
+      return CompletionStages.handleAndCompose(commitStage, (ignore, t) -> {
+         if (t != null) {
+            return handleCommitFailure(t, false, ctx);
+         }
          txTable.running().removeLocalTransaction(ctx.getCacheTransaction());
-      } catch (Throwable e) {
-         handleCommitFailure(e, false, ctx);
-      }
+         return CompletableFutures.completedFalse();
+      });
    }
 
-   private void rollbackInternal(LocalTxInvocationContext ctx) throws Throwable {
+   private CompletionStage<Void> rollbackInternal(LocalTxInvocationContext ctx) {
       if (trace) log.tracef("rollback transaction %s ", ctx.getGlobalTransaction());
       RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(ctx.getGlobalTransaction());
-      invoker.running().invoke(ctx, rollbackCommand);
-      txTable.running().removeLocalTransaction(ctx.getCacheTransaction());
+      return invoker.running().invokeAsync(ctx, rollbackCommand)
+            .thenRun(() ->
+                  txTable.running().removeLocalTransaction(ctx.getCacheTransaction())
+            );
    }
 
-   private void validateNotMarkedForRollback(LocalTransaction localTransaction) throws XAException {
+   private <T> CompletionStage<T> validateNotMarkedForRollback(LocalTransaction localTransaction) {
       if (localTransaction.isMarkedForRollback()) {
          if (trace) log.tracef("Transaction already marked for rollback. Forcing rollback for %s", localTransaction);
-         rollback(localTransaction);
-         throw new XAException(XAException.XA_RBROLLBACK);
+         return rollback(localTransaction).thenApply(ignore -> {
+            throw CompletableFutures.asCompletionException(new XAException(XAException.XA_RBROLLBACK));
+         });
       }
+      return null;
    }
 
    public boolean is1PcForAutoCommitTransaction(LocalTransaction localTransaction) {

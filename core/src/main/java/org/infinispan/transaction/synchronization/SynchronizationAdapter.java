@@ -1,10 +1,14 @@
 package org.infinispan.transaction.synchronization;
 
+import java.util.concurrent.Executor;
+
 import javax.transaction.Synchronization;
 
 import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * {@link Synchronization} implementation for integrating with the TM.
@@ -16,21 +20,25 @@ import org.infinispan.transaction.impl.TransactionTable;
 public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements Synchronization {
    private final LocalTransaction localTransaction;
    private final TransactionTable txTable;
+   private final Executor executor;
 
-   public SynchronizationAdapter(LocalTransaction localTransaction, TransactionTable txTable) {
+   public SynchronizationAdapter(LocalTransaction localTransaction, TransactionTable txTable, Executor executor) {
       super(localTransaction);
       this.localTransaction = localTransaction;
       this.txTable = txTable;
+      this.executor = executor;
    }
 
    @Override
    public void beforeCompletion() {
-      txTable.beforeCompletion(localTransaction);
+      CompletionStages.join(CompletableFutures.completedNull()
+            .thenComposeAsync(ignore -> txTable.beforeCompletion(localTransaction), executor));
    }
 
    @Override
    public void afterCompletion(int status) {
-      txTable.afterCompletion(localTransaction, status);
+      CompletionStages.join(CompletableFutures.completedNull()
+            .thenComposeAsync(ignore -> txTable.afterCompletion(localTransaction, status), executor));
    }
 
    @Override

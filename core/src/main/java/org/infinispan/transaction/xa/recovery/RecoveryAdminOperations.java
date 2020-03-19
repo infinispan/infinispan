@@ -14,6 +14,7 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -95,13 +96,13 @@ public class RecoveryAdminOperations {
          @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
          @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
          @Parameter(name = "branchQualifier", description = "The branchQualifier of the transaction") byte[] branchQualifier) {
-      recoveryManager.removeRecoveryInformation(null, XidImpl.create(formatId, globalTxId, branchQualifier), true, null, false);
+      CompletionStages.join(recoveryManager.removeRecoveryInformation(null, XidImpl.create(formatId, globalTxId, branchQualifier), null, false));
       return "Recovery info removed.";
    }
 
    @ManagedOperation(description = "Removes recovery info for the given transaction.", displayName="Remove recovery info by internal id")
    public String forget(@Parameter(name = "internalId", description = "The internal identifier of the transaction") long internalId) {
-      recoveryManager.removeRecoveryInformationFromCluster(null, internalId, true);
+      CompletionStages.join(recoveryManager.removeRecoveryInformationFromCluster(null, internalId));
       return "Recovery info removed.";
    }
 
@@ -128,7 +129,7 @@ public class RecoveryAdminOperations {
       //try to run it locally at first
       if (i.isLocal()) {
          log.tracef("Forcing completion of local transaction: %s", i);
-         return recoveryManager.forceTransactionCompletion(xid, commit);
+         return CompletionStages.join(recoveryManager.forceTransactionCompletion(xid, commit));
       } else {
          log.tracef("Forcing completion of remote transaction: %s", i);
          Set<Address> owners = i.getOwners();

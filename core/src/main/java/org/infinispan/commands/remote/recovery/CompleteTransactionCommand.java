@@ -3,7 +3,6 @@ package org.infinispan.commands.remote.recovery;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import javax.transaction.xa.Xid;
@@ -50,7 +49,7 @@ public class CompleteTransactionCommand extends BaseRpcCommand {
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
       RecoveryManager recoveryManager = componentRegistry.getRecoveryManager().running();
-      return CompletableFuture.completedFuture(recoveryManager.forceTransactionCompletion(xid, commit));
+      return recoveryManager.forceTransactionCompletion(xid, commit);
    }
 
    @Override
