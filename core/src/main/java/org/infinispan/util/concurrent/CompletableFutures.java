@@ -157,8 +157,10 @@ public class CompletableFutures {
       }
    }
 
-   public static void rethrowException(Throwable t) {
-      if (t != null) throw asCompletionException(t);
+   public static void rethrowExceptionIfPresent(Throwable t) {
+      if (t != null) {
+         throw asCompletionException(t);
+      }
    }
 
    public static Throwable extractException(Throwable t) {

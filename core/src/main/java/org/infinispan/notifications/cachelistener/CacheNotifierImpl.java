@@ -1111,9 +1111,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                log.tracef("Listener %s initial state for cache completed", generatedId);
             }
 
-            if (t != null) {
-               CompletableFutures.rethrowException(t);
-            }
+            CompletableFutures.rethrowExceptionIfPresent(t);
          });
       }
       return stage;
@@ -1414,7 +1412,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                log.tracef("Listener %s initial state for cache completed", generatedId);
             }
 
-            CompletableFutures.rethrowException(t);
+            CompletableFutures.rethrowExceptionIfPresent(t);
          });
       }
 

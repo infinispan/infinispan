@@ -50,7 +50,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.impl.ClusteringInterceptor;
-import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -312,7 +311,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return asyncValue(remoteInvocation.handle((responses, t) -> {
          // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
          command.setValueMatcher(originalMatcher.matcherForRetry());
-         CompletableFutures.rethrowException(t instanceof RemoteException ? t.getCause() : t);
+         CompletableFutures.rethrowExceptionIfPresent(t);
          return localResult;
       }));
    }
@@ -475,7 +474,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       private final List<Object> keys;
       private final int destinationIndex;
       private final Map<Object, Collection<Address>> contactedNodes;
-      private final ReadManyCommandHelper<C> helper;;
+      private final ReadManyCommandHelper<C> helper;
 
       private ReadManyHandler(Address target, MergingCompletableFuture<Object> allFuture, InvocationContext ctx, C command, List<Object> keys,
                               Map<Object, Collection<Address>> contactedNodes, int destinationIndex, ReadManyCommandHelper<C> helper) {
@@ -698,7 +697,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                                               rpcManager.getSyncRpcOptions());
          return asyncValue(rpc).thenApply(ctx, command, (rCtx, rCommand, response) -> {
             Object responseValue = ((SuccessfulResponse) response).getResponseValue();
-            return unwrapFunctionalResultOnOrigin(rCtx, ((ReadOnlyKeyCommand) rCommand).getKey(), responseValue);
+            return unwrapFunctionalResultOnOrigin(rCtx, rCommand.getKey(), responseValue);
          });
       } else {
          // This has LOCAL flags, just wrap NullCacheEntry and let the command run
@@ -737,7 +736,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
       return asyncValue(remoteInvocation).andHandle(ctx, command, (rCtx, dataWriteCommand, rv, t) -> {
          dataWriteCommand.setValueMatcher(dataWriteCommand.getValueMatcher().matcherForRetry());
-         CompletableFutures.rethrowException(t);
+         CompletableFutures.rethrowExceptionIfPresent(t);
 
          Response response = ((Response) rv);
          if (!response.isSuccessful()) {
@@ -813,8 +812,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    private class ClusteredReadCommandGenerator implements Function<Address, ReplicableCommand> {
       private final Map<Address, List<Object>> requestedKeys;
-      private long flags;
-      private int topologyId;
+      private final long flags;
+      private final int topologyId;
       private final GlobalTransaction gtx;
 
       public ClusteredReadCommandGenerator(Map<Address, List<Object>> requestedKeys, long flags, int topologyId,
