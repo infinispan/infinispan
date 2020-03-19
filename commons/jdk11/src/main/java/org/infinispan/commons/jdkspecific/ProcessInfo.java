@@ -50,7 +50,7 @@ public class ProcessInfo {
 
    @Override
    public String toString() {
-      return "Process{" +
+      return "Process[jdk11]{" +
             "name='" + name + '\'' +
             ", pid=" + pid +
             ", ppid=" + ppid +

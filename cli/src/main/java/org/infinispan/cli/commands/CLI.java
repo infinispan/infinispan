@@ -14,7 +14,9 @@ import org.aesh.AeshRuntimeRunner;
 import org.aesh.command.AeshCommandRuntimeBuilder;
 import org.aesh.command.Command;
 import org.aesh.command.CommandResult;
+import org.aesh.command.CommandRuntime;
 import org.aesh.command.GroupCommandDefinition;
+import org.aesh.command.impl.AeshCommandRuntime;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.impl.registry.AeshCommandRegistryBuilder;
 import org.aesh.command.invocation.CommandInvocation;
@@ -27,6 +29,7 @@ import org.aesh.io.Resource;
 import org.aesh.readline.ReadlineConsole;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.activators.ContextAwareCommandActivatorProvider;
+import org.infinispan.cli.commands.kubernetes.Kube;
 import org.infinispan.cli.completers.ContextAwareCompleterInvocationProvider;
 import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.cli.impl.CliCommandNotFoundHandler;
@@ -36,10 +39,13 @@ import org.infinispan.cli.impl.ContextAwareCommandInvocationProvider;
 import org.infinispan.cli.impl.ContextAwareQuitHandler;
 import org.infinispan.cli.impl.ContextImpl;
 import org.infinispan.cli.impl.DefaultShell;
+import org.infinispan.cli.impl.KubernetesContextImpl;
 import org.infinispan.cli.impl.SSLContextSettings;
 import org.infinispan.cli.util.ZeroSecurityHostnameVerifier;
 import org.infinispan.cli.util.ZeroSecurityTrustManager;
+import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.util.ServiceFinder;
+import org.infinispan.commons.util.Util;
 import org.wildfly.security.keystore.KeyStoreUtil;
 import org.wildfly.security.provider.util.ProviderUtil;
 
@@ -70,7 +76,9 @@ import org.wildfly.security.provider.util.ProviderUtil;
             Echo.class,
             Encoding.class,
             Get.class,
+            Logging.class,
             Ls.class,
+            Migrate.class,
             Patch.class,
             Put.class,
             Query.class,
@@ -79,8 +87,10 @@ import org.wildfly.security.provider.util.ProviderUtil;
             Reset.class,
             Run.class,
             Schema.class,
+            Server.class,
             Shutdown.class,
             Site.class,
+            Task.class,
             User.class,
             Version.class
       })
@@ -236,8 +246,15 @@ public class CLI extends CliCommand {
    }
 
    private static AeshCommandRuntimeBuilder initialCommandRuntimeBuilder(Shell shell, Properties properties) throws CommandRegistryException {
-      AeshCommandRegistryBuilder registryBuilder = AeshCommandRegistryBuilder.builder().command(CLI.class);
-      Context context = new ContextImpl(properties);
+      AeshCommandRegistryBuilder registryBuilder = AeshCommandRegistryBuilder.builder();
+      Context context;
+      if (isKubernetesMode()) {
+         context = new KubernetesContextImpl(properties);
+         registryBuilder.command(Kube.class);
+      } else {
+         context = new ContextImpl(properties);
+         registryBuilder.command(CLI.class);
+      }
       AeshCommandRuntimeBuilder runtimeBuilder = AeshCommandRuntimeBuilder.builder();
       runtimeBuilder
             .commandActivatorProvider(new ContextAwareCommandActivatorProvider(context))
@@ -250,10 +267,15 @@ public class CLI extends CliCommand {
       return runtimeBuilder;
    }
 
+   private static boolean isKubernetesMode() {
+      return ProcessInfo.getInstance().getName().contains("kubectl") || Boolean.getBoolean("infinispan.cli.kubernetes");
+   }
+
    public static void main(Shell shell, String[] args, Properties properties) {
       try {
-         AeshCommandRuntimeBuilder runtimeBuilder = initialCommandRuntimeBuilder(shell, properties);
-         AeshRuntimeRunner.builder().commandRuntime(runtimeBuilder.build()).args(args).execute();
+         CommandRuntime runtime = initialCommandRuntimeBuilder(shell, properties).build();
+         AeshRuntimeRunner.builder().commandRuntime(runtime).args(args).execute();
+         Util.close((AutoCloseable) runtime.getAeshContext());
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
@@ -261,8 +283,9 @@ public class CLI extends CliCommand {
 
    public static void main(String[] args) {
       try {
-         AeshCommandRuntimeBuilder runtimeBuilder = initialCommandRuntimeBuilder(new DefaultShell(), System.getProperties());
-         AeshRuntimeRunner.builder().commandRuntime(runtimeBuilder.build()).args(args).execute();
+         CommandRuntime runtime = (AeshCommandRuntime) initialCommandRuntimeBuilder(new DefaultShell(), System.getProperties()).build();
+         AeshRuntimeRunner.builder().commandRuntime(runtime).args(args).execute();
+         Util.close((AutoCloseable) runtime.getAeshContext());
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
