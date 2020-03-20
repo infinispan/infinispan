@@ -138,7 +138,7 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       });
    }
 
-   @Test(enabled = false, description = "ISPN-11305")
+   @Test
    public void testQueryReturnsNullWhenProjectingCacheValue() throws Exception {
       prepareData();
 
