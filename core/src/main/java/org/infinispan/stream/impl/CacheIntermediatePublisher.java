@@ -21,13 +21,14 @@ import org.reactivestreams.Publisher;
 import io.reactivex.Flowable;
 
 /**
- * Function that is used to bridge DistributedCacheStream and CluserPublisherManager worlds.
+ * Function that is used to encapsulate multiple intermediate operations and perform them lazily when the function
+ * is applied.
  * @param <R>
  */
-public final class CacheStreamIntermediatePublisher<R> implements ModifiedValueFunction<Publisher<Object>, Publisher<R>>, InjectableComponent {
+public final class CacheIntermediatePublisher<R> implements ModifiedValueFunction<Publisher<Object>, Publisher<R>>, InjectableComponent {
    private final Queue<IntermediateOperation> intOps;
 
-   CacheStreamIntermediatePublisher(Queue<IntermediateOperation> intOps) {
+   public CacheIntermediatePublisher(Queue<IntermediateOperation> intOps) {
       this.intOps = intOps;
    }
 
@@ -61,20 +62,20 @@ public final class CacheStreamIntermediatePublisher<R> implements ModifiedValueF
       }
    }
 
-   public static final class ReducerExternalizer implements AdvancedExternalizer<CacheStreamIntermediatePublisher> {
+   public static final class ReducerExternalizer implements AdvancedExternalizer<CacheIntermediatePublisher> {
       @Override
-      public void writeObject(ObjectOutput output, CacheStreamIntermediatePublisher object) throws IOException {
+      public void writeObject(ObjectOutput output, CacheIntermediatePublisher object) throws IOException {
          output.writeObject(object.intOps);
       }
 
       @Override
-      public CacheStreamIntermediatePublisher readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new CacheStreamIntermediatePublisher((Queue) input.readObject());
+      public CacheIntermediatePublisher readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new CacheIntermediatePublisher((Queue) input.readObject());
       }
 
       @Override
-      public Set<Class<? extends CacheStreamIntermediatePublisher>> getTypeClasses() {
-         return Collections.singleton(CacheStreamIntermediatePublisher.class);
+      public Set<Class<? extends CacheIntermediatePublisher>> getTypeClasses() {
+         return Collections.singleton(CacheIntermediatePublisher.class);
       }
 
       @Override

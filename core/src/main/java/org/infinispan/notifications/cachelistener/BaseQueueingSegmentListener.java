@@ -75,12 +75,12 @@ abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implemen
    }
 
    @Override
-   public CompletionStage<Void> notifiedKey(K key) {
+   public CompletionStage<Void> delayProcessing() {
       return CompletableFutures.completedNull();
    }
 
    @Override
-   public final void segmentCompleted(Set<Integer> segments) {
+   public void accept(int segment) {
       // Don't do anything here - should implement accept if segment completions are desired
    }
 

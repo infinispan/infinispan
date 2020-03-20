@@ -130,6 +130,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
       Publisher<KeyValueEntry<String, Object[]>> continuously = store.findContinuously(queryRequest);
       continuously.subscribe(personTestSubscriber);
 
+      personTestSubscriber.awaitCount(6);
       personTestSubscriber.assertValueCount(6);
       List<String> firstNames = personTestSubscriber
             .values()
@@ -155,6 +156,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
 
       continuously.subscribe(personTestSubscriber);
 
+      personTestSubscriber.awaitCount(6);
       personTestSubscriber.assertValueCount(6);
    }
 

@@ -19,13 +19,15 @@ import static org.infinispan.notifications.cachelistener.event.Event.Type.TRANSA
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
@@ -33,14 +35,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.CacheStream;
+import org.infinispan.cache.impl.EncoderEntryMapper;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commons.CacheException;
@@ -128,9 +129,19 @@ import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFi
 import org.infinispan.notifications.impl.AbstractListenerImpl;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.reactive.publisher.PublisherTransformers;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
+import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.stream.impl.CacheIntermediatePublisher;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
+import org.infinispan.stream.impl.intops.object.FilterOperation;
+import org.infinispan.stream.impl.intops.object.FlatMapOperation;
+import org.infinispan.stream.impl.intops.object.MapOperation;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
@@ -139,6 +150,9 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
 
 /**
  * Helper class that handles all notifications to registered listeners.
@@ -211,6 +225,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Inject ComponentRef<AdvancedCache<K, V>> cache;
    @Inject ComponentRef<ClusteringDependentLogic> clusteringDependentLogic;
    @Inject ComponentRef<AsyncInterceptorChain> interceptorChain;
+   @Inject ComponentRef<ClusterPublisherManager<K, V>> publisherManager;
 
    private ClusterExecutor clusterExecutor;
    private final Map<Object, UUID> clusterListenerIDs = new ConcurrentHashMap<>();
@@ -1070,51 +1085,89 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       }
 
       // If we have a segment listener handler, it means we have to do initial state
-      QueueingSegmentListener handler = segmentHandler.remove(generatedId);
+      QueueingSegmentListener<K, V, ? extends Event<K, V>> handler = segmentHandler.remove(generatedId);
       if (handler != null) {
          if (trace) {
             log.tracef("Listener %s requests initial state for cache", generatedId);
          }
-         CacheStream entryStream = cache.wired().withEncoding(keyConversion.getEncoderClass(), valueConversion.getEncoderClass()).cacheEntrySet().stream();
-         Stream<CacheEntry<K, V>> usedStream = entryStream.segmentCompletionListener(handler);
+         Queue<IntermediateOperation> intermediateOperations = new ArrayDeque<>();
+
+         if (keyDataConversion != DataConversion.IDENTITY_KEY && valueDataConversion != DataConversion.IDENTITY_VALUE) {
+            intermediateOperations.add(new MapOperation(EncoderEntryMapper.newCacheEntryMapper(
+                  keyDataConversion, valueDataConversion, entryFactory)));
+         }
 
          if (filter instanceof CacheEventFilterConverter && (filter == converter || converter == null)) {
             // Hacky cast to prevent other casts
-            usedStream = CacheFilters.filterAndConvert(usedStream,
-                  new CacheEventFilterConverterAsKeyValueFilterConverter<>((CacheEventFilterConverter<K, V, V>) filter));
+            intermediateOperations.add(new FlatMapOperation(CacheFilters.flatMap(
+                  new CacheEventFilterConverterAsKeyValueFilterConverter<>((CacheEventFilterConverter) filter))));
          } else {
-            usedStream = filter == null ? usedStream : usedStream.filter(CacheFilters.predicate(
-                  new CacheEventFilterAsKeyValueFilter<>(filter)));
-            usedStream = converter == null ? usedStream : usedStream.map(CacheFilters.function(
-                  new CacheEventConverterAsConverter(converter)));
+            if (filter != null) {
+               intermediateOperations.add(new FilterOperation(CacheFilters.predicate(
+                     new CacheEventFilterAsKeyValueFilter<>(filter))));
+            }
+            if (converter != null) {
+               intermediateOperations.add(new MapOperation(CacheFilters.function(
+                     new CacheEventConverterAsConverter(converter))));
+            }
          }
 
-         Stream finalUsedStream = usedStream;
-         Iterator<CacheEntry<K, V>> iterator = usedStream.iterator();
-         stage = stage.thenCompose(ignore -> batchIterator(iterator, handler, null, null, l, generatedId, 20));
-
-         stage = stage.thenCompose(ignore -> {
-            Set<CacheEntry> entries = handler.findCreatedEntries();
-
-            AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-            for (CacheEntry entry : entries) {
-               aggregateCompletionStage.dependsOn(raiseEventForInitialTransfer(generatedId, entry, l.clustered(), null, null));
-            }
-            return aggregateCompletionStage.freeze();
-         });
-
-         stage = stage.thenCompose(ignore -> handler.transferComplete());
-
-         stage = stage.whenComplete((v, t) -> {
-            finalUsedStream.close();
-            if (trace) {
-               log.tracef("Listener %s initial state for cache completed", generatedId);
-            }
-
-            CompletableFutures.rethrowExceptionIfPresent(t);
-         });
+         stage = handlePublisher(stage, intermediateOperations, handler, generatedId, l, null, null);
       }
       return stage;
+   }
+
+   private CompletionStage<Void> handlePublisher(CompletionStage<Void> currentStage,
+         Queue<IntermediateOperation> intermediateOperations, QueueingSegmentListener<K, V, ? extends Event<K, V>> handler,
+         UUID generatedId, Listener l, Function<Object, Object> kc, Function<Object, Object> kv) {
+      SegmentCompletionPublisher<CacheEntry<K, V>> publisher = publisherManager.running().entryPublisher(
+            null, null, null, true,
+            // TODO: do we really need EXACTLY_ONCE? AT_LEAST_ONCE should be fine I think
+            DeliveryGuarantee.EXACTLY_ONCE, config.clustering().stateTransfer().chunkSize(),
+            intermediateOperations.isEmpty() ? PublisherTransformers.identity() : new CacheIntermediatePublisher(intermediateOperations));
+
+      io.reactivex.functions.Function<Object, ? extends Publisher<Void>> itemDelayFunction = ice -> {
+         CompletionStage<Void> delay = handler.delayProcessing();
+         if (CompletionStages.isCompletedSuccessfully(delay)) {
+            return Flowable.empty();
+         }
+         return RxJavaInterop.completionStageToCompletable(delay).toFlowable();
+      };
+      Publisher<CacheEntry<K, V>> p = s -> publisher.subscribe(s, handler);
+      currentStage = Flowable.fromPublisher(p)
+            .delaySubscription(RxJavaInterop.completionStageToMaybe(currentStage).toFlowable())
+            .delay(itemDelayFunction)
+            .filter(ice -> handler.markKeyAsProcessing(ice.getKey()) != QueueingSegmentListener.REMOVED)
+            .delay(ice -> RxJavaInterop.completionStageToCompletable(raiseEventForInitialTransfer(generatedId, ice, l.clustered(),
+                  kc, kv)).toFlowable())
+            // Only request up to 20 at a time
+            .rebatchRequests(20)
+            .count()
+            .toFlowable()
+            // Make sure there are no more delays for processing after we have retrieved all values
+            .delay(itemDelayFunction)
+            .to(RxJavaInterop.flowableToCompletionStage());
+
+      currentStage = currentStage.thenCompose(ignore -> {
+         if (trace) {
+            log.tracef("Finding any created entries during listener registration for %s", generatedId);
+         }
+         Set<CacheEntry<K, V>> entries = handler.findCreatedEntries();
+
+         AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+         for (CacheEntry entry : entries) {
+            aggregateCompletionStage.dependsOn(raiseEventForInitialTransfer(generatedId, entry, l.clustered(), null, null));
+         }
+         return aggregateCompletionStage.freeze();
+      });
+
+      currentStage = currentStage.thenCompose(ignore -> handler.transferComplete());
+
+      if (trace) {
+         currentStage = currentStage.whenComplete((v, t) ->
+               log.tracef("Listener %s initial state for cache completed", generatedId));
+      }
+      return currentStage;
    }
 
    private <C> CompletionStage<Void> registerClusterListeners(List<Address> members, UUID generatedId, Address ourAddress,
@@ -1320,29 +1373,42 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       }
 
       // If we have a segment listener handler, it means we have to do initial state
-      QueueingSegmentListener handler = segmentHandler.remove(generatedId);
+      QueueingSegmentListener<K, V, ? extends Event<K, V>> handler = segmentHandler.remove(generatedId);
       if (handler != null) {
          if (trace) {
             log.tracef("Listener %s requests initial state for cache", generatedId);
          }
-         boolean hasFilter = false;
+
+         Queue<IntermediateOperation> intermediateOperations = new ArrayDeque<>();
+
+
          MediaType storage = valueConversion.getStorageMediaType();
          MediaType keyReq = keyConversion.getRequestMediaType();
          MediaType valueReq = valueConversion.getRequestMediaType();
-         AdvancedCache iterationCache = cache.wired();
+
+         AdvancedCache advancedCache = cache.running();
+         DataConversion chainedKeyDataConversion = advancedCache.getKeyDataConversion();
+         DataConversion chainedValueDataConversion = advancedCache.getValueDataConversion();
+
          if (keyReq != null && valueReq != null) {
-            iterationCache = iterationCache.withMediaType(keyReq.toString(), valueReq.toString());
+            chainedKeyDataConversion = chainedKeyDataConversion.withRequestMediaType(keyReq);
+            chainedValueDataConversion = chainedValueDataConversion.withRequestMediaType(valueReq);
          }
+
+         boolean hasFilter = false;
+
          MediaType filterMediaType = null;
          if (filter != null) {
             hasFilter = true;
             filterMediaType = useStorageFormat ? null : filter.format();
             if (filterMediaType == null) {
                // iterate in the storage format
-               iterationCache = iterationCache.withMediaType(storage.toString(), storage.toString());
+               chainedKeyDataConversion = chainedKeyDataConversion.withRequestMediaType(storage);
+               chainedValueDataConversion = chainedValueDataConversion.withRequestMediaType(storage);
             } else {
                // iterate in the filter format
-               iterationCache = iterationCache.withMediaType(filterMediaType.toString(), filterMediaType.toString());
+               chainedKeyDataConversion = chainedKeyDataConversion.withRequestMediaType(filterMediaType);
+               chainedValueDataConversion = chainedValueDataConversion.withRequestMediaType(filterMediaType);
             }
          }
          if (converter != null) {
@@ -1350,32 +1416,40 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             filterMediaType = useStorageFormat ? null : converter.format();
             if (filterMediaType == null) {
                // iterate in the storage format
-               iterationCache = iterationCache.withEncoding(IdentityEncoder.class).withMediaType(storage.toString(), storage.toString());
+               chainedKeyDataConversion = chainedKeyDataConversion.withEncoding(IdentityEncoder.class).withRequestMediaType(storage);
+               chainedValueDataConversion = chainedValueDataConversion.withEncoding(IdentityEncoder.class).withRequestMediaType(storage);
             } else {
                // iterate in the filter format
-               iterationCache = iterationCache.withEncoding(IdentityEncoder.class).withMediaType(filterMediaType.toString(), filterMediaType.toString());
+               chainedKeyDataConversion = chainedKeyDataConversion.withEncoding(IdentityEncoder.class).withRequestMediaType(filterMediaType);
+               chainedValueDataConversion = chainedValueDataConversion.withEncoding(IdentityEncoder.class).withRequestMediaType(filterMediaType);
             }
          }
 
-         CacheStream entryStream = iterationCache.cacheEntrySet().stream();
-
-         Stream<CacheEntry<K, V>> usedStream = entryStream.segmentCompletionListener(handler);
+         if (!Objects.equals(chainedKeyDataConversion, keyDataConversion) ||
+               !Objects.equals(chainedValueDataConversion, valueDataConversion)) {
+            componentRegistry.wireDependencies(chainedKeyDataConversion, false);
+            componentRegistry.wireDependencies(chainedValueDataConversion, false);
+            intermediateOperations.add(new MapOperation(EncoderEntryMapper.newCacheEntryMapper(chainedKeyDataConversion,
+                  chainedValueDataConversion, entryFactory)));
+         }
 
          if (filter instanceof CacheEventFilterConverter && (filter == converter || converter == null)) {
             // Hacky cast to prevent other casts
-            usedStream = CacheFilters.filterAndConvert(usedStream,
-                  new CacheEventFilterConverterAsKeyValueFilterConverter<>((CacheEventFilterConverter<K, V, V>) filter));
+            intermediateOperations.add(new FlatMapOperation(CacheFilters.flatMap(
+                  new CacheEventFilterConverterAsKeyValueFilterConverter<>((CacheEventFilterConverter) filter))));
          } else {
-            usedStream = filter == null ? usedStream : usedStream.filter(CacheFilters.predicate(
-                  new CacheEventFilterAsKeyValueFilter<>(filter)));
-            usedStream = converter == null ? usedStream : usedStream.map(CacheFilters.function(
-                  new CacheEventConverterAsConverter(converter)));
+            if (filter != null) {
+               intermediateOperations.add(new FilterOperation(CacheFilters.predicate(
+                     new CacheEventFilterAsKeyValueFilter<>(filter))));
+            }
+            if (converter != null) {
+               intermediateOperations.add(new MapOperation(CacheFilters.function(
+                     new CacheEventConverterAsConverter(converter))));
+            }
          }
 
-         Stream finalUsedStream = usedStream;
-         Iterator<CacheEntry<K, V>> iterator = usedStream.iterator();
-         MediaType finalFilterMediaType = filterMediaType;
          boolean finalHasFilter = hasFilter;
+         MediaType finalFilterMediaType = filterMediaType;
 
          Function<Object, Object> kc = k -> {
             if (!finalHasFilter) return k;
@@ -1392,28 +1466,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             return valueConversion.convert(v, finalFilterMediaType, valueConversion.getRequestMediaType());
          };
 
-         stage = stage.thenCompose(ignore -> batchIterator(iterator, handler, kc, kv, l, generatedId, 20));
-
-         stage = stage.thenCompose(ignore -> {
-            Set<CacheEntry> entries = handler.findCreatedEntries();
-
-            AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-            for (CacheEntry entry : entries) {
-               aggregateCompletionStage.dependsOn(raiseEventForInitialTransfer(generatedId, entry, l.clustered(), null, null));
-            }
-            return aggregateCompletionStage.freeze();
-         });
-
-         stage = stage.thenCompose(ignore -> handler.transferComplete());
-
-         stage = stage.whenComplete((v, t) -> {
-            finalUsedStream.close();
-            if (trace) {
-               log.tracef("Listener %s initial state for cache completed", generatedId);
-            }
-
-            CompletableFutures.rethrowExceptionIfPresent(t);
-         });
+         stage = handlePublisher(stage, intermediateOperations, handler, generatedId, l, kc, kv);
       }
 
       return stage;
@@ -1442,52 +1495,6 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
       builder.setFilterAnnotations(filterAnnotations);
    }
-
-   CompletionStage<Void> batchIterator(Iterator<CacheEntry<K, V>> iterator, QueueingSegmentListener handler,
-         Function<Object, Object> keyConversion, Function<Object, Object> valueConversion, Listener l, UUID generatedId, int outstandingFutureMax) {
-      int composedCount = 0;
-
-      AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-
-      // TODO: this still can block - need non blocking iteration
-      while (iterator.hasNext()) {
-         CacheEntry<K, V> entry = iterator.next();
-         // Mark the key as processed and see if we had a concurrent update
-         Object value = handler.markKeyAsProcessing(entry.getKey());
-         if (value == BaseQueueingSegmentListener.REMOVED) {
-            // Don't process this value if we had a concurrent remove
-            continue;
-         }
-         boolean shouldReturn = false;
-         CompletionStage<Void> transferStage = raiseEventForInitialTransfer(generatedId, entry, l.clustered(),
-               keyConversion, valueConversion);
-         if (!CompletionStages.isCompletedSuccessfully(transferStage)) {
-            if (++composedCount == outstandingFutureMax) {
-               shouldReturn = true;
-            }
-            aggregateCompletionStage.dependsOn(transferStage);
-         }
-
-         // We notify the handler we have fired the notification for this key, which means it can finalize segments
-         // if needed. If a segment is complete and has some pending events it will notify them now (for example
-         // an update for a key arrives that conflicts with the iterator)
-         CompletionStage<Void> segmentCompleteStage = handler.notifiedKey(entry.getKey());
-         if (!CompletionStages.isCompletedSuccessfully(segmentCompleteStage)) {
-            shouldReturn = true;
-            aggregateCompletionStage.dependsOn(segmentCompleteStage);
-         }
-
-         // We either have max outstanding entry notifications or we have completed a segment that caused notifications
-         if (shouldReturn) {
-            // We don't want to have too many concurrent notifications at once, thus we wait until our built stage
-            // completes before continuing the iterator notifications
-            return aggregateCompletionStage.freeze().thenCompose(v -> batchIterator(iterator, handler, keyConversion,
-                  valueConversion, l, generatedId, outstandingFutureMax));
-         }
-      }
-      return CompletableFutures.completedNull();
-   }
-
 
    protected class CacheInvocationBuilder extends AbstractInvocationBuilder {
       CacheEventFilter<? super K, ? super V> filter;

@@ -2,11 +2,12 @@ package org.infinispan.notifications.cachelistener;
 
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.function.IntConsumer;
 
-import org.infinispan.CacheStream;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * This interface describes methods needed for a segment listener that is used when iterating over the current
@@ -15,7 +16,7 @@ import org.infinispan.notifications.impl.ListenerInvocation;
  * @author wburns
  * @since 7.0
  */
-public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends CacheStream.SegmentCompletionListener {
+public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends IntConsumer {
    // This is to be used as a placeholder when a value has been iterated and now is being processed by the caller
    // This is considered to be the completed state for the key and should never change from this
    static final Object NOTIFIED = new Object();
@@ -45,13 +46,12 @@ public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends Ca
    public Set<CacheEntry<K, V>> findCreatedEntries();
 
    /**
-    * This should invoked after the key has been successfully processed to tell the handler that the
-    * key is done. This method is used to know when a key has been notified, which if the key was the last one
-    * for a given segment when iterating it can complete it and chain additional notifications.
-    * @param key The key that was processed
+    * Invoked to determine if processing should be delayed or not. Will return
+    * {@link CompletableFutures#completedNull()} if processing can continue immediately, otherwise should wait until this
+    * is complete.
     * @return null if no notifications are required or a non null CompletionStage that when completed all notifications are done
     */
-   public CompletionStage<Void> notifiedKey(K key);
+   public CompletionStage<Void> delayProcessing();
 
    /**
     * This should be called by any listener when an event is generated to possibly queue it.  If it is not
