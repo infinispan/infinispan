@@ -1,13 +1,17 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.query.FetchOptions.FetchMode.EAGER;
+import static org.infinispan.query.FetchOptions.FetchMode.LAZY;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 import org.apache.lucene.index.IndexReader;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
@@ -86,8 +90,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
             .indexing().enable()
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");
       cacheCfg.memory()
             .storageType(storageType);
       createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
@@ -158,7 +161,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    public void testEagerOrdered() {
       CacheQuery<Person> cacheQuery = createSortedQuery("age");
 
-      try (ResultIterator<Person> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER))) {
+      try (ResultIterator<Person> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(EAGER))) {
          assertEquals(10, cacheQuery.getResultSize());
 
          int previousAge = 0;
@@ -174,7 +177,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    @Test(expectedExceptions = NoSuchElementException.class)
    public void testIteratorNextOutOfBounds() {
       cacheQuery.maxResults(1);
-      try (ResultIterator<Person> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER))) {
+      try (ResultIterator<Person> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(EAGER))) {
          assert iterator.hasNext();
          iterator.next();
 
@@ -187,7 +190,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    @Test(expectedExceptions = UnsupportedOperationException.class)
    public void testIteratorRemove() {
       cacheQuery.maxResults(1);
-      try (ResultIterator<Person> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER))) {
+      try (ResultIterator<Person> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(EAGER))) {
          assert iterator.hasNext();
          iterator.remove();
       }
@@ -444,6 +447,28 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       assertEquals(NUM_ENTRIES, results.size());
       assertEquals(NUM_ENTRIES - 1, results.iterator().next().getAge());
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
+   }
+
+   @Test
+   public void testIckleProjectionsLazyRetrieval() {
+      SearchManager searchManager = Search.getSearchManager(cacheAMachine1);
+      String query = String.format("SELECT name, blurb FROM %s p ORDER BY age", Person.class.getName());
+
+      CacheQuery<Object[]> cacheQuery = searchManager.getQuery(query, IndexedQueryMode.BROADCAST);
+      ResultIterator<Object[]> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(LAZY));
+
+      List<Object[]> values = toList(iterator);
+
+      for (int i = 0; i < NUM_ENTRIES; i++) {
+         Object[] projection = values.get(i);
+         assertEquals(projection[0], "name" + i);
+         assertEquals(projection[1], "blurb" + i);
+      }
+   }
+
+   private <E> List<E> toList(Iterator<E> iterator) {
+      return StreamSupport.stream(((Iterable<E>) () -> iterator).spliterator(), false)
+            .collect(Collectors.toList());
    }
 
    @Test
