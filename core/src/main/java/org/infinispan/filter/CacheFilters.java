@@ -80,13 +80,17 @@ public final class CacheFilters {
    public static <K, V, C> Stream<CacheEntry<K, C>> filterAndConvert(Stream<CacheEntry<K, V>> stream,
            KeyValueFilterConverter<? super K, ? super V, C> filterConverter) {
       // Have to use flatMap instead of map/filter as reactive streams spec doesn't allow null values
-      return stream.flatMap(new FilterConverterAsCacheEntryFunction(filterConverter));
+      return stream.flatMap(flatMap(filterConverter));
    }
 
    public static <K, V, C> CacheStream<CacheEntry<K, C>> filterAndConvert(CacheStream<CacheEntry<K, V>> stream,
             KeyValueFilterConverter<? super K, ? super V, C> filterConverter) {
       // Have to use flatMap instead of map/filter as reactive streams spec doesn't allow null values
-      return stream.flatMap(new FilterConverterAsCacheEntryFunction(filterConverter));
+      return stream.flatMap(flatMap(filterConverter));
+   }
+
+   public static <K, V, C> Function<CacheEntry<K, V>, Stream<CacheEntry<K, C>>> flatMap(KeyValueFilterConverter<? super K, ? super V, C> filterConverter) {
+      return new FilterConverterAsCacheEntryFunction<>(filterConverter);
    }
 
    @Scope(Scopes.NONE)

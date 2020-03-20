@@ -349,7 +349,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
       if (intermediateOperations.isEmpty()) {
          usedTransformer = MarshallableFunctions.identity();
       } else {
-         usedTransformer = new CacheStreamIntermediatePublisher(intermediateOperations);
+         usedTransformer = new CacheIntermediatePublisher(intermediateOperations);
       }
       DeliveryGuarantee deliveryGuarantee = rehashAware ? DeliveryGuarantee.EXACTLY_ONCE : DeliveryGuarantee.AT_MOST_ONCE;
       Publisher<R> publisherToSubscribeTo;

@@ -6,9 +6,10 @@ import java.util.Queue;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -36,7 +37,7 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    private final ToIntFunction<Object> intFunction;
    protected final InternalEntryFactory entryFactory;
 
-   private PrimitiveIterator.OfInt justCompletedSegments = null;
+   private IntSet justCompletedSegments = null;
 
    public DistributedQueueingSegmentListener(InternalEntryFactory entryFactory, int numSegments, ToIntFunction<Object> intFunction) {
       this.entryFactory = entryFactory;
@@ -98,33 +99,10 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
       return aggregateCompletionStage.freeze();
    }
 
-   @Override
-   public CompletionStage<Void> notifiedKey(K key) {
-      // This relies on the fact that notifiedKey is immediately called after the entry has finished being iterated on
-      PrimitiveIterator.OfInt iter = justCompletedSegments;
-      AggregateCompletionStage<Void> aggregateCompletionStage = null;
-      if (iter != null) {
-         while (iter.hasNext()) {
-            CompletionStage<Void> segmentStage = completeSegment(iter.nextInt());
-            if (segmentStage != null) {
-               if (aggregateCompletionStage == null) {
-                  aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-               }
-               aggregateCompletionStage.dependsOn(segmentStage);
-            }
-         }
-      }
-      justCompletedSegments = null;
-      return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
-   }
-
    private CompletionStage<Void> completeSegment(int segment) {
       Queue<KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>>> queue = queues.getAndSet(segment, null);
       AggregateCompletionStage<Void> aggregateCompletionStage = null;
       if (queue != null) {
-         if (trace) {
-            log.tracef("Completed segment %s", segment);
-         }
          if (!queue.isEmpty()) {
             aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
             for (KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>> event : queue) {
@@ -137,8 +115,34 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    }
 
    @Override
-   public void accept(Supplier<PrimitiveIterator.OfInt> segments) {
-      justCompletedSegments = segments.get();
+   public void accept(int segment) {
+      if (justCompletedSegments == null) {
+         justCompletedSegments = IntSets.mutableEmptySet();
+      }
+      justCompletedSegments.set(segment);
+   }
+
+   @Override
+   public CompletionStage<Void> delayProcessing() {
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      if (justCompletedSegments != null) {
+         if (trace) {
+            log.tracef("Segments %s completed for listener", justCompletedSegments);
+         }
+         // This relies on the fact that notifiedKey is immediately called after the entry has finished being iterated on
+         PrimitiveIterator.OfInt iter = justCompletedSegments.iterator();
+         while (iter.hasNext()) {
+            CompletionStage<Void> segmentStage = completeSegment(iter.nextInt());
+            if (segmentStage != null) {
+               if (aggregateCompletionStage == null) {
+                  aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+               }
+               aggregateCompletionStage.dependsOn(segmentStage);
+            }
+         }
+         justCompletedSegments = null;
+      }
+      return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
    }
 
    @Override

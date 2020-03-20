@@ -1,9 +1,9 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -58,6 +58,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -68,12 +69,15 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import io.reactivex.Flowable;
+
 
 @Test(groups = "unit", testName = "notifications.cachelistener.BaseCacheNotifierImplInitialTransferTest")
 public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractInfinispanTest {
    CacheNotifierImpl n;
    EncoderCache mockCache;
    InvocationContext ctx;
+   ClusterPublisherManager mockPublisherManager;
 
    protected CacheMode cacheMode;
 
@@ -134,6 +138,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       Configuration config = new ConfigurationBuilder().clustering().cacheMode(cacheMode).build();
       when(mockCache.getStatus()).thenReturn(ComponentStatus.INITIALIZING);
 
+      mockPublisherManager = mock(ClusterPublisherManager.class);
+
       ComponentRegistry componentRegistry = mock(ComponentRegistry.class);
       when(mockCache.getComponentRegistry()).thenReturn(componentRegistry);
       MockBasicComponentRegistry mockRegistry = new MockBasicComponentRegistry();
@@ -144,7 +150,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       cdl.init(null, config, mock(KeyPartitioner.class));
       ClusterEventManager cem = mock(ClusterEventManager.class);
       when(cem.sendEvents()).thenReturn(CompletableFutures.completedNull());
-      TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
+      TestingUtil.inject(n, mockCache, cdl, config, mockRegistry, mockPublisherManager,
                          new InternalEntryFactoryImpl(), cem, mock(KeyPartitioner.class),
                          TestingUtil.named(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR, new WithinThreadExecutor()),
                          TestingUtil.named(KnownComponentNames.NON_BLOCKING_EXECUTOR, new WithinThreadExecutor()));
@@ -169,11 +175,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          initialValues.add(new ImmortalCacheEntry(key, value));
       }
 
-      CacheStream mockStream = mockStream();
-
-      doReturn(initialValues.iterator()).when(mockStream).iterator();
-
-      mockEntrySetStream(mockStream, mockCache);
+      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any()))
+            .thenReturn((s, intConsumer) -> Flowable.fromIterable(initialValues).subscribe(s));
 
       n.addListener(listener);
       verifyEvents(isClustered(listener), listener, initialValues);
@@ -194,11 +197,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       // Note we don't actually use the filter/converter to retrieve values since it is being mocked, thus we can assert
       // the filter/converter are not used by us
 
-      CacheStream mockStream = mockStream();
-
-      doReturn(initialValues.iterator()).when(mockStream).iterator();
-
-      mockEntrySetStream(mockStream, mockCache);
+      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any()))
+            .thenReturn((s, intConsumer) -> Flowable.fromIterable(initialValues).subscribe(s));
 
       CacheEventFilter filter = mock(CacheEventFilter.class, withSettings().serializable());
       CacheEventConverter converter = mock(CacheEventConverter.class, withSettings().serializable());
@@ -221,11 +221,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       // Note we don't actually use the filter/converter to retrieve values since it is being mocked, thus we can assert
       // the filter/converter are not used by us
-      CacheStream mockStream = mockStream();
-
-      doReturn(initialValues.iterator()).when(mockStream).iterator();
-
-      mockEntrySetStream(mockStream, mockCache);
+      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any()))
+            .thenReturn((s, intConsumer) -> Flowable.fromIterable(initialValues).subscribe(s));
 
       CacheEventFilter filter = mock(CacheEventFilter.class, withSettings().serializable());
       CacheEventConverter converter = mock(CacheEventConverter.class, withSettings().serializable());
@@ -327,16 +324,12 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       final CyclicBarrier barrier = new CyclicBarrier(2);
 
-      CacheStream mockStream = mockStream();
-
-      doAnswer(i -> {
-         barrier.await(10, TimeUnit.SECONDS);
-         barrier.await(10, TimeUnit.SECONDS);
-         return initialValues.iterator();
-      }).when(mockStream).iterator();
-
-      mockEntrySetStream(mockStream, mockCache);
-
+      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any()))
+            .thenReturn((s, intConsumer) -> Flowable.defer(() -> {
+               barrier.await(10, TimeUnit.SECONDS);
+               barrier.await(10, TimeUnit.SECONDS);
+               return Flowable.fromIterable(initialValues);
+            }).subscribe(s));
       Future<Void> future = fork(() -> {
          n.addListener(listener);
          return null;
@@ -431,17 +424,13 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       final CyclicBarrier barrier = new CyclicBarrier(2);
 
-      CacheStream mockStream = mockStream();
-
-      doReturn(initialValues.iterator()).when(mockStream).iterator();
-
-      doAnswer(i -> {
-         barrier.await(10, TimeUnit.SECONDS);
-         barrier.await(10, TimeUnit.SECONDS);
-         return null;
-      }).when(mockStream).close();
-
-      mockEntrySetStream(mockStream, mockCache);
+      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any()))
+            .thenReturn((s, intConsumer) -> Flowable.fromIterable(initialValues)
+                  .doOnComplete(() -> {
+                     barrier.await(10, TimeUnit.SECONDS);
+                     barrier.await(10, TimeUnit.SECONDS);
+                  })
+                  .subscribe(s));
 
       Future<Void> future = fork(() -> {
          n.addListener(listener);

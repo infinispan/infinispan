@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
@@ -12,6 +13,7 @@ import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -27,6 +29,7 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
    @Inject LocalPublisherManager<K, V> localPublisherManager;
    @Inject Configuration cacheConfiguration;
    @Inject KeyPartitioner keyPartitioner;
+   @Inject ComponentRegistry componentRegistry;
 
    private int maxSegment;
 
@@ -76,6 +79,12 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
          InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
          Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+      if (transformer instanceof InjectableComponent) {
+         ((InjectableComponent) transformer).inject(componentRegistry);
+      }
+      if (finalizer instanceof InjectableComponent) {
+         ((InjectableComponent) finalizer).inject(componentRegistry);
+      }
       if (invocationContext == null || invocationContext.lookedUpEntriesCount() == 0) {
          return localPublisherManager.keyReduction(parallelPublisher, handleNullSegments(segments), keysToInclude, null,
                includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer).thenApply(PublisherResult::getResult);
@@ -97,6 +106,12 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
          InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+      if (transformer instanceof InjectableComponent) {
+         ((InjectableComponent) transformer).inject(componentRegistry);
+      }
+      if (finalizer instanceof InjectableComponent) {
+         ((InjectableComponent) finalizer).inject(componentRegistry);
+      }
       if (invocationContext == null || invocationContext.lookedUpEntriesCount() == 0) {
          return localPublisherManager.entryReduction(parallelPublisher, handleNullSegments(segments), keysToInclude, null,
                includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer).thenApply(PublisherResult::getResult);
@@ -118,6 +133,9 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
    public <R> SegmentCompletionPublisher<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
          InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
          int batchSize, Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
+      if (transformer instanceof InjectableComponent) {
+         ((InjectableComponent) transformer).inject(componentRegistry);
+      }
       if (invocationContext == null || invocationContext.lookedUpEntriesCount() == 0) {
          return localPublisherManager.keyPublisher(handleNullSegments(segments), keysToInclude, null, includeLoader,
                DeliveryGuarantee.AT_MOST_ONCE, transformer);
@@ -137,6 +155,9 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
    public <R> SegmentCompletionPublisher<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
          InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee, int batchSize,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer) {
+      if (transformer instanceof InjectableComponent) {
+         ((InjectableComponent) transformer).inject(componentRegistry);
+      }
       if (invocationContext == null || invocationContext.lookedUpEntriesCount() == 0) {
          return localPublisherManager.entryPublisher(handleNullSegments(segments), keysToInclude, null, includeLoader,
                DeliveryGuarantee.AT_MOST_ONCE, transformer);

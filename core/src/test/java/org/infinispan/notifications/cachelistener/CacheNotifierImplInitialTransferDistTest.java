@@ -1,13 +1,10 @@
 package org.infinispan.notifications.cachelistener;
 
-import static org.infinispan.test.Mocks.invokeAndReturnMock;
-import static org.mockito.AdditionalAnswers.delegatesTo;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
@@ -18,46 +15,36 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.PrimitiveIterator;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
+import java.util.function.IntConsumer;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheSet;
-import org.infinispan.CacheStream;
-import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
-import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
+import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
+import org.reactivestreams.Subscriber;
 import org.testng.annotations.Test;
 
 
@@ -223,14 +210,11 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       final CheckPoint checkPoint = new CheckPoint();
 
-      AsyncInterceptorChain chain = mockEntrySet(cache, (mock, real, additional) ->
-              doAnswer(i -> {
-                 // Wait for main thread to sync up
-                 checkPoint.trigger("pre_retrieve_entry_invoked");
-                 // Now wait until main thread lets us through
-                 checkPoint.awaitStrict("pre_retrieve_entry_released", 10, TimeUnit.SECONDS);
-                 return invokeAndReturnMock(i, real);
-              }).when(mock).iterator());
+      registerBlockingPublisher(checkPoint, cache);
+
+      checkPoint.triggerForever(Mocks.AFTER_INVOCATION);
+      checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+
       try {
          String keyToChange = findKeyBasedOnOwnership("key-to-change",
                                                       cache.getAdvancedCache().getDistributionManager()
@@ -246,18 +230,17 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
             return null;
          });
 
-         checkPoint.awaitStrict("pre_retrieve_entry_invoked", 10, TimeUnit.SECONDS);
+         checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
 
          operation.perform(cache, keyToChange, value);
 
          // Now let the iteration complete
-         checkPoint.triggerForever("pre_retrieve_entry_released");
+         checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
 
          future.get(10, TimeUnit.SECONDS);
 
          verifyEvents(isClustered(listener), listener, expectedValues);
       } finally {
-         TestingUtil.replaceComponent(cache, AsyncInterceptorChain.class, chain, true);
          cache.removeListener(listener);
       }
    }
@@ -295,15 +278,10 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       CheckPoint checkPoint = new CheckPoint();
 
-      AsyncInterceptorChain chain = mockEntrySet(cache, (mock, real, additional) -> {
-         doAnswer(i -> {
-            // Wait for main thread to sync up
-            checkPoint.trigger("pre_close_iter_invoked");
-            // Now wait until main thread lets us through
-            checkPoint.awaitStrict("pre_close_iter_released", 10, TimeUnit.SECONDS);
-            return invokeAndReturnMock(i, real);
-         }).when(mock).close();
-      });
+      registerBlockingPublisher(checkPoint, cache);
+
+      checkPoint.triggerForever(Mocks.BEFORE_INVOCATION);
+      checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
 
       try {
          String keyToChange = findKeyBasedOnOwnership("key-to-change",
@@ -320,14 +298,14 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
             return null;
          });
 
-         checkPoint.awaitStrict("pre_close_iter_invoked", 10, TimeUnit.SECONDS);
+         checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.MINUTES);
 
          Object oldValue = operation.perform(cache, keyToChange, value);
 
          // Now let the iteration complete
-         checkPoint.triggerForever("pre_close_iter_released");
+         checkPoint.triggerForever(Mocks.AFTER_RELEASE);
 
-         future.get(10, TimeUnit.SECONDS);
+         future.get(10, TimeUnit.MINUTES);
 
          boolean isClustered = isClustered(listener);
 
@@ -380,7 +358,6 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
             assertEquals(event.getValue(), value);
          }
       } finally {
-         TestingUtil.replaceComponent(cache, AsyncInterceptorChain.class, chain, true);
          cache.removeListener(listener);
       }
    }
@@ -485,11 +462,12 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       }
 
       CheckPoint checkPoint = new CheckPoint();
+      checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+      checkPoint.triggerForever(Mocks.AFTER_INVOCATION);
       int segmentToUse = cache.getAdvancedCache().getDistributionManager().getCacheTopology().getSegment(keyToChange);
 
       // do the operation, which should put it in the queue.
-      ClusterCacheNotifier notifier = waitUntilClosingSegment(cache, segmentToUse, checkPoint, keyToChange,
-            operation == Operation.CREATE);
+      waitUntilClosingSegment(cache, segmentToUse, checkPoint);
 
       Future<Void> future = fork(() -> {
          cache.addListener(listener);
@@ -497,11 +475,11 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       });
 
       try {
-         checkPoint.awaitStrict("pre_complete_segment_invoked", 10, TimeUnit.SECONDS);
+         checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
          Object oldValue = operation.perform(cache, keyToChange, value);
 
          // Now let the iteration complete
-         checkPoint.triggerForever("pre_complete_segment_released");
+         checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
 
          future.get(10, TimeUnit.SECONDS);
 
@@ -587,8 +565,6 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
          }
       } finally {
          cache.removeListener(listener);
-         TestingUtil.replaceComponent(cache, CacheNotifier.class, notifier, true);
-         TestingUtil.replaceComponent(cache, ClusterCacheNotifier.class, notifier, true);
       }
    }
 
@@ -698,91 +674,31 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       }
    }
 
-   protected ClusterCacheNotifier waitUntilClosingSegment(final Cache<?, ?> cache, int segment, CheckPoint checkPoint,
-         Object keyToWaitFor, boolean isCreation) {
-      ClusterCacheNotifier realNotifier = TestingUtil.extractComponent(cache, ClusterCacheNotifier.class);
-      ConcurrentMap<UUID, QueueingSegmentListener> listeningMap = new ConcurrentHashMap<UUID, QueueingSegmentListener>() {
-         @Override
-         public QueueingSegmentListener putIfAbsent(UUID key, QueueingSegmentListener value) {
-            log.tracef("Adding segment listener %s : %s", key, value);
-            final Answer<Object> listenerAnswer = AdditionalAnswers.delegatesTo(value);
+   protected void waitUntilClosingSegment(final Cache<?, ?> cache, int segment, CheckPoint checkPoint) {
+      ClusterPublisherManager<Object, String> spy = Mocks.replaceComponentWithSpy(cache, ClusterPublisherManager.class);
 
-            QueueingSegmentListener mockListener = mock(QueueingSegmentListener.class,
-                                                       withSettings().defaultAnswer(listenerAnswer));
-
-            // If it was creation then we just wait until segment is about to be completed
-            AtomicBoolean foundOther = new AtomicBoolean(isCreation);
-            // We are guaranteed that we have returned an entry from iterator before segment is completed - however
-            // there is no guarantee that the iterator has marked it as processing yet
-            doAnswer(i -> {
-               Supplier<PrimitiveIterator.OfInt> segments = i.getArgument(0);
-               if (log.isTraceEnabled()) {
-                  Set<Integer> segmentsCompleted = new HashSet<>();
-                  segments.get().forEachRemaining((Integer segment) -> segmentsCompleted.add(segment));
-                  log.tracef("Completed segments %s", segmentsCompleted);
-               }
-               PrimitiveIterator.OfInt iter = segments.get();
-               while (iter.hasNext()) {
-                  if (iter.nextInt() == segment) {
-                     // This will fire checkpoint if the segment completion ran after the iterator marked the value
-                     segmentCompletionWaiter(foundOther, checkPoint);
-                  }
-               }
-               return listenerAnswer.answer(i);
-            }).when(mockListener).accept(Mockito.any(Supplier.class));
-
-            // No reason to wrap listener if we won't hear the key
-            if (!isCreation) {
-               doAnswer(i -> {
-                  Object k = i.getArgument(0);
-                  log.tracef("Notified for key %s", k);
-                  if (keyToWaitFor.equals(k)) {
-                     // This will fire checkpoint if the segment completion ran before our iterator marked the value
-                     segmentCompletionWaiter(foundOther, checkPoint);
-                  }
-                  return listenerAnswer.answer(i);
-               }).when(mockListener).notifiedKey(any());
-            }
-            return super.putIfAbsent(key, mockListener);
-         }
-      };
-      CacheNotifierImpl notifier = new CacheNotifierImpl(listeningMap);
-      TestingUtil.replaceComponent(cache, CacheNotifier.class, notifier, true);
-      TestingUtil.replaceComponent(cache, ClusterCacheNotifier.class, notifier, true);
-      return realNotifier;
-   }
-
-   // This is a helper method so that subsequent calls to the stream will return a mocked instance so we
-   // can keep track of invocations properly.
-   protected Stream mockStream(CacheStream realStream, StreamMocking mocking) {
-      CacheStream mockStream =
-            mock(CacheStream.class, withSettings().defaultAnswer(i -> invokeAndReturnMock(i, realStream)));
-
-      mocking.additionalInformation(mockStream, realStream, mocking);
-
-      return mockStream;
+      doAnswer(invocation -> {
+         SegmentCompletionPublisher<?> publisher = (SegmentCompletionPublisher<?>) invocation.callRealMethod();
+         SegmentCompletionPublisher<Object> mockPublisher = (Subscriber<Object> s, IntConsumer segmentCompletion) -> {
+            IntConsumer mock = mock(IntConsumer.class);
+            Mockito.doAnswer(Mocks.blockingAnswer(AdditionalAnswers.delegatesTo(segmentCompletion), checkPoint))
+               .when(mock).accept(segment);
+            publisher.subscribe(s, mock);
+         };
+         return mockPublisher;
+      }).when(spy).entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any());
    }
 
    private interface StreamMocking {
       void additionalInformation(Stream mockStream, Stream realStream, StreamMocking ourselves);
    }
 
-   protected AsyncInterceptorChain mockEntrySet(final Cache<?, ?> cache, StreamMocking mocking) {
-      AsyncInterceptorChain chain = TestingUtil.extractComponent(cache, AsyncInterceptorChain.class);
-      AsyncInterceptorChain mockChain = spy(chain);
-      doAnswer(i -> {
-         CacheSet cacheSet = (CacheSet) i.callRealMethod();
-         CacheSet mockSet = mock(CacheSet.class,
-                                 withSettings().defaultAnswer(delegatesTo(cacheSet)));
+   private static void registerBlockingPublisher(final CheckPoint checkPoint, Cache<?, ?> cache) {
+      ClusterPublisherManager<Object, String> spy = Mocks.replaceComponentWithSpy(cache, ClusterPublisherManager.class);
 
-         when(mockSet.stream()).then(j -> {
-            CacheStream stream = cacheSet.stream();
-            return mockStream(stream, mocking);
-         });
-
-         return mockSet;
-      }).when(mockChain).invoke(any(InvocationContext.class), any(EntrySetCommand.class));
-      TestingUtil.replaceComponent(cache, AsyncInterceptorChain.class, mockChain, true);
-      return chain;
+      doAnswer(invocation -> {
+         SegmentCompletionPublisher<?> result = (SegmentCompletionPublisher<?>) invocation.callRealMethod();
+         return Mocks.blockingPublisher(result, checkPoint);
+      }).when(spy).entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any());
    }
 }
