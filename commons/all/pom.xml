@@ -83,6 +83,12 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons-jdk11</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss</groupId>
          <artifactId>jdk-misc</artifactId>
          <version>2.Final</version>
@@ -298,4 +304,48 @@
          </plugin>
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>loom</id>
+         <dependencies>
+            <dependency>
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-commons-loom</artifactId>
+               <version>${project.version}</version>
+               <scope>provided</scope>
+            </dependency>
+         </dependencies>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-dependency-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>loom</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                           <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                           <artifactItems>
+                              <artifactItem>
+                                 <groupId>org.infinispan</groupId>
+                                 <artifactId>infinispan-commons-loom</artifactId>
+                                 <version>${project.version}</version>
+                                 <type>jar</type>
+                                 <overWrite>false</overWrite>
+                                 <outputDirectory>${project.build.outputDirectory}/META-INF/versions/15</outputDirectory>
+                                 <includes>**/*.class</includes>
+                              </artifactItem>
+                           </artifactItems>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 </project>
