@@ -8,7 +8,7 @@
       <relativePath>../../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-javadoc-all</artifactId>
-   <name>Infinispan JavaDoc All</name>
+   <name>Infinispan JavaDoc</name>
    <packaging>jar</packaging>
 
    <properties>
@@ -239,6 +239,11 @@
       <dependency>
          <groupId>io.projectreactor.tools</groupId>
          <artifactId>blockhound</artifactId>
+      </dependency>
+      
+      <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-core</artifactId>
       </dependency>
    </dependencies>
 
