@@ -23,6 +23,10 @@ public class InfinispanServerRuleBuilder {
    private JavaArchive[] archives;
    private boolean jmx;
 
+   public static InfinispanServerRuleBuilder config() {
+      return new InfinispanServerRuleBuilder("infinispan-default.xml");
+   }
+
    public static InfinispanServerRuleBuilder config(String configurationFile) {
       return new InfinispanServerRuleBuilder(configurationFile);
    }

@@ -9,14 +9,15 @@
       <relativePath>../../pom.xml</relativePath>
    </parent>
 
-   <artifactId>infinispan-server-testdriver-junit4</artifactId>
+   <artifactId>infinispan-server-testdriver-junit5</artifactId>
    <packaging>jar</packaging>
-   <name>Infinispan Server JUnit 4.x Test Driver</name>
-   <description>Infinispan Server Test Driver for JUnit 4.x</description>
+   <name>Infinispan Server JUnit 5.x Test Driver</name>
+   <description>Infinispan Server Test Driver for JUnit 5.x</description>
 
    <properties>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
    </properties>
+
    <dependencies>
       <!-- Build dependencies. -->
       <dependency>

@@ -3,6 +3,7 @@
 The Infinispan Server test driver is built around the following tools:
 
 * JUnit 4.x
+* JUnit 5.x
 * Testcontainers 1.12.x
 
 The general aim of the driver is to reduce server churn by reusing servers between tests that can share the same
@@ -37,6 +38,9 @@ By default, the **EMBEDDED** driver will be used. When running the testsuite thr
 ```
 mvn -Pcontainer verify
 ```
+
+## JUnit 5.x Extension
+
 
 ## JUnit 4.x Rules
 
