@@ -4,7 +4,7 @@ import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -110,14 +110,6 @@ public class TransactionContext<K, V> {
       return future;
    }
 
-   OperationsFactory getOperationsFactory() {
-      return operationsFactory;
-   }
-
-   String getCacheName() {
-      return cacheName;
-   }
-
    <T> CompletableFuture<T> compute(K key, Function<TransactionEntry<K, V>, T> function,
          Function<K, MetadataValue<V>> remoteValueSupplier) {
       CompletableFuture<T> future = new CompletableFuture<>();
@@ -176,7 +168,7 @@ public class TransactionContext<K, V> {
     */
    int prepareContext(Xid xid, boolean onePhaseCommit, long timeout) {
       PrepareTransactionOperation operation;
-      Collection<Modification> modifications;
+      List<Modification> modifications;
       try {
          modifications = toModification();
          if (trace) {
@@ -207,7 +199,7 @@ public class TransactionContext<K, V> {
       entries.clear();
    }
 
-   private Collection<Modification> toModification() {
+   private List<Modification> toModification() {
       return entries.values().stream()
             .filter(TransactionEntry::isModified)
             .map(entry -> entry.toModification(keyMarshaller, valueMarshaller))

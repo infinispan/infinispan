@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -173,7 +173,7 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public <K, V> BulkGetOperation<K, V> newBulkGetOperation(int size, DataFormat dataFormat) {
-      return new BulkGetOperation(
+      return new BulkGetOperation<>(
             codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, size, dataFormat, clientStatistics);
    }
 
@@ -294,7 +294,7 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public <E> IterationNextOperation<E> newIterationNextOperation(byte[] iterationId, Channel channel, KeyTracker segmentKeyTracker, DataFormat dataFormat) {
-      return new IterationNextOperation(codec, flags(), cfg, cacheNameBytes, topologyId, iterationId, channel, channelFactory, segmentKeyTracker, dataFormat);
+      return new IterationNextOperation<>(codec, flags(), cfg, cacheNameBytes, topologyId, iterationId, channel, channelFactory, segmentKeyTracker, dataFormat);
    }
 
    public <K> GetStreamOperation newGetStreamOperation(K key, byte[] keyBytes, int offset) {
@@ -322,7 +322,7 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public PrepareTransactionOperation newPrepareTransactionOperation(Xid xid, boolean onePhaseCommit,
-                                                                     Collection<Modification> modifications,
+                                                                     List<Modification> modifications,
                                                                      boolean recoverable, long timeoutMs) {
       return new PrepareTransactionOperation(codec, channelFactory, cacheNameBytes, topologyId, cfg, xid,
             onePhaseCommit, modifications, recoverable, timeoutMs);
