@@ -143,7 +143,9 @@ public class CompletionStages {
     * @param continuationExecutor the executor to run any further completion chain methods on
     * @param traceId the id to print when tracing is enabled
     * @return a CompletionStage that when depended upon will run any callback in the supplied executor
+    * @deprecated This method is to be removed and replaced with a component to handle thread continuations in a better manner
     */
+   @Deprecated
    public static <V> CompletionStage<V> continueOnExecutor(CompletionStage<V> delay,
                                                            Executor continuationExecutor, Object traceId) {
       if (isCompletedSuccessfully(delay)) {
