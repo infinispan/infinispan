@@ -62,7 +62,7 @@ The "users" cache backups its data to the "NYC" and "SFO" sites. Even though the
 ** _FAIL_ - only in effect if "strategy" is "SYNC" - fails local cluster operation/transaction by throwing an exception to the user
 ** _CUSTOM_ - user provided, see "failurePolicyClass" below
 
-* failurePolicyClass - If the 'failure-policy' is set to 'CUSTOM' then this attribute is required and should contain the fully qualified name of a class implementing org.infinispan.xsite.CustomFailurePolicy
+* failurePolicyClass - If the 'failure-policy' is set to 'CUSTOM' then this attribute is required and should contain the fully qualified name of a class implementing org.infinispan.configuration.cache.CustomFailurePolicy.
 * timeout - The timeout(milliseconds) to be used when backing up data remotely. Defaults to 10000 (10 seconds)
 
 The same setup can be achieved programatically:

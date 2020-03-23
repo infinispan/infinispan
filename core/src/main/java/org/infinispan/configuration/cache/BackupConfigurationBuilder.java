@@ -71,7 +71,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    /**
     * If the failure policy is set to {@link BackupFailurePolicy#CUSTOM} then the failurePolicyClass is required and
-    * should return the fully qualified name of a class implementing {@link org.infinispan.xsite.CustomFailurePolicy}
+    * should return the fully qualified name of a class implementing {@link CustomFailurePolicy}
     */
    public String failurePolicyClass() {
       return attributes.attribute(FAILURE_POLICY_CLASS).get();

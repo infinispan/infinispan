@@ -43,6 +43,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.CustomFailurePolicy;
 import org.infinispan.configuration.cache.SitesConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.CacheEntry;
@@ -82,7 +83,7 @@ public class BackupSenderImpl implements BackupSender {
    private static Log log = LogFactory.getLog(BackupSenderImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject ComponentRef<Cache> cache;
+   @Inject ComponentRef<Cache<Object,Object>> cache;
    @Inject RpcManager rpcManager;
    @Inject Transport transport;
    @Inject Configuration config;
@@ -94,7 +95,7 @@ public class BackupSenderImpl implements BackupSender {
    @Inject KeyPartitioner keyPartitioner;
    @Inject TakeOfflineManager takeOfflineManager;
 
-   private final Map<String, CustomFailurePolicy> siteFailurePolicy = new HashMap<>();
+   private final Map<String, CustomFailurePolicy<Object,Object>> siteFailurePolicy = new HashMap<>();
    private String localSiteName;
    private String cacheName;
 
@@ -114,7 +115,7 @@ public class BackupSenderImpl implements BackupSender {
             if (backupPolicy == null) {
                throw new IllegalStateException("Backup policy class missing for custom failure policy!");
             }
-            CustomFailurePolicy instance = Util.getInstance(backupPolicy, globalConfig.classLoader());
+            CustomFailurePolicy<Object, Object> instance = Util.getInstance(backupPolicy, globalConfig.classLoader());
             instance.init(cache.wired());
             siteFailurePolicy.put(bc.site(), instance);
          }
@@ -342,7 +343,7 @@ public class BackupSenderImpl implements BackupSender {
                addException(siteName, throwable);
                break;
             case CUSTOM:
-               CustomFailurePolicy failurePolicy = siteFailurePolicy.get(siteName);
+               CustomFailurePolicy<Object,Object> failurePolicy = siteFailurePolicy.get(siteName);
                try {
                   command.acceptVisitor(null, new CustomBackupPolicyInvoker(siteName, failurePolicy, transaction));
                } catch (Throwable t) {
@@ -379,9 +380,8 @@ public class BackupSenderImpl implements BackupSender {
       private final CustomFailurePolicy<Object, Object> failurePolicy;
       private final Transaction tx;
 
-      public CustomBackupPolicyInvoker(String site, CustomFailurePolicy failurePolicy, Transaction tx) {
+      public CustomBackupPolicyInvoker(String site, CustomFailurePolicy<Object, Object> failurePolicy, Transaction tx) {
          this.site = site;
-         //noinspection unchecked
          this.failurePolicy = failurePolicy;
          this.tx = tx;
       }
