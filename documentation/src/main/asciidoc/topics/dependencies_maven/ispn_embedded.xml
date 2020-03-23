@@ -1,5 +1,15 @@
-<dependency>
-  <groupId>org.infinispan</groupId>
-  <artifactId>infinispan-embedded</artifactId>
-  <version>${version.infinispan}</version>
-</dependency>
+<dependencyManagement>
+    <dependencies>
+       <dependency>
+           <groupId>org.infinispan</groupId>
+           <artifactId>infinispan-bom</artifactId>
+           <version>${version.infinispan}</version>
+           <type>pom</type>
+           <scope>import</scope>
+       </dependency>
+       <dependency>
+           <groupId>org.infinispan</groupId>
+           <artifactId>infinispan-core</artifactId>
+       </dependency>
+    </dependencies>
+ </dependencyManagement>
