@@ -1139,15 +1139,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          long time = configurationManager.getGlobalConfiguration().transport().distributedSyncTimeout();
          return ClusterExecutors.allSubmissionExecutor(null, this, transport, time, TimeUnit.MILLISECONDS,
                // This can run arbitrary code, including user - such commands can block
-               // This should be remedied in https://issues.redhat.com/browse/ISPN-11482
-               globalComponentRegistry.getComponent(ExecutorService.class, KnownComponentNames.NON_BLOCKING_EXECUTOR),
+               globalComponentRegistry.getComponent(ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR),
                globalComponentRegistry.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR));
       } else {
          return ClusterExecutors.allSubmissionExecutor(null, this, null,
                TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT.getDefaultValue(), TimeUnit.MILLISECONDS,
                // This can run arbitrary code, including user - such commands can block
-               // This should be remedied in https://issues.redhat.com/browse/ISPN-11482
-               globalComponentRegistry.getComponent(ExecutorService.class, KnownComponentNames.NON_BLOCKING_EXECUTOR),
+               globalComponentRegistry.getComponent(ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR),
                globalComponentRegistry.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR));
       }
    }
