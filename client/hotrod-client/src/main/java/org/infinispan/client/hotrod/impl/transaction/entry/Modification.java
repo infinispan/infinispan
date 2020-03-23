@@ -75,4 +75,11 @@ public class Modification {
       }
       return size;
    }
+
+   /**
+    * @return The key changed by this modification.
+    */
+   public byte[] getKey() {
+      return key;
+   }
 }
