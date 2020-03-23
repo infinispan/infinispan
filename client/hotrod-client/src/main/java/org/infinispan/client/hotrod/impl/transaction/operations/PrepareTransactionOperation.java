@@ -5,7 +5,9 @@ import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.esti
 import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.writeVInt;
 import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.writeXid;
 
-import java.util.Collection;
+import java.net.SocketAddress;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.transaction.TransactionManager;
@@ -33,14 +35,14 @@ public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer
 
    private final Xid xid;
    private final boolean onePhaseCommit;
-   private final Collection<Modification> modifications;
+   private final List<Modification> modifications;
    private final boolean recoverable;
    private final long timeoutMs;
    private boolean retry;
 
    public PrepareTransactionOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
          AtomicInteger topologyId, Configuration cfg, Xid xid, boolean onePhaseCommit,
-         Collection<Modification> modifications, boolean recoverable, long timeoutMs) {
+         List<Modification> modifications, boolean recoverable, long timeoutMs) {
       super(PREPARE_TX_2_REQUEST, PREPARE_TX_2_RESPONSE, codec, channelFactory, cacheName, topologyId, 0, cfg, null);
       this.xid = xid;
       this.onePhaseCommit = onePhaseCommit;
@@ -80,8 +82,17 @@ public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer
       channel.writeAndFlush(buf);
    }
 
+   @Override
+   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
+      if (modifications.isEmpty()) {
+         super.fetchChannelAndInvoke(retryCount, failedServers);
+      } else {
+         channelFactory.fetchChannelAndInvoke(modifications.get(0).getKey(), failedServers, cacheName, this);
+      }
+   }
+
    private int estimateSize() {
-      int size = codec.estimateHeaderSize(header) + estimateXidSize(xid) + 1 +estimateVIntSize(modifications.size());
+      int size = codec.estimateHeaderSize(header) + estimateXidSize(xid) + 1 + estimateVIntSize(modifications.size());
       for (Modification modification : modifications) {
          size += modification.estimateSize(codec);
       }
