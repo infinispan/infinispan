@@ -16,22 +16,12 @@ operations.
 
 [IMPORTANT]
 ====
-Loss of data can occur if the number of segments in a cache store are not
-changed gracefully. For this reason, if you change the `numSegments` setting in the store configuration, you must migrate the existing store to use the new configuration.
+The number of segments you configure for cache stores must match the number of
+segments you define in the {brandname} configuration with the
+`clustering.hash.numSegments` parameter.
 
-The recommended method to migrate the cache store configuration is to perform a
-rolling upgrade. The store migrator supports migrating a non-segmented cache
-store to a segmented cache store only. The store migrator does not currently
-support migrating from a segmented cache store.
-====
-
-[NOTE]
-====
-Not all cache stores support segmentation. See the appropriate section for each
-store to determine if it supports segmentation.
-
-If you plan to convert or write a new store to support segmentation, see the
-following SPI section that provides more details.
+If you change the `numSegments` parameter in the configuration after you add a
+segmented cache store, {brandname} cannot read data from that cache store.
 ====
 
 .Reference

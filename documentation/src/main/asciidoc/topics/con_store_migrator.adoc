@@ -14,3 +14,11 @@ the target cache.
 `StoreMigrator` also lets you migrate data from one type of cache store to
 another. For example, you can migrate from a JDBC String-Based cache store to a
 Single File cache store.
+
+[IMPORTANT]
+====
+`StoreMigrator` cannot migrate data from segmented cache stores to:
+
+* Non-segmented cache store.
+* Segmented cache stores that have a different number of segments.
+====

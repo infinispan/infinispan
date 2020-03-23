@@ -1,6 +1,9 @@
 [id='sfs_cache_store']
 = Single File Cache Stores
-Single File cache stores, `SingleFileStore`, persist data to a single file and maintains an in-memory index of keys and their values in that file.
+Single File cache stores, `SingleFileStore`, persist data to file. {brandname}
+also maintains an in-memory index of keys while keys and values are stored in
+the file. By default, Single File cache stores are segmented, which means that
+{brandname} creates a separate file for each segment.
 
 Because `SingleFileStore` keeps an in-memory index of keys and the location of
 values, it requires additional memory, depending on the key size and the number
@@ -8,7 +11,7 @@ of keys. For this reason, `SingleFileStore` is not recommended for use cases
 where the keys have a large size.
 
 In some cases, `SingleFileStore` can also become fragmented. If the size of
-values continually increases, available space in the single file is not used 
+values continually increases, available space in the single file is not used
 but the entry is appended to the end of the file. Available space in the file
 is used only if an entry can fit within it. Likewise, if you remove all entries
 from memory, the single file store does not decrease in size or become
