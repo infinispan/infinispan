@@ -191,7 +191,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
     * @param metadata
     */
    private void deleteFromStoresAndNotifySync(K key, V value, Metadata metadata) {
-      persistenceManager.deleteFromAllStoresSync(key, keyPartitioner.getSegment(key), PersistenceManager.AccessMode.BOTH);
+      CompletionStages.join(persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), PersistenceManager.AccessMode.BOTH));
       CompletionStages.join(cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null));
    }
 
