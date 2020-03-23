@@ -4,14 +4,12 @@ import static org.infinispan.server.logging.Messages.MSG;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Properties;
-import java.util.StringJoiner;
 import java.util.logging.Logger;
 
+import org.infinispan.commons.jdkspecific.Process;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.tool.Main;
 
@@ -168,12 +166,10 @@ public class Bootstrap extends Main {
    }
 
    private void logJVMInformation() {
-      RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
       Logger logger = Logger.getLogger("BOOT");
-      logger.info("JVM " + runtimeMxBean.getVmName() + " " + runtimeMxBean.getVmVendor() + " " + runtimeMxBean.getVmVersion());
-      StringJoiner sj = new StringJoiner(" ");
-      runtimeMxBean.getInputArguments().forEach(s -> sj.add(s));
-      logger.info("JVM arguments = " + sj);
-      logger.info("PID = " + runtimeMxBean.getName().split("@")[0]);
+      logger.info("JVM " + System.getProperty("java.vm.name") + " " + System.getProperty("java.vm.vendor") + " " + System.getProperty("java.vm.version"));
+      Process process = Process.getInstance();
+      logger.info("JVM arguments = " + process.getArguments());
+      logger.info("PID = " + process.getPid());
    }
 }
