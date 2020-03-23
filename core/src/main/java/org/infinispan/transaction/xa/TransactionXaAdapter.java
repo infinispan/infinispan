@@ -2,7 +2,6 @@ package org.infinispan.transaction.xa;
 
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 import java.util.function.Function;
 
 import javax.transaction.xa.XAException;
@@ -11,7 +10,6 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -45,20 +43,17 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     * Reefer to section 3.4.4 from JTA spec v.1.1
     */
    private final LocalXaTransaction localTransaction;
-   private final Executor executor;
    private volatile RecoveryManager.RecoveryIterator recoveryIterator;
 
-   public TransactionXaAdapter(LocalXaTransaction localTransaction, XaTransactionTable txTable, Executor executor) {
+   public TransactionXaAdapter(LocalXaTransaction localTransaction, XaTransactionTable txTable) {
       super(localTransaction);
       this.txTable = txTable;
       this.localTransaction = localTransaction;
-      this.executor = executor;
    }
 
-   public TransactionXaAdapter(XaTransactionTable txTable, Executor executor) {
+   public TransactionXaAdapter(XaTransactionTable txTable) {
       super();
       this.txTable = txTable;
-      this.executor = executor;
       localTransaction = null;
    }
 
@@ -67,7 +62,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     */
    @Override
    public int prepare(Xid externalXid) throws XAException {
-      return runAsyncAndJoinRethrowingXAException(ignore -> txTable.prepare(externalXid));
+      return runRethrowingXAException(ignore -> txTable.prepare(externalXid));
    }
 
    /**
@@ -75,7 +70,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     */
    @Override
    public void commit(Xid externalXid, boolean isOnePhase) throws XAException {
-      runAsyncAndJoinRethrowingXAException(ignore -> txTable.commit(externalXid, isOnePhase));
+      runRethrowingXAException(ignore -> txTable.commit(externalXid, isOnePhase));
    }
 
    /**
@@ -83,7 +78,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     */
    @Override
    public void rollback(Xid externalXid) throws XAException {
-      runAsyncAndJoinRethrowingXAException(ignore -> txTable.rollback(externalXid));
+      runRethrowingXAException(ignore -> txTable.rollback(externalXid));
    }
 
    @Override
@@ -98,7 +93,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
 
    @Override
    public void forget(Xid externalXid) throws XAException {
-      runAsyncAndJoinRethrowingXAException(ignore -> txTable.forget(externalXid));
+      runRethrowingXAException(ignore -> txTable.forget(externalXid));
    }
 
    @Override
@@ -188,10 +183,9 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       return (value & flag) != 0;
    }
 
-   private <T> T runAsyncAndJoinRethrowingXAException(Function<Void, CompletionStage<T>> function) throws XAException {
+   private <T> T runRethrowingXAException(Function<Void, CompletionStage<T>> function) throws XAException {
       try {
-         return CompletionStages.join(CompletableFutures.<Void>completedNull()
-               .thenComposeAsync(function, executor));
+         return CompletionStages.join(function.apply(null));
       } catch (CompletionException e) {
          Throwable cause = e.getCause();
          if (cause instanceof XAException) {
