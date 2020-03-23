@@ -30,4 +30,7 @@ outside the scope of the actual {brandname} commit boundaries.
 ** Shared stores. Shared cache stores require entries to always exist in the
 store for other owners. For this reason, passivation is not supported because
 entries cannot be removed.
+
+If you enable passivation with transactional stores or shared stores,
+{brandname} throws an exception.
 ====
