@@ -84,7 +84,7 @@ public class XaTransactionTable extends TransactionTable {
       LocalXaTransaction localTransaction = (LocalXaTransaction) ltx;
       if (!localTransaction.isEnlisted()) { //make sure that you only enlist it once
          try {
-            transaction.enlistResource(new TransactionXaAdapter(localTransaction, this, nonBlockingExecutor));
+            transaction.enlistResource(new TransactionXaAdapter(localTransaction, this));
          } catch (Exception e) {
             Xid xid = localTransaction.getXid();
             if (xid != null && !localTransaction.getLookedUpEntries().isEmpty()) {

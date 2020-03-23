@@ -20,7 +20,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -172,8 +171,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Inject LocalTopologyManager localTopologyManager;
    @Inject StateTransferManager stateTransferManager;
    @Inject InvocationHelper invocationHelper;
-   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
-   Executor nonBlockingExecutor;
 
    protected Metadata defaultMetadata;
    private final String name;
@@ -1284,7 +1281,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public XAResource getXAResource() {
-      return new TransactionXaAdapter((XaTransactionTable) txTable, nonBlockingExecutor);
+      return new TransactionXaAdapter((XaTransactionTable) txTable);
    }
 
    @Override

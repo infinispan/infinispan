@@ -1,6 +1,5 @@
 package org.infinispan.transaction.impl;
 
-import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.util.logging.Log.CLUSTER;
 import static org.infinispan.util.logging.Log.CONTAINER;
@@ -18,7 +17,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -117,8 +115,6 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    @Inject TransactionOriginatorChecker transactionOriginatorChecker;
    @Inject TransactionManager transactionManager;
    @Inject ComponentRegistry componentRegistry;
-   @Inject @ComponentName(NON_BLOCKING_EXECUTOR)
-   Executor nonBlockingExecutor;
 
    /**
     * minTxTopologyId is the minimum topology ID across all ongoing local and remote transactions.
@@ -212,7 +208,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    public void enlist(Transaction transaction, LocalTransaction localTransaction) {
       if (!localTransaction.isEnlisted()) {
          SynchronizationAdapter sync =
-               new SynchronizationAdapter(localTransaction, this, nonBlockingExecutor);
+               new SynchronizationAdapter(localTransaction, this);
          if (transactionSynchronizationRegistry != null) {
             boolean needsSuspend = false;
             try {
@@ -254,7 +250,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    public void enlistClientTransaction(Transaction transaction, LocalTransaction localTransaction) {
       if (!localTransaction.isEnlisted()) {
-         SynchronizationAdapter sync = new SynchronizationAdapter(localTransaction, this, nonBlockingExecutor);
+         SynchronizationAdapter sync = new SynchronizationAdapter(localTransaction, this);
          try {
             transaction.registerSynchronization(sync);
          } catch (Exception e) {

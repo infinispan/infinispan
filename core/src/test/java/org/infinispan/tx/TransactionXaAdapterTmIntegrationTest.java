@@ -30,7 +30,6 @@ import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.XaTransactionTable;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -71,7 +70,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       when(invoker.invokeAsync(any(), any())).thenReturn(CompletableFutures.completedNull());
 
       TestingUtil.inject(txCoordinator, commandsFactory, icf, invoker, txTable, configuration);
-      xaAdapter = new TransactionXaAdapter(localTx, txTable, new WithinThreadExecutor());
+      xaAdapter = new TransactionXaAdapter(localTx, txTable);
 
       xaAdapter.start(xid, 0);
    }
