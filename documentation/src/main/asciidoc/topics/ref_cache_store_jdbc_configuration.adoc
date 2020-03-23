@@ -2,35 +2,32 @@
 = JDBC String-Based Cache Store Configuration
 You can configure `JdbcStringBasedStore` programmatically or declaratively.
 
-Specify a connection factory declaratively with the `<connectionPool />`,
-`<dataSource />`, or `<simpleConnection />` elements.
+.Declarative configuration
 
-Specify a connection factory programmatically with the `connectionPool()`,
-`dataSource()`, or `simpleConnection()` methods in the
-`JdbcStringBasedStoreConfigurationBuilder` class.
-
-.Declarative configuration with `PooledConnectionFactory`
+* Using `PooledConnectionFactory`
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/persistence_example_jdbc.xml[]
 ----
 
-.Declarative configuration with `ManagedConnectionFactory`
+* Using `ManagedConnectionFactory`
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/persistence_example_ds_jndi.xml[]
 ----
 
-.Programmatic configuration with `PooledConnectionFactory`
+.Programmatic configuration
+
+* Using `PooledConnectionFactory`
 
 [source,java]
 ----
 include::code_examples/PersistenceJdbcStringBasedStore.java[]
 ----
 
-.Programmatic configuration with `ManagedConnectionFactory`
+* Using `ManagedConnectionFactory`
 
 [source,java]
 ----
