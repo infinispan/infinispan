@@ -1,8 +1,8 @@
 [id='library_mode']
 :context: embedding
 
-include::{topics}/embedded_cache.adoc[leveloffset=+0]
-include::{topics}/embedded_datagrid.adoc[leveloffset=+0]
+include::{topics}/proc_installing_embedded.adoc[leveloffset=+0]
+include::{topics}/proc_running_embedded.adoc[leveloffset=+0]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
