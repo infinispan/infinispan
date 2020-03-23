@@ -10,7 +10,7 @@ import javax.transaction.Transaction;
  * @author Mircea Markus
  * @since 5.2
  */
-public class CountingCustomFailurePolicy extends AbstractCustomFailurePolicy {
+public class CountingCustomFailurePolicy<K,V> extends AbstractCustomFailurePolicy<K,V> {
 
    public static volatile boolean PUT_INVOKED;
    public static volatile boolean REMOVE_INVOKED;

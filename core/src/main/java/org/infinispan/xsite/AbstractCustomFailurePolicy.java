@@ -5,6 +5,7 @@ import java.util.Map;
 import javax.transaction.Transaction;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CustomFailurePolicy;
 
 /**
  * Support class for {@link CustomFailurePolicy}.
@@ -17,7 +18,7 @@ public abstract class AbstractCustomFailurePolicy<K,V> implements CustomFailureP
    protected volatile Cache<K,V> cache;
 
    @Override
-   public void init(Cache cache) {
+   public void init(Cache<K, V> cache) {
       this.cache = cache;
    }
 

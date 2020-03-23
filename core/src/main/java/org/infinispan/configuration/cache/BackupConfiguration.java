@@ -88,7 +88,7 @@ public class BackupConfiguration implements ConfigurationInfo {
 
    /**
     * If the failure policy is set to {@link BackupFailurePolicy#CUSTOM} then the failurePolicyClass is required and
-    * should return the fully qualified name of a class implementing {@link org.infinispan.xsite.CustomFailurePolicy}
+    * should return the fully qualified name of a class implementing {@link CustomFailurePolicy}
     */
    public String failurePolicyClass() {
       return failurePolicyClass.get();

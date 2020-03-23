@@ -1,5 +1,10 @@
 = Upgrading from 10.1 to 11.0
 
+== Cross Site Replication
+
+The `org.infinispan.xsite.CustomFailurePolicy` interface has been deprecated and it will be replaced by
+`org.infinispan.configuration.cache.CustomFailurePolicy`.
+
 == Total Order transaction protocol removed
 
 Total Order transaction protocol was deprecated in 10.0 and now it is removed.
