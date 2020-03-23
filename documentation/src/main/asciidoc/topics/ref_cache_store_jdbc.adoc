@@ -19,5 +19,5 @@ shared.
 
 .Segmentation
 
-`JdbcStringBasedStore` supports segmentation and uses an additional column in
-the database table to represent the segment to which an entry belongs.
+`JdbcStringBasedStore` uses segmentation by default and requires a column in
+the database table to represent the segments to which entries belong.
