@@ -96,11 +96,6 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    }
 
    @Override
-   public boolean deleteFromAllStoresSync(Object key, int segment, Predicate<? super StoreConfiguration> predicate) {
-      return persistenceManager.deleteFromAllStoresSync(key, segment, predicate);
-   }
-
-   @Override
    public CompletionStage<Boolean> deleteFromAllStores(Object key, int segment, Predicate<? super StoreConfiguration> predicate) {
       return persistenceManager.deleteFromAllStores(key, segment, predicate);
    }
@@ -148,12 +143,6 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    @Override
    public void setClearOnStop(boolean clearOnStop) {
       persistenceManager.setClearOnStop(clearOnStop);
-   }
-
-   @Override
-   public void writeToAllNonTxStoresSync(MarshallableEntry marshalledEntry, int segment,
-                                         Predicate<? super StoreConfiguration> predicate) {
-      persistenceManager.writeToAllNonTxStoresSync(marshalledEntry, segment, predicate);
    }
 
    @Override
@@ -206,21 +195,10 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    }
 
    @Override
-   public <K, V> MarshallableEntry<K, V> loadFromAllStoresSync(Object key, boolean localInvocation, boolean includeStores) {
-      return persistenceManager.loadFromAllStoresSync(key, localInvocation, includeStores);
-   }
-
-   @Override
    public <K, V> CompletionStage<MarshallableEntry<K, V>> loadFromAllStores(Object key, int segment,
                                                                             boolean localInvocation,
                                                                             boolean includeStores) {
       return persistenceManager.loadFromAllStores(key, segment, localInvocation, includeStores);
-   }
-
-   @Override
-   public <K, V> MarshallableEntry<K, V> loadFromAllStoresSync(Object key, int segment, boolean localInvocation,
-                                                               boolean includeStores) {
-      return persistenceManager.loadFromAllStoresSync(key, segment, localInvocation, includeStores);
    }
 
    @Override

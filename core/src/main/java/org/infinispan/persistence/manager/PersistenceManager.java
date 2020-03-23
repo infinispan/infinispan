@@ -15,7 +15,6 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.reactivestreams.Publisher;
 
 /**
@@ -62,14 +61,6 @@ public interface PersistenceManager extends Lifecycle {
     * Invokes {@link org.infinispan.persistence.spi.AdvancedCacheWriter#clear()} on all the stores that aloes it.
     */
    CompletionStage<Void> clearAllStores(Predicate<? super StoreConfiguration> predicate);
-
-   /**
-    * Same as {@link #deleteFromAllStores(Object, int, Predicate)} except synchronous - Should only be invoked
-    * from persistence thread and from passivation or activation code
-    * @deprecated should be using async version when available - only here for passivation
-    */
-   @Deprecated
-   boolean deleteFromAllStoresSync(Object key, int segment, Predicate<? super StoreConfiguration> predicate);
 
    CompletionStage<Boolean> deleteFromAllStores(Object key, int segment, Predicate<? super StoreConfiguration> predicate);
 
@@ -158,16 +149,6 @@ public interface PersistenceManager extends Lifecycle {
    <K, V> CompletionStage<MarshallableEntry<K, V>> loadFromAllStores(Object key, boolean localInvocation, boolean includeStores);
 
    /**
-    * Same as {@link #loadFromAllStores(Object, boolean, boolean)} except synchronous - Should only be invoked
-    * from persistence thread and from passivation or activation code
-    * @deprecated should be using async version when available - only here for passivation
-    */
-   @Deprecated
-   default <K, V> MarshallableEntry<K, V> loadFromAllStoresSync(Object key, boolean localInvocation, boolean includeStores) {
-      return CompletionStages.join(loadFromAllStores(key, localInvocation, includeStores));
-   }
-
-   /**
     * Same as {@link #loadFromAllStores(Object, boolean, boolean)} except that the segment of the key is also
     * provided to avoid having to calculate the segment.
     * @param key key to read the entry from
@@ -179,16 +160,6 @@ public interface PersistenceManager extends Lifecycle {
     */
    default <K, V> CompletionStage<MarshallableEntry<K, V>> loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
       return loadFromAllStores(key, localInvocation, includeStores);
-   }
-
-   /**
-    * Same as {@link #loadFromAllStores(Object, int, boolean, boolean)} except synchronous - Should only be invoked
-    * from persistence thread and from passivation or activation code
-    * @deprecated should be using async version when available - only here for passivation
-    */
-   @Deprecated
-   default <K, V> MarshallableEntry<K, V> loadFromAllStoresSync(Object key, int segment, boolean localInvocation, boolean includeStores) {
-      return CompletionStages.join(loadFromAllStores(key, segment, localInvocation, includeStores));
    }
 
    default CompletionStage<Integer> size() {
@@ -265,13 +236,6 @@ public interface PersistenceManager extends Lifecycle {
    }
 
    void setClearOnStop(boolean clearOnStop);
-
-   /**
-    * Same as {@link #writeToAllNonTxStores(MarshallableEntry, int, Predicate)} except synchronous - Should only be invoked
-    * from persistence thread and from passivation or activation code
-    * @deprecated should be using async version when available - only here for passivation
-    */
-   void writeToAllNonTxStoresSync(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Write to all stores that are not transactional. A store is considered transactional if all of the following are true:

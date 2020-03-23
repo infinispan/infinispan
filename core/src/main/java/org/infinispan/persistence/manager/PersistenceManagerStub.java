@@ -84,11 +84,6 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public boolean deleteFromAllStoresSync(Object key, int segment, Predicate<? super StoreConfiguration> predicate) {
-      return false;
-   }
-
-   @Override
    public CompletionStage<Boolean> deleteFromAllStores(Object key, int segment, Predicate<? super StoreConfiguration> predicate) {
       return CompletableFutures.completedFalse();
    }
@@ -156,10 +151,6 @@ public class PersistenceManagerStub implements PersistenceManager {
    @Override
    public CompletionStage<Void> rollbackAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public void writeToAllNonTxStoresSync(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate) {
    }
 
    @Override

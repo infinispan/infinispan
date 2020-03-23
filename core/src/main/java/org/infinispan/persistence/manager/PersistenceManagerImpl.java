@@ -181,7 +181,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
       advancedListener = new AdvancedPurgeListener<>(expirationManager.wired());
       preloaded = false;
       enabled = configuration.persistence().usingStores();
-      blockingScheduler = Schedulers.from(blockingExecutor);
+      blockingScheduler = Schedulers.from(task -> {
+         if (isCurrentThreadBlocking()) {
+            SecurityActions.startThread(task, "persistence-bulk-blocking-operation");
+         } else {
+            blockingExecutor.execute(task);
+         }
+      });
       nonBlockingScheduler = Schedulers.from(nonBlockingExecutor);
       if (!enabled)
          return;
@@ -553,18 +559,24 @@ public class PersistenceManagerImpl implements PersistenceManager {
     * @param <V> the return type
     * @return the stage to return that will continue the execution on the CPU thread
     */
-   private <V> CompletionStage<V> continueOnCPUExecutor(CompletionStage<V> delay,
-         int traceId) {
+   private <V> CompletionStage<V> continueOnCPUExecutor(CompletionStage<V> delay, int traceId) {
       return CompletionStages.continueOnExecutor(delay, nonBlockingExecutor, traceId);
    }
 
    private <V> CompletionStage<V> supplyOnPersistenceExAndContinue(IntFunction<V> function, String traceMessage) {
       int traceId = getNextTraceNumber(traceMessage);
+      if (isCurrentThreadBlocking()) {
+         return CompletableFuture.completedFuture(function.apply(traceId));
+      }
       return continueOnCPUExecutor(CompletableFuture.supplyAsync(() -> function.apply(traceId), blockingExecutor), traceId);
    }
 
    private CompletionStage<Void> runOnPersistenceExAndContinue(IntConsumer consumer, String traceMessage) {
       int traceId = getNextTraceNumber(traceMessage);
+      if (isCurrentThreadBlocking()) {
+         consumer.accept(traceId);
+         return CompletableFutures.completedNull();
+      }
       return continueOnCPUExecutor(CompletableFuture.runAsync(() -> consumer.accept(traceId), blockingExecutor), traceId);
    }
 
@@ -579,7 +591,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public CompletionStage<Void> clearAllStores(Predicate<? super StoreConfiguration> predicate) {
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
       return runOnPersistenceExAndContinue(traceId -> clearAllStoresSync(predicate, traceId), "Clearing all stores for id %d");
    }
 
@@ -603,13 +614,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
       } finally {
          storesMutex.readLock().unlock();
       }
-   }
-
-   @Override
-   public boolean deleteFromAllStoresSync(Object key, int segment, Predicate<? super StoreConfiguration> predicate) {
-      assert Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
-      // Note this one doesn't need an additional trace messages as it is invoked synchronously
-      return deleteFromAllStoresSync(key, segment, predicate, -1);
    }
 
    private boolean deleteFromAllStoresSync(Object key, int segment, Predicate<? super StoreConfiguration> predicate,
@@ -642,7 +646,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    public CompletionStage<Boolean> deleteFromAllStores(Object key, int segment, Predicate<? super StoreConfiguration> predicate) {
       Objects.requireNonNull(key);
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
       return supplyOnPersistenceExAndContinue(traceId -> deleteFromAllStoresSync(key, segment, predicate, traceId),
             "Deleting from all stores for id %d");
    }
@@ -681,7 +684,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    public <K, V> Flowable<MarshallableEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
                                                                    boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
       AdvancedCacheLoader<K, V> advancedCacheLoader = getFirstAdvancedCacheLoader(predicate);
 
       if (advancedCacheLoader != null) {
@@ -700,7 +702,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    public <K, V> Flowable<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter,
                                                                    boolean fetchValue, boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
       SegmentedAdvancedLoadWriteStore<K, V> segmentedStore = getFirstSegmentedStore(predicate);
       if (segmentedStore != null) {
          return Flowable
@@ -715,7 +716,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public <K> Flowable<K> publishKeys(Predicate<? super K> filter, Predicate<? super StoreConfiguration> predicate) {
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
       AdvancedCacheLoader<K, ?> advancedCacheLoader = getFirstAdvancedCacheLoader(predicate);
 
       if (advancedCacheLoader != null) {
@@ -734,7 +734,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    public <K> Flowable<K> publishKeys(IntSet segments, Predicate<? super K> filter,
          Predicate<? super StoreConfiguration> predicate) {
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
       SegmentedAdvancedLoadWriteStore<K, ?> segmentedStore = getFirstSegmentedStore(predicate);
 
       if (segmentedStore != null) {
@@ -749,16 +748,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
       }
 
       return publishKeys(PersistenceUtil.combinePredicate(segments, keyPartitioner, filter), predicate);
-   }
-
-   @Override
-   public <K, V> MarshallableEntry<K, V> loadFromAllStoresSync(Object key, boolean localInvocation, boolean includeStores) {
-      // Some code calls into PersistenceManager even if there are no stores configured
-      if (loaders.isEmpty()) {
-         return null;
-      }
-      assert Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
-      return loadFromAllStoresSync(key, localInvocation, includeStores, -1);
    }
 
    private <K, V> MarshallableEntry<K, V> loadFromAllStoresSync(Object key, boolean localInvocation, boolean includeStores, int traceId) {
@@ -788,19 +777,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public <K, V> CompletionStage<MarshallableEntry<K, V>> loadFromAllStores(Object key, boolean localInvocation, boolean includeStores) {
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
       return supplyOnPersistenceExAndContinue(traceId -> loadFromAllStoresSync(key, localInvocation, includeStores, traceId),
             "Loading from first store for id %d");
-   }
-
-   @Override
-   public <K, V> MarshallableEntry<K, V> loadFromAllStoresSync(Object key, int segment, boolean localInvocation, boolean includeStores) {
-      // Some code calls into PersistenceManager even if there are no stores configured
-      if (loaders.isEmpty()) {
-         return null;
-      }
-      assert Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
-      return loadFromAllStoresSync(key, segment, localInvocation, includeStores, -1);
    }
 
    private <K, V> MarshallableEntry<K, V> loadFromAllStoresSync(Object key, int segment, boolean localInvocation, boolean includeStores, int traceId) {
@@ -844,7 +822,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public <K, V> CompletionStage<MarshallableEntry<K, V>> loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
       return supplyOnPersistenceExAndContinue(traceId -> loadFromAllStoresSync(key, segment, localInvocation, includeStores, traceId),
             "Loading from first store for id %d");
    }
@@ -860,15 +837,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
          return unwrappedLoader instanceof LocalOnlyCacheLoader;
       }
       return false;
-   }
-
-   @Override
-   public void writeToAllNonTxStoresSync(MarshallableEntry marshalledEntry, int segment,
-         Predicate<? super StoreConfiguration> predicate) {
-      // This is commented out due to the fact that caffeine may schedule a buffer drain on the thread doing just
-      // a simple get (note this is only an issue with passivation)
-//      assert Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
-      writeToAllNonTxStoresSync(marshalledEntry, segment, predicate, 0, -1);
    }
 
    private void writeToAllNonTxStoresSync(MarshallableEntry marshalledEntry, int segment,
@@ -898,7 +866,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    public CompletionStage<Void> writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment,
          Predicate<? super StoreConfiguration> predicate, long flags) {
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
       return runOnPersistenceExAndContinue(traceId -> writeToAllNonTxStoresSync(marshalledEntry, segment, predicate, flags, traceId),
             "Writing to all stores for id %d");
    }
@@ -908,8 +875,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
          Predicate<? super StoreConfiguration> predicate, long flags) {
       if (!entries.iterator().hasNext())
          return CompletableFutures.completedNull();
-
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
 
       int id = getNextTraceNumber("Submitting persistence async operation of id %d to write a batch");
 
@@ -963,8 +928,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
       if (!keys.iterator().hasNext())
          return CompletableFutures.completedNull();
 
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
-
       return runOnPersistenceExAndContinue(traceId -> {
          storesMutex.readLock().lock();
          try {
@@ -984,7 +947,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    public CompletionStage<Void> prepareAllTxStores(Transaction transaction, BatchModification batchModification,
          Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
       return runOnPersistenceExAndContinue(traceId -> {
          storesMutex.readLock().lock();
          try {
@@ -1006,21 +968,18 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public CompletionStage<Void> commitAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
       return runOnPersistenceExAndContinue(traceId -> performOnAllTxStores(predicate, writer -> writer.commit(transaction), traceId),
             "Committing tx for all stores for id %d");
    }
 
    @Override
    public CompletionStage<Void> rollbackAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
       return runOnPersistenceExAndContinue(traceId -> performOnAllTxStores(predicate, writer -> writer.rollback(transaction), traceId),
             "Rolling back tx for all stores for id %d");
    }
 
    @Override
    public CompletionStage<Integer> size(Predicate<? super StoreConfiguration> predicate) {
-      assert !Thread.currentThread().getName().startsWith("blocking") : "Thread name is: " + Thread.currentThread().getName();
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
@@ -1043,40 +1002,41 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public CompletionStage<Integer> size(IntSet segments) {
-         storesMutex.readLock().lock();
-         try {
-            checkStoreAvailability();
-            for (CacheLoader l : loaders) {
-               StoreConfiguration storeConfiguration;
-               if (l instanceof SegmentedAdvancedLoadWriteStore &&
-                     ((storeConfiguration = getStoreConfig(l)) != null && storeConfiguration.segmented())) {
-                  return supplyOnPersistenceExAndContinue(traceId -> {
-                     if (trace) {
-                        log.tracef("Continuing size operation for id %d", traceId);
-                     }
-                     return ((SegmentedAdvancedLoadWriteStore) l).size(segments);
-                  }, "Retrieving size with segments for id %d");
-               }
+      storesMutex.readLock().lock();
+      try {
+         checkStoreAvailability();
+         for (CacheLoader l : loaders) {
+            StoreConfiguration storeConfiguration;
+            if (l instanceof SegmentedAdvancedLoadWriteStore &&
+                  ((storeConfiguration = getStoreConfig(l)) != null && storeConfiguration.segmented())) {
+               return supplyOnPersistenceExAndContinue(traceId -> {
+                  if (trace) {
+                     log.tracef("Continuing size operation for id %d", traceId);
+                  }
+                  return ((SegmentedAdvancedLoadWriteStore) l).size(segments);
+               }, "Retrieving size with segments for id %d");
             }
-            if (trace) {
-               log.tracef("Calculating size of store via publisher for segments %s", segments);
-            }
-            return Flowable.fromPublisher(publishKeys(segments, null, AccessMode.BOTH))
-                  .count()
-                  .map(count -> {
-                     long longValue = count.longValue();
-                     if (longValue > Integer.MAX_VALUE) {
-                        return Integer.MAX_VALUE;
-                     }
-                     return (int) longValue;
-                  })
-                  .subscribeOn(blockingScheduler)
-                  .observeOn(nonBlockingScheduler)
-                  .to(RxJavaInterop.singleToCompletionStage());
-
-         } finally {
-            storesMutex.readLock().unlock();
          }
+         if (trace) {
+            log.tracef("Calculating size of store via publisher for segments %s", segments);
+         }
+
+         return Flowable.fromPublisher(publishKeys(segments, null, AccessMode.BOTH))
+               .count()
+               .map(count -> {
+                  long longValue = count.longValue();
+                  if (longValue > Integer.MAX_VALUE) {
+                     return Integer.MAX_VALUE;
+                  }
+                  return (int) longValue;
+               })
+               .subscribeOn(blockingScheduler)
+               .observeOn(nonBlockingScheduler)
+               .to(RxJavaInterop.singleToCompletionStage());
+
+      } finally {
+         storesMutex.readLock().unlock();
+      }
    }
 
    @Override
@@ -1521,7 +1481,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       }
    }
 
-   class StoreStatus {
+   static class StoreStatus {
       final Object store;
       final StoreConfiguration config;
       boolean availability = true;
@@ -1544,5 +1504,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          }
          return oldAvailability != availability;
       }
+   }
+
+   private boolean isCurrentThreadBlocking() {
+      return Thread.currentThread().getName().startsWith("blocking");
    }
 }
