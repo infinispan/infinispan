@@ -51,6 +51,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
 import org.rocksdb.BuiltinComparator;
 import org.rocksdb.ColumnFamilyDescriptor;
@@ -67,8 +68,7 @@ import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 
 import io.reactivex.Flowable;
-import io.reactivex.Scheduler;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.internal.functions.Functions;
 
 @Store
 @ConfiguredBy(RocksDBStoreConfiguration.class)
@@ -81,7 +81,6 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     private RocksDB db;
     private RocksDB expiredDb;
     private InitializationContext ctx;
-    private Scheduler scheduler;
     private TimeService timeService;
     private Semaphore semaphore;
     private WriteOptions dataWriteOptions;
@@ -96,7 +95,6 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     public void init(InitializationContext ctx) {
         this.configuration = ctx.getConfiguration();
         this.ctx = ctx;
-        this.scheduler = Schedulers.from(ctx.getExecutor());
         this.timeService = ctx.getTimeService();
         this.marshaller = ctx.getPersistenceMarshaller();
         this.semaphore = new Semaphore(Integer.MAX_VALUE, true);
@@ -1112,8 +1110,9 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
             if (segments != null && segments.size() == 1) {
                 return publish(segments.iterator().nextInt(), function);
             }
-            return PersistenceUtil.parallelizePublisher(segments == null ? IntSets.immutableRangeSet(handles.length()) : segments,
-                  scheduler, i -> publish(i,  function));
+            return new FlowableFromIntSetFunction<>(segments == null ? IntSets.immutableRangeSet(handles.length()) : segments,
+                  i -> publish(i, function))
+                  .concatMap(Functions.identity());
         }
 
         @Override
