@@ -13,9 +13,10 @@ cache entries as objects in the data container.
 <memory />
 ----
 
-.Passivation without eviction
+.Passivation with eviction
 
-Invalid configuration, {brandname} writes an error to log files:
+Passivation persists data to cache stores when {brandname} evicts entries. You
+should always enable eviction if you enable passivation.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
@@ -26,18 +27,10 @@ Invalid configuration, {brandname} writes an error to log files:
 <memory />
 ----
 
-[TIP]
-====
-Passivation configures {brandname} to write entries to cache stores when it
-evicts those entries. You should always enable eviction if you enable
-passivation.
-====
-
 .Manual eviction
 
 {brandname} stores cache entries as objects. Eviction is not enabled but
-performed manually using the `evict()` method. {brandname} does not log errors
-if you enable passivation with this configuration:
+performed manually using the `evict()` method.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----

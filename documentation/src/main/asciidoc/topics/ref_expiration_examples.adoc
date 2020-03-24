@@ -3,7 +3,7 @@
 When you configure {brandname} to expire entries, you can set lifespan and
 maximum idle times for:
 
-* All entries in a cache (cache-wide). You declaratively configure cache-wide expiration in `infinispan.xml` or programmatically using the `ConfigurationBuilder`.
+* All entries in a cache (cache-wide). You can configure cache-wide expiration in `infinispan.xml` or programmatically using the `ConfigurationBuilder`.
 * Per entry, which takes priority over cache-wide expiration values. You configure expiration for specific entries when you create them.
 
 [NOTE]
@@ -53,7 +53,7 @@ when creating cache entries:
 
 [source,java]
 ----
-// Use cache-wide expiration configuration.
+// Use the cache-wide expiration configuration.
 cache.put("pinot noir", pinotNoirPrice); <1>
 
 // Define a lifespan value of 2.
@@ -68,7 +68,8 @@ cache.put("riesling", rieslingPrice,
           5, TimeUnit.SECONDS, 1, TimeUnit.SECONDS); <4>
 ----
 
-In a scenario where `infinispan.xml` defines a lifespan value of `1000` for all entries, the preceding `Cache.put()` requests cause the entries to expire:
+If the {brandname} configuration defines a lifespan value of `1000` for all
+entries, the preceding `Cache.put()` requests cause the entries to expire:
 
 <1> After 1 second.
 <2> After 2 seconds.
