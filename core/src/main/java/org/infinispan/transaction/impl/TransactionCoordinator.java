@@ -5,6 +5,7 @@ import static javax.transaction.xa.XAResource.XA_RDONLY;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
@@ -219,25 +220,30 @@ public class TransactionCoordinator {
       } else {
          log.errorProcessing2pcCommitCommand(e);
       }
-      try {
-         boolean isRecoveryEnabled = recoveryManager.running() != null;
-         if (!isRecoveryEnabled) {
-            //the rollback is not needed any way, because if one node aborts the transaction, then all the nodes will
-            //abort too.
-            rollbackInternal(ctx);
-         }
-      } catch (Throwable e1) {
-         log.couldNotRollbackPrepared1PcTransaction(ctx.getCacheTransaction(), e1);
-         // inform the TM that a resource manager error has occurred in the transaction branch (XAER_RMERR).
-         XAException xe = new XAException(XAException.XAER_RMERR);
-         xe.initCause(e);
-         return CompletableFutures.completedExceptionFuture(xe);
-      } finally {
-         txTable.running().failureCompletingTransaction(ctx.getTransaction());
+      boolean isRecoveryEnabled = recoveryManager.running() != null;
+      CompletionStage<Void> stage;
+      if (!isRecoveryEnabled) {
+         //the rollback is not needed any way, because if one node aborts the transaction, then all the nodes will
+         //abort too.
+         stage = rollbackInternal(ctx);
+      } else {
+         stage = CompletableFutures.completedNull();
       }
-      XAException xe = new XAException(XAException.XA_HEURRB);
-      xe.initCause(e);
-      return CompletableFutures.completedExceptionFuture(xe); //this is a heuristic rollback
+      return stage.handle((ignore, t) -> {
+         txTable.running().failureCompletingTransaction(ctx.getTransaction());
+         if (t != null) {
+            log.couldNotRollbackPrepared1PcTransaction(ctx.getCacheTransaction(), t);
+            // inform the TM that a resource manager error has occurred in the transaction branch (XAER_RMERR).
+            XAException xe = new XAException(XAException.XAER_RMERR);
+            xe.initCause(t);
+            xe.addSuppressed(e);
+            throw new CompletionException(xe);
+         }
+
+         XAException xe = new XAException(XAException.XA_HEURRB);
+         xe.initCause(e);
+         throw new CompletionException(xe); //this is a heuristic rollback
+      });
    }
 
    private CompletionStage<Boolean> commitInternal(LocalTxInvocationContext ctx) {

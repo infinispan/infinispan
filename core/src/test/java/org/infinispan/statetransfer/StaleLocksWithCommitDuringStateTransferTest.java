@@ -74,7 +74,7 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
 
       // Execute the prepare on both nodes
       LocalTransaction localTx = txTable.getLocalTransaction(tm(c1).getTransaction());
-      txCoordinator.prepare(localTx);
+      CompletionStages.join(txCoordinator.prepare(localTx));
 
       final CountDownLatch commitLatch = new CountDownLatch(1);
       Thread worker = new Thread("RehasherSim,StaleLocksWithCommitDuringStateTransferTest") {
@@ -153,7 +153,7 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
 
       // Execute the prepare on both nodes
       LocalTransaction localTx = txTable.getLocalTransaction(tm(c1).getTransaction());
-      txCoordinator.prepare(localTx);
+      CompletionStages.join(txCoordinator.prepare(localTx));
 
       // Delay the commit on the remote node. Can't used blockNewTransactions because we don't want a StateTransferInProgressException
       AsyncInterceptorChain c2ic = c2.getAdvancedCache().getAsyncInterceptorChain();
