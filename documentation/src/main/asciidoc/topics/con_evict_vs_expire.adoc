@@ -5,9 +5,13 @@ they remove old, unused entries. Although eviction and expiration are similar,
 they have some important differences that you should take into account when
 planning your configuration.
 
-* [*] Eviction prevents {brandname} from exceeding the maximum size of data containers.
+* [*] Eviction prevents {brandname} from exceeding the maximum size of the data
+container. {brandname} performs eviction when you add entries to the cache.
 
-* [*] Expiration limits the amount of time entries can exist.
+* [*] Expiration limits the amount of time entries can exist. {brandname} uses
+a scheduler to periodically remove expired entries. Entries that are expired
+but not yet removed are immediately removed on access; in this case `get()`
+calls for expired entries return "null" values.
 
 * [*] Eviction is local to {brandname} nodes.
 
