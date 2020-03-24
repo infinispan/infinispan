@@ -335,7 +335,7 @@ public class Server implements ServerManagement, AutoCloseable {
          );
          // Change status
          this.status = ComponentStatus.RUNNING;
-         log.serverStarted(Version.getBrandName(), Version.getVersion(), timeService.timeDuration(startTime, TimeUnit.MILLISECONDS));
+         log.serverStarted(Version.getBrandName(), Version.getBrandVersion(), timeService.timeDuration(startTime, TimeUnit.MILLISECONDS));
       } catch (Exception e) {
          r.completeExceptionally(e);
       }
