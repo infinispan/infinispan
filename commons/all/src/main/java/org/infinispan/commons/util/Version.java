@@ -25,13 +25,15 @@ public class Version {
    private static final Version INSTANCE = new Version();
    public static final String INFINISPAN_VERSION = "infinispan.version";
    public static final String INFINISPAN_BRAND_NAME = "infinispan.brand.name";
+   public static final String INFINISPAN_BRAND_VERSION = "infinispan.brand.version";
    public static final String INFINISPAN_CODENAME = "infinispan.codename";
    public static final String INFINISPAN_CORE_SCHEMA_VERSION = "infinispan.core.schema.version";
    public static final String INFINISPAN_MODULE_SLOT_PREFIX = "infinispan.module.slot.prefix";
    public static final String INFINISPAN_MODULE_SLOT_VERSION = "infinispan.module.slot.version";
 
    private final String version;
-   private final String brandname;
+   private final String brandName;
+   private final String brandVersion;
    private final String codename;
    private final String schemaVersion;
    private final byte[] versionId;
@@ -56,7 +58,8 @@ public class Version {
          // Ignore errors, we'll use fallbacks
       }
       version = properties.getProperty(INFINISPAN_VERSION, "0.0.0-SNAPSHOT");
-      brandname = properties.getProperty(INFINISPAN_BRAND_NAME, "Infinispan");
+      brandName = properties.getProperty(INFINISPAN_BRAND_NAME, "Infinispan");
+      brandVersion = properties.getProperty(INFINISPAN_BRAND_VERSION, version);
       codename = properties.getProperty(INFINISPAN_CODENAME, "N/A");
       schemaVersion = properties.getProperty(INFINISPAN_CORE_SCHEMA_VERSION, "0.0");
       String parts[] = getParts(version);
@@ -83,7 +86,7 @@ public class Version {
    }
 
    public String brandName() {
-      return brandname;
+      return brandName;
    }
 
    /*
@@ -94,7 +97,11 @@ public class Version {
    }
 
    public static String getBrandName() {
-      return INSTANCE.brandname;
+      return INSTANCE.brandName;
+   }
+
+   public static String getBrandVersion() {
+      return INSTANCE.brandVersion;
    }
 
    public static String getCodename() {
@@ -181,9 +188,9 @@ public class Version {
     * Prints full version information to the standard output.
     */
    public static void printFullVersionInformation() {
-      System.out.println(INSTANCE.brandname);
+      System.out.println(INSTANCE.brandName);
       System.out.println();
-      System.out.printf("Version: \t%s%n", INSTANCE.version);
+      System.out.printf("Version: \t%s%n", INSTANCE.brandVersion);
       System.out.printf("Codename: \t%s%n", INSTANCE.codename);
       System.out.println();
    }
@@ -192,7 +199,7 @@ public class Version {
     * Returns version information as a string.
     */
    public static String printVersion() {
-      return INSTANCE.brandname + " '" + INSTANCE.codename + "' " + INSTANCE.version;
+      return INSTANCE.brandName + " '" + INSTANCE.codename + "' " + INSTANCE.brandVersion;
    }
 
    private static byte[] readVersionBytes(String major, String minor, String micro, String modifier) {
