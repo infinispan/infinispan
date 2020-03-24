@@ -5,6 +5,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
+import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -56,6 +57,7 @@ public class SecureRemoteCacheAdminTest extends RemoteCacheAdminTest {
          EmbeddedCacheManager cm = Security.doPrivileged((PrivilegedExceptionAction<EmbeddedCacheManager>) () -> {
             EmbeddedCacheManager cacheManager = addClusterEnabledCacheManager(gcb, builder);
             cacheManager.defineConfiguration("template", builder.build());
+            cacheManager.defineConfiguration(DefaultTemplate.DIST_ASYNC.getTemplateName(), builder.build());
             return cacheManager;
          });
 
