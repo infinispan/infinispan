@@ -241,4 +241,14 @@ public interface RestCacheClient {
     * Check if the cache exists
     */
    CompletionStage<RestResponse> exists();
+
+   /**
+    * Execute a Rolling Upgrade processing
+    */
+   CompletionStage<RestResponse> synchronizeData();
+
+   /**
+    * Disconnects the target cluster from the source cluster after a Rolling Upgrade
+    */
+   CompletionStage<RestResponse> disconnectSource();
 }
