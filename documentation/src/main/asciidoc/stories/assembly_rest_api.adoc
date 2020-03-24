@@ -31,6 +31,11 @@ endif::productized[]
 
 include::{topics}/ref_rest_xsite.adoc[leveloffset=+3]
 
+[id='rest_v2_rolling_upgrades']
+=== Rolling Upgrades
+Perform rolling upgrades of cache data between {brandname} clusters
+
+include::{topics}/ref_rest_rolling.adoc[leveloffset=+3]
 
 [id='rest_v2_counters']
 == Creating and Managing Counters

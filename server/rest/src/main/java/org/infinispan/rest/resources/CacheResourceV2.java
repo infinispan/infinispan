@@ -26,6 +26,8 @@ import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.StandardConversions;
+import org.infinispan.commons.util.ProcessorInfo;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -45,6 +47,7 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.stats.Stats;
+import org.infinispan.upgrade.RollingUpgradeManager;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -83,6 +86,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             // Operations
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("clear").handleWith(this::clearEntireCache)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("size").handleWith(this::getSize)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("sync-data").handleWith(this::syncData)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("disconnect-source").handleWith(this::disconnectSource)
 
             // Search
             .invocation().methods(GET, POST).path("/v2/caches/{cacheName}").withAction("search").handleWith(queryAction::search)
@@ -94,6 +99,44 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .invocation().methods(GET).path("/v2/caches/{cacheName}").handleWith(this::getAllDetails)
             .create();
 
+   }
+
+   private CompletionStage<RestResponse> disconnectSource(RestRequest request) {
+      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      String cacheName = request.variables().get("cacheName");
+
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+      RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+      try {
+         upgradeManager.disconnectSource("hotrod");
+      } catch (Exception e) {
+         builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
+      }
+      return completedFuture(builder.build());
+   }
+
+   private CompletionStage<RestResponse> syncData(RestRequest request) {
+      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      String cacheName = request.variables().get("cacheName");
+      String readBatchReq = request.getParameter("read-batch");
+      String threadsReq = request.getParameter("threads");
+
+      int readBatch = readBatchReq == null ? 10_000 : Integer.parseInt(readBatchReq);
+      int threads = request.getParameter("threads") == null ? ProcessorInfo.availableProcessors() : Integer.parseInt(threadsReq);
+
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+      RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            long hotrod = upgradeManager.synchronizeData("hotrod", readBatch, threads);
+            builder.entity(String.valueOf(hotrod));
+         } catch (Exception e) {
+            Throwable rootCause = Util.getRootCause(e);
+            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(rootCause.getMessage());
+         }
+         return builder.build();
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> convertToJson(RestRequest restRequest) {

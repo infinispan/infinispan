@@ -46,12 +46,21 @@ public class JsonReader {
             if (elementBuilderInfo != null) {
                readJson(elementBuilderInfo, attributeName, attributeValue);
             } else {
-               readAttribute(builderInfo, elementName, attributeName, attributeValue.getValue());
+               boolean read = readAttribute(builderInfo, elementName, attributeName, attributeValue.getValue());
+               if (!read) readSingleElementArray(builderInfo, elementName, attributeName, attributeValue);
             }
          } else {
             readAttribute(builderInfo, elementName, attributeName, attributeValue.getValue());
          }
       }
+   }
+
+   private void readSingleElementArray(ConfigurationBuilderInfo builderInfo, String enclosing, String name, Json json) {
+      ConfigurationBuilderInfo readerForArray = builderInfo.getNewBuilderInfo(name);
+      if (readerForArray != null) {
+         readJson(readerForArray, name, json);
+      } else
+         throw new CacheConfigurationException(String.format("Cannot read element '%s' under '%s'", name, enclosing));
    }
 
    private void readArray(ConfigurationBuilderInfo builderInfo, String enclosing, String name, Json value) {
@@ -71,19 +80,16 @@ public class JsonReader {
       }
    }
 
-   private void readAttribute(ConfigurationBuilderInfo builderInfo, String enclosing, String name, Object value) {
+   private boolean readAttribute(ConfigurationBuilderInfo builderInfo, String enclosing, String name, Object value) {
       Pair simpleAttribute = findSimpleAttribute(name, builderInfo);
       if (simpleAttribute != null) {
          AttributeDefinition<?> attributeDefinition = ((Attribute) simpleAttribute.attribute).getAttributeDefinition();
          AttributeSerializer serializerConfig = attributeDefinition.getSerializerConfig();
          Object attrValue = serializerConfig.readAttributeValue(enclosing, attributeDefinition, value, simpleAttribute.builderInfo);
          ((Attribute) simpleAttribute.attribute).set(attrValue);
-      } else {
-         ElementDefinition element = builderInfo.getElementDefinition();
-         if (element == null) {
-            throw new CacheConfigurationException(String.format("Could not find attribute definition for '%s' under '%s'", name, builderInfo));
-         }
+         return true;
       }
+      return false;
    }
 
    private Pair findSimpleAttribute(String name, ConfigurationBuilderInfo builderInfo) {

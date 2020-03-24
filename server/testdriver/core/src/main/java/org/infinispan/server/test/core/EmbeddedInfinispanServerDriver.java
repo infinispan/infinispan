@@ -39,6 +39,10 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       super(configuration, InetAddress.getLoopbackAddress());
    }
 
+   protected int clusterPortOffset() {
+      return 0;
+   }
+
    @Override
    protected void start(String name, File rootDir, String configurationFile) {
       servers = new ArrayList<>();
@@ -48,7 +52,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
          Properties properties = new Properties();
          properties.setProperty(Server.INFINISPAN_SERVER_HOME_PATH, serverRoot.getAbsolutePath());
          properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, new File(rootDir, Server.DEFAULT_SERVER_CONFIG).getAbsolutePath());
-         properties.setProperty(Server.INFINISPAN_PORT_OFFSET, Integer.toString(i * OFFSET_FACTOR));
+         properties.setProperty(Server.INFINISPAN_PORT_OFFSET, Integer.toString(clusterPortOffset() + i * OFFSET_FACTOR));
          properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, name);
          properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
          configuration.properties().forEach((k, v) -> properties.put(k, StringPropertyReplacer.replaceProperties((String) v, properties)));
@@ -83,7 +87,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
 
    @Override
    public InetSocketAddress getServerSocket(int server, int port) {
-      return new InetSocketAddress(getServerAddress(server), port + server * OFFSET_FACTOR);
+      return new InetSocketAddress(getServerAddress(server), port + clusterPortOffset() + server * OFFSET_FACTOR);
    }
 
    @Override

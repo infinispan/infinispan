@@ -13,6 +13,7 @@ import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
@@ -33,20 +34,26 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<Integer> KEY_SIZE_ESTIMATE = AttributeDefinition.builder("keySizeEstimate", ConfigurationProperties.DEFAULT_KEY_SIZE).immutable().build();
    static final AttributeDefinition<Integer> VALUE_SIZE_ESTIMATE = AttributeDefinition.builder("valueSizeEstimate", ConfigurationProperties.DEFAULT_VALUE_SIZE).immutable().build();
    static final AttributeDefinition<String> MARSHALLER = AttributeDefinition.builder("marshaller", null, String.class).immutable().build();
-   static final AttributeDefinition<ProtocolVersion> PROTOCOL_VERSION = AttributeDefinition.builder("protocolVersion", ProtocolVersion.DEFAULT_PROTOCOL_VERSION).immutable().build();
+   static final AttributeDefinition<ProtocolVersion> PROTOCOL_VERSION = AttributeDefinition.builder("protocolVersion", ProtocolVersion.DEFAULT_PROTOCOL_VERSION)
+         .serializer(new AttributeSerializer<ProtocolVersion, RemoteStoreConfiguration, RemoteStoreConfigurationBuilder>() {
+            @Override
+            public Object readAttributeValue(String enclosingElement, AttributeDefinition attributeDefinition, Object attrValue, RemoteStoreConfigurationBuilder builderInfo) {
+               return ProtocolVersion.parseVersion(attrValue.toString());
+            }
+         })
+         .immutable().build();
    static final AttributeDefinition<String> REMOTE_CACHE_NAME = AttributeDefinition.builder("remoteCacheName", "").immutable().xmlName("cache").build();
-   static final AttributeDefinition<List<RemoteServerConfiguration>> SERVERS = AttributeDefinition.builder("servers", null, (Class<List<RemoteServerConfiguration>>) (Class<?>) List.class)
-         .initializer(ArrayList::new).autoPersist(false).build();
+
    static final AttributeDefinition<Long> SOCKET_TIMEOUT = AttributeDefinition.builder("socketTimeout", (long) ConfigurationProperties.DEFAULT_SO_TIMEOUT).build();
    static final AttributeDefinition<Boolean> TCP_NO_DELAY = AttributeDefinition.builder("tcpNoDelay", true).build();
    private final List<ConfigurationInfo> subElements;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RemoteStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), BALANCING_STRATEGY, CONNECTION_TIMEOUT, FORCE_RETURN_VALUES,
-            HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_NAME, SERVERS, SOCKET_TIMEOUT, TCP_NO_DELAY, VALUE_SIZE_ESTIMATE);
+            HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_NAME, SOCKET_TIMEOUT, TCP_NO_DELAY, VALUE_SIZE_ESTIMATE);
    }
 
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(REMOTE_STORE.getLocalName(), true, false);
+   static ElementDefinition<RemoteStoreConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(REMOTE_STORE.getLocalName(), true, false);
 
    private final Attribute<String> balancingStrategy;
    private final Attribute<Long> connectionTimeout;
@@ -58,16 +65,16 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    private final Attribute<String> marshaller;
    private final Attribute<ProtocolVersion> protocolVersion;
    private final Attribute<String> remoteCacheName;
-   private final Attribute<List<RemoteServerConfiguration>> servers;
    private final Attribute<Long> socketTimeout;
    private final Attribute<Boolean> tcpNoDelay;
    private final ConnectionPoolConfiguration connectionPool;
    private final ExecutorFactoryConfiguration asyncExecutorFactory;
    private final SecurityConfiguration security;
+   private List<RemoteServerConfiguration> servers;
 
    public RemoteStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async,
                                    ExecutorFactoryConfiguration asyncExecutorFactory, ConnectionPoolConfiguration connectionPool,
-                                   SecurityConfiguration security) {
+                                   SecurityConfiguration security, List<RemoteServerConfiguration> servers) {
       super(attributes, async);
       balancingStrategy = attributes.attribute(BALANCING_STRATEGY);
       connectionTimeout = attributes.attribute(CONNECTION_TIMEOUT);
@@ -79,21 +86,21 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       marshaller = attributes.attribute(MARSHALLER);
       protocolVersion = attributes.attribute(PROTOCOL_VERSION);
       remoteCacheName = attributes.attribute(REMOTE_CACHE_NAME);
-      servers = attributes.attribute(SERVERS);
       socketTimeout = attributes.attribute(SOCKET_TIMEOUT);
       tcpNoDelay = attributes.attribute(TCP_NO_DELAY);
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.connectionPool = connectionPool;
       this.security = security;
+      this.servers = servers;
       this.subElements = new ArrayList<>(super.subElements());
       subElements.add(connectionPool);
       subElements.add(asyncExecutorFactory);
       subElements.add(security);
-      subElements.addAll(servers());
+      subElements.addAll(servers);
    }
 
    @Override
-   public ElementDefinition getElementDefinition() {
+   public ElementDefinition<RemoteStoreConfiguration> getElementDefinition() {
       return ELEMENT_DEFINITION;
    }
 
@@ -147,7 +154,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    }
 
    public List<RemoteServerConfiguration> servers() {
-      return servers.get();
+      return servers;
    }
 
    public long socketTimeout() {
