@@ -4,7 +4,6 @@ import static org.infinispan.util.logging.Log.SECURITY;
 
 import java.security.AccessControlException;
 import java.security.Principal;
-import java.security.acl.Group;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -113,7 +112,7 @@ public class AuthorizationHelper {
 
    private boolean checkSubjectPermissionAndRole(Subject subject, AuthorizationConfiguration configuration,
          AuthorizationPermission requiredPermission, String requestedRole) {
-      Principal userPrincipal = getUserPrincipal(subject);
+      Principal userPrincipal = Security.getSubjectUserPrincipal(subject);
       if (userPrincipal != null) {
          CachePrincipalPair cpp = new CachePrincipalPair(userPrincipal, name);
          SubjectACL subjectACL;
@@ -158,19 +157,4 @@ public class AuthorizationHelper {
       }
       return new SubjectACL(allRoles, subjectMask);
    }
-
-   private Principal getUserPrincipal(Subject subject) {
-      if (subject != null) {
-         Set<Principal> principals = subject.getPrincipals();
-         if (principals != null && !principals.isEmpty()) {
-            for (Principal p : principals) {
-               if (!(p instanceof Group)) {
-                  return p;
-               }
-            }
-         }
-      }
-      return null;
-   }
-
 }
