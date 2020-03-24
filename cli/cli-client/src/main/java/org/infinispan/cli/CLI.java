@@ -284,7 +284,7 @@ public class CLI {
    }
 
    private void version(PrintStream out) {
-      out.printf("%s CLI %s\n", Version.getBrandName(), Version.getVersion());
+      out.printf("%s CLI %s\n", Version.getBrandName(), Version.getBrandVersion());
       out.printf("Copyright (C) Red Hat Inc. and/or its affiliates and other contributors\n");
       out.printf("License Apache License, v. 2.0. http://www.apache.org/licenses/LICENSE-2.0\n");
    }

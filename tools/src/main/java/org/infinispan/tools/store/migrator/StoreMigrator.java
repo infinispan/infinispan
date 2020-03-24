@@ -4,6 +4,7 @@ import static org.infinispan.tools.store.migrator.Element.BATCH;
 import static org.infinispan.tools.store.migrator.Element.SIZE;
 
 import java.io.FileReader;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -18,6 +19,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.util.Version;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -91,7 +93,7 @@ public class StoreMigrator {
 
    void run(boolean output) throws Exception {
       String batchSizeProp = properties.getProperty(BATCH + "." + SIZE);
-      int batchLimit = batchSizeProp != null ? new Integer(batchSizeProp) : DEFAULT_BATCH_SIZE;
+      int batchLimit = batchSizeProp != null ? Integer.parseInt(batchSizeProp) : DEFAULT_BATCH_SIZE;
 
       try (EmbeddedCacheManager manager = TargetStoreFactory.getCacheManager(properties);
            StoreIterator sourceReader = StoreIteratorFactory.get(properties)) {
@@ -127,12 +129,19 @@ public class StoreMigrator {
 
    public static void main(String[] args) throws Exception {
       if (args.length != 1) {
-         System.err.println("Usage: StoreMigrator migrator.properties");
+         version(System.out);
+         System.out.println("Usage: StoreMigrator migrator.properties");
          System.exit(1);
       }
       Properties properties = new Properties();
       properties.load(new FileReader(args[0]));
       new StoreMigrator(properties).run(true);
+   }
+
+   private static void version(PrintStream out) {
+      out.printf("%s Store Migrator %s\n", Version.getBrandName(), Version.getBrandVersion());
+      out.println("Copyright (C) Red Hat Inc. and/or its affiliates and other contributors");
+      out.println("License Apache License, v. 2.0. http://www.apache.org/licenses/LICENSE-2.0");
    }
 
    private boolean warnAndIgnoreInternalClasses(Object o, Set<Class> extClass, boolean output) {
