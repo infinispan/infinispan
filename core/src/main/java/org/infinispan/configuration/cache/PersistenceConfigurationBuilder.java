@@ -12,6 +12,8 @@ import static org.infinispan.util.logging.Log.CONFIG;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -34,16 +36,26 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    private final List<StoreConfigurationBuilder<?, ?>> stores = new ArrayList<>(2);
    private final AttributeSet attributes;
 
-   private static List<Class<? extends StoreConfigurationBuilder<?, ?>>> subElements = new ArrayList<>();
+   private static final Set<Class<? extends StoreConfigurationBuilder<?, ?>>> AVAILABLE_BUILDERS =
+         Configurations.lookupPersistenceBuilders();
 
-   static {
-      subElements.addAll(Configurations.lookupPersistenceBuilders());
-   }
+   private static List<Class<? extends StoreConfigurationBuilder<?, ?>>> subElements = new ArrayList<>();
 
    protected PersistenceConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = PersistenceConfiguration.attributeDefinitionSet();
    }
+
+
+   public StoreConfigurationBuilder getBuilderFromName(String name) {
+      Optional<Class<? extends StoreConfigurationBuilder<?, ?>>> first = AVAILABLE_BUILDERS.stream().filter(klass -> {
+         StoreConfigurationBuilder<?, ?> builderFromClass = getBuilderFromClass(klass);
+         return builderFromClass.getElementDefinition().supports(name);
+      }).findFirst();
+
+      return getBuilderFromClass(first.get());
+   }
+
 
    public PersistenceConfigurationBuilder passivation(boolean b) {
       attributes.attribute(PASSIVATION).set(b);
@@ -92,9 +104,9 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
          return configBuilder;
 
       }
-      return subElements.stream().map(this::addStore)
-            .filter(r -> r.getElementDefinition().supports(name))
-            .findFirst().orElse(null);
+      StoreConfigurationBuilder builder = getBuilderFromName(name);
+      this.addStore(builder);
+      return builder;
    }
 
    /**
@@ -143,11 +155,15 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
     * Adds a cache loader that uses the specified builder class to build its configuration.
     */
    public <T extends StoreConfigurationBuilder<?, ?>> T addStore(Class<T> klass) {
+      T builder = getBuilderFromClass(klass);
+      this.stores.add(builder);
+      return builder;
+   }
+
+   private <T extends StoreConfigurationBuilder<?, ?>> T getBuilderFromClass(Class<T> klass) {
       try {
          Constructor<T> constructor = klass.getDeclaredConstructor(PersistenceConfigurationBuilder.class);
-         T builder = constructor.newInstance(this);
-         this.stores.add(builder);
-         return builder;
+         return constructor.newInstance(this);
       } catch (Exception e) {
          throw new CacheConfigurationException("Could not instantiate loader configuration builder '" + klass.getName()
                + "'", e);
