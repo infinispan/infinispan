@@ -1,5 +1,14 @@
 [id='how_eviction_works-{context}']
 = How Eviction Works
+{brandname} eviction removes entries from the data container to make space when
+adding new entries.
+
+[IMPORTANT]
+====
+To prevent data loss, you should always configure a persistent cache store if
+you enable eviction.
+====
+
 {brandname} eviction relies on two configurations:
 
 * Size of the data container.
@@ -63,7 +72,8 @@ create a new entry, {brandname} performs eviction.
 
 .Eviction strategies
 
-Strategies control how {brandname} performs eviction. You can either perform eviction manually or configure {brandname} to do one of the following:
+Strategies control how {brandname} performs eviction. You can either perform
+eviction manually or configure {brandname} to do one of the following:
 
 * Remove old entries to make space for new ones.
 * Throw `ContainerFullException` and prevent new entries from being created.
@@ -82,3 +92,5 @@ Least Recently Used (LRU) algorithm.
 .References
 
 * link:https://github.com/ben-manes/caffeine[Caffeine]
+* link:#persistence[Setting Up Persistent Storage]
+* link:#passivation[Passivation]
