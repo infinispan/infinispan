@@ -3,7 +3,6 @@ package org.infinispan.persistence.support;
 import java.util.PrimitiveIterator;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
@@ -20,18 +19,17 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
-import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
-import io.reactivex.Scheduler;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.internal.functions.Functions;
 
 /**
  * Segmented store that creates multiple inner stores for each segment. This is used by stores that are not segmented
@@ -42,11 +40,9 @@ import io.reactivex.schedulers.Schedulers;
 public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedStoreConfiguration> extends AbstractSegmentedAdvancedLoadWriteStore<K, V> {
    private final AbstractSegmentedStoreConfiguration<T> configuration;
    Cache<K, V> cache;
-   ExecutorService executorService;
    CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
    KeyPartitioner keyPartitioner;
    InitializationContext ctx;
-   Scheduler scheduler;
    boolean shouldStopSegments;
 
    AtomicReferenceArray<AdvancedLoadWriteStore<K, V>> stores;
@@ -133,7 +129,8 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
       if (segments.size() == 1) {
          return publisherFunction.apply(segments.iterator().nextInt());
       }
-      return PersistenceUtil.parallelizePublisher(segments, scheduler, publisherFunction);
+      return new FlowableFromIntSetFunction<>(segments, publisherFunction)
+            .concatMap(Functions.identity());
    }
 
    @Override
@@ -153,7 +150,8 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
       if (segments.size() == 1) {
          return publisherFunction.apply(segments.iterator().nextInt());
       }
-      return PersistenceUtil.parallelizePublisher(segments, scheduler, publisherFunction);
+      return new FlowableFromIntSetFunction<>(segments, publisherFunction)
+            .concatMap(Functions.identity());
    }
 
    @Override
@@ -225,15 +223,12 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
    public void init(InitializationContext ctx) {
       this.ctx = ctx;
       cache = ctx.getCache();
-      executorService = ctx.getExecutor();
    }
 
    @Override
    public void start() {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       cacheStoreFactoryRegistry = componentRegistry.getComponent(CacheStoreFactoryRegistry.class);
-
-      scheduler = Schedulers.from(executorService);
 
       HashConfiguration hashConfiguration = cache.getCacheConfiguration().clustering().hash();
       keyPartitioner = componentRegistry.getComponent(KeyPartitioner.class);
