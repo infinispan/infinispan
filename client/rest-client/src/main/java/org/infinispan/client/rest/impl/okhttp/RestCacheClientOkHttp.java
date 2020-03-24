@@ -53,6 +53,20 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> synchronizeData() {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "?action=sync-data").get();
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> disconnectSource() {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "?action=disconnect-source").get();
+      return client.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> size() {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "?action=size").get();

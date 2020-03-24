@@ -10,7 +10,6 @@ import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigu
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.PROTOCOL_VERSION;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.RAW_VALUES;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.REMOTE_CACHE_NAME;
-import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.SERVERS;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.SOCKET_TIMEOUT;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.TCP_NO_DELAY;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.VALUE_SIZE_ESTIMATE;
@@ -77,7 +76,7 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
 
    @Override
    public ConfigurationBuilderInfo getNewBuilderInfo(String name) {
-      if (name.equals(Element.SERVERS.getLocalName())) return addServer();
+      if (name.equals(Element.SERVER.getLocalName())) return addServer();
       return this;
    }
 
@@ -199,9 +198,8 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       for (RemoteServerConfigurationBuilder server : servers) {
          remoteServers.add(server.create());
       }
-      attributes.attribute(SERVERS).set(remoteServers);
       return new RemoteStoreConfiguration(attributes.protect(), async.create(),
-            asyncExecutorFactory.create(), connectionPool.create(), security.create());
+            asyncExecutorFactory.create(), connectionPool.create(), security.create(), remoteServers);
    }
 
    @Override
