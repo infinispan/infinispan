@@ -7,7 +7,6 @@ import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.security.acl.Group;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -160,15 +159,11 @@ public final class Security {
    }
 
    /**
-    * Returns the first principal of a subject which is not of type {@link java.security.acl.Group}
+    * Returns the first principal of a subject
     */
    public static Principal getSubjectUserPrincipal(Subject s) {
-      if (s != null) {
-         for (Principal p : s.getPrincipals()) {
-            if (!(p instanceof Group)) {
-               return p;
-            }
-         }
+      if (s != null && !s.getPrincipals().isEmpty()) {
+         return s.getPrincipals().iterator().next();
       }
       return null;
    }
