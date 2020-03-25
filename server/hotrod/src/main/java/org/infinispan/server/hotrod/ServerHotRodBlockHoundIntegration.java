@@ -3,7 +3,6 @@ package org.infinispan.server.hotrod;
 import org.infinispan.commons.util.SaslUtils;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.utils.SslUtils;
-import org.infinispan.server.hotrod.tx.PrepareCoordinator;
 import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.kohsuke.MetaInfServices;
 
@@ -53,11 +52,6 @@ public class ServerHotRodBlockHoundIntegration implements BlockHoundIntegration 
       builder.allowBlockingCallsInside(GlobalTxTable.class.getName(), "update");
       // Uses blocking call inside publisher - can be non blocking instead
       builder.allowBlockingCallsInside(GlobalTxTable.class.getName(), "forgetTransaction");
-
-      // Transaction API is inherently blocking - need to workaround eventually
-      builder.allowBlockingCallsInside(PrepareCoordinator.class.getName(), "rollback");
-      builder.allowBlockingCallsInside(PrepareCoordinator.class.getName(), "commit");
-      builder.allowBlockingCallsInside(TransactionRequestProcessor.class.getName(), "prepareTransactionInternal");
 
       builder.allowBlockingCallsInside(CounterRequestProcessor.class.getName(), "counterRemoveInternal");
       // Counter creation is blocking - needs to be fixed
