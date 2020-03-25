@@ -37,13 +37,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       listenerRegistry = server.getClientListenerRegistry();
    }
 
-   private boolean isBlockingRead(CacheInfo info, HotRodHeader header) {
-      return info.persistence && !header.isSkipCacheLoad();
-   }
-
    private boolean isBlockingWrite(CacheInfo cacheInfo, HotRodHeader header) {
       // Note: cache store cannot be skipped (yet)
-      return cacheInfo.persistence || cacheInfo.indexing && !header.isSkipIndexing();
+      return cacheInfo.indexing && !header.isSkipIndexing();
    }
 
    void ping(HotRodHeader header, Subject subject) {
@@ -64,11 +60,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
 
-      if (isBlockingRead(cacheInfo, header)) {
-         executor.execute(() -> getInternal(header, cache, key));
-      } else {
-         getInternal(header, cache, key);
-      }
+      getInternal(header, cache, key);
    }
 
    private void getInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key) {
@@ -115,11 +107,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void getWithMetadata(HotRodHeader header, Subject subject, byte[] key, int offset) {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      if (isBlockingRead(cacheInfo, header)) {
-         executor.execute(() -> getWithMetadataInternal(header, cache, key, offset));
-      } else {
-         getWithMetadataInternal(header, cache, key, offset);
-      }
+      getWithMetadataInternal(header, cache, key, offset);
    }
 
    private void getWithMetadataInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, int offset) {
@@ -152,11 +140,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void containsKey(HotRodHeader header, Subject subject, byte[] key) {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      if (isBlockingRead(cacheInfo, header)) {
-         executor.execute(() -> containsKeyInternal(header, cache, key));
-      } else {
-         containsKeyInternal(header, cache, key);
-      }
+      containsKeyInternal(header, cache, key);
    }
 
    private void containsKeyInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key) {
@@ -428,11 +412,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void getAll(HotRodHeader header, Subject subject, Set<?> keys) {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      if (isBlockingRead(cacheInfo, header)) {
-         executor.execute(() -> getAllInternal(header, cache, keys));
-      } else {
-         getAllInternal(header, cache, keys);
-      }
+      getAllInternal(header, cache, keys);
    }
 
    private void getAllInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Set<?> keys) {
