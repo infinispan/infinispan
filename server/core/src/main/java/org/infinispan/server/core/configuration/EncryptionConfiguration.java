@@ -14,7 +14,7 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  */
 public class EncryptionConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder("securityRealm", null, String.class).build();
-   static final AttributeDefinition<Boolean> REQUIRE_CLIENT_AUTH = AttributeDefinition.builder("requireSslClientAuth", null, Boolean.class).build();
+   static final AttributeDefinition<Boolean> REQUIRE_CLIENT_AUTH = AttributeDefinition.builder("requireSslClientAuth", false, Boolean.class).build();
 
    private static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("encryption");
    private final List<ConfigurationInfo> subElements = new ArrayList<>();
