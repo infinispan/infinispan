@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -116,7 +115,7 @@ class ClientListenerRegistry {
       cacheEventFilterConverterFactories.remove(name);
    }
 
-   void addClientListener(CacheRequestProcessor cacheProcessor, Channel ch, HotRodHeader h, byte[] listenerId,
+   CompletionStage<Void> addClientListener(Channel ch, HotRodHeader h, byte[] listenerId,
                           AdvancedCache<byte[], byte[]> cache, boolean includeState,
                           String filterFactory, List<byte[]> binaryFilterParams,
                           String converterFactory, List<byte[]> binaryConverterParams,
@@ -154,20 +153,7 @@ class ClientListenerRegistry {
 
       eventSenders.put(new WrappedByteArray(listenerId), clientEventSender);
 
-      // If state included, do it async
-      CompletionStage<Void> cf = addCacheListener(cache, clientEventSender, filter, converter, listenerInterests, useRawData);
-
-      cf.whenComplete((ignore, cause) -> {
-         if (cause != null) {
-            if (cause instanceof CompletionException) {
-               cacheProcessor.writeException(h, cause.getCause());
-            } else {
-               cacheProcessor.writeException(h, cause);
-            }
-         } else {
-            cacheProcessor.writeSuccess(h);
-         }
-      });
+      return addCacheListener(cache, clientEventSender, filter, converter, listenerInterests, useRawData);
    }
 
    private CompletionStage<Void> addCacheListener(AdvancedCache<byte[], byte[]> cache, Object clientEventSender,
@@ -234,12 +220,12 @@ class ClientListenerRegistry {
       return binaryParams.stream().map(bp -> valueDataConversion.convert(bp, requestMedia, APPLICATION_OBJECT)).collect(Collectors.toList());
    }
 
-   boolean removeClientListener(byte[] listenerId, Cache cache) {
+   CompletionStage<Boolean> removeClientListener(byte[] listenerId, Cache cache) {
       Object sender = eventSenders.get(new WrappedByteArray(listenerId));
       if (sender != null) {
-         cache.removeListener(sender);
-         return true;
-      } else return false;
+         return cache.removeListenerAsync(sender)
+               .thenCompose(ignore -> CompletableFutures.completedTrue());
+      } else return CompletableFutures.completedFalse();
    }
 
    public void stop() {

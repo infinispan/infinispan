@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
 import javax.security.auth.Subject;
@@ -512,35 +514,41 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void addClientListener(HotRodHeader header, Subject subject, byte[] listenerId, boolean includeCurrentState, String filterFactory, List<byte[]> filterParams, String converterFactory, List<byte[]> converterParams, boolean useRawData, int listenerInterests) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      executor.execute(() -> {
-         try {
-            listenerRegistry.addClientListener(this, channel, header, listenerId,
-                  cache, includeCurrentState,
-                  filterFactory, filterParams,
-                  converterFactory, converterParams,
-                  useRawData, listenerInterests);
-         } catch (Throwable t) {
-            log.trace("Failed to add listener", t);
-            writeException(header, t);
+      CompletionStage<Void> stage = listenerRegistry.addClientListener(channel, header, listenerId, cache,
+            includeCurrentState, filterFactory, filterParams, converterFactory, converterParams, useRawData,
+            listenerInterests);
+      stage.whenComplete((ignore, cause) -> {
+         if (cause != null) {
+            log.trace("Failed to add listener", cause);
+            if (cause instanceof CompletionException) {
+               writeException(header, cause.getCause());
+            } else {
+               writeException(header, cause);
+            }
+         } else {
+            writeSuccess(header);
          }
       });
    }
 
    void removeClientListener(HotRodHeader header, Subject subject, byte[] listenerId) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      executor.execute(() -> removeClientListenerInternal(header, cache, listenerId));
+      removeClientListenerInternal(header, cache, listenerId);
    }
 
    private void removeClientListenerInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] listenerId) {
-      try {
-         if (server.getClientListenerRegistry().removeClientListener(listenerId, cache)) {
-            writeSuccess(header);
-         } else {
-            writeNotExecuted(header);
-         }
-      } catch (Throwable t) {
-         writeException(header, t);
-      }
+      server.getClientListenerRegistry().removeClientListener(listenerId, cache)
+            .whenComplete((success, t) -> {
+               if (t != null) {
+                  writeException(header, t);
+               } else {
+                  if (success == Boolean.TRUE) {
+                     writeSuccess(header);
+                  } else {
+                     writeNotExecuted(header);
+                  }
+               }
+            });
    }
 
    void iterationStart(HotRodHeader header, Subject subject, byte[] segmentMask, String filterConverterFactory,

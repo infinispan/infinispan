@@ -44,11 +44,6 @@ public class ServerHotRodBlockHoundIntegration implements BlockHoundIntegration 
 
       builder.allowBlockingCallsInside(SaslUtils.class.getName(), "getFactories");
 
-      // Listeners aren't using new non blocking publisher for include current state
-      builder.allowBlockingCallsInside(ClientListenerRegistry.class.getName(), "addClientListener");
-      // Client listener removal is using blocking method - should use non blocking version
-      builder.allowBlockingCallsInside(ClientListenerRegistry.class.getName(), "removeClientListener");
-
       // Blocks on non blocking method - should return CompletionStage
       builder.allowBlockingCallsInside(GlobalTxTable.class.getName(), "update");
       // Uses blocking call inside publisher - can be non blocking instead
