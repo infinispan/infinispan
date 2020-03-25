@@ -1,6 +1,6 @@
 package org.infinispan.server.core.utils;
 
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
 
 import org.infinispan.executors.ManageableExecutorService;
 import org.infinispan.jmx.annotations.MBean;
@@ -10,9 +10,9 @@ import org.infinispan.jmx.annotations.MBean;
  * @since 10.0
  */
 @MBean(objectName = "WorkerExecutor")
-public class ManageableThreadPoolExecutorService extends ManageableExecutorService<ThreadPoolExecutor> {
+public class ManageableThreadPoolExecutorService extends ManageableExecutorService<ExecutorService> {
 
-   public ManageableThreadPoolExecutorService(ThreadPoolExecutor threadPoolExecutor) {
+   public ManageableThreadPoolExecutorService(ExecutorService threadPoolExecutor) {
       this.executor = threadPoolExecutor;
    }
 }

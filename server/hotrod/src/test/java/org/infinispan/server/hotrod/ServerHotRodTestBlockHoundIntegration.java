@@ -3,6 +3,9 @@ package org.infinispan.server.hotrod;
 import org.infinispan.server.hotrod.counter.impl.TestCounterNotificationManager;
 import org.kohsuke.MetaInfServices;
 
+import com.arjuna.ats.internal.arjuna.coordinator.ReaperThread;
+import com.arjuna.ats.internal.arjuna.coordinator.ReaperWorkerThread;
+
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
@@ -11,5 +14,9 @@ public class ServerHotRodTestBlockHoundIntegration implements BlockHoundIntegrat
    @Override
    public void applyTo(BlockHound.Builder builder) {
       builder.allowBlockingCallsInside(TestCounterNotificationManager.class.getName(), "accept");
+
+      // Let arjuna block - sometimes its thread will be put in our non blocking thread group
+      builder.allowBlockingCallsInside(ReaperThread.class.getName(), "run");
+      builder.allowBlockingCallsInside(ReaperWorkerThread.class.getName(), "run");
    }
 }
