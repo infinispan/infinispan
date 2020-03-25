@@ -101,9 +101,10 @@
                   </Export-Package>
                   <Include-Resource>
                      {maven-resources},
-                     /proto=${project.basedir}/target/classes/proto,
-                     /META-INF/services=${project.basedir}/target/classes/META-INF/services,
-                     /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
+                     /schema=${project.build.outputDirectory}/schema,
+                     /proto=${project.build.outputDirectory}/proto,
+                     /META-INF/services=${project.build.outputDirectory}/META-INF/services,
+                     /OSGI-INF/blueprint/blueprint.xml=${project.build.outputDirectory}/OSGI-INF/blueprint/blueprint.xml
                   </Include-Resource>
                </instructions>
             </configuration>

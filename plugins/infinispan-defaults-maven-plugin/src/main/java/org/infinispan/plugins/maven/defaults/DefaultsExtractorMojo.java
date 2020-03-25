@@ -94,8 +94,8 @@ public class DefaultsExtractorMojo extends AbstractMojo {
    @Component
    private BuildPluginManager pluginManager;
 
-   private DefaultsResolver ispnResovler = new InfinispanDefaultsResolver();
-   private DefaultsResolver serverResovler = new ServerResourceDefaultsResolver();
+   private DefaultsResolver ispnResolver = new InfinispanDefaultsResolver();
+   private DefaultsResolver serverResolver = new ServerResourceDefaultsResolver();
    private List<String> classPaths;
    private ClassLoader classLoader;
 
@@ -124,7 +124,7 @@ public class DefaultsExtractorMojo extends AbstractMojo {
    }
 
    private boolean isValidClass(String className) {
-      return ispnResovler.isValidClass(className) || serverResovler.isValidClass(className);
+      return ispnResolver.isValidClass(className) || serverResolver.isValidClass(className);
    }
 
    private Map<String, String> extractDefaults(Set<Class> classes) {
@@ -132,10 +132,10 @@ public class DefaultsExtractorMojo extends AbstractMojo {
       Map<String, String> defaults = new HashMap<>();
       boolean extractAll = attributeDefType == AttributeDefType.ALL;
       if (extractAll || attributeDefType == AttributeDefType.ISPN)
-         defaults.putAll(ispnResovler.extractDefaults(classes, separator));
+         defaults.putAll(ispnResolver.extractDefaults(classes, separator));
 
       if (extractAll || attributeDefType == AttributeDefType.SERVER)
-         defaults.putAll(serverResovler.extractDefaults(classes, separator));
+         defaults.putAll(serverResolver.extractDefaults(classes, separator));
 
       return defaults;
    }

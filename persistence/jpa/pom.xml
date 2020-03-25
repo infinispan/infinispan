@@ -75,8 +75,9 @@
                   </Import-Package>
                   <Include-Resource>
                      {maven-resources},
-                     /META-INF/services=${project.basedir}/target/classes/META-INF/services,
-                     /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
+                     /schema=${project.build.outputDirectory}/schema,
+                     /META-INF/services=${project.build.outputDirectory}/META-INF/services,
+                     /OSGI-INF/blueprint/blueprint.xml=${project.build.outputDirectory}/OSGI-INF/blueprint/blueprint.xml
                   </Include-Resource>
                   <!-- Required for driver loading. -->
                   <DynamicImport-Package>*</DynamicImport-Package>

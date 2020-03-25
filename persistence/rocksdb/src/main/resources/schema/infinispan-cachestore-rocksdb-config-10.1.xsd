@@ -65,7 +65,7 @@
         <xs:documentation>The base directory in which to store expired cache state.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="queue-size" type="xs:integer" default="${RocksDBStore.expiryQueueSize}">
+    <xs:attribute name="queue-size" type="xs:integer" default="${RocksDBExpiration.queueSize}">
       <xs:annotation>
         <xs:documentation>Deprecated. The expiration queue is no longer used since 10.1</xs:documentation>
       </xs:annotation>
