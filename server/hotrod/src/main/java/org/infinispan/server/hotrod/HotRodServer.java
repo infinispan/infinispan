@@ -67,7 +67,6 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConvert
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.core.AbstractProtocolServer;
@@ -407,10 +406,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       if (info.anonymizedCache.getStatus() != ComponentStatus.RUNNING)
          return;
 
-      ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(info.anonymizedCache);
-      PersistenceManager pm = cr.getComponent(PersistenceManager.class);
       boolean hasIndexing = SecurityActions.getCacheConfiguration(info.anonymizedCache).indexing().enabled();
-      info.update(pm.isEnabled(), hasIndexing);
+      info.update(hasIndexing);
    }
 
    private AdvancedCache<byte[], byte[]> obtainAnonymizedCache(String cacheName) {
@@ -600,7 +597,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       final Configuration configuration;
       final boolean transactional;
       final boolean clustered;
-      volatile boolean persistence;
       volatile boolean indexing;
 
       CacheInfo(AdvancedCache<byte[], byte[]> cache, Configuration configuration) {
@@ -613,7 +609,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          this.clustered = configuration.clustering().cacheMode().isClustered();
 
          // Start conservative and assume we have all the stuff that can cause operations to block
-         this.persistence = true;
          this.indexing = true;
       }
 
@@ -632,8 +627,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          }
       }
 
-      public void update(boolean enabled, boolean indexing) {
-         this.persistence = enabled;
+      public void update(boolean indexing) {
          this.indexing = indexing;
       }
    }

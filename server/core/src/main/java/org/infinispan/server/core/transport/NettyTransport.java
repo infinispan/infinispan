@@ -2,12 +2,14 @@ package org.infinispan.server.core.transport;
 
 import java.net.InetSocketAddress;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -66,9 +68,12 @@ public class NettyTransport implements Transport {
       this.address = address;
       this.configuration = configuration;
 
+      Executor executor = cacheManager.getGlobalComponentRegistry().getComponent(Executor.class,
+            KnownComponentNames.NON_BLOCKING_EXECUTOR);
+
       // Need to initialize these in constructor since they require configuration
       masterGroup = buildEventLoop(1, new DefaultThreadFactory(threadNamePrefix + "-ServerMaster"));
-      ioGroup = buildEventLoop(configuration.ioThreads(), new DefaultThreadFactory(threadNamePrefix + "-ServerIO"));
+      ioGroup = buildEventLoop(configuration.ioThreads(), executor);
 
       serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels", ImmediateEventExecutor.INSTANCE);
       acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted", ImmediateEventExecutor.INSTANCE);
@@ -300,6 +305,13 @@ public class NettyTransport implements Transport {
    private EventLoopGroup buildEventLoop(int nThreads, DefaultThreadFactory threadFactory) {
       EventLoopGroup eventLoop = EPollAvailable.USE_NATIVE_EPOLL ? new EpollEventLoopGroup(nThreads, threadFactory) :
               new NioEventLoopGroup(nThreads, threadFactory);
+      log.createdNettyEventLoop(eventLoop.getClass().getName(), configuration.toString());
+      return eventLoop;
+   }
+
+   private EventLoopGroup buildEventLoop(int nThreads, Executor executor) {
+      EventLoopGroup eventLoop = EPollAvailable.USE_NATIVE_EPOLL ? new EpollEventLoopGroup(nThreads, executor) :
+            new NioEventLoopGroup(nThreads, executor);
       log.createdNettyEventLoop(eventLoop.getClass().getName(), configuration.toString());
       return eventLoop;
    }
