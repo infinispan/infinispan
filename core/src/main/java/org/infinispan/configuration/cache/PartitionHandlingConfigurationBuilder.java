@@ -44,6 +44,10 @@ public class PartitionHandlingConfigurationBuilder extends AbstractClusteringCon
       return this;
    }
 
+   PartitionHandling whenSplit() {
+      return attributes.attribute(WHEN_SPLIT).get();
+   }
+
    public PartitionHandlingConfigurationBuilder whenSplit(PartitionHandling partitionHandling) {
       attributes.attribute(WHEN_SPLIT).set(partitionHandling);
       return this;

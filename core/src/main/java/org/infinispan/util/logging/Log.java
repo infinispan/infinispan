@@ -1946,4 +1946,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Global state cannot persisted because it is incomplete (usually caused by errors at startup).", id = 574)
    void incompleteGlobalState();
+
+   @Message(value = "PartitionStrategy must be ALLOW_READ_WRITES when numOwners is 1", id = 575)
+   CacheConfigurationException singleOwnerNotSetToAllowReadWrites();
 }
