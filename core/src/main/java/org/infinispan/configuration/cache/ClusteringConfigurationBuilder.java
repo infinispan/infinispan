@@ -19,6 +19,7 @@ import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.partitionhandling.PartitionHandling;
 
 /**
  * Defines clustered characteristics of the cache.
@@ -143,8 +144,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    @Override
-   public
-   void validate() {
+   public void validate() {
       for (Builder<?> validatable : Arrays.asList(hashConfigurationBuilder, l1ConfigurationBuilder,
             stateTransferConfigurationBuilder, partitionHandlingConfigurationBuilder)) {
          validatable.validate();
@@ -158,14 +158,18 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
          if (transactionMode != null && transactionMode.isTransactional()) {
             throw CONFIG.scatteredCacheIsNonTransactional();
          }
-      }
-      if (!cacheMode().isScattered() && attributes.attribute(INVALIDATION_BATCH_SIZE).isModified()) {
-         throw CONFIG.invalidationBatchSizeAppliesOnNonScattered();
-      }
-      if (!cacheMode().isScattered() && (attributes.attribute(BIAS_ACQUISITION).isModified() || attributes.attribute(BIAS_LIFESPAN).isModified())) {
-         throw CONFIG.biasedReadsAppliesOnlyToScattered();
-      } else if (attributes.attribute(BIAS_ACQUISITION).get() == BiasAcquisition.ON_READ) {
-         throw new UnsupportedOperationException("Not implemented yet");
+
+         if (attributes.attribute(BIAS_ACQUISITION).get() == BiasAcquisition.ON_READ)
+            throw new UnsupportedOperationException("Not implemented yet");
+      } else {
+         if (attributes.attribute(INVALIDATION_BATCH_SIZE).isModified())
+            throw CONFIG.invalidationBatchSizeAppliesOnNonScattered();
+
+         if (attributes.attribute(BIAS_ACQUISITION).isModified() || attributes.attribute(BIAS_LIFESPAN).isModified())
+            throw CONFIG.biasedReadsAppliesOnlyToScattered();
+
+         if (hash().numOwners() == 1 && partitionHandling().whenSplit() != PartitionHandling.ALLOW_READ_WRITES)
+            throw CONFIG.singleOwnerNotSetToAllowReadWrites();
       }
    }
 
