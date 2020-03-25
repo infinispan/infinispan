@@ -167,6 +167,27 @@
    <build>
       <plugins>
          <plugin>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-defaults-maven-plugin</artifactId>
+            <version>${project.version}</version>
+            <executions>
+               <execution>
+                  <id>extract-defaults</id>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>extract-defaults</goal>
+                  </goals>
+                  <configuration>
+                     <jars>
+                        <jar>infinispan-core</jar>
+                        <jar>infinispan-server-core</jar>
+                        <jar>infinispan-server-hotrod</jar>
+                     </jars>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
             <executions>
