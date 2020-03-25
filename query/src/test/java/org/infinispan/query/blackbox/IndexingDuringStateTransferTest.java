@@ -1,19 +1,19 @@
 package org.infinispan.query.blackbox;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.query.helper.TestQueryHelperFactory.queryAll;
+import static org.infinispan.test.TestingUtil.orTimeout;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -40,6 +40,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -51,7 +52,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
    private static final AnotherGrassEater FLUFFY = new AnotherGrassEater("Fluffy", "Very cute.");
 
    private ConfigurationBuilder builder;
-   private ControlledConsistentHashFactory.Default chf = new ControlledConsistentHashFactory.Default(0, 1);
+   private final ControlledConsistentHashFactory.Default chf = new ControlledConsistentHashFactory.Default(0, 1);
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -124,7 +125,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
     * The test checks that when we replace a Person entity with entity of another type (Animal)
     * or completely remove it the old index is still correctly updated.
     */
-   private void test(Consumer<Cache> op, Consumer<SearchManager> check) {
+   private void test(Consumer<Cache<Object, Object>> op, Consumer<SearchManager> check) {
       SearchManager sm0 = Search.getSearchManager(cache(0));
       assertEquals(0, queryAll(sm0, Person.class).size());
 
@@ -144,24 +145,28 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(QueryTestSCI.INSTANCE, builder).getCache();
 
       // wait until the node discards old entries
-      eventuallyEquals(null, () -> cache(0).getAdvancedCache().getDataContainer().get(KEY));
+      eventuallyEquals(null, () -> cache(0).getAdvancedCache().getDataContainer().peek(KEY));
 
       // block state response commands
-      AtomicReference<Exception> exception = new AtomicReference<>();
-      CountDownLatch allowStateResponse = new CountDownLatch(1);
-      caches().forEach(c -> TestingUtil.wrapComponent(c, RpcManager.class, original -> new AbstractDelegatingRpcManager(original) {
-         @Override
-         protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
-                                                         ResponseCollector<T> collector,
-                                                         Function<ResponseCollector<T>, CompletionStage<T>> invoker,
-                                                         RpcOptions rpcOptions) {
-            if (command instanceof StateResponseCommand) {
-               try {
-                  assertTrue(allowStateResponse.await(10, TimeUnit.SECONDS));
-               } catch (Exception e) {
-                  exception.set(e);
-               }
-            }
+      AtomicReference<Throwable> exception = new AtomicReference<>();
+      CompletableFuture<Void> allowStateResponse = new CompletableFuture<>();
+      caches().forEach(
+            c -> TestingUtil.wrapComponent(c, RpcManager.class, original -> new AbstractDelegatingRpcManager(original) {
+               @Override
+               protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+                                                               ResponseCollector<T> collector,
+                                                               Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+                                                               RpcOptions rpcOptions) {
+                  if (command instanceof StateResponseCommand) {
+                     CompletableFuture<Void> stageWithTimeout = orTimeout(allowStateResponse, 10, SECONDS,
+                                                                          testExecutor());
+                     return CompletionStages.handleAndCompose(stageWithTimeout, (ignored, t) -> {
+                        if (t != null) {
+                           exception.set(t);
+                        }
+                        return super.performRequest(targets, command, collector, invoker, rpcOptions);
+                     });
+                  }
             return super.performRequest(targets, command, collector, invoker, rpcOptions);
          }
       }));
@@ -180,11 +185,11 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       op.accept(cache(0));
 
       // unblock state transfer
-      allowStateResponse.countDown();
+      allowStateResponse.complete(null);
 
       // wait for the new node to be added
       try {
-         stoppingCacheFuture.get(10, TimeUnit.SECONDS);
+         stoppingCacheFuture.get(10, SECONDS);
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
