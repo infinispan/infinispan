@@ -10,6 +10,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
@@ -97,9 +98,10 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
          }
       }
 
-      if (config.reliability() == Reliability.CONSISTENT) {
-         builder.clustering()
-               .partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES);
+      // If numOwners = 1, we can't use DENY_READ_WRITES as a single node leaving will cause the cluster to become DEGRADED
+      int numOwners = config.numOwners() < 0 ? HashConfiguration.NUM_OWNERS.getDefaultValue() : config.numOwners();
+      if (config.reliability() == Reliability.CONSISTENT && numOwners > 1) {
+         builder.clustering().partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES);
       } else {
          builder.clustering().partitionHandling().whenSplit(PartitionHandling.ALLOW_READ_WRITES);
       }
