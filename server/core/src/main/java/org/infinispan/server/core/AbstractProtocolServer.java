@@ -3,17 +3,15 @@ package org.infinispan.server.core;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
 
 import javax.management.ObjectName;
 
 import org.eclipse.microprofile.metrics.MetricID;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -23,8 +21,6 @@ import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.core.utils.ManageableThreadPoolExecutorService;
 import org.infinispan.tasks.TaskManager;
-
-import io.netty.util.concurrent.DefaultThreadFactory;
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -45,7 +41,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    private CacheIgnoreManager cacheIgnore;
    private ObjectName transportObjName;
    private CacheManagerJmxRegistration jmxRegistration;
-   private ThreadPoolExecutor executor;
+   private ExecutorService executor;
    private ManageableThreadPoolExecutorService manageableThreadPoolExecutorService;
    private ObjectName executorObjName;
    private CacheManagerMetricsRegistration metricsRegistration;
@@ -104,21 +100,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
          throw new IllegalStateException("CacheIgnoreManager is a required component");
       }
 
-      executor = new ThreadPoolExecutor(
-            configuration.workerThreads(),
-            configuration.workerThreads(),
-            0L, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<>(),
-            new DefaultThreadFactory(getQualifiedName() + "-ServerHandler"),
-            new ThreadPoolExecutor.AbortPolicy() {
-               @Override
-               public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
-                  if (e.isShutdown())
-                     throw new IllegalLifecycleStateException("Server has been stopped");
-                  else
-                     super.rejectedExecution(r, e);
-               }
-            });
+      executor = bcr.getComponent(KnownComponentNames.BLOCKING_EXECUTOR, ExecutorService.class).running();
 
       manageableThreadPoolExecutorService = new ManageableThreadPoolExecutorService(executor);
 
@@ -153,7 +135,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       registerMetrics();
    }
 
-   public ThreadPoolExecutor getExecutor() {
+   public ExecutorService getExecutor() {
       return executor;
    }
 
@@ -208,9 +190,6 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       boolean isDebug = log.isDebugEnabled();
       if (isDebug && configuration != null)
          log.debugf("Stopping server %s listening at %s:%d", getQualifiedName(), configuration.host(), configuration.port());
-
-      if (executor != null)
-         executor.shutdownNow();
 
       if (transport != null)
          transport.stop();
