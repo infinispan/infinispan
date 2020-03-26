@@ -168,7 +168,8 @@ public class RollingUpgradeIT {
 
    private static class ClusterConfiguration extends InfinispanServerTestConfiguration {
       public ClusterConfiguration(String configurationFile, int numServers) {
-         super(configurationFile, numServers, ServerRunMode.EMBEDDED, new Properties(), null, null, false);
+         super(configurationFile, numServers, ServerRunMode.EMBEDDED, new Properties(), null, null,
+               false, false);
       }
    }
 
