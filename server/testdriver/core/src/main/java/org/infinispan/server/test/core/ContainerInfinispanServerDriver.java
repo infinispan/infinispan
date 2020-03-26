@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
@@ -28,6 +29,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.test.Eventually;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.commons.test.skip.OS;
@@ -57,6 +59,7 @@ import com.github.dockerjava.api.model.Network;
 public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDriver {
    private static final Log log = org.infinispan.commons.logging.LogFactory.getLog(ContainerInfinispanServerDriver.class);
    private static final String STARTUP_MESSAGE_REGEX = ".*ISPN080001.*";
+   private static final String SHUTDOWN_MESSAGE_REGEX = ".*ISPN080003.*";
    private static final int TIMEOUT_SECONDS = Integer.getInteger(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_TIMEOUT_SECONDS, 45);
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    public static final int JMX_PORT = 9999;
@@ -148,6 +151,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                .from(imageName)
                .env("INFINISPAN_SERVER_HOME", INFINISPAN_SERVER_HOME)
                .env("INFINISPAN_VERSION", Version.getVersion())
+               .env("LAUNCH_ISPN_IN_BACKGROUND", Boolean.TRUE.toString())
                .label("name", "Infinispan Server")
                .label("version", Version.getVersion())
                .label("release", Version.getVersion())
@@ -189,9 +193,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          builder.copy("test", INFINISPAN_SERVER_HOME + "/server")
                .copy("tmp", INFINISPAN_SERVER_HOME)
                .workDir(INFINISPAN_SERVER_HOME)
-               .cmd(
-                     args.toArray(new String[]{})
-               )
+               .entryPoint(args.toArray(new String[]{}))
                .expose(
                      11222, // Protocol endpoint
                      11221, // Memcached endpoint
@@ -201,14 +203,25 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                )
                .build();
       });
-      latch = new CountdownLatchLoggingConsumer(configuration.numServers(), STARTUP_MESSAGE_REGEX);
-      for (int i = 0; i < configuration.numServers(); i++) {
-         GenericContainer container = createContainer(i, rootDir);
-         containers.add(i, container);
-         log.infof("Starting container %s-%d", name, i);
-         container.start();
+
+      if (configuration.isParallelStartup()) {
+         latch = new CountdownLatchLoggingConsumer(configuration.numServers(), STARTUP_MESSAGE_REGEX);
+         IntStream.range(0, configuration.numServers()).forEach(i -> createContainer(i, name, rootDir));
+         Exceptions.unchecked(() -> latch.awaitStrict(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      } else {
+         for (int i = 0; i < configuration.numServers(); i++) {
+            latch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
+            createContainer(i, name, rootDir);
+            Exceptions.unchecked(() -> latch.awaitStrict(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+         }
       }
-      Exceptions.unchecked(() -> latch.awaitStrict(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+   }
+
+   private void createContainer(int i, String name, File rootDir) {
+      GenericContainer container = createContainer(i, rootDir);
+      containers.add(i, container);
+      log.infof("Starting container %s-%d", name, i);
+      container.start();
    }
 
    private String runProcess(String... commands) {
@@ -224,15 +237,13 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private GenericContainer createContainer(int i, File rootDir) {
       GenericContainer container = new GenericContainer(image);
       // Create directories which we will bind the container to
-      File serverRoot = createServerHierarchy(rootDir, Integer.toString(i),
+      createServerHierarchy(rootDir, Integer.toString(i),
             (hostDir, dir) -> {
                String containerDir = String.format("%s/server/%s", INFINISPAN_SERVER_HOME, dir);
                if ("lib".equals(dir)) {
                   copyArtifactsToUserLibDir(hostDir);
                }
-               //container.withCopyFileToContainer(MountableFile.forHostPath(hostDir.getAbsolutePath()), containerDir);
                container.withFileSystemBind(hostDir.getAbsolutePath(), containerDir);
-               //hostDir.setWritable(true, false);
             });
       // Process any enhancers
       container
@@ -316,6 +327,16 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    @Override
    public void kill(int server) {
       Exceptions.unchecked(() -> containers.get(server).execInContainer(INFINISPAN_SERVER_HOME + "/bin/kill.sh"));
+   }
+
+   // TODO should this just replace stop?
+   public void sigterm(int server) {
+      GenericContainer container = containers.get(server);
+      CountdownLatchLoggingConsumer latch = new CountdownLatchLoggingConsumer(1, SHUTDOWN_MESSAGE_REGEX);
+      container.withLogConsumer(latch);
+      Container.ExecResult result = Exceptions.unchecked(() -> container.execInContainer(INFINISPAN_SERVER_HOME + "/bin/term.sh"));
+      System.out.printf("[%d] TERM %s\n", server, result);
+      Eventually.eventually(() -> !container.isRunning());
    }
 
    @Override

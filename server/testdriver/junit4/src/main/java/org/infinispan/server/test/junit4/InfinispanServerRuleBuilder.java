@@ -22,6 +22,7 @@ public class InfinispanServerRuleBuilder {
    private ServerRunMode runMode = ServerRunMode.DEFAULT;
    private JavaArchive[] archives;
    private boolean jmx;
+   private boolean parallelStartup = true;
 
    public static InfinispanServerRuleBuilder config(String configurationFile) {
       return new InfinispanServerRuleBuilder(configurationFile);
@@ -67,10 +68,18 @@ public class InfinispanServerRuleBuilder {
       return this;
    }
 
+   /**
+    * If false servers are started individually, waiting until they become available, before subsequent servers are started.
+    */
+   public InfinispanServerRuleBuilder parallelStartup(boolean parallel) {
+      this.parallelStartup = parallel;
+      return this;
+   }
+
    public InfinispanServerRule build() {
       InfinispanServerTestConfiguration configuration =
             new InfinispanServerTestConfiguration(configurationFile, numServers, runMode, this.properties, mavenArtifacts,
-                                                  archives, jmx);
+                                                  archives, jmx, parallelStartup);
       return new InfinispanServerRule(configuration);
    }
 }
