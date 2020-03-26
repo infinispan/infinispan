@@ -151,7 +151,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                .from(imageName)
                .env("INFINISPAN_SERVER_HOME", INFINISPAN_SERVER_HOME)
                .env("INFINISPAN_VERSION", Version.getVersion())
-               .env("LAUNCH_ISPN_IN_BACKGROUND", Boolean.TRUE.toString())
                .label("name", "Infinispan Server")
                .label("version", Version.getVersion())
                .label("release", Version.getVersion())
