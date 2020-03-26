@@ -65,7 +65,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
    }
 
    private void createStatefulCacheManager(String id, boolean clear) {
-      String stateDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator + id);
+      String stateDirectory = tmpDirectory(this.getClass().getSimpleName(), id);
       if (clear)
          Util.recursiveFileRemove(stateDirectory);
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();

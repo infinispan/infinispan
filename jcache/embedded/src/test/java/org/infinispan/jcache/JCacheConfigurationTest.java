@@ -14,6 +14,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -81,7 +82,7 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
          if (!tmpDirFile.exists()) {
             tmpDirFile.mkdirs();
          }
-         String sampleJarWithResourcePathString = tmpDir + File.separator + "sampleJarWithResource.jar";
+         String sampleJarWithResourcePathString = Paths.get(tmpDir, "sampleJarWithResource.jar").toString();
          sampleJarWithResourceFile = new File(sampleJarWithResourcePathString);
          String existingResourceToAddInJar = "infinispan_uri.xml";
          String targetPathInJar = "sample-dir-inside-jar/";

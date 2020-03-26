@@ -16,8 +16,8 @@ import static org.infinispan.globalstate.GlobalConfigurationManager.CONFIG_STATE
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.File;
 import java.net.URLEncoder;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -83,7 +83,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       GlobalConfigurationBuilder config = super.getGlobalConfigForNode(id);
       config.globalState().enable()
             .configurationStorage(ConfigurationStorage.OVERLAY)
-            .persistentLocation(PERSISTENT_LOCATION + File.separator + id);
+            .persistentLocation(Paths.get(PERSISTENT_LOCATION, Integer.toString(id)).toString());
       return config;
    }
 

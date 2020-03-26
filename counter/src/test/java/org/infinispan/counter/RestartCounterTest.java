@@ -4,7 +4,7 @@ import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -32,8 +32,8 @@ import org.testng.annotations.Test;
 public class RestartCounterTest extends BaseCounterTest {
 
    private static final String PERSISTENT_FOLDER = tmpDirectory(RestartCounterTest.class.getSimpleName());
-   private static final String TEMP_PERSISTENT_FOLDER = PERSISTENT_FOLDER + File.separator + "temp";
-   private static final String SHARED_PERSISTENT_FOLDER = PERSISTENT_FOLDER + File.separator + "shared";
+   private static final String TEMP_PERSISTENT_FOLDER = Paths.get(PERSISTENT_FOLDER, "temp").toString();
+   private static final String SHARED_PERSISTENT_FOLDER = Paths.get(PERSISTENT_FOLDER, "shared").toString();
    private static final int CLUSTER_SIZE = 4;
    private final Collection<CounterDefinition> defaultCounters = new ArrayList<>(6);
    private final Collection<CounterDefinition> otherCounters = new ArrayList<>(6);
@@ -125,9 +125,9 @@ public class RestartCounterTest extends BaseCounterTest {
    @Override
    protected GlobalConfigurationBuilder configure(int nodeId) {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      builder.globalState().enable().persistentLocation(PERSISTENT_FOLDER + File.separator + nodeId)
-            .temporaryLocation(TEMP_PERSISTENT_FOLDER + File.separator + nodeId)
-            .sharedPersistentLocation(SHARED_PERSISTENT_FOLDER + File.separator + nodeId);
+      builder.globalState().enable().persistentLocation(Paths.get(PERSISTENT_FOLDER, Integer.toString(nodeId)).toString())
+            .temporaryLocation(Paths.get(TEMP_PERSISTENT_FOLDER, Integer.toString(nodeId)).toString())
+            .sharedPersistentLocation(Paths.get(SHARED_PERSISTENT_FOLDER, Integer.toString(nodeId)).toString());
       CounterManagerConfigurationBuilder counterBuilder = builder.addModule(CounterManagerConfigurationBuilder.class);
       defaultCounters.forEach(counterDefinition -> counterDefinition.define(counterBuilder));
       return builder;

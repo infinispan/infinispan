@@ -1,6 +1,7 @@
 package org.infinispan.cli.util;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * SystemUtils.
@@ -18,16 +19,16 @@ public class SystemUtils {
     * @return
     */
    public static String getAppConfigFolder(String appName) {
-      String configRoot = null;
+      Path configRoot = null;
       String osName = System.getProperty("os.name");
       if ("Mac OS X".equals(osName)) {
-         configRoot = System.getProperty("user.home") + File.separator + "Library" + File.separator + "Java";
+         configRoot = Paths.get(System.getProperty("user.home"), "Library", "Java");
       } else if (osName.startsWith("Windows")) {
          // If on Windows, use the APPDATA environment
          try {
-            configRoot = System.getenv("APPDATA");
-            if (configRoot != null) {
-               configRoot = configRoot + File.separator + "Sun" + File.separator + "Java"; // FIXME: should be different if using other JVMs from other vendors
+            String appData = System.getenv("APPDATA");
+            if (appData != null) {
+               configRoot = Paths.get(appData).resolve("Sun").resolve("Java");
             }
          } catch (SecurityException e) {
             // We may be wrapped by a SecurityManager, ignore the exception
@@ -35,9 +36,9 @@ public class SystemUtils {
       }
       if (configRoot == null) {
          // Use the user.home
-         configRoot = System.getProperty("user.home") + File.separator + ".config";
+         configRoot = Paths.get(System.getProperty("user.home"), ".config");
       }
-      return configRoot + File.separator + appName;
+      return configRoot.resolve(appName).toString();
    }
 
 }

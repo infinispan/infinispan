@@ -3,6 +3,7 @@ package org.infinispan.query.blackbox;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
+import java.nio.file.Paths;
 
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
@@ -45,7 +46,7 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "filesystem")
             .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
-            .addProperty("default.indexBase", TMP_DIR + File.separator + indexName)
+            .addProperty("default.indexBase", Paths.get(TMP_DIR,  indexName).toString())
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return cb;
    }

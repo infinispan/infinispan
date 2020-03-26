@@ -1,5 +1,6 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
@@ -17,7 +18,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.blackbox.LocalCacheAsyncCacheStoreTest")
 public class LocalCacheAsyncCacheStoreTest extends LocalCacheTest {
 
-   private final String indexDirectory = System.getProperty("java.io.tmpdir") + File.separator + "asyncStore";
+   private final String indexDirectory = tmpDirectory("asyncStore");
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

@@ -1,7 +1,5 @@
 package org.infinispan.commons.test;
 
-import static java.io.File.separator;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +9,7 @@ import java.nio.file.CopyOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -31,7 +30,7 @@ public class CommonsTestingUtil {
     * @return an absolute path
     */
    public static String tmpDirectory(Class<?> test) {
-      return tmpDirectory() + separator + TEST_PATH + separator + test.getSimpleName();
+      return Paths.get(tmpDirectory(), TEST_PATH, test.getSimpleName()).toString();
    }
 
    /**
@@ -39,8 +38,11 @@ public class CommonsTestingUtil {
     *
     * @return an absolute path
     */
-   public static String tmpDirectory(String folder) {
-      return tmpDirectory() + separator + TEST_PATH + separator + folder;
+   public static String tmpDirectory(String... folders) {
+      String[] tFolders = new String[folders.length + 1];
+      tFolders[0] = TEST_PATH;
+      System.arraycopy(folders, 0, tFolders, 1, folders.length);
+      return Paths.get(tmpDirectory(), tFolders).toString();
    }
 
    public static String tmpDirectory() {

@@ -2,8 +2,6 @@ package org.infinispan.manager;
 
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 
-import java.io.File;
-
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -31,14 +29,14 @@ public class CacheManagerAdminPermanentTest extends CacheManagerAdminTest {
    }
 
    protected void createStatefulCacheManager(String id, boolean clear) {
-      String stateDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator + id);
+      String stateDirectory = tmpDirectory(this.getClass().getSimpleName(), id);
       if (clear)
          Util.recursiveFileRemove(stateDirectory);
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
       global.globalState().enable().persistentLocation(stateDirectory).
             configurationStorage(ConfigurationStorage.OVERLAY);
       if (isShared()) {
-         String sharedDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator + "COMMON");
+         String sharedDirectory = tmpDirectory(this.getClass().getSimpleName(), "COMMON");
          global.globalState().sharedPersistentLocation(sharedDirectory);
       } else {
          global.globalState().sharedPersistentLocation(stateDirectory);

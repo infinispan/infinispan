@@ -4,7 +4,7 @@ import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterManager;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 
-import java.io.File;
+import java.nio.file.Paths;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.IllegalLifecycleStateException;
@@ -47,8 +47,8 @@ import org.testng.annotations.Test;
 public class ConfigurationTest extends AbstractCacheTest {
 
    private static final String PERSISTENT_FOLDER = tmpDirectory(ConfigurationTest.class.getSimpleName());
-   private static final String TEMP_PERSISTENT_FOLDER = PERSISTENT_FOLDER + File.separator + "temp";
-   private static final String SHARED_PERSISTENT_FOLDER = PERSISTENT_FOLDER + File.separator + "shared";
+   private static final String TEMP_PERSISTENT_FOLDER = Paths.get(PERSISTENT_FOLDER, "temp").toString();
+   private static final String SHARED_PERSISTENT_FOLDER = Paths.get(PERSISTENT_FOLDER, "shared").toString();
 
    private static GlobalConfigurationBuilder defaultGlobalConfigurationBuilder(boolean globalStateEnabled) {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();

@@ -68,7 +68,7 @@ public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
          log.tracef("Analysing %s", aConfFile);
          EmbeddedCacheManager dcm = null;
          try {
-            String absolutePath = getRootFolder() + File.separator + aConfFile;
+            String absolutePath = new File(getRootFolder(), aConfFile).getAbsolutePath();
             ConfigurationBuilderHolder holder = TestCacheManagerFactory.parseFile(absolutePath, false);
             if (holder.getGlobalConfigurationBuilder().jmx().enabled()) {
                holder.getGlobalConfigurationBuilder().jmx().mBeanServerLookup(mBeanServerLookup);
