@@ -3,6 +3,7 @@ package org.infinispan.rest;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.rest.cachemanager.RestCacheManager;
@@ -27,6 +28,7 @@ import org.infinispan.rest.resources.TasksResource;
 import org.infinispan.rest.resources.XSiteResource;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.ServerManagement;
+import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyInitializers;
 
 import io.netty.channel.Channel;
@@ -40,6 +42,9 @@ import io.netty.channel.ChannelOutboundHandler;
  * @author Sebastian Łaskawiec
  */
 public class RestServer extends AbstractProtocolServer<RestServerConfiguration> {
+
+   private static final Log log = LogFactory.getLog(RestServer.class, Log.class);
+
    private ServerManagement server;
    private RestDispatcher restDispatcher;
    private RestCacheManager<Object> restCacheManager;
@@ -79,6 +84,9 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
 
    @Override
    public void stop() {
+      if (log.isDebugEnabled())
+         log.debugf("Stopping server %s listening at %s:%d", getQualifiedName(), configuration.host(), configuration.port());
+
       if (restCacheManager != null) {
          restCacheManager.stop();
       }
@@ -87,6 +95,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
          try {
             auth.authenticator().close();
          } catch (IOException e) {
+            log.trace(e);
          }
       }
       super.stop();
