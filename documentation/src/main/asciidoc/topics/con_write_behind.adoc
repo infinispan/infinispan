@@ -14,7 +14,7 @@ mode until the modification queue can accept new entries.
 Write-Behind mode provides a performance advantage over Write-Through mode
 because cache operations do not need to wait for updates to the underlying cache
 store to complete. However, data in the cache store remains inconsistent with
-data in the cache until the modification queue is processed. For this reason, 
+data in the cache until the modification queue is processed. For this reason,
 Write-Behind mode is suitable for cache stores with low latency, such as
 unshared and local filesystem-based cache stores, where the time between the
 write to the cache and the write to the cache store is as small as possible.
@@ -25,6 +25,24 @@ write to the cache and the write to the cache store is as small as possible.
 ----
 include::config_examples/persistence_write_through_async.xml[]
 ----
+
+The preceding configuration example uses the `fail-silently` parameter to
+control what happens when either the cache store is unavailable or the
+modification queue is full.
+
+* If `fail-silently="true"` then {brandname} logs WARN messages and rejects
+write operations.
+* If `fail-silently="false"` then {brandname} throws exceptions if it detects
+the cache store is unavailable during a write operation. Likewise if the
+modification queue becomes full, {brandname} throws an exception.
++
+In some cases, data loss can occur if {brandname} restarts and write operations
+exist in the modification queue. For example the cache store goes offline but,
+during the time it takes to detect that the cache store is unavailable, write
+operations are added to the modification queue because it is not full. If
+{brandname} restarts or otherwise becomes unavailable before the cache store
+comes back online, then the write operations in the modification queue are lost
+because they were not persisted.
 
 .Reference
 
