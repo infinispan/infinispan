@@ -1,19 +1,27 @@
 = Memcached
-{brandname} provides an implementation of the Memcached text protocol for remote client access.
+{brandname} provides an implementation of the Memcached text protocol for
+remote client access.
 
-The {brandname} Memcached server supports clustering with replicated and
+[IMPORTANT]
+====
+The Memcached endpoint is deprecated and planned for removal in a future
+release.
+====
+
+//Community Only
+ifndef::productized[]
+The {brandname} Memcached endpoint supports clustering with replicated and
 distributed cache modes.
 
 There are some Memcached client implementations, such as the Cache::Memcached
 Perl client, that can offer load balancing and failover detection capabilities
 with static lists of {brandname} server addresses that require manual updates
 when cluster topology changes occur.
+endif::productized[]
 
 //Community Only
-.Reference
-
 ifndef::productized[]
+.Reference
 * link:../memcached/memcached.html[{brandname} Memcached Server]
-endif::productized[]
-* link:http://code.google.com/p/memcached/wiki/Clients[Memcached clients]
 * link:http://github.com/memcached/memcached/blob/master/doc/protocol.txt[Memcached text protocol]
+endif::productized[]

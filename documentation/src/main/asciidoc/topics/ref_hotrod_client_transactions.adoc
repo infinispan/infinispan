@@ -17,7 +17,17 @@ The following server configuration is required, otherwise transactions rollback 
 
 * Isolation level must be `REPEATABLE_READ`.
 * Locking mode must be `PESSIMISTIC`. In a future release, `OPTIMISTIC` locking mode will be supported.
-* Transaction mode should be `NON_XA` or `NON_DURABLE_XA`. Hot Rod transactions cannot use `FULL_XA` because it degrades performance.
+* Transaction mode should be `NON_XA` or `NON_DURABLE_XA`. Hot Rod transactions should not use `FULL_XA` because it degrades performance.
+
+For example:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<replicated-cache name="hotrodReplTx">
+  <locking isolation="REPEATABLE_READ"/>
+  <transaction mode="NON_XA" locking="PESSIMISTIC"/>
+</replicated-cache>
+----
 
 Hot Rod transactions have their own recovery mechanism.
 
@@ -57,7 +67,7 @@ infinispan.client.hotrod.transaction.timeout = 60000
 Available implementations of `TransactionManagerLookup`:
 
 {gtml}::
-A lookup class that locates {tm}s running in Java EE application servers. Defaults to the {rtm} if it cannot find a {tm}.
+A lookup class that locates {tm}s running in Java EE application servers. Defaults to the {rtm} if it cannot find a {tm}. This is the default for Hot Rod Java clients.
 
 [TIP]
 ====
@@ -119,7 +129,9 @@ The `getCache(String)` method returns {rc} instances regardless of whether they 
 
 [[hr_transactions_force_return_value]]
 == Detecting Conflicts with Transactions
-Transactions use the initial values of keys to detect conflicts. For example, "k" has a value of "v" when a transaction begins. During the prepare phase, the transaction fetches "k" from the server to read the value. If the value has changed, the transaction rolls back to avoid a conflict.
+Transactions use the initial values of keys to detect conflicts.
+
+For example, "k" has a value of "v" when a transaction begins. During the prepare phase, the transaction fetches "k" from the server to read the value. If the value has changed, the transaction rolls back to avoid a conflict.
 
 [NOTE]
 ====
@@ -129,7 +141,7 @@ Transactions use versions to detect changes instead of checking value equality.
 The `forceReturnValue` parameter controls write operations to the {rc} and helps avoid conflicts. It has the following values:
 
 * If `true`, the {tm} fetches the most recent value from the server before performing write operations. However, the `forceReturnValue` parameter applies only to write operations that access the key for the first time.
-* If `false`, the {tm} does not fetch the most recent value from the server before performing write operations. Because this setting
+* If `false`, the {tm} does not fetch the most recent value from the server before performing write operations.
 
 [NOTE]
 ====

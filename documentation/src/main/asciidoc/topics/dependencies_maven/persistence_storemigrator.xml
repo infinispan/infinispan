@@ -31,7 +31,7 @@
             </execution>
           </executions>
           <configuration>
-            <mainClass>StoreMigrator</mainClass>
+            <mainClass>org.infinispan.tools.store.migrator.StoreMigrator</mainClass>
             <arguments>
               <argument>path/to/migrator.properties</argument>
             </arguments>
