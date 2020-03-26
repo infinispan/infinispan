@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.distribution;
 
+import static org.infinispan.transaction.impl.WriteSkewHelper.mergePrepareResponses;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,8 +60,10 @@ import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
+import org.infinispan.remoting.responses.PrepareResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
@@ -165,8 +169,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                rpcManager.invokeCommandOnAll(command, collector, rpcOptions) :
                rpcManager.invokeCommand(affectedNodes, command, collector, rpcOptions);
          return asyncValue(remoteInvocation.thenApply(responses -> {
-            checkTxCommandResponses(responses, command, localTxCtx,
-                  localTxCtx.getCacheTransaction().getRemoteLocksAcquired());
+            checkTxCommandResponses(responses, command, localTxCtx, localTxCtx.getCacheTransaction().getRemoteLocksAcquired(), null);
             return null;
          }));
       }
@@ -244,13 +247,13 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          return invokeNext(ctx, command);
       }
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         if (!shouldInvokeRemoteTxCommand(ctx)) {
-            return null;
+         if (!shouldInvokeRemoteTxCommand((TxInvocationContext) rCtx)) {
+            return rv;
          }
 
          TxInvocationContext<LocalTransaction> localTxCtx = (TxInvocationContext<LocalTransaction>) rCtx;
          LocalTransaction localTx = localTxCtx.getCacheTransaction();
-         LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+         LocalizedCacheTopology cacheTopology = checkTopologyId(rCommand);
          Collection<Address> writeOwners = cacheTopology.getWriteOwners(localTxCtx.getAffectedKeys());
          localTx.locksAcquired(writeOwners);
          Collection<Address> recipients = isReplicated ? null : localTx.getCommitNodes(writeOwners, cacheTopology);
@@ -277,8 +280,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             transactionRemotelyPrepared(ctx);
             CompletableFutures.rethrowExceptionIfPresent(t);
 
-            checkTxCommandResponses(responses, command, (LocalTxInvocationContext) ctx, recipients);
-            return null;
+            PrepareResponse prepareResponse = new PrepareResponse();
+            checkTxCommandResponses(responses, command, (LocalTxInvocationContext) ctx, recipients, prepareResponse);
+            for (Response r : responses.values()) mergePrepareResponses(r, prepareResponse);
+            return prepareResponse;
          });
       } catch (Throwable t) {
          transactionRemotelyPrepared(ctx);
@@ -302,10 +307,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             MapResponseCollector collector = MapResponseCollector.ignoreLeavers();
             remoteInvocation = rpcManager.invokeCommandOnAll(command, collector, rpcManager.getSyncRpcOptions());
          }
-         return asyncValue(remoteInvocation.thenApply(responses -> {
-            checkTxCommandResponses(responses, command, ctx, recipients);
-            return null;
-         }));
+         InvocationStage remoteResponse = asyncValue(remoteInvocation.thenAccept(responses ->
+               checkTxCommandResponses(responses, command, ctx, recipients, null)));
+         return invokeNextThenApply(ctx, command, remoteResponse::thenReturn);
       }
 
       return invokeNext(ctx, command);
@@ -321,11 +325,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    protected void checkTxCommandResponses(Map<Address, Response> responseMap,
          TransactionBoundaryCommand command, TxInvocationContext<LocalTransaction> context,
-         Collection<Address> recipients) {
+         Collection<Address> recipients, PrepareResponse prepareResponse) {
       LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       for (Map.Entry<Address, Response> e : responseMap.entrySet()) {
          Address recipient = e.getKey();
          Response response = e.getValue();
+         mergePrepareResponses(response, prepareResponse);
          if (response == CacheNotFoundResponse.INSTANCE) {
             // Prepare/Commit commands are sent to all affected nodes, including the ones that left the cluster.
             // We must not register a partial commit when receiving a CacheNotFoundResponse from one of those.

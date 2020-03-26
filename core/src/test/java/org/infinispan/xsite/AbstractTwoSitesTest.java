@@ -124,17 +124,13 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
    }
 
    @Override
-   protected String parameters() {
-      StringBuilder sb = new StringBuilder().append("[")
-            .append(cacheMode)
-            .append(", tx=").append(transactional);
-      if (lockingMode != null) {
-         sb.append(", lockingMode=").append(lockingMode);
-      }
-      if (use2Pc) {
-         sb.append(", 2PC");
-      }
-      return sb.append("]").toString();
+   protected String[] parameterNames() {
+      return new String[] {null, "tx", "lockingMode", null};
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return new Object[] {cacheMode, transactional, lockingMode, use2Pc ? "2PC" : null};
    }
 
    protected abstract ConfigurationBuilder getNycActiveConfig();

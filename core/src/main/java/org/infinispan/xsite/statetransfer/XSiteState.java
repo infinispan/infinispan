@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.metadata.Metadata;
@@ -24,11 +25,13 @@ public class XSiteState {
    private final Object key;
    private final Object value;
    private final Metadata metadata;
+   private final MetaParamsInternalMetadata internalMetadata;
 
-   private XSiteState(Object key, Object value, Metadata metadata) {
+   private XSiteState(Object key, Object value, Metadata metadata, MetaParamsInternalMetadata internalMetadata) {
       this.key = key;
       this.value = value;
       this.metadata = metadata;
+      this.internalMetadata = internalMetadata;
    }
 
    public final Object key() {
@@ -43,12 +46,17 @@ public class XSiteState {
       return metadata;
    }
 
+   public MetaParamsInternalMetadata internalMetadata() {
+      return internalMetadata;
+   }
+
    public static XSiteState fromDataContainer(InternalCacheEntry entry) {
-      return new XSiteState(entry.getKey(), entry.getValue(), entry.getMetadata());
+      return new XSiteState(entry.getKey(), entry.getValue(), entry.getMetadata(), entry.getInternalMetadata());
    }
 
    public static XSiteState fromCacheLoader(MarshallableEntry marshalledEntry) {
-      return new XSiteState(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata());
+      return new XSiteState(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata(),
+            null);
    }
 
    @Override
@@ -57,6 +65,7 @@ public class XSiteState {
             "key=" + key +
             ", value=" + value +
             ", metadata=" + metadata +
+            ", internalMetadata=" + internalMetadata +
             '}';
    }
 
@@ -77,11 +86,13 @@ public class XSiteState {
          output.writeObject(object.key);
          output.writeObject(object.value);
          output.writeObject(object.metadata);
+         output.writeObject(object.internalMetadata);
       }
 
       @Override
       public XSiteState readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new XSiteState(input.readObject(), input.readObject(), (Metadata) input.readObject());
+         return new XSiteState(input.readObject(), input.readObject(), (Metadata) input.readObject(),
+               (MetaParamsInternalMetadata) input.readObject());
       }
    }
 }

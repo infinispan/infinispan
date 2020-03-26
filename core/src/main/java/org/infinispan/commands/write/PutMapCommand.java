@@ -7,6 +7,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -19,6 +20,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
@@ -37,6 +39,7 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    private Map<Object, Object> map;
    private Metadata metadata;
    private boolean isForwarded = false;
+   private Map<Object, MetaParamsInternalMetadata> internalMetadataMap;
 
    public CommandInvocationId getCommandInvocationId() {
       return commandInvocationId;
@@ -53,6 +56,7 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
       this.metadata = metadata;
       this.commandInvocationId = commandInvocationId;
       setFlagsBitSet(flagsBitSet);
+      this.internalMetadataMap = new HashMap<>();
    }
 
    public PutMapCommand(PutMapCommand command) {
@@ -61,6 +65,7 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
       this.isForwarded = command.isForwarded;
       this.commandInvocationId = command.commandInvocationId;
       setFlagsBitSet(command.getFlagsBitSet());
+      this.internalMetadataMap = new HashMap<>(command.internalMetadataMap);
    }
 
    @Override
@@ -94,6 +99,7 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
 
    public void setMap(Map<Object, Object> map) {
       this.map = map;
+      this.internalMetadataMap.keySet().retainAll(map.keySet());
    }
 
    public final PutMapCommand withMap(Map<Object, Object> map) {
@@ -113,6 +119,7 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
       output.writeBoolean(isForwarded);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
+      MarshallUtil.marshallMap(internalMetadataMap, output);
    }
 
    @Override
@@ -122,6 +129,7 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
       isForwarded = input.readBoolean();
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
+      internalMetadataMap = MarshallUtil.unmarshallMap(input, HashMap::new);
    }
 
    @Override
@@ -166,6 +174,7 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
       }
       sb.append("}, flags=").append(printFlags())
          .append(", metadata=").append(metadata)
+         .append(", internalMetadata=").append(internalMetadataMap)
          .append(", isForwarded=").append(isForwarded)
          .append("}");
       return sb.toString();
@@ -238,6 +247,16 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
     */
    public void setForwarded(boolean forwarded) {
       isForwarded = forwarded;
+   }
+
+   @Override
+   public MetaParamsInternalMetadata getInternalMetadata(Object key) {
+      return internalMetadataMap.get(key);
+   }
+
+   @Override
+   public void setInternalMetadata(Object key, MetaParamsInternalMetadata internalMetadata) {
+      this.internalMetadataMap.put(key, internalMetadata);
    }
 
 }

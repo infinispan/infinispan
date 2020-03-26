@@ -10,6 +10,7 @@ import java.util.Map;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TriangleFunctionsUtil;
@@ -26,6 +27,7 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
 
    private Map<Object, Object> map;
    private Metadata metadata;
+   private Map<Object, MetaParamsInternalMetadata> internalMetadataMap;
 
    //for testing
    @SuppressWarnings("unused")
@@ -47,6 +49,7 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
       writeBase(output);
       MarshallUtil.marshallMap(map, output);
       output.writeObject(metadata);
+      MarshallUtil.marshallMap(internalMetadataMap, output);
    }
 
    @Override
@@ -54,12 +57,17 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
       readBase(input);
       map = MarshallUtil.unmarshallMap(input, HashMap::new);
       metadata = (Metadata) input.readObject();
+      internalMetadataMap = MarshallUtil.unmarshallMap(input, HashMap::new);
    }
 
    public void setPutMapCommand(PutMapCommand command, Collection<Object> keys) {
       setCommonAttributesFromCommand(command);
       this.map = TriangleFunctionsUtil.filterEntries(command.getMap(), keys);
       this.metadata = command.getMetadata();
+      this.internalMetadataMap = new HashMap<>();
+      for (Object key : map.keySet()) {
+         internalMetadataMap.put(key, command.getInternalMetadata(key));
+      }
    }
 
    @Override
@@ -71,6 +79,7 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
    WriteCommand createWriteCommand() {
       PutMapCommand cmd = new PutMapCommand(map, metadata, getFlags(), getCommandInvocationId());
       cmd.setForwarded(true);
+      internalMetadataMap.forEach(cmd::setInternalMetadata);
       return cmd;
    }
 
@@ -78,6 +87,7 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
    String toStringFields() {
       return super.toStringFields() +
             ", map=" + map +
-            ", metadata=" + metadata;
+            ", metadata=" + metadata +
+            ", internalMetadata=" + internalMetadataMap;
    }
 }

@@ -38,6 +38,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -48,6 +49,7 @@ import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.MarshallableFunctions;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.LocalInvocation;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -101,8 +103,9 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       this.commandsFactory = registry.getCommandsFactory();
       ExecutorService executor = registry.getComponent(ExecutorService.class, BLOCKING_EXECUTOR);
       TransactionHandler txHandler = new TransactionHandler(cache);
-      this.defaultHandler = new DefaultHandler(txHandler, executor);
-      this.asyncBackupHandler = new AsyncBackupHandler(txHandler, executor, timeService);
+      boolean isVersionedTx = Configurations.isTxVersioned(cache.getCacheConfiguration());
+      this.defaultHandler = new DefaultHandler(txHandler, executor, isVersionedTx);
+      this.asyncBackupHandler = new AsyncBackupHandler(txHandler, executor, timeService, isVersionedTx);
    }
 
    @Override
@@ -220,15 +223,18 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
 
       final TransactionHandler txHandler;
       final ExecutorService executor;
+      final boolean dropVersion;
 
-      private DefaultHandler(TransactionHandler txHandler, ExecutorService executor) {
+      private DefaultHandler(TransactionHandler txHandler, ExecutorService executor, boolean dropVersion) {
          this.txHandler = txHandler;
          this.executor = executor;
+         this.dropVersion = dropVersion;
       }
 
       @Override
       public CompletionStage<Object> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
-         return cache().putAsync(command.getKey(), command.getValue(), command.getMetadata());
+         Metadata metadata = dropVersionIfNeeded(command.getMetadata());
+         return cache().putAsync(command.getKey(), command.getValue(), metadata);
       }
 
       @Override
@@ -275,14 +281,22 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       private FunctionalMap.WriteOnlyMap<Object, Object> fMap() {
          return txHandler.writeOnlyMap;
       }
+
+      private Metadata dropVersionIfNeeded(Metadata metadata) {
+         if (dropVersion && metadata != null) {
+            return metadata.builder().version(null).build();
+         }
+         return metadata;
+      }
    }
 
    private static final class AsyncBackupHandler extends DefaultHandler {
 
       private final ActionSequencer sequencer;
 
-      private AsyncBackupHandler(TransactionHandler txHandler, ExecutorService executor, TimeService timeService) {
-         super(txHandler, executor);
+      private AsyncBackupHandler(TransactionHandler txHandler, ExecutorService executor, TimeService timeService,
+            boolean dropVersion) {
+         super(txHandler, executor, dropVersion);
          sequencer = new ActionSequencer(executor, false, timeService);
       }
 

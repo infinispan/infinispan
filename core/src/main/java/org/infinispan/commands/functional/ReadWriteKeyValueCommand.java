@@ -18,6 +18,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.metadata.Metadata;
 
@@ -71,6 +72,7 @@ public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKey
       output.writeObject(prevMetadata);
       DataConversion.writeTo(output, keyDataConversion);
       DataConversion.writeTo(output, valueDataConversion);
+      output.writeObject(internalMetadata);
    }
 
    @Override
@@ -87,6 +89,7 @@ public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKey
       prevMetadata = (Metadata) input.readObject();
       keyDataConversion = DataConversion.readFrom(input);
       valueDataConversion = DataConversion.readFrom(input);
+      internalMetadata = (MetaParamsInternalMetadata) input.readObject();
    }
 
    @Override

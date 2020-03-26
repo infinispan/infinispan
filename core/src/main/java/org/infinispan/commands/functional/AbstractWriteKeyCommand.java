@@ -7,6 +7,7 @@ import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.functional.impl.Params;
 
 public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand implements FunctionalCommand<K, V> {
@@ -16,6 +17,7 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
    boolean successful = true;
    DataConversion keyDataConversion;
    DataConversion valueDataConversion;
+   MetaParamsInternalMetadata internalMetadata;
 
    public AbstractWriteKeyCommand(Object key, ValueMatcher valueMatcher, int segment,
                                   CommandInvocationId id, Params params,
@@ -83,5 +85,15 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
    @Override
    public DataConversion getValueDataConversion() {
       return valueDataConversion;
+   }
+
+   @Override
+   public MetaParamsInternalMetadata getInternalMetadata() {
+      return internalMetadata;
+   }
+
+   @Override
+   public void setInternalMetadata(MetaParamsInternalMetadata internalMetadata) {
+      this.internalMetadata = internalMetadata;
    }
 }

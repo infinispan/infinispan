@@ -15,6 +15,7 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 
 public class ComputeCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
@@ -25,6 +26,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    private Metadata metadata;
    private boolean computeIfPresent;
    private boolean successful = true;
+   private MetaParamsInternalMetadata internalMetadata;
 
    public ComputeCommand() {
    }
@@ -108,6 +110,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
       output.writeObject(metadata);
       CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeObject(internalMetadata);
    }
 
    @Override
@@ -119,6 +122,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
       metadata = (Metadata) input.readObject();
       commandInvocationId = CommandInvocationId.readFrom(input);
       setFlagsBitSet(input.readLong());
+      internalMetadata = (MetaParamsInternalMetadata) input.readObject();
    }
 
    @Override
@@ -166,5 +170,15 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public final boolean isReturnValueExpected() {
       return true;
+   }
+
+   @Override
+   public MetaParamsInternalMetadata getInternalMetadata() {
+      return internalMetadata;
+   }
+
+   @Override
+   public void setInternalMetadata(MetaParamsInternalMetadata internalMetadata) {
+      this.internalMetadata = internalMetadata;
    }
 }

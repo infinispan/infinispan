@@ -102,8 +102,13 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    protected abstract void createSites();
 
    protected TestSite createSite(String siteName, int numNodes, GlobalConfigurationBuilder gcb, ConfigurationBuilder defaultCacheConfig) {
-      TestSite testSite = new TestSite(siteName, sites.size());
+      TestSite testSite = addSite(siteName);
       testSite.createClusteredCaches(numNodes, null, gcb, defaultCacheConfig);
+      return testSite;
+   }
+
+   protected TestSite addSite(String siteName) {
+      TestSite testSite = new TestSite(siteName, sites.size());
       sites.add(testSite);
       siteName2index.put(siteName, sites.size() - 1);
       return testSite;
@@ -354,5 +359,18 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       return (DefaultTakeOfflineManager) cache(site, index).getAdvancedCache()
             .getComponentRegistry()
             .getComponent(TakeOfflineManager.class);
+   }
+
+   @Override
+   protected final String parameters() {
+      return defaultParametersString(parameterNames(), parameterValues());
+   }
+
+   protected String[] parameterNames() {
+      return new String[0];
+   }
+
+   protected Object[] parameterValues() {
+      return new Object[0];
    }
 }

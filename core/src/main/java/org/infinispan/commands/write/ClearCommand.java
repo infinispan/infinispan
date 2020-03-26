@@ -11,6 +11,7 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -89,6 +90,16 @@ public class ClearCommand extends AbstractTopologyAffectedCommand implements Wri
    @Override
    public CommandInvocationId getCommandInvocationId() {
       return null;
+   }
+
+   @Override
+   public MetaParamsInternalMetadata getInternalMetadata(Object key) {
+      return null;
+   }
+
+   @Override
+   public void setInternalMetadata(Object key, MetaParamsInternalMetadata internalMetadata) {
+      //no-op
    }
 
    @Override

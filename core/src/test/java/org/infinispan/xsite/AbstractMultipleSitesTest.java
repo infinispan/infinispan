@@ -1,5 +1,7 @@
 package org.infinispan.xsite;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -102,4 +104,24 @@ public abstract class AbstractMultipleSitesTest extends AbstractXSiteTest {
       site.cacheManagers().forEach(cacheManager -> cacheManager.defineConfiguration(cacheName, configuration));
    }
 
+   protected <K, V> void assertInAllSitesAndCaches(AssertCondition<K, V> condition) {
+      assertInAllSitesAndCaches(null, condition);
+   }
+
+   protected <K, V> void assertInAllSitesAndCaches(String cacheName, AssertCondition<K, V> condition) {
+      for (TestSite testSite : sites) {
+         assertInSite(testSite.getSiteName(), cacheName, condition);
+      }
+   }
+
+   protected <K, V> void eventuallyAssertInAllSitesAndCaches(EventuallyAssertCondition<K, V> condition) {
+      eventuallyAssertInAllSitesAndCaches(null, condition);
+   }
+
+   protected <K, V> void eventuallyAssertInAllSitesAndCaches(String cacheName,
+         EventuallyAssertCondition<K, V> condition) {
+      for (TestSite testSite : sites) {
+         assertEventuallyInSite(testSite.getSiteName(), cacheName, condition, 30, TimeUnit.SECONDS);
+      }
+   }
 }

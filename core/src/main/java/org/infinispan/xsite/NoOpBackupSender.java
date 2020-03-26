@@ -2,7 +2,6 @@ package org.infinispan.xsite;
 
 import javax.transaction.Transaction;
 
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -40,7 +39,7 @@ public class NoOpBackupSender implements BackupSender {
    }
 
    @Override
-   public InvocationStage backupWrite(WriteCommand command, VisitableCommand originalCommand) {
+   public InvocationStage backupWrite(WriteCommand command, WriteCommand originalCommand) {
       return SyncInvocationStage.completedNullStage();
    }
 

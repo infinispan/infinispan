@@ -733,6 +733,7 @@ public class StateConsumerImpl implements StateConsumer {
       InternalMetadataImpl metadata = new InternalMetadataImpl(e);
       PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(e.getKey(), e.getValue(), segmentId,
                                                                        metadata, STATE_TRANSFER_FLAGS);
+      put.setInternalMetadata(e.getInternalMetadata());
       ctx.setLockOwner(put.getKeyLockOwner());
       return interceptorChain.invokeAsync(ctx, put);
    }
