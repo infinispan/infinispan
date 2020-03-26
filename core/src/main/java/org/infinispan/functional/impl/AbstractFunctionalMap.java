@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import javax.transaction.SystemException;
@@ -17,10 +18,12 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.Param;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -43,6 +46,9 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
    protected final DataConversion keyDataConversion;
    protected final DataConversion valueDataConversion;
 
+   private final Executor nonBlockingExecutor;
+   private final Executor blockingExecutor;
+
    protected AbstractFunctionalMap(Params params, FunctionalMapImpl<K, V> fmap) {
       this.fmap = fmap;
       Configuration config = fmap.cache.getCacheConfiguration();
@@ -53,6 +59,8 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
       this.params = config.statistics().available() ? params : params.addAll(Param.StatisticsMode.SKIP);
       this.keyDataConversion = fmap.cache.getKeyDataConversion();
       this.valueDataConversion = fmap.cache.getValueDataConversion();
+      this.nonBlockingExecutor = fmap.cache.getComponentRegistry().getComponent(Executor.class, KnownComponentNames.NON_BLOCKING_EXECUTOR);
+      this.blockingExecutor = fmap.cache.getComponentRegistry().getComponent(Executor.class, KnownComponentNames.BLOCKING_EXECUTOR);
    }
 
    @Override
@@ -139,7 +147,7 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
          throw t;
       }
       if (isImplicitTx) {
-         return cf.handle((result, throwable) -> {
+         return CompletionStages.continueOnExecutor(cf.handleAsync((result, throwable) -> {
             if (throwable != null) {
                try {
                   implicitTransaction.rollback();
@@ -156,7 +164,7 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
                throw CompletableFutures.asCompletionException(e);
             }
             return result;
-         });
+         }, blockingExecutor), nonBlockingExecutor, ctx.getLockOwner()).toCompletableFuture();
       } else {
          return cf;
       }
