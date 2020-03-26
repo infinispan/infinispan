@@ -497,6 +497,9 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    @Override
    public void stop() {
+      if (log.isDebugEnabled())
+         log.debugf("Stopping server %s listening at %s:%d", getQualifiedName(), configuration.host(), configuration.port());
+
       if (removeCacheListener != null) {
          SecurityActions.removeListener(cacheManager, removeCacheListener);
       }
