@@ -37,7 +37,7 @@ public abstract class AbstractKrb5ConfServerSetupTask implements ServerSetupTask
    private static Logger LOGGER = Logger.getLogger(AbstractKrb5ConfServerSetupTask.class);
 
    private static final String JAVA_IO_TMP_DIR = System.getProperty("java.io.tmpdir");
-   protected static final File KEYTABS_DIR = new File(JAVA_IO_TMP_DIR + File.separator + "keytabs");
+   protected static final File KEYTABS_DIR = new File(JAVA_IO_TMP_DIR, "keytabs");
    private static final String KRB5_CONF = "krb5.conf";
    private static final File KRB5_CONF_FILE = new File(JAVA_IO_TMP_DIR, KRB5_CONF);
 
