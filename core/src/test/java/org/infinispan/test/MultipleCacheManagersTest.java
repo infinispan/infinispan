@@ -709,31 +709,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    @Override
    protected String parameters() {
-      // cacheMode is self-explaining
-      String[] names = parameterNames();
-      Object[] params = parameterValues();
-      assert names.length == params.length;
-
-      boolean[] last = new boolean[params.length];
-      boolean none = true;
-      for (int i = params.length - 1; i >= 0; --i) {
-         last[i] = none;
-         none &= params[i] == null;
-      }
-      if (none) {
-         return null;
-      }
-      StringBuilder sb = new StringBuilder().append('[');
-      for (int i = 0; i < params.length; ++i) {
-         if (params[i] != null) {
-            if (names[i] != null) {
-               sb.append(names[i]).append('=');
-            }
-            sb.append(params[i]);
-            if (!last[i]) sb.append(", ");
-         }
-      }
-      return sb.append(']').toString();
+      return defaultParametersString(parameterNames(), parameterValues());
    }
 
    protected String[] parameterNames() {

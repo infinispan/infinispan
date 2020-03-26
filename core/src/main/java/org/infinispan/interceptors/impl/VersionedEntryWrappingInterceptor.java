@@ -1,6 +1,9 @@
 package org.infinispan.interceptors.impl;
 
 import java.util.Map;
+import static org.infinispan.remoting.responses.PrepareResponse.asPrepareResponse;
+import static org.infinispan.transaction.impl.WriteSkewHelper.mergeInPrepareResponse;
+
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
@@ -50,8 +53,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       TxInvocationContext ctx = (TxInvocationContext) nonTxCtx;
       CompletionStage<Map<Object, IncrementableEntryVersion>> originVersionData;
       if (ctx.isOriginLocal() && !ctx.getCacheTransaction().isFromStateTransfer()) {
-         originVersionData =
-               cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, command);
+         originVersionData = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, command);
       } else {
          originVersionData = CompletableFutures.completedNull();
       }
@@ -59,24 +61,22 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       InvocationStage originVersionStage = makeStage(asyncInvokeNext(ctx, command, originVersionData));
 
       InvocationStage newVersionStage = originVersionStage.thenApplyMakeStage(ctx, command, (rCtx, rCommand, rv) -> {
-         TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
-         VersionedPrepareCommand versionedPrepareCommand = (VersionedPrepareCommand) rCommand;
-         if (txInvocationContext.isOriginLocal()) {
+         TxInvocationContext txCtx = (TxInvocationContext) rCtx;
+         if (txCtx.isOriginLocal()) {
             // This is already completed, so just return a sync stage
-            return asyncValue(originVersionData);
+            return asyncValue(originVersionData
+                  .thenApply(versionsMap -> mergeInPrepareResponse(versionsMap, asPrepareResponse(rv))));
          } else {
-            return asyncValue(cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, txInvocationContext,
-                  versionedPrepareCommand));
+            return asyncValue(cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, txCtx, rCommand)
+                  .thenApply(versionsMap -> mergeInPrepareResponse(versionsMap, asPrepareResponse(rv))));
          }
       });
 
       return newVersionStage.thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
-         VersionedPrepareCommand versionedPrepareCommand = (VersionedPrepareCommand) rCommand;
-         boolean onePhaseCommit = versionedPrepareCommand.isOnePhaseCommit();
+         boolean onePhaseCommit = rCommand.isOnePhaseCommit();
          if (onePhaseCommit) {
-            txInvocationContext.getCacheTransaction()
-                  .setUpdatedEntryVersions(versionedPrepareCommand.getVersionsSeen());
+            txInvocationContext.getCacheTransaction().setUpdatedEntryVersions(rCommand.getVersionsSeen());
          }
 
          CompletionStage<Void> stage = null;
@@ -112,22 +112,24 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       if (ctx.isInTxScope() && stateTransferFlag == null) {
          EntryVersion updatedEntryVersion = ((TxInvocationContext) ctx)
                .getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
-         Metadata commitMetadata;
-         if (updatedEntryVersion != null) {
-            if (entry.getMetadata() == null) {
-               commitMetadata = new EmbeddedMetadata.Builder().version(updatedEntryVersion).build();
-            } else {
-               commitMetadata = entry.getMetadata().builder().version(updatedEntryVersion).build();
-            }
-         } else {
-            commitMetadata = entry.getMetadata();
-         }
-
+         Metadata commitMetadata = createMetadataForCommit(entry, updatedEntryVersion);
          entry.setMetadata(commitMetadata);
          return cdl.commitEntry(entry, command, ctx, null, l1Invalidation);
       } else {
          // This could be a state transfer call!
          return cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
+      }
+   }
+
+   protected Metadata createMetadataForCommit(CacheEntry<?, ?> entry, EntryVersion version) {
+      if (version != null) {
+         if (entry.getMetadata() == null) {
+            return new EmbeddedMetadata.Builder().version(version).build();
+         } else {
+            return entry.getMetadata().builder().version(version).build();
+         }
+      } else {
+         return entry.getMetadata();
       }
    }
 

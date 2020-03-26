@@ -8,12 +8,14 @@ import java.util.function.Function;
 
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.ByteString;
 
@@ -32,6 +34,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    private Object key;
    private Object valueOrFunction;
    private Metadata metadata;
+   private MetaParamsInternalMetadata internalMetadata;
 
    //for testing
    @SuppressWarnings("unused")
@@ -58,6 +61,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       this.key = command.getKey();
       this.valueOrFunction = command.getValue();
       this.metadata = command.getMetadata();
+      this.internalMetadata = command.getInternalMetadata();
    }
 
    public void setRemoveCommand(RemoveCommand command, boolean removeExpired) {
@@ -65,6 +69,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       setCommonAttributesFromCommand(command);
       this.key = command.getKey();
       this.valueOrFunction = command.getValue();
+      this.internalMetadata = command.getInternalMetadata();
    }
 
    public void setReplaceCommand(ReplaceCommand command) {
@@ -73,6 +78,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       this.key = command.getKey();
       this.valueOrFunction = command.getNewValue();
       this.metadata = command.getMetadata();
+      this.internalMetadata = command.getInternalMetadata();
    }
 
    public void setComputeCommand(ComputeCommand command) {
@@ -81,6 +87,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       this.key = command.getKey();
       this.valueOrFunction = command.getRemappingBiFunction();
       this.metadata = command.getMetadata();
+      this.internalMetadata = command.getInternalMetadata();
    }
 
    public void setComputeIfAbsentCommand(ComputeIfAbsentCommand command) {
@@ -89,6 +96,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       this.key = command.getKey();
       this.valueOrFunction = command.getMappingFunction();
       this.metadata = command.getMetadata();
+      this.internalMetadata = command.getInternalMetadata();
    }
 
    @Override
@@ -96,6 +104,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       writeBase(output);
       MarshallUtil.marshallEnum(operation, output);
       output.writeObject(key);
+      output.writeObject(internalMetadata);
       switch (operation) {
          case COMPUTE_IF_PRESENT:
          case COMPUTE_IF_ABSENT:
@@ -118,6 +127,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       readBase(input);
       operation = MarshallUtil.unmarshallEnum(input, SingleKeyBackupWriteCommand::valueOf);
       key = input.readObject();
+      internalMetadata = (MetaParamsInternalMetadata) input.readObject();
       switch (operation) {
          case COMPUTE_IF_PRESENT:
          case COMPUTE_IF_ABSENT:
@@ -142,31 +152,41 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
 
    @Override
    WriteCommand createWriteCommand() {
+      DataWriteCommand command;
       switch (operation) {
          case REMOVE:
-            return new RemoveCommand(key, null, segmentId, getFlags(), getCommandInvocationId());
+            command = new RemoveCommand(key, null, segmentId, getFlags(), getCommandInvocationId());
+            break;
          case WRITE:
-            return new PutKeyValueCommand(key, valueOrFunction, false, metadata, segmentId, getTopologyId(),
+            command = new PutKeyValueCommand(key, valueOrFunction, false, metadata, segmentId, getTopologyId(),
                   getCommandInvocationId());
+            break;
          case COMPUTE:
-            return new ComputeCommand(key, (BiFunction) valueOrFunction, false, segmentId, getFlags(),
+            command = new ComputeCommand(key, (BiFunction) valueOrFunction, false, segmentId, getFlags(),
                   getCommandInvocationId(), metadata);
+            break;
          case REPLACE:
-            return new ReplaceCommand(key, null, valueOrFunction, metadata, segmentId, getFlags(),
+            command = new ReplaceCommand(key, null, valueOrFunction, metadata, segmentId, getFlags(),
                   getCommandInvocationId());
+            break;
          case REMOVE_EXPIRED:
             // Doesn't matter if it is max idle or not - important thing is that it raises expired event
-            return new RemoveExpiredCommand(key, valueOrFunction, null, false, segmentId, getFlags(),
+            command = new RemoveExpiredCommand(key, valueOrFunction, null, false, segmentId, getFlags(),
                   getCommandInvocationId());
+            break;
          case COMPUTE_IF_PRESENT:
-            return new ComputeCommand(key, (BiFunction) valueOrFunction, true, segmentId, getFlags(),
+            command = new ComputeCommand(key, (BiFunction) valueOrFunction, true, segmentId, getFlags(),
                   getCommandInvocationId(), metadata);
+            break;
          case COMPUTE_IF_ABSENT:
-            return new ComputeIfAbsentCommand(key, (Function) valueOrFunction, segmentId, getFlags(),
+            command = new ComputeIfAbsentCommand(key, (Function) valueOrFunction, segmentId, getFlags(),
                   getCommandInvocationId(), metadata);
+            break;
          default:
             throw new IllegalStateException("Unknown operation " + operation);
       }
+      command.setInternalMetadata(internalMetadata);
+      return command;
    }
 
    @Override
@@ -175,7 +195,8 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
             ", operation=" + operation +
             ", key=" + key +
             ", valueOrFunction=" + valueOrFunction +
-            ", metadata=" + metadata;
+            ", metadata=" + metadata +
+            ", internalMetadata=" + internalMetadata;
    }
 
    private enum Operation {

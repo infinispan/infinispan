@@ -12,6 +12,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 
 
 /**
@@ -62,6 +63,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
               ", value=" + toStr(value) +
               ", lifespan=" + lifespan +
               ", maxIde=" + maxIdle +
+              ", internalMetadata=" + getInternalMetadata() +
               '}';
    }
 
@@ -79,6 +81,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
       }
       output.writeBoolean(maxIdle);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeObject(getInternalMetadata());
 
    }
 
@@ -96,6 +99,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
       }
       maxIdle = input.readBoolean();
       setFlagsBitSet(input.readLong());
+      setInternalMetadata((MetaParamsInternalMetadata) input.readObject());
    }
 
    @Override

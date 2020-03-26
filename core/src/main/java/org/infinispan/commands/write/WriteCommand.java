@@ -6,6 +6,7 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 
 /**
  * A command that modifies the cache in some way
@@ -78,5 +79,9 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, Top
     * @return the {@link CommandInvocationId} associated to the command.
     */
    CommandInvocationId getCommandInvocationId();
+
+   MetaParamsInternalMetadata getInternalMetadata(Object key);
+
+   void setInternalMetadata(Object key, MetaParamsInternalMetadata internalMetadata);
 
 }

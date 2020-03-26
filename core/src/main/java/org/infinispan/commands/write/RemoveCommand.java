@@ -14,6 +14,7 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 
 
@@ -29,6 +30,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
 
    protected Metadata metadata;
    protected ValueMatcher valueMatcher;
+   private MetaParamsInternalMetadata internalMetadata;
 
    /**
     * When not null, value indicates that the entry should only be removed if the key is mapped to this value.
@@ -92,6 +94,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
          .append(toStr(key))
          .append(", value=").append(toStr(value))
          .append(", metadata=").append(metadata)
+         .append(", internalMetadata=").append(internalMetadata)
          .append(", flags=").append(printFlags())
          .append(", commandInvocationId=").append(CommandInvocationId.show(commandInvocationId))
          .append(", valueMatcher=").append(valueMatcher)
@@ -127,6 +130,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       MarshallUtil.marshallEnum(valueMatcher, output);
       CommandInvocationId.writeTo(output, commandInvocationId);
+      output.writeObject(internalMetadata);
    }
 
    @Override
@@ -138,6 +142,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
       setFlagsBitSet(input.readLong());
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       commandInvocationId = CommandInvocationId.readFrom(input);
+      internalMetadata = (MetaParamsInternalMetadata) input.readObject();
    }
 
    @Override
@@ -172,5 +177,13 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    public final boolean isReturnValueExpected() {
       // IGNORE_RETURN_VALUES ignored for conditional remove
       return isConditional() || super.isReturnValueExpected();
+   }
+
+   public MetaParamsInternalMetadata getInternalMetadata() {
+      return internalMetadata;
+   }
+
+   public void setInternalMetadata(MetaParamsInternalMetadata internalMetadata) {
+      this.internalMetadata = internalMetadata;
    }
 }

@@ -15,10 +15,9 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.persistence.util.EntryLoader;
+import org.infinispan.remoting.responses.PrepareResponse;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.transaction.WriteSkewException;
-import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 
@@ -30,14 +29,16 @@ import org.infinispan.util.concurrent.CompletionStages;
  */
 public class WriteSkewHelper {
 
-   @SuppressWarnings("unchecked")
-   public static void readVersionsFromResponse(Response r, CacheTransaction ct) {
-      if (r != null && r.isSuccessful()) {
-         SuccessfulResponse<Map<Object, IncrementableEntryVersion>> sr = (SuccessfulResponse<Map<Object, IncrementableEntryVersion>>) r;
-         Map<Object, IncrementableEntryVersion> entryVersions = sr.getResponseValue();
-         if (entryVersions != null)
-            ct.setUpdatedEntryVersions(mergeEntryVersions(entryVersions, ct.getUpdatedEntryVersions()));
+   public static void mergePrepareResponses(Response r, PrepareResponse aggregateResponse) {
+      if (r instanceof PrepareResponse && aggregateResponse != null) {
+         PrepareResponse remoteRsp = (PrepareResponse) r;
+         aggregateResponse.merge(remoteRsp);
       }
+   }
+
+   public static PrepareResponse mergeInPrepareResponse(Map<Object, IncrementableEntryVersion> versionsMap, PrepareResponse response) {
+      response.mergeEntryVersions(versionsMap);
+      return response;
    }
 
    public static Map<Object, IncrementableEntryVersion> mergeEntryVersions(Map<Object, IncrementableEntryVersion> entryVersions,

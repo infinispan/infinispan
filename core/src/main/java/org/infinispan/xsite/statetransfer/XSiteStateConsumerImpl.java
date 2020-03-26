@@ -140,8 +140,10 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
 
    private PutKeyValueCommand createPut(XSiteState state) {
       Object key = state.key();
-      return commandsFactory.buildPutKeyValueCommand(key, state.value(), keyPartitioner.getSegment(key),
-            state.metadata(), STATE_TRANSFER_PUT_FLAGS);
+      PutKeyValueCommand cmd = commandsFactory.buildPutKeyValueCommand(key, state.value(),
+            keyPartitioner.getSegment(key), state.metadata(), STATE_TRANSFER_PUT_FLAGS);
+      cmd.setInternalMetadata(state.internalMetadata());
+      return cmd;
    }
 
    private void safeRollback() {

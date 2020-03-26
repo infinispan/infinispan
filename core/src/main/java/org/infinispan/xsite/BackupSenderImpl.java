@@ -135,11 +135,14 @@ public class BackupSenderImpl implements BackupSender {
       //if we run a 2PC then filter out 1PC prepare backup calls as they will happen during the local commit phase.
       BackupFilter filter = !prepare.isOnePhaseCommit() ? BackupFilter.KEEP_2PC_ONLY : BackupFilter.KEEP_ALL;
       List<XSiteBackup> backups = calculateBackupInfo(filter);
+      if (backups.isEmpty()) {
+         return SyncInvocationStage.completedNullStage();
+      }
       return backupCommand(prepare, command, backups, transaction);
    }
 
    @Override
-   public InvocationStage backupWrite(WriteCommand command, VisitableCommand originalCommand) {
+   public InvocationStage backupWrite(WriteCommand command, WriteCommand originalCommand) {
       List<XSiteBackup> xSiteBackups = calculateBackupInfo(BackupFilter.KEEP_ALL);
       return backupCommand(command, originalCommand, xSiteBackups, null);
    }

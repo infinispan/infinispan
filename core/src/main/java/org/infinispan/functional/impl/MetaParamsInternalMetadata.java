@@ -1,5 +1,6 @@
 package org.infinispan.functional.impl;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -147,6 +148,28 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
    @Override
    public String toString() {
       return "MetaParamsInternalMetadata{params=" + params + '}';
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+         return false;
+      }
+      MetaParamsInternalMetadata that = (MetaParamsInternalMetadata) o;
+      return created() == that.created() &&
+            lastUsed() == that.lastUsed() &&
+            lifespan() == that.lifespan() &&
+            maxIdle() == that.maxIdle() &&
+            Objects.equals(version(), that.version()) &&
+            Objects.equals(counterConfiguration(), that.counterConfiguration());
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(created(), lastUsed(), lastUsed(), maxIdle(), version(), counterConfiguration());
    }
 
    public static MetaParamsInternalMetadata.Builder getBuilder(MetaParamsInternalMetadata metadata) {

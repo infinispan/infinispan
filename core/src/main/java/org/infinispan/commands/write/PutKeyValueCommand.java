@@ -13,6 +13,7 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -34,6 +35,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    private boolean successful = true;
    private Metadata metadata;
    private ValueMatcher valueMatcher;
+   private MetaParamsInternalMetadata internalMetadata;
 
    public PutKeyValueCommand() {
    }
@@ -44,7 +46,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       this.value = value;
       this.putIfAbsent = putIfAbsent;
       this.valueMatcher = putIfAbsent ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
-      //noinspection unchecked
       this.metadata = metadata;
    }
 
@@ -85,6 +86,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeBoolean(putIfAbsent);
+      output.writeObject(internalMetadata);
    }
 
    @Override
@@ -97,6 +99,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       commandInvocationId = CommandInvocationId.readFrom(input);
       setFlagsBitSet(input.readLong());
       putIfAbsent = input.readBoolean();
+      internalMetadata = (MetaParamsInternalMetadata) input.readObject();
    }
 
    @Override
@@ -185,5 +188,13 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    @Override
    public boolean isReturnValueExpected() {
       return isConditional() || super.isReturnValueExpected();
+   }
+
+   public MetaParamsInternalMetadata getInternalMetadata() {
+      return internalMetadata;
+   }
+
+   public void setInternalMetadata(MetaParamsInternalMetadata internalMetadata) {
+      this.internalMetadata = internalMetadata;
    }
 }

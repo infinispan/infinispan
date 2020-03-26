@@ -6,6 +6,7 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 
 import org.infinispan.commands.CommandInvocationId;
@@ -68,6 +69,7 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
 
    public void setArguments(Map<?, ?> arguments) {
       this.arguments = arguments;
+      this.internalMetadataMap.keySet().retainAll(arguments.keySet());
    }
 
    public final ReadWriteManyEntriesCommand<K, V, T, R> withArguments(Map<?, ?> entries) {
@@ -91,6 +93,7 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
       output.writeLong(flags);
       DataConversion.writeTo(output, keyDataConversion);
       DataConversion.writeTo(output, valueDataConversion);
+      MarshallUtil.marshallMap(internalMetadataMap, output);
    }
 
    @Override
@@ -105,6 +108,7 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
       flags = input.readLong();
       keyDataConversion = DataConversion.readFrom(input);
       valueDataConversion = DataConversion.readFrom(input);
+      this.internalMetadataMap = MarshallUtil.unmarshallMap(input, ConcurrentHashMap::new);
    }
 
    public boolean isForwarded() {

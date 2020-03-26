@@ -13,6 +13,7 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -27,6 +28,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    private Object newValue;
    private Metadata metadata;
    private boolean successful = true;
+   private MetaParamsInternalMetadata internalMetadata;
 
    private ValueMatcher valueMatcher;
 
@@ -69,6 +71,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       MarshallUtil.marshallEnum(valueMatcher, output);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
+      output.writeObject(internalMetadata);
    }
 
    @Override
@@ -81,6 +84,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
+      internalMetadata = (MetaParamsInternalMetadata) input.readObject();
    }
 
    @Override
@@ -177,4 +181,13 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
             '}';
    }
 
+   @Override
+   public MetaParamsInternalMetadata getInternalMetadata() {
+      return internalMetadata;
+   }
+
+   @Override
+   public void setInternalMetadata(MetaParamsInternalMetadata internalMetadata) {
+      this.internalMetadata = internalMetadata;
+   }
 }

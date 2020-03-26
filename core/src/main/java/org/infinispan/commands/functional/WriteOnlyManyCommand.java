@@ -5,6 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import org.infinispan.commands.CommandInvocationId;
@@ -59,6 +60,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
 
    public void setKeys(Collection<?> keys) {
       this.keys = keys;
+      this.internalMetadataMap.keySet().retainAll(keys);
    }
 
    public final WriteOnlyManyCommand<K, V> withKeys(Collection<?> keys) {
@@ -82,6 +84,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       output.writeLong(flags);
       DataConversion.writeTo(output, keyDataConversion);
       DataConversion.writeTo(output, valueDataConversion);
+      MarshallUtil.marshallMap(internalMetadataMap, output);
    }
 
    @Override
@@ -95,6 +98,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       flags = input.readLong();
       keyDataConversion = DataConversion.readFrom(input);
       valueDataConversion = DataConversion.readFrom(input);
+      this.internalMetadataMap = MarshallUtil.unmarshallMap(input, ConcurrentHashMap::new);
    }
 
    @Override

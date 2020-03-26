@@ -1,6 +1,5 @@
 package org.infinispan.interceptors.distribution;
 
-import static org.infinispan.transaction.impl.WriteSkewHelper.readVersionsFromResponse;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.Collection;
@@ -17,6 +16,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.remoting.responses.PrepareResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
@@ -148,12 +148,14 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
          transactionRemotelyPrepared(ctx);
          CompletableFutures.rethrowExceptionIfPresent(t);
 
-         checkTxCommandResponses(responses, command, (TxInvocationContext<LocalTransaction>) ctx, recipients);
+         PrepareResponse prepareResponse = new PrepareResponse();
+         checkTxCommandResponses(responses, command, (TxInvocationContext<LocalTransaction>) ctx, recipients,
+               prepareResponse);
 
          // Now store newly generated versions from lock owners for use during the commit phase.
          CacheTransaction ct = ctx.getCacheTransaction();
-         for (Response r : responses.values()) readVersionsFromResponse(r, ct);
-         return null;
+         ct.setUpdatedEntryVersions(prepareResponse.mergeEntryVersions(ct.getUpdatedEntryVersions()));
+         return prepareResponse;
       });
    }
 }
