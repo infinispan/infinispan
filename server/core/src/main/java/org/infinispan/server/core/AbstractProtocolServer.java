@@ -197,6 +197,9 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    }
 
    public final String getQualifiedName() {
+      if (configuration == null)
+         return protocolName;
+
       return protocolName + (configuration.name().length() > 0 ? "-" : "") + configuration.name();
    }
 
@@ -221,7 +224,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       unregisterMetrics();
 
       if (isDebug)
-         log.debug("Server stopped");
+         log.debugf("Server %s stopped", getQualifiedName());
    }
 
    public EmbeddedCacheManager getCacheManager() {
