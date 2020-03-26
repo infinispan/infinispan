@@ -1,4 +1,4 @@
-[id='cli_operations-{context}']
+[id='cli_operations']
 :context: server
 = Performing Operations with the {brandname} CLI
 Connect to servers with the {brandname} command line interface (CLI) to access
