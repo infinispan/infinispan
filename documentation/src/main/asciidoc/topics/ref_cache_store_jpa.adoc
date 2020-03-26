@@ -1,6 +1,9 @@
 [id='jpa_cache_store']
 = JPA Cache Stores
-JPA (Java Persistence API) cache stores, `JpaStore`, use formal schema to persist data. Other applications can then read from persistent storage to load data from {brandname}. However, other applications should not use persistent storage concurrently with {brandname}.
+JPA (Java Persistence API) cache stores, `JpaStore`, use formal schema to
+persist data. Other applications can then read from persistent storage to load
+data from {brandname}. However, other applications should not use persistent
+storage concurrently with {brandname}.
 
 When using `JpaStore`, you should take the following into consideration:
 
@@ -40,7 +43,7 @@ include::code_examples/ConfigJpaStore.java[]
 | `persistenceUnitName`
 | Specifies the JPA persistence unit name in the JPA configuration file, `persistence.xml`, that contains the JPA entity class.
 
-| entityClass
+| `entityClass`
 | Specifies the fully qualified JPA entity class name that is expected to be stored in this cache. Only one class is allowed.
 |===
 

@@ -41,7 +41,7 @@ Programmatic configuration::
 +
 [source,java]
 ----
-CacheManager cm = getCacheManager();
+DefaultCacheManager cm = getCacheManager();
 ConfigurationBuilder builder = new ConfigurationBuilder().simpleCache(true);
 cm.defineConfiguration("mySimpleCache", builder.build());
 Cache cache = cm.getCache("mySimpleCache");
