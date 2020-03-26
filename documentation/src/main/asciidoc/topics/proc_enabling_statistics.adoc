@@ -23,12 +23,15 @@ configuration, you only need to enable statistics when you configure caches.
 </cache-container>
 ----
 
+<1> collects statistics about the Cache Manager.
+<2> collects statistics about the named cache.
+
 .Programmatically
 
 [source,java]
 ----
 GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-  .statistics().enable() <1>
+  .cacheContainer().statistics(true) <1>
   .build();
 
  ...

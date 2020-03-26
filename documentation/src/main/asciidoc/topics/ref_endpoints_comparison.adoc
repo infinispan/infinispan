@@ -1,5 +1,7 @@
 = Protocol Comparison
 
+//Community includes Memcached
+ifndef::productized[]
 [cols="20,^20,^20,^20",options="header"]
 |============================================================
 |                    | Hot Rod    | HTTP / REST     | Memcached
@@ -15,3 +17,23 @@
 | Execution          | [green]*Y* | [red]*N*        | [red]*N*
 | Cross-site failover| [green]*Y* | [red]*N*        | [red]*N*
 |============================================================
+endif::productized[]
+
+//RHDG does not support Memcached
+ifdef::productized[]
+[cols="20,^20,^20",options="header"]
+|==============================================
+|                    | Hot Rod    | HTTP / REST
+| Topology-aware     | [green]*Y* | [red]*N*
+| Hash-aware         | [green]*Y* | [red]*N*
+| Encryption         | [green]*Y* | [green]*Y*
+| Authentication     | [green]*Y* | [green]*Y*
+| Conditional ops    | [green]*Y* | [green]*Y*
+| Bulk ops           | [green]*Y* | [red]*N*
+| Transactions       | [green]*Y* | [red]*N*
+| Listeners          | [green]*Y* | [red]*N*
+| Query              | [green]*Y* | [green]*Y*
+| Execution          | [green]*Y* | [red]*N*
+| Cross-site failover| [green]*Y* | [red]*N*
+|==============================================
+endif::productized[]

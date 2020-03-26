@@ -234,7 +234,7 @@ Append the `extended` parameter to the query string to get additional informatio
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /cacheName/cacheKey?extended
+GET /rest/v2/caches/{cacheName}/{cacheKey}?extended
 ----
 
 The preceding request returns custom headers:

@@ -1,7 +1,7 @@
 [id='get_store_migrator-{context}']
 = Getting the Store Migrator
 `StoreMigrator` is available as part of the {brandname} tools library,
-`infinispan-tools`, and included in the Maven repository.
+`infinispan-tools`, and is included in the Maven repository.
 
 .Procedure
 
