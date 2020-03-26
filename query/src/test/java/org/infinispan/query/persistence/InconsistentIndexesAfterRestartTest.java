@@ -5,6 +5,7 @@ import static org.testng.Assert.assertEquals;
 
 import java.io.File;
 import java.io.Serializable;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.hibernate.search.annotations.Field;
@@ -91,7 +92,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
              .addIndexedEntity(SEntity.class)
              .addProperty("default.directory_provider", "filesystem")
              .addProperty("lucene_version", "LUCENE_CURRENT")
-             .addProperty("default.indexBase", TMP_DIR + File.separator + "idx")
+             .addProperty("default.indexBase", Paths.get(TMP_DIR, "idx").toString())
           .invocationBatching()
              .enable(batchingEnabled);
 

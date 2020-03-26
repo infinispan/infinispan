@@ -3,6 +3,7 @@ package org.infinispan.query.blackbox;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
+import java.nio.file.Paths;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -20,7 +21,7 @@ public class LocalCachePerformantConfTest extends LocalCacheTest {
    /**
     * The file constant needs to match what's defined in the configuration file.
     */
-   private final String indexDirectory = System.getProperty("java.io.tmpdir") + File.separator + "LocalCachePerformantConfTest";
+   private final String indexDirectory = Paths.get(System.getProperty("java.io.tmpdir"), "LocalCachePerformantConfTest").toString();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

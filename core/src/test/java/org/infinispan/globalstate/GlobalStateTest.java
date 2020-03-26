@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 public class GlobalStateTest extends AbstractInfinispanTest {
 
    public void testLockPersistentLocation() {
-      String stateDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator + "COMMON");
+      String stateDirectory = tmpDirectory(this.getClass().getSimpleName(), "COMMON");
 
       GlobalConfigurationBuilder global1 = statefulGlobalBuilder(stateDirectory, true);
       GlobalConfigurationBuilder global2 = statefulGlobalBuilder(stateDirectory, true);
@@ -46,9 +46,9 @@ public class GlobalStateTest extends AbstractInfinispanTest {
    }
 
    public void testCorruptGlobalState(Method m) throws Exception {
-      String state1 = tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName() + "1");
+      String state1 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "1");
       GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
-      String state2 = tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName() + "2");
+      String state2 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "2");
       GlobalConfigurationBuilder global2 = statefulGlobalBuilder(state2, true);
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
@@ -70,9 +70,9 @@ public class GlobalStateTest extends AbstractInfinispanTest {
    }
 
    public void testIncompatibleGlobalState(Method m) throws Exception {
-      String state1 = tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName() + "1");
+      String state1 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "1");
       GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
-      String state2 = tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName() + "2");
+      String state2 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "2");
       GlobalConfigurationBuilder global2 = statefulGlobalBuilder(state2, true);
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
@@ -113,7 +113,7 @@ public class GlobalStateTest extends AbstractInfinispanTest {
    }
 
    public void testFailStartup(Method m) throws Exception {
-      String state = tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName());
+      String state = tmpDirectory(this.getClass().getSimpleName(), m.getName());
       GlobalConfigurationBuilder global = statefulGlobalBuilder(state, true);
       global.transport().transport(new FailingJGroupsTransport());
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, global, new ConfigurationBuilder(), new TransportFlags());

@@ -5,7 +5,6 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.File;
 import java.lang.reflect.Method;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -47,13 +46,13 @@ public class RemoteCacheAdminPermanentTest extends MultiHotRodServersTest {
    protected HotRodServer addStatefulHotRodServer(ConfigurationBuilder builder, char id) {
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
-      String stateDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator + id);
+      String stateDirectory = tmpDirectory(this.getClass().getSimpleName(), Character.toString(id));
       if (clear)
          Util.recursiveFileRemove(stateDirectory);
       gcb.globalState().enable().persistentLocation(stateDirectory).
          configurationStorage(ConfigurationStorage.OVERLAY);
       if (isShared()) {
-         String sharedDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator + "COMMON");
+         String sharedDirectory = tmpDirectory(this.getClass().getSimpleName(), "COMMON");
          gcb.globalState().sharedPersistentLocation(sharedDirectory);
       } else {
          gcb.globalState().sharedPersistentLocation(stateDirectory);

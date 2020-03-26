@@ -4,6 +4,7 @@ import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,8 +30,8 @@ import org.testng.annotations.Test;
 public class RemoteCounterManagerTest extends AbstractCounterTest implements CounterManagerTestStrategy {
 
    private static final String PERSISTENT_LOCATION = tmpDirectory("RemoteCounterManagerTest");
-   private static final String TMP_LOCATION = PERSISTENT_LOCATION + File.separator + "tmp";
-   private static final String SHARED_LOCATION = PERSISTENT_LOCATION + File.separator + "shared";
+   private static final String TMP_LOCATION = Paths.get(PERSISTENT_LOCATION, "tmp").toString();
+   private static final String SHARED_LOCATION = Paths.get(PERSISTENT_LOCATION,"shared").toString();
    private final CounterManagerTestStrategy strategy;
 
 
@@ -100,7 +101,7 @@ public class RemoteCounterManagerTest extends AbstractCounterTest implements Cou
       char id = 'A';
       id += cacheManagers.size();
       builder.globalState().enable()
-            .persistentLocation(PERSISTENT_LOCATION + File.separator + id)
+            .persistentLocation(Paths.get(PERSISTENT_LOCATION, Character.toString(id)).toString())
             .temporaryLocation(TMP_LOCATION)
             .sharedPersistentLocation(SHARED_LOCATION);
    }

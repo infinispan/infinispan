@@ -6,6 +6,7 @@ import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.PrintWriter;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,7 +23,7 @@ import org.testng.annotations.Test;
 @Test(groups = "manual", testName = "test.fwk.TestNameVerifier")
 public class TestNameVerifier {
 
-   String dir = "src" + File.separator + "test" + File.separator + "java" + File.separator + "org" + File.separator + "infinispan";
+   String dir = Paths.get("src", "test", "java", "org", "infinispan").toString();
 
    Pattern packageLinePattern = Pattern.compile("package org.infinispan[^;]*");
    Pattern classLinePattern = Pattern.compile("(abstract\\s*)??(public\\s*)(abstract\\s*)??class [^\\s]*");
