@@ -1,18 +1,19 @@
 package org.infinispan.lock.impl.manager;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.context.Flag;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
@@ -22,11 +23,13 @@ import org.infinispan.lock.api.ClusteredLockConfiguration;
 import org.infinispan.lock.api.ClusteredLockManager;
 import org.infinispan.lock.configuration.ClusteredLockManagerConfiguration;
 import org.infinispan.lock.exception.ClusteredLockException;
+import org.infinispan.lock.impl.ClusteredLockModuleLifecycle;
 import org.infinispan.lock.impl.entries.ClusteredLockKey;
 import org.infinispan.lock.impl.entries.ClusteredLockState;
 import org.infinispan.lock.impl.entries.ClusteredLockValue;
 import org.infinispan.lock.impl.lock.ClusteredLockImpl;
 import org.infinispan.lock.logging.Log;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.ByteString;
 
 /**
@@ -39,7 +42,6 @@ import org.infinispan.util.ByteString;
 @MBean(objectName = EmbeddedClusteredLockManager.OBJECT_NAME, description = "Component to manage clustered locks")
 public class EmbeddedClusteredLockManager implements ClusteredLockManager {
    public static final String OBJECT_NAME = "ClusteredLockManager";
-   private static final long WAIT_CACHES_TIMEOUT = TimeUnit.SECONDS.toNanos(15);
    private static final Log log = LogFactory.getLog(EmbeddedClusteredLockManager.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
    public static final String FORCE_RELEASE = "forceRelease";
@@ -48,56 +50,76 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
    public static final String IS_LOCKED = "isLocked";
 
    private final ConcurrentHashMap<String, ClusteredLock> locks = new ConcurrentHashMap<>();
-   private final CompletableFuture<CacheHolder> cacheHolderFuture;
    private final ClusteredLockManagerConfiguration config;
-   private ScheduledExecutorService scheduledExecutorService;
-   private Executor executor;
+   private volatile boolean started = false;
+
+   @Inject
+   EmbeddedCacheManager cacheManager;
+
+   @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
+   ScheduledExecutorService scheduledExecutorService;
+
+   @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
+   Executor executor;
 
    private AdvancedCache<ClusteredLockKey, ClusteredLockValue> cache;
 
-   public EmbeddedClusteredLockManager(CompletableFuture<CacheHolder> cacheHolderFuture, ClusteredLockManagerConfiguration config) {
-      this.cacheHolderFuture = cacheHolderFuture;
+   public EmbeddedClusteredLockManager(ClusteredLockManagerConfiguration config) {
       this.config = config;
    }
 
-   @Inject
-   public void injectDep(@ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService scheduledExecutorService,
-                         @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR) Executor executor) {
-      this.scheduledExecutorService = scheduledExecutorService;
-      this.executor = executor;
+   @Start
+   public void start() {
+      if (trace)
+         log.trace("Starting EmbeddedClusteredLockManager");
+
+      started = true;
+   }
+
+   @Stop
+   public void stop() {
+      if (trace)
+         log.trace("Stopping EmbeddedClusteredLockManager");
+
+      started = false;
+      cache = null;
+   }
+
+   private AdvancedCache<ClusteredLockKey, ClusteredLockValue> cache() {
+      if (!started) {
+        throw new IllegalStateException("Component not running, cannot request the lock cache");
+      } else if (cache == null) {
+         cache = cacheManager.<ClusteredLockKey, ClusteredLockValue>getCache(ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME)
+               .getAdvancedCache()
+               .withFlags(Flag.SKIP_CACHE_LOAD, Flag.SKIP_CACHE_STORE);
+      }
+      return cache;
    }
 
    @Override
    public boolean defineLock(String name) {
       ClusteredLockConfiguration configuration = new ClusteredLockConfiguration();
-      if (trace) {
+      if (trace)
          log.tracef("LOCK[%s] defineLock with default configuration has been called %s", name, configuration);
-      }
+
       return defineLock(name, configuration);
    }
 
    @Override
    public boolean defineLock(String name, ClusteredLockConfiguration configuration) {
-      if (trace) {
+      if (trace)
          log.tracef("LOCK[%s] defineLock has been called %s", name, configuration);
-      }
-      // TODO: Configuration is not used because we don't support any other mode for now. For that : ISPN-8413
-      CacheHolder cacheHolder = extractCacheHolder(cacheHolderFuture);
-      cache = cacheHolder.getClusteredLockCache();
+
       ClusteredLockKey key = new ClusteredLockKey(ByteString.fromString(name));
-      ClusteredLockValue clusteredLockValue = cache.putIfAbsent(key, ClusteredLockValue.INITIAL_STATE);
+      ClusteredLockValue clv = cache().putIfAbsent(key, ClusteredLockValue.INITIAL_STATE);
       locks.putIfAbsent(name, new ClusteredLockImpl(name, key, cache, this));
-      return clusteredLockValue == null;
+      return clv == null;
    }
 
    @Override
    public ClusteredLock get(String name) {
-      if (trace) {
+      if (trace)
          log.tracef("LOCK[%s] get has been called", name);
-      }
-      if (cache == null) {
-         cache = extractCacheHolder(cacheHolderFuture).getClusteredLockCache();
-      }
 
       return locks.computeIfAbsent(name, this::createLock);
    }
@@ -108,26 +130,21 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
          throw new ClusteredLockException(String.format("Lock %s does not exist", lockName));
       }
       ClusteredLockKey key = new ClusteredLockKey(ByteString.fromString(lockName));
-      cache.putIfAbsent(key, ClusteredLockValue.INITIAL_STATE);
-      ClusteredLockImpl lock = new ClusteredLockImpl(lockName, key, cache, this);
+      cache().putIfAbsent(key, ClusteredLockValue.INITIAL_STATE);
+      ClusteredLockImpl lock = new ClusteredLockImpl(lockName, key, cache(), this);
       return lock;
    }
 
    @Override
    public ClusteredLockConfiguration getConfiguration(String name) {
-      if (trace) {
+      if (trace)
          log.tracef("LOCK[%s] getConfiguration has been called", name);
-      }
-      CacheHolder cacheHolder = extractCacheHolder(cacheHolderFuture);
-      cache = cacheHolder.getClusteredLockCache();
 
-      if (cache.containsKey(new ClusteredLockKey(ByteString.fromString(name)))) {
+      if (cache().containsKey(new ClusteredLockKey(ByteString.fromString(name))))
          return new ClusteredLockConfiguration();
-      }
 
-      if (config.locks().containsKey(name)) {
+      if (config.locks().containsKey(name))
          return new ClusteredLockConfiguration();
-      }
 
       throw new ClusteredLockException(String.format("Lock %s does not exist", name));
    }
@@ -139,30 +156,26 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
    )
    @Override
    public boolean isDefined(String name) {
-      if (trace) {
+      if (trace)
          log.tracef("LOCK[%s] isDefined has been called", name);
-      }
-      if (cache == null) {
-         cache = extractCacheHolder(cacheHolderFuture).getClusteredLockCache();
-      }
-      return cache.containsKey(new ClusteredLockKey(ByteString.fromString(name)));
+
+      return cache().containsKey(new ClusteredLockKey(ByteString.fromString(name)));
    }
 
    @Override
    public CompletableFuture<Boolean> remove(String name) {
-      if (trace) {
+      if (trace)
          log.tracef("LOCK[%s] remove has been called", name);
-      }
-      CacheHolder cacheHolder = extractCacheHolder(cacheHolderFuture);
-      AdvancedCache<ClusteredLockKey, ClusteredLockValue> clusteredLockCache = cacheHolder.getClusteredLockCache();
+
       ClusteredLockImpl clusteredLock = (ClusteredLockImpl) locks.get(name);
       if (clusteredLock != null) {
          clusteredLock.stop();
          locks.remove(name);
       }
-      return clusteredLockCache.removeAsync(new ClusteredLockKey(ByteString.fromString(name))).thenApply(value ->
-            value != null
-      );
+
+      return cache()
+            .removeAsync(new ClusteredLockKey(ByteString.fromString(name)))
+            .thenApply(Objects::nonNull);
    }
 
    @ManagedOperation(
@@ -171,25 +184,26 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
          name = REMOVE
    )
    public boolean removeSync(String name) {
-      if (trace) {
+      if (trace)
          log.tracef("LOCK[%s] remove sync has been called", name);
-      }
-      CacheHolder cacheHolder = extractCacheHolder(cacheHolderFuture);
-      AdvancedCache<ClusteredLockKey, ClusteredLockValue> clusteredLockCache = cacheHolder.getClusteredLockCache();
+
       ClusteredLockImpl clusteredLock = (ClusteredLockImpl) locks.get(name);
       if (clusteredLock != null) {
          clusteredLock.stop();
          locks.remove(name);
       }
-      return clusteredLockCache.remove(new ClusteredLockKey(ByteString.fromString(name))) != null;
+
+      return cache().remove(new ClusteredLockKey(ByteString.fromString(name))) != null;
    }
 
    public CompletableFuture<Boolean> forceRelease(String name) {
-      if (trace) {
+      if (trace)
          log.tracef("LOCK[%s] forceRelease has been called", name);
-      }
-      CompletableFuture<ClusteredLockValue> future = cache.computeIfPresentAsync(new ClusteredLockKey(ByteString.fromString(name)), (k, v) -> ClusteredLockValue.INITIAL_STATE);
-      return future.thenApply(clusteredLockValue -> clusteredLockValue != null && clusteredLockValue.getState() == ClusteredLockState.RELEASED);
+
+      ClusteredLockKey lockLey = new ClusteredLockKey(ByteString.fromString(name));
+      return cache()
+            .computeIfPresentAsync(lockLey, (k, v) -> ClusteredLockValue.INITIAL_STATE)
+            .thenApply(clv -> clv != null && clv.getState() == ClusteredLockState.RELEASED);
    }
 
    @ManagedOperation(
@@ -198,9 +212,9 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
          name = FORCE_RELEASE
    )
    public boolean forceReleaseSync(String name) {
-      if (trace) {
+      if (trace)
          log.tracef("LOCK[%s] forceRelease sync has been called", name);
-      }
+
       return forceRelease(name).join();
    }
 
@@ -210,24 +224,11 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
          name = IS_LOCKED
    )
    public boolean isLockedSync(String name) {
-      if (trace) {
+      if (trace)
          log.tracef("LOCK[%s] isLocked sync has been called", name);
-      }
-      ClusteredLockValue clusteredLockValue = cache.get(new ClusteredLockKey(ByteString.fromString(name)));
-      return clusteredLockValue != null && clusteredLockValue.getState() == ClusteredLockState.ACQUIRED;
-   }
 
-   private static CacheHolder extractCacheHolder(CompletableFuture<CacheHolder> future) {
-      try {
-         return future.get(WAIT_CACHES_TIMEOUT, TimeUnit.NANOSECONDS);
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         log.fatal(e);
-         throw new IllegalStateException("Clustered lock cache could not be started", e);
-      } catch (ExecutionException | TimeoutException e) {
-         log.fatal(e);
-         throw new IllegalStateException("Clustered lock cache could not be started", e);
-      }
+      ClusteredLockValue clv = cache().get(new ClusteredLockKey(ByteString.fromString(name)));
+      return clv != null && clv.getState() == ClusteredLockState.ACQUIRED;
    }
 
    public ScheduledExecutorService getScheduledExecutorService() {
@@ -241,7 +242,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
    @Override
    public String toString() {
       return "EmbeddedClusteredLockManager{" +
-            ", address=" + cache.getCacheManager().getAddress() +
+            ", address=" + cacheManager.getAddress() +
             ", locks=" + locks +
             '}';
    }

@@ -2,9 +2,7 @@ package org.infinispan.lock.impl;
 
 import java.util.EnumSet;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.CacheMode;
@@ -27,10 +25,8 @@ import org.infinispan.lock.impl.functions.IsLocked;
 import org.infinispan.lock.impl.functions.LockFunction;
 import org.infinispan.lock.impl.functions.UnlockFunction;
 import org.infinispan.lock.impl.lock.ClusteredLockFilter;
-import org.infinispan.lock.impl.manager.CacheHolder;
 import org.infinispan.lock.impl.manager.EmbeddedClusteredLockManager;
 import org.infinispan.lock.logging.Log;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
@@ -49,6 +45,11 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
+      if (!globalConfiguration.isClustered()) {
+         log.configurationNotClustered();
+         return;
+      }
+
       final Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalConfiguration.serialization()
             .advancedExternalizers();
       externalizerMap.put(ClusteredLockKey.EXTERNALIZER.getId(), ClusteredLockKey.EXTERNALIZER);
@@ -57,25 +58,12 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
       externalizerMap.put(UnlockFunction.EXTERNALIZER.getId(), UnlockFunction.EXTERNALIZER);
       externalizerMap.put(IsLocked.EXTERNALIZER.getId(), IsLocked.EXTERNALIZER);
       externalizerMap.put(ClusteredLockFilter.EXTERNALIZER.getId(), ClusteredLockFilter.EXTERNALIZER);
-   }
-
-   @Override
-   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
-      // This works because locks are not yet used internally, otherwise it would have to be in cacheManagerStarting
-      final EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
-      final InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
 
       ClusteredLockManagerConfiguration config = extractConfiguration(gcr);
-      GlobalConfiguration globalConfig = gcr.getGlobalConfiguration();
-
-      if (globalConfig.isClustered()) {
-         internalCacheRegistry.registerInternalCache(CLUSTERED_LOCK_CACHE_NAME, createClusteredLockCacheConfiguration(config, globalConfig),
-               EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
-         CompletableFuture<CacheHolder> future = startCaches(cacheManager);
-         registerClusteredLockManager(gcr.getComponent(BasicComponentRegistry.class), globalConfig, future, config);
-      } else {
-         log.configurationNotClustered();
-      }
+      InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
+      Configuration lockConfig = createClusteredLockCacheConfiguration(config, globalConfiguration);
+      internalCacheRegistry.registerInternalCache(CLUSTERED_LOCK_CACHE_NAME, lockConfig, EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
+      registerClusteredLockManager(gcr.getComponent(BasicComponentRegistry.class), globalConfiguration, config);
    }
 
    private static ClusteredLockManagerConfiguration extractConfiguration(GlobalComponentRegistry globalComponentRegistry) {
@@ -108,24 +96,10 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
       return builder.build();
    }
 
-   private static CompletableFuture<CacheHolder> startCaches(EmbeddedCacheManager cacheManager) {
-      final CompletableFuture<CacheHolder> future = new CompletableFuture<>();
-      new Thread(() -> {
-         try {
-            Cache<? extends ClusteredLockKey, ClusteredLockValue> locksCache = cacheManager.getCache(CLUSTERED_LOCK_CACHE_NAME);
-            future.complete(new CacheHolder(locksCache.getAdvancedCache()));
-         } catch (Throwable throwable) {
-            future.completeExceptionally(throwable);
-         }
-      }).start();
-      return future;
-   }
-
    private static void registerClusteredLockManager(BasicComponentRegistry registry,
                                                     GlobalConfiguration globalConfig,
-                                                    CompletableFuture<CacheHolder> future,
                                                     ClusteredLockManagerConfiguration config) {
-      ClusteredLockManager clusteredLockManager = new EmbeddedClusteredLockManager(future, config);
+      ClusteredLockManager clusteredLockManager = new EmbeddedClusteredLockManager(config);
       registry.registerComponent(ClusteredLockManager.class, clusteredLockManager, true);
 
       if (globalConfig.jmx().enabled()) {
