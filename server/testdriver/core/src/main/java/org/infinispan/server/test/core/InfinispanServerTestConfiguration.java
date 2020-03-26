@@ -17,8 +17,11 @@ public class InfinispanServerTestConfiguration {
    private final String[] mavenArtifacts;
    private final JavaArchive[] archives;
    private final boolean jmx;
+   private final boolean parallelStartup;
 
-   public InfinispanServerTestConfiguration(String configurationFile, int numServers, ServerRunMode runMode, Properties properties, String[] mavenArtifacts, JavaArchive[] archives, boolean jmx) {
+   public InfinispanServerTestConfiguration(String configurationFile, int numServers, ServerRunMode runMode,
+                                            Properties properties, String[] mavenArtifacts, JavaArchive[] archives,
+                                            boolean jmx, boolean parallelStartup) {
       this.configurationFile = configurationFile;
       this.numServers = numServers;
       this.runMode = runMode;
@@ -26,6 +29,7 @@ public class InfinispanServerTestConfiguration {
       this.mavenArtifacts = mavenArtifacts;
       this.archives = archives;
       this.jmx = jmx;
+      this.parallelStartup = parallelStartup;
    }
 
    public String configurationFile() {
@@ -54,5 +58,9 @@ public class InfinispanServerTestConfiguration {
 
    public String[] mavenArtifacts() {
       return mavenArtifacts;
+   }
+
+   public boolean isParallelStartup() {
+      return parallelStartup;
    }
 }
