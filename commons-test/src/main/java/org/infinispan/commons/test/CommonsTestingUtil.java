@@ -49,17 +49,6 @@ public class CommonsTestingUtil {
       return System.getProperty("infinispan.test.tmpdir", System.getProperty("java.io.tmpdir"));
    }
 
-   /**
-    * Creates a path to a unique (per test) temporary directory. The directory is created in the platform's temp
-    * directory (set by {@code java.io.tmpdir}).
-    *
-    * @param test test that requires this directory.
-    * @return an absolute path
-    */
-   public static String javaTmpDirectory(Class<?> test) {
-      return System.getProperty("java.io.tmpdir") + separator + TEST_PATH + separator + test.getSimpleName();
-   }
-
    public static String loadFileAsString(InputStream is) throws IOException {
       StringBuilder sb = new StringBuilder();
       BufferedReader r = new BufferedReader(new InputStreamReader(is));

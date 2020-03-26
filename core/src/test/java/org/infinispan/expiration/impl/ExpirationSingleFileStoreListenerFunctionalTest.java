@@ -43,6 +43,6 @@ public class ExpirationSingleFileStoreListenerFunctionalTest extends ExpirationS
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
-      Util.recursiveFileRemove(location);
+      Util.recursiveFileRemove(CommonsTestingUtil.tmpDirectory(this.getClass()));
    }
 }

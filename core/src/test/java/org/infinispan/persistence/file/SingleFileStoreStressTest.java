@@ -30,7 +30,6 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -46,8 +45,10 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    private static final String TIMES_STRING = "123456789_";
    private String location;
 
-   @AfterClass
-   protected void clearTempDir() {
+
+   @Override
+   protected void teardown() {
+      super.teardown();
       Util.recursiveFileRemove(this.location);
    }
 
