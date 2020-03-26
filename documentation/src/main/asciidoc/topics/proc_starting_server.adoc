@@ -25,7 +25,7 @@ Server logs display the following messages:
 ----
 ISPN080004: Protocol SINGLE_PORT listening on 127.0.0.1:11222
 
-ISPN080001: Infinispan Server started in 7453ms
+ISPN080001: {brandname} Server <$version> started in <mm>ms
 ----
 
 _Hello {brandname}!_

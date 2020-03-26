@@ -7,7 +7,7 @@ the latest {brandname} cache store implementations.
 source and uses a cache store implementation as target.
 
 When you run `StoreMigrator`, it creates the target cache with the cache store
-type that you define using the `EmbeddedCacheManager` interface. `StoreMigrator
+type that you define using the `EmbeddedCacheManager` interface. `StoreMigrator`
 then loads entries from the source store into memory and then puts them into
 the target cache.
 

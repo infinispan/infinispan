@@ -21,18 +21,8 @@ Check the server logs for the following messages:
 
 [source,options="nowrap",subs=attributes+]
 ----
-ISPN080002: Infinispan Server stopping
-ISPN000029: Passivating all entries to disk
-ISPN000030: Passivated <N> entries in <M> milliseconds
+ISPN080002: {brandname} Server stopping
 ISPN000080: Disconnecting JGroups channel cluster
 ISPN000390: Persisted state, version=<$version> timestamp=YYYY-MM-DDTHH:MM:SS
-ISPN080003: Infinispan Server stopped
-----
-
-Cluster shutdowns include the following messages:
-
-[source,options="nowrap",subs=attributes+]
-----
-ISPN080029: Cluster shutdown
-ISPN000080: Disconnecting JGroups channel cluster
+ISPN080003: {brandname} Server stopped
 ----

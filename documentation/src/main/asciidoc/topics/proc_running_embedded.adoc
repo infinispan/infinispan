@@ -12,7 +12,7 @@ GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredB
 DefaultCacheManager cacheManager = new DefaultCacheManager(global.build());
 ConfigurationBuilder builder = new ConfigurationBuilder();
 builder.clustering().cacheMode(CacheMode.DIST_SYNC);
-cacheManager.administration().getOrCreate("myCache", builder.build());
+cacheManager.administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).getOrCreateCache("myCache", builder.build());
 ----
 
 The preceding code initializes a default, clustered Cache Manager. Cache
@@ -21,9 +21,9 @@ Managers contain your cache definitions and control cache lifecycles.
 {brandname} does not provide default cache definitions so after initializing
 the default Cache Manager, you need to add at least one cache instance. This
 example uses the `ConfigurationBuilder` class to create a cache definition that
-uses the distributed, synchronous cache mode. You then call the `getOrCreate()`
-method that either creates a cache named "myCache" on all nodes in the cluster
-or returns it if it already exists.
+uses the distributed, synchronous cache mode. You then call the
+`getOrCreateCache()` method that either creates a cache named "myCache" on all
+nodes in the cluster or returns it if it already exists.
 
 .Next steps
 

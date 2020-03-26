@@ -1,5 +1,5 @@
 GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-  .statistics().enable()
+  .cacheContainer().statistics(true)
   .metrics().gauges(true).histograms(true)
   .jmx().enable()
   .build();

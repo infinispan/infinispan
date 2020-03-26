@@ -84,12 +84,14 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory
 import org.infinispan.filter.NamedFactory;
 
 @NamedFactory(name = "static-filter")
-class StaticCacheEventFilterFactory implements CacheEventFilterFactory {
+public static class StaticCacheEventFilterFactory implements CacheEventFilterFactory {
+
    @Override
-   public CacheEventFilterFactory<Integer, String> getFilter(Object[] params) {
+   public StaticCacheEventFilter getFilter(Object[] params) {
       return new StaticCacheEventFilter();
    }
 }
+
 
 // Serializable, Externalizable or marshallable with Infinispan Externalizers
 // needed when running in a cluster
@@ -142,9 +144,9 @@ RemoteCache<?, ?> cache = ...
 cache.addClientListener(new EventPrintListener());
 ----
 
-Dynamic filter instances that filter based on parameters provided when the
-listener is registered are also possible. Filters use the parameters received
-by the filter factories to enable this option. For example:
+You can also register dynamic filter instances that filter based on parameters
+provided when the listener is registered are also possible. Filters use the 
+parameters received by the filter factories to enable this option, for example:
 
 [source,java]
 ----
@@ -368,7 +370,7 @@ cache.addClientListener(new EventPrintListener(), null, new Object[]{1});
 
 WARNING: Converter instances have to marshallable when they are deployed in a
 cluster, so that the conversion can happen right where the event is generated,
-even if the even is generated in a different node to where the listener is
+even if the event is generated in a different node to where the listener is
 registered. To make them marshallable, either make them extend `Serializable`,
 `Externalizable`, or provide a custom `Externalizer` for them.
 
@@ -511,10 +513,6 @@ content has been iterated over, events are received as normal, as cache
 updates are received.  If the cache is clustered, the entire cluster wide
 contents are iterated over.
 
-`includeCurrentState` also controls whether state is received when the node
-where the client event listener is registered fails and it's moved to a
-different node. The next section discusses this topic in depth.
-
 == Listener Failure Handling
 
 When a Hot Rod client registers a client listener, it does so in a single
@@ -529,8 +527,7 @@ the cache contents can iterated over and `ClientCacheEntryCreated` events
 (or custom events if configured) are generated. By default,
 `includeCurrentState` is set to false.
 
-Java Hot Rod clients can be made aware of such fail over event by adding a
-callback to handle it:
+Use callbacks to handle failover events:
 
 [source,java]
 ----
