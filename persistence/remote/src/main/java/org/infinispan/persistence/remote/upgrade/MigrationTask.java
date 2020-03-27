@@ -36,6 +36,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.threads.BlockingThreadFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -71,7 +72,7 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
    @Override
    public Integer apply(EmbeddedCacheManager embeddedCacheManager) {
       AtomicInteger counter = new AtomicInteger(0);
-      DefaultThreadFactory threadFactory = new DefaultThreadFactory(null, 1, THREAD_NAME + "-%t", null, null);
+      DefaultThreadFactory threadFactory = new BlockingThreadFactory(null, 1, THREAD_NAME + "-%t", null, null);
       ExecutorService executorService = Executors.newFixedThreadPool(threads, threadFactory);
       RemoveListener listener = null;
       AdvancedCache<Object, Object> advancedCache = embeddedCacheManager.getCache(cacheName).getAdvancedCache();

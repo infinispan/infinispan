@@ -1,32 +1,25 @@
 package org.infinispan.configuration.global;
 
-import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.parsing.Element;
-import org.infinispan.factories.threads.DefaultNonBlockingThreadFactory;
+import org.infinispan.factories.threads.BlockingThreadFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
+import org.infinispan.factories.threads.NonBlockingThreadFactory;
 
 class ThreadFactoryConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
-   static final AttributeDefinition<ThreadGroup> GROUP = AttributeDefinition.builder("groupName", null, ThreadGroup.class)
-         .serializer(new AttributeSerializer<ThreadGroup, ConfigurationInfo, ConfigurationBuilderInfo>() {
-            @Override
-            public Object getSerializationValue(Attribute<ThreadGroup> attribute, ConfigurationInfo configurationElement) {
-               return attribute.get().getName();
-            }
-         }).build();
+   static final AttributeDefinition<String> GROUP = AttributeDefinition.builder("groupName", null, String.class).build();
    static final AttributeDefinition<String> THREAD_NAME_PATTERN = AttributeDefinition.builder("threadNamePattern", null, String.class).build();
    static final AttributeDefinition<Integer> PRIORITY = AttributeDefinition.builder("priority", null, Integer.class).build();
 
    private final AttributeSet attributes;
    private final Attribute<String> name;
-   private final Attribute<ThreadGroup> group;
+   private final Attribute<String> groupName;
    private final Attribute<String> threadNamePattern;
    private final Attribute<Integer> priority;
    private String nodeName;
@@ -40,7 +33,7 @@ class ThreadFactoryConfiguration implements ConfigurationInfo {
    ThreadFactoryConfiguration(AttributeSet attributes, String nodeName) {
       this.attributes = attributes.checkProtection();
       this.name = attributes.attribute(NAME);
-      this.group = attributes.attribute(GROUP);
+      this.groupName = attributes.attribute(GROUP);
       this.threadNamePattern = attributes.attribute(THREAD_NAME_PATTERN);
       this.priority = attributes.attribute(PRIORITY);
       this.nodeName = nodeName;
@@ -54,9 +47,9 @@ class ThreadFactoryConfiguration implements ConfigurationInfo {
 
    public DefaultThreadFactory getThreadFactory(boolean isNonBlocking) {
       if (isNonBlocking) {
-         return new DefaultNonBlockingThreadFactory(name.get(), group.get(), priority.get(), threadNamePattern.get(), nodeName, null);
+         return new NonBlockingThreadFactory(name.get(), groupName.get(), priority.get(), threadNamePattern.get(), nodeName, null);
       }
-      return new DefaultThreadFactory(name.get(), group.get(), priority.get(), threadNamePattern.get(), nodeName, null);
+      return new BlockingThreadFactory(name.get(), groupName.get(), priority.get(), threadNamePattern.get(), nodeName, null);
    }
 
    public AttributeSet attributes() {
@@ -67,8 +60,8 @@ class ThreadFactoryConfiguration implements ConfigurationInfo {
       return name;
    }
 
-   public Attribute<ThreadGroup> groupName() {
-      return group;
+   public Attribute<String> groupName() {
+      return groupName;
    }
 
    public Attribute<String> threadPattern() {

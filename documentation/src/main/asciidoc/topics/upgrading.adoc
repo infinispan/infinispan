@@ -29,6 +29,11 @@ OSGi support has been deprecated and will be removed in a future release.
 ** `.buildQueryBuilderForClass()`, that allows to build Hibernate Search queries directly has been removed. Ickle queries should be used instead.
 ** It is not possible anymore to specify multiple target entity(ies) class(es) when calling `.getQuery()`. The entity will come from the Ickle query string, so multi-entity queries are not supported anymore.
 
+== ThreadFactoryConfiguration changes
+
+The ThreadGroup configuration setting has been removed and only thread group name is allowed now.
+This configuration was inconsistent between programmatic and declarative configuration and is now
+consistent.
 
 = Upgrading from 10.0 to 10.1 and 10.0 to 11.0
 

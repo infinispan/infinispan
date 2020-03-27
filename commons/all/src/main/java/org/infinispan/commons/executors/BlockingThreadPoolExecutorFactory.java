@@ -64,7 +64,7 @@ public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFact
       BlockingQueue<Runnable> queue = queueLength == 0 ? new SynchronousQueue<>() : new LinkedBlockingQueue<>(queueLength);
 
       if (nonBlocking) {
-         if (!(threadFactory instanceof NonBlockingThreadFactory)) {
+         if (!(threadFactory instanceof NonBlockingResource)) {
             throw new IllegalStateException("Executor factory configured to be non blocking and received a thread" +
                   " factory that can create blocking threads!");
          }

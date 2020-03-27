@@ -2,7 +2,7 @@ package org.infinispan.commons.internal;
 
 import java.lang.reflect.Method;
 
-import org.infinispan.commons.executors.NonBlockingThread;
+import org.infinispan.commons.executors.NonBlockingResource;
 import org.infinispan.commons.util.concurrent.NonBlockingRejectedExecutionHandler;
 import org.kohsuke.MetaInfServices;
 
@@ -13,7 +13,7 @@ import reactor.blockhound.integration.BlockHoundIntegration;
 public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
    @Override
    public void applyTo(BlockHound.Builder builder) {
-      builder.nonBlockingThreadPredicate(current -> current.or(thread -> thread instanceof NonBlockingThread));
+      builder.nonBlockingThreadPredicate(current -> current.or(thread -> thread.getThreadGroup() instanceof NonBlockingResource));
 
       // This should never block as non blocking thread will run the task if pool was full
       builder.disallowBlockingCallsInside(NonBlockingRejectedExecutionHandler.class.getName(), "rejectedExecution");

@@ -25,8 +25,8 @@ public class ThreadFactoryConfigurationBuilder extends AbstractGlobalConfigurati
       return attributes;
    }
 
-   public ThreadFactoryConfigurationBuilder groupName(ThreadGroup threadGroup) {
-      attributes.attribute(GROUP).set(threadGroup);
+   public ThreadFactoryConfigurationBuilder groupName(String threadGroupName) {
+      attributes.attribute(GROUP).set(threadGroupName);
       return this;
    }
 
@@ -53,7 +53,7 @@ public class ThreadFactoryConfigurationBuilder extends AbstractGlobalConfigurati
       return attributes.attribute(PRIORITY).get();
    }
 
-   public ThreadGroup group() {
+   public String groupName() {
       return attributes.attribute(GROUP).get();
    }
 

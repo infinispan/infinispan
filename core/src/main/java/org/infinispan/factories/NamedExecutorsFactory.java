@@ -20,8 +20,9 @@ import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService;
 import org.infinispan.executors.LazyInitializingScheduledExecutorService;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.factories.threads.DefaultNonBlockingThreadFactory;
+import org.infinispan.factories.threads.BlockingThreadFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
+import org.infinispan.factories.threads.NonBlockingThreadFactory;
 
 /**
  * A factory that specifically knows how to create named executors.
@@ -45,9 +46,9 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
                         ExecutorServiceType.DEFAULT);
          } else if (componentName.equals(BLOCKING_EXECUTOR)) {
             return createExecutorService(
-                        globalConfiguration.persistenceThreadPool(),
+                        globalConfiguration.blockingThreadPool(),
                         BLOCKING_EXECUTOR,
-                        ExecutorServiceType.DEFAULT);
+                        ExecutorServiceType.BLOCKING);
          } else if (componentName.equals(EXPIRATION_SCHEDULED_EXECUTOR)) {
             return createExecutorService(
                         globalConfiguration.expirationThreadPool(),
@@ -55,7 +56,7 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
                         ExecutorServiceType.SCHEDULED);
          } else if (componentName.equals(NON_BLOCKING_EXECUTOR)) {
             return createExecutorService(
-                        globalConfiguration.asyncThreadPool(),
+                        globalConfiguration.nonBlockingThreadPool(),
                         NON_BLOCKING_EXECUTOR, ExecutorServiceType.NON_BLOCKING);
          } else if (componentName.endsWith(TIMEOUT_SCHEDULE_EXECUTOR)) {
             return createExecutorService(null, TIMEOUT_SCHEDULE_EXECUTOR, ExecutorServiceType.SCHEDULED);
@@ -107,13 +108,18 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
 
    private ThreadFactory createThreadFactoryWithDefaults(GlobalConfiguration globalCfg, final String componentName,
                                                          ExecutorServiceType type) {
-      if (type.isNonBlocking()) {
-         return new DefaultNonBlockingThreadFactory(null, getDefaultThreadPrio(componentName),
-               DefaultThreadFactory.DEFAULT_PATTERN, globalCfg.transport().nodeName(), shortened(componentName));
+      switch (type) {
+         case BLOCKING:
+            return new BlockingThreadFactory("ISPN-blocking-thread-group", getDefaultThreadPrio(componentName),
+                  DefaultThreadFactory.DEFAULT_PATTERN, globalCfg.transport().nodeName(), shortened(componentName));
+         case NON_BLOCKING:
+            return new NonBlockingThreadFactory("ISPN-non-blocking-thread-group", getDefaultThreadPrio(componentName),
+                  DefaultThreadFactory.DEFAULT_PATTERN, globalCfg.transport().nodeName(), shortened(componentName));
+         default:
+            // Use defaults
+            return new DefaultThreadFactory(null, getDefaultThreadPrio(componentName), DefaultThreadFactory.DEFAULT_PATTERN,
+                  globalCfg.transport().nodeName(), shortened(componentName));
       }
-      // Use defaults
-      return new DefaultThreadFactory(null, getDefaultThreadPrio(componentName), DefaultThreadFactory.DEFAULT_PATTERN,
-            globalCfg.transport().nodeName(), shortened(componentName));
    }
 
    private ThreadPoolExecutorFactory createThreadPoolFactoryWithDefaults(
@@ -130,18 +136,13 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
    }
 
    private enum ExecutorServiceType {
-      // This type can be blocking
       DEFAULT,
       SCHEDULED,
-      // This is a special type that allows for blocking remote operations to be enqueued
-      REMOTE_BLOCKING,
+      // This type of pool means that it can run blocking operations, should not run CPU based operations if possible
+      BLOCKING,
       // This type of pool means that nothing should ever be executed upon it that may block
       NON_BLOCKING,
       ;
-
-      boolean isNonBlocking() {
-         return this == NON_BLOCKING;
-      }
    }
 
 }
