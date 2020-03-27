@@ -27,7 +27,6 @@
          </indexing>
       </replicated-cache>
       <replicated-cache name="LuceneIndexesMetadata_custom1">
-         <transaction mode="NON_XA" />
          <persistence>
             <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:${infinispan.core.schema.version}"
                                   key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
@@ -50,7 +49,6 @@
       <!--  Cache to store Lucene data  -->
       <!-- **************************** -->
       <replicated-cache name="LuceneIndexesData_custom1">
-         <transaction mode="NON_XA" />
          <persistence>
             <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:${infinispan.core.schema.version}"
                                      key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
@@ -72,7 +70,6 @@
       <!--  Cache to store Lucene locks  -->
       <!-- ***************************** -->
       <replicated-cache name="LuceneIndexesLocking_custom1">
-         <transaction mode="NON_XA" />
          <persistence>
             <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:${infinispan.core.schema.version}"
                                      key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
