@@ -30,7 +30,6 @@
       <!--  Cache to store Lucene's file metadata  -->
       <!-- *************************************** -->
       <local-cache name="LuceneIndexesMetadata_custom">
-         <transaction mode="NON_XA" />
          <persistence passivation="false">
             <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
                <write-behind thread-pool-size="5" />
@@ -42,7 +41,6 @@
       <!--  Cache to store Lucene data  -->
       <!-- **************************** -->
       <local-cache name="LuceneIndexesData_custom">
-         <transaction mode="NON_XA" />
          <persistence passivation="false">
             <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
                <write-behind thread-pool-size="5" />
@@ -54,7 +52,6 @@
       <!--  Cache to store Lucene locks  -->
       <!-- ***************************** -->
       <local-cache name="LuceneIndexesLocking_custom">
-         <transaction mode="NON_XA" />
          <persistence passivation="false">
             <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
                <write-behind thread-pool-size="5" />
