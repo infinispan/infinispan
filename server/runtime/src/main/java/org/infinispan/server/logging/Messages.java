@@ -1,5 +1,10 @@
 package org.infinispan.server.logging;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
+import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageBundle;
 
@@ -94,6 +99,18 @@ public interface Messages {
    @Message("Specifies the name of the user to add.")
    String userToolHelpUser();
 
-   @Message("Store passwords in digest format (WARN: works only with DIGEST-MD5/Digest authentication).")
-   String userToolHelpDigestPassword();
+   @Message("Store passwords in encrypted format (default).")
+   String userToolHelpEncryptedPassword();
+
+   @Message("Store passwords in clear-text format.")
+   String userToolHelpClearTextPassword();
+
+   @Message("A comma-separated list of encryption algorithms to store in the password file. Defaults to: %s")
+   String userToolHelpAlgorithms(List<String> allAlgorithms);
+
+   @Message("Unkown password encryption algorithm: '%s'")
+   IllegalArgumentException userToolUnknownAlgorithm(String algorithm);
+
+   @Message("Error accessing file '%s'")
+   RuntimeException userToolIOError(File file, @Cause IOException e);
 }

@@ -10,7 +10,6 @@ import java.util.Properties;
 
 import org.infinispan.server.Server;
 import org.wildfly.security.auth.SupportLevel;
-import org.wildfly.security.auth.realm.LegacyPropertiesSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -27,7 +26,7 @@ public class PropertiesSecurityRealm implements SecurityRealm {
    private final boolean plainText;
    private final String groupsAttribute;
    private final String realmName;
-   LegacyPropertiesSecurityRealm delegate;
+   EncryptedPropertiesSecurityRealm delegate;
 
    public PropertiesSecurityRealm(File usersFile, File groupsFile, boolean plainText, String groupsAttribute, String realmName) {
       this.usersFile = usersFile;
@@ -41,7 +40,7 @@ public class PropertiesSecurityRealm implements SecurityRealm {
    private void load() {
       try (InputStream usersInputStream = new FileInputStream(usersFile);
            InputStream groupsInputStream = groupsFile != null ? new FileInputStream(groupsFile) : null) {
-         delegate = LegacyPropertiesSecurityRealm.builder()
+         delegate = EncryptedPropertiesSecurityRealm.builder()
                .setUsersStream(usersInputStream)
                .setGroupsStream(groupsInputStream)
                .setPlainText(plainText)
