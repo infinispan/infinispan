@@ -405,7 +405,7 @@ public class Parser implements ConfigurationParser {
 
    private void parseThreadFactory(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       String name = null;
-      ThreadGroup threadGroup = null;
+      String threadGroupName = null;
       String threadNamePattern = null;
       int priority = 1; // minimum priority
 
@@ -420,7 +420,7 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case GROUP_NAME: {
-               threadGroup = new ThreadGroup(value);
+               threadGroupName = value;
                break;
             }
             case THREAD_NAME_PATTERN: {
@@ -437,7 +437,7 @@ public class Parser implements ConfigurationParser {
          }
       }
 
-      holder.getGlobalConfigurationBuilder().threads().addThreadFactory(name).groupName(threadGroup).priority(priority).threadNamePattern(threadNamePattern);
+      holder.getGlobalConfigurationBuilder().threads().addThreadFactory(name).groupName(threadGroupName).priority(priority).threadNamePattern(threadNamePattern);
       ParseUtils.requireNoContent(reader);
    }
 

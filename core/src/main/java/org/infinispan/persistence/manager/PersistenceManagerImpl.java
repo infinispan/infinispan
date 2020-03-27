@@ -49,6 +49,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
+import org.infinispan.commons.executors.BlockingResource;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.time.TimeService;
@@ -1509,6 +1510,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private boolean isCurrentThreadBlocking() {
-      return Thread.currentThread().getName().startsWith("blocking");
+      return Thread.currentThread().getThreadGroup() instanceof BlockingResource;
    }
 }

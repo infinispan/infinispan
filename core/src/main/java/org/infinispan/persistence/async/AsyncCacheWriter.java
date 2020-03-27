@@ -28,6 +28,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
+import org.infinispan.factories.threads.BlockingThreadFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.persistence.modifications.Modification;
 import org.infinispan.persistence.modifications.ModificationsList;
@@ -121,14 +122,14 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
       // executed. A bounded queue could throw RejectedExecutionException and thus lose data.
       int poolSize = asyncConfiguration.threadPoolSize();
       DefaultThreadFactory processorThreadFactory =
-            new DefaultThreadFactory(null, Thread.NORM_PRIORITY, DefaultThreadFactory.DEFAULT_PATTERN, nodeName,
+            new BlockingThreadFactory(null, Thread.NORM_PRIORITY, DefaultThreadFactory.DEFAULT_PATTERN, nodeName,
                                      "AsyncStoreProcessor");
       executor = new ThreadPoolExecutor(poolSize, poolSize, 120L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
                                         processorThreadFactory);
       ((ThreadPoolExecutor) executor).allowCoreThreadTimeOut(true);
 
       DefaultThreadFactory coordinatorThreadFactory =
-            new DefaultThreadFactory(null, Thread.NORM_PRIORITY, DefaultThreadFactory.DEFAULT_PATTERN, nodeName,
+            new BlockingThreadFactory(null, Thread.NORM_PRIORITY, DefaultThreadFactory.DEFAULT_PATTERN, nodeName,
                                      "AsyncStoreCoordinator");
 
       coordinator = coordinatorThreadFactory.newThread(new AsyncStoreCoordinator(asyncConfiguration.failSilently()));

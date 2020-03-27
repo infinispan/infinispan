@@ -424,8 +424,8 @@ public class TestCacheManagerFactory {
             new BlockingThreadPoolExecutorFactory(NAMED_EXECUTORS_THREADS_WITH_QUEUE, NAMED_EXECUTORS_THREADS_WITH_QUEUE,
                   NAMED_EXECUTORS_QUEUE_SIZE, NAMED_EXECUTORS_KEEP_ALIVE, true);
 
-      builder.persistenceThreadPool().threadPoolFactory(executorFactoryWithQueue);
-      builder.asyncThreadPool().threadPoolFactory(nonBlockingExecutorFactoryWithQueue);
+      builder.blockingThreadPool().threadPoolFactory(executorFactoryWithQueue);
+      builder.nonBlockingThreadPool().threadPoolFactory(nonBlockingExecutorFactoryWithQueue);
       // Listener thread pool already has a single thread
       // builder.listenerThreadPool().threadPoolFactory(executorFactoryWithQueue);
       builder.transport().transportThreadPool().threadPoolFactory(executorFactoryWithQueue);
