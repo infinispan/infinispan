@@ -186,34 +186,32 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
 
          BiConsumer<Void, Throwable> flushIfNeeded = (v, t) -> {
             try {
-               for (IndexedTypeIdentifier type : toFlush) {
-                  indexUpdater.flush(type);
-               }
+               indexUpdater.flush(toFlush);
             } finally {
                lock.unlock();
             }
          };
-         CompletableFuture<Void> compositeFuture;
+         Map<MassIndexStrategy, Set<IndexedTypeIdentifier>> strategyPerType = new HashMap<>();
+         for (IndexedTypeIdentifier indexedType : searchIntegrator.getIndexBindings().keySet()) {
+            MassIndexStrategy strategy = calculateStrategy(indexInspector, indexedType);
+            strategyPerType.computeIfAbsent(strategy, s -> new HashSet<>()).add(indexedType);
+         }
          try {
-            for (IndexedTypeIdentifier indexedType : searchIntegrator.getIndexBindings().keySet()) {
-               MassIndexStrategy strategy = calculateStrategy(indexInspector, indexedType);
+            strategyPerType.forEach((strategy, indexedTypes) -> {
                boolean workerClean = true, workerFlush = true;
                if (strategy.getCleanStrategy() == CleanExecutionMode.ONCE_BEFORE) {
-                  indexUpdater.purge(indexedType);
+                  indexUpdater.purge(indexedTypes);
                   workerClean = false;
                }
                if (strategy.getFlushStrategy() == FlushExecutionMode.ONCE_AFTER) {
-                  toFlush.add(indexedType);
+                  toFlush.addAll(indexedTypes);
                   workerFlush = false;
                }
-
-               IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
-               IndexWorker indexWork = new IndexWorker(cache.getName(), indexedType, workerFlush, workerClean,
-                     skipIndex, indexingStrategy == IndexingExecutionMode.PRIMARY_OWNER, null);
-
+               IndexWorker indexWork = new IndexWorker(cache.getName(), indexedTypes, workerFlush, workerClean,
+                     skipIndex, strategy.getIndexingStrategy() == IndexingExecutionMode.PRIMARY_OWNER, null);
                futures.add(executor.submitConsumer(indexWork, TRI_CONSUMER));
-            }
-            compositeFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+            });
+            CompletableFuture<Void> compositeFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
             return compositeFuture.whenCompleteAsync(flushIfNeeded, localExecutor);
          } catch (Throwable t) {
             lock.unlock();

@@ -1,5 +1,6 @@
 package org.infinispan.query.distributed;
 
+import java.util.Collections;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -260,7 +261,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
       IndexUpdater indexUpdater = new IndexUpdater(ComponentRegistryUtils.getSearchIntegrator(cache1),
             ComponentRegistryUtils.getKeyTransformationHandler(cache1),
             ComponentRegistryUtils.getTimeService(cache1));
-      indexUpdater.flush(new PojoIndexedTypeIdentifier(Transaction.class));
+      indexUpdater.flush(Collections.singleton(new PojoIndexedTypeIdentifier(Transaction.class)));
    }
 
    class StopTimer {
