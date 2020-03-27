@@ -76,6 +76,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     private static final Log log = LogFactory.getLog(RocksDBStore.class, Log.class);
     static final String DATABASE_PROPERTY_NAME_WITH_SUFFIX = "database.";
     static final String COLUMN_FAMILY_PROPERTY_NAME_WITH_SUFFIX = "data.";
+    static final String EXPIRED_PROPERTY_NAME_WITH_SUFFIX = "expired.";
 
     protected RocksDBStoreConfiguration configuration;
     private RocksDB db;
@@ -87,6 +88,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     private RocksDBHandler handler;
     private Properties databaseProperties;
     private Properties columnFamilyProperties;
+    private Properties expiredProperties;
     private Marshaller marshaller;
     private MarshallableEntryFactory<K, V> entryFactory;
     private volatile boolean stopped = true;
@@ -128,6 +130,11 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
                     columnFamilyProperties = new Properties();
                 }
                 columnFamilyProperties.setProperty(key.substring(COLUMN_FAMILY_PROPERTY_NAME_WITH_SUFFIX.length()), entry.getValue().toString());
+            } else if (key.startsWith(EXPIRED_PROPERTY_NAME_WITH_SUFFIX)) {
+                if (expiredProperties == null) {
+                    expiredProperties = new Properties();
+                }
+                expiredProperties.setProperty(key.substring(EXPIRED_PROPERTY_NAME_WITH_SUFFIX.length()), entry.getValue().toString());
             }
         }
 
@@ -173,7 +180,16 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     }
 
     protected Options expiredDbOptions() {
-        return new Options()
+        DBOptions dbOptions;
+        if (expiredProperties != null) {
+            dbOptions = DBOptions.getDBOptionsFromProps(expiredProperties);
+            if (dbOptions == null) {
+                throw log.rocksDBUnknownPropertiesSupplied(expiredProperties.toString());
+            }
+        } else {
+            dbOptions = new DBOptions();
+        }
+        return dbOptions
               .setCreateIfMissing(true)
               // Make sure keys are sorted by bytes - we use this sorting to remove entries that have expired most recently
               .setComparator(BuiltinComparator.BYTEWISE_COMPARATOR);
