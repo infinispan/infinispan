@@ -215,7 +215,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    protected void pollStoreAvailability() {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          boolean availabilityChanged = false;
          boolean failureDetected = false;
@@ -233,7 +233,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             CompletionStages.join(cacheNotifier.notifyPersistenceAvailabilityChanged(true));
          }
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
@@ -297,11 +297,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
       if (!enabled) {
          return false;
       }
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          return !nonTxWriters.isEmpty() || !txWriters.isEmpty();
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
@@ -337,7 +337,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
       AdvancedCacheLoader<Object, Object> preloadCl = null;
 
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          for (CacheLoader l : loaders) {
             if (getStoreConfig(l).preload()) {
@@ -352,7 +352,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             }
          }
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
       if (preloadCl == null) {
          return CompletableFutures.completedNull();
@@ -426,7 +426,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public <T> Set<T> getStores(Class<T> storeClass) {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          Set<T> result = new HashSet<>();
          for (CacheLoader l : loaders) {
@@ -447,13 +447,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
          return result;
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
    @Override
    public Collection<String> getStoresAsString() {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          Set<String> loaderTypes = new HashSet<>(loaders.size());
          for (CacheLoader loader : loaders)
@@ -464,7 +464,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             loaderTypes.add(undelegate(writer).getClass().getName());
          return loaderTypes;
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
@@ -497,7 +497,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             start = timeService.time();
          }
 
-         storesMutex.readLock().lock();
+         acquireReadLock();
          try {
             checkStoreAvailability();
             Consumer<CacheWriter> purgeWriter = writer -> {
@@ -516,7 +516,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             nonTxWriters.forEach(purgeWriter);
             txWriters.forEach(purgeWriter);
          } finally {
-            storesMutex.readLock().unlock();
+            releaseReadLock();
          }
 
          if (trace) {
@@ -553,7 +553,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private void clearAllStoresSync(Predicate<? super StoreConfiguration> predicate, int traceId) {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          checkStoreAvailability();
          if (trace) {
@@ -570,13 +570,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
          nonTxWriters.forEach(clearWriter);
          txWriters.forEach(clearWriter);
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
    private boolean deleteFromAllStoresSync(Object key, int segment, Predicate<? super StoreConfiguration> predicate,
          int traceId) {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          checkStoreAvailability();
          if (trace) {
@@ -597,7 +597,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          }
          return removed;
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
@@ -609,7 +609,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    <K, V> AdvancedCacheLoader<K, V> getFirstAdvancedCacheLoader(Predicate<? super StoreConfiguration> predicate) {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          for (CacheLoader loader : loaders) {
             if (predicate.test(getStoreConfig(loader)) && loader instanceof AdvancedCacheLoader) {
@@ -617,13 +617,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
             }
          }
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
       return null;
    }
 
    <K, V> SegmentedAdvancedLoadWriteStore<K, V> getFirstSegmentedStore(Predicate<? super StoreConfiguration> predicate) {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          for (CacheLoader l : loaders) {
             StoreConfiguration storeConfiguration;
@@ -634,7 +634,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             }
          }
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
       return null;
    }
@@ -701,7 +701,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private <K, V> MarshallableEntry<K, V> loadFromAllStoresSync(Object key, boolean localInvocation, boolean includeStores, int traceId) {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          checkStoreAvailability();
          if (trace) {
@@ -721,7 +721,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          }
          return load;
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
@@ -732,7 +732,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private <K, V> MarshallableEntry<K, V> loadFromAllStoresSync(Object key, int segment, boolean localInvocation, boolean includeStores, int traceId) {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          checkStoreAvailability();
          if (trace) {
@@ -766,7 +766,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          }
          return load;
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
@@ -791,7 +791,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    private void writeToAllNonTxStoresSync(MarshallableEntry marshalledEntry, int segment,
          Predicate<? super StoreConfiguration> predicate, long flags, int traceId) {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          checkStoreAvailability();
          if (trace) {
@@ -809,7 +809,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   }
                });
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
@@ -828,7 +828,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
       int id = getNextTraceNumber("Submitting persistence async operation of id %d to write a batch");
 
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          checkStoreAvailability();
          return Completable.using(publisherSemaphoreCallable,
@@ -848,7 +848,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                Semaphore::release)
                .toCompletionStage(null);
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
@@ -859,7 +859,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          return CompletableFutures.completedNull();
 
       return runOnPersistenceExAndContinue(traceId -> {
-         storesMutex.readLock().lock();
+         acquireReadLock();
          try {
             checkStoreAvailability();
             if (trace) {
@@ -869,7 +869,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   .filter(writer -> predicate.test(getStoreConfig(writer)))
                   .forEach(writer -> writer.deleteBatch(keys));
          } finally {
-            storesMutex.readLock().unlock();
+            releaseReadLock();
          }
       }, "Submitting persistence async operation of id %d to write a batch");
    }
@@ -878,7 +878,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public CompletionStage<Void> prepareAllTxStores(Transaction transaction, BatchModification batchModification,
          Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
       return runOnPersistenceExAndContinue(traceId -> {
-         storesMutex.readLock().lock();
+         acquireReadLock();
          try {
             checkStoreAvailability();
             if (trace) {
@@ -891,7 +891,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                }
             }
          } finally {
-            storesMutex.readLock().unlock();
+            releaseReadLock();
          }
       }, "Preparing all tx stores for id %d");
    }
@@ -910,7 +910,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public CompletionStage<Integer> size(Predicate<? super StoreConfiguration> predicate) {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          checkStoreAvailability();
          for (CacheLoader l : loaders) {
@@ -925,14 +925,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
             }
          }
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
       return CompletableFuture.completedFuture(-1);
    }
 
    @Override
    public CompletionStage<Integer> size(IntSet segments) {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          checkStoreAvailability();
          for (CacheLoader l : loaders) {
@@ -963,7 +963,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                .toCompletionStage();
 
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
@@ -976,7 +976,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public CompletionStage<Boolean> addSegments(IntSet segments) {
       return supplyOnPersistenceExAndContinue(traceId -> {
          boolean allSegmented = true;
-         storesMutex.readLock().lock();
+         acquireReadLock();
          try {
             if (trace) {
                log.tracef("Continuing addition of segments %s for id %s", segments, traceId);
@@ -991,7 +991,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                }
             }
          } finally {
-            storesMutex.readLock().unlock();
+            releaseReadLock();
          }
          return allSegmented;
       }, "Adding segments for id %d");
@@ -1001,7 +1001,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public CompletionStage<Boolean> removeSegments(IntSet segments) {
       return supplyOnPersistenceExAndContinue(traceId -> {
          boolean allSegmented = true;
-         storesMutex.readLock().lock();
+         acquireReadLock();
          try {
             if (trace) {
                log.tracef("Continuing removal of segments %s for id %s", segments, traceId);
@@ -1016,7 +1016,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                }
             }
          } finally {
-            storesMutex.readLock().unlock();
+            releaseReadLock();
          }
          return allSegmented;
       }, "Removing segments for id %d");
@@ -1028,30 +1028,44 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    public List<CacheLoader> getAllLoaders() {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          return new ArrayList<>(loaders);
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
    public List<CacheWriter> getAllWriters() {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          return new ArrayList<>(nonTxWriters);
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
    public List<CacheWriter> getAllTxWriters() {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          return new ArrayList<>(txWriters);
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
+   }
+
+   /**
+    * Method must be here for augmentation to tell blockhound this method is okay to block
+    */
+   private void acquireReadLock() {
+      storesMutex.readLock().lock();
+   }
+
+   /**
+    * Opposite of acquireReadLock here for symmetry
+    */
+   private void releaseReadLock() {
+      storesMutex.readLock().unlock();
    }
 
    private void createLoadersAndWriters() {
@@ -1248,7 +1262,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             FlagBitSets.SKIP_XSITE_BACKUP;
 
       boolean hasShared = false;
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          for (CacheWriter w : nonTxWriters) {
             if (getStoreConfig(w).shared()) {
@@ -1257,7 +1271,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             }
          }
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
 
       if (hasShared) {
@@ -1394,7 +1408,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private void performOnAllTxStores(Predicate<? super StoreConfiguration> predicate, Consumer<TransactionalCacheWriter> action, int id) {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          checkStoreAvailability();
          if (trace) {
@@ -1404,17 +1418,17 @@ public class PersistenceManagerImpl implements PersistenceManager {
                .filter(writer -> predicate.test(getStoreConfig(writer)))
                .forEach(action);
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
    private StoreConfiguration getStoreConfig(Object store) {
-      storesMutex.readLock().lock();
+      acquireReadLock();
       try {
          StoreStatus status = storeStatuses.get(store);
          return status == null ? null : status.config;
       } finally {
-         storesMutex.readLock().unlock();
+         releaseReadLock();
       }
    }
 
