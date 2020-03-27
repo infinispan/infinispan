@@ -7,6 +7,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.security.KeycloakRoleDecoder;
+import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.auth.realm.token.TokenSecurityRealm;
 import org.wildfly.security.auth.realm.token.TokenValidator;
 import org.wildfly.security.auth.realm.token.validator.JwtValidator;
@@ -76,6 +77,7 @@ public class TokenRealmConfigurationBuilder implements Builder<TokenRealmConfigu
          tokenRealmBuilder.validator(validator);
          securityRealm = tokenRealmBuilder.build();
          domainBuilder.addRealm(name, securityRealm).setRoleDecoder(new KeycloakRoleDecoder()).build();
+         realmBuilder.addFeature(ServerSecurityRealm.Feature.TOKEN);
       }
       return securityRealm;
    }

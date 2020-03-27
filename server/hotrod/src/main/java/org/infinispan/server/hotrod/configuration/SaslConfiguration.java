@@ -19,7 +19,7 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  */
 @SuppressWarnings("unchecked")
 public class SaslConfiguration implements ConfigurationInfo {
-   public static final AttributeDefinition<String> SERVER_NAME = AttributeDefinition.builder("serverName", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> SERVER_NAME = AttributeDefinition.builder("serverName", "infinispan", String.class).immutable().build();
    public static final AttributeDefinition<Set<String>> MECHANISMS = AttributeDefinition.builder("mechanisms", null, (Class<Set<String>>) (Class<?>) Set.class)
          .initializer(LinkedHashSet::new).immutable().build();
    public static final AttributeDefinition<List<QOP>> QOP = AttributeDefinition.builder("qop", new ArrayList<>(), (Class<List<QOP>>) (Class<?>) List.class)

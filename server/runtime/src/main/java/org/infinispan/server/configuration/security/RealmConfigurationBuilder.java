@@ -1,6 +1,7 @@
 package org.infinispan.server.configuration.security;
 
 import java.security.GeneralSecurityException;
+import java.util.EnumSet;
 import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
@@ -35,7 +36,7 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    private SSLContextBuilder sslContextBuilder = null;
    private Supplier<Boolean> httpChallengeReadiness = () -> true;
    private ServerSecurityRealm serverSecurityRealm = null;
-   private boolean hasTrustStoreRealm;
+   private EnumSet<ServerSecurityRealm.Feature> features = EnumSet.noneOf(ServerSecurityRealm.Feature.class);
 
    RealmConfigurationBuilder(String name, RealmsConfigurationBuilder realmsBuilder) {
       this.realmsBuilder = realmsBuilder;
@@ -132,7 +133,7 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
       if (serverSecurityRealm == null) {
          SecurityDomain securityDomain = domainBuilder.build();
          String name = attributes.attribute(RealmConfiguration.NAME).get();
-         serverSecurityRealm = new ServerSecurityRealm(name, securityDomain, httpChallengeReadiness, serverIdentitiesConfiguration.create());
+         serverSecurityRealm = new ServerSecurityRealm(name, securityDomain, httpChallengeReadiness, serverIdentitiesConfiguration.create(), features);
       }
       return serverSecurityRealm;
    }
@@ -140,7 +141,7 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    SSLContext getSSLContext() {
       if (sslContextBuilder == null) return null;
       if (sslContext == null) {
-         if (hasTrustStoreRealm) {
+         if (features.contains(ServerSecurityRealm.Feature.TRUST)) {
             sslContextBuilder.setSecurityDomain(serverSecurityRealm.getSecurityDomain());
          }
          sslContextBuilder.setWrap(false);
@@ -153,7 +154,7 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
       return sslContext;
    }
 
-   void hasTrustStoreRealm(boolean hasTrustStoreRealm) {
-      this.hasTrustStoreRealm = hasTrustStoreRealm;
+   public void addFeature(ServerSecurityRealm.Feature feature) {
+      features.add(feature);
    }
 }

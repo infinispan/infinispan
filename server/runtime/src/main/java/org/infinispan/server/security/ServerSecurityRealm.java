@@ -1,5 +1,6 @@
 package org.infinispan.server.security;
 
+import java.util.EnumSet;
 import java.util.function.Supplier;
 
 import org.infinispan.rest.authentication.Authenticator;
@@ -18,12 +19,14 @@ public class ServerSecurityRealm {
    private final SecurityDomain securityDomain;
    private final Supplier<Boolean> httpChallengeReadiness;
    private final ServerIdentitiesConfiguration serverIdentities;
+   private final EnumSet<Feature> features;
 
-   public ServerSecurityRealm(String name, SecurityDomain securityDomain, Supplier<Boolean> httpChallengeReadiness, ServerIdentitiesConfiguration serverIdentities) {
+   public ServerSecurityRealm(String name, SecurityDomain securityDomain, Supplier<Boolean> httpChallengeReadiness, ServerIdentitiesConfiguration serverIdentities, EnumSet<Feature> features) {
       this.name = name;
       this.securityDomain = securityDomain;
       this.httpChallengeReadiness = httpChallengeReadiness;
       this.serverIdentities = serverIdentities;
+      this.features = features;
    }
 
    public String getName() {
@@ -51,5 +54,17 @@ public class ServerSecurityRealm {
          CredentialSource credentialSource = serverIdentities.getCredentialSource(serverPrincipal);
          mechConfigurationBuilder.setServerCredentialSource(credentialSource);
       }
+   }
+
+   public ServerIdentitiesConfiguration getServerIdentities() {
+      return serverIdentities;
+   }
+
+   public boolean hasFeature(Feature feature) {
+      return features.contains(feature);
+   }
+
+   public enum Feature {
+      PASSWORD, TOKEN, TRUST,
    }
 }

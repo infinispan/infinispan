@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
@@ -164,6 +165,7 @@ public class LdapRealmConfigurationBuilder implements Builder<LdapRealmConfigura
          if (domainBuilder.getDefaultRealmName() == null) {
             domainBuilder.setDefaultRealmName(name);
          }
+         realmBuilder.addFeature(ServerSecurityRealm.Feature.PASSWORD);
       }
       return securityRealm;
    }

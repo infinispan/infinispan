@@ -1,19 +1,29 @@
 package org.infinispan.server.security;
 
+import static org.infinispan.server.security.Common.HTTP_KERBEROS_MECHS;
+import static org.infinispan.server.security.Common.HTTP_PROTOCOLS;
+import static org.infinispan.server.security.Common.sync;
 import static org.junit.Assert.assertEquals;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.security.VoidCallbackHandler;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.Protocol;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.infinispan.server.test.core.LdapServerRule;
 import org.infinispan.server.test.core.category.Security;
+import org.infinispan.commons.test.Exceptions;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -44,15 +54,27 @@ public class AuthenticationKerberosIT {
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
+   private final String protocol;
    private final String mechanism;
+
    private static String oldKrb5Conf;
 
-   @Parameterized.Parameters(name = "{0}")
+   @Parameterized.Parameters(name = "{1}({0})")
    public static Collection<Object[]> data() {
-      return Common.SASL_KERBEROS_MECHS;
+      List<Object[]> params = new ArrayList<>();
+      for(Object[] mech : Common.SASL_KERBEROS_MECHS) {
+         params.add(new Object[]{"Hot Rod", mech[0]});
+      }
+      for (Protocol protocol : HTTP_PROTOCOLS) {
+         for (Object[] mech : HTTP_KERBEROS_MECHS) {
+            params.add(new Object[]{protocol.name(), mech[0]});
+         }
+      }
+      return params;
    }
 
-   public AuthenticationKerberosIT(String mechanism) {
+   public AuthenticationKerberosIT(String protocol, String mechanism) {
+      this.protocol = protocol;
       this.mechanism = mechanism;
    }
 
@@ -69,7 +91,15 @@ public class AuthenticationKerberosIT {
    }
 
    @Test
-   public void testReadWrite() {
+   public void testProtocol() {
+      if ("Hot Rod".equals(protocol)) {
+         testHotRod();
+      } else {
+         testRest(Protocol.valueOf(protocol));
+      }
+   }
+
+   public void testHotRod() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       if (!mechanism.isEmpty()) {
          builder.security().authentication()
@@ -87,6 +117,29 @@ public class AuthenticationKerberosIT {
       } catch (HotRodClientException e) {
          // Rethrow if unexpected
          if (!mechanism.isEmpty()) throw e;
+      }
+   }
+
+   public void testRest(Protocol protocol) {
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      if (!mechanism.isEmpty()) {
+         builder
+               .protocol(protocol)
+               .security().authentication()
+               .mechanism(mechanism)
+               .clientSubject(Common.createSubject("admin", "INFINISPAN.ORG", "strongPassword".toCharArray()));
+      }
+      if (mechanism.isEmpty()) {
+         Exceptions.expectException(RuntimeException.class, () -> SERVER_TEST.rest().withClientConfiguration(builder).create());
+      } else {
+         RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
+         RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).post("k1", "v1"));
+         assertEquals(204, response.getStatus());
+         assertEquals(protocol, response.getProtocol());
+         response = sync(client.cache(SERVER_TEST.getMethodName()).get("k1"));
+         assertEquals(200, response.getStatus());
+         assertEquals(protocol, response.getProtocol());
+         assertEquals("v1", response.getBody());
       }
    }
 }
