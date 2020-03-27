@@ -113,11 +113,12 @@ GET /v2/caches/{cacheName}/x-site/backups/{siteName}?action=cancel-push-state
 
 [id='rest_v2_xsite_state_push']
 = Getting State Transfer Status
-Retrieve status of state transfer operations with the `?action=push-site-status` parameter.
+Retrieve status of state transfer operations with the
+`?action=push-state-status` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}/x-site/backups?action=push-site-status
+GET /v2/caches/{cacheName}/x-site/backups?action=push-state-status
 ----
 
 {brandname} responds with the status of state transfer for each backup location
