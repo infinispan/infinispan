@@ -12,6 +12,7 @@ import org.infinispan.factories.impl.BasicComponentRegistryImpl;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.interceptors.impl.PrefetchInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -54,6 +55,8 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
          builder.allowBlockingCallsInside(TransactionTable.class.getName(), "calculateMinTopologyId");
 
          builder.allowBlockingCallsInside(ClusterTopologyManagerImpl.class.getName(), "acquireUpdateLock");
+
+         builder.allowBlockingCallsInside(PersistenceManagerImpl.class.getName(), "acquireReadLock");
       }
       // This invokes the actual runnable - we have to make sure it doesn't block as normal
       builder.disallowBlockingCallsInside(LimitedExecutor.class.getName(), "actualRun");
