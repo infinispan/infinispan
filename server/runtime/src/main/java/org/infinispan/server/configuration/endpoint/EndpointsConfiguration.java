@@ -18,13 +18,14 @@ import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
 public class EndpointsConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<String> SOCKET_BINDING = AttributeDefinition.builder("socket-binding", null, String.class).build();
    static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder("security-realm", null, String.class).build();
+   static final AttributeDefinition<Boolean> IMPLICIT_CONNECTOR_SECURITY = AttributeDefinition.builder("implicit-connector-security", false, Boolean.class).build();
 
    private final List<ProtocolServerConfiguration> connectors;
    private final SinglePortRouterConfiguration singlePort;
 
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(EndpointsConfiguration.class, SOCKET_BINDING, SECURITY_REALM);
+      return new AttributeSet(EndpointsConfiguration.class, SOCKET_BINDING, SECURITY_REALM, IMPLICIT_CONNECTOR_SECURITY);
    }
 
    private static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.ENDPOINTS.toString());
@@ -53,6 +54,10 @@ public class EndpointsConfiguration implements ConfigurationInfo {
 
    public List<ProtocolServerConfiguration> connectors() {
       return connectors;
+   }
+
+   public boolean implicitConnectorSecurity() {
+      return attributes.attribute(IMPLICIT_CONNECTOR_SECURITY).get();
    }
 
    @Override

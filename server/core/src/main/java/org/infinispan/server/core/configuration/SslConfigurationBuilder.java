@@ -55,6 +55,10 @@ public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S ex
       return this;
    }
 
+   public boolean isEnabled() {
+      return enabled;
+   }
+
    /**
     * Enables client certificate authentication
     */

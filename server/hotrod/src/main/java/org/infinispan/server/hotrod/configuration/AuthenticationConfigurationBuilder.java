@@ -50,6 +50,11 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
       return this;
    }
 
+   public AuthenticationConfigurationBuilder addMechanisms(String... mechs) {
+      sasl.addMechanisms(mechs);
+      return this;
+   }
+
    public AuthenticationConfigurationBuilder addAllowedMech(String mech) {
       sasl.addAllowedMech(mech);
       return this;

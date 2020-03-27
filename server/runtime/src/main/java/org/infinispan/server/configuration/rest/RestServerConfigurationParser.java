@@ -137,7 +137,6 @@ public class RestServerConfigurationParser implements ConfigurationParser {
             default:
                throw ParseUtils.unexpectedElement(reader);
          }
-
       }
    }
 

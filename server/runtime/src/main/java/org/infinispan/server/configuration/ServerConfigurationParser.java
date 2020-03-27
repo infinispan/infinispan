@@ -1114,8 +1114,8 @@ public class ServerConfigurationParser implements ConfigurationParser {
                // Already seen
                break;
             case SECURITY_REALM:
-               // Set the endpoint security realm and fall-through
-               endpoints.securityRealm(value);
+               // Set the endpoint security realm and fall-through. Starting with 11.0 we also enable implicit authentication configuration
+               endpoints.securityRealm(value).implicitConnectorSecurity(reader.getSchema().since(11, 0));
             default:
                parseCommonConnectorAttributes(reader, i, builder, builder.endpoint());
                break;

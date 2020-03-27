@@ -12,6 +12,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.server.Server;
+import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.keystore.KeyStoreUtil;
@@ -84,7 +85,7 @@ public class TrustStoreRealmConfigurationBuilder implements Builder<TrustStoreRe
                   if (domainBuilder.getDefaultRealmName() == null) {
                      domainBuilder.setDefaultRealmName(name);
                   }
-                  securityRealmBuilder.hasTrustStoreRealm(true);
+                  securityRealmBuilder.addFeature(ServerSecurityRealm.Feature.TRUST);
                   break;
                }
             }

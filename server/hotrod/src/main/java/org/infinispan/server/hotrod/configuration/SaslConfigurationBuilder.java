@@ -90,6 +90,13 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
       return mechProperties;
    }
 
+   public SaslConfigurationBuilder addMechanisms(String... mechs) {
+      for(String mech : mechs) {
+         addAllowedMech(mech);
+      }
+      return this;
+   }
+
    public SaslConfigurationBuilder addAllowedMech(String mech) {
       Attribute<Set<String>> attribute = attributes.attribute(SaslConfiguration.MECHANISMS);
       Set<String> mechs = attribute.get();

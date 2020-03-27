@@ -6,6 +6,7 @@ import java.io.File;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.server.security.ServerSecurityRealm;
 import org.infinispan.server.security.realm.PropertiesSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
 
@@ -56,6 +57,7 @@ public class PropertiesRealmConfigurationBuilder implements Builder<PropertiesRe
          }
          this.securityRealm = propertiesSecurityRealm;
          this.realmBuilder.setHttpChallengeReadiness(propertiesSecurityRealm::isEmpty);
+         realmBuilder.addFeature(ServerSecurityRealm.Feature.PASSWORD);
       }
       return securityRealm;
    }
