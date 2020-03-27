@@ -2,9 +2,9 @@ package org.infinispan.server.logging;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.NoSuchElementException;
 
 import javax.naming.NamingException;
-import javax.naming.NoInitialContextException;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.jboss.logging.BasicLogger;
@@ -13,6 +13,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.wildfly.security.auth.server.RealmUnavailableException;
 
 /**
  * @author Tristan Tarrant
@@ -153,6 +154,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Created datasource '%s' bound to JNDI '%s'", id = 80038)
    void dataSourceCreated(String name, String jndiName);
 
-   @Message(value = "Cannot find InitialContextFactory '%s'", id = 80039)
-   NoInitialContextException noInitialContextFactory(String className);
+   @Message(value = "Invalid Unicode sequence '%s'", id = 80039)
+   IOException invalidUnicodeSequence(String sequence, @Cause NoSuchElementException e);
+
+   @Message(value = "No realm name found in users property file - non-plain-text users file must contain \"#$REALM_NAME=RealmName$\" line", id = 80040)
+   RealmUnavailableException noRealmFoundInProperties();
 }
