@@ -6,7 +6,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -124,45 +123,6 @@ public class CompletionStages {
       }
 
       return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
-   }
-
-   /**
-    * When the provided stage is complete, continue the completion chain of the returned CompletionStage on the
-    * supplied executor. If tracing is enabled a trace message is printed using the object as an identifier to more
-    * easily track the transition between threads.
-    * <p>
-    * This method is useful when an asynchronous computation completes and you do not want to run further processing
-    * on the thread that returned it. An example may be that some blocking operation is performed on a special blocking
-    * thread pool. However when the blocking operation completes we will want to continue the processing of that result
-    * in a thread pool that is for computational tasks.
-    * <p>
-    * If the supplied stage is already completed when invoking this command, this will return an already completed
-    * stage, which means any additional dependent stages will run in the invoking thread.
-    * @param <V> return value type of the supplied stage
-    * @param delay the stage to delay the continuation until complete
-    * @param continuationExecutor the executor to run any further completion chain methods on
-    * @param traceId the id to print when tracing is enabled
-    * @return a CompletionStage that when depended upon will run any callback in the supplied executor
-    * @deprecated This method is to be removed and replaced with a component to handle thread continuations in a better manner
-    */
-   @Deprecated
-   public static <V> CompletionStage<V> continueOnExecutor(CompletionStage<V> delay,
-                                                           Executor continuationExecutor, Object traceId) {
-      if (isCompletedSuccessfully(delay)) {
-         if (trace) {
-            log.tracef("Stage for %s was already completed, returning in same thread", traceId);
-         }
-         return delay;
-      }
-      return delay.whenCompleteAsync((v, t) -> {
-         if (t != null) {
-            if (trace) {
-               log.tracef("Continuing execution of id %s with exception %s", traceId, t.getMessage());
-            }
-         } else if (trace) {
-            log.tracef("Continuing execution of id %s", traceId);
-         }
-      }, continuationExecutor);
    }
 
    /**

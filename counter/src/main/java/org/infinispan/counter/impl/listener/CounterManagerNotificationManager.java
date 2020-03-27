@@ -8,7 +8,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -20,7 +19,6 @@ import org.infinispan.counter.api.WeakCounter;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.logging.Log;
-import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -29,7 +27,7 @@ import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.LogFactory;
 
 import net.jcip.annotations.GuardedBy;
@@ -56,7 +54,7 @@ public class CounterManagerNotificationManager {
    private final Map<ByteString, Holder> counters;
    private final CounterValueListener valueListener;
    private final TopologyListener topologyListener;
-   private volatile Executor userListenerExecutor = new WithinThreadExecutor();
+   private volatile BlockingManager.BlockingExecutor userListenerExecutor;
    @GuardedBy("this")
    private boolean listenersRegistered;
    @GuardedBy("this")
@@ -69,15 +67,15 @@ public class CounterManagerNotificationManager {
    }
 
    /**
-    * The executor to use where the user's {@link CounterListener} is invoked.
+    * The blockingManager to use where the user's {@link CounterListener} is invoked.
     *
-    * @param asyncExecutor The {@link Executor} implementation.
+    * @param blockingManager The {@link BlockingManager} to use.
     */
-   public void useExecutor(Executor asyncExecutor) {
-      if (asyncExecutor == null) {
+   public void useBlockingManager(BlockingManager blockingManager) {
+      if (blockingManager == null) {
          return;
       }
-      userListenerExecutor = new LimitedExecutor("counter-listener", asyncExecutor, 1);
+      userListenerExecutor = blockingManager.limitedBlockingExecutor("counter-listener", 1);
    }
 
    /**
@@ -253,7 +251,7 @@ public class CounterManagerNotificationManager {
          if (userListeners.isEmpty() || event == null) {
             return;
          }
-         userListenerExecutor.execute(() -> userListeners.parallelStream().forEach(l -> l.onUpdate(event)));
+         userListenerExecutor.execute(() -> userListeners.forEach(l -> l.onUpdate(event)), event);
       }
    }
 

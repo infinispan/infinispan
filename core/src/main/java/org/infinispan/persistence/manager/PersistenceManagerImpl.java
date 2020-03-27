@@ -1,9 +1,7 @@
 package org.infinispan.persistence.manager;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.util.ArrayList;
@@ -17,7 +15,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
@@ -102,18 +99,18 @@ import org.infinispan.persistence.support.ComposedSegmentedLoadWriteStore;
 import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.persistence.support.DelegatingCacheWriter;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Supplier;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 import net.jcip.annotations.GuardedBy;
 
 @Scope(Scopes.NAMED_CACHE)
@@ -130,8 +127,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    PersistenceMarshaller m;
    @Inject TransactionManager transactionManager;
    @Inject TimeService timeService;
-   @Inject @ComponentName(BLOCKING_EXECUTOR)
-   ExecutorService blockingExecutor;
    @Inject @ComponentName(EXPIRATION_SCHEDULED_EXECUTOR)
    ScheduledExecutorService scheduledExecutor;
    @Inject ByteBufferFactory byteBufferFactory;
@@ -141,8 +136,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Inject CacheNotifier cacheNotifier;
    @Inject KeyPartitioner keyPartitioner;
    @Inject Transport transport;
-   @Inject @ComponentName(NON_BLOCKING_EXECUTOR)
-   ExecutorService nonBlockingExecutor;
+   @Inject BlockingManager handler;
    @Inject ComponentRef<InvocationHelper> invocationHelper;
    @Inject ComponentRef<CommandsFactory> commandsFactory;
 
@@ -162,9 +156,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return publisherSemaphore;
    };
 
-   private Scheduler blockingScheduler;
-   private Scheduler nonBlockingScheduler;
-
    /**
     * making it volatile as it might change after @Start, so it needs the visibility.
     */
@@ -181,14 +172,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
       advancedListener = new AdvancedPurgeListener<>(expirationManager.wired());
       preloaded = false;
       enabled = configuration.persistence().usingStores();
-      blockingScheduler = Schedulers.from(task -> {
-         if (isCurrentThreadBlocking()) {
-            SecurityActions.startThread(task, "persistence-bulk-blocking-operation");
-         } else {
-            blockingExecutor.execute(task);
-         }
-      });
-      nonBlockingScheduler = Schedulers.from(nonBlockingExecutor);
       if (!enabled)
          return;
       try {
@@ -381,12 +364,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
       AdvancedCache<?,?> tmpCache = this.cache.wired().withStorageMediaType();
       DataConversion keyDataConversion = tmpCache.getKeyDataConversion();
       DataConversion valueDataConversion = tmpCache.getValueDataConversion();
-      return Flowable.fromPublisher(preloadCl.entryPublisher(null, true, true))
+      return Flowable.fromPublisher(handler.blockingPublisher(preloadCl.entryPublisher(null, true, true)))
             .take(maxEntries)
-            .observeOn(nonBlockingScheduler)
             .concatMapSingle(me -> preloadKey(flags, me, keyDataConversion, valueDataConversion))
             .count()
-            .subscribeOn(blockingScheduler)
             .toCompletionStage()
             .thenAccept(insertAmount -> {
                this.preloaded = insertAmount < maxEntries;
@@ -526,10 +507,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
                if (writer instanceof AdvancedCacheExpirationWriter) {
                   //noinspection unchecked
-                  ((AdvancedCacheExpirationWriter)writer).purge(blockingExecutor, advancedListener);
+                  ((AdvancedCacheExpirationWriter)writer).purge(new WithinThreadExecutor(), advancedListener);
                } else if (writer instanceof AdvancedCacheWriter) {
                   //noinspection unchecked
-                  ((AdvancedCacheWriter)writer).purge(blockingExecutor, advancedListener);
+                  ((AdvancedCacheWriter)writer).purge(new WithinThreadExecutor(), advancedListener);
                }
             };
             nonTxWriters.forEach(purgeWriter);
@@ -547,36 +528,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
       }
    }
 
-   /**
-    * This method continues the stage on the CPU executor after the passed in <code>delay</code> stage completes.
-    * This method also prints a message at the trace level with the given <code>traceId</code> to allow for
-    * traceability between thread invocations.
-    * @param delay the delay to wait for before continuing with the returned value.
-    * @param traceId the traceId to allow for code to be followed
-    * @param <V> the return type
-    * @return the stage to return that will continue the execution on the CPU thread
-    * @deprecated to be removed and check if the invoking thread is blocking and not use a new thread
-    */
-   @Deprecated
-   private <V> CompletionStage<V> continueOnCPUExecutor(CompletionStage<V> delay, int traceId) {
-      return CompletionStages.continueOnExecutor(delay, nonBlockingExecutor, traceId);
-   }
-
    private <V> CompletionStage<V> supplyOnPersistenceExAndContinue(IntFunction<V> function, String traceMessage) {
       int traceId = getNextTraceNumber(traceMessage);
-      if (isCurrentThreadBlocking()) {
-         return CompletableFuture.completedFuture(function.apply(traceId));
-      }
-      return continueOnCPUExecutor(CompletableFuture.supplyAsync(() -> function.apply(traceId), blockingExecutor), traceId);
+      return handler.supplyBlocking(() -> function.apply(traceId), traceId);
    }
 
    private CompletionStage<Void> runOnPersistenceExAndContinue(IntConsumer consumer, String traceMessage) {
       int traceId = getNextTraceNumber(traceMessage);
-      if (isCurrentThreadBlocking()) {
-         consumer.accept(traceId);
-         return CompletableFutures.completedNull();
-      }
-      return continueOnCPUExecutor(CompletableFuture.runAsync(() -> consumer.accept(traceId), blockingExecutor), traceId);
+      return handler.runBlocking(() -> consumer.accept(traceId), traceId);
    }
 
    private static int getNextTraceNumber(String message) {
@@ -690,10 +649,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
          // is done while processing data
          return Flowable
                .using(publisherSemaphoreCallable,
-                     semaphore -> advancedCacheLoader.entryPublisher(filter, fetchValue, fetchMetadata),
-                     Semaphore::release)
-               .subscribeOn(blockingScheduler)
-               .observeOn(nonBlockingScheduler);
+                     semaphore -> handler.blockingPublisher(advancedCacheLoader.entryPublisher(filter, fetchValue, fetchMetadata)),
+                     Semaphore::release);
       }
       return Flowable.empty();
    }
@@ -705,10 +662,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
       if (segmentedStore != null) {
          return Flowable
                .using(publisherSemaphoreCallable,
-                     semaphore -> segmentedStore.entryPublisher(segments, filter, fetchValue, fetchMetadata),
-                     Semaphore::release)
-               .subscribeOn(blockingScheduler)
-               .observeOn(nonBlockingScheduler);
+                     semaphore -> handler.blockingPublisher(segmentedStore.entryPublisher(segments, filter, fetchValue, fetchMetadata)),
+                     Semaphore::release);
       }
       return publishEntries(PersistenceUtil.combinePredicate(segments, keyPartitioner, filter), fetchValue, fetchMetadata, predicate);
    }
@@ -722,10 +677,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
          // is done while processing data
          return Flowable
                .using(publisherSemaphoreCallable,
-                     semaphore -> advancedCacheLoader.publishKeys(filter),
-                     Semaphore::release)
-               .subscribeOn(blockingScheduler)
-               .observeOn(nonBlockingScheduler);
+                     semaphore -> handler.blockingPublisher(advancedCacheLoader.publishKeys(filter)),
+                     Semaphore::release);
       }
       return Flowable.empty();
    }
@@ -740,10 +693,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
          // is done while processing data
          return Flowable
                .using(publisherSemaphoreCallable,
-                     semaphore -> segmentedStore.publishKeys(segments, filter),
-                     Semaphore::release)
-               .subscribeOn(blockingScheduler)
-               .observeOn(nonBlockingScheduler);
+                     semaphore -> handler.blockingPublisher(segmentedStore.publishKeys(segments, filter)),
+                     Semaphore::release);
       }
 
       return publishKeys(PersistenceUtil.combinePredicate(segments, keyPartitioner, filter), predicate);
@@ -877,48 +828,28 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
       int id = getNextTraceNumber("Submitting persistence async operation of id %d to write a batch");
 
-      boolean hasSemaphore = false;
-
-      AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
-         try {
-            // We have to acquire semaphore as our operation will escape the storesMutex lock boundaries
-            // as the flowables are subscribed on the persistence thread pool. Thus we have to retain the publisher
-            // semaphore until after all the stores have completed their operations
-            publisherSemaphore.acquire();
-         } catch (InterruptedException e) {
-            throw new PersistenceException(e);
-         }
-         hasSemaphore = true;
-         //noinspection unchecked
-         nonTxWriters.stream()
-               .filter(writer -> !(writer instanceof FlagAffectedStore) || FlagAffectedStore.class.cast(writer).shouldWrite(flags))
-               .filter(writer -> predicate.test(getStoreConfig(writer)))
-               .map(writer -> {
-                  Flowable<MarshallableEntry> flowable = Flowable.fromIterable(entries);
-                  if (trace) {
-                     // Note this trace message will be on the persistence thread as it is subscribed below
-                     flowable = flowable.doOnSubscribe(s -> log.tracef("Continuing write batch for id %d", id));
-                  }
-                  // Subscribing on the persistence scheduler here forces this invocation to be async
-                  return writer.bulkUpdate(flowable.subscribeOn(blockingScheduler));
-               })
-               .forEach(aggregateCompletionStage::dependsOn);
-      } catch (Throwable t) {
-         if (hasSemaphore) {
-            publisherSemaphore.release();
-         }
-         throw t;
+         return Completable.using(publisherSemaphoreCallable,
+               semaphore -> Flowable.fromIterable(nonTxWriters)
+                     .filter(writer -> !(writer instanceof FlagAffectedStore) || FlagAffectedStore.class.cast(writer).shouldWrite(flags))
+                     .filter(writer -> predicate.test(getStoreConfig(writer)))
+                     .map(writer -> {
+                        Flowable<MarshallableEntry> flowable = Flowable.fromIterable(entries);
+                        if (trace) {
+                           // Note this trace message will be on the persistence thread as it is subscribed below
+                           flowable = flowable.doOnSubscribe(s -> log.tracef("Continuing write batch for id %d", id));
+                        }
+                        // Invoking blockingPublisher here makes this async
+                        return writer.bulkUpdate(handler.blockingPublisher(flowable));
+                        // Only prefetch one to limit async subscriptions to a single one
+                     }).concatMapCompletable(Completable::fromCompletionStage, 1),
+               Semaphore::release)
+               .toCompletionStage(null);
       } finally {
          storesMutex.readLock().unlock();
       }
-
-      CompletionStage<Void> stage = aggregateCompletionStage.freeze();
-      stage.whenComplete((v, t) -> publisherSemaphore.release());
-
-      return continueOnCPUExecutor(stage, id);
    }
 
    @Override
@@ -1029,8 +960,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   }
                   return (int) longValue;
                })
-               .subscribeOn(blockingScheduler)
-               .observeOn(nonBlockingScheduler)
                .toCompletionStage();
 
       } finally {
@@ -1126,6 +1055,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private void createLoadersAndWriters() {
+      WithinThreadExecutor withinThreadExecutor = new WithinThreadExecutor();
       for (StoreConfiguration cfg : configuration.persistence().stores()) {
 
          final Object bareInstance;
@@ -1149,7 +1079,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
          InitializationContextImpl ctx =
                new InitializationContextImpl(processedConfiguration, cache.wired(), keyPartitioner, m, timeService,
-                     byteBufferFactory, marshallableEntryFactory, blockingExecutor, globalConfiguration);
+                     byteBufferFactory, marshallableEntryFactory, withinThreadExecutor, globalConfiguration);
          initializeLoader(processedConfiguration, loader, ctx);
          initializeWriter(processedConfiguration, writer, ctx);
          initializeBareInstance(bareInstance, ctx);
@@ -1375,7 +1305,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          } catch (Exception e) {
             throw new PersistenceException("Unable to preload!", e);
          }
-         stage = (CompletionStage) putStage.whenCompleteAsync((pendingTransaction, t) -> {
+         stage = (CompletionStage) handler.whenCompleteBlocking(putStage, (pendingTransaction, t) -> {
             try {
                transactionManager.resume(pendingTransaction);
                commitIfNeeded(t == null);
@@ -1384,7 +1314,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             } finally {
                resumeIfNeeded(transaction);
             }
-         }, blockingExecutor);
+         }, me.getKey());
       } else {
          stage = invocationHelper.wired().invokeAsync(cmd, 1);
       }

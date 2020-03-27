@@ -7,7 +7,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -49,8 +48,6 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
 
    @Inject @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
    protected ScheduledExecutorService executor;
-   @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
-   protected ExecutorService blockingExecutor;
    @Inject protected Configuration configuration;
    @Inject protected PersistenceManager persistenceManager;
    @Inject protected ComponentRef<InternalDataContainer<K, V>> dataContainer;
@@ -158,29 +155,8 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
 
    @Override
    public boolean entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime) {
-      if (persistenceManager.hasWriter()) {
-         // If entry was expired and we have store this can block - so fire in separate thread to remove the entry
-         blockingExecutor.submit(() -> entryExpiredInMemorySync(entry, currentTime));
-      } else {
-         // This shouldn't block as there are no stores (other than the lock acquisition on the Map and notification)
-         entryExpiredInMemory(entry, currentTime, false);
-      }
+      entryExpiredInMemory(entry, currentTime, false);
       return true;
-   }
-
-   private void entryExpiredInMemorySync(InternalCacheEntry<K, V> entry, long currentTime) {
-      dataContainer.running().compute(entry.getKey(), ((k, oldEntry, factory) -> {
-         if (oldEntry != null) {
-            synchronized (oldEntry) {
-               if (oldEntry.isExpired(currentTime)) {
-                  deleteFromStoresAndNotifySync(k, oldEntry.getValue(), oldEntry.getMetadata());
-               } else {
-                  return oldEntry;
-               }
-            }
-         }
-         return null;
-      }));
    }
 
    /**

@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -69,6 +68,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Person;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
@@ -615,7 +615,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
    public static class TestStorage implements LocalConfigurationStorage {
 
       @Override
-      public void initialize(EmbeddedCacheManager embeddedCacheManager, ConfigurationManager configurationManager, Executor executor) {
+      public void initialize(EmbeddedCacheManager embeddedCacheManager, ConfigurationManager configurationManager, BlockingManager blockingManager) {
       }
 
       @Override

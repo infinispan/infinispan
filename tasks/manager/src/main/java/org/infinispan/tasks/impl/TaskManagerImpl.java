@@ -8,17 +8,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -32,6 +29,7 @@ import org.infinispan.tasks.TaskExecution;
 import org.infinispan.tasks.TaskManager;
 import org.infinispan.tasks.logging.Log;
 import org.infinispan.tasks.spi.TaskEngine;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
@@ -49,8 +47,8 @@ public class TaskManagerImpl implements TaskManager {
 
    @Inject EmbeddedCacheManager cacheManager;
    @Inject TimeService timeService;
-   @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
-   ExecutorService blockingExecutor;
+   @Inject
+   BlockingManager blockingManager;
    @Inject EventLogManager eventLogManager;
 
    private List<TaskEngine> engines;
@@ -75,7 +73,7 @@ public class TaskManagerImpl implements TaskManager {
    }
 
    @Override
-   public <T> CompletableFuture<T> runTask(String name, TaskContext context) {
+   public <T> CompletionStage<T> runTask(String name, TaskContext context) {
       for(TaskEngine engine : engines) {
          if (engine.handles(name)) {
             context.cacheManager(cacheManager);
@@ -91,7 +89,7 @@ public class TaskManagerImpl implements TaskManager {
             TaskExecutionImpl exec = new TaskExecutionImpl(name, address == null ? "local" : address.toString(), who, context);
             exec.setStart(timeService.instant());
             runningTasks.put(exec.getUUID(), exec);
-            CompletableFuture<T> task = engine.runTask(name, context, blockingExecutor);
+            CompletionStage<T> task = engine.runTask(name, context, blockingManager);
             return task.whenComplete((r, e) -> {
                if (context.isLogEvent()) {
                   EventLogger eventLog = eventLogManager.getEventLogger().scope(cacheManager.getAddress());

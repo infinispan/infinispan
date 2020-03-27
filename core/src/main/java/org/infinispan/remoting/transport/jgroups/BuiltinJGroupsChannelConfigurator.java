@@ -14,8 +14,10 @@ import org.infinispan.commons.util.FileLookupFactory;
  **/
 public class BuiltinJGroupsChannelConfigurator extends FileJGroupsChannelConfigurator {
 
+   public static final String TCP_STACK_NAME = "tcp";
+
    public static BuiltinJGroupsChannelConfigurator TCP(Properties properties) {
-      return loadBuiltIn("tcp", "default-configs/default-jgroups-tcp.xml", properties);
+      return loadBuiltIn(TCP_STACK_NAME, "default-configs/default-jgroups-tcp.xml", properties);
    }
 
    public static BuiltinJGroupsChannelConfigurator UDP(Properties properties) {

@@ -1,6 +1,5 @@
 package org.infinispan.conflict.impl;
 
-import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.Collection;
@@ -16,9 +15,9 @@ import java.util.Set;
 import java.util.Spliterators;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -51,8 +50,6 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.executors.LimitedExecutor;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -69,6 +66,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -90,20 +88,19 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    @Inject Configuration cacheConfiguration;
    @Inject CommandsFactory commandsFactory;
    @Inject DistributionManager distributionManager;
-   @Inject @ComponentName(BLOCKING_EXECUTOR)
-   ExecutorService blockingExecutor;
    @Inject InvocationContextFactory invocationContextFactory;
    @Inject RpcManager rpcManager;
    @Inject ComponentRef<StateConsumer> stateConsumer;
    @Inject StateReceiver<K, V> stateReceiver;
    @Inject EntryMergePolicyFactoryRegistry mergePolicyRegistry;
    @Inject TimeService timeService;
+   @Inject BlockingManager blockingManager;
 
    private String cacheName;
    private Address localAddress;
    private long conflictTimeout;
    private EntryMergePolicy<K, V> entryMergePolicy;
-   private LimitedExecutor resolutionExecutor;
+   private BlockingManager.BlockingExecutor resolutionExecutor;
    private final AtomicBoolean streamInProgress = new AtomicBoolean();
    private final Map<K, VersionRequest> versionRequestMap = new HashMap<>();
    private final Queue<VersionRequest> retryQueue = new ConcurrentLinkedQueue<>();
@@ -123,7 +120,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       this.conflictTimeout = cacheConfiguration.clustering().stateTransfer().timeout();
 
       // Limit the number of concurrent tasks to ensure that internal CR operations can never overlap
-      this.resolutionExecutor = new LimitedExecutor("ConflictManager-" + cacheName, blockingExecutor, 1);
+      this.resolutionExecutor = blockingManager.limitedBlockingExecutor("ConflictManager-" + cacheName, 1);
       this.running = true;
       if (trace) log.tracef("Cache %s starting %s. isRunning=%s", cacheName, getClass().getSimpleName(), !running);
    }
@@ -239,7 +236,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    }
 
    @Override
-   public CompletableFuture<Void> resolveConflicts(CacheTopology topology, Set<Address> preferredNodes) {
+   public CompletionStage<Void> resolveConflicts(CacheTopology topology, Set<Address> preferredNodes) {
       if (!running)
          return CompletableFuture.completedFuture(null);
 
@@ -249,7 +246,9 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       } else {
          localizedTopology = distributionManager.createLocalizedCacheTopology(topology);
       }
-      conflictFuture = CompletableFuture.runAsync(() -> doResolveConflicts(localizedTopology, entryMergePolicy, preferredNodes), resolutionExecutor);
+      conflictFuture = resolutionExecutor.execute(() -> doResolveConflicts(localizedTopology, entryMergePolicy, preferredNodes),
+            localizedTopology.getTopologyId())
+            .toCompletableFuture();
       return conflictFuture.whenComplete((Void, t) -> {
          if (t != null) {
             log.errorf("Cache %s encountered exception whilst trying to resolve conflicts on merge: %s", cacheName, t);

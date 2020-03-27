@@ -2,10 +2,9 @@ package org.infinispan.server.hotrod.tx.operation;
 
 import static org.infinispan.remoting.transport.impl.VoidResponseCollector.validOnly;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -21,7 +20,6 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.HotRodHeader;
@@ -32,6 +30,9 @@ import org.infinispan.server.hotrod.tx.table.CacheXid;
 import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * A base class to complete a transaction (commit or rollback).
@@ -60,7 +61,7 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
    private final HotRodServer server;
    private final Subject subject;
    final Collection<ByteString> cacheNames = new ConcurrentLinkedQueue<>();
-   final ExecutorService blockingExecutor;
+   final BlockingManager blockingManager;
    private final AtomicInteger expectedCaches = new AtomicInteger();
    volatile boolean hasErrors = false;
    volatile boolean hasCommits = false;
@@ -70,7 +71,7 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
          BiConsumer<HotRodHeader, Integer> reply) {
       GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(server.getCacheManager());
       this.globalTxTable = gcr.getComponent(GlobalTxTable.class);
-      this.blockingExecutor = gcr.getComponent(ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR);
+      this.blockingManager = gcr.getComponent(BlockingManager.class);
       this.header = header;
       this.server = server;
       this.subject = subject;
@@ -126,7 +127,7 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
    /**
     * When this node is the originator, this method is invoked to complete the transaction in the specific cache.
     */
-   abstract CompletableFuture<Void> asyncCompleteLocalTransaction(AdvancedCache<?, ?> cache, long timeout);
+   abstract CompletionStage<Void> asyncCompleteLocalTransaction(AdvancedCache<?, ?> cache, long timeout);
 
    abstract Log log();
 
@@ -159,21 +160,21 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
          return;
       }
 
-      List<CompletableFuture<Void>> futures = new ArrayList<>(size);
+      AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       for (ByteString cacheName : cacheNames) {
          try {
-            futures.add(completeCache(cacheName));
+            aggregateCompletionStage.dependsOn(completeCache(cacheName));
          } catch (Throwable t) {
             hasErrors = true;
          }
       }
-      CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(this::sendReply);
+      aggregateCompletionStage.freeze().thenRun(this::sendReply);
    }
 
    /**
     * Completes the transaction for a specific cache.
     */
-   private CompletableFuture<Void> completeCache(ByteString cacheName) throws Throwable {
+   private CompletionStage<Void> completeCache(ByteString cacheName) throws Throwable {
       TxState state = globalTxTable.getState(new CacheXid(cacheName, xid));
       HotRodServer.CacheInfo cacheInfo =
          server.getCacheInfo(cacheName.toString(), header.getVersion(), header.getMessageId(), true);

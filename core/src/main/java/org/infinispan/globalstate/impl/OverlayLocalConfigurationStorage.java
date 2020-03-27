@@ -48,22 +48,24 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
    public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       CompletableFuture<Void> future = super.createCache(name, template, configuration, flags);
       if (!flags.contains(CacheContainerAdmin.AdminFlag.VOLATILE)) {
-         return future.thenApplyAsync((v) -> {
+         return blockingManager.thenApplyBlocking(future, (v) -> {
             persistentCaches.add(name);
             storeAll();
             return v;
-         }, executor);
+         }, name).toCompletableFuture();
       } else {
          return future;
       }
    }
 
    public CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      return CompletableFuture.runAsync(() -> {
+      return blockingManager.<Void>supplyBlocking(() -> {
          if (persistentCaches.remove(name)) {
             storeAll();
          }
-      }, executor).thenCompose((v) -> super.removeCache(name, flags));
+         removeCacheSync(name, flags);
+         return null;
+      }, name).toCompletableFuture();
    }
 
    public Map<String, Configuration> loadAll() {

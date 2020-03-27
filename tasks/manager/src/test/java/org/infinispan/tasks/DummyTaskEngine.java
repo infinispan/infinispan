@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 import org.infinispan.tasks.spi.TaskEngine;
+import org.infinispan.util.concurrent.BlockingManager;
 
 public class DummyTaskEngine implements TaskEngine {
 
@@ -42,7 +42,7 @@ public class DummyTaskEngine implements TaskEngine {
    }
 
    @Override
-   public <T> CompletableFuture<T> runTask(String taskName, TaskContext context, Executor executor) {
+   public <T> CompletableFuture<T> runTask(String taskName, TaskContext context, BlockingManager blockingManager) {
       switch (DummyTaskTypes.valueOf(taskName)) {
       case SUCCESSFUL_TASK:
          return (CompletableFuture<T>) CompletableFuture.completedFuture("result");

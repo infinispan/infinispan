@@ -7,7 +7,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -35,7 +35,7 @@ public class ActionSequencer {
    private final LongAdder pendingActions = new LongAdder();
    private final LongAdder runningActions = new LongAdder();
    private final TimeService timeService;
-   private final ExecutorService executor;
+   private final Executor executor;
    private final boolean forceExecutor;
    private volatile SimpleStat queueTimes = new DefaultSimpleStat();
    private volatile SimpleStat runningTimes = new DefaultSimpleStat();
@@ -46,7 +46,7 @@ public class ActionSequencer {
     * @param forceExecutor If {@code false}, run submitted actions on the submitter thread if possible. If {@code true},
     *                      always run submitted actions on the executor.
     */
-   public ActionSequencer(ExecutorService executor, boolean forceExecutor, TimeService timeService) {
+   public ActionSequencer(Executor executor, boolean forceExecutor, TimeService timeService) {
       this.executor = executor;
       this.forceExecutor = forceExecutor;
       this.timeService = timeService;
@@ -196,7 +196,7 @@ public class ActionSequencer {
             previousStage.handleAsync(this, executor);
          } else if (forceExecutor) {
             //execute the action in another thread.
-            executor.submit(this);
+            executor.execute(this);
          } else {
             run();
          }

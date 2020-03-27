@@ -3,12 +3,12 @@ package org.infinispan.globalstate;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * The {@link LocalConfigurationStorage} is responsible for applying on each node the configuration changes initiated
@@ -24,9 +24,9 @@ public interface LocalConfigurationStorage {
     * Initialization entry point for the {@link LocalConfigurationStorage}
     * @param embeddedCacheManager
     * @param configurationManager
-    * @param executor
+    * @param blockingManager handler to use when a blocking operation is required
     */
-   void initialize(EmbeddedCacheManager embeddedCacheManager, ConfigurationManager configurationManager, Executor executor);
+   void initialize(EmbeddedCacheManager embeddedCacheManager, ConfigurationManager configurationManager, BlockingManager blockingManager);
    /**
     * Checks whether this {@link LocalConfigurationStorage} supports the supplied flags.
     * A {@link org.infinispan.commons.CacheConfigurationException} will be thrown in case this cannot be done.

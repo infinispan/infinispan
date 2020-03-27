@@ -1,11 +1,7 @@
 package org.infinispan.remoting;
 
-import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
-
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
@@ -16,6 +12,7 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
@@ -32,7 +29,7 @@ public class LocalInvocation implements Callable<Response>, Function<Object, Res
    private final ComponentRegistry componentRegistry;
    private final CommandsFactory commandsFactory;
    private final Address self;
-   private final Executor blockingExecutor;
+   private final BlockingManager blockingManager;
 
    private LocalInvocation(ResponseGenerator responseGenerator, CacheRpcCommand command,
                            ComponentRegistry componentRegistry, Address self) {
@@ -41,7 +38,7 @@ public class LocalInvocation implements Callable<Response>, Function<Object, Res
       this.componentRegistry = componentRegistry;
       this.commandsFactory = componentRegistry.getCommandsFactory();
       this.self = self;
-      this.blockingExecutor = componentRegistry.getComponent(Executor.class, BLOCKING_EXECUTOR);
+      this.blockingManager = componentRegistry.getComponent(BlockingManager.class);
    }
 
    @Override
@@ -81,13 +78,13 @@ public class LocalInvocation implements Callable<Response>, Function<Object, Res
       try {
          CompletionStage<?> stage;
          if (command.canBlock()) {
-            stage = CompletableFuture.supplyAsync(() -> {
+            stage = blockingManager.supplyBlocking(() -> {
                try {
                   return command.invokeAsync(componentRegistry);
                } catch (Throwable t) {
                   throw CompletableFutures.asCompletionException(t);
                }
-            }, blockingExecutor);
+            }, command.getCommandId());
          } else {
             stage = command.invokeAsync(componentRegistry);
          }

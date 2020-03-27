@@ -2,9 +2,7 @@ package org.infinispan.interceptors.distribution;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
@@ -15,7 +13,6 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.jboss.logging.Logger;
 
 /**
@@ -34,16 +31,14 @@ public class L1WriteSynchronizer {
    private final InternalDataContainer<Object, Object> dc;
    private final StateTransferLock stateTransferLock;
    private final ClusteringDependentLogic cdl;
-   private final Executor persistenceExecutor;
 
    public L1WriteSynchronizer(InternalDataContainer dc, long l1Lifespan, StateTransferLock stateTransferLock,
-                              ClusteringDependentLogic cdl, Executor persistenceExecutor) {
+                              ClusteringDependentLogic cdl) {
       //noinspection unchecked
       this.dc = dc;
       this.l1Lifespan = l1Lifespan;
       this.stateTransferLock = stateTransferLock;
       this.cdl = cdl;
-      this.persistenceExecutor = persistenceExecutor;
    }
 
    private static class L1WriteSync extends AbstractQueuedSynchronizer {
@@ -176,20 +171,7 @@ public class L1WriteSynchronizer {
          if (ice != null) {
             Object key;
             if (sync.attemptUpdateToRunning() && !dc.containsKey((key = ice.getKey()))) {
-               if (persistenceExecutor == null) {
-                  runL1Update(key, ice);
-               } else {
-                  CompletableFuture<Void> stage = new CompletableFuture<>();
-                  persistenceExecutor.execute(() -> {
-                     try {
-                        runL1Update(key, ice);
-                        stage.complete(null);
-                     } catch (Throwable t) {
-                        stage.completeExceptionally(t);
-                     }
-                  });
-                  CompletionStages.join(stage);
-               }
+               runL1Update(key, ice);
             }
          }
       }

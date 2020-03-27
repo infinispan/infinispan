@@ -91,7 +91,7 @@ public class RemoteClusterListener {
    @CacheEntryModified
    @CacheEntryRemoved
    @CacheEntryExpired
-   public CompletionStage<Void> handleClusterEvents(CacheEntryEvent event) throws Exception {
+   public CompletionStage<Void> handleClusterEvents(CacheEntryEvent event) {
       GlobalTransaction transaction = event.getGlobalTransaction();
       if (transaction != null) {
          // If we are in a transaction, queue up those events so we can send them as 1 batch.
@@ -109,14 +109,16 @@ public class RemoteClusterListener {
          if (trace) {
             log.tracef("Passing Event to manager %s to send to %s", event, origin);
          }
-         eventManager.addEvents(origin, id, Collections.singleton(ClusterEvent.fromEvent(event)), sync);
+         // Non tx event batching is keyed by the invoking thread.
+         eventManager.addEvents(Thread.currentThread(), origin, id, Collections.singleton(ClusterEvent.fromEvent(event)), sync);
       }
       return CompletableFutures.completedNull();
    }
 
    @TransactionCompleted
-   public CompletionStage<Void> transactionCompleted(TransactionCompletedEvent event) throws Exception {
-      Queue<CacheEntryEvent> events = transactionChanges.remove(event.getGlobalTransaction());
+   public CompletionStage<Void> transactionCompleted(TransactionCompletedEvent event) {
+      GlobalTransaction transaction = event.getGlobalTransaction();
+      Queue<CacheEntryEvent> events = transactionChanges.remove(transaction);
       if (event.isTransactionSuccessful() && events != null) {
          List<ClusterEvent> eventsToSend = new ArrayList<>(events.size());
          for (CacheEntryEvent cacheEvent : events) {
@@ -126,7 +128,7 @@ public class RemoteClusterListener {
                log.tracef("Passing Event(s) to manager %s to send to %s", eventsToSend, origin);
             }
          }
-         eventManager.addEvents(origin, id, eventsToSend, sync);
+         eventManager.addEvents(transaction, origin, id, eventsToSend, sync);
       }
       return CompletableFutures.completedNull();
    }

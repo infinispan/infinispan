@@ -22,6 +22,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -1133,19 +1134,20 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             globalComponentRegistry.getStatus() != ComponentStatus.INITIALIZING) {
          throw new IllegalStateException("CacheManager must be started before retrieving a ClusterExecutor!");
       }
+      // TODO: This is to be removed in https://issues.redhat.com/browse/ISPN-11482
+      Executor blockingExecutor = globalComponentRegistry.getComponent(ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR);
       // Have to make sure the transport is running before we retrieve it
       Transport transport = globalComponentRegistry.getComponent(BasicComponentRegistry.class).getComponent(Transport.class).running();
       if (transport != null) {
          long time = configurationManager.getGlobalConfiguration().transport().distributedSyncTimeout();
          return ClusterExecutors.allSubmissionExecutor(null, this, transport, time, TimeUnit.MILLISECONDS,
                // This can run arbitrary code, including user - such commands can block
-               globalComponentRegistry.getComponent(ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR),
+               blockingExecutor,
                globalComponentRegistry.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR));
       } else {
          return ClusterExecutors.allSubmissionExecutor(null, this, null,
                TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT.getDefaultValue(), TimeUnit.MILLISECONDS,
-               // This can run arbitrary code, including user - such commands can block
-               globalComponentRegistry.getComponent(ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR),
+               blockingExecutor,
                globalComponentRegistry.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR));
       }
    }

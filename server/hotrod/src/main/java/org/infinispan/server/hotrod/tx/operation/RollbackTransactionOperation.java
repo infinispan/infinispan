@@ -2,7 +2,7 @@ package org.infinispan.server.hotrod.tx.operation;
 
 import static org.infinispan.server.hotrod.tx.operation.Util.rollbackLocalTransaction;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
@@ -142,9 +142,8 @@ public class RollbackTransactionOperation extends BaseCompleteTransactionOperati
    }
 
    @Override
-   CompletableFuture<Void> asyncCompleteLocalTransaction(AdvancedCache<?, ?> cache, long timeout) {
-      CompletableFuture<Void> cf = new CompletableFuture<>();
-      blockingExecutor.submit(() -> {
+   CompletionStage<Void> asyncCompleteLocalTransaction(AdvancedCache<?, ?> cache, long timeout) {
+      return blockingManager.runBlocking(() -> {
          try {
             rollbackLocalTransaction(cache, xid, timeout);
          } catch (HeuristicMixedException e) {
@@ -153,9 +152,7 @@ public class RollbackTransactionOperation extends BaseCompleteTransactionOperati
          } catch (Throwable t) {
             hasErrors = true;
          }
-         cf.complete(null);
-      });
-      return cf;
+      }, this);
    }
 
    @Override

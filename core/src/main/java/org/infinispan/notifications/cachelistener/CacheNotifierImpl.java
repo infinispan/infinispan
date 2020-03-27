@@ -417,7 +417,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             && (command == null || !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER))) {
          EventImpl<K, V> e = EventImpl.createEvent(cache.wired(), CACHE_ENTRY_CREATED);
          boolean isLocalNodePrimaryOwner = isLocalNodePrimaryOwner(key);
-         boolean sendEvents = !ctx.isInTxScope();
+         Object batchIdentifier = ctx.isInTxScope() ? null : Thread.currentThread();
          try {
             AggregateCompletionStage<Void> aggregateCompletionStage = null;
             for (CacheEntryListenerInvocation<K, V> listener : cacheEntryCreatedListeners) {
@@ -426,15 +426,14 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
                      listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner));
             }
-            if (sendEvents) {
-               sendEvents = false;
-               return sendEvents(aggregateCompletionStage);
+            if (batchIdentifier != null) {
+               return sendEvents(batchIdentifier, aggregateCompletionStage);
             } else if (aggregateCompletionStage != null) {
                return aggregateCompletionStage.freeze();
             }
          } finally {
-            if (sendEvents) {
-               eventManager.dropEvents();
+            if (batchIdentifier != null) {
+               eventManager.dropEvents(batchIdentifier);
             }
          }
       }
@@ -456,7 +455,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             && (command == null || !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER))) {
          EventImpl<K, V> e = EventImpl.createEvent(cache.wired(), CACHE_ENTRY_MODIFIED);
          boolean isLocalNodePrimaryOwner = isLocalNodePrimaryOwner(key);
-         boolean sendEvents = !ctx.isInTxScope();
+         Object batchIdentifier = ctx.isInTxScope() ? null : Thread.currentThread();
          try {
             AggregateCompletionStage<Void> aggregateCompletionStage = null;
             for (CacheEntryListenerInvocation<K, V> listener : cacheEntryModifiedListeners) {
@@ -465,15 +464,14 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
                      listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner));
             }
-            if (sendEvents) {
-               sendEvents = false;
-               return sendEvents(aggregateCompletionStage);
+            if (batchIdentifier != null) {
+               return sendEvents(batchIdentifier, aggregateCompletionStage);
             } else if (aggregateCompletionStage != null) {
                return aggregateCompletionStage.freeze();
             }
          } finally {
-            if (sendEvents) {
-               eventManager.dropEvents();
+            if (batchIdentifier != null) {
+               eventManager.dropEvents(batchIdentifier);
             }
          }
       }
@@ -494,7 +492,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       if (clusteringDependentLogic.running().commitType(command, ctx, extractSegment(command, key), true).isLocal()) {
          EventImpl<K, V> e = EventImpl.createEvent(cache.wired(), CACHE_ENTRY_REMOVED);
          boolean isLocalNodePrimaryOwner = isLocalNodePrimaryOwner(key);
-         boolean sendEvents = !ctx.isInTxScope();
+         Object batchIdentifier = ctx.isInTxScope() ? null : Thread.currentThread();
          try {
             AggregateCompletionStage<Void> aggregateCompletionStage = null;
             for (CacheEntryListenerInvocation<K, V> listener : cacheEntryRemovedListeners) {
@@ -510,15 +508,14 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
                      listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner));
             }
-            if (sendEvents) {
-               sendEvents = false;
-               return sendEvents(aggregateCompletionStage);
+            if (batchIdentifier != null) {
+               return sendEvents(batchIdentifier, aggregateCompletionStage);
             } else if (aggregateCompletionStage != null) {
                return aggregateCompletionStage.freeze();
             }
          } finally {
-            if (sendEvents) {
-               eventManager.dropEvents();
+            if (batchIdentifier != null) {
+               eventManager.dropEvents(batchIdentifier);
             }
          }
       }
@@ -564,12 +561,13 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
     * Configure event data. Currently used for 'expired' events.
     */
    private void configureEvent(CacheEntryListenerInvocation listenerInvocation,
-                               EventImpl<K, V> e, K key, V value, Metadata metadata) {
+                               EventImpl<K, V> e, K key, V value, Metadata metadata, InvocationContext ctx) {
       e.setKey(convertKey(listenerInvocation, key));
       e.setValue(convertValue(listenerInvocation, value));
       e.setMetadata(metadata);
       e.setOriginLocal(true);
       e.setPre(false);
+      setTx(ctx, e);
    }
 
    @Override
@@ -616,8 +614,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
    }
 
-   private CompletionStage<Void> sendEvents(AggregateCompletionStage<Void> aggregateCompletionStage) {
-      CompletionStage<Void> managerStage = eventManager.sendEvents();
+   private CompletionStage<Void> sendEvents(Object batchIdentifier, AggregateCompletionStage<Void> aggregateCompletionStage) {
+      CompletionStage<Void> managerStage = eventManager.sendEvents(batchIdentifier);
       if (aggregateCompletionStage != null) {
          if (managerStage != null) {
             aggregateCompletionStage.dependsOn(managerStage);
@@ -640,21 +638,20 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       boolean isLocalNodePrimaryOwner = isLocalNodePrimaryOwner(key);
 
       AggregateCompletionStage<Void> aggregateCompletionStage = null;
-      boolean sendEvents = ctx == null || !ctx.isInTxScope();
+      Object batchIdentifier = (ctx == null || ctx.isInTxScope()) ? null : Thread.currentThread();
       try {
          for (CacheEntryListenerInvocation<K, V> listener : cacheEntryExpiredListeners) {
             // Need a wrapper per invocation since converter could modify the entry in it
-            configureEvent(listener, e, key, value, metadata);
+            configureEvent(listener, e, key, value, metadata, ctx);
             aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
                   listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner));
          }
-         if (sendEvents) {
-            sendEvents = false;
-            return sendEvents(aggregateCompletionStage);
+         if (batchIdentifier != null) {
+            return sendEvents(batchIdentifier, aggregateCompletionStage);
          }
       } finally {
-         if (sendEvents) {
-            eventManager.dropEvents();
+         if (batchIdentifier != null) {
+            eventManager.dropEvents(batchIdentifier);
          }
       }
 
@@ -787,9 +784,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       }
       if (ctx.isInTxScope()) {
          if (successful) {
-            return sendEvents(aggregateCompletionStage);
+            return sendEvents(transaction, aggregateCompletionStage);
          } else {
-            eventManager.dropEvents();
+            eventManager.dropEvents(transaction);
          }
       }
       return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();

@@ -9,7 +9,6 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
@@ -31,8 +30,6 @@ import org.infinispan.counter.impl.strong.BoundedStrongCounter;
 import org.infinispan.counter.impl.strong.UnboundedStrongCounter;
 import org.infinispan.counter.impl.weak.WeakCounterImpl;
 import org.infinispan.counter.logging.Log;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -41,6 +38,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * A {@link CounterManager} implementation for embedded cache manager.
@@ -62,8 +60,7 @@ public class EmbeddedCounterManager implements CounterManager {
    private volatile AdvancedCache<CounterKey, CounterValue> counterCache;
    private volatile boolean started = false;
 
-   @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
-   Executor blockingExecutor;
+   @Inject BlockingManager blockingManager;
 
    public EmbeddedCounterManager(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
@@ -85,7 +82,7 @@ public class EmbeddedCounterManager implements CounterManager {
       if (trace) {
          log.trace("Starting EmbeddedCounterManager");
       }
-      notificationManager.useExecutor(blockingExecutor);
+      notificationManager.useBlockingManager(blockingManager);
 
       configurationManager.start();
       started = true;

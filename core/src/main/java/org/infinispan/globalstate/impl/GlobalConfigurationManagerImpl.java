@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
@@ -20,8 +19,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -32,6 +29,7 @@ import org.infinispan.globalstate.ScopedState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -54,8 +52,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    @Inject ConfigurationManager configurationManager;
    @Inject InternalCacheRegistry internalCacheRegistry;
    @Inject GlobalComponentRegistry globalComponentRegistry;
-   @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
-   ExecutorService blockingExecutor;
+   @Inject BlockingManager blockingManager;
 
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
@@ -92,7 +89,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          SecurityActions.getCache(cacheManager, cacheName);
       }
 
-      localConfigurationManager.initialize(cacheManager, configurationManager, blockingExecutor);
+      localConfigurationManager.initialize(cacheManager, configurationManager, blockingManager);
 
       // Load any state we previously had in the local persistent state into the global state
       Map<String, Configuration> persistedConfigurations = localConfigurationManager.loadAll();

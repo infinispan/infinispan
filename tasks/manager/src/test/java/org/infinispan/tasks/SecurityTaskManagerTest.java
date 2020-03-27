@@ -94,7 +94,8 @@ public class SecurityTaskManagerTest extends SingleCacheManagerTest {
         Security.doAs(subject, new PrivilegedAction<Void>() {
             @Override
             public Void run() {
-                CompletableFuture<Object> slowTask = taskManager.runTask(DummyTaskEngine.DummyTaskTypes.SLOW_TASK.name(), new TaskContext());
+                CompletableFuture<Object> slowTask = taskManager.runTask(DummyTaskEngine.DummyTaskTypes.SLOW_TASK.name(), new TaskContext())
+                      .toCompletableFuture();
                 Collection<TaskExecution> currentTasks = taskManager.getCurrentTasks();
                 assertEquals(1, currentTasks.size());
 

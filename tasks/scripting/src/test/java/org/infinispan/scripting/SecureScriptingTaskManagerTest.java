@@ -29,6 +29,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 /**
@@ -114,8 +115,7 @@ public class SecureScriptingTaskManagerTest extends SingleCacheManagerTest {
         Security.doAs(PHEIDIPPIDES, new PrivilegedExceptionAction<Void>() {
             @Override
             public Void run() throws Exception {
-                String result = null;
-                result = (String) taskManager.runTask(SCRIPT_NAME, new TaskContext().addParameter("a", "a")).get();
+                String result = CompletionStages.join(taskManager.runTask(SCRIPT_NAME, new TaskContext().addParameter("a", "a")));
 
                 assertEquals("a", result);
 

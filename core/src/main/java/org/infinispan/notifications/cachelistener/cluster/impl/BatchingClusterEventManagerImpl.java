@@ -1,11 +1,13 @@
 package org.infinispan.notifications.cachelistener.cluster.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandsFactory;
@@ -25,12 +27,17 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 @Scope(Scopes.NAMED_CACHE)
 public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManager<K, V> {
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   private static final boolean trace = log.isTraceEnabled();
+
    @Inject EmbeddedCacheManager cacheManager;
    @Inject Configuration configuration;
    @Inject RpcManager rpcManager;
@@ -38,7 +45,7 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
 
    private long timeout;
 
-   private final ThreadLocal<EventContext<K, V>> localContext = new ThreadLocal<>();
+   private final Map<Object, EventContext<K, V>> eventContextMap = new ConcurrentHashMap<>();
 
    @Start
    public void start() {
@@ -46,28 +53,46 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
    }
 
    @Override
-   public void addEvents(Address target, UUID identifier, Collection<ClusterEvent<K, V>> events, boolean sync) {
-      EventContext<K, V> ctx = localContext.get();
-      if (ctx == null) {
-         ctx = new UnicastEventContext<>();
-         localContext.set(ctx);
-      }
-      ctx.addTargets(target, identifier, events, sync);
+   public void addEvents(Object batchIdentifier, Address target, UUID identifier, Collection<ClusterEvent<K, V>> events, boolean sync) {
+      eventContextMap.compute(batchIdentifier, (ignore, eventContext) -> {
+         if (eventContext == null) {
+            if (trace) {
+               log.tracef("Created new unicast event context for identifier %s", batchIdentifier);
+            }
+            eventContext = new UnicastEventContext<>();
+         }
+         if (trace) {
+            log.tracef("Adding new events %s for identifier %s", events, batchIdentifier);
+         }
+         eventContext.addTargets(target, identifier, events, sync);
+         return eventContext;
+      });
    }
 
    @Override
-   public CompletionStage<Void> sendEvents() {
-      EventContext<K, V> ctx = localContext.get();
+   public CompletionStage<Void> sendEvents(Object batchIdentifier) {
+      EventContext<K, V> ctx = eventContextMap.remove(batchIdentifier);
       if (ctx != null) {
-         localContext.remove();
+         if (trace) {
+            log.tracef("Sending events for identifier %s", batchIdentifier);
+         }
          return ctx.sendToTargets();
+      } else if (trace) {
+         log.tracef("No events to send for identifier %s", batchIdentifier);
       }
       return CompletableFutures.completedNull();
    }
 
    @Override
-   public void dropEvents() {
-      localContext.remove();
+   public void dropEvents(Object batchIdentifier) {
+      EventContext<K, V> ctx = eventContextMap.remove(batchIdentifier);
+      if (trace) {
+         if (ctx != null) {
+            log.tracef("Dropping events for identifier %s", batchIdentifier);
+         } else {
+            log.tracef("No events to drop for identifier %s", batchIdentifier);
+         }
+      }
    }
 
    private interface EventContext<K, V> {

@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +50,7 @@ import org.infinispan.stream.CacheCollectors;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.LogFactory;
 
 import net.jcip.annotations.GuardedBy;
@@ -87,11 +87,8 @@ public class GlobalTxTable implements Runnable, Lifecycle {
    private ScheduledFuture<?> scheduledFuture;
 
    @Inject TimeService timeService;
-   @Inject
-   @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
-   ExecutorService blockingExecutor;
-   @Inject
-   @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
+   @Inject BlockingManager blockingManager;
+   @Inject @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
    ScheduledExecutorService scheduledExecutor;
 
    public GlobalTxTable(Cache<CacheXid, TxState> storage, GlobalComponentRegistry gcr) {
@@ -257,8 +254,9 @@ public class GlobalTxTable implements Runnable, Lifecycle {
             //local transaction doesn't exists.
             onTransactionCompleted(cacheXid);
          } else {
-            blockingExecutor.execute(
-                  () -> rollbackOldTransaction(cacheXid, state, () -> completeLocal(txTable, cacheXid, tx, false)));
+            blockingManager.runBlocking(
+                  () -> rollbackOldTransaction(cacheXid, state, () -> completeLocal(txTable, cacheXid, tx, false)),
+                  cacheXid);
          }
       }
    }
@@ -300,7 +298,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
             //transaction completed
             onTransactionCompleted(cacheXid);
          } else {
-            blockingExecutor.execute(() -> completeLocal(txTable, cacheXid, tx, commit));
+            blockingManager.runBlocking(() -> completeLocal(txTable, cacheXid, tx, commit), cacheXid);
          }
       } else {
          if (commit) {

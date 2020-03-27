@@ -72,7 +72,8 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    @Inject Configuration configuration;
    @Inject CommandsFactory commandsFactory;
    @Inject ResponseGenerator responseGenerator;
-   @Inject @ComponentName(value = BLOCKING_EXECUTOR)
+   // TODO: This should be removed in https://issues.redhat.com/browse/ISPN-11398
+   @Inject @ComponentName(BLOCKING_EXECUTOR)
    ExecutorService blockingExecutor;
    @Inject StateTransferManager stateTransferManager;
    @Inject DistributionManager distributionManager;

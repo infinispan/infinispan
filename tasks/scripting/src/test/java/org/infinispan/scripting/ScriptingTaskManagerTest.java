@@ -18,6 +18,7 @@ import org.infinispan.tasks.spi.TaskEngine;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 @Test(groups="functional", testName="scripting.ScriptingTaskManagerTest")
@@ -43,7 +44,7 @@ public class ScriptingTaskManagerTest extends SingleCacheManagerTest {
    public void testTask() throws Exception {
       ScriptingManager scriptingManager = extractGlobalComponent(cacheManager, ScriptingManager.class);
       ScriptingUtils.loadScript(scriptingManager, TEST_SCRIPT);
-      String result = (String) taskManager.runTask(TEST_SCRIPT, new TaskContext().addParameter("a", "a")).get();
+      String result = CompletionStages.join(taskManager.runTask(TEST_SCRIPT, new TaskContext().addParameter("a", "a")));
       assertEquals("a", result);
 
       List<Task> tasks = taskManager.getTasks();
@@ -65,6 +66,6 @@ public class ScriptingTaskManagerTest extends SingleCacheManagerTest {
    public void testBrokenTask() throws Exception {
       ScriptingManager scriptingManager = extractGlobalComponent(cacheManager, ScriptingManager.class);
       ScriptingUtils.loadScript(scriptingManager, BROKEN_SCRIPT);
-      taskManager.runTask(BROKEN_SCRIPT, new TaskContext()).get();
+      CompletionStages.join(taskManager.runTask(BROKEN_SCRIPT, new TaskContext()));
    }
 }

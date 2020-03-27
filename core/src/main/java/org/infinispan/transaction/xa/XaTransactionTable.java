@@ -4,7 +4,6 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
@@ -36,8 +35,6 @@ public class XaTransactionTable extends TransactionTable {
    @Inject protected RecoveryManager recoveryManager;
    @ComponentName(KnownComponentNames.CACHE_NAME)
    @Inject protected String cacheName;
-   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
-   Executor nonBlockingExecutor;
 
    protected ConcurrentMap<Xid, LocalXaTransaction> xid2LocalTx;
 

@@ -66,6 +66,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
    @Inject ClusteringDependentLogic clusteringDependentLogic;
    @Inject CommandsFactory commandsFactory;
    @Inject RpcManager rpcManager;
+   // TODO: This should be removed in https://issues.redhat.com/browse/ISPN-11398
    @Inject @ComponentName(BLOCKING_EXECUTOR)
    ExecutorService blockingExecutor;
    @Inject Configuration configuration;
