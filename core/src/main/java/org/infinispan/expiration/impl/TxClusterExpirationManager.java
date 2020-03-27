@@ -1,8 +1,5 @@
 package org.infinispan.expiration.impl;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
 import org.infinispan.transaction.LockingMode;
@@ -19,20 +16,6 @@ public class TxClusterExpirationManager<K, V> extends ClusterExpirationManager<K
       super.start();
 
       optimisticTransaction = configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC;
-   }
-
-   @Override
-   CompletableFuture<Boolean> removeLifespan(AdvancedCache<K, V> cacheToUse, K key, V value, long lifespan) {
-      // Transactional is still blocking - to be removed later
-      return CompletableFuture.supplyAsync(() -> super.removeLifespan(cacheToUse, key, value, lifespan), blockingExecutor)
-            .thenCompose(Function.identity());
-   }
-
-   @Override
-   CompletableFuture<Boolean> removeMaxIdle(AdvancedCache<K, V> cacheToUse, K key, V value) {
-      // Transactional is still blocking - to be removed later
-      return CompletableFuture.supplyAsync(() -> cacheToUse.removeMaxIdleExpired(key, value), blockingExecutor)
-                  .thenCompose(Function.identity());
    }
 
    @Override

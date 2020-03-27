@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -21,6 +20,7 @@ import org.infinispan.security.impl.AuthorizationHelper;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.spi.TaskEngine;
+import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * @author Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
@@ -57,7 +57,7 @@ public class ServerTaskEngine implements TaskEngine {
    }
 
    @Override
-   public <T> CompletableFuture<T> runTask(String taskName, TaskContext context, Executor executor) {
+   public <T> CompletableFuture<T> runTask(String taskName, TaskContext context, BlockingManager blockingManager) {
       ServerTaskWrapper<T> task = tasks.get(taskName);
       if (task == null) {
          throw new IllegalArgumentException("Task not found: " + taskName);

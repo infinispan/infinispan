@@ -1,7 +1,7 @@
 package org.infinispan.tasks;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.tasks.spi.TaskEngine;
 
@@ -20,7 +20,7 @@ public interface TaskManager {
     * @param context
     * @return
     */
-   <T> CompletableFuture<T> runTask(String taskName, TaskContext context);
+   <T> CompletionStage<T> runTask(String taskName, TaskContext context);
 
    /**
     * Retrieves the currently executing tasks. If running in a cluster this operation

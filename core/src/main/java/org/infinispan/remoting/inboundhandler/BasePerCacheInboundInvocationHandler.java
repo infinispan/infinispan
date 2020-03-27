@@ -52,6 +52,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    public static final String MBEAN_COMPONENT_NAME = "InboundInvocationHandler";
    private static final int NO_TOPOLOGY_COMMAND = Integer.MIN_VALUE;
 
+   // TODO: To be removed with https://issues.redhat.com/browse/ISPN-11483
    @Inject @ComponentName(BLOCKING_EXECUTOR)
    protected BlockingTaskAwareExecutorService blockingExecutor;
    @Inject @ComponentName(NON_BLOCKING_EXECUTOR)

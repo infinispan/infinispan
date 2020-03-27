@@ -1,6 +1,5 @@
 package org.infinispan.xsite;
 
-import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.remoting.transport.impl.MapResponseCollector.validOnly;
 import static org.infinispan.util.concurrent.CompletableFutures.asCompletionException;
 import static org.infinispan.util.concurrent.CompletableFutures.completedExceptionFuture;
@@ -16,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
@@ -43,6 +42,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
@@ -68,6 +68,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -101,11 +102,14 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       ComponentRegistry registry = this.cache.getComponentRegistry();
       this.timeService = registry.getTimeService();
       this.commandsFactory = registry.getCommandsFactory();
-      ExecutorService executor = registry.getComponent(ExecutorService.class, BLOCKING_EXECUTOR);
+
+      BlockingManager blockingManager = registry.getComponent(BlockingManager.class);
+      Executor nonBlockingExecutor = registry.getComponent(Executor.class, KnownComponentNames.NON_BLOCKING_EXECUTOR);
       TransactionHandler txHandler = new TransactionHandler(cache);
       boolean isVersionedTx = Configurations.isTxVersioned(cache.getCacheConfiguration());
-      this.defaultHandler = new DefaultHandler(txHandler, executor, isVersionedTx);
-      this.asyncBackupHandler = new AsyncBackupHandler(txHandler, executor, timeService, isVersionedTx);
+      this.defaultHandler = new DefaultHandler(txHandler, blockingManager, isVersionedTx);
+      this.asyncBackupHandler = new AsyncBackupHandler(txHandler, blockingManager, timeService, nonBlockingExecutor,
+            isVersionedTx);
    }
 
    @Override
@@ -222,12 +226,12 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    private static class DefaultHandler extends AbstractVisitor {
 
       final TransactionHandler txHandler;
-      final ExecutorService executor;
+      final BlockingManager blockingManager;
       final boolean dropVersion;
 
-      private DefaultHandler(TransactionHandler txHandler, ExecutorService executor, boolean dropVersion) {
+      private DefaultHandler(TransactionHandler txHandler, BlockingManager blockingManager, boolean dropVersion) {
          this.txHandler = txHandler;
-         this.executor = executor;
+         this.blockingManager = blockingManager;
          this.dropVersion = dropVersion;
       }
 
@@ -256,17 +260,17 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
 
       @Override
       public CompletionStage<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
-         return CompletableFuture.runAsync(() -> txHandler.handlePrepareCommand(command), executor);
+         return blockingManager.runBlocking(() -> txHandler.handlePrepareCommand(command), command.getCommandId());
       }
 
       @Override
       public CompletionStage<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) {
-         return CompletableFuture.runAsync(() -> txHandler.handleCommitCommand(command), executor);
+         return blockingManager.runBlocking(() -> txHandler.handleCommitCommand(command), command.getCommandId());
       }
 
       @Override
       public CompletionStage<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) {
-         return CompletableFuture.runAsync(() -> txHandler.handleRollbackCommand(command), executor);
+         return blockingManager.runBlocking(() -> txHandler.handleRollbackCommand(command), command.getCommandId());
       }
 
       @Override
@@ -294,10 +298,10 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
 
       private final ActionSequencer sequencer;
 
-      private AsyncBackupHandler(TransactionHandler txHandler, ExecutorService executor, TimeService timeService,
-            boolean dropVersion) {
-         super(txHandler, executor, dropVersion);
-         sequencer = new ActionSequencer(executor, false, timeService);
+      private AsyncBackupHandler(TransactionHandler txHandler, BlockingManager blockingManager, TimeService timeService,
+            Executor nonBlockingExecutor, boolean dropVersion) {
+         super(txHandler, blockingManager, dropVersion);
+         sequencer = new ActionSequencer(nonBlockingExecutor, false, timeService);
       }
 
       @Override

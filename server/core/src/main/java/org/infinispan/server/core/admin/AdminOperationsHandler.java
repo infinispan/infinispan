@@ -5,14 +5,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.security.Security;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.spi.TaskEngine;
+import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * AdminOperationsHandler is a special {@link TaskEngine} which can handle admin tasks
@@ -41,9 +41,9 @@ public abstract class AdminOperationsHandler implements TaskEngine {
    }
 
    @Override
-   public <T> CompletableFuture<T> runTask(String taskName, TaskContext context, Executor executor) {
+   public <T> CompletionStage<T> runTask(String taskName, TaskContext context, BlockingManager blockingManager) {
       AdminServerTask<T> task = tasks.get(taskName);
-      return CompletableFuture.supplyAsync(() -> {
+      return blockingManager.supplyBlocking(() -> {
          try {
             if (context.getSubject().isPresent()) {
                return Security.doAs(context.getSubject().get(), (PrivilegedAction<T>) () -> task.execute(context));
@@ -55,7 +55,7 @@ public abstract class AdminOperationsHandler implements TaskEngine {
          } catch (Exception e) {
             throw new CacheException(e);
          }
-      }, executor);
+      }, taskName);
    }
 
    @Override

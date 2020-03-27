@@ -1,13 +1,10 @@
 package org.infinispan.query.impl.massindex;
 
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 
 import org.hibernate.search.spi.IndexedTypeIdentifier;
@@ -15,7 +12,6 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -27,6 +23,7 @@ import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.IndexInspector;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.function.TriConsumer;
@@ -47,7 +44,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    private final SearchIntegrator searchIntegrator;
    private final IndexUpdater indexUpdater;
    private final ClusterExecutor executor;
-   private final ExecutorService localExecutor;
+   private final BlockingManager blockingManager;
    private final MassIndexLock lock;
 
    @Inject
@@ -65,8 +62,8 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       this.searchIntegrator = searchIntegrator;
       this.indexUpdater = new IndexUpdater(searchIntegrator, keyTransformationHandler, timeService);
       this.executor = cache.getCacheManager().executor();
-      this.localExecutor = cache.getCacheManager().getGlobalComponentRegistry()
-            .getComponent(ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR);
+      this.blockingManager = cache.getCacheManager().getGlobalComponentRegistry()
+            .getComponent(BlockingManager.class);
       this.lock = MassIndexerLockFactory.buildLock(cache);
    }
 
@@ -116,7 +113,6 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
 
    private CompletableFuture<Void> executeInternal(boolean skipIndex) {
       if (lock.lock()) {
-         List<CompletableFuture<Void>> futures = new ArrayList<>();
          Deque<IndexedTypeIdentifier> toFlush = new LinkedList<>();
 
          BiConsumer<Void, Throwable> flushIfNeeded = (v, t) -> {
@@ -132,9 +128,8 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
          }
          try {
             IndexWorker indexWork = new IndexWorker(cache.getName(), indexedTypes, skipIndex, null);
-            futures.add(executor.submitConsumer(indexWork, TRI_CONSUMER));
-            CompletableFuture<Void> compositeFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-            return compositeFuture.whenCompleteAsync(flushIfNeeded, localExecutor);
+            CompletableFuture<Void> future = executor.submitConsumer(indexWork, TRI_CONSUMER);
+            return blockingManager.whenCompleteBlocking(future, flushIfNeeded, this).toCompletableFuture();
          } catch (Throwable t) {
             lock.unlock();
             return CompletableFutures.completedExceptionFuture(t);

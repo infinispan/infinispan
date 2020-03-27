@@ -11,6 +11,7 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.TestSuiteProgress;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.eviction.impl.EvictionWithConcurrentOperationsTest;
+import org.infinispan.notifications.cachelistener.CacheListenerVisibilityTest;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestBlocking;
 import org.infinispan.test.TestingUtil;
@@ -79,6 +80,9 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
       CommonsBlockHoundIntegration.allowMethodsToBlock(builder, Class.forName(ReplListener.class.getName() + "$ReplListenerInterceptor"), false);
       // This uses a lambda callback to invoke some methods - which aren't public
       CommonsBlockHoundIntegration.allowMethodsToBlock(builder, Class.forName(InboundRpcSequencerAction.class.getName() + "$SequencerPerCacheInboundInvocationHandler"), false);
+
+      builder.allowBlockingCallsInside(CacheListenerVisibilityTest.EntryModifiedWithAssertListener.class.getName(), "entryCreated");
+      builder.allowBlockingCallsInside(CacheListenerVisibilityTest.EntryCreatedWithAssertListener.class.getName(), "entryCreated");
    }
 
    private static void writeJUnitReport(String testName, Throwable throwable, String type) {

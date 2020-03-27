@@ -16,8 +16,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
+
 import javax.security.auth.Subject;
 import javax.transaction.Transaction;
 
@@ -37,6 +37,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.security.Security;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -52,6 +53,10 @@ import org.infinispan.util.logging.Log;
 @Scope(Scopes.NONE)
 public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
 
+   @Inject @ComponentName(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR)
+   protected Executor asyncProcessor;
+   @Inject
+   BlockingManager blockingManager;
    protected final Map<Class<? extends Annotation>, List<L>> listenersMap = new HashMap<>(16, 0.99f);
 
    protected abstract class AbstractInvocationBuilder {
@@ -116,13 +121,6 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
 
    }
 
-   // Processor used to handle async listener notifications.
-   @Inject @ComponentName(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR)
-   protected Executor asyncProcessor;
-   // Make sure all listeners resume on this executor
-   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
-   ExecutorService nonBlockingExecutor;
-
    /**
     * Removes all listeners from the notifier
     */
@@ -134,7 +132,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
    }
 
    protected CompletionStage<Void> resumeOnCPU(CompletionStage<Void> stage, Object traceId) {
-      return CompletionStages.continueOnExecutor(stage, nonBlockingExecutor, traceId);
+      return blockingManager.continueOnNonBlockingThread(stage, traceId);
    }
 
    protected abstract Log getLog();

@@ -1,7 +1,5 @@
 package org.infinispan.interceptors.distribution;
 
-import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -12,7 +10,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -48,7 +45,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.impl.BaseRpcInterceptor;
@@ -78,12 +74,9 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    @Inject protected InternalDataContainer dataContainer;
    @Inject protected StateTransferLock stateTransferLock;
    @Inject protected KeyPartitioner keyPartitioner;
-   @Inject @ComponentName(BLOCKING_EXECUTOR)
-   ExecutorService persistenceExecutor;
 
    private long l1Lifespan;
    private long replicationTimeout;
-   private boolean hasPassivation;
 
    /**
     *  This map holds all the current write synchronizers registered for a given key.  This map is only added to when an
@@ -114,7 +107,6 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    public void start() {
       l1Lifespan = cacheConfiguration.clustering().l1().lifespan();
       replicationTimeout = cacheConfiguration.clustering().remoteTimeout();
-      hasPassivation = cacheConfiguration.persistence().usingStores() && cacheConfiguration.persistence().passivation();
    }
 
    @Override
@@ -156,7 +148,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
                                                 boolean runInterceptorOnConflict, Object key, boolean isEntry) throws Throwable {
       // Most times the putIfAbsent will be successful, so not doing a get first
       L1WriteSynchronizer l1WriteSync = new L1WriteSynchronizer(dataContainer, l1Lifespan, stateTransferLock,
-                                                                cdl, hasPassivation ? persistenceExecutor : null);
+                                                                cdl);
       L1WriteSynchronizer presentSync = concurrentWrites.putIfAbsent(key, l1WriteSync);
 
       // If the sync was null that means we are the first to register for the given key.  If not that means there is

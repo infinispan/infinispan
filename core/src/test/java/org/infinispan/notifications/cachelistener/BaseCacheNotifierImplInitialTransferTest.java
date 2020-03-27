@@ -62,6 +62,7 @@ import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
@@ -149,11 +150,12 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
       cdl.init(null, config, mock(KeyPartitioner.class));
       ClusterEventManager cem = mock(ClusterEventManager.class);
-      when(cem.sendEvents()).thenReturn(CompletableFutures.completedNull());
+      when(cem.sendEvents(any())).thenReturn(CompletableFutures.completedNull());
+      BlockingManager handler = mock(BlockingManager.class);
+      when(handler.continueOnNonBlockingThread(any(), any())).thenReturn(CompletableFutures.completedNull());
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry, mockPublisherManager,
-                         new InternalEntryFactoryImpl(), cem, mock(KeyPartitioner.class),
-                         TestingUtil.named(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR, new WithinThreadExecutor()),
-                         TestingUtil.named(KnownComponentNames.NON_BLOCKING_EXECUTOR, new WithinThreadExecutor()));
+                         new InternalEntryFactoryImpl(), cem, mock(KeyPartitioner.class), handler,
+                         TestingUtil.named(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR, new WithinThreadExecutor()));
       n.start();
       ctx = new NonTxInvocationContext(null);
    }

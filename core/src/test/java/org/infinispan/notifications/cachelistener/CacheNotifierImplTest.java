@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
@@ -44,6 +45,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.BeforeMethod;
@@ -76,11 +78,13 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       Configuration config = new ConfigurationBuilder().build();
       cdl.init(null, config, mock(KeyPartitioner.class));
       ClusterEventManager cem = mock(ClusterEventManager.class);
-      when(cem.sendEvents()).thenReturn(CompletableFutures.completedNull());
+      when(cem.sendEvents(any())).thenReturn(CompletableFutures.completedNull());
+      BlockingManager handler = mock(BlockingManager.class);
+      when(handler.continueOnNonBlockingThread(any(), any())).thenReturn(CompletableFutures.completedNull());
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
                          mock(InternalEntryFactory.class), cem, mock(KeyPartitioner.class), new FakeEncoderRegistry(),
                          TestingUtil.named(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR, new WithinThreadExecutor()),
-                         TestingUtil.named(KnownComponentNames.NON_BLOCKING_EXECUTOR, new WithinThreadExecutor()));
+                         handler);
       cl = new CacheListener();
       n.start();
       addListener();

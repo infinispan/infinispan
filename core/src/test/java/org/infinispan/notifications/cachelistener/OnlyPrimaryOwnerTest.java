@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -46,6 +47,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -76,9 +78,9 @@ public class OnlyPrimaryOwnerTest {
       mockRegistry.registerMock(KnownComponentNames.INTERNAL_MARSHALLER, StreamingMarshaller.class);
       Configuration config = new ConfigurationBuilder().memory().storageType(StorageType.OBJECT).build();
       ClusterEventManager cem = mock(ClusterEventManager.class);
-      when(cem.sendEvents()).thenReturn(CompletableFutures.completedNull());
+      when(cem.sendEvents(any())).thenReturn(CompletableFutures.completedNull());
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
-                         mock(InternalEntryFactory.class), cem, mock(KeyPartitioner.class));
+                         mock(InternalEntryFactory.class), cem, mock(KeyPartitioner.class), mock(BlockingManager.class));
       cl = new PrimaryOwnerCacheListener();
       n.start();
       n.addListener(cl);

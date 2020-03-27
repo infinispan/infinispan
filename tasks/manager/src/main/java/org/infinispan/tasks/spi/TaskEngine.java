@@ -1,11 +1,11 @@
 package org.infinispan.tasks.spi;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
+import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * TaskEngine. An implementation of an engine for executing tasks. How the tasks are implemented is
@@ -32,10 +32,10 @@ public interface TaskEngine {
     *
     * @param taskName the name of the task
     * @param context a task context
-    * @param executor the executor which the can be used by the task engine to run the task
+    * @param blockingManager the handler for when a task is to be invoked that could block
     * @return
     */
-   <T> CompletableFuture<T> runTask(String taskName, TaskContext context, Executor executor);
+   <T> CompletionStage<T> runTask(String taskName, TaskContext context, BlockingManager blockingManager);
 
    /**
     * Returns whether this task engine knows about a specified named task

@@ -59,6 +59,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService scheduledExecutorService;
 
+   // TODO: To be removed with https://issues.redhat.com/browse/ISPN-11553
    @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
    Executor executor;
 

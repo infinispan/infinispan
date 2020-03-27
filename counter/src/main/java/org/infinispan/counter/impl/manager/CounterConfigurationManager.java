@@ -4,13 +4,13 @@ import static org.infinispan.counter.configuration.ConvertUtil.parsedConfigToCon
 import static org.infinispan.counter.impl.Utils.validateStrongCounterBounds;
 import static org.infinispan.counter.logging.Log.CONTAINER;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -21,7 +21,7 @@ import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.configuration.AbstractCounterConfiguration;
 import org.infinispan.counter.configuration.CounterManagerConfiguration;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
-import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.counter.logging.Log;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.ScopeFilter;
 import org.infinispan.globalstate.ScopedState;
@@ -32,7 +32,9 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.stream.CacheCollectors;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Stores all the defined counter's configuration.
@@ -45,6 +47,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @since 9.2
  */
 public class CounterConfigurationManager {
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
 
    public static final String COUNTER_SCOPE = "counter";
    private final AtomicBoolean counterCacheStarted = new AtomicBoolean(false);
@@ -125,14 +128,17 @@ public class CounterConfigurationManager {
                }
                //put configuration in cache
                return stateCache.putIfAbsentAsync(stateKey(name), configuration)
-                     .thenApply(cfg -> {
+                     .thenCompose(cfg -> {
                         if (cfg == null) {
+                           BlockingManager blockingManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(BlockingManager.class);
                            //the counter was created. we need to persist it (if the counter is persistent)
-                           storage.store(name, configuration);
-                           return Boolean.TRUE;
+                           return blockingManager.supplyBlocking(() -> {
+                              storage.store(name, configuration);
+                              return Boolean.TRUE;
+                           }, name);
                         } else {
                            //already defined.
-                           return Boolean.FALSE;
+                           return CompletableFutures.completedFalse();
                         }
                      });
             });
@@ -231,19 +237,19 @@ public class CounterConfigurationManager {
 
    private void startCounterCache() {
       if (counterCacheStarted.compareAndSet(false, true)) {
-         SecurityActions.getGlobalComponentRegistry(cacheManager)
-               .getComponent(Executor.class, KnownComponentNames.BLOCKING_EXECUTOR)
-               .execute(() -> {
-                  String oldName = Thread.currentThread().getName();
-                  try {
-                     GlobalConfiguration configuration = SecurityActions.getCacheManagerConfiguration(cacheManager);
-                     String threadName = "CounterCacheStartThread," + configuration.transport().nodeName();
-                     SecurityActions.setThreadName(threadName);
-                     cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME);
-                  } finally {
-                     SecurityActions.setThreadName(oldName);
-                  }
-               });
+         BlockingManager blockingManager = SecurityActions.getGlobalComponentRegistry(cacheManager)
+               .getComponent(BlockingManager.class);
+         blockingManager.runBlocking(() -> {
+               String oldName = Thread.currentThread().getName();
+               try {
+                  GlobalConfiguration configuration = SecurityActions.getCacheManagerConfiguration(cacheManager);
+                  String threadName = "CounterCacheStartThread," + configuration.transport().nodeName();
+                  SecurityActions.setThreadName(threadName);
+                  cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME);
+               } finally {
+                  SecurityActions.setThreadName(oldName);
+               }
+            }, CounterModuleLifecycle.COUNTER_CACHE_NAME);
       }
    }
 

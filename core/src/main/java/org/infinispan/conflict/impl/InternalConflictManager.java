@@ -1,7 +1,7 @@
 package org.infinispan.conflict.impl;
 
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.conflict.ConflictManager;
 import org.infinispan.factories.scopes.Scope;
@@ -18,6 +18,6 @@ public interface InternalConflictManager<K, V> extends ConflictManager<K, V> {
    void cancelVersionRequests();
    void restartVersionRequests();
    void cancelConflictResolution();
-   CompletableFuture<Void> resolveConflicts(CacheTopology cacheTopology, Set<Address> preferredNodes);
+   CompletionStage<Void> resolveConflicts(CacheTopology cacheTopology, Set<Address> preferredNodes);
    StateReceiver getStateReceiver();
 }
