@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.hibernate.search.spi.IndexedTypeIdentifier;
@@ -46,17 +47,17 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
 public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
 
    private final String cacheName;
-   private final IndexedTypeIdentifier indexedType;
+   private final Set<IndexedTypeIdentifier> indexedTypes;
    private final boolean flush;
    private final boolean clean;
    private final boolean skipIndex;
    private final boolean primaryOwner;
    private final Set<Object> keys;
 
-   IndexWorker(String cacheName, IndexedTypeIdentifier indexedType, boolean flush, boolean clean, boolean skipIndex,
+   IndexWorker(String cacheName, Set<IndexedTypeIdentifier> indexedTypes, boolean flush, boolean clean, boolean skipIndex,
                boolean primaryOwner, Set<Object> keys) {
       this.cacheName = cacheName;
-      this.indexedType = indexedType;
+      this.indexedTypes = indexedTypes;
       this.flush = flush;
       this.clean = clean;
       this.skipIndex = skipIndex;
@@ -102,9 +103,9 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
                   if (value instanceof byte[] && storageType != OBJECT) {
                      value = wrapper.wrap(value);
                   }
-                  //TODO do not use Class equality but refactor to type equality:
-                  if (value != null && value.getClass().equals(indexedType.getPojoType()))
+                  if (value != null && indexedTypes.contains(PojoIndexedTypeIdentifier.convertFromLegacy(value.getClass()))) {
                      indexUpdater.updateIndex(next.getKey(), value, segment);
+                  }
                }
             }
          }
@@ -118,19 +119,19 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
                classSet.add(value.getClass());
             }
          }
-         for (Class<?> clazz : classSet)
-            indexUpdater.flush(PojoIndexedTypeIdentifier.convertFromLegacy(clazz));
+         Set<IndexedTypeIdentifier> toFlush = classSet.stream().map(PojoIndexedTypeIdentifier::convertFromLegacy).collect(Collectors.toSet());
+         indexUpdater.flush(toFlush);
       }
       return null;
    }
 
    private void preIndex(IndexUpdater indexUpdater) {
-      if (clean) indexUpdater.purge(indexedType);
+      if (clean) indexUpdater.purge(indexedTypes);
    }
 
    private void postIndex(IndexUpdater indexUpdater) {
       indexUpdater.waitForAsyncCompletion();
-      if (flush) indexUpdater.flush(indexedType);
+      if (flush) indexUpdater.flush(indexedTypes);
    }
 
    private KeyValueFilter getFilter(ClusteringDependentLogic clusteringDependentLogic, DataConversion keyDataConversion) {
@@ -151,7 +152,13 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       @Override
       public void writeObject(ObjectOutput output, IndexWorker worker) throws IOException {
          output.writeObject(worker.cacheName);
-         output.writeObject(PojoIndexedTypeIdentifier.convertToLegacy(worker.indexedType));
+         if (worker.indexedTypes == null) {
+            output.writeInt(0);
+         } else {
+            output.writeInt(worker.indexedTypes.size());
+            for (IndexedTypeIdentifier indexedTypeIdentifier : worker.indexedTypes)
+               output.writeObject(PojoIndexedTypeIdentifier.convertToLegacy(indexedTypeIdentifier));
+         }
          output.writeBoolean(worker.flush);
          output.writeBoolean(worker.clean);
          output.writeBoolean(worker.primaryOwner);
@@ -162,14 +169,17 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       @Override
       public IndexWorker readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          String cacheName = (String) input.readObject();
-         Class indexedClass = (Class) input.readObject();
+         int typesSize = input.readInt();
+         Set<IndexedTypeIdentifier> types = new HashSet<>(typesSize);
+         for (int i = 0; i < typesSize; i++) {
+            types.add(PojoIndexedTypeIdentifier.convertFromLegacy((Class<?>) input.readObject()));
+         }
          boolean flush = input.readBoolean();
          boolean clean = input.readBoolean();
          boolean primaryOwner = input.readBoolean();
          boolean skipIndex = input.readBoolean();
          Set<Object> keys = (Set<Object>) input.readObject();
-         return new IndexWorker(cacheName, PojoIndexedTypeIdentifier.convertFromLegacy(indexedClass), flush, clean,
-               skipIndex, primaryOwner, keys);
+         return new IndexWorker(cacheName, types, flush, clean, skipIndex, primaryOwner, keys);
       }
 
       @Override

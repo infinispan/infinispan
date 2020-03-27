@@ -1,5 +1,7 @@
 package org.infinispan.query.impl.massindex;
 
+import java.util.Collection;
+
 import org.hibernate.search.backend.UpdateLuceneWork;
 import org.hibernate.search.bridge.spi.ConversionContext;
 import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
@@ -8,6 +10,7 @@ import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.spi.DefaultInstanceInitializer;
 import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.impl.IndexedTypeSets;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.query.backend.KeyTransformationHandler;
@@ -34,14 +37,14 @@ public class IndexUpdater {
       this.defaultBatchBackend = new ExtendedBatchBackend(searchIntegrator, new DefaultMassIndexerProgressMonitor(timeService));
    }
 
-   public void flush(IndexedTypeIdentifier entity) {
-      LOG.flushingIndex(entity.getName());
-      defaultBatchBackend.flush(entity.asTypeSet());
+   public void flush(Collection<IndexedTypeIdentifier> entities) {
+      LOG.flushingIndex(entities.toString());
+      defaultBatchBackend.flush(IndexedTypeSets.fromIdentifiers(entities));
    }
 
-   public void purge(IndexedTypeIdentifier entity) {
-      LOG.purgingIndex(entity.getName());
-      defaultBatchBackend.purge(entity.asTypeSet());
+   public void purge(Collection<IndexedTypeIdentifier> entities) {
+      LOG.purgingIndex(entities.toString());
+      defaultBatchBackend.purge(IndexedTypeSets.fromIdentifiers(entities));
    }
 
    public void waitForAsyncCompletion() {
