@@ -97,10 +97,10 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       nonBlockingExecutorService = new DummyTaskCountExecutorService(realExecutor);
       blockingExecutorService = new DummyTaskCountExecutorService(realExecutor);
       BlockingTaskAwareExecutorService nonBlockingExecutor =
-         new BlockingTaskAwareExecutorServiceImpl("AsynchronousInvocationTest-Controller-NonBlocking", nonBlockingExecutorService,
+         new BlockingTaskAwareExecutorServiceImpl(nonBlockingExecutorService,
                                                   TIME_SERVICE);
       BlockingTaskAwareExecutorService blockingExecutor =
-            new BlockingTaskAwareExecutorServiceImpl("AsynchronousInvocationTest-Controller-Blocking", blockingExecutorService,
+            new BlockingTaskAwareExecutorServiceImpl(blockingExecutorService,
                   TIME_SERVICE);
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalBuilder.defaultCacheName(CACHE_NAME);
