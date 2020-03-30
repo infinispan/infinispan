@@ -16,7 +16,6 @@ include::config_examples/persistence_rocksdb_example.xml[]
 
 .Programmatic configuration
 
-//dnaro:need to verify these config examples and distinguish between them more clearly
 [source,java]
 ----
 include::code_examples/ConfigRocksDb.java[]
@@ -34,11 +33,13 @@ include::code_examples/ConfigRocksDbProperties.java[]
 
 | `location`
 | Specifies the path to the RocksDB database that provides the primary cache
-store. If you do not set the location, it gets automatically created.
+store. If you do not set the location, it is automatically created. Note that
+the path must be relative to the global persistent location.
 
 | `expiredLocation`
 | Specifies the path to the RocksDB database that provides the cache store for
-expired data. If you do not set the location, it gets automatically created.
+expired data. If you do not set the location, it is automatically created. Note
+that the path must be relative to the global persistent location.
 
 | `expiryQueueSize`
 | Sets the size of the in-memory queue for expiring entries. When the queue
