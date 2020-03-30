@@ -100,7 +100,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       args.add(configurationFile);
       args.add("-b");
       args.add("SITE_LOCAL");
-      args.add("-Djgroups.tcp.address=SITE_LOCAL");
+      args.add("-Djgroups.bind.address=SITE_LOCAL");
       args.add("-Dinfinispan.cluster.name=" + name);
       args.add("-D" + TEST_HOST_ADDRESS + "=" + testHostAddress.getHostName());
       if (configuration.isJMXEnabled()) {
@@ -183,7 +183,9 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                   }));
                }
             } else {
-               Files.walkFileTree(Paths.get(overlayUri), new CommonsTestingUtil.CopyFileVisitor(tmp, true));
+               Files.walkFileTree(Paths.get(overlayUri), new CommonsTestingUtil.CopyFileVisitor(tmp, true, f -> {
+                  f.setExecutable(true, false);
+               }));
             }
 
          } catch (Exception e) {
@@ -198,7 +200,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                      11222, // Protocol endpoint
                      11221, // Memcached endpoint
                      7800,  // JGroups TCP
-                     43366, // JGroups MPING
+                     46655, // JGroups UDP
                      9999   // JMX Remoting
                )
                .build();
@@ -207,12 +209,12 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       if (configuration.isParallelStartup()) {
          latch = new CountdownLatchLoggingConsumer(configuration.numServers(), STARTUP_MESSAGE_REGEX);
          IntStream.range(0, configuration.numServers()).forEach(i -> createContainer(i, name, rootDir));
-         Exceptions.unchecked(() -> latch.awaitStrict(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+         Exceptions.unchecked(() -> latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
       } else {
          for (int i = 0; i < configuration.numServers(); i++) {
             latch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
             createContainer(i, name, rootDir);
-            Exceptions.unchecked(() -> latch.awaitStrict(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            Exceptions.unchecked(() -> latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
          }
       }
    }
@@ -349,7 +351,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       containers.set(server, container);
       log.infof("Restarting container %s-%d", name, server);
       container.start();
-      Exceptions.unchecked(() -> latch.awaitStrict(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      Exceptions.unchecked(() -> latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
    @Override
@@ -361,7 +363,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          log.infof("Restarting container %s-%d", name, i);
          container.start();
       }
-      Exceptions.unchecked(() -> latch.awaitStrict(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      Exceptions.unchecked(() -> latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
    @Override
