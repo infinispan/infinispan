@@ -98,11 +98,9 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
          case SCHEDULED:
             return (T) new LazyInitializingScheduledExecutorService(executorFactory, threadFactory);
          default:
-            final String controllerName = "Controller-" + shortened(componentName) + "-" +
                   globalConfiguration.transport().nodeName();
             return (T) new LazyInitializingBlockingTaskAwareExecutorService(executorFactory, threadFactory,
-                                                                        globalComponentRegistry.getTimeService(),
-                                                                        controllerName);
+                                                                        globalComponentRegistry.getTimeService());
       }
    }
 

@@ -84,16 +84,14 @@ public final class LazyInitializingBlockingTaskAwareExecutorService
    private final ThreadPoolExecutorFactory<ExecutorService> executorFactory;
    private final ThreadFactory threadFactory;
    private final TimeService timeService;
-   private final String controllerThreadName;
    private volatile BlockingTaskAwareExecutorService blockingExecutor;
 
    public LazyInitializingBlockingTaskAwareExecutorService(ThreadPoolExecutorFactory<ExecutorService> executorFactory,
                                                            ThreadFactory threadFactory,
-                                                           TimeService timeService, String controllerThreadName) {
+                                                           TimeService timeService) {
       this.executorFactory = executorFactory;
       this.threadFactory = threadFactory;
       this.timeService = timeService;
-      this.controllerThreadName = controllerThreadName;
    }
 
    @Override
@@ -207,7 +205,7 @@ public final class LazyInitializingBlockingTaskAwareExecutorService
                // The superclass methods only work if the blockingExecutor is a ThreadPoolExecutor
                this.executor = executorFactory.createExecutor(threadFactory);
                this.blockingExecutor =
-                  new BlockingTaskAwareExecutorServiceImpl(controllerThreadName , executor, timeService);
+                  new BlockingTaskAwareExecutorServiceImpl(executor, timeService);
             }
          }
       }

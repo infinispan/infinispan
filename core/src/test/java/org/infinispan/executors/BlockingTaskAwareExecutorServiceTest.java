@@ -77,10 +77,9 @@ public class BlockingTaskAwareExecutorServiceTest extends AbstractInfinispanTest
    }
 
    private BlockingTaskAwareExecutorServiceImpl createExecutorService() {
-      final String controllerName = "Controller-" + getClass().getSimpleName();
       final ExecutorService realOne = new ThreadPoolExecutor(1, 2, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
                                                              new DummyThreadFactory());
-      return new BlockingTaskAwareExecutorServiceImpl(controllerName, realOne, TIME_SERVICE);
+      return new BlockingTaskAwareExecutorServiceImpl(realOne, TIME_SERVICE);
    }
 
    public static class DummyThreadFactory implements ThreadFactory {

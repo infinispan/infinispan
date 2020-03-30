@@ -1,6 +1,5 @@
 package org.infinispan.util.concurrent;
 
-import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -9,8 +8,8 @@ import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
@@ -31,16 +30,15 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
    private final Queue<BlockingRunnable> blockedTasks;
    private final ExecutorService executorService;
    private final TimeService timeService;
-   private final ControllerThread controllerThread;
    private volatile boolean shutdown;
 
-   public BlockingTaskAwareExecutorServiceImpl(String controllerThreadName, ExecutorService executorService, TimeService timeService) {
+   private final AtomicInteger requestCounter = new AtomicInteger();
+
+   public BlockingTaskAwareExecutorServiceImpl(ExecutorService executorService, TimeService timeService) {
       this.blockedTasks = new ConcurrentLinkedQueue<>();
       this.executorService = executorService;
       this.timeService = timeService;
       this.shutdown = false;
-      this.controllerThread = new ControllerThread(controllerThreadName);
-      controllerThread.start();
    }
 
    @Override
@@ -56,7 +54,7 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
       } else {
          //we no longer submit directly to the executor service.
          blockedTasks.offer(runnable);
-         controllerThread.checkForReadyTask();
+         checkForReadyTasks();
          if (trace) {
             log.tracef("Added a new task to the queue: %d task(s) are waiting", blockedTasks.size());
          }
@@ -66,14 +64,12 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
    @Override
    public void shutdown() {
       shutdown = true;
-      controllerThread.interrupt();
       executorService.shutdown();
    }
 
    @Override
    public List<Runnable> shutdownNow() {
       shutdown = true;
-      controllerThread.interrupt();
       List<Runnable> runnableList = new LinkedList<>();
       runnableList.addAll(executorService.shutdownNow());
       runnableList.addAll(blockedTasks);
@@ -103,7 +99,9 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
 
    @Override
    public final void checkForReadyTasks() {
-      controllerThread.checkForReadyTask();
+      if (!blockedTasks.isEmpty()) {
+         tryBlockedTasks();
+      }
    }
 
    @Override
@@ -128,53 +126,17 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
       return executorService;
    }
 
-   private void doExecute(BlockingRunnable runnable) {
-      try {
-         executorService.execute(runnable);
-      } catch (RejectedExecutionException rejected) {
-         //put it back!
-         blockedTasks.offer(runnable);
-         checkForReadyTasks();
-      }
-   }
-
-   private class ControllerThread extends Thread {
-
-      private final Semaphore semaphore;
-      private volatile boolean interrupted;
-
-      public ControllerThread(String controllerThreadName) {
-         super(controllerThreadName);
-         this.setUncaughtExceptionHandler((t, e) -> log.errorf(e, "Exception in thread %s", t.getName()));
-         semaphore = new Semaphore(0);
-      }
-
-      public void checkForReadyTask() {
-         semaphore.release();
-      }
-
-      @Override
-      public void interrupt() {
-         interrupted = true;
-         super.interrupt();
-         semaphore.release();
-
-      }
-
-      @Override
-      public void run() {
-         while (!interrupted) {
-            try {
-               semaphore.acquire();
-            } catch (InterruptedException e) {
-               return;
-            }
-            semaphore.drainPermits();
-            int size = blockedTasks.size();
-            if (size == 0) {
-               continue;
-            }
-            ArrayDeque<BlockingRunnable> readyList = new ArrayDeque<>(size);
+   /**
+    * Attempts to run any blocked tasks that are now able to be ran. Note that if concurrent threads invoke this
+    * method only one can run the given tasks. If an additional thread attempts to run the given tasks it will
+    * restart the original one.
+    */
+   private void tryBlockedTasks() {
+      int counter = requestCounter.getAndIncrement();
+      if (counter == 0) {
+         do {
+            int taskExecutionCount = 0;
+            int remaining = 0;
             for (Iterator<BlockingRunnable> iterator = blockedTasks.iterator(); iterator.hasNext(); ) {
                BlockingRunnable runnable = iterator.next();
                boolean ready;
@@ -185,21 +147,33 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
                   iterator.remove();
                   continue;
                }
+               boolean executed = false;
                if (ready) {
                   iterator.remove();
-                  readyList.addLast(runnable);
+                  executed = doExecute(runnable);
+               }
+               if (executed) {
+                  taskExecutionCount++;
+               } else {
+                  remaining++;
                }
             }
-
             if (trace) {
-               log.tracef("Tasks to be executed=%s, still pending=~%s", readyList.size(), size);
+               log.tracef("Tasks executed=%s, still pending=~%s", taskExecutionCount, remaining);
             }
+         } while ((counter = requestCounter.addAndGet(-counter)) != 0);
+      }
+   }
 
-            BlockingRunnable runnable;
-            while ((runnable = readyList.pollFirst()) != null) {
-               doExecute(runnable);
-            }
-         }
+   private boolean doExecute(BlockingRunnable runnable) {
+      try {
+         executorService.execute(runnable);
+         return true;
+      } catch (RejectedExecutionException rejected) {
+         //put it back!
+         blockedTasks.offer(runnable);
+         requestCounter.incrementAndGet();
+         return false;
       }
    }
 
