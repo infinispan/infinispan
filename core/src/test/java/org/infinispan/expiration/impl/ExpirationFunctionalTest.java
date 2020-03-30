@@ -66,13 +66,20 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
    }
 
    protected EmbeddedCacheManager createCacheManager(ConfigurationBuilder builder) {
+      GlobalConfigurationBuilder globalBuilder;
       if (builder.clustering().cacheMode().isClustered()) {
-         return TestCacheManagerFactory.createClusteredCacheManager(false,
-               GlobalConfigurationBuilder.defaultClusteredBuilder(), builder, new TransportFlags());
+         globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+         configure(globalBuilder);
+         return TestCacheManagerFactory.createClusteredCacheManager(false, globalBuilder, builder, new TransportFlags());
       } else {
-         return TestCacheManagerFactory.createCacheManager(new GlobalConfigurationBuilder().nonClusteredDefault(),
-                                                           builder, false);
+         globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+         configure(globalBuilder);
+         return TestCacheManagerFactory.createCacheManager(globalBuilder, builder, false);
       }
+   }
+
+   protected void configure(GlobalConfigurationBuilder globalBuilder) {
+      // no-op
    }
 
    protected void configure(ConfigurationBuilder config) {

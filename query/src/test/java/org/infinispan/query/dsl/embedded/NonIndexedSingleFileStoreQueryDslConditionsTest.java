@@ -4,6 +4,7 @@ import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -32,14 +33,14 @@ public class NonIndexedSingleFileStoreQueryDslConditionsTest extends NonIndexedQ
    @Override
    protected void createCacheManagers() throws Throwable {
       Util.recursiveFileRemove(tmpDirectory);
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.serialization().addContextInitializer(DslSCI.INSTANCE);
+      globalBuilder.globalState().persistentLocation(tmpDirectory);
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      cfg.persistence()
-            .addStore(SingleFileStoreConfigurationBuilder.class)
-            .location(tmpDirectory);
+      cfg.persistence().addStore(SingleFileStoreConfigurationBuilder.class);
 
       // ensure the data container contains minimal data so the store will need to be accessed to get the rest
       cfg.locking().concurrencyLevel(1).memory().size(1L);
-
-      createClusteredCaches(1, DslSCI.INSTANCE, cfg);
+      createClusteredCaches(1, globalBuilder, cfg, false);
    }
 }

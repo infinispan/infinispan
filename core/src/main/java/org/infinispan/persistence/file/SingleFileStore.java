@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,6 +28,7 @@ import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
+import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
@@ -106,13 +108,9 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    @Override
    public void start() {
+      Path location = PersistenceUtil.getQualifiedLocation(ctx.getGlobalConfiguration(), configuration.location(), ctx.getCache().getName(), "data");
       try {
-         // open the data file
-         String location = configuration.location();
-         if (location == null || location.trim().length() == 0) {
-            location = ctx.getGlobalConfiguration().globalState().persistentLocation();
-         }
-         file = new File(location, ctx.getCache().getName() + ".dat");
+         file = new File(location.toFile(), ctx.getCache().getName() + ".dat");
          if (!file.exists()) {
             File dir = file.getParentFile();
             if (!dir.mkdirs() && !dir.exists()) {

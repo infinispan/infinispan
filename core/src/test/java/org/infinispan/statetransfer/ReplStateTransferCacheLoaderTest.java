@@ -9,6 +9,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
@@ -35,12 +36,16 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
    private static final Log log = LogFactory.getLog(ReplStateTransferCacheLoaderTest.class);
 
    private File tmpDir;
+   private GlobalConfigurationBuilder globalBuilder;
    private ConfigurationBuilder builder;
 
    @Override
    protected void createCacheManagers() {
       tmpDir = new File(CommonsTestingUtil.tmpDirectory(this.getClass()));
       Util.recursiveFileRemove(tmpDir);
+
+      globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.globalState().persistentLocation(tmpDir.getPath());
 
       // reproduce the MODE-1754 config as closely as possible
       builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true, true);
@@ -53,12 +58,9 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
             .memory().storageType(StorageType.BINARY)
             .clustering().remoteTimeout(20000)
             .stateTransfer().timeout(240000).fetchInMemoryState(false).chunkSize(10000)
-            .persistence().passivation(false).addSingleFileStore().location(new File(tmpDir, "store0").getAbsolutePath()).shared(false).preload(false)
-            .fetchPersistentState(true)
-            .ignoreModifications(false)
-            .purgeOnStartup(false);
+            .persistence().addSingleFileStore().location("store0");
 
-      createCluster(builder, 1);
+      createCluster(globalBuilder, builder, 1);
       waitForClusterToForm();
    }
 
@@ -67,7 +69,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
       Util.recursiveFileRemove(tmpDir);
    }
 
-   public void testStateTransfer() throws Exception {
+   public void testStateTransfer() {
       final int numKeys = 300;
       for (int i = 0; i < numKeys; i++) {
          cache(0).put(i, i);
@@ -79,16 +81,15 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
       }
 
       log.info("Adding a new node ..");
-      builder.persistence().clearStores().addSingleFileStore().location(new File(tmpDir, "store1").getAbsolutePath())  // make sure this node writes in a different location
-            .fetchPersistentState(true)
-            .ignoreModifications(false)
-            .purgeOnStartup(false);
+      // make sure this node writes in a different location
+      builder.persistence().clearStores().addSingleFileStore().location("store1").fetchPersistentState(true);
 
-      addClusterEnabledCacheManager(builder);
+      addClusterEnabledCacheManager(globalBuilder, builder);
       log.info("Added a new node");
 
       for (int i = 0; i < numKeys; i++) {
-         assertEquals(i, cache(1).get(i));   // some keys are lost in 5.2
+         // some keys are lost in 5.2
+         assertEquals(i, cache(1).get(i));
       }
    }
 }

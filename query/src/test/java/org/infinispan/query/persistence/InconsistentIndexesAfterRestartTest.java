@@ -14,6 +14,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
@@ -76,30 +77,25 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
     }
 
     private EmbeddedCacheManager getCacheManager(boolean batchingEnabled) {
+       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+       globalBuilder.globalState().persistentLocation(TMP_DIR);
+       globalBuilder.serialization().addContextInitializer(SCI.INSTANCE);
+
        ConfigurationBuilder builder = new ConfigurationBuilder();
        builder
           .persistence()
-             .passivation(false)
           .addSingleFileStore()
-             .location(TMP_DIR + File.separator + "cacheStore")
-             .preload(false)
              .fetchPersistentState(true)
-             .purgeOnStartup(false)
           .indexing()
              .enable()
              .addIndexedEntity(SEntity.class)
              .addProperty("default.directory_provider", "filesystem")
              .addProperty("lucene_version", "LUCENE_CURRENT")
-             .addProperty("default.indexBase", TMP_DIR + File.separator + "idx");
+             .addProperty("default.indexBase", TMP_DIR + File.separator + "idx")
+          .invocationBatching()
+             .enable(batchingEnabled);
 
-       if (batchingEnabled) {
-          builder.invocationBatching().enable();
-       }
-       else {
-          builder.invocationBatching().disable();
-       }
-
-       return TestCacheManagerFactory.createCacheManager(SCI.INSTANCE, builder);
+       return TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
     }
 
     private List searchByName(String name, Cache c) {
@@ -115,8 +111,6 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
     public static class SEntity implements Serializable {
 
         public static final String IDX_NAME = "name";
-
-        public static final String IDX_SURNAME = "surname";
 
         private final long id;
 

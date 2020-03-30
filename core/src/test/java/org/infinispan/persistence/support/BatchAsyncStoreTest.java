@@ -1,12 +1,12 @@
 package org.infinispan.persistence.support;
 
-import java.io.File;
 import java.util.HashMap;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
 public class BatchAsyncStoreTest extends SingleCacheManagerTest {
 
    private final HashMap<Object, Object> cacheCopy = new HashMap<Object, Object>();
+   private String tmpDirectory;
 
    public BatchAsyncStoreTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -33,28 +34,27 @@ public class BatchAsyncStoreTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.globalState().persistentLocation(tmpDirectory);
+
       ConfigurationBuilder configuration = new ConfigurationBuilder();
       configuration.invocationBatching().enable();
       enableTestJdbcStorage(configuration);
 
-      return TestCacheManagerFactory.createCacheManager(configuration);
+      return TestCacheManagerFactory.createCacheManager(globalBuilder, configuration);
    }
 
    private void enableTestJdbcStorage(ConfigurationBuilder configuration) throws Exception {
       configuration
          .persistence()
-            .passivation(false)
             .addSingleFileStore()
-               .preload(false)
-               .shared(false)
-               .location(tmpDirectory)
                .async()
                   .enable()
                   .threadPoolSize(1);
    }
 
    @Test
-   public void sequantialOvewritingInBatches() {
+   public void sequentialOverwritingInBatches() {
       cache = cacheManager.getCache();
       AdvancedCache<Object,Object> advancedCache = cache.getAdvancedCache();
       for (int i = 0; i < 2000;) {
@@ -74,7 +74,7 @@ public class BatchAsyncStoreTest extends SingleCacheManagerTest {
       advancedCache.put(key, value);
    }
 
-   @Test(dependsOnMethods = "sequantialOvewritingInBatches")
+   @Test(dependsOnMethods = "sequentialOverwritingInBatches")
    public void indexWasStored() {
       cache = cacheManager.getCache();
       Assert.assertEquals(0, cache.getAdvancedCache().getDataContainer().size());
@@ -91,12 +91,9 @@ public class BatchAsyncStoreTest extends SingleCacheManagerTest {
       Assert.assertEquals(cacheCopy.keySet().size(), cache.keySet().size(), "have a different number of keys");
    }
 
-   private String tmpDirectory;
-
    @BeforeClass
    protected void setUpTempDir() {
       tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
-      new File(tmpDirectory).mkdirs();
    }
 
    @AfterClass

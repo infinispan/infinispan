@@ -20,15 +20,16 @@ import java.util.concurrent.Future;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -53,11 +54,18 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       location = CommonsTestingUtil.tmpDirectory(SingleFileStoreStressTest.class);
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.globalState().persistentLocation(location);
+
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.persistence().addSingleFileStore().location(this.location).purgeOnStartup(true).segmented(false);
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(builder);
+      builder.persistence().addSingleFileStore().purgeOnStartup(true).segmented(false);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
       cacheManager.defineConfiguration(CACHE_NAME, builder.build());
       return cacheManager;
+   }
+
+   private File getFileStore() {
+      return new File(location, String.format("%1$s/data/%1$s.dat", CACHE_NAME));
    }
 
    public void testReadsAndWrites() throws ExecutionException, InterruptedException {
@@ -140,7 +148,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       long [] fileSizesWithoutPurge = new long [times];
       long [] fileSizesWithPurge = new long [times];
-      File file = new File(location, CACHE_NAME + ".dat");
+      File file = getFileStore();
 
       // Write values for all keys iteratively such that the entry size increases during each iteration
       // Also record the file size after each such iteration.
@@ -211,7 +219,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          readFutures[i].get();
       }
 
-      File file = new File(location, CACHE_NAME + ".dat");
+      File file = getFileStore();
       long length1 = file.length();
       store.purge(null, null);
       long length2 = file.length();
@@ -392,7 +400,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       @Override
       public Object call() throws Exception {
-         File file = new File(location, CACHE_NAME + ".dat");
+         File file = getFileStore();
          assertTrue(file.exists());
 
          MILLISECONDS.sleep(100);
@@ -422,7 +430,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       @Override
       public Object call() throws Exception {
-         File file = new File(location, CACHE_NAME + ".dat");
+         File file = getFileStore();
          assertTrue(file.exists());
 
          Long sum = Flowable.fromPublisher(store.entryPublisher(null, true, true))
@@ -445,7 +453,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       @Override
       public Object call() throws Exception {
-         File file = new File(location, CACHE_NAME + ".dat");
+         File file = getFileStore();
          assertTrue(file.exists());
 
          Long sum = Flowable.fromPublisher(store.entryPublisher(null, false, false))

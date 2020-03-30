@@ -17,6 +17,7 @@ import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -216,17 +217,21 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
    }
 
    protected EmbeddedCacheManager createCacheManager(int maxEntries) throws Exception {
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.globalState().persistentLocation(storeDir.getAbsolutePath());
+      globalBuilder.serialization().addContextInitializer(QueryTestSCI.INSTANCE);
+
       ConfigurationBuilder b = new ConfigurationBuilder();
       b.memory().evictionType(EvictionType.COUNT).size(maxEntries)
             .persistence().passivation(true)
-            .addSingleFileStore().location(storeDir.getAbsolutePath()).preload(true)
+            .addSingleFileStore().preload(true)
             .indexing().enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(Car.class)
             .addProperty("default.directory_provider", "filesystem")
             .addProperty("default.indexBase", indexDir.getAbsolutePath())
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, b);
+      return TestCacheManagerFactory.createCacheManager(globalBuilder, b);
    }
 
    protected EmbeddedCacheManager createVolatileCacheManager() {
