@@ -22,8 +22,6 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -35,7 +33,6 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "persistence.decorators.AsyncStoreWithoutEvictionFunctionalTest")
 public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanTest {
 
-   private static final Log log = LogFactory.getLog(AsyncStoreWithoutEvictionFunctionalTest.class);
    private DefaultCacheManager dcm;
 
    private boolean segmented;
@@ -75,8 +72,7 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
       SingleFileStoreConfigurationBuilder bld = new ConfigurationBuilder()
             .clustering().cacheMode(CacheMode.LOCAL)
             .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
-            .persistence().passivation(false)
-            .addSingleFileStore().preload(false).purgeOnStartup(false).segmented(segmented).location(tmpDirectory.getAbsolutePath());
+            .persistence().addSingleFileStore().segmented(segmented);
 
       if (async) {
          bld.async().enable().threadPoolSize(10).modificationQueueSize(1000);

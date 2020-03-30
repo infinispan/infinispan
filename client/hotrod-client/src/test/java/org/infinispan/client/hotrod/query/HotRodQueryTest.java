@@ -60,6 +60,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
          .mBeanServerLookup(mBeanServerLookup);
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       gcb.serialization().addContextInitializer(TestDomainSCI.INSTANCE);
+      configure(gcb);
 
       ConfigurationBuilder builder = getConfigurationBuilder();
 
@@ -75,6 +76,10 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
 
       remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
       return cacheManager;
+   }
+
+   protected void configure(GlobalConfigurationBuilder builder) {
+      // no-op
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

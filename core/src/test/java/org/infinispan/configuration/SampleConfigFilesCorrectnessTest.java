@@ -11,6 +11,8 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
+import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -34,6 +36,7 @@ public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(SampleConfigFilesCorrectnessTest.class);
 
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+   private final String globalPersistentLocation = CommonsTestingUtil.tmpDirectory(SampleConfigFilesCorrectnessTest.class);
    private String configRoot;
    private InMemoryAppender appender;
 
@@ -57,6 +60,7 @@ public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
    @AfterMethod
    public void tearDownTest() {
       appender.disable();
+      Util.recursiveFileRemove(globalPersistentLocation);
    }
 
    public void testConfigWarnings() throws Exception {
@@ -69,6 +73,7 @@ public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
             if (holder.getGlobalConfigurationBuilder().jmx().enabled()) {
                holder.getGlobalConfigurationBuilder().jmx().mBeanServerLookup(mBeanServerLookup);
             }
+            holder.getGlobalConfigurationBuilder().globalState().persistentLocation(globalPersistentLocation);
             dcm = TestCacheManagerFactory.createClusteredCacheManager(true, holder, new TransportFlags());
             if (dcm.getDefaultCacheConfiguration() != null)
                dcm.getCache();
