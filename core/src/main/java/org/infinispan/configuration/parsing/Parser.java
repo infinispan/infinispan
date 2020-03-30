@@ -444,7 +444,8 @@ public class Parser implements ConfigurationParser {
    private void parseJGroups(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       Transport transport = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
+            if (!ParseUtils.isNoNamespaceAttribute(reader, i))
+            continue;
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
 
