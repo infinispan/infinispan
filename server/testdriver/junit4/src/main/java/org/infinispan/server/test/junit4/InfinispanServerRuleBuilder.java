@@ -14,11 +14,10 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
  * @since 10.0
  **/
 public class InfinispanServerRuleBuilder {
-
    private final String configurationFile;
+   private final Properties properties;
    private String[] mavenArtifacts;
    private int numServers = 2;
-   private Properties properties = new Properties(System.getProperties());
    private ServerRunMode runMode = ServerRunMode.DEFAULT;
    private JavaArchive[] archives;
    private boolean jmx;
@@ -30,6 +29,9 @@ public class InfinispanServerRuleBuilder {
 
    private InfinispanServerRuleBuilder(String configurationFile) {
       this.configurationFile = configurationFile;
+      this.properties = new Properties(System.getProperties()); // set the defaults
+      // also copy org.infinispan properties
+      System.getProperties().entrySet().stream().filter(e -> e.getKey().toString().startsWith("org.infinispan")).forEach(e -> properties.put(e.getKey(), e.getValue()));
    }
 
    public InfinispanServerRuleBuilder mavenArtifacts(String... mavenArtifacts) {
