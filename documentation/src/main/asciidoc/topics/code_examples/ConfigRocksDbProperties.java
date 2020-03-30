@@ -4,7 +4,7 @@ props.put("data.write_buffer_size", "512MB");
 
 Configuration cacheConfig = new ConfigurationBuilder().persistence()
 				.addStore(RocksDBStoreConfigurationBuilder.class)
-				.location("/tmp/rocksdb/data")
-				.expiredLocation("/tmp/rocksdb/expired")
+				.location("rocksdb/data")
+				.expiredLocation("rocksdb/expired")
         .properties(props)
 				.build();

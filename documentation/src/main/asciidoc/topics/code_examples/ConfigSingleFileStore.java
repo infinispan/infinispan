@@ -1,5 +1,5 @@
 ConfigurationBuilder b = new ConfigurationBuilder();
 b.persistence()
     .addSingleFileStore()
-    .location("/tmp/myDataStore")
+    .location("myDataStore")
     .maxEntries(5000);
