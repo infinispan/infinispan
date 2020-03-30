@@ -49,6 +49,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.factories.ComponentRegistry;
@@ -408,10 +409,13 @@ public class CacheManagerTest extends AbstractInfinispanTest {
             GlobalConfiguration globalCfg = cm1.getCacheManagerConfiguration();
             Configuration cfg = c1.getCacheConfiguration();
             killCacheManagers(cm1);
-            globalCfg = new GlobalConfigurationBuilder().read(globalCfg).build();
 
-            withCacheManager(new CacheManagerCallable(
-                  new DefaultCacheManager(globalCfg, cfg)) {
+            ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+            holder.getGlobalConfigurationBuilder().read(globalCfg);
+            holder.getNamedConfigurationBuilders().put(TestCacheManagerFactory.DEFAULT_CACHE_NAME,
+                                                       new ConfigurationBuilder().read(cfg));
+
+            withCacheManager(new CacheManagerCallable(new DefaultCacheManager(holder, true)) {
                @Override
                public void call() {
                   Cache<Object, Object> c = cm.getCache();
@@ -596,7 +600,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    @Listener
    private class MyListener {
-      private String cacheName;
+      private final String cacheName;
       private final CompletableFuture<Void> cacheStartBlocked;
       private final CompletableFuture<Void> cacheStartResumed;
 

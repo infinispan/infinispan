@@ -9,18 +9,17 @@ import org.infinispan.Cache;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -33,7 +32,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "persistence.decorators.AsyncStoreWithoutEvictionFunctionalTest")
 public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanTest {
 
-   private DefaultCacheManager dcm;
+   private EmbeddedCacheManager dcm;
 
    private boolean segmented;
    private File tmpDirectory;
@@ -63,25 +62,26 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
       return "segmented-" + segmented;
    }
 
-   private DefaultCacheManager configureCacheManager(boolean async) throws Exception {
+   private EmbeddedCacheManager configureCacheManager(boolean async) throws Exception {
 
       tmpDirectory = new File(CommonsTestingUtil.tmpDirectory(this.getClass()));
       Util.recursiveFileRemove(tmpDirectory);
 
-      GlobalConfiguration glob = new GlobalConfigurationBuilder().defaultCacheName("cache").nonClusteredDefault().build();
-      SingleFileStoreConfigurationBuilder bld = new ConfigurationBuilder()
+      GlobalConfigurationBuilder glob = new GlobalConfigurationBuilder().nonClusteredDefault()
+                                                                        .defaultCacheName("cache");
+      ConfigurationBuilder cacheb = new ConfigurationBuilder();
+      SingleFileStoreConfigurationBuilder sfsb = cacheb
             .clustering().cacheMode(CacheMode.LOCAL)
             .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
             .persistence().addSingleFileStore().segmented(segmented);
 
       if (async) {
-         bld.async().enable().threadPoolSize(10).modificationQueueSize(1000);
+         sfsb.async().enable().threadPoolSize(10).modificationQueueSize(1000);
       } else {
-         bld.async().disable();
+         sfsb.async().disable();
       }
 
-      Configuration loc = bld.build();
-      return new DefaultCacheManager(glob, loc, true);
+      return TestCacheManagerFactory.createCacheManager(glob, cacheb);
    }
 
    @BeforeClass

@@ -9,6 +9,7 @@ import static org.infinispan.tools.store.migrator.Element.SOURCE;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
@@ -63,16 +64,17 @@ public class SerializationConfigUtil {
             if (props.isTargetStore())
                return null;
 
-            GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder()
-                  .defaultCacheName(props.cacheName());
+            GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
             configureSerializationContextInitializers(props, globalConfig.serialization());
             marshaller = loadMarshallerInstance(props);
             if (marshaller != null) {
                globalConfig.serialization().marshaller(marshaller);
             }
 
-            EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig.build(), new ConfigurationBuilder().build());
-            return manager.getCache().getAdvancedCache().getComponentRegistry().getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
+            EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig.build());
+            Cache<Object, Object> cache = manager.createCache(props.cacheName(), new ConfigurationBuilder().build());
+            return cache.getAdvancedCache().getComponentRegistry()
+                        .getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
          default:
             throw new IllegalStateException(String.format("Unexpected major version '%d'", majorVersion));
       }

@@ -57,10 +57,18 @@ public class AbstractEmbeddedCacheManagerFactory {
             gcb = new GlobalConfigurationBuilder();
          }
 
-         if (builder == null) {
-            return new DefaultCacheManager(gcb.build());
+         if (builder != null) {
+            ConfigurationBuilderHolder configurationBuilderHolder =
+                  new ConfigurationBuilderHolder(Thread.currentThread().getContextClassLoader(), gcb);
+            configurationBuilderHolder.getGlobalConfigurationBuilder().read(gcb.build());
+            if (gcb.defaultCacheName().isPresent()) {
+               configurationBuilderHolder.getNamedConfigurationBuilders().put(gcb.defaultCacheName().get(), builder);
+            } else {
+               throw logger.noDefaultCache();
+            }
+            return new DefaultCacheManager(configurationBuilderHolder, true);
          } else {
-            return new DefaultCacheManager(gcb.build(), builder.build());
+            return new DefaultCacheManager(gcb.build());
          }
       }
    }

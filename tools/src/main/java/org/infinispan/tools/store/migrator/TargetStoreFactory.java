@@ -15,8 +15,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -34,12 +33,14 @@ class TargetStoreFactory {
    private static final String DEFAULT_CACHE_NAME = StoreMigrator.class.getName();
 
    static EmbeddedCacheManager getCacheManager(Properties properties) {
+      ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+      holder.getGlobalConfigurationBuilder().defaultCacheName(DEFAULT_CACHE_NAME);
       StoreProperties props = new StoreProperties(TARGET, properties);
-      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
-      globalBuilder.defaultCacheName(DEFAULT_CACHE_NAME);
-      SerializationConfigUtil.configureSerialization(props, globalBuilder.serialization());
-      GlobalConfiguration globalConfig = globalBuilder.build();
-      return new DefaultCacheManager(globalConfig, new ConfigurationBuilder().build());
+      SerializationConfigUtil.configureSerialization(props, holder.getGlobalConfigurationBuilder().serialization());
+
+      holder.getNamedConfigurationBuilders().put(DEFAULT_CACHE_NAME, new ConfigurationBuilder());
+
+      return new DefaultCacheManager(holder, true);
    }
 
    static AdvancedCache getTargetCache(EmbeddedCacheManager manager, Properties properties) {
