@@ -33,8 +33,7 @@ import org.infinispan.cdi.embedded.util.logging.EmbeddedLog;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 
@@ -56,7 +55,7 @@ public class InfinispanExtensionEmbedded implements Extension {
 
    private final Object registerLock = new Object();
 
-   private Set<Set<Annotation>> installedEmbeddedCacheManagers = new HashSet<>();
+   private final Set<Set<Annotation>> installedEmbeddedCacheManagers = new HashSet<>();
 
    public InfinispanExtensionEmbedded() {
       new ConfigurationBuilder(); // Attempt to initialize a core class
@@ -194,7 +193,7 @@ public class InfinispanExtensionEmbedded implements Extension {
    /**
     * The default cache manager is an instance of {@link DefaultCacheManager} initialized with the
     * default configuration (either produced by
-    * {@link #createDefaultEmbeddedConfigurationBean(BeanManager)} or provided by user). The default
+    * {@link #createDefaultEmbeddedConfigurationBean(BeanManager, Configuration)} or provided by user). The default
     * cache manager can be overridden by creating a producer which produces the new default cache
     * manager. The cache manager produced must have the scope {@link ApplicationScoped} and the
     * {@linkplain javax.enterprise.inject.Default Default} qualifier.
@@ -214,14 +213,19 @@ public class InfinispanExtensionEmbedded implements Extension {
                @Override
                public EmbeddedCacheManager create(Bean<EmbeddedCacheManager> bean,
                      CreationalContext<EmbeddedCacheManager> creationalContext) {
-                  GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder()
-                        .cacheManagerName(CACHE_NAME).defaultCacheName("default").build();
+                  ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+                  holder.getGlobalConfigurationBuilder().cacheManagerName(CACHE_NAME).defaultCacheName("default");
                   @SuppressWarnings("unchecked")
                   Bean<Configuration> configurationBean = (Bean<Configuration>) beanManager
                         .resolve(beanManager.getBeans(Configuration.class));
                   Configuration defaultConfiguration = (Configuration) beanManager.getReference(configurationBean,
                         Configuration.class, beanManager.createCreationalContext(configurationBean));
-                  return new DefaultCacheManager(globalConfiguration, defaultConfiguration);
+
+                  ConfigurationBuilder builder = new ConfigurationBuilder();
+                  builder.read(defaultConfiguration);
+                  holder.getNamedConfigurationBuilders().put("default", builder);
+
+                  return new DefaultCacheManager(holder, true);
                }
 
                @Override

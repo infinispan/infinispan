@@ -17,23 +17,27 @@ import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
 
 public class ConfigurationBuilderHolder {
 
-   private GlobalConfigurationBuilder globalConfigurationBuilder;
+   private final GlobalConfigurationBuilder globalConfigurationBuilder;
    private final Map<String, ConfigurationBuilder> namedConfigurationBuilders;
    private ConfigurationBuilder currentConfigurationBuilder;
    private final Map<Class<? extends ConfigurationParser>, ParserContext> parserContexts;
    private final WeakReference<ClassLoader> classLoader;
    private final Deque<String> scope;
-   private JGroupsConfigurationBuilder jgroupsBuilder;
+   private final JGroupsConfigurationBuilder jgroupsBuilder;
 
    public ConfigurationBuilderHolder() {
       this(Thread.currentThread().getContextClassLoader());
    }
 
    public ConfigurationBuilderHolder(ClassLoader classLoader) {
-      this.globalConfigurationBuilder = new GlobalConfigurationBuilder();
+      this(classLoader, new GlobalConfigurationBuilder());
+   }
+
+   public ConfigurationBuilderHolder(ClassLoader classLoader, GlobalConfigurationBuilder globalConfigurationBuilder) {
+      this.globalConfigurationBuilder = globalConfigurationBuilder;
       this.namedConfigurationBuilders = new HashMap<>();
       this.parserContexts = new HashMap<>();
-      this.jgroupsBuilder = globalConfigurationBuilder.transport().jgroups();
+      this.jgroupsBuilder = this.globalConfigurationBuilder.transport().jgroups();
       this.classLoader = new WeakReference<>(classLoader);
       scope = new ArrayDeque<>();
       scope.push(ParserScope.GLOBAL.name());

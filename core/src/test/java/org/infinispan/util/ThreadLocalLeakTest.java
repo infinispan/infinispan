@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -40,9 +39,7 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
    private static final Pattern THREAD_LOCAL_FILTER = Pattern.compile("org\\.infinispan\\..*");
 
    // Some static thread locals we cannot remove, because
-   private static final Set<String> ACCEPTED_THREAD_LOCALS = new HashSet<String>(Arrays.asList(new String[]{
-         "org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8$CounterHashCode"
-   }));
+   private static final Set<String> ACCEPTED_THREAD_LOCALS = new HashSet<>(Arrays.asList());
 
    private String tmpDirectory;
 
@@ -65,31 +62,27 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
             .persistence().passivation(false)
                .addSingleFileStore().shared(false).preload(true);
 
-      Future<Map<String, Map<ThreadLocal<?>, Object>>> result = fork(
-            new Callable<Map<String, Map<ThreadLocal<?>, Object>>>() {
-         @Override
-         public Map<String, Map<ThreadLocal<?>, Object>> call() throws Exception {
-            TestResourceTracker.testThreadStarted(ThreadLocalLeakTest.this.getTestName());
-            Thread forkedThread = doStuffWithCache(builder);
+      Future<Map<String, Map<ThreadLocal<?>, Object>>> result = fork(() -> {
+               TestResourceTracker.testThreadStarted(ThreadLocalLeakTest.this.getTestName());
+               Thread forkedThread = doStuffWithCache(builder);
 
-            beforeGC();
-            System.gc();
-            Thread.sleep(500);
-            System.gc();
-            afterGC();
+               beforeGC();
+               System.gc();
+               Thread.sleep(500);
+               System.gc();
+               afterGC();
 
-            // Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
-            List<Thread> threadSet = Arrays.asList(Thread.currentThread(), forkedThread);
-            Map<String, Map<ThreadLocal<?>, Object>> allThreadLocals = new HashMap<String, Map<ThreadLocal<?>, Object>>();
-            for (Thread thread : threadSet) {
-               Map<ThreadLocal<?>, Object> threadLocalLeaks = findThreadLocalLeaks(thread);
-               if (threadLocalLeaks != null && !threadLocalLeaks.isEmpty())
-                  allThreadLocals.put(thread.getName(), threadLocalLeaks);
-            }
+               // Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
+               List<Thread> threadSet = Arrays.asList(Thread.currentThread(), forkedThread);
+               Map<String, Map<ThreadLocal<?>, Object>> allThreadLocals = new HashMap<>();
+               for (Thread thread : threadSet) {
+                  Map<ThreadLocal<?>, Object> threadLocalLeaks = findThreadLocalLeaks(thread);
+                  if (threadLocalLeaks != null && !threadLocalLeaks.isEmpty())
+                     allThreadLocals.put(thread.getName(), threadLocalLeaks);
+               }
 
-            return allThreadLocals;
-         }
-      });
+               return allThreadLocals;
+            });
 
       Map<String, Map<ThreadLocal<?>, Object>> allThreadLocals = result.get(30, TimeUnit.SECONDS);
       if (!allThreadLocals.isEmpty())
@@ -97,17 +90,17 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
    }
 
    private Thread doStuffWithCache(ConfigurationBuilder builder) {
-      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault().defaultCacheName("leak");
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalBuilder.globalState().persistentLocation(tmpDirectory);
-      final EmbeddedCacheManager[] cm = {new DefaultCacheManager(globalBuilder.build(), builder.build(),
-            true)};
-      Thread forkedThread = null;
+      EmbeddedCacheManager cm = new DefaultCacheManager(globalBuilder.build());
+      Thread forkedThread;
       try {
-         final Cache<Object, Object> c = cm[0].getCache();
+         cm.defineConfiguration("leak", builder.build());
+         final Cache<Object, Object> c = cm.getCache("leak");
          c.put("key1", "value1");
 
          forkedThread = inNewThread(() -> {
-            Cache<Object, Object> c1 = cm[0].getCache();
+            Cache<Object, Object> c1 = cm.getCache("leak");
             c1.put("key2", "value2");
             c1 = null;
             TestingUtil.sleepThread(2000);
@@ -117,7 +110,6 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
-      cm[0] = null;
       return forkedThread;
    }
 

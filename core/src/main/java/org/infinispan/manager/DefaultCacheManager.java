@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -183,7 +184,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * for details of these defaults.
     *
     * @param defaultConfiguration configuration to use as a template for all caches created
+    * @deprecated Since 11.0, please use {@link #DefaultCacheManager(ConfigurationBuilderHolder, boolean)} instead.
     */
+   @Deprecated
    public DefaultCacheManager(Configuration defaultConfiguration) {
       this(null, defaultConfiguration, true);
    }
@@ -194,7 +197,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     *
     * @param defaultConfiguration configuration file to use as a template for all caches created
     * @param start                if true, the cache manager is started
+    * @deprecated Since 11.0, please use {@link #DefaultCacheManager(ConfigurationBuilderHolder, boolean)} instead.
     */
+   @Deprecated
    public DefaultCacheManager(Configuration defaultConfiguration, boolean start) {
       this(null, defaultConfiguration, start);
    }
@@ -228,7 +233,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     *
     * @param globalConfiguration  global configuration to use. If null, a default instance is created.
     * @param defaultConfiguration default configuration to use. If null, a default instance is created.
+    * @deprecated Since 11.0, please use {@link #DefaultCacheManager(ConfigurationBuilderHolder, boolean)} instead.
     */
+   @Deprecated
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration) {
       this(globalConfiguration, defaultConfiguration, true);
    }
@@ -240,7 +247,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * @param globalConfiguration  global configuration to use. If null, a default instance is created.
     * @param defaultConfiguration default configuration to use. If null, a default instance is created.
     * @param start                if true, the cache manager is started
+    * @deprecated Since 11.0, please use {@link #DefaultCacheManager(ConfigurationBuilderHolder, boolean)} instead.
     */
+   @Deprecated
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration,
                               boolean start) {
       globalConfiguration = globalConfiguration == null ? new GlobalConfigurationBuilder().build() : globalConfiguration;
@@ -926,7 +935,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public boolean isDefaultRunning() {
-      return isRunning(configurationManager.getGlobalConfiguration().defaultCacheName().get());
+      Optional<String> defaultCacheName = configurationManager.getGlobalConfiguration().defaultCacheName();
+      return defaultCacheName.isPresent() && isRunning(defaultCacheName.get());
    }
 
    @ManagedAttribute(description = "The status of the cache manager instance.", displayName = "Cache manager status", dataType = DataType.TRAIT)
