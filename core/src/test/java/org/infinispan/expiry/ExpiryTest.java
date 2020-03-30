@@ -17,8 +17,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.CacheContainer;
@@ -26,7 +28,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -235,9 +236,9 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    private CacheContainer createCacheContainerWithStore(String location) {
-      ConfigurationBuilder b = new ConfigurationBuilder();
-      b.persistence().addSingleFileStore().location(location);
-      CacheContainer cc = TestCacheManagerFactory.createCacheManager(b);
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.globalState().persistentLocation(location);
+      CacheContainer cc = TestCacheManagerFactory.createCacheManager(globalBuilder, new ConfigurationBuilder());
       TestingUtil.replaceComponent(cc, TimeService.class, timeService, true);
       return cc;
    }
