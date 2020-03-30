@@ -6,6 +6,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -23,6 +24,7 @@ public class XSiteCacheConfigurationTest {
 
    public void testApi() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC);
       cb.
          sites().addBackup()
             .site(LON)
@@ -59,9 +61,10 @@ public class XSiteCacheConfigurationTest {
       assertEquals(b2.strategy(), BackupConfiguration.BackupStrategy.ASYNC);
    }
 
-   @Test (expectedExceptions = CacheConfigurationException.class)
+   @Test (expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: Multiple sites with name 'LON-1' are configured. That is not allowed!")
    public void testSameBackupDefinedMultipleTimes() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC);
       cb.
             sites().addBackup()
                .site(LON)
@@ -73,18 +76,20 @@ public class XSiteCacheConfigurationTest {
       cb.build();
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class)
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: The 'site' must be specified!")
    public void testBackupSiteNotSpecified() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC);
       cb.
             sites().addBackup()
                .site();
       cb.build();
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class)
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: It is required to specify a 'failurePolicyClass' when using a custom backup failure policy!")
    public void testCustomBackupFailurePolicyClassNotSpecified() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC);
       cb.
             sites().addBackup()
                .site(LON)
@@ -93,9 +98,10 @@ public class XSiteCacheConfigurationTest {
       cb.build();
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class)
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: Two-phase commit can only be used with synchronous backup strategy.")
    public void testTwoPhaseCommitAsyncBackup() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC);
       cb.
             sites().addBackup()
                .site(LON)
@@ -106,6 +112,7 @@ public class XSiteCacheConfigurationTest {
 
    public void testMultipleCachesWithNoCacheName() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC);
       cb.
             sites().addBackup()
                .site(LON)
@@ -115,5 +122,19 @@ public class XSiteCacheConfigurationTest {
                .sites().addBackup()
             .site(NYC);
       cb.build();
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: Cross-site Replication not available for local cache.")
+   public void testLocalCache() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.sites().addBackup().site(LON);
+      builder.build();
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: Cross-site Replication not available for local cache.")
+   public void testLocalCacheWithBackupFor() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.sites().backupFor().remoteCache("remote").remoteSite(LON);
+      builder.build();
    }
 }

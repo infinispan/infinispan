@@ -85,7 +85,6 @@ public class BackupSenderImpl implements BackupSender {
 
    @Inject ComponentRef<Cache<Object,Object>> cache;
    @Inject RpcManager rpcManager;
-   @Inject Transport transport;
    @Inject Configuration config;
    @Inject TransactionTable txTable;
    @Inject TimeService timeService;
@@ -106,6 +105,7 @@ public class BackupSenderImpl implements BackupSender {
 
    @Start
    public void start() {
+      Transport transport = rpcManager.getTransport();
       transport.checkCrossSiteAvailable();
       this.cacheName = cache.wired().getName();
       this.localSiteName = transport.localSiteName();
@@ -170,19 +170,10 @@ public class BackupSenderImpl implements BackupSender {
 
    private void sendTo(XSiteReplicateCommand command, Collection<XSiteBackup> xSiteBackups,
          ResponseAggregator aggregator) {
-      //RpcManager is null for local caches.
-      if (rpcManager == null) {
-         for (XSiteBackup backup : xSiteBackups) {
-            XSiteResponse cs = transport.backupRemotely(backup, command);
-            takeOfflineManager.registerRequest(cs);
-            aggregator.addResponse(backup, cs);
-         }
-      } else {
-         for (XSiteBackup backup : xSiteBackups) {
-            XSiteResponse cs = rpcManager.invokeXSite(backup, command);
-            takeOfflineManager.registerRequest(cs);
-            aggregator.addResponse(backup, cs);
-         }
+      for (XSiteBackup backup : xSiteBackups) {
+         XSiteResponse cs = rpcManager.invokeXSite(backup, command);
+         takeOfflineManager.registerRequest(cs);
+         aggregator.addResponse(backup, cs);
       }
    }
 

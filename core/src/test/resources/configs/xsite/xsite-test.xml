@@ -3,32 +3,32 @@
 
    <cache-container default-cache="default">
       <transport cluster="infinispan-cluster" lock-timeout="50000" stack="udp" node-name="Jalapeno" machine="m1" rack="r1" site="LON"/>
-      <local-cache-configuration name="base">
+      <distributed-cache-configuration name="base">
          <backups>
             <backup site="NYC" strategy="SYNC" failure-policy="IGNORE" timeout="12003"/>
             <backup site="SFO" strategy="ASYNC"/>
          </backups>
-      </local-cache-configuration>
-      <local-cache name="default" configuration="base" />
-      <local-cache name="backupNyc" configuration="base" >
+      </distributed-cache-configuration>
+      <distributed-cache name="default" configuration="base" />
+      <distributed-cache name="backupNyc" configuration="base" >
          <backups/>
          <backup-for remote-cache="someCache" remote-site="NYC"/>
-      </local-cache>
-      <local-cache name="importantCache" configuration="base" >
+      </distributed-cache>
+      <distributed-cache name="importantCache" configuration="base" >
          <backups>
             <backup site="NYC2" strategy="SYNC" failure-policy="FAIL" timeout="160000"/>
          </backups>
-      </local-cache>
-      <local-cache name="inheritor" configuration="base" />
-      <local-cache name="noBackups" configuration="base" >
+      </distributed-cache>
+      <distributed-cache name="inheritor" configuration="base" />
+      <distributed-cache name="noBackups" configuration="base" >
          <backups/>
-      </local-cache>
-      <local-cache name="customBackupPolicy" configuration="base" >
+      </distributed-cache>
+      <distributed-cache name="customBackupPolicy" configuration="base" >
          <backups>
             <backup site="NYC2" strategy="SYNC" failure-policy="CUSTOM"
                     failure-policy-class="org.infinispan.xsite.CountingCustomFailurePolicy" timeout="160000"/>
          </backups>
-      </local-cache>
+      </distributed-cache>
    </cache-container>
 
 </infinispan>

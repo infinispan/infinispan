@@ -2,8 +2,10 @@
 
 == Cross Site Replication
 
-The `org.infinispan.xsite.CustomFailurePolicy` interface has been deprecated and it will be replaced by
+* The `org.infinispan.xsite.CustomFailurePolicy` interface has been deprecated and it will be replaced by
 `org.infinispan.configuration.cache.CustomFailurePolicy`.
+
+* Cross Site Replication was disabled for local caches. They are unable to send or receive updates.
 
 == Total Order transaction protocol removed
 

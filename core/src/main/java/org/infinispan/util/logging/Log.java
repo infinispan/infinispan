@@ -1949,4 +1949,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "PartitionStrategy must be ALLOW_READ_WRITES when numOwners is 1", id = 575)
    CacheConfigurationException singleOwnerNotSetToAllowReadWrites();
+
+   @Message(value = "Cross-site Replication not available for local cache.", id = 576)
+   CacheConfigurationException xsiteInLocalCache();
 }
