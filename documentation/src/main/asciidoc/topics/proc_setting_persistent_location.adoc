@@ -1,0 +1,53 @@
+[id='setting_persistent_location-{context}']
+= Setting a Global Persistent Location for File-Based Cache Stores
+{brandname} uses a global filesystem location for saving data to persistent
+storage.
+
+[IMPORTANT]
+====
+The global persistent location must be unique to each {brandname} instance. To
+share data between multiple instances, use a shared persistent location.
+====
+
+When using file-based cache stores, the directories you define for storage are
+relative to the global persistent location.
+
+{brandname} servers use the `{server_home}/server/data` directory as the global
+persistent location.
+
+If you are using {brandname} as a library embedded in custom applications, the
+global persistent location defaults to the `user.dir` system property. This
+system property typically uses the directory where your application starts. You
+should configure a global persistent location to use a suitable location.
+
+.Declarative configuration
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<cache-container default-cache="myCache">
+   <global-state>
+      <persistent-location path="example" relative-to="my.data"/>
+   </global-state>
+   ...
+</cache-container>
+----
+
+[source,java,options="nowrap",subs=attributes+]
+----
+public GlobalStateConfigurationBuilder persistentLocation(String path, String relativeTo) {
+   persistentLocation.location(example, my.data);
+   return this;
+}
+----
+
+{brandname} logs the following message if you attempt to use a directory
+outside the global persistent location with file-based cache stores:
+
+----
+ISPN000558: "The store location 'foo' is not a child of the global persistent location 'bar'"
+----
+
+.Reference
+
+* link:{configdocroot}[{brandname} configuration schema]
+* link:{javadocroot}/org/infinispan/configuration/global/GlobalStateConfiguration.html[org.infinispan.configuration.global.GlobalStateConfiguration]
