@@ -68,6 +68,10 @@ public class BackupForBuilder extends AbstractConfigurationChildBuilder implemen
       if (attributes.attribute(REMOTE_SITE).get() == null || attributes.attribute(REMOTE_CACHE).get() == null) {
          throw CONFIG.backupForMissingParameters();
       }
+      //if we have backup for configured, we can check if the cache is clustered.
+      if (!builder.clustering().cacheMode().isClustered()) {
+         throw CONFIG.xsiteInLocalCache();
+      }
    }
 
    @Override

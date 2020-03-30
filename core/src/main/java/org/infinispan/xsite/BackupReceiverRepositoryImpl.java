@@ -1,5 +1,6 @@
 package org.infinispan.xsite;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -31,6 +32,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
    private static Log log = LogFactory.getLog(BackupReceiverRepositoryImpl.class);
 
    private final ConcurrentMap<SiteCachePair, BackupReceiver> backupReceivers = new ConcurrentHashMap<>();
+   private final Set<String> localCacheName = ConcurrentHashMap.newKeySet();
 
    @Inject EmbeddedCacheManager cacheManager;
    @Inject CacheManagerNotifier cacheManagerNotifier;
@@ -75,6 +77,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
       for (String name : cacheNames) {
          Configuration cacheConfiguration = configurationManager.getConfiguration(name, false);
          if (cacheConfiguration != null && isBackupForRemoteCache(remoteSite, remoteCache, cacheConfiguration, name)) {
+            checkNotLocalCache(name);
             Cache<Object, Object> cache = cacheManager.getCache(name);
             toLookFor.setLocalCacheName(name);
             backupReceivers.putIfAbsent(toLookFor, createBackupReceiver(cache));
@@ -113,10 +116,8 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
 
          SiteCachePair that = (SiteCachePair) o;
 
-         if (remoteCache != null ? !remoteCache.equals(that.remoteCache) : that.remoteCache != null) return false;
-         if (remoteSite != null ? !remoteSite.equals(that.remoteSite) : that.remoteSite != null) return false;
-
-         return true;
+         return Objects.equals(remoteCache, that.remoteCache) &&
+               Objects.equals(remoteSite, that.remoteSite);
       }
 
       @Override
@@ -152,10 +153,18 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
       return backupReceivers.get(new SiteCachePair(site, cache));
    }
 
-   private static BackupReceiver createBackupReceiver(Cache<Object,Object> cache) {
+   private BackupReceiver createBackupReceiver(Cache<Object,Object> cache) {
       Cache<Object, Object> receiverCache = SecurityActions.getUnwrappedCache(cache);
-      return receiverCache.getCacheConfiguration().clustering().cacheMode().isClustered() ?
-            new ClusteredCacheBackupReceiver(receiverCache) :
-            new LocalCacheBackupReceiver(receiverCache);
+      if (receiverCache.getCacheConfiguration().clustering().cacheMode().isClustered()) {
+         return new ClusteredCacheBackupReceiver(receiverCache);
+      }
+      localCacheName.add(receiverCache.getName());
+      throw log.xsiteInLocalCache();
+   }
+
+   private void checkNotLocalCache(String cacheName) {
+      if (localCacheName.contains(cacheName)) {
+         throw log.xsiteInLocalCache();
+      }
    }
 }

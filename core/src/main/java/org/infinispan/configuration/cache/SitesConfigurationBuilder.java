@@ -104,6 +104,11 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
          bcb.validate();
       }
 
+      //we have backups configured. check if we have a clustered cache
+      if (!backupNames.isEmpty() && !builder.clustering().cacheMode().isClustered()) {
+         throw CONFIG.xsiteInLocalCache();
+      }
+
       for (String site : attributes.attribute(IN_USE_BACKUP_SITES).get()) {
          boolean found = false;
          for (BackupConfigurationBuilder bcb : backups) {

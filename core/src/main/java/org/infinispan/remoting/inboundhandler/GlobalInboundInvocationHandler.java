@@ -99,9 +99,8 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       BackupReceiver receiver = backupReceiverRepository.getBackupReceiver(origin, command.getCacheName().toString());
       ComponentRegistry cr = receiver.getCache().getAdvancedCache().getComponentRegistry();
       PerCacheInboundInvocationHandler handler = cr.getPerCacheInboundInvocationHandler();
-      if (handler != null) { //not a local cache.
-         handler.registerXSiteCommandReceiver(reply != Reply.NO_OP);
-      }
+      assert handler != null;
+      handler.registerXSiteCommandReceiver(reply != Reply.NO_OP);
       command.performInLocalSite(receiver, order.preserveOrder()).whenComplete(new ResponseConsumer(command, reply));
    }
 

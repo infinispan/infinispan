@@ -1,5 +1,6 @@
 package org.infinispan.xsite;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -43,7 +44,7 @@ public abstract class AbstractMultipleSitesTest extends AbstractXSiteTest {
     * @param siteIndex the site index.
     */
    protected ConfigurationBuilder defaultConfigurationForSite(int siteIndex) {
-      return new ConfigurationBuilder();
+      return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
    }
 
    /**

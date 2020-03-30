@@ -26,11 +26,11 @@ public class BackupForConfigTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
       TestCacheManagerFactory.amendDefaultCache(lonGc);
-      ConfigurationBuilder lon = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
+      ConfigurationBuilder lon = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       lon.sites().addBackup()
             .site("NYC")
             .strategy(BackupConfiguration.BackupStrategy.SYNC);
-      nycBackup = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
+      nycBackup = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       nycBackup.sites().backupFor().remoteSite("NYC").remoteCache(lonGc.defaultCacheName().get());
 
       // creating the cache manager in order to avoid leaks
