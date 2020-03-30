@@ -16,7 +16,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import javax.management.MBeanServer;
@@ -381,6 +383,55 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       assertRemoteCacheManagerIsStarted();
       ClearOperation op = operationsFactory.newClearOperation();
       return op.execute();
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return await(computeAsync(key, remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      CompletableFuture<MetadataValue<V>> cf = getWithMetadataAsync(key);
+
+      return cf.thenCompose(metadataValue -> {
+         V newValue;
+         V oldValue;
+         long version;
+         if (metadataValue != null) {
+            oldValue = metadataValue.getValue();
+            version = metadataValue.getVersion();
+         } else {
+            oldValue = null;
+            version = -1;
+         }
+         newValue = remappingFunction.apply(key, oldValue);
+
+         CompletionStage<Boolean> doneStage;
+         if (newValue != null) {
+            if (oldValue != null) {
+               doneStage = replaceWithVersionAsync(key, newValue, version, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+            } else {
+               doneStage = putIfAbsentAsync(key, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit)
+                  .thenApply(Objects::isNull);
+            }
+         } else {
+            if (oldValue != null) {
+               doneStage = removeWithVersionAsync(key, version);
+            } else {
+               // Nothing to remove
+               doneStage = CompletableFuture.completedFuture(Boolean.TRUE);
+            }
+         }
+
+         return doneStage.thenCompose(done -> {
+            if (done) {
+               return CompletableFuture.completedFuture(newValue);
+            }
+            // Retry if one of the operations failed
+            return computeAsync(key, remappingFunction, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+         });
+      });
    }
 
    @Override

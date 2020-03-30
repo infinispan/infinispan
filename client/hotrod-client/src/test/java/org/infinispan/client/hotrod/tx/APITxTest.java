@@ -239,22 +239,9 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
       assertTrue(cache.containsValue(value1));
    }
 
-   public void testComputeMethods(Method method) {
-      RemoteCache<K, V> cache = txRemoteCache();
-
-      final K targetKey = kvGenerator.generateKey(method, 0);
-
-      BiFunction<? super K, ? super V, ? extends V> remappingFunction = (key, value) ->
-            kvGenerator.generateValue(method, 1);
-
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.compute(targetKey, remappingFunction));
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.compute(targetKey, remappingFunction, 1, TimeUnit.SECONDS));
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.compute(targetKey, remappingFunction, 1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS));
-
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeAsync(targetKey, remappingFunction));
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeAsync(targetKey, remappingFunction, 1, TimeUnit.SECONDS));
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeAsync(targetKey, remappingFunction, 1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS));
-   }
+// Compute is not implemented for tx remote caches
+//   public void testCompute(Method method) {
+//   }
 
    public void testComputeIfAbsentMethods(Method method) {
       RemoteCache<K, V> cache = txRemoteCache();
