@@ -54,23 +54,6 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
 
    protected ConfigurationBuilder configurationBuilder;
 
-   protected StorageType storageType;
-
-   protected ClusterExpirationFunctionalTest storageType(StorageType storageType) {
-      this.storageType = storageType;
-      return this;
-   }
-
-   @Override
-   protected String[] parameterNames() {
-      return concat(super.parameterNames(), "storageType");
-   }
-
-   @Override
-   protected Object[] parameterValues() {
-      return concat(super.parameterValues(), storageType);
-   }
-
    @Override
    public Object[] factory() {
       return Arrays.stream(StorageType.values())

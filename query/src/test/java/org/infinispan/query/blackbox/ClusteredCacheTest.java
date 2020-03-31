@@ -52,7 +52,6 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    protected Cache<Object, Person> cache1;
    protected Cache<Object, Person> cache2;
-   protected StorageType storageType;
    private Person person1;
    private Person person2;
    private Person person3;
@@ -64,16 +63,6 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    public ClusteredCacheTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
-   }
-
-   @Override
-   protected String[] parameterNames() {
-      return concat(super.parameterNames(), "StorageType");
-   }
-
-   @Override
-   protected Object[] parameterValues() {
-      return concat(super.parameterValues(), storageType);
    }
 
    public Object[] factory() {
@@ -90,11 +79,6 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       // Update the indexes as well -- see ISPN-9890
       cache(0).clear();
       super.clearContent();
-   }
-
-   ClusteredCacheTest storageType(StorageType storageType) {
-      this.storageType = storageType;
-      return this;
    }
 
    protected void enhanceConfig(ConfigurationBuilder cacheCfg) {

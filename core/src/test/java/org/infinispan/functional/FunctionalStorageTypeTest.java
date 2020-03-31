@@ -6,8 +6,6 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "functional.FunctionalStorageTypeTest")
 public class FunctionalStorageTypeTest extends FunctionalMapTest {
-   StorageType storageType;
-
    @Override
    protected void configureCache(ConfigurationBuilder builder) {
       builder.memory().storageType(storageType);
@@ -20,17 +18,5 @@ public class FunctionalStorageTypeTest extends FunctionalMapTest {
             new FunctionalStorageTypeTest().storageType(StorageType.BINARY),
             new FunctionalStorageTypeTest().storageType(StorageType.OBJECT),
       };
-   }
-
-   FunctionalStorageTypeTest storageType(StorageType storageType) {
-      this.storageType = storageType;
-      return this;
-   }
-   protected String[] parameterNames() {
-      return new String[]{"storage"};
-   }
-
-   protected Object[] parameterValues() {
-      return new Object[]{storageType};
    }
 }

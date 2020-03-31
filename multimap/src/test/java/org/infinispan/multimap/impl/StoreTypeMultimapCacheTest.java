@@ -1,8 +1,6 @@
 package org.infinispan.multimap.impl;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.infinispan.configuration.cache.CacheMode;
@@ -20,8 +18,6 @@ public class StoreTypeMultimapCacheTest extends DistributedMultimapCacheTest {
 
    protected Map<Address, MultimapCache<String, String>> multimapCacheCluster = new HashMap<>();
 
-   protected StorageType storageType;
-
    public StoreTypeMultimapCacheTest() {
       super();
       l1CacheEnabled = false;
@@ -30,28 +26,13 @@ public class StoreTypeMultimapCacheTest extends DistributedMultimapCacheTest {
       fromOwner = true;
    }
 
-   public StoreTypeMultimapCacheTest storageType(StorageType storageType) {
-      this.storageType = storageType;
-      return this;
-   }
-
-   @Override
-   protected String[] parameterNames() {
-      return concat(super.parameterNames(), "storageType");
-   }
-
-   @Override
-   protected Object[] parameterValues() {
-      return concat(super.parameterValues(), storageType);
-   }
-
    @Override
    public Object[] factory() {
-      List testsToRun = new ArrayList<>();
-      testsToRun.add(new StoreTypeMultimapCacheTest().storageType(StorageType.OFF_HEAP));
-      testsToRun.add(new StoreTypeMultimapCacheTest().storageType(StorageType.OBJECT));
-      testsToRun.add(new StoreTypeMultimapCacheTest().storageType(StorageType.BINARY));
-      return testsToRun.toArray();
+      return new Object[]{
+            new StoreTypeMultimapCacheTest().storageType(StorageType.OFF_HEAP),
+            new StoreTypeMultimapCacheTest().storageType(StorageType.OBJECT),
+            new StoreTypeMultimapCacheTest().storageType(StorageType.BINARY),
+      };
    }
 
    @Override
