@@ -190,18 +190,12 @@
       <version.netty>4.1.45.Final</version.netty>
       <version.okhttp>3.14.6</version.okhttp>
       <version.openjdk.jmh>1.12</version.openjdk.jmh>
-      <version.ops4j.base>1.5.0</version.ops4j.base>
-      <version.ops4j.pax.exam>4.11.0</version.ops4j.pax.exam>
-      <version.ops4j.pax.logging>1.10.1</version.ops4j.pax.logging>
-      <version.ops4j.pax.swissbox>1.8.3</version.ops4j.pax.swissbox>
-      <version.ops4j.pax.url>2.5.2</version.ops4j.pax.url>
       <version.org.wildfly>${appserver.version}</version.org.wildfly>
       <version.org.wildfly.arquillian>2.2.0.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.core>10.0.0.Final</version.org.wildfly.core>
       <version.org.wildfly.elytron>1.11.0.Final</version.org.wildfly.elytron>
       <version.org.wildfly.openssl>1.0.9.Final</version.org.wildfly.openssl>
       <version.osgi>4.3.1</version.osgi>
-      <version.pax.exam>4.11.0</version.pax.exam>
       <version.picketbox>5.0.3.Final</version.picketbox>
       <version.picketlink>2.5.5.SP12</version.picketlink>
       <version.projectodd>1.1.6</version.projectodd>
