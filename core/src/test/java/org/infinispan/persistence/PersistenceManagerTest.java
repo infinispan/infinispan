@@ -1,7 +1,7 @@
 package org.infinispan.persistence;
 
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.KnownComponentNames;
@@ -24,7 +25,6 @@ import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -96,7 +96,7 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
       // This has to be > 128 - as the flowable pulls a chunk of that size
       for (int i = 0; i < 140; ++i) {
          String key = "k" + i;
-         persistenceManager.writeToAllNonTxStores(MarshalledEntryUtil.create(key, "v", cache), keyPartitioner.getSegment(key), BOTH);
+         CompletionStages.join(persistenceManager.writeToAllNonTxStores(MarshalledEntryUtil.create(key, "v", cache), keyPartitioner.getSegment(key), BOTH));
       }
       PersistenceManagerImpl pmImpl = (PersistenceManagerImpl) persistenceManager;
       assertEquals(0, pmImpl.activePublisherInvocations());
