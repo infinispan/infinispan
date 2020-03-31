@@ -1,6 +1,5 @@
 package org.infinispan.stream;
 
-import static org.infinispan.commons.test.Exceptions.unchecked;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.anyBoolean;
@@ -28,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
+import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
@@ -45,7 +45,6 @@ import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
@@ -465,15 +464,14 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
    }
 
    protected <K> void blockStateTransfer(final Cache<?, ?> cache, final CheckPoint checkPoint) {
-      Mocks.blockingMock(checkPoint, StateProvider.class, cache, (stub, stateProvider) -> unchecked(() -> {
-                            stub.when(stateProvider).startOutboundTransfer(any(), anyInt(), any(), anyBoolean());
-                         }));
+      Mocks.blockInboundCacheRpcCommand(cache, checkPoint, command -> command instanceof StateTransferStartCommand);
    }
 
    protected void waitUntilDataContainerWillBeIteratedOn(final Cache<?, ?> cache, final CheckPoint checkPoint) {
       InternalDataContainer<?, ?> dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(dataContainer);
-      InternalDataContainer<?, ?> mockContainer = mock(InternalDataContainer.class, withSettings().defaultAnswer(forwardedAnswer));
+      InternalDataContainer<?, ?> mockContainer = mock(InternalDataContainer.class,
+                                                       withSettings().defaultAnswer(forwardedAnswer));
       final AtomicInteger invocationCount = new AtomicInteger();
       Answer<?> blockingAnswer = invocation -> {
          boolean waiting = false;
