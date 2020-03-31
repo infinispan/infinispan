@@ -1,5 +1,6 @@
 package org.infinispan.test;
 
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -10,13 +11,20 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
+import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.mockito.AdditionalAnswers;
@@ -195,31 +203,57 @@ public class Mocks {
 
    public static <E> Publisher<E> blockingPublisher(Publisher<E> publisher, CheckPoint checkPoint) {
       return Flowable.fromPublisher(publisher)
-            .doOnSubscribe(s -> {
-               checkPoint.trigger(BEFORE_INVOCATION);
-               checkPoint.awaitStrict(BEFORE_RELEASE, 20, TimeUnit.SECONDS);
-            })
-            .doOnComplete(() -> {
-               checkPoint.trigger(AFTER_INVOCATION);
-               checkPoint.awaitStrict(AFTER_RELEASE, 20, TimeUnit.SECONDS);
-            });
+                     .doOnSubscribe(s -> {
+                        checkPoint.trigger(BEFORE_INVOCATION);
+                        checkPoint.awaitStrict(BEFORE_RELEASE, 20, TimeUnit.SECONDS);
+                     })
+                     .doOnComplete(() -> {
+                        checkPoint.trigger(AFTER_INVOCATION);
+                        checkPoint.awaitStrict(AFTER_RELEASE, 20, TimeUnit.SECONDS);
+                     });
    }
 
-   public static <E> SegmentCompletionPublisher<E> blockingPublisher(SegmentCompletionPublisher<E> publisher, CheckPoint checkPoint) {
+   public static <E> SegmentCompletionPublisher<E> blockingPublisher(SegmentCompletionPublisher<E> publisher,
+                                                                     CheckPoint checkPoint) {
       return (s, complete) -> {
-         blockingPublisher((Subscriber<? super E> innerSubscriber) -> publisher.subscribe(innerSubscriber, complete), checkPoint).subscribe(s);
+         blockingPublisher((Subscriber<? super E> innerSubscriber) -> publisher.subscribe(innerSubscriber, complete),
+                           checkPoint).subscribe(s);
       };
+   }
+
+   public static AbstractDelegatingHandler blockInboundCacheRpcCommand(Cache<?, ?> cache, CheckPoint checkPoint,
+                                                                       Predicate<? super CacheRpcCommand> predicate) {
+      Executor executor = extractGlobalComponent(cache.getCacheManager(), ExecutorService.class,
+                                                 KnownComponentNames.NON_BLOCKING_EXECUTOR);
+      return TestingUtil.wrapInboundInvocationHandler(cache, handler -> new AbstractDelegatingHandler(handler) {
+         @Override
+         public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+            if (!predicate.test(command)) {
+               delegate.handle(command, reply, order);
+               return;
+            }
+
+            checkPoint.trigger(BEFORE_INVOCATION);
+            checkPoint.future(BEFORE_RELEASE, 20, TimeUnit.SECONDS, executor)
+                      .thenRun(() -> delegate.handle(command, reply, order))
+                      .thenCompose(ignored -> {
+                         checkPoint.trigger(AFTER_INVOCATION);
+                         return checkPoint.future(AFTER_RELEASE, 20, TimeUnit.SECONDS, executor);
+                      });
+         }
+      });
    }
 
    /**
     * Replaces the given component with a spy and returns it for further mocking as needed. Note the original component
     * is not retrieved and thus requires retrieving before invoking this method if needed.
-    * @param cache the cache to get the component from
+    *
+    * @param cache          the cache to get the component from
     * @param componentClass the class of the component to retrieve
-    * @param <C> the component class
+    * @param <C>            the component class
     * @return the spied component which has already been replaced and wired in the cache
     */
-   public static <C> C replaceComponentWithSpy(Cache<?,?> cache, Class<C> componentClass) {
+   public static <C> C replaceComponentWithSpy(Cache<?, ?> cache, Class<C> componentClass) {
       C component = TestingUtil.extractComponent(cache, componentClass);
       C spiedComponent = spy(component);
       TestingUtil.replaceComponent(cache, componentClass, spiedComponent, true);
