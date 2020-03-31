@@ -56,7 +56,6 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
    Cache<String, Person> cacheAMachine1, cacheAMachine2;
    private CacheQuery<Person> cacheQuery;
-   protected StorageType storageType;
 
    public Object[] factory() {
       return new Object[]{
@@ -64,21 +63,6 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
             new ClusteredQueryTest().storageType(StorageType.BINARY),
             new ClusteredQueryTest().storageType(StorageType.OBJECT),
       };
-   }
-
-   @Override
-   protected String[] parameterNames() {
-      return concat(super.parameterNames(), "StorageType");
-   }
-
-   @Override
-   protected Object[] parameterValues() {
-      return concat(super.parameterValues(), storageType);
-   }
-
-   ClusteredQueryTest storageType(StorageType storageType) {
-      this.storageType = storageType;
-      return this;
    }
 
    @AfterMethod

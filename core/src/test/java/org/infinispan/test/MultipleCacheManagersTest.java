@@ -1,8 +1,8 @@
 package org.infinispan.test;
 
 import static java.util.Arrays.asList;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.infinispan.commons.test.TestResourceTracker.getCurrentTestShortName;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.annotation.Annotation;
@@ -30,10 +30,12 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -47,7 +49,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.test.fwk.TestFrameworkFailure;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.fwk.TestSelector;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
@@ -109,6 +110,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected IsolationLevel isolationLevel;
    // Disables the triangle algorithm if set to Boolean.FALSE
    protected Boolean useTriangle;
+   protected StorageType storageType;
 
    @BeforeClass(alwaysRun = true)
    public void createBeforeClass() throws Throwable {
@@ -707,6 +709,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL;
    }
 
+   public MultipleCacheManagersTest storageType(StorageType storageType) {
+      this.storageType = storageType;
+      return this;
+   }
+
    @Override
    protected String parameters() {
       // cacheMode is self-explaining
@@ -737,11 +744,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected String[] parameterNames() {
-      return new String[]{null, "tx", "locking", "TO", "isolation", "bias", "triangle"};
+      return new String[]{null, "tx", "locking", "TO", "isolation", "bias", "triangle", null};
    }
 
    protected Object[] parameterValues() {
-      return new Object[]{cacheMode, transactional, lockingMode, totalOrder, isolationLevel, biasAcquisition, useTriangle};
+      return new Object[]{cacheMode, transactional, lockingMode, totalOrder, isolationLevel, biasAcquisition, useTriangle, storageType};
    }
 
    @SafeVarargs
