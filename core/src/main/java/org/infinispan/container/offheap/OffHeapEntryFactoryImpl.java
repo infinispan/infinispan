@@ -68,10 +68,11 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    }
 
    @Override
-   public long create(WrappedBytes key, int hashCode, WrappedBytes value, Metadata metadata, MetaParamsInternalMetadata internalMetadata) {
+   public long create(WrappedBytes key, int hashCode, InternalCacheEntry<WrappedBytes, WrappedBytes> ice) {
       byte type;
       boolean shouldWriteMetadataSize = false;
       byte[] metadataBytes;
+      Metadata metadata = ice.getMetadata();
       if (metadata instanceof EmbeddedMetadata) {
          EntryVersion version = metadata.version();
          byte[] versionBytes;
@@ -98,22 +99,21 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
             type |= MORTAL;
             metadataBytes = new byte[16 + versionBytes.length];
             Bits.putLong(metadataBytes, 0, lifespan);
-            Bits.putLong(metadataBytes, 8, timeService.wallClockTime());
+            Bits.putLong(metadataBytes, 8, ice.getCreated());
             System.arraycopy(versionBytes, 0, metadataBytes, 16, versionBytes.length);
          } else if (lifespan < 0 && maxIdle > -1) {
             type |= TRANSIENT;
             metadataBytes = new byte[16 + versionBytes.length];
             Bits.putLong(metadataBytes, 0, maxIdle);
-            Bits.putLong(metadataBytes, 8, timeService.wallClockTime());
+            Bits.putLong(metadataBytes, 8, ice.getLastUsed());
             System.arraycopy(versionBytes, 0, metadataBytes, 16, versionBytes.length);
          } else {
             type |= TRANSIENT_MORTAL;
             metadataBytes = new byte[32 + versionBytes.length];
             Bits.putLong(metadataBytes, 0, lifespan);
             Bits.putLong(metadataBytes, 8, maxIdle);
-            long time = timeService.wallClockTime();
-            Bits.putLong(metadataBytes, 16, time);
-            Bits.putLong(metadataBytes, 24, time);
+            Bits.putLong(metadataBytes, 16, ice.getCreated());
+            Bits.putLong(metadataBytes, 24, ice.getLastUsed());
             System.arraycopy(versionBytes, 0, metadataBytes, 32, versionBytes.length);
          }
       } else {
@@ -125,10 +125,11 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
 
       int keySize = key.getLength();
       int metadataSize = metadataBytes.length;
+      WrappedBytes value = ice.getValue();
       int valueSize = value != null ? value.getLength() : 0;
 
-      byte[] internalMetadataBytes = shouldWriteInternalMetadata(internalMetadata) ?
-                                     marshall(internalMetadata) :
+      byte[] internalMetadataBytes = shouldWriteInternalMetadata(ice.getInternalMetadata()) ?
+                                     marshall(ice.getInternalMetadata()) :
                                      Util.EMPTY_BYTE_ARRAY;
       int internalMetadataSize = internalMetadataBytes.length;
 

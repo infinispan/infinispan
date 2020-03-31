@@ -27,7 +27,6 @@ public class StorageRoutingTest extends MultiHotRodServersTest {
 
    private static final int CLUSTER_SIZE = 3;
 
-   protected StorageType storageType;
    private Object key;
 
    public Object[] factory() {
@@ -45,11 +44,11 @@ public class StorageRoutingTest extends MultiHotRodServersTest {
    }
 
    protected String[] parameterNames() {
-      return new String[]{"storage", "key"};
+      return new String[]{null, "key"};
    }
 
    protected Object[] parameterValues() {
-      return new Object[]{storageType, key};
+      return new Object[]{storageType, key.getClass().getSimpleName()};
    }
 
    private StorageRoutingTest withStorageType(StorageType storageType) {

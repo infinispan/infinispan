@@ -40,7 +40,6 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
 
    private RemoteCache<Object, Object> userCache;
 
-   private StorageType storageType;
    private long evictionSize = -1;
 
    @Override
@@ -71,7 +70,7 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
       };
    }
 
-   MultiServerStoreQueryTest storageType(StorageType storageType) {
+   public MultiServerStoreQueryTest storageType(StorageType storageType) {
       this.storageType = storageType;
       return this;
    }
