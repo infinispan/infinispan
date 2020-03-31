@@ -15,23 +15,11 @@ public interface OffHeapEntryFactory extends KeyValueMetadataSizeCalculator<Wrap
    /**
     * Creates an off heap entry using the provided key value and metadata
     * @param key the key to use
-    * @param value the value to use
-    * @param metadata the metadata to use
-    * @return the address of where the entry was created
-    */
-   default long create(WrappedBytes key, WrappedBytes value, Metadata metadata) {
-      return create(key, key.hashCode(), value, metadata);
-   }
-
-   /**
-    * Creates an off heap entry using the provided key value and metadata
-    * @param key the key to use
     * @param hashCode the hashCode of the key
-    * @param value the value to use
-    * @param metadata the metadata to use
+    * @param ice the internal entry to use
     * @return the address of where the entry was created
     */
-   long create(WrappedBytes key, int hashCode, WrappedBytes value, Metadata metadata);
+   long create(WrappedBytes key, int hashCode, InternalCacheEntry<WrappedBytes, WrappedBytes> ice);
 
    /**
     * Returns how many bytes in memory this address location uses assuming it is an {@link InternalCacheEntry}.
