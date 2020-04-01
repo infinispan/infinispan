@@ -801,7 +801,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          }
 
          // We can stop the manager
-         log.debugf("Stopping cache manager %s on %s", configurationManager.getGlobalConfiguration().transport().nodeName(), getAddress());
+         log.infof("Stopping cache manager %s on %s", configurationManager.getGlobalConfiguration().transport().nodeName(), getAddress());
          updateStatus(ComponentStatus.STOPPING);
       } catch (InterruptedException e) {
          throw new CacheException("Interrupted waiting for the cache manager to stop");
