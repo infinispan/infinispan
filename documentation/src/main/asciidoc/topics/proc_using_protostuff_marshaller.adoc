@@ -38,7 +38,8 @@ as the marshaller.
 [source,java]
 ----
 GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
-      builder.serialization().marshaller(org.infinispan.marshaller.protostuff.ProtostuffMarshaller)
+builder.serialization()
+       .marshaller(new org.infinispan.marshaller.protostuff.ProtostuffMarshaller());
 ----
 
 .Procedure

@@ -8,7 +8,7 @@ public class SpecificKeyFilter implements KeyFilter<String> {
       this.keyToAccept = keyToAccept;
     }
 
-    boolean accept(String key) {
+    public boolean accept(String key) {
       return keyToAccept.equals(key);
     }
 }

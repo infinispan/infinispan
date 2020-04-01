@@ -23,7 +23,7 @@ include::code_examples/NewDefaultCacheManager.java[]
 ----
 
 which starts the most basic, local mode, non-clustered cache manager with no caches. CacheManagers have a lifecycle
-and the default constructors also call link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#start--[start()].
+and the default constructors also call link:{javadocroot}/org/infinispan/commons/api/Lifecycle.html#start()[Lifecycle.start()].
 Overloaded versions of the constructors are available, that do not start the CacheManager, although keep in
 mind that CacheManagers need to be started before they can be used to create Cache instances.
 
@@ -38,7 +38,7 @@ clustered it will also leave the cluster gracefully.
 == Obtaining caches
 After you configure the `CacheManager`, you can obtain and control caches.
 
-Invoke the link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#getCache--[`getCache()`] method to obtain caches, as follows:
+Invoke the link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#getCache(java.lang.String)[`getCache(String)`] method to obtain caches, as follows:
 
 [source,java,options="nowrap"]
 ----
@@ -49,7 +49,7 @@ The preceding operation creates a cache named `myCache`, if it does not already 
 
 Using the `getCache()` method creates the cache only on the node where you invoke the method. In other words, it performs a local operation that must be invoked on each node across the cluster. Typically, applications deployed across multiple nodes obtain caches during initialization to ensure that caches are _symmetric_ and exist on each node.
 
-Invoke the link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManagerAdmin.html#createCache--[`createCache()`] method to create caches dynamically across the entire cluster, as follows:
+Invoke the link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManagerAdmin.html#createCache(java.lang.String,java.lang.String)[`createCache()`] method to create caches dynamically across the entire cluster, as follows:
 
 [source,java]
 ----
@@ -69,7 +69,7 @@ include::code_examples/CreateCacheWithFlagsPermanent.java[]
 
 For the +PERMANENT+ flag to take effect, you must enable global state and set a configuration storage provider.
 
-For more information about configuration storage providers, see link:{javadocroot}/org/infinispan/configuration/global/GlobalStateConfigurationBuilder.html#configurationStorage-org.infinispan.globalstate.ConfigurationStorage-[GlobalStateConfigurationBuilder#configurationStorage()].
+For more information about configuration storage providers, see link:{javadocroot}/org/infinispan/configuration/global/GlobalStateConfigurationBuilder.html#configurationStorage(org.infinispan.globalstate.ConfigurationStorage)[GlobalStateConfigurationBuilder#configurationStorage()].
 
 == Clustering Information
 The `EmbeddedCacheManager` has quite a few methods to provide information
@@ -81,24 +81,11 @@ is configured).
 When you are using a cluster it is very important to be able to find information
 about membership in the cluster including who is the owner of the cluster.
 
-.link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#getMembers--[getMembers()]
+.link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#getMembers()[getMembers()]
 The +getMembers()+ method returns all of the nodes in the current cluster.
 
-.link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#getCoordinator--[getCoordinator()]
+.link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#getCoordinator()[getCoordinator()]
 The +getCoordinator()+ method will tell you which one of the members is the coordinator
 of the cluster.  For most intents you shouldn't need to care who the coordinator is.
-You can use link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#isCoordinator--[isCoordinator()]
+You can use link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#isCoordinator()[isCoordinator()]
 method directly to see if the local node is the coordinator as well.
-
-== Other methods
-
-.link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#getTransport--[getTransport()]
-This method provides you access to the underlying Transport that is used to send
-messages to other nodes.  In most cases a user wouldn't ever need to go to
-this level, but if you want to get Transport specific information (in this
-case JGroups) you can use this mechanism.
-
-.link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#getStats--[getStats()]
-The stats provided here are coalesced from all of the active caches in this manager.
-These stats can be useful to see if there is something wrong going on with your
-cluster overall.

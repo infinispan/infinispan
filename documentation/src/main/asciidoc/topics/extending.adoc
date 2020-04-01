@@ -1,8 +1,7 @@
 [[extending]]
 = Extending {brandname}
 {brandname} can be extended to provide the ability for an end user to add
-additional configurations, operations and components outside of the scope of the ones normally provided
-by {brandname}.
+additional configurations, operations and components outside of the scope of the ones normally provided by {brandname}.
 
 == Custom Commands
 {brandname} makes use of a link:http://en.wikipedia.org/wiki/Command_pattern[command/visitor pattern] to
@@ -17,8 +16,7 @@ As a module author (such as link:https://github.com/infinispan/infinispan/tree/m
 You do so by:
 
 . Create a `META-INF/services/org.infinispan.commands.module.ModuleCommandExtensions` file and ensure this is packaged in your jar.
-. Implementing link:https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandFactory.java[`ModuleCommandFactory`],
-link:https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandInitializer.java[`ModuleCommandInitializer`] and
+. Implementing link:https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandFactory.java[`ModuleCommandFactory`] and
 link:https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandExtensions.java[`ModuleCommandExtensions`]
 . Specifying the fully-qualified class name of the  link:https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandExtensions.java[`ModuleCommandExtensions`]
 implementation in `META-INF/services/org.infinispan.commands.module.ModuleCommandExtensions`.
@@ -32,8 +30,6 @@ Here is an example of an `META-INF/services/org.infinispan.commands.module.Modul
 ----
 org.infinispan.query.QueryModuleCommandExtensions
 ----
-
-For a full, working example of a sample module that makes use of custom commands and visitors, check out link:https://github.com/infinispan/infinispan-sample-module[{brandname} Sample Module] .
 
 === Preassigned Custom Command Id Ranges
 This is the list of `Command` identifiers that are used by {brandname} based modules or frameworks.

@@ -1,2 +1,3 @@
 GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
-builder.addContextInitializers(new LibraryInitializerImpl(), new SCIImpl())
+builder.serialization()
+       .addContextInitializers(new LibraryInitializerImpl(), new SCIImpl());

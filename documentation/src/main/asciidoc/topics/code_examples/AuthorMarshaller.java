@@ -13,7 +13,7 @@ public class AuthorMarshaller implements MessageMarshaller<Author> {
    }
 
    @Override
-   public void writeTo(ProtoStreamWriter writer, Author author) throws IOException {
+   public void writeTo(MessageMarshaller.ProtoStreamWriter writer, Author author) throws IOException {
       writer.writeString("name", author.getName());
       writer.writeString("surname", author.getSurname());
    }

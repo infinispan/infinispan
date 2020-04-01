@@ -35,7 +35,8 @@ marshaller.
 [source,java]
 ----
 GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
-      builder.serialization().marshaller(org.infinispan.marshaller.kryo.KryoMarshaller)
+builder.serialization()
+       .marshaller(new org.infinispan.marshaller.kryo.KryoMarshaller());
 ----
 
 .Procedure

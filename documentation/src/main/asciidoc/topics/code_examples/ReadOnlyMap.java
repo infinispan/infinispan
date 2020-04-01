@@ -1,5 +1,5 @@
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
+import org.infinispan.functional.EntryView.ReadEntryView;
+import org.infinispan.functional.FunctionalMap.ReadOnlyMap;
 
 ReadOnlyMap<String, String> readOnlyMap = ...
 CompletableFuture<Optional<String>> readFuture = readOnlyMap.eval("key1", ReadEntryView::find);

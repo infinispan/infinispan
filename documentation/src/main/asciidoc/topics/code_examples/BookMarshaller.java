@@ -13,7 +13,7 @@ public class BookMarshaller implements MessageMarshaller<Book> {
    }
 
    @Override
-   public void writeTo(ProtoStreamWriter writer, Book book) throws IOException {
+   public void writeTo(MessageMarshaller.ProtoStreamWriter writer, Book book) throws IOException {
       writer.writeString("title", book.getTitle());
       writer.writeString("description", book.getDescription());
       writer.writeInt("publicationYear", book.getPublicationYear());

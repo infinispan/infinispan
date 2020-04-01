@@ -8,14 +8,14 @@ using data that is expensive to retrieve (i.e. DB or web service), or data
 that is hard to calculate. Caching these type of objects in memory can help
 speed up application performance by retrieving the data directly from memory
 instead of doing an expensive roundtrip or recalculation. This document
-specifies how to use JCache with {brandname}'s implementation of the
+specifies how to use JCache with the {brandname} implementation of the
 specification, and explains key aspects of the API.
 
 == Dependencies
-In order to start using {brandname} JCache implementation, a single dependency
-needs to be added to the Maven pom.xml file:
 
-.pom.xml
+. Ensure that `cache-api` is on your classpath.
+. Add the following dependencies to your `pom.xml`:
++
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::dependencies_maven/jcache.xml[]

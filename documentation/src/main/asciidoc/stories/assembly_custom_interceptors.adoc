@@ -1,5 +1,5 @@
 [id='interceptors']
-:context: admin
+:context: dev
 
 include::{topics}/interceptors.adoc[leveloffset=+0]
 

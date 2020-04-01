@@ -1,2 +1,2 @@
 CounterManager counterManager = ...
-StrongCounter aCounter = counterManager.getStrongCounter("my-counter);
+StrongCounter aCounter = counterManager.getStrongCounter("my-counter");
