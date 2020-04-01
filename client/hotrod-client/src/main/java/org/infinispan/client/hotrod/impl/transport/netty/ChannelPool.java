@@ -73,7 +73,7 @@ class ChannelPool {
             continue;
          }
          if (!channel.isWritable() || channel.pipeline().get(HeaderDecoder.class).registeredOperations() >= maxPendingRequests) {
-            channels.addLast(channel);
+            channels.addFirst(channel);
             // prevent looping on non-writable channels
             if (++fullChannelsSeen < MAX_FULL_CHANNELS_SEEN) {
                continue;
