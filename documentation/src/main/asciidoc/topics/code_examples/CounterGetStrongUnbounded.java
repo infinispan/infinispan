@@ -7,7 +7,7 @@ System.out.println("new value is " + counter.incrementAndGet().get());
 counter.addAndGet(-100).thenApply(v -> {
    System.out.println("new value is " + v);
    return null;
-}).get
+}).get();
 
 // alternative, you can do some work while the counter is updated
 CompletableFuture<Long> f = counter.addAndGet(10);

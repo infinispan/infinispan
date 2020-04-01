@@ -1,5 +1,6 @@
-import org.infinispan.commons.api.functional.FunctionalMap.*;
+import org.infinispan.functional.FunctionalMap.*;
 import org.infinispan.functional.impl.*;
+import org.infinispan.AdvancedCache;
 
 AdvancedCache<String, String> cache = ...
 

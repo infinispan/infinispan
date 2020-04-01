@@ -2,7 +2,7 @@ WeakCounter counter = counterManager.getWeakCounter("my_counter");
 
 // increment the counter and check its result
 counter.increment().get();
-System.out.println("current value is " + counter.getValue().get());
+System.out.println("current value is " + counter.getValue());
 
 CompletableFuture<Void> f = counter.add(-100);
 //do some work
