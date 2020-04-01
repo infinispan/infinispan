@@ -249,7 +249,7 @@ public class CacheManagerResource implements ResourceHandler {
                .filter(n -> !internalCacheRegistry.isInternalCache(n))
                .distinct()
                .map(n -> {
-                  Configuration cacheConfiguration = Security.doAs(request.getSubject(), (PrivilegedAction<Configuration>) () -> cacheManager.getCacheConfiguration(n));
+                  Configuration cacheConfiguration = cacheManager.withSubject(request.getSubject()).getCacheConfiguration(n);
                   String json = jsonWriter.toJSON(cacheConfiguration);
                   return new NamedCacheConfiguration(n, json);
                })
