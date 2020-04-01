@@ -43,7 +43,7 @@ include::code_examples/Encoder.java[]
 
 == Overriding programmatically
 
-Is is possible to override programmatically the encoding used for both keys and values, by calling the _.withEncoding()_ method variants from _AdvancedCache_.
+It is possible to override programmatically the encoding used for both keys and values, by calling the _.withEncoding()_ method variants from _AdvancedCache_.
 
 Example, consider the following cache configured as OFF_HEAP:
 

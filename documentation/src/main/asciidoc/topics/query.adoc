@@ -479,8 +479,7 @@ SearchManager searchManager = Search.getSearchManager(cache);
 searchManager.getMassIndexer().start();
 
 // Non blocking execution
-CompletableFuture<Void> future = searchManager.getMassIndexer().startAsyc();
-
+CompletableFuture<Void> future = searchManager.getMassIndexer().startAsync();
 ----
 
 TIP: This is also available as a `start` JMX operation on the link:{javadocroot}/jmxComponents.html#MassIndexer[MassIndexer MBean]
@@ -581,7 +580,6 @@ In the following example we map an object _Author_ which is to be stored in the 
 
 [source,java]
 ----
-
 import org.apache.lucene.search.Query;
 import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.cfg.SearchMapping;
@@ -609,7 +607,7 @@ properties.put(Environment.MODEL_MAPPING, mapping);
 properties.put("hibernate.search.[other options]", "[...]");
 
 Configuration infinispanConfiguration = new ConfigurationBuilder()
-        .indexing().index(Index.LOCAL)
+        .indexing().index(Index.NONE)
         .withProperties(properties)
         .build();
 
@@ -625,7 +623,6 @@ QueryBuilder qb = sm.buildQueryBuilderForClass(Author.class).get();
 Query q = qb.keyword().onField("name").matching("Manik").createQuery();
 CacheQuery cq = sm.getQuery(q, Author.class);
 assert cq.getResultSize() == 1;
-
 ----
 
 [[query_apis]]
@@ -646,9 +643,10 @@ To run a Lucene query directly, simply create and wrap it in a _CacheQuery_:
 
 [source,java]
 ----
+import org.apache.lucene.search.Query;
+import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.apache.lucene.Query;
 
 
 SearchManager searchManager = Search.getSearchManager(cache);

@@ -1,15 +1,24 @@
-public class Scrambler implements Encoder {
+class Scrambler implements Encoder {
 
-   Object toStorage(Object content) {
-      // Encrypt data
+   public Object toStorage(Object content) {
+   // Encrypt data
    }
 
-   Object fromStorage(Object content) {
-      // Decrypt data
+   public Object fromStorage(Object content) {
+   // Decrypt data
    }
 
-   MediaType getStorageFormat() {
-      return "application/scrambled";
+   @Override
+   public boolean isStorageFormatFilterable() {
+
    }
 
+   public MediaType getStorageFormat() {
+   return new MediaType("application", "scrambled");
+   }
+
+   @Override
+   public short id() {
+   //return id
+   }
 }

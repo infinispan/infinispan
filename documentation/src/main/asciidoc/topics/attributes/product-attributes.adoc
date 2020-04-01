@@ -18,12 +18,6 @@
 :cli_help: {topics}/cli_help
 
 //
-// Include topic-specific attributes
-//
-include::javadoc-attributes.adoc[]
-include::transaction-attributes.adoc[]
-
-//
 // Product names and versions
 //
 
@@ -99,3 +93,8 @@ include::transaction-attributes.adoc[]
 :osproductshort: Data Grid for OpenShift
 :datagridservice: Data Grid service
 :cacheservice: Cache service
+
+//
+// Include topic-specific attributes
+//
+include::transaction-attributes.adoc[]

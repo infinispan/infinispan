@@ -1,5 +1,9 @@
 public interface MultimapCache<K, V> {
 
+   CompletableFuture<Optional<CacheEntry<K, Collection<V>>>> getEntry(K key);
+
+   CompletableFuture<Void> remove(SerializablePredicate<? super V> p);
+
    CompletableFuture<Void> put(K key, V value);
 
    CompletableFuture<Collection<V>> get(K key);
