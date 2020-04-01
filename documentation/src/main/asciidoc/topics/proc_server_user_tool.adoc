@@ -13,11 +13,11 @@ For example, create a new user named "myuser" with a password of "qwer1234!" tha
 Linux::
 [source,options="nowrap",subs=attributes+]
 ----
-include::cmd_examples/user_tool_nix.adoc[]
+include::cmd_examples/user_tool_authz_nix.adoc[]
 ----
 
 Microsoft Windows::
 [source,options="nowrap",subs=attributes+]
 ----
-include::cmd_examples/user_tool_win.adoc[]
+include::cmd_examples/user_tool_authz_win.adoc[]
 ----

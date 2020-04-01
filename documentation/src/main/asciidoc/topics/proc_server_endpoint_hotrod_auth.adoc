@@ -1,32 +1,7 @@
-[id='configure_hotrod_endpoint_auth-{context}']
-= Setting Up Hot Rod Authentication
-Configure Hot Rod connectors to authenticate with clients to {brandname} server
-security realms using specific SASL authentication mechanisms.
-
-Normally there is no need to explicitly configure authentication on the Hot Rod connector, since the server will automatically configure the appropriate mechanisms based on the available security realms.
-The automatic settings can be overridden for specific scenarios.
-The following table summarizes
-
-
-|===
-|Security Realm feature |Mechanisms
-
-|Property Realm, LDAP Realm
-|SCRAM, DIGEST, CRAM
-
-|Token Realm
-|OAUTHBEARER
-
-|Trust Realm
-|EXTERNAL
-
-|Kerberos Identity
-|GSSAPI, GS2-KRB5
-
-| TLS
-| PLAIN
-|===
-
+[id='configure_hotrod_authentication-{context}']
+= Manually Configuring Hot Rod Authentication
+Explicitly configure Hot Rod connector authentication to override the default
+SASL authentication mechanisms that {brandname} servers use for security realms.
 
 .Procedure
 
