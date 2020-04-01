@@ -170,10 +170,9 @@ To tune the thread pool used to dispatch such asynchronous notifications, use th
 ==  Asynchronous API
 In addition to synchronous API methods like link:{jdkdocroot}/java/util/Map.html#put-K-V-[Cache.put()] , link:{jdkdocroot}/java/util/Map.html#remove-java.lang.Object-[Cache.remove()] , etc., {brandname} also has an asynchronous, non-blocking API where you can achieve the same results in a non-blocking fashion.
 
-These methods are named in a similar fashion to their blocking counterparts, with "Async" appended.  E.g., link:{javadocroot}/org/infinispan/commons/api/AsyncCache.html#putAsync-K-V-[Cache.putAsync()] , link:{javadocroot}/org/infinispan/commons/api/AsyncCache.html#removeAsync-java.lang.Object-[Cache.removeAsync()] , etc.  These asynchronous counterparts return a link:{jdkdocroot}/java/util/concurrent/Future.html[Future] containing the actual result of the operation.
+These methods are named in a similar fashion to their blocking counterparts, with "Async" appended.  E.g., link:{javadocroot}/org/infinispan/commons/api/AsyncCache.html#putAsync(K,V)[Cache.putAsync()] , link:{javadocroot}/org/infinispan/commons/api/AsyncCache.html#removeAsync(java.lang.Object)[Cache.removeAsync()] , etc.  These asynchronous counterparts return a link:{jdkdocroot}/java/util/concurrent/CompletableFuture.html[CompletableFuture] that contains the actual result of the operation.
 
-For example, in a cache parameterized as `Cache<String, String>`, `Cache.put(String key, String value)` returns a `String`.
-`Cache.putAsync(String key, String value)` would return a `Future<String>`.
+For example, in a cache parameterized as `Cache<String, String>`, `Cache.put(String key, String value)` returns `String` while `Cache.putAsync(String key, String value)` returns `CompletableFuture<String>`.
 
 === Why use such an API?
 Non-blocking APIs are powerful in that they provide all of the guarantees of synchronous communications - with the ability to handle communication failures and exceptions - with the ease of not having to block until a call completes.  This allows you to better harness parallelism in your system.  For example:
