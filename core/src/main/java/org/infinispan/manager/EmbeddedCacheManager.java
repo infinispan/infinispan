@@ -4,6 +4,8 @@ import java.io.Closeable;
 import java.util.List;
 import java.util.Set;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.configuration.ClassWhiteList;
@@ -373,4 +375,8 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    }
 
    ClassWhiteList getClassWhiteList();
+
+   Subject getSubject();
+
+   EmbeddedCacheManager withSubject(Subject subject);
 }
