@@ -92,7 +92,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
 
    @Override
    protected void rebuildIndexes() throws Exception {
-      Cache cache = cache(0);
+      Cache<?, ?> cache = cache(0);
       SearchManager searchManager = Search.getSearchManager(cache);
       CompletableFuture<Void> future = searchManager.getMassIndexer().startAsync();
       future.get();

@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config:${infinispan.core.schema.version}
-                          urn:infinispan:config:store:jdbc:${infinispan.core.schema.version} http://docs.jboss.org/infinispan/schemas/infinispan-cachestore-jdbc-config:${infinispan.core.schema.version}"
-      xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config:${infinispan.core.schema.version}"
+        xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
    <cache-container default-cache="JDBCBased_LocalIndex">
       <serialization>
@@ -17,76 +16,11 @@
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>
             </indexed-entities>
-            <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
+            <property name="default.directory_provider">local-heap</property>
             <property name="default.reader.strategy">shared</property>
-            <property name="default.locking_cachename">LuceneIndexesLocking_custom1</property>
-            <property name="default.data_cachename">LuceneIndexesData_custom1</property>
-            <property name="default.metadata_cachename">LuceneIndexesMetadata_custom1</property>
             <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
             <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
-      </replicated-cache>
-      <replicated-cache name="LuceneIndexesMetadata_custom1">
-         <persistence>
-            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:${infinispan.core.schema.version}"
-                                  key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
-                                  fetch-state="false"
-                                  read-only="false"
-                                  preload="true"
-                                  purge="true">
-               <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE_METADATA">
-                  <id-column name="ID_COLUMN" type="VARCHAR(255)" />
-                  <data-column name="DATA_COLUMN" type="BINARY" />
-                  <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
-                  <segment-column name="SEGMENT_COLUMN" type="BIGINT" />
-               </string-keyed-table>
-               <write-behind modification-queue-size="1024" thread-pool-size="1"/>
-            </string-keyed-jdbc-store>
-         </persistence>
-         <indexing enabled="false" />
-      </replicated-cache>
-      <!-- **************************** -->
-      <!--  Cache to store Lucene data  -->
-      <!-- **************************** -->
-      <replicated-cache name="LuceneIndexesData_custom1">
-         <persistence>
-            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:${infinispan.core.schema.version}"
-                                     key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
-                                     fetch-state="false"
-                                     read-only="false"
-                                     preload="true"
-                                     purge="true">
-               <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE_DATA">
-                  <id-column name="ID_COLUMN" type="VARCHAR(255)" />
-                  <data-column name="DATA_COLUMN" type="BINARY" />
-                  <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
-                  <segment-column name="SEGMENT_COLUMN" type="BIGINT" />
-               </string-keyed-table>
-            </string-keyed-jdbc-store>
-         </persistence>
-         <indexing enabled="false" />
-      </replicated-cache>
-      <!-- ***************************** -->
-      <!--  Cache to store Lucene locks  -->
-      <!-- ***************************** -->
-      <replicated-cache name="LuceneIndexesLocking_custom1">
-         <persistence>
-            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:${infinispan.core.schema.version}"
-                                     key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
-                                     fetch-state="false"
-                                     read-only="false"
-                                     preload="true"
-                                     purge="true">
-               <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE_LOCK">
-                  <id-column name="ID_COLUMN" type="VARCHAR(255)" />
-                  <data-column name="DATA_COLUMN" type="BINARY" />
-                  <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
-                  <segment-column name="SEGMENT_COLUMN" type="BIGINT" />
-               </string-keyed-table>
-               <write-behind modification-queue-size="1024" thread-pool-size="1"/>
-            </string-keyed-jdbc-store>
-         </persistence>
-         <indexing enabled="false" />
       </replicated-cache>
    </cache-container>
 

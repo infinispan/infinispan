@@ -15,9 +15,8 @@ public class PersistentStateTransferQueryDistributedIndexTest extends Persistent
       super.configureCache(builder);
 
       builder.indexing().enable()
-             .addProperty("default.directory_provider", "infinispan")
-             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-             .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty("default.directory_provider", "local-heap")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
 
    }
 }

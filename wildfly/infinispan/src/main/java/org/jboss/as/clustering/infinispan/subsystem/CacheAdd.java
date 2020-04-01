@@ -22,10 +22,6 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import static org.infinispan.query.impl.IndexPropertyInspector.getDataCacheName;
-import static org.infinispan.query.impl.IndexPropertyInspector.getLockingCacheName;
-import static org.infinispan.query.impl.IndexPropertyInspector.getMetadataCacheName;
-import static org.infinispan.query.impl.IndexPropertyInspector.hasInfinispanDirectory;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 import java.util.ArrayList;
@@ -221,14 +217,6 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
 
         builder.addDependency(DeployedCacheStoreFactoryService.SERVICE_NAME, DeployedCacheStoreFactory.class, cacheDependencies.getDeployedCacheStoreFactoryInjector());
         builder.addDependency(DeployedMergePolicyFactoryService.SERVICE_NAME, DeployedMergePolicyFactory.class, cacheDependencies.getDeployedMergePolicyRegistryInjector());
-
-        boolean hasInfinispanDirectory = hasInfinispanDirectory(indexingProperties);
-
-        if (hasInfinispanDirectory) {
-            builder.addDependency(CacheServiceName.CACHE.getServiceName(containerName, getDataCacheName(indexingProperties)));
-            builder.addDependency(CacheServiceName.CACHE.getServiceName(containerName, getMetadataCacheName(indexingProperties)));
-            builder.addDependency(CacheServiceName.CACHE.getServiceName(containerName, getLockingCacheName(indexingProperties)));
-        }
 
         return builder.install();
     }

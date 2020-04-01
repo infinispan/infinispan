@@ -16,48 +16,12 @@
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>
             </indexed-entities>
-            <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
+             <property name="default.directory_provider">local-heap</property>
             <!-- Enable error safety net -->
             <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
 
-            <property name="default.locking_cachename">LuceneIndexesLocking_custom</property>
-            <property name="default.data_cachename">LuceneIndexesData_custom</property>
-            <property name="default.metadata_cachename">LuceneIndexesMetadata_custom</property>
             <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
-      </local-cache>
-      <!-- *************************************** -->
-      <!--  Cache to store Lucene's file metadata  -->
-      <!-- *************************************** -->
-      <local-cache name="LuceneIndexesMetadata_custom">
-         <persistence passivation="false">
-            <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
-               <write-behind thread-pool-size="5" />
-            </file-store>
-         </persistence>
-         <indexing enabled="false"/>
-      </local-cache>
-      <!-- **************************** -->
-      <!--  Cache to store Lucene data  -->
-      <!-- **************************** -->
-      <local-cache name="LuceneIndexesData_custom">
-         <persistence passivation="false">
-            <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
-               <write-behind thread-pool-size="5" />
-            </file-store>
-         </persistence>
-         <indexing enabled="false" />
-      </local-cache>
-      <!-- ***************************** -->
-      <!--  Cache to store Lucene locks  -->
-      <!-- ***************************** -->
-      <local-cache name="LuceneIndexesLocking_custom">
-         <persistence passivation="false">
-            <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
-               <write-behind thread-pool-size="5" />
-            </file-store>
-         </persistence>
-         <indexing enabled="false" />
       </local-cache>
    </cache-container>
 

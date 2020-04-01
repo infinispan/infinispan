@@ -27,6 +27,10 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<IndexingConfiguration>, ConfigurationBuilderInfo {
 
    private final AttributeSet attributes;
+   private static final String DIRECTORY_PROVIDER = "hibernate.search.default.directory_provider";
+   private static final String EXCLUSIVE_INDEX_USE = "hibernate.search.default.exclusive_index_use";
+   private static final String INDEX_MANAGER = "hibernate.search.default.indexmanager";
+   private static final String READER_STRATEGY = "hibernate.search.default.reader.strategy";
 
    IndexingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -192,7 +196,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       } else {
          //TODO [anistor] Infinispan 10 must not allow definition of indexed entities or indexing properties if indexing is not enabled
          if (!indexedEntities().isEmpty()) {
-           // throw new CacheConfigurationException("Cache configuration must not declare indexed entities if it is not indexed");
+            // throw new CacheConfigurationException("Cache configuration must not declare indexed entities if it is not indexed");
          }
       }
    }
@@ -210,15 +214,18 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       }
    }
 
+   private void applyAutoConfig(TypedProperties properties) {
+      properties.putIfAbsent(DIRECTORY_PROVIDER, "filesystem");
+      properties.putIfAbsent(EXCLUSIVE_INDEX_USE, "true");
+      properties.putIfAbsent(INDEX_MANAGER, "near-real-time");
+      properties.putIfAbsent(READER_STRATEGY, "shared");
+   }
+
    @Override
    public IndexingConfiguration create() {
       TypedProperties typedProperties = attributes.attribute(PROPERTIES).get();
       if (autoConfig()) {
-         if (clustering().cacheMode().isDistributed()) {
-            IndexOverlay.DISTRIBUTED_INFINISPAN.apply(typedProperties);
-         } else {
-            IndexOverlay.NON_DISTRIBUTED_FS.apply(typedProperties);
-         }
+         applyAutoConfig(typedProperties);
          attributes.attribute(PROPERTIES).set(typedProperties);
       }
       return new IndexingConfiguration(attributes.protect());

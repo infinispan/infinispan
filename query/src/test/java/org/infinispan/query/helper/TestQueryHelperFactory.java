@@ -48,15 +48,15 @@ public class TestQueryHelperFactory {
    }
 
    public static List<EmbeddedCacheManager> createTopologyAwareCacheNodes(int numberOfNodes, CacheMode cacheMode, boolean transactional,
-                                                    boolean indexLocalOnly, boolean isRamDirectoryProvider, String defaultCacheName, Class<?>... indexedTypes) {
+                                                                          boolean indexLocalOnly, boolean isRamDirectoryProvider, String defaultCacheName, Class<?>... indexedTypes) {
       return createTopologyAwareCacheNodes(numberOfNodes, cacheMode, transactional, indexLocalOnly,
             isRamDirectoryProvider, defaultCacheName, f -> {
             }, indexedTypes);
    }
 
    public static List<EmbeddedCacheManager> createTopologyAwareCacheNodes(int numberOfNodes, CacheMode cacheMode, boolean transactional,
-                                                    boolean indexLocalOnly, boolean isRamDirectoryProvider, String defaultCacheName,
-                                                    Consumer<ConfigurationBuilderHolder> holderConsumer, Class<?>... indexedTypes) {
+                                                                          boolean indexLocalOnly, boolean isRamDirectoryProvider, String defaultCacheName,
+                                                                          Consumer<ConfigurationBuilderHolder> holderConsumer, Class<?>... indexedTypes) {
       List<EmbeddedCacheManager> managers = new ArrayList<>();
 
       ConfigurationBuilder builder = AbstractCacheTest.getDefaultClusteredCacheConfig(cacheMode, transactional);
@@ -67,12 +67,12 @@ public class TestQueryHelperFactory {
          builder.indexing()
                .addProperty("default.directory_provider", "local-heap")
                .addProperty("lucene_version", "LUCENE_CURRENT")
-               .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");
+               .addProperty("error_handler", StaticTestingErrorHandler.class.getName());
       } else {
          builder.indexing()
-               .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+               .addProperty("default.directory_provider", "local-heap")
                .addProperty("lucene_version", "LUCENE_CURRENT")
-               .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");
+               .addProperty("error_handler", StaticTestingErrorHandler.class.getName());
          if (cacheMode.isClustered()) {
             builder.clustering().stateTransfer().fetchInMemoryState(true);
          }

@@ -1,7 +1,5 @@
 package org.infinispan.query.backend;
 
-import static org.infinispan.query.impl.IndexPropertyInspector.isInfinispanDirectoryInternalCache;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,7 +11,6 @@ import java.util.Set;
 
 import org.hibernate.annotations.common.reflection.ReflectionManager;
 import org.hibernate.search.analyzer.definition.LuceneAnalysisDefinitionProvider;
-import org.hibernate.search.analyzer.definition.spi.LuceneAnalysisDefinitionSourceService;
 import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
@@ -23,7 +20,6 @@ import org.hibernate.search.engine.service.spi.Service;
 import org.hibernate.search.engine.spi.SearchMappingHelper;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.hibernate.search.spi.CacheManagerService;
 import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
 import org.infinispan.util.logging.LogFactory;
@@ -45,7 +41,6 @@ public final class SearchableCacheConfiguration extends SearchConfigurationBase 
    private final Map<String, Class<?>> classes = new HashMap<>();
    private final Properties properties;
    private final SearchMapping searchMapping;
-   private final Map<Class<? extends Service>, Object> providedServices;
    private final ClassLoaderServiceImpl classLoaderService;
 
    public SearchableCacheConfiguration(Set<Class<?>> indexedEntities,
@@ -69,14 +64,6 @@ public final class SearchableCacheConfiguration extends SearchConfigurationBase 
                }
             } : null;
 
-      Map<Class<? extends Service>, Object> services = new HashMap<>(3);
-      //Register the SelfLoopedCacheManagerServiceProvider to allow custom IndexManagers to access the CacheManager
-      InfinispanLoopbackService loopService = new InfinispanLoopbackService(cr, cache.getCacheManager(), analyzerDefProvider);
-      services.put(ComponentRegistryService.class, loopService);
-      services.put(CacheManagerService.class, loopService);
-      services.put(LuceneAnalysisDefinitionSourceService.class, loopService);
-      this.providedServices = Collections.unmodifiableMap(services);
-
       //deal with programmatic mapping:
       SearchMapping searchMapping = SearchMappingHelper.extractSearchMapping(this);
       if (programmaticSearchMappingProviders != null && !programmaticSearchMappingProviders.isEmpty()) {
@@ -92,25 +79,21 @@ public final class SearchableCacheConfiguration extends SearchConfigurationBase 
       }
       this.searchMapping = searchMapping;
 
-      // Infinispan Directory causes runtime circular dependencies so we need to postpone creation of indexes for
-      // classes until all components and other involved caches are initialised (see LifecycleManager.cacheStarted)
-      if (!isInfinispanDirectoryInternalCache(cache.getName(), properties)) {
-         for (Class<?> c : indexedEntities) {
+      for (Class<?> c : indexedEntities) {
+         if (log.isDebugEnabled()) {
+            log.debugf("Found configured class mapping for Hibernate Search: %s", c.getName());
+         }
+         classes.put(c.getName(), c);
+      }
+
+      //if we have a SearchMapping then we can predict at least those entities specified in the mapping
+      //and avoid further SearchFactory rebuilds triggered by new entity discovery during cache events
+      if (searchMapping != null) {
+         for (Class<?> c : searchMapping.getMappedEntities()) {
             if (log.isDebugEnabled()) {
-               log.debugf("Found configured class mapping for Hibernate Search: %s", c.getName());
+               log.debugf("Found programmatically configured class mapping for Hibernate Search: %s", c.getName());
             }
             classes.put(c.getName(), c);
-         }
-
-         //if we have a SearchMapping then we can predict at least those entities specified in the mapping
-         //and avoid further SearchFactory rebuilds triggered by new entity discovery during cache events
-         if (searchMapping != null) {
-            for (Class<?> c : searchMapping.getMappedEntities()) {
-               if (log.isDebugEnabled()) {
-                  log.debugf("Found programmatically configured class mapping for Hibernate Search: %s", c.getName());
-               }
-               classes.put(c.getName(), c);
-            }
          }
       }
    }
@@ -152,7 +135,7 @@ public final class SearchableCacheConfiguration extends SearchConfigurationBase 
 
    @Override
    public Map<Class<? extends Service>, Object> getProvidedServices() {
-      return providedServices;
+      return Collections.emptyMap();
    }
 
    @Override

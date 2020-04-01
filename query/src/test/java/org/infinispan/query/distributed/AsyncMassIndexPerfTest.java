@@ -18,6 +18,7 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.massindex.IndexUpdater;
 import org.infinispan.query.test.Transaction;
@@ -46,7 +47,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    private static final boolean TX_ENABLED = false;
    private static final String MERGE_FACTOR = "30";
    private static final CacheMode CACHE_MODE = CacheMode.DIST_SYNC;
-   private static final IndexManager INDEX_MANAGER = IndexManager.INFINISPAN;
+   private static final IndexManager INDEX_MANAGER = IndexManager.NRT;
    private static final Provider DIRECTORY_PROVIDER = Provider.INFINISPAN;
    /**
     * Hibernate search backend used. Either sync or async (commit every 1s by default)
@@ -70,7 +71,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
             .addProperty("default.indexmanager", INDEX_MANAGER.toString())
             .addProperty("default.indexwriter.merge_factor", MERGE_FACTOR)
             .addProperty("hibernate.search.default.worker.execution", WORKER_MODE.toString())
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       createClusteredCaches(2, cacheCfg);
@@ -161,7 +162,6 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    private enum IndexManager {
       NRT("near-real-time"),
-      INFINISPAN("org.infinispan.query.indexmanager.InfinispanIndexManager"),
       ELASTIC_SEARCH("elasticsearch"),
       DIRECTORY("directory-based");
       private final String cfg;

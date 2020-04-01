@@ -4,6 +4,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
@@ -27,7 +28,7 @@ public class ObjectStorageClusteredCacheTest extends ClusteredCacheTest {
             .enable()
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);
       createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);

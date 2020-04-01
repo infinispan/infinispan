@@ -34,8 +34,8 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
             .addIndexedEntity(Car.class)
             .addIndexedEntity(Person.class)
             .addProperty("hibernate.search.person.directory_provider", "local-heap")
-            .addProperty("hibernate.search.car.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("default.directory_provider", "local-heap")
+            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);

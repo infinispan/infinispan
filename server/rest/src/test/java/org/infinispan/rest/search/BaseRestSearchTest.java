@@ -7,7 +7,6 @@ import static org.eclipse.jetty.http.HttpStatus.OK_200;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.query.remote.json.JSONConstants.HIT;
-import static org.infinispan.query.remote.json.JSONConstants.QUERY_MODE;
 import static org.infinispan.query.remote.json.JSONConstants.TOTAL_RESULTS;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.testng.Assert.assertEquals;
@@ -32,7 +31,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.rest.RestTestSCI;
 import org.infinispan.rest.assertion.ResponseAssertion;
@@ -449,21 +447,16 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    private ContentResponse executeQueryRequest(String cacheName, HttpMethod method, String q, int offset, int maxResults) throws Exception {
       Request request;
       String searchUrl = getUrl(pickServer(), cacheName);
-      IndexedQueryMode queryMode = getQueryMode();
       if (method == POST) {
          ObjectNode queryReq = MAPPER.createObjectNode();
          queryReq.put("query", q);
          queryReq.put("offset", offset);
          queryReq.put("max_results", maxResults);
-         if (queryMode != null) queryReq.put(QUERY_MODE, queryMode.toString());
          request = client.newRequest(searchUrl).method(POST).content(new StringContentProvider(queryReq.toString()));
       } else {
          String queryReq = searchUrl + "&query=" + URLEncoder.encode(q, "UTF-8") +
                "&offset=" + offset +
                "&max_results=" + maxResults;
-         if (queryMode != null) {
-            queryReq = queryReq + "&" + QUERY_MODE + "=" + queryMode.toString();
-         }
          request = client.newRequest(queryReq).method(GET);
       }
       return request.send();
@@ -482,7 +475,4 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    abstract ConfigurationBuilder getConfigBuilder();
 
-   IndexedQueryMode getQueryMode() {
-      return IndexedQueryMode.FETCH;
-   }
 }

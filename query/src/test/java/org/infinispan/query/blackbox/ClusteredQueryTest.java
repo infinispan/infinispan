@@ -74,7 +74,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
             .indexing().enable()
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");
+            .addProperty("error_handler", StaticTestingErrorHandler.class.getName());
       cacheCfg.memory()
             .storageType(storageType);
       createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);

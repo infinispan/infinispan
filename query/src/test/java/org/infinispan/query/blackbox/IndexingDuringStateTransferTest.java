@@ -62,7 +62,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
             .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT");
       builder.memory()
             .storageType(StorageType.OBJECT);

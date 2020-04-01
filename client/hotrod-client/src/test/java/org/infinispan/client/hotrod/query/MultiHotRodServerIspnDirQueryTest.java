@@ -24,7 +24,7 @@ public class MultiHotRodServerIspnDirQueryTest extends MultiHotRodServerQueryTes
 
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "infinispan")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       for (EmbeddedCacheManager cm : cacheManagers) {

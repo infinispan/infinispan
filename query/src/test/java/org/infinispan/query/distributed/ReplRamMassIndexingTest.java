@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Search;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
@@ -26,7 +27,7 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
             .addIndexedEntity(Car.class)
             .addProperty("hibernate.search.default.directory_provider", "local-heap")
             .addProperty("hibernate.search.default.exclusive_index_use", "true")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT")
             .clustering()
             .hash().numSegments(10 * NUM_NODES);

@@ -92,7 +92,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
             .enable()
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT");
       cacheCfg.memory()
             .storageType(storageType);

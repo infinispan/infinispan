@@ -42,7 +42,7 @@ public class ProgrammaticAutoConfigTest {
               .create();
 
       assertFalse(cfg.properties().isEmpty());
-      assertEquals(cfg.properties().get("hibernate.search.default.directory_provider"), "infinispan");
+      assertEquals(cfg.properties().get("hibernate.search.default.directory_provider"), "filesystem");
    }
 
    @Test

@@ -1,10 +1,7 @@
 package org.infinispan.rest.search;
 
-import static org.infinispan.query.dsl.IndexedQueryMode.BROADCAST;
-
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.testng.annotations.Test;
 
 /**
@@ -22,8 +19,4 @@ public class NonSharedIndexSearchTest extends BaseRestSearchTest {
       return builder;
    }
 
-   @Override
-   IndexedQueryMode getQueryMode() {
-      return BROADCAST;
-   }
 }

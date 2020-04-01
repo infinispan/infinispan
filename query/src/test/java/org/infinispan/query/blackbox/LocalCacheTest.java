@@ -502,7 +502,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
             .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cfg);
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);

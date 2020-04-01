@@ -45,7 +45,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
             getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      builder.indexing().autoConfig(true);
+      builder.indexing().enable().addProperty("default.directory_provider", "local-heap");
       createHotRodServers(2, builder);
    }
 

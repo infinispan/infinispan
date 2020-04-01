@@ -8,6 +8,7 @@ import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.AfterMethod;
@@ -43,7 +44,7 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
             .enable() //index also changes originated on other nodes, the index is not shared
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "filesystem")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("default.indexBase", TMP_DIR + File.separator + indexName)
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return cb;
