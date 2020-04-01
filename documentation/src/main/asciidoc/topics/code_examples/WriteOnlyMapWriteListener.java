@@ -1,6 +1,6 @@
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-import org.infinispan.commons.api.functional.Listeners.WriteListeners.WriteListener;
+import org.infinispan.functional.EntryView.*;
+import org.infinispan.functional.FunctionalMap.*;
+import org.infinispan.functional.Listeners.WriteListeners.WriteListener;
 
 WriteOnlyMap<String, String> woMap = ...
 

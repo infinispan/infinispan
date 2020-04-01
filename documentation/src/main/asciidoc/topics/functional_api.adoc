@@ -86,20 +86,20 @@ The function parameters for read-only maps provide the user with a
 link:{javadocroot}/org/infinispan/functional/EntryView.ReadEntryView.html[read-only entry view]
 to interact with the data in the cache, which include these operations:
 
-* link:{javadocroot}/org/infinispan/functional/EntryView.ReadEntryView.html#key--[`key()`]
+* link:{javadocroot}/org/infinispan/functional/EntryView.ReadEntryView.html#key()[`key()`]
 method returns the key for which this function is being executed.
-* link:{javadocroot}/org/infinispan/functional/EntryView.ReadEntryView.html#find--[`find()`]
+* link:{javadocroot}/org/infinispan/functional/EntryView.ReadEntryView.html#find()[`find()`]
 returns a Java 8 `Optional` wrapping the value if present,
 otherwise it returns an empty optional. Unless the value is guaranteed to
 be associated with the key, it's recommended to use `find()` to verify
 whether there's a value associated with the key.
-* link:{javadocroot}/org/infinispan/functional/EntryView.ReadEntryView.html#get--[`get()`]
+* link:{javadocroot}/org/infinispan/functional/EntryView.ReadEntryView.html#get()[`get()`]
 returns the value associated with the key. If the key has no value
 associated with it, calling `get()` throws a `NoSuchElementException`.
 `get()` can be considered as a shortcut of `ReadEntryView.find().get()`
 which should be used only when the caller has guarantees that there's
 definitely a value associated with the key.
-* link:{javadocroot}/org/infinispan/functional/MetaParam.Lookup.html#findMetaParam-java.lang.Class-[`findMetaParam(Class<T> type)`]
+* link:{javadocroot}/org/infinispan/functional/MetaParam.Lookup.html#findMetaParam(java.lang.Class)[`findMetaParam(Class<T> type)`]
 allows metadata parameter information
 associated with the cache entry to be looked up, for example: entry
 lifespan, last  accessed time...etc.
@@ -131,7 +131,7 @@ include::code_examples/WriteOnlyMap.java[]
 ----
 
 Multiple key/value pairs can be stored in one go using
-{javadocroot}/org/infinispan/functional/FunctionalMap.WriteOnlyMap.html#evalMany-java.util.Map-java.util.function.BiConsumer-[`evalMany`]
+{javadocroot}/org/infinispan/functional/FunctionalMap.WriteOnlyMap.html#evalMany(java.util.Map,java.util.function.BiConsumer)[`evalMany`]
 API:
 
 [source,java]
@@ -141,7 +141,7 @@ include::code_examples/WriteOnlyMapStoreKeys.java[]
 
 To remove all contents of the cache, there are two possibilities with
 different semantics. If using
-link:{javadocroot}/org/infinispan/functional/FunctionalMap.WriteOnlyMap.html#evalAll-java.util.function.Consumer-[`evalAll`]
+link:{javadocroot}/org/infinispan/functional/FunctionalMap.WriteOnlyMap.html#evalAll(java.util.function.Consumer)[`evalAll`]
 each cached entry is iterated over and the function is called
 with that entry's information. Using this method also results in listeners being invoked.
 
@@ -151,7 +151,7 @@ include::code_examples/WriteOnlyMapRemoveAll.java[]
 ----
 
 The alternative way to remove all entries is to call
-link:{javadocroot}/org/infinispan/functional/FunctionalMap.WriteOnlyMap.html#truncate--[`truncate`]
+link:{javadocroot}/org/infinispan/functional/FunctionalMap.WriteOnlyMap.html#truncate()[`truncate`]
 operation which clears the entire cache contents in one go without
 invoking any listeners and is best-effort:
 
@@ -167,12 +167,12 @@ link:{javadocroot}/org/infinispan/functional/EntryView.WriteEntryView.html[write
 to modify the data in the cache, which include these
 operations:
 
-* link:{javadocroot}/org/infinispan/functional/EntryView.WriteEntryView.html#set-V-org.infinispan.commons.api.functional.MetaParam.Writable...-[`set(V, MetaParam.Writable...)`]
+* link:{javadocroot}/org/infinispan/functional/EntryView.WriteEntryView.html#set(V,org.infinispan.functional.MetaParam.Writable...)[`set(V, MetaParam.Writable...)`]
 method allows for a new value to be
 associated with the cache entry for which this function is executed, and it
 optionally takes zero or more metadata parameters to be stored along with
 the value. See link:#meta_parameter[Metadata Parameter Handling] for more information.
-* link:{javadocroot}/org/infinispan/functional/EntryView.WriteEntryView.html#remove--[`remove()`]
+* link:{javadocroot}/org/infinispan/functional/EntryView.WriteEntryView.html#remove()[`remove()`]
 method removes the cache entry, including both value and metadata
 parameters associated with this key.
 
@@ -252,7 +252,7 @@ internal logic to extra the data. Storing is done via the
 `set(V, MetaParam.Writable...)` method in the link:#write_only_entry_view[write-only entry view] or link:#read_write_entry_view[read-write entry view] function parameters.
 
 Querying metadata parameters is available via the
-link:{javadocroot}/org/infinispan/functional/MetaParam.Lookup.html#findMetaParam-java.lang.Class-[`findMetaParam(Class)`]
+link:{javadocroot}/org/infinispan/functional/MetaParam.Lookup.html#findMetaParam(java.lang.Class)[`findMetaParam(Class)`]
 method
 available via link:#read_write_entry_view[read-write entry view] or
 link:#read_only_entry_view[read-only entry views] or function parameters.
@@ -296,7 +296,7 @@ link:{javadocroot}/org/infinispan/functional/Param.html[Per-invocation parameter
 are applied to regular functional map API calls to
 alter the behaviour of certain aspects. Adding per invocation parameters is
 done using the
-link:{javadocroot}/org/infinispan/functional/FunctionalMap.html#withParams-org.infinispan.commons.api.functional.Param...-[`withParams(Param<?>...)`]
+link:{javadocroot}/org/infinispan/functional/FunctionalMap.html#withParams(org.infinispan.functional.Param...)[`withParams(Param<?>...)`]
 method.
 
 link:{javadocroot}/org/infinispan/functional/Param.FutureMode.html[`Param.FutureMode`]
@@ -369,22 +369,22 @@ entry has been written.
 However, write event listeners can distinguish between entry removals
 and cache entry create/modify-update events because they can query
 what the new entry's value via
-link:{javadocroot}/org/infinispan/functional/EntryView.ReadEntryView.html#find--[`ReadEntryView.find()`]
+link:{javadocroot}/org/infinispan/functional/EntryView.ReadEntryView.html#find()[`ReadEntryView.find()`]
 method.
 
 Adding a write listener is done via the WriteListeners interface
 which is accessible via both
-link:{javadocroot}/org/infinispan/functional/FunctionalMap.ReadWriteMap.html#listeners--[`ReadWriteMap.listeners()`]
+link:{javadocroot}/org/infinispan/functional/FunctionalMap.ReadWriteMap.html#listeners()[`ReadWriteMap.listeners()`]
 and
-link:{javadocroot}/org/infinispan/functional/FunctionalMap.WriteOnlyMap.html#listeners--[`WriteOnlyMap.listeners()`]
+link:{javadocroot}/org/infinispan/functional/FunctionalMap.WriteOnlyMap.html#listeners()[`WriteOnlyMap.listeners()`]
  method.
 
 A write listener implementation can be defined either passing a function
 to
-link:{javadocroot}/org/infinispan/functional/Listeners.WriteListeners.html#onWrite-java.util.function.Consumer-[`onWrite(Consumer<ReadEntryView<K, V>>)`]
+link:{javadocroot}/org/infinispan/functional/Listeners.WriteListeners.html#onWrite(java.util.function.Consumer)[`onWrite(Consumer<ReadEntryView<K, V>>)`]
 method, or passing a
 WriteListener implementation to
-link:{javadocroot}/org/infinispan/functional/Listeners.WriteListeners.html#add-org.infinispan.commons.api.functional.Listeners.WriteListeners.WriteListener-[`add(WriteListener<K, V>)`]
+link:{javadocroot}/org/infinispan/functional/Listeners.WriteListeners.html#add(org.infinispan.functional.Listeners.WriteListeners.WriteListener)[`add(WriteListener<K, V>)`]
 method.
 Either way, all these methods return an
 link:{jdkdocroot}/java/lang/AutoCloseable.html[AutoCloseable]
@@ -410,16 +410,16 @@ guaranteed.
 Adding a read-write listener is done via the
 link:{javadocroot}/org/infinispan/functional/Listeners.ReadWriteListeners.html[`ReadWriteListeners`]
 interface which is accessible via
-link:{javadocroot}/org/infinispan/functional/FunctionalMap.ReadWriteMap.html#listeners--[`ReadWriteMap.listeners()`]
+link:{javadocroot}/org/infinispan/functional/FunctionalMap.ReadWriteMap.html#listeners()[`ReadWriteMap.listeners()`]
 method.
 
 If interested in only one of the event types, the simplest way to add a
 listener is to pass a function to either
-link:{javadocroot}/org/infinispan/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onCreate-org.infinispan.commons.api.functional.EntryView.ReadEntryView-[`onCreate`]
+link:{javadocroot}/org/infinispan/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onCreate(java.util.function.Consumer)[`onCreate`]
 ,
-link:{javadocroot}/org/infinispan/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onModify-org.infinispan.commons.api.functional.EntryView.ReadEntryView-org.infinispan.commons.api.functional.EntryView.ReadEntryView-[`onModify`]
+link:{javadocroot}/org/infinispan/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onModify(java.util.function.BiConsumer)[`onModify`]
 or
-link:{javadocroot}/org/infinispan/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onRemove-org.infinispan.commons.api.functional.EntryView.ReadEntryView-[`onRemove`]
+link:{javadocroot}/org/infinispan/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onRemove(java.util.function.Consumer)[`onRemove`]
 methods. All these methods return an AutoCloseable instance that can be
 used to de-register the function listener:
 
@@ -432,7 +432,7 @@ If listening for two or more event types, it's better to pass in an
 implementation of
 link:{javadocroot}/org/infinispan/functional/Listeners.WriteListeners.WriteListener.html[`ReadWriteListener`]
 interface via the
-link:{javadocroot}/org/infinispan/functional/Listeners.ReadWriteListeners.html#add-org.infinispan.commons.api.functional.Listeners.ReadWriteListeners.ReadWriteListener-[`ReadWriteListeners.add()`]
+link:{javadocroot}/org/infinispan/functional/Listeners.ReadWriteListeners.html#add(org.infinispan.functional.Listeners.ReadWriteListeners.ReadWriteListener)[`ReadWriteListeners.add()`]
 method. `ReadWriteListener` offers the same `onCreate`/`onModify`/`onRemove`
 callbacks with default method implementations that are empty:
 
