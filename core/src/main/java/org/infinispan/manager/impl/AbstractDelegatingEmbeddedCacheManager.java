@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.configuration.cache.Configuration;
@@ -250,5 +252,15 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    @Override
    public void close() throws IOException {
       cm.close();
+   }
+
+   @Override
+   public EmbeddedCacheManager withSubject(Subject subject) {
+      return cm.withSubject(subject);
+   }
+
+   @Override
+   public Subject getSubject() {
+      return cm.getSubject();
    }
 }

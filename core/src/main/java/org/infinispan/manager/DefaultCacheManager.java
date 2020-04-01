@@ -31,6 +31,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
@@ -372,7 +374,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          stats = new CacheContainerStatsImpl(this);
          globalComponentRegistry.registerComponent(stats, CacheContainerStats.class);
 
-
          health = new HealthImpl(this, internalCacheRegistry);
          cacheManagerInfo = new CacheManagerInfo(this, getConfigurationManager(), internalCacheRegistry);
          globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
@@ -389,6 +390,18 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       }
       if (start)
          start();
+   }
+
+   private DefaultCacheManager(DefaultCacheManager original) {
+      this.authzHelper = original.authzHelper;
+      this.configurationManager = original.configurationManager;
+      this.health = original.health;
+      this.classWhiteList = original.classWhiteList;
+      this.cacheManagerInfo = original.cacheManagerInfo;
+      this.cacheManagerAdmin = original.cacheManagerAdmin;
+      this.defaultCacheName = original.defaultCacheName;
+      this.stats = original.stats;
+      this.globalComponentRegistry = original.globalComponentRegistry;
    }
 
    @Override
@@ -412,7 +425,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    }
 
    private Configuration doDefineConfiguration(String name, Configuration... configurations) {
-      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.ADMIN);
       assertIsNotTerminated();
       if (name == null || configurations == null)
          throw new NullPointerException("Null arguments not allowed");
@@ -437,7 +450,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public void undefineConfiguration(String configurationName) {
-      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.ADMIN);
       Configuration existing = configurationManager.getConfiguration(configurationName, false);
       if (existing != null) {
          for (CompletableFuture<Cache<?, ?>> cacheFuture : caches.values()) {
@@ -538,7 +551,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public EmbeddedCacheManager startCaches(final String... cacheNames) {
-      authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.LIFECYCLE);
 
       internalStart(false);
 
@@ -653,7 +666,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
       if (c.security().authorization().enabled()) {
          // Don't even attempt to wire anything if we don't have LIFECYCLE privileges
-         authzHelper.checkPermission(c.security().authorization(), AuthorizationPermission.LIFECYCLE);
+         authzHelper.checkPermission(c.security().authorization(), getSubject(), AuthorizationPermission.LIFECYCLE, null);
       }
       if (c.isTemplate() && sameCache) {
          throw CONFIG.templateConfigurationStartAttempt(cacheName);
@@ -709,7 +722,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public void start() {
-      authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.LIFECYCLE);
       internalStart(true);
    }
 
@@ -784,7 +797,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public void stop() {
-      authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.LIFECYCLE);
 
       internalStop();
    }
@@ -843,14 +856,14 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public CompletionStage<Void> addListenerAsync(Object listener) {
-      authzHelper.checkPermission(AuthorizationPermission.LISTEN);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.LISTEN);
       CacheManagerNotifier notifier = globalComponentRegistry.getComponent(CacheManagerNotifier.class);
       return notifier.addListenerAsync(listener);
    }
 
    @Override
    public CompletionStage<Void> removeListenerAsync(Object listener) {
-      authzHelper.checkPermission(AuthorizationPermission.LISTEN);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.LISTEN);
       try {
          CacheManagerNotifier notifier = globalComponentRegistry.getComponent(CacheManagerNotifier.class);
          return notifier.removeListenerAsync(listener);
@@ -863,7 +876,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Deprecated
    @Override
    public Set<Object> getListeners() {
-      authzHelper.checkPermission(AuthorizationPermission.LISTEN);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.LISTEN);
       CacheManagerNotifier notifier = globalComponentRegistry.getComponent(CacheManagerNotifier.class);
       return notifier.getListeners();
    }
@@ -875,13 +888,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public GlobalConfiguration getCacheManagerConfiguration() {
-      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.ADMIN);
       return configurationManager.getGlobalConfiguration();
    }
 
    @Override
    public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration() {
-      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.ADMIN);
       if (defaultCacheName != null) {
          return configurationManager.getConfiguration(defaultCacheName, true);
       } else {
@@ -891,7 +904,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public Configuration getCacheConfiguration(String name) {
-      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.ADMIN);
       Configuration configuration = configurationManager.getConfiguration(name, true);
       if (configuration == null && cacheExists(name)) {
          return getDefaultCacheConfiguration();
@@ -1088,13 +1101,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public GlobalComponentRegistry getGlobalComponentRegistry() {
-      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.ADMIN);
       return globalComponentRegistry;
    }
 
    @Override
    public void addCacheDependency(String from, String to) {
-      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.ADMIN);
       cacheDependencyGraph.addDependency(from, to);
    }
 
@@ -1128,7 +1141,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public ClusterExecutor executor() {
-      authzHelper.checkPermission(AuthorizationPermission.EXEC);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.EXEC);
       // Allow INITIALIZING state so ClusterExecutor can be used by components in a @Start method.
       if (globalComponentRegistry.getStatus() != ComponentStatus.RUNNING &&
             globalComponentRegistry.getStatus() != ComponentStatus.INITIALIZING) {
@@ -1158,8 +1171,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       return classWhiteList;
    }
 
+   @Override
    public EmbeddedCacheManagerAdmin administration() {
-      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authzHelper.checkPermission(getSubject(), AuthorizationPermission.ADMIN);
       return cacheManagerAdmin;
    }
 
@@ -1169,5 +1183,29 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    ConfigurationManager getConfigurationManager() {
       return configurationManager;
+   }
+
+   @Override
+   public Subject getSubject() {
+      return null;
+   }
+
+   @Override
+   public EmbeddedCacheManager withSubject(Subject subject) {
+      if (subject == null) {
+         return this;
+      } else {
+         return new DefaultCacheManager(this) {
+            @Override
+            public EmbeddedCacheManager withSubject(Subject subject) {
+               throw new IllegalArgumentException("Cannot set a Subject on an EmbeddedCacheManager more than once");
+            }
+
+            @Override
+            public Subject getSubject() {
+               return subject;
+            }
+         };
+      }
    }
 }
