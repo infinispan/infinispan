@@ -3,7 +3,4 @@
 
 include::{stories}/assembly_developing.adoc[leveloffset=+1]
 include::{stories}/assembly_custom_interceptors.adoc[leveloffset=+1]
-//Community only
-ifndef::productized[]
 include::{stories}/assembly_extending.adoc[leveloffset=+1]
-endif::productized[]

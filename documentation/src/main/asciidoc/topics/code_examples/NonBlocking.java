@@ -1,4 +1,4 @@
-Set<Future<?>> futures = new HashSet<Future<?>>();
+Set<CompletableFuture<?>> futures = new HashSet<>();
 futures.add(cache.putAsync(key1, value1)); // does not block
 futures.add(cache.putAsync(key2, value2)); // does not block
 futures.add(cache.putAsync(key3, value3)); // does not block
@@ -9,4 +9,4 @@ futures.add(cache.putAsync(key3, value3)); // does not block
 // in the cluster
 
 // check that the puts completed successfully
-for (Future<?> f: futures) f.get();
+for (CompletableFuture<?> f: futures) f.get();

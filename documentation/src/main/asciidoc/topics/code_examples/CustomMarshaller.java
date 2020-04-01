@@ -1,3 +1,4 @@
 GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
-      builder.serialization().marshaller(org.infinispan.example.marshall.CustomMarshaller.class)
-      .addJavaSerialWhiteList("org.infinispan.example.*");
+builder.serialization()
+      .marshaller(new org.infinispan.example.marshall.CustomMarshaller())
+      .whiteList().addRegexp("org.infinispan.example.*");
