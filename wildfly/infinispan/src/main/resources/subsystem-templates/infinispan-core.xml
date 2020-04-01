@@ -408,27 +408,13 @@
                   <property name="default.directory_provider">local-heap</property>
                </indexing>
             </replicated-cache>
-            <!-- Indexes are local to each node, stored on infinispan itself on configured caches -->
-            <replicated-cache name="InfinispanCustomNonSharedIndex">
-               <indexing enabled="true">
-                  <property name="default.directory_provider">infinispan</property>
-                  <property name="default.metadata_cachename">indexMetadata</property>
-                  <property name="default.data_cachename">indexData</property>
-                  <property name="default.locking_cachename">indexLocking</property>
-               </indexing>
-            </replicated-cache>
+
             <local-cache name="indexMetadata">
             </local-cache>
             <local-cache name="indexData">
             </local-cache>
             <local-cache name="indexLocking">
             </local-cache>
-            <!-- Indexes are shared between all nodes, stored on infinispan itself -->
-            <distributed-cache name="InfinispanSharedIndex">
-               <indexing enabled="true">
-                  <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
-               </indexing>
-            </distributed-cache>
             <!-- Auto config based on cache type -->
             <distributed-cache name="sharedIndexInfinispanDirectory">
                <indexing enabled="true" auto-config="true"/>

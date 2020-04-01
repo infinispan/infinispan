@@ -4,13 +4,10 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
-import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
@@ -33,16 +30,11 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
          cacheCfg.indexing()
                .enable()
                .addIndexedEntity(Car.class)
-               .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
+               .addProperty("default.directory_provider", "local-heap")
                .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
                .addProperty("lucene_version", "LUCENE_CURRENT");
          cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);
          holder.newConfigurationBuilder(defaultName).read(cacheCfg.build());
-
-         Configuration cacheCfg1 = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false)
-               .clustering().stateTransfer().fetchInMemoryState(true).build();
-         holder.newConfigurationBuilder(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME).read(cacheCfg1);
-         holder.newConfigurationBuilder(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME).read(cacheCfg1);
       }, NUM_NODES);
    }
 

@@ -56,7 +56,8 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    private ConfigurationBuilder getIndexedPersistedCache() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      builder.indexing().enable().autoConfig(true)
+      builder.indexing().enable()
+            .addProperty("default.directory_provider", "local-heap")
             .statistics().enable()
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
       return builder;

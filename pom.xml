@@ -100,9 +100,6 @@
       <module>object-filter</module>
       <module>remote-query/remote-query-client</module>
       <module>remote-query/remote-query-server</module>
-      <module>lucene</module>
-      <module>lucene/lucene-directory</module>
-      <module>lucene/directory-provider</module>
       <module>persistence</module>
       <module>persistence/jdbc</module>
       <module>persistence/jpa</module>
@@ -143,7 +140,6 @@
       <module>jcache</module>
       <module>integrationtests</module>
       <module>integrationtests/wildfly-modules</module>
-      <module>integrationtests/as-lucene-directory</module>
       <module>integrationtests/endpoints-interop-it</module>
       <module>integrationtests/jboss-marshalling-it</module>
       <module>integrationtests/cdi-jcache-it</module>
@@ -2414,13 +2410,6 @@
             <version>${version.infinispan}</version>
             <type>test-jar</type>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-lucene-directory</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-            <version>${version.infinispan}</version>
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>

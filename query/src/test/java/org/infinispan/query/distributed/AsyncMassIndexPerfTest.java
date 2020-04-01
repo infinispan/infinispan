@@ -46,7 +46,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    private static final boolean TX_ENABLED = false;
    private static final String MERGE_FACTOR = "30";
    private static final CacheMode CACHE_MODE = CacheMode.DIST_SYNC;
-   private static final IndexManager INDEX_MANAGER = IndexManager.INFINISPAN;
+   private static final IndexManager INDEX_MANAGER = IndexManager.NRT;
    private static final Provider DIRECTORY_PROVIDER = Provider.INFINISPAN;
    /**
     * Hibernate search backend used. Either sync or async (commit every 1s by default)
@@ -161,7 +161,6 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    private enum IndexManager {
       NRT("near-real-time"),
-      INFINISPAN("org.infinispan.query.indexmanager.InfinispanIndexManager"),
       ELASTIC_SEARCH("elasticsearch"),
       DIRECTORY("directory-based");
       private final String cfg;

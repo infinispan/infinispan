@@ -56,8 +56,8 @@ public class ClusteredIT {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
       if (indexed) {
-         builder.indexing()
-               .autoConfig(true)
+         builder.indexing().enable()
+               .addProperty("default.directory_provider", "local-heap")
                .addProperty("infinispan.query.lucene.max-boolean-clauses", "1025");
       }
 

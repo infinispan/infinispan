@@ -24,45 +24,11 @@
                <indexed-entities>
                   <indexed-entity>org.infinispan.test.integration.as.query.Book</indexed-entity>
                </indexed-entities>
-               <!-- Use our custom IndexManager; TODO autoinject by default? -->
-               <property name="hibernate.search.default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
                <!-- specify the managed index is to be shared across the nodes -->
-               <property name="hibernate.search.default.directory_provider">infinispan</property>
-               <!-- Supporting exclusive index usage will require lock cleanup on crashed nodes to be implemented -->
+                <property name="default.directory_provider">local-heap</property>
+                <!-- Supporting exclusive index usage will require lock cleanup on crashed nodes to be implemented -->
                <property name="hibernate.search.default.exclusive_index_use">false</property>
             </indexing>
        </distributed-cache>
-
-       <!-- ******************************************************************************* -->
-       <!-- Individually configured "named" caches.                                         -->
-       <!--                                                                                 -->
-       <!-- While default configuration happens to be fine with similar settings across the -->
-       <!-- three caches, they should generally be different in a production environment.   -->
-       <!--                                                                                 -->
-       <!-- Current settings could easily lead to OutOfMemory exception as a CacheStore     -->
-       <!-- should be enabled, and maybe distribution is more suited for LuceneIndexesData. -->
-       <!-- ******************************************************************************* -->
-
-      <!-- *************************************** -->
-      <!--  Cache to store Lucene's file metadata  -->
-      <!-- *************************************** -->
-      <replicated-cache name="LuceneIndexesMetadata" mode="SYNC" remote-timeout="25000">
-         <state-transfer enabled="true" />
-         <indexing enabled="false" />
-      </replicated-cache>
-      <!-- **************************** -->
-      <!--  Cache to store Lucene data  -->
-      <!-- **************************** -->
-      <distributed-cache name="LuceneIndexesData" mode="SYNC" remote-timeout="25000">
-         <state-transfer enabled="true" />
-         <indexing enabled="false" />
-      </distributed-cache>
-      <!-- ***************************** -->
-      <!--  Cache to store Lucene locks  -->
-      <!-- ***************************** -->
-      <replicated-cache name="LuceneIndexesLocking" mode="SYNC" remote-timeout="25000">
-         <state-transfer enabled="true" />
-         <indexing enabled="false" />
-      </replicated-cache>
    </cache-container>
 </infinispan>

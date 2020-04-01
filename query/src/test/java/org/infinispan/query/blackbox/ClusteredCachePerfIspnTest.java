@@ -3,7 +3,6 @@ package org.infinispan.query.blackbox;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -25,7 +24,7 @@ public class ClusteredCachePerfIspnTest extends ClusteredCacheTest {
               .addIndexedEntity(Person.class)
               .addProperty("default.indexmanager", "near-real-time")
               .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
-              .addProperty("default.directory_provider", "infinispan")
+              .addProperty("default.directory_provider", "local-heap")
               .addProperty("default.chunk_size", "128000")
               .addProperty("default.indexwriter.merge_factor", "30")
               .addProperty("default.indexwriter.merge_max_size", "1024")
@@ -35,8 +34,6 @@ public class ClusteredCachePerfIspnTest extends ClusteredCacheTest {
 
       enhanceConfig(cacheCfg);
 
-      ConfigurationBuilder indexCfg = new ConfigurationBuilder();
-
       for (int i = 0; i < 2; i++) {
          ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
          holder.getGlobalConfigurationBuilder()
@@ -45,9 +42,6 @@ public class ClusteredCachePerfIspnTest extends ClusteredCacheTest {
                .serialization().addContextInitializer(QueryTestSCI.INSTANCE);
 
          holder.getNamedConfigurationBuilders().put(TestCacheManagerFactory.DEFAULT_CACHE_NAME, cacheCfg);
-         holder.getNamedConfigurationBuilders().put(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, indexCfg);
-         holder.getNamedConfigurationBuilders().put(InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME, indexCfg);
-         holder.getNamedConfigurationBuilders().put(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, indexCfg);
 
          addClusterEnabledCacheManager(holder);
       }

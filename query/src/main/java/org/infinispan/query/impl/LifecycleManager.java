@@ -1,17 +1,10 @@
 package org.infinispan.query.impl;
 
-import static org.infinispan.query.impl.IndexPropertyInspector.getDataCacheName;
-import static org.infinispan.query.impl.IndexPropertyInspector.getLockingCacheName;
-import static org.infinispan.query.impl.IndexPropertyInspector.getMetadataCacheName;
-import static org.infinispan.query.impl.IndexPropertyInspector.hasInfinispanDirectory;
-import static org.infinispan.query.impl.IndexPropertyInspector.isInfinispanDirectoryInternalCache;
-import static org.infinispan.query.impl.SegmentFilterFactory.SEGMENT_FILTER_NAME;
 import static org.infinispan.query.logging.Log.CONTAINER;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -21,7 +14,6 @@ import javax.management.ObjectName;
 import org.apache.lucene.search.BooleanQuery;
 import org.hibernate.search.analyzer.definition.LuceneAnalysisDefinitionProvider;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
-import org.hibernate.search.engine.impl.MutableSearchFactory;
 import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
@@ -47,7 +39,6 @@ import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.metrics.impl.CacheMetricsRegistration;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
@@ -119,7 +110,6 @@ public class LifecycleManager implements ModuleLifecycle {
             cr.registerComponent(indexInspector, IndexInspector.class);
 
             createQueryInterceptorIfNeeded(cr, cfg, cache, searchFactory, keyTransformationHandler);
-            addCacheDependencyIfNeeded(cacheName, cache.getCacheManager(), cfg.indexing());
 
             cr.registerComponent(new QueryBox(), QueryBox.class);
             DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache, searchFactory,
@@ -129,25 +119,6 @@ public class LifecycleManager implements ModuleLifecycle {
 
          cr.registerComponent(ObjectReflectionMatcher.create(new ReflectionEntityNamesResolver(aggregatedClassLoader), searchFactory), ObjectReflectionMatcher.class);
          cr.registerComponent(new QueryEngine<>(cache, isIndexed), QueryEngine.class);
-      }
-   }
-
-   private void addCacheDependencyIfNeeded(String cacheStarting, EmbeddedCacheManager cacheManager, IndexingConfiguration indexingConfiguration) {
-      if (hasInfinispanDirectory(indexingConfiguration.properties())) {
-         String metadataCacheName = getMetadataCacheName(indexingConfiguration.properties());
-         if (!metadataCacheName.equals(cacheStarting)) {
-            SecurityActions.addCacheDependency(cacheManager, cacheStarting, metadataCacheName);
-         }
-
-         String lockingCacheName = getLockingCacheName(indexingConfiguration.properties());
-         if (!lockingCacheName.equals(cacheStarting)) {
-            SecurityActions.addCacheDependency(cacheManager, cacheStarting, lockingCacheName);
-         }
-
-         String dataCacheName = getDataCacheName(indexingConfiguration.properties());
-         if (!dataCacheName.equals(cacheStarting)) {
-            SecurityActions.addCacheDependency(cacheManager, cacheStarting, dataCacheName);
-         }
       }
    }
 
@@ -205,21 +176,6 @@ public class LifecycleManager implements ModuleLifecycle {
       }
 
       SearchIntegrator searchFactory = cr.getComponent(SearchIntegrator.class);
-      Properties indexingProperties = indexingConfiguration.properties();
-      if (isInfinispanDirectoryInternalCache(cacheName, indexingProperties)) {
-         // Infinispan Directory causes runtime circular dependencies so we have postponed creation of indexes until
-         // all components and involved caches are initialised (see SearchableCacheConfiguration). Now is the right time!
-         // TODO classes defined programmatically via SearchMapping are lost!
-         // Workaround: Remove pre-registered filter to avoid SearchException when dynamically adding entities
-         MutableSearchFactory mutableSearchFactory = searchFactory.unwrap(MutableSearchFactory.class);
-         mutableSearchFactory.getFilterDefinitions().remove(SEGMENT_FILTER_NAME);
-         Class<?>[] indexedEntities = indexingConfiguration.indexedEntities().toArray(new Class<?>[0]);
-         for (Class<?> clazz : indexedEntities) {
-            mutableSearchFactory.getProgrammaticMapping().entity(clazz).classBridge(SegmentFieldBridge.class).name(SegmentFieldBridge.SEGMENT_FIELD);
-         }
-         searchFactory.addClasses(indexedEntities);
-      }
-
       checkIndexableClasses(searchFactory, indexingConfiguration.indexedEntities());
 
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();

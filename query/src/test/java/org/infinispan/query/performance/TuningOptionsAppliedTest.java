@@ -2,7 +2,6 @@ package org.infinispan.query.performance;
 
 import java.io.IOException;
 
-import org.apache.lucene.store.Directory;
 import org.hibernate.search.backend.configuration.impl.IndexWriterSetting;
 import org.hibernate.search.backend.spi.LuceneIndexingParameters;
 import org.hibernate.search.backend.spi.LuceneIndexingParameters.ParameterSet;
@@ -12,8 +11,6 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.store.DirectoryProvider;
 import org.hibernate.search.store.impl.FSDirectoryProvider;
 import org.infinispan.Cache;
-import org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider;
-import org.infinispan.lucene.impl.DirectoryExtensions;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -40,23 +37,7 @@ public class TuningOptionsAppliedTest extends AbstractInfinispanTest {
          NRTIndexManager nrti = verifyShardingOptions(si, 6);
          verifyIndexWriterOptions(nrti, 220, 4096, 30);
          verifyUsesFSDirectory(nrti);
-      }
-      finally {
-         TestingUtil.killCacheManagers(embeddedCacheManager);
-      }
-   }
-
-   public void verifyInfinispanDirectoryOptions() throws IOException, IllegalArgumentException, IllegalAccessException, SecurityException, NoSuchFieldException {
-      EmbeddedCacheManager embeddedCacheManager = TestCacheManagerFactory.fromXml("nrt-performance-writer-infinispandirectory.xml");
-      try {
-         SearchIntegrator si = extractSearchFactoryImplementor(embeddedCacheManager);
-         NRTIndexManager nrti = verifyShardingOptions(si, 6);
-         verifyIndexWriterOptions(nrti, 64, 1024, 30);
-         verifyUsesInfinispanDirectory(nrti, 128000, embeddedCacheManager);
-         //Make sure to close the Indexed cache before those storing the index:
-         embeddedCacheManager.getCache("Indexed").stop();
-      }
-      finally {
+      } finally {
          TestingUtil.killCacheManagers(embeddedCacheManager);
       }
    }
@@ -70,35 +51,18 @@ public class TuningOptionsAppliedTest extends AbstractInfinispanTest {
 
    private NRTIndexManager verifyShardingOptions(SearchIntegrator searchIntegrator, int expectedShards) {
       for (int i = 0; i < expectedShards; i++)
-         Assert.assertNotNull(searchIntegrator.getIndexManager("person."+i), "person."+i+" IndexManager missing!");
-      Assert.assertNull(searchIntegrator.getIndexManager("person."+expectedShards), "An IndexManager too much was created!");
+         Assert.assertNotNull(searchIntegrator.getIndexManager("person." + i), "person." + i + " IndexManager missing!");
+      Assert.assertNull(searchIntegrator.getIndexManager("person." + expectedShards), "An IndexManager too much was created!");
 
       IndexManager indexManager = searchIntegrator.getIndexManager("person.0");
       Assert.assertTrue(indexManager instanceof NRTIndexManager);
-      NRTIndexManager nrtIM = (NRTIndexManager)indexManager;
+      NRTIndexManager nrtIM = (NRTIndexManager) indexManager;
       return nrtIM;
    }
 
    private void verifyUsesFSDirectory(NRTIndexManager nrtIM) {
       DirectoryProvider directoryProvider = nrtIM.getDirectoryProvider();
       Assert.assertTrue(directoryProvider instanceof FSDirectoryProvider);
-   }
-
-   private void verifyUsesInfinispanDirectory(NRTIndexManager nrti, int expectedChunkSize, EmbeddedCacheManager embeddedCacheManager) throws IllegalArgumentException, IllegalAccessException, SecurityException, NoSuchFieldException {
-      DirectoryProvider directoryProvider = nrti.getDirectoryProvider();
-      Assert.assertTrue(directoryProvider instanceof InfinispanDirectoryProvider);
-      InfinispanDirectoryProvider ispn = (InfinispanDirectoryProvider)directoryProvider;
-      Directory infinispanDirectory = ispn.getDirectory();
-      DirectoryExtensions extended = (DirectoryExtensions)infinispanDirectory;
-
-      Assert.assertEquals(expectedChunkSize, extended.getChunkSize());
-
-      Assert.assertEquals(extended.getMetadataCache().getName(), "LuceneIndexesMetadataOWR");
-
-      Assert.assertEquals(extended.getDataCache().getName(), "LuceneIndexesDataOWR");
-
-      //And finally check we're running it in the same CacheManager:
-      Assert.assertTrue(extended.getDataCache().getCacheManager() == embeddedCacheManager);
    }
 
    private void verifyIndexWriterOptions(NRTIndexManager nrtIM, Integer expectedRAMBuffer, Integer expectedMaxMergeSize, Integer expectedMergeFactor) {

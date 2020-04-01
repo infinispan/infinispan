@@ -23,7 +23,7 @@ public class DeclarativeAutoConfigTest extends AbstractInfinispanTest {
    @Test
    public void testAutoConfig() throws IOException {
       withCacheManager(new CacheManagerCallable(
-              TestCacheManagerFactory.fromXml("configuration-parsing-test.xml")) {
+            TestCacheManagerFactory.fromXml("configuration-parsing-test.xml")) {
          @Override
          public void call() {
             Configuration cacheConfiguration = cm.getCacheConfiguration("repl-with-default");
@@ -38,10 +38,10 @@ public class DeclarativeAutoConfigTest extends AbstractInfinispanTest {
             properties = cacheConfiguration.indexing().properties();
 
             assertFalse(properties.isEmpty());
-            assertEquals(properties.getProperty("hibernate.search.default.directory_provider"), "infinispan");
-            assertEquals(properties.getProperty("hibernate.search.default.indexmanager"), "org.infinispan.query.indexmanager.InfinispanIndexManager");
             assertEquals(properties.getProperty("hibernate.search.default.exclusive_index_use"), "true");
             assertEquals(properties.getProperty("hibernate.search.default.reader.strategy"), "shared");
+            assertEquals(properties.getProperty("hibernate.search.default.indexmanager"), "near-real-time");
+            assertEquals(properties.getProperty("hibernate.search.default.directory_provider"), "filesystem");
          }
       });
    }

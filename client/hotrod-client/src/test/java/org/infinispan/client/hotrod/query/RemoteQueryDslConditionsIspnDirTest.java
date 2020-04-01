@@ -41,7 +41,7 @@ public class RemoteQueryDslConditionsIspnDirTest extends RemoteQueryDslCondition
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = super.getConfigurationBuilder();
-      builder.indexing().addProperty("default.directory_provider", "infinispan");
+      builder.indexing().addProperty("default.directory_provider", "local-heap");
       return builder;
    }
 }

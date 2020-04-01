@@ -31,7 +31,7 @@ public class LocalCachePerfProgrammaticConfTest extends LocalCacheTest {
             .enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
-            .addProperty("default.directory_provider", "infinispan")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("default.chunk_size", "128000")
             .addProperty("default.indexmanager", "near-real-time")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")

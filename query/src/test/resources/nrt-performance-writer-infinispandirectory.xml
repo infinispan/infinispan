@@ -28,7 +28,7 @@
             <!-- Enabled fastest writer: NRT backend -->
             <property name="default.indexmanager">near-real-time</property>
             <!-- Write indexes in Infinispan -->
-            <property name="default.directory_provider">infinispan</property>
+            <property name="default.directory_provider">local-heap</property>
             <property name="default.chunk_size">128000</property>
             <property name="default.metadata_cachename">LuceneIndexesMetadataOWR</property>
             <property name="default.data_cachename">LuceneIndexesDataOWR</property>

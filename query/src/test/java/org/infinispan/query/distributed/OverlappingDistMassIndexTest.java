@@ -25,7 +25,7 @@ public class OverlappingDistMassIndexTest extends OverlappingIndexMassIndexTest 
             .enable()
             .addIndexedEntity(Transaction.class)
             .addIndexedEntity(Block.class)
-            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);

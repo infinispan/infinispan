@@ -21,7 +21,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.testng.annotations.Test;
 
 /**
@@ -33,23 +32,15 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
    private static final String USER_CACHE = "users";
    private static final String ACCOUNT_CACHE = "accounts";
 
-   private static final String DATA_CACHE = "lucene_data_dist";
-   private static final String METADATA_CACHE = "lucene_metadata_dist";
-   private static final String LOCKING_CACHE = "lucene_locking_dist";
-
    private static final int NODES = 3;
    private static final int NUM_ENTRIES = 50;
 
    private RemoteCache<Integer, UserPB> userCache;
    private RemoteCache<Integer, AccountPB> accountCache;
 
-   public Configuration buildIndexedConfig(String lockCache, String dataCache, String metadataCache) {
+   public Configuration buildIndexedConfig() {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      builder.indexing().enable()
-            .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
-            .addProperty("default.metadata_cachename", metadataCache)
-            .addProperty("default.data_cachename", dataCache)
-            .addProperty("default.locking_cachename", lockCache);
+      builder.indexing().enable().addProperty("default.directory_provider", "local-heap");
       return builder.build();
    }
 
@@ -67,12 +58,8 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
       createHotRodServers(NODES, defaultConfiguration);
 
       cacheManagers.forEach(cm -> {
-         cm.defineConfiguration(USER_CACHE, buildIndexedConfig(LOCKING_CACHE, DATA_CACHE, METADATA_CACHE));
-         cm.defineConfiguration(ACCOUNT_CACHE, buildIndexedConfig(LOCKING_CACHE, DATA_CACHE, METADATA_CACHE));
-
-         cm.defineConfiguration(METADATA_CACHE, getNonIndexDataConfig());
-         cm.defineConfiguration(DATA_CACHE, getNonIndexDataConfig());
-         cm.defineConfiguration(LOCKING_CACHE, getNonIndexLockConfig());
+         cm.defineConfiguration(USER_CACHE, buildIndexedConfig());
+         cm.defineConfiguration(ACCOUNT_CACHE, buildIndexedConfig());
 
          cm.getCache(USER_CACHE);
          cm.getCache(ACCOUNT_CACHE);

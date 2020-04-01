@@ -13,7 +13,6 @@ import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.query.indexmanager.InfinispanIndexManager;
 
 /**
  * Provides runtime information about indexing backends.
@@ -68,7 +67,7 @@ public final class IndexInspector {
    }
 
    private boolean isShared(IndexManager indexManager) {
-      return indexManager instanceof InfinispanIndexManager || indexManager.getClass().getName().equals(ELASTICSEARCH_INDEX_MANAGER);
+      return indexManager.getClass().getName().equals(ELASTICSEARCH_INDEX_MANAGER);
    }
 
    public boolean hasLocalIndexes() {

@@ -1,8 +1,5 @@
 package org.infinispan.query.partitionhandling;
 
-import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME;
-import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME;
-import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_LOCKING_CACHENAME;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -10,16 +7,12 @@ import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
-import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
@@ -42,9 +35,9 @@ public class SharedIndexTest extends BasePartitionHandlingTest {
    protected ConfigurationBuilder cacheConfiguration() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.indexing()
-                          .enable()
-                          .addIndexedEntity(Person.class)
-                          .addProperty("default.indexmanager", InfinispanIndexManager.class.getName());
+            .enable()
+            .addIndexedEntity(Person.class)
+            .addProperty("default.directory_provider", "local-heap");
       return configurationBuilder;
    }
 
@@ -53,22 +46,6 @@ public class SharedIndexTest extends BasePartitionHandlingTest {
       return QueryTestSCI.INSTANCE;
    }
 
-   @Override
-   protected void amendCacheManagerBeforeStart(EmbeddedCacheManager cm) {
-      Configuration replConfig = new ConfigurationBuilder()
-            .clustering().cacheMode(CacheMode.REPL_SYNC).partitionHandling()
-            .whenSplit(PartitionHandling.DENY_READ_WRITES)
-            .indexing().enabled(false).build();
-
-      Configuration distConfig = new ConfigurationBuilder()
-            .clustering().cacheMode(CacheMode.DIST_SYNC).partitionHandling()
-            .whenSplit(PartitionHandling.DENY_READ_WRITES)
-            .indexing().enabled(false).build();
-
-      cm.defineConfiguration(DEFAULT_LOCKING_CACHENAME, replConfig);
-      cm.defineConfiguration(DEFAULT_INDEXESDATA_CACHENAME, distConfig);
-      cm.defineConfiguration(DEFAULT_INDEXESMETADATA_CACHENAME, replConfig);
-   }
 
    @Test(expectedExceptions = AvailabilityException.class)
    public void shouldThrowExceptionInDegradedMode() {

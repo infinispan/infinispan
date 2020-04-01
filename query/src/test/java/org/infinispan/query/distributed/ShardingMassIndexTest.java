@@ -36,7 +36,7 @@ public class ShardingMassIndexTest extends MultipleCacheManagersTest {
             .addIndexedEntity(Car.class)
             .addProperty("hibernate.search.car.sharding_strategy.nbr_of_shards", "2")
             .addProperty("hibernate.search.car.1.directory_provider", "local-heap")
-            .addProperty("hibernate.search.car.0.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+            .addProperty("hibernate.search.car.0.indexmanager", "near-real-time")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 

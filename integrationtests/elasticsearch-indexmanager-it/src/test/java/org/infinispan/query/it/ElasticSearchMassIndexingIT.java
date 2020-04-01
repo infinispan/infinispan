@@ -2,7 +2,6 @@ package org.infinispan.query.it;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.query.distributed.DistributedMassIndexingTest;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.QueryTestSCI;
@@ -22,12 +21,6 @@ public class ElasticSearchMassIndexingIT extends DistributedMassIndexingTest {
             .addIndexedEntity(Car.class);
       ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());
       createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
-      ConfigurationBuilder indexCache = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      indexCache.clustering().stateTransfer().fetchInMemoryState(true);
-      defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, indexCache);
-      defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, indexCache);
-      defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME, indexCache);
-
       waitForClusterToForm();
    }
 }

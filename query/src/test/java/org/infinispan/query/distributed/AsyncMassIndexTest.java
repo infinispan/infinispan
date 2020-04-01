@@ -37,14 +37,13 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
             .indexing()
             .enable()
             .addIndexedEntity(Transaction.class)
-            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
       waitForClusterToForm(getDefaultCacheName());
    }
-
 
 
    private void populate(int elements) throws Exception {

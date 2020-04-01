@@ -6,6 +6,5 @@
         <module name="org.infinispan.core" slot="@infinispan.module.slot@" export="true" services="export" />
         <module name="org.infinispan.query.core" slot="@infinispan.module.slot@" export="true" services="import" optional="true" />
         <module name="org.infinispan.query" slot="@infinispan.module.slot@" export="true" services="import" optional="true" />
-        <module name="org.infinispan.lucene-directory" slot="@infinispan.module.slot@" export="true" services="import" optional="true" />
     </dependencies>
 </module>

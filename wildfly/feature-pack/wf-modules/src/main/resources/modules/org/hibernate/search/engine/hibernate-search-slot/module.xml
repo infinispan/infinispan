@@ -26,9 +26,6 @@
         <!-- JGroups backend support -->
         <module name="org.hibernate.search.backend-jgroups" services="import" optional="true" slot="@hibernate.search.module.slot@" />
 
-        <!-- Infinispan extensions - provided by the Infinispan project -->
-        <module name="org.infinispan.hibernate-search.directory-provider" slot="for-hibernatesearch-5.10" services="import" optional="true" />
-
         <!-- optional Apache Avro serialization -->
         <module name="org.hibernate.search.serialization-avro" slot="@hibernate.search.module.slot@" services="import" optional="true" />
 

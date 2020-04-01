@@ -57,28 +57,6 @@
 
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-directory-provider</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-lucene-directory</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-jcache</artifactId>
             <exclusions>
                 <exclusion>

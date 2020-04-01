@@ -20,7 +20,6 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
-import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.testng.annotations.Test;
 
@@ -34,9 +33,6 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
    private static final boolean USE_PERSISTENCE = true;
 
    private static final String USER_CACHE = "news";
-   private static final String LUCENE_LOCKING_CACHE = "LuceneIndexesLocking_news";
-   private static final String LUCENE_METADATA_CACHE = "LuceneIndexesMetadata_news";
-   private static final String LUCENE_DATA_CACHE = "LuceneIndexesData_news";
 
    private RemoteCache<Object, Object> userCache;
 
@@ -59,7 +55,7 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
    }
 
    public Object[] factory() {
-      return new Object[] {
+      return new Object[]{
             new MultiServerStoreQueryTest().storageType(StorageType.OFF_HEAP),
             // Disabled until https://issues.jboss.org/browse/ISPN-10700 is fixed
 //            new MultiServerStoreQueryTest().storageType(StorageType.BINARY),
@@ -96,15 +92,12 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
    public Configuration buildIndexedConfig(String storeName) {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.indexing().enable()
-            .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("default.worker.execution", "async")
             .addProperty("default.index_flush_interval", "500")
             .addProperty("default.indexwriter.merge_factor", "30")
             .addProperty("default.indexwriter.merge_max_size", "1024")
-            .addProperty("default.indexwriter.ram_buffer_size", "256")
-            .addProperty("default.locking_cachename", LUCENE_LOCKING_CACHE)
-            .addProperty("default.data_cachename", LUCENE_DATA_CACHE)
-            .addProperty("default.metadata_cachename", LUCENE_METADATA_CACHE);
+            .addProperty("default.indexwriter.ram_buffer_size", "256");
       builder.memory().storageType(storageType);
       if (evictionSize > 0) {
          builder.memory().size(evictionSize);
@@ -123,10 +116,6 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
       for (int i = 0; i < cacheManagers.size(); i++) {
          EmbeddedCacheManager cm = cacheManagers.get(i);
          cm.defineConfiguration(USER_CACHE, buildIndexedConfig("News-" + i));
-
-         cm.defineConfiguration(LUCENE_LOCKING_CACHE, getLockCacheConfig());
-         cm.defineConfiguration(LUCENE_METADATA_CACHE, getLuceneCacheConfig(LUCENE_METADATA_CACHE + "_" + i));
-         cm.defineConfiguration(LUCENE_DATA_CACHE, getLuceneCacheConfig(LUCENE_DATA_CACHE + "_" + i));
          cm.getCache(USER_CACHE);
       }
 

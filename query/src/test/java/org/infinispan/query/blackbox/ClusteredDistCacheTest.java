@@ -18,9 +18,10 @@ public class ClusteredDistCacheTest extends ClusteredCacheTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      cacheCfg.indexing().autoConfig(true)
+      cacheCfg.indexing()
             .enable()
             .addIndexedEntity(Person.class)
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");
 
       cacheCfg.memory().storageType(storageType);
