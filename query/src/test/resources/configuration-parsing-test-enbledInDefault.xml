@@ -34,6 +34,7 @@
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
             <property name="hibernate.search.default.directory_provider">filesystem</property>
+            <property name="hibernate.search.default.indexBase">target/</property>
             <property name="hibernate.search.cats.exclusive_index_use">true</property>
             <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>

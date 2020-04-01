@@ -37,7 +37,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
       Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
       assertTrue(diskCfg.indexing().enabled());
-      assertEquals(diskCfg.indexing().properties().size(), 3);
+      assertEquals(diskCfg.indexing().properties().size(), 4);
       assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "filesystem");
       assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.cats.exclusive_index_use"), "true");
 
@@ -70,7 +70,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
       Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
       assertTrue(diskCfg.indexing().enabled());
-      assertEquals(diskCfg.indexing().properties().size(), 3);
+      assertEquals(diskCfg.indexing().properties().size(), 4);
       assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "filesystem");
       assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.cats.exclusive_index_use"), "true");
    }

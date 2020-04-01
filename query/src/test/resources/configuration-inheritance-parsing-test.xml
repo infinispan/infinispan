@@ -19,6 +19,7 @@
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>
             </indexed-entities>
+            <property name="default.directory_provider">local-heap</property>
          </indexing>
       </local-cache>
    </cache-container>

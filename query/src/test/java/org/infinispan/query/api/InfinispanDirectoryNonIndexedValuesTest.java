@@ -21,6 +21,7 @@ public class InfinispanDirectoryNonIndexedValuesTest extends NonIndexedValuesTes
             .addIndexedEntity(TestEntity.class)
             .addIndexedEntity(AnotherTestEntity.class)
             .addProperty("default.indexmanager", "near-real-time")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, c);

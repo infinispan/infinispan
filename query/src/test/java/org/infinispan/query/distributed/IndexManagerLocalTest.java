@@ -38,7 +38,8 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
             .addIndexedEntity(Person.class)
             .addProperty("lucene_version", "LUCENE_CURRENT")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
-            .addProperty("default.indexmanager", "near-real-time");
+            .addProperty("default.indexmanager", "near-real-time")
+            .addProperty("default.directory_provider", "local-heap");
 
       if (transactionsEnabled()) {
          builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);

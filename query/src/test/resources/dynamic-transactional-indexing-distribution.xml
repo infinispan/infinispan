@@ -23,7 +23,6 @@
                <indexed-entities>
                   <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                </indexed-entities>
-               <!-- Use our custom IndexManager; TODO autoinject by default? -->
                <property name="default.directory_provider">local-heap</property>
                <!-- Enable error safety net -->
                <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
