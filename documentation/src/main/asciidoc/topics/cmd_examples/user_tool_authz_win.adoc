@@ -1,0 +1,1 @@
+$ bin\user-tools.bat -b -u myuser -p "qwer1234!" -g supervisor,reader,writer

@@ -1,0 +1,19 @@
+[id='disable_endpoint_auth-{context}']
+= Disabling {brandname} Server Authentication
+
+.Procedure
+
+. Remove any `security-realm` attributes from the `endpoints` configuration.
+. Ensure that the Hot Rod and REST connectors do not include any
+`authentication` definitions.
+
+For example, the following configuration allows unauthenticated access to
+{brandname}:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<endpoints socket-binding="default">
+  <hotrod-connector name="hotrod"/>
+  <rest-connector name="rest"/>
+</endpoints>
+----

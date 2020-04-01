@@ -1,8 +1,8 @@
 [id='server_readme']
 = Infinispan Server
 
-Infinispan server provides fast, reliable, and secure access to your data. This
-release of the server improves on previous versions and offers:
+Infinispan server provides fast, reliable, and secure access to your data.
+The main features are:
 
 * Small code-base with minimal duplication of existing functionality (e.g. configuration).
 * Embeddable: the server should allow for easy testability in both single and clustered configurations.

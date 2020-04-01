@@ -76,6 +76,16 @@ the `-j` argument:
 ```
 The above commands will use the `udp` stack which uses UDP to communicate between the nodes. 
 
+Security
+--------
+The default server configuration requires client authentication. Create a user with the `user-tool` as follows:
+
+```
+<HOME>/bin/user-tool.sh -b -u username -p password     (Unix / Linux)
+
+<HOME>\bin\user-tool.bat -b -u username -p password    (Windows)
+```
+
 Stopping the Server
 -------------------
 To stop a server, simply interrupt it (Ctrl-C from the terminal it was launched or kill the process via the TERM signal)

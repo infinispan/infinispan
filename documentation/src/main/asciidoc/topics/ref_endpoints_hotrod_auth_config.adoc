@@ -8,10 +8,10 @@
 include::config_examples/hotrod_connector_sasl.xml[]
 ----
 
-<1> enables authentication against the security realm named "default".
-<2> specifies SASL mechanisms to use for authentication.
-<3> defines the name that {brandname} servers declare to clients. The server name should match the client configuration.
-<4> enables *auth* QoP.
+<1> Enables authentication against the security realm named "default".
+<2> Specifies SASL mechanisms to use for authentication.
+<3> Defines the name that {brandname} servers declare to clients. The server name should match the client configuration.
+<4> Enables *auth* QoP.
 
 .Hot Rod connector with Kerberos authentication
 

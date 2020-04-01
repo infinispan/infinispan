@@ -1,0 +1,1 @@
+$ bin/user-tools.sh -b -u myuser -p "qwer1234!" -g supervisor,reader,writer

@@ -3,11 +3,17 @@
 = Securing {brandname} Servers
 Protect {brandname} servers against network attacks and unauthorized access.
 
-include::{topics}/con_cache_authorization.adoc[leveloffset=+1]
-include::{topics}/ref_cache_authorization.adoc[leveloffset=+2]
+By default {brandname} servers require user authentication to access the
+command line interface (CLI) and console as well as the Hot Rod and REST
+endpoints. {brandname} servers also automatically configure authentication 
+mechanisms based on the security realms that you define.
+
 include::assembly_server_security_realm.adoc[leveloffset=+1]
 include::assembly_server_security_identity.adoc[leveloffset=+1]
 include::assembly_server_endpoint_authentication.adoc[leveloffset=+1]
+include::{topics}/proc_disabling_server_authentication.adoc[leveloffset=+1]
+include::{topics}/con_cache_authorization.adoc[leveloffset=+1]
+include::{topics}/ref_cache_authorization.adoc[leveloffset=+2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
