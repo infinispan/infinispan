@@ -832,7 +832,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    class SubscriberHandler<I, R> implements ObjIntConsumer<I> {
       final AbstractSegmentAwarePublisher<I, R> publisher;
       final Subscriber<? super R> subscriber;
-      final Object requestId;
+      final String requestId;
 
       final AtomicReferenceArray<Set<K>> keysBySegment;
       final IntSet segmentsToComplete;
@@ -1166,10 +1166,10 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          new SubscriberHandler<I, R>(this, s, consumerToUse).start();
       }
 
-      abstract InitialPublisherCommand buildInitialCommand(Address target, Object requestId, IntSet segments,
-            Set<K> excludedKeys, int batchSize, boolean useContext);
+      abstract InitialPublisherCommand buildInitialCommand(Address target, String requestId, IntSet segments,
+                                                           Set<K> excludedKeys, int batchSize, boolean useContext);
 
-      NextPublisherCommand buildNextCommand(Object requestId) {
+      NextPublisherCommand buildNextCommand(String requestId) {
          return commandsFactory.buildNextPublisherCommand(requestId);
       }
    }
@@ -1199,8 +1199,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
 
       @Override
-      InitialPublisherCommand buildInitialCommand(Address target, Object requestId, IntSet segments, Set<K> excludedKeys,
-            int batchSize, final boolean useContext) {
+      InitialPublisherCommand buildInitialCommand(Address target, String requestId, IntSet segments, Set<K> excludedKeys,
+                                                  int batchSize, final boolean useContext) {
          Set<K> keysToUse = calculateKeysToUse(keysToInclude, segments, excludedKeys);
          if (keysToUse == null) {
             return null;
@@ -1240,8 +1240,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
 
       @Override
-      InitialPublisherCommand buildInitialCommand(Address target, Object requestId, IntSet segments, Set<K> excludedKeys,
-            int batchSize, boolean useContext) {
+      InitialPublisherCommand buildInitialCommand(Address target, String requestId, IntSet segments, Set<K> excludedKeys,
+                                                  int batchSize, boolean useContext) {
          Function<? super Publisher<I>, ? extends Publisher<R>> functionToUse;
          int lookupEntryCount;
          if (useContext && invocationContext != null && (lookupEntryCount = invocationContext.lookedUpEntriesCount()) > 0) {

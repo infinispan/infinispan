@@ -48,6 +48,7 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
 import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
 import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
@@ -115,7 +116,6 @@ import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherComman
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
@@ -666,20 +666,20 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <K, I, R> InitialPublisherCommand<K, I, R> buildInitialPublisherCommand(Object requestId, DeliveryGuarantee deliveryGuarantee,
-         int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
-         boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+   public <K, I, R> InitialPublisherCommand<K, I, R> buildInitialPublisherCommand(String requestId, DeliveryGuarantee deliveryGuarantee,
+                                                                                  int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
+                                                                                  boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
       return new InitialPublisherCommand<>(cacheName, requestId, deliveryGuarantee, batchSize, segments, keys,
             excludedKeys, includeLoader, entryStream, trackKeys, transformer);
    }
 
    @Override
-   public NextPublisherCommand buildNextPublisherCommand(Object requestId) {
+   public NextPublisherCommand buildNextPublisherCommand(String requestId) {
       return new NextPublisherCommand(cacheName, requestId);
    }
 
    @Override
-   public CancelPublisherCommand buildCancelPublisherCommand(Object requestId) {
+   public CancelPublisherCommand buildCancelPublisherCommand(String requestId) {
       return new CancelPublisherCommand(cacheName, requestId);
    }
 

@@ -615,13 +615,13 @@ public interface CommandsFactory {
          Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
 
-   <K, I, R> InitialPublisherCommand<K, I, R> buildInitialPublisherCommand(Object requestId, DeliveryGuarantee deliveryGuarantee,
-         int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
-         boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer);
+   <K, I, R> InitialPublisherCommand<K, I, R> buildInitialPublisherCommand(String requestId, DeliveryGuarantee deliveryGuarantee,
+                                                                           int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
+                                                                           boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer);
 
-   NextPublisherCommand buildNextPublisherCommand(Object requestId);
+   NextPublisherCommand buildNextPublisherCommand(String requestId);
 
-   CancelPublisherCommand buildCancelPublisherCommand(Object requestId);
+   CancelPublisherCommand buildCancelPublisherCommand(String requestId);
 
    <K, V> MultiClusterEventCommand<K, V> buildMultiClusterEventCommand(Map<UUID, Collection<ClusterEvent<K, V>>> events);
 
