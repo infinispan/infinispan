@@ -89,7 +89,7 @@ public class StatefulSetRollingUpgradeTest extends MultipleCacheManagersTest {
       config.clustering()
             .partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES)
             .stateTransfer().timeout(5 * numNodes, TimeUnit.SECONDS);
-      EmbeddedCacheManager manager = createClusteredCacheManager(true, global, null, new TransportFlags());
+      EmbeddedCacheManager manager = createClusteredCacheManager(true, global, null, new TransportFlags().withFD(true));
       manager.defineConfiguration(CACHE_NAME, config.build());
       cacheManagers.add(id, manager);
    }
