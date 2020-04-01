@@ -37,7 +37,7 @@ public class UserTool extends Main {
    private boolean batchMode = false;
    private boolean plainText = true;
 
-   public static void main(String[] args) {
+   public static void main(String... args) {
       UserTool userTool = new UserTool();
       userTool.run(args);
    }

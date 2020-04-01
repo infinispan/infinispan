@@ -150,11 +150,17 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    }
 
    protected void createUserFile(String realm) {
+      // Create users and groups for individual permissions
       for (AuthorizationPermission permission : AuthorizationPermission.values()) {
          String name = permission.name().toLowerCase();
-         UserTool userTool = new UserTool();
-         userTool.run("-b", "-s", rootDir.getAbsolutePath(), "-r", realm, "-u", name + "_user", "-p", name, "-g", name);
+         UserTool.main("-b", "-s", rootDir.getAbsolutePath(), "-r", realm, "-u", name + "_user", "-p", name, "-g", name);
       }
+
+      // Create users with composite roles
+      UserTool.main("-b", "-s", rootDir.getAbsolutePath(), "-r", realm, "-u", "admin", "-p", "strongPassword", "-g", "AdminRole");
+      UserTool.main("-b", "-s", rootDir.getAbsolutePath(), "-r", realm, "-u", "writer", "-p", "somePassword", "-g", "WriterRole");
+      UserTool.main("-b", "-s", rootDir.getAbsolutePath(), "-r", realm, "-u", "reader", "-p", "password", "-g", "ReaderRole");
+      UserTool.main("-b", "-s", rootDir.getAbsolutePath(), "-r", realm, "-u", "supervisor", "-p", "lessStrongPassword", "-g", "SupervisorRole");
    }
 
    @Override
