@@ -1,6 +1,6 @@
-import org.infinispan.commons.api.functional.EntryView.*;
-import org.infinispan.commons.api.functional.FunctionalMap.*;
-import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners.ReadWriteListener;
+import org.infinispan.functional.EntryView.*;
+import org.infinispan.functional.FunctionalMap.*;
+import org.infinispan.functional.Listeners.ReadWriteListeners.ReadWriteListener;
 
 ReadWriteMap<String, String> rwMap = ...
 AutoCloseable readWriteClose = rwMap.listeners.add(new ReadWriteListener<String, String>() {

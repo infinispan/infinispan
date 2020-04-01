@@ -19,7 +19,7 @@ include::config_examples/custom_marshaller.xml[]
 [TIP]
 ====
 Custom marshaller implementations can access a configured white list via the
-link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html#initialize[initialize()] method, which is called during startup.
+link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html#initialize(org.infinispan.commons.configuration.ClassWhiteList)[initialize()] method, which is called during startup.
 ====
 
 .Reference
