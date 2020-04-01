@@ -16,7 +16,7 @@ public class  NextPublisherCommand extends BaseRpcCommand implements TopologyAff
 
    private PublisherHandler publisherHandler;
 
-   private Object requestId;
+   private String requestId;
    private int topologyId = -1;
 
    // Only here for CommandIdUniquenessTest
@@ -26,7 +26,7 @@ public class  NextPublisherCommand extends BaseRpcCommand implements TopologyAff
       super(cacheName);
    }
 
-   public NextPublisherCommand(ByteString cacheName, Object requestId) {
+   public NextPublisherCommand(ByteString cacheName, String requestId) {
       super(cacheName);
       this.requestId = requestId;
    }
@@ -59,11 +59,11 @@ public class  NextPublisherCommand extends BaseRpcCommand implements TopologyAff
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(requestId);
+      output.writeUTF(requestId);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      requestId = input.readObject();
+      requestId = input.readUTF();
    }
 }

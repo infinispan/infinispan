@@ -96,7 +96,7 @@ public class PublisherHandler {
     */
    public <I, R> CompletableFuture<PublisherResponse> register(InitialPublisherCommand<?, I, R> command) {
       PublisherState publisherState;
-      Object requestId = command.getRequestId();
+      String requestId = command.getRequestId();
       if (command.isTrackKeys()) {
          publisherState = new KeyPublisherState(requestId, command.getOrigin(), command.getBatchSize());
       } else {
@@ -128,7 +128,7 @@ public class PublisherHandler {
     * @param requestId the unique request id to continue the response with
     * @return future that will or eventually will contain the next response
     */
-   public CompletableFuture<PublisherResponse> getNext(Object requestId) {
+   public CompletableFuture<PublisherResponse> getNext(String requestId) {
       PublisherState publisherState = currentRequests.get(requestId);
       if (publisherState == null) {
          throw new IllegalStateException("Publisher for requestId " + requestId + " doesn't exist!");
@@ -148,7 +148,7 @@ public class PublisherHandler {
     * Closes the publisher that maps to the given request id
     * @param requestId unique identifier for the request
     */
-   public void closePublisher(Object requestId) {
+   public void closePublisher(String requestId) {
       PublisherState state;
       if ((state = currentRequests.remove(requestId)) != null) {
          if (trace) {
@@ -163,7 +163,7 @@ public class PublisherHandler {
     * @param requestId unique identifier for the given request
     * @param state state to cancel if it is still registered
     */
-   private void closePublisher(Object requestId, PublisherState state) {
+   private void closePublisher(String requestId, PublisherState state) {
       if (currentRequests.remove(requestId, state)) {
          if (trace) {
             log.tracef("Closed publisher from completion using requestId %s", requestId);
@@ -197,7 +197,7 @@ public class PublisherHandler {
     * that is used to collect the response.
     */
    private class PublisherState implements FlowableSubscriber<Object>, Runnable {
-      final Object requestId;
+      final String requestId;
       final Address origin;
       final int batchSize;
 
@@ -219,7 +219,7 @@ public class PublisherHandler {
       // Set to true when the last futureResponse has been set - meaning the next response will be the last
       volatile boolean complete;
 
-      private PublisherState(Object requestId, Address origin, int batchSize) {
+      private PublisherState(String requestId, Address origin, int batchSize) {
          this.requestId = requestId;
          this.origin = origin;
          this.batchSize = batchSize;
@@ -494,7 +494,7 @@ public class PublisherHandler {
       // Whether the last published value completed a key (we cannot send a respones in the middle of processing a key)
       boolean previousValueFinishedKey = true;
 
-      private KeyPublisherState(Object requestId, Address origin, int batchSize) {
+      private KeyPublisherState(String requestId, Address origin, int batchSize) {
 
          super(requestId, origin, batchSize);
          // Worst case is keys found is same size as the batch 1:1

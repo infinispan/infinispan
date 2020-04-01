@@ -14,7 +14,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 public class CancelPublisherCommand extends BaseRpcCommand {
    public static final byte COMMAND_ID = 49;
 
-   private Object requestId;
+   private String requestId;
 
    // Only here for CommandIdUniquenessTest
    private CancelPublisherCommand() { super(null); }
@@ -23,7 +23,7 @@ public class CancelPublisherCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public CancelPublisherCommand(ByteString cacheName, Object requestId) {
+   public CancelPublisherCommand(ByteString cacheName, String requestId) {
       super(cacheName);
       this.requestId = requestId;
    }
@@ -47,11 +47,11 @@ public class CancelPublisherCommand extends BaseRpcCommand {
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(requestId);
+      output.writeUTF(requestId);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      requestId = input.readObject();
+      requestId = input.readUTF();
    }
 }

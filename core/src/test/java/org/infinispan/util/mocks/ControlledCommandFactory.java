@@ -637,17 +637,17 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public <K, I, R> InitialPublisherCommand<K, I, R> buildInitialPublisherCommand(Object requestId, DeliveryGuarantee deliveryGuarantee, int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream, boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+   public <K, I, R> InitialPublisherCommand<K, I, R> buildInitialPublisherCommand(String requestId, DeliveryGuarantee deliveryGuarantee, int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream, boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
       return actual.buildInitialPublisherCommand(requestId, deliveryGuarantee, batchSize, segments, keys, excludedKeys, includeLoader, entryStream, trackKeys, transformer);
    }
 
    @Override
-   public NextPublisherCommand buildNextPublisherCommand(Object requestId) {
+   public NextPublisherCommand buildNextPublisherCommand(String requestId) {
       return actual.buildNextPublisherCommand(requestId);
    }
 
    @Override
-   public CancelPublisherCommand buildCancelPublisherCommand(Object requestId) {
+   public CancelPublisherCommand buildCancelPublisherCommand(String requestId) {
       return actual.buildCancelPublisherCommand(requestId);
    }
 

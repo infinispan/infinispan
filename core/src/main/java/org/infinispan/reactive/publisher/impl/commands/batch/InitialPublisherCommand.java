@@ -23,7 +23,7 @@ import org.reactivestreams.Publisher;
 public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 18;
 
-   private Object requestId;
+   private String requestId;
    private DeliveryGuarantee deliveryGuarantee;
    private int batchSize;
    private IntSet segments;
@@ -42,7 +42,7 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
       super(cacheName);
    }
 
-   public InitialPublisherCommand(ByteString cacheName, Object requestId, DeliveryGuarantee deliveryGuarantee,
+   public InitialPublisherCommand(ByteString cacheName, String requestId, DeliveryGuarantee deliveryGuarantee,
          int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
          boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
       super(cacheName);
@@ -58,7 +58,7 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
       this.transformer = transformer;
    }
 
-   public Object getRequestId() {
+   public String getRequestId() {
       return requestId;
    }
 
@@ -130,7 +130,7 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(requestId);
+      output.writeUTF(requestId);
       MarshallUtil.marshallEnum(deliveryGuarantee, output);
       UnsignedNumeric.writeUnsignedInt(output, batchSize);
       output.writeObject(segments);
@@ -145,7 +145,7 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      requestId = input.readObject();
+      requestId = input.readUTF();
       deliveryGuarantee = MarshallUtil.unmarshallEnum(input, DeliveryGuarantee::valueOf);
       batchSize = UnsignedNumeric.readUnsignedInt(input);
       segments = (IntSet) input.readObject();
