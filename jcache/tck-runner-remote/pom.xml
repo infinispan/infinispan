@@ -49,14 +49,7 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-jcache-commons</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-jcache-commons</artifactId>
-         <type>test-jar</type>
-         <scope>test</scope>
+         <artifactId>infinispan-cdi-remote</artifactId>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -89,12 +82,11 @@
          <classifier>tests</classifier>
          <scope>test</scope>
       </dependency>
-      <!-- jcache-remote does not support method interception annotations yet, skip the interception tests -->
-<!--      <dependency>-->
-<!--         <groupId>javax.cache</groupId>-->
-<!--         <artifactId>cdi-weld-annotations-test-harness</artifactId>-->
-<!--         <scope>test</scope>-->
-<!--      </dependency>-->
+      <dependency>
+         <groupId>javax.cache</groupId>
+         <artifactId>cdi-weld-annotations-test-harness</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>
@@ -198,6 +190,17 @@
 
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>default-test</id>
+                  <phase>none</phase>
+               </execution>
+            </executions>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
             <executions>
                <execution>
@@ -226,6 +229,9 @@
                   <javax.cache.Cache>${remote.CacheImpl}</javax.cache.Cache>
                   <javax.cache.Cache.Entry>${remote.CacheEntryImpl}</javax.cache.Cache.Entry>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
+                  <!-- Apply our beans.xml to the TCK beans -->
+                  <!-- TODO The interception tests won't actually run because there is no beans.xml, see ISPN-10745 -->
+                  <!--<org.jboss.weld.se.archive.isolation>false</org.jboss.weld.se.archive.isolation>-->
 
                   <javax.management.builder.initial>${tck.mbean.builder}</javax.management.builder.initial>
                   <org.jsr107.tck.management.agentId>${tck.mbean.server}</org.jsr107.tck.management.agentId>
