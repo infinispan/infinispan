@@ -144,7 +144,9 @@ public final class Util {
     * Tries to determine if the code is running in an OSGi context.
     *
     * @return true if an OSGi context is detected
+    * @deprecated Since 10.1, OSGi support is deprecated and will be removed in a future version.
     */
+   @Deprecated
    public static boolean isOSGiContext() {
       return IS_OSGI_CONTEXT;
    }

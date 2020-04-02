@@ -7,6 +7,10 @@ import java.nio.file.Paths;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * @deprecated Since 10.1, OSGi support is deprecated and will be removed in a future release.
+ */
+@Deprecated
 public class BlueprintGenerator {
 
    public static void main(String[] args) {

@@ -16,7 +16,9 @@ import org.osgi.framework.FrameworkUtil;
 
 /**
  * @author Brett Meyer
+ * @deprecated Since 10.1, OSGi support is deprecated and will be removed in a future version.
  */
+@Deprecated
 public class OsgiClassLoader extends ClassLoader {
 
    // TODO: Eventually, it would be better to limit this in scope to *only* what's needed, rather than all bundles

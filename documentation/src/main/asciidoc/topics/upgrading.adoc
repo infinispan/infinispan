@@ -9,6 +9,10 @@ The `org.infinispan.xsite.CustomFailurePolicy` interface has been deprecated and
 
 Total Order transaction protocol was deprecated in 10.0 and now it is removed.
 
+== OSGi
+
+OSGi support has been deprecated and will be removed in a future release.
+
 == Query
 
 * The AffinityIndexManager is removed. Indexes should be configured with the ```near-real-time``` index manager instead.

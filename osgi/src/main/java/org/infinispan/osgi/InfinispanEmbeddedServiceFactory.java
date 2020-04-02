@@ -17,6 +17,10 @@ import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedServiceFactory;
 
+/**
+ * Since 10.1, OSGi support is deprecated and will be removed in a future version.
+ */
+@Deprecated
 public class InfinispanEmbeddedServiceFactory implements ManagedServiceFactory {
    /**
     * Configuration property used to indicate the cache configuration to use.
