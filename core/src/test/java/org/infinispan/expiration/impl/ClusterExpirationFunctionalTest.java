@@ -363,7 +363,8 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       assertEquals(value, cache0.get(key));
    }
 
-   public void testWriteExpiredEntry() throws InterruptedException {
+   @Test(groups = "unstable", description = "https://issues.redhat.com/browse/ISPN-11422")
+   public void testWriteExpiredEntry() {
       String key = "key";
       String value = "value";
 
@@ -387,6 +388,26 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
          ts2.advance(secondOneMilliAdvanced);
       }
    }
+
+   // Simpler test for https://issues.redhat.com/browse/ISPN-11422
+//   public void testBackupExpirationWritePrimary() {
+//      testExpirationButOnBackupDuringWrite(true);
+//   }
+//
+//   public void testBackupExpirationWriteBackup() {
+//      testExpirationButOnBackupDuringWrite(false);
+//   }
+//
+//   private void testExpirationButOnBackupDuringWrite(boolean primary) {
+//      Object key = createKey(cache0, cache1);
+//      String value = key.toString();
+//      assertNull(cache0.put(key, value, 10, TimeUnit.SECONDS));
+//
+//      // Advance the backup so it is expired there
+//      ts1.advance(TimeUnit.SECONDS.toMillis(11));
+//
+//      assertEquals(value, ((primary ? cache0 : cache1).put(key, "replacement-value")));
+//   }
 
    public void testMaxIdleReadNodeDiesPrimary() {
       // Scattered cache does not support replicating expiration metadata
