@@ -6,6 +6,8 @@ import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
+import static org.infinispan.server.test.core.AbstractInfinispanServerDriver.DEFAULT_CLUSTERED_INFINISPAN_CONFIG_FILE_NAME;
+
 /**
  * Builder for {@link InfinispanServerRule}.
  *
@@ -14,7 +16,6 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
  * @since 10.0
  **/
 public class InfinispanServerRuleBuilder {
-
    private final String configurationFile;
    private String[] mavenArtifacts;
    private int numServers = 2;
@@ -22,6 +23,18 @@ public class InfinispanServerRuleBuilder {
    private ServerRunMode runMode = ServerRunMode.DEFAULT;
    private JavaArchive[] archives;
    private boolean jmx;
+
+   /**
+    * Use this method to instantiate a single clustered embedded server
+    *
+    * @return InfinispanServerRule
+    */
+   public static InfinispanServerRule standalone() {
+      return new InfinispanServerRuleBuilder(DEFAULT_CLUSTERED_INFINISPAN_CONFIG_FILE_NAME)
+            .numServers(1)
+            .runMode(ServerRunMode.EMBEDDED)
+            .build();
+   }
 
    public static InfinispanServerRuleBuilder config(String configurationFile) {
       return new InfinispanServerRuleBuilder(configurationFile);

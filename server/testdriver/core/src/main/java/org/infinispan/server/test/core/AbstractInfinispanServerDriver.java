@@ -1,27 +1,5 @@
 package org.infinispan.server.test.core;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-
-import javax.security.auth.x500.X500Principal;
-
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
@@ -34,11 +12,40 @@ import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
+import javax.security.auth.x500.X500Principal;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
 public abstract class AbstractInfinispanServerDriver implements InfinispanServerDriver {
+   public static final String DEFAULT_CLUSTERED_INFINISPAN_CONFIG_FILE_NAME = "__default-infinispan.xml";
+
+   private static final List<String> DEFAULT_INFINISPAN_CONFIG_FILES = Arrays.asList(
+         DEFAULT_CLUSTERED_INFINISPAN_CONFIG_FILE_NAME);
+
    public static final String TEST_HOST_ADDRESS = "org.infinispan.test.host.address";
    public static final String BASE_DN = "CN=%s,OU=Infinispan,O=JBoss,L=Red Hat";
    public static final String KEY_PASSWORD = "secret";
@@ -84,7 +91,9 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
          throw new RuntimeException("Failed to create server configuration directory " + confDir);
       }
       URL configurationFileURL;
-      if (new File(configuration.configurationFile()).isAbsolute()) {
+      if (DEFAULT_INFINISPAN_CONFIG_FILES.contains(configuration.configurationFile())) {
+         configurationFileURL = getClass().getClassLoader().getResource(configuration.configurationFile());
+      } else if (new File(configuration.configurationFile()).isAbsolute()) {
          configurationFileURL = Exceptions.unchecked(() -> new File(configuration.configurationFile()).toURI().toURL());
       } else {
          configurationFileURL = getClass().getClassLoader().getResource(configuration.configurationFile());
@@ -92,14 +101,22 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       if (configurationFileURL == null) {
          throw new RuntimeException("Cannot find test configuration file: " + configuration.configurationFile());
       }
-      Path configurationFilePath;
+
       try {
-         configurationFilePath = Paths.get(configurationFileURL.toURI());
-         // Recursively copy the contents of the directory containing the configuration file to the test target
-         Util.recursiveDirectoryCopy(configurationFilePath.getParent(), confDir.toPath());
+         if (DEFAULT_INFINISPAN_CONFIG_FILES.contains(configuration.configurationFile())) {
+            InputStream resourceAsStream = getClass().getClassLoader()
+                  .getResourceAsStream(configuration.configurationFile());
+            Path target = Paths.get(confDir.getAbsolutePath(), configuration.configurationFile());
+            Files.copy(resourceAsStream, target);
+         } else  {
+            Path configurationFilePath = Paths.get(configurationFileURL.toURI());
+            // Recursively copy the contents of the directory containing the configuration file to the test target
+            Util.recursiveDirectoryCopy(configurationFilePath.getParent(), confDir.toPath());
+         }
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
+
       createUserFile("default");
       createKeyStores();
    }
