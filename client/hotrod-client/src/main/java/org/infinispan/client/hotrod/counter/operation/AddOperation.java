@@ -12,6 +12,7 @@ import org.infinispan.counter.exception.CounterOutOfBoundsException;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * Add operation.
@@ -36,10 +37,10 @@ public class AddOperation extends BaseCounterOperation<Long> {
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, 8);
       buf.writeLong(delta);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    @Override

@@ -15,6 +15,7 @@ import org.infinispan.counter.api.WeakCounter;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * An add listener operation for {@link StrongCounter#addListener(CounterListener)} and {@link
@@ -41,11 +42,11 @@ public class AddListenerOperation extends BaseCounterOperation<Boolean> {
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       this.channel = channel;
       ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, ByteBufUtil.estimateArraySize(listenerId));
       ByteBufUtil.writeArray(buf, listenerId);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    @Override

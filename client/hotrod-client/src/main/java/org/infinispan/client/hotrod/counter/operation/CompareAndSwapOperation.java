@@ -14,6 +14,7 @@ import org.infinispan.counter.exception.CounterOutOfBoundsException;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * A compare-and-set operation for {@link StrongCounter#compareAndSwap(long, long)} and {@link
@@ -39,11 +40,11 @@ public class CompareAndSwapOperation extends BaseCounterOperation<Long> {
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, 16);
       buf.writeLong(expect);
       buf.writeLong(update);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    @Override

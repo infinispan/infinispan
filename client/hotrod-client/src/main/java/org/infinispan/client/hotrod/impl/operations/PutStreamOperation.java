@@ -20,6 +20,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -54,7 +55,7 @@ public class PutStreamOperation extends AbstractKeyOperation<OutputStream> imple
    }
 
    @Override
-   public void executeOperation(Channel channel) {
+   public ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
 
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateArraySize(keyBytes) +
@@ -64,9 +65,11 @@ public class PutStreamOperation extends AbstractKeyOperation<OutputStream> imple
       ByteBufUtil.writeArray(buf, keyBytes);
       codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       buf.writeLong(version);
-      channel.writeAndFlush(buf);
+      ChannelFuture channelFuture = channel.writeAndFlush(buf);
 
       complete(new ChannelOutputStream(channel, this));
+
+      return channelFuture;
    }
 
    @Override

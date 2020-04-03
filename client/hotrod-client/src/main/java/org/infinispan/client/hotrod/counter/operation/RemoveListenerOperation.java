@@ -13,6 +13,7 @@ import org.infinispan.counter.api.Handle;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * A remove listener operation for {@link Handle#remove()}.
@@ -34,10 +35,10 @@ public class RemoveListenerOperation extends BaseCounterOperation<Boolean> {
 
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, ByteBufUtil.estimateArraySize(listenerId));
       ByteBufUtil.writeArray(buf, listenerId);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    @Override

@@ -15,6 +15,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * Implement "replaceIfUnmodified" as defined by  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod
@@ -36,7 +37,7 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<Vers
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
 
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateArraySize(keyBytes) +
@@ -48,7 +49,7 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<Vers
       codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       buf.writeLong(version);
       ByteBufUtil.writeArray(buf, value);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    @Override

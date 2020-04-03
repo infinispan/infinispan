@@ -20,6 +20,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * A prepare request from the {@link TransactionManager}.
@@ -64,7 +65,7 @@ public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       retry = false;
       scheduleRead(channel);
       ByteBuf buf = channel.alloc().buffer(estimateSize());
@@ -77,7 +78,7 @@ public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer
       for (Modification m : modifications) {
          m.writeTo(buf, codec);
       }
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    private int estimateSize() {

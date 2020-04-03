@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -31,9 +32,9 @@ public class ContainsKeyOperation extends AbstractKeyOperation<Boolean> {
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
-      sendArrayOperation(channel, keyBytes);
+      return sendArrayOperation(channel, keyBytes);
    }
 
    @Override

@@ -23,6 +23,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.DecoderException;
 import net.jcip.annotations.Immutable;
 
@@ -84,15 +85,15 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
       return header;
    }
 
-   protected void sendHeaderAndRead(Channel channel) {
+   protected ChannelFuture sendHeaderAndRead(Channel channel) {
       scheduleRead(channel);
-      sendHeader(channel);
+      return sendHeader(channel);
    }
 
-   protected void sendHeader(Channel channel) {
+   protected ChannelFuture sendHeader(Channel channel) {
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header));
       codec.writeHeader(buf, header);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    protected void scheduleRead(Channel channel) {
@@ -126,13 +127,13 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
       }
    }
 
-   protected void sendArrayOperation(Channel channel, byte[] array) {
+   protected ChannelFuture sendArrayOperation(Channel channel, byte[] array) {
       // 1) write [header][array length][key]
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateArraySize(array));
 
       codec.writeHeader(buf, header);
       ByteBufUtil.writeArray(buf, array);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    public abstract void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder);

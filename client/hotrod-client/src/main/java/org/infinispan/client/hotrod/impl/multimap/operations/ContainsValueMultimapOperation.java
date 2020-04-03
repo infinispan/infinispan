@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * Implements "contains value" for multimap cache as defined by  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot
@@ -44,9 +45,9 @@ public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Bool
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
-      sendValueOperation(channel);
+      return sendValueOperation(channel);
    }
 
    @Override
@@ -58,13 +59,13 @@ public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Bool
       }
    }
 
-   protected void sendValueOperation(Channel channel) {
+   protected ChannelFuture sendValueOperation(Channel channel) {
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) +
             codec.estimateExpirationSize(lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit) +
             ByteBufUtil.estimateArraySize(value));
       codec.writeHeader(buf, header);
       codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       ByteBufUtil.writeArray(buf, value);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 }

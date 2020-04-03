@@ -14,6 +14,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * Remove client listener operation. In order to avoid issues with concurrent
@@ -49,10 +50,11 @@ public class RemoveClientListenerOperation extends HotRodOperation<Void> impleme
    }
 
    @Override
-   public void invoke(Channel channel) {
+   public ChannelFuture invoke(Channel channel) {
       scheduleRead(channel);
-      sendArrayOperation(channel, listenerId);
+      ChannelFuture channelFuture = sendArrayOperation(channel, listenerId);
       releaseChannel(channel);
+      return channelFuture;
    }
 
    @Override

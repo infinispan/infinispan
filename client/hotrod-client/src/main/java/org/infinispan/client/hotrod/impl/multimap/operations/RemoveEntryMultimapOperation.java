@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -37,9 +38,9 @@ public class RemoveEntryMultimapOperation extends AbstractKeyValueOperation<Bool
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
-      sendKeyValueOperation(channel);
+      return sendKeyValueOperation(channel);
    }
 
    @Override

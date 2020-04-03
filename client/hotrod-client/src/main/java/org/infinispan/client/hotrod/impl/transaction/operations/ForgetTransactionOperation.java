@@ -14,6 +14,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * It forgets the transaction identified by {@link Xid} in the server.
@@ -39,12 +40,12 @@ public class ForgetTransactionOperation extends RetryOnFailureOperation<Void> {
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
       ByteBuf buf = channel.alloc().buffer(estimateSize());
       codec.writeHeader(buf, header);
       ByteBufUtil.writeXid(buf, xid);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    private int estimateSize() {

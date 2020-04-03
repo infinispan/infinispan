@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.DecoderException;
 import net.jcip.annotations.Immutable;
 
@@ -50,11 +51,12 @@ public class PingOperation extends HotRodOperation<PingResponse> implements Chan
    }
 
    @Override
-   public void invoke(Channel channel) {
-      sendHeaderAndRead(channel);
+   public ChannelFuture invoke(Channel channel) {
+      ChannelFuture channelFuture = sendHeaderAndRead(channel);
       if (releaseChannel) {
          releaseChannel(channel);
       }
+      return channelFuture;
    }
 
    @Override

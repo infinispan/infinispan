@@ -14,6 +14,7 @@ import org.infinispan.counter.api.CounterManager;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * A counter configuration for {@link CounterManager#getConfiguration(String)}.
@@ -29,8 +30,8 @@ public class GetConfigurationOperation extends BaseCounterOperation<CounterConfi
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      sendHeaderAndCounterNameAndRead(channel);
+   protected ChannelFuture executeOperation(Channel channel) {
+      return sendHeaderAndCounterNameAndRead(channel);
    }
 
    @Override

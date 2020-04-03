@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 import java.net.SocketAddress;
 import java.util.Deque;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -15,7 +16,13 @@ import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
+import com.netflix.concurrency.limits.Limiter;
+import com.netflix.concurrency.limits.internal.EmptyMetricRegistry;
+import com.netflix.concurrency.limits.limit.VegasLimit;
+import com.netflix.concurrency.limits.limiter.SimpleLimiter;
+
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.ScheduledFuture;
 import io.netty.util.internal.PlatformDependent;
@@ -35,6 +42,7 @@ class ChannelPool {
    private static final AtomicIntegerFieldUpdater<TimeoutCallback> invokedUpdater = AtomicIntegerFieldUpdater.newUpdater(TimeoutCallback.class, "invoked");
    private static final Log log = LogFactory.getLog(ChannelPool.class);
    private static final int MAX_FULL_CHANNELS_SEEN = 10;
+   private static final Limiter<Void> LIMITER = SimpleLimiter.newBuilder().metricRegistry(EmptyMetricRegistry.INSTANCE).limit(VegasLimit.newBuilder().build()).build();
 
    private final Deque<Channel> channels = PlatformDependent.newConcurrentDeque();
    private final Deque<ChannelOperation> callbacks = PlatformDependent.newConcurrentDeque();
@@ -73,7 +81,7 @@ class ChannelPool {
             continue;
          }
          if (!channel.isWritable() || channel.pipeline().get(HeaderDecoder.class).registeredOperations() >= maxPendingRequests) {
-            channels.addLast(channel);
+            channels.addFirst(channel);
             // prevent looping on non-writable channels
             if (++fullChannelsSeen < MAX_FULL_CHANNELS_SEEN) {
                continue;
@@ -203,21 +211,37 @@ class ChannelPool {
       if (useExecutor) {
          // Do not execute another operation in releasing thread, we could run out of stack
          executor.execute(() -> {
-            try {
-               callback.invoke(channel);
-            } catch (Throwable t) {
-               log.tracef(t, "Requesting %s close due to exception", channel);
-               discardChannel(channel, record);
-            }
+            invokeCallback(channel, callback, record);
          });
       } else {
-         try {
-            callback.invoke(channel);
-         } catch (Throwable t) {
-            log.tracef(t, "Requesting %s close due to exception", channel);
-            discardChannel(channel, record);
-            throw t;
+         invokeCallback(channel, callback, record);
+      }
+   }
+
+   private void invokeCallback(Channel channel, ChannelOperation callback, ChannelRecord record) {
+      final Optional<Limiter.Listener> listener = LIMITER.acquire(null);
+      try {
+         // non remote operation or and exception before reaching the server will return null
+         if (listener.isPresent()) {
+            ChannelFuture future = callback.invoke(channel);
+            if (future != null) {
+               future.addListener((cf) -> {
+                  if (cf.isSuccess()) {
+                     listener.get().onSuccess();
+                  } else {
+                     listener.get().onIgnore();
+                  }
+               });
+            } else {
+               listener.get().onSuccess();
+            }
+         } else {
+            throw new RejectedExecutionException();
          }
+      } catch (Throwable t) {
+         log.tracef(t, "Requesting %s close due to exception", channel);
+         discardChannel(channel, record);
+         throw new IllegalStateException(t);
       }
    }
 
@@ -288,13 +312,15 @@ class ChannelPool {
       }
 
       @Override
-      public void invoke(Channel channel) {
+      public ChannelFuture invoke(Channel channel) {
          ScheduledFuture<?> timeoutFuture = this.timeoutFuture;
          if (timeoutFuture != null) {
             timeoutFuture.cancel(false);
          }
          if (invokedUpdater.compareAndSet(this, 0, 1)) {
-            callback.invoke(channel);
+            return callback.invoke(channel);
+         } else {
+            return null;
          }
       }
 

@@ -11,6 +11,7 @@ import org.infinispan.counter.api.WeakCounter;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * A counter operation for {@link StrongCounter#reset()} and {@link WeakCounter#reset()}.
@@ -26,8 +27,8 @@ public class ResetOperation extends BaseCounterOperation<Void> {
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      sendHeaderAndCounterNameAndRead(channel);
+   protected ChannelFuture executeOperation(Channel channel) {
+      return sendHeaderAndCounterNameAndRead(channel);
    }
 
    @Override

@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -31,8 +32,8 @@ public class StatsOperation extends RetryOnFailureOperation<Map<String, String>>
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      sendHeaderAndRead(channel);
+   protected ChannelFuture executeOperation(Channel channel) {
+      return sendHeaderAndRead(channel);
    }
 
    @Override

@@ -14,6 +14,7 @@ import org.infinispan.counter.api.CounterManager;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * A counter define operation for {@link CounterManager#defineCounter(String, CounterConfiguration)}.
@@ -32,10 +33,10 @@ public class DefineCounterOperation extends BaseCounterOperation<Boolean> {
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, 28);
       encodeConfiguration(configuration, buf::writeByte, buf::writeLong, i -> ByteBufUtil.writeVInt(buf, i));
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    @Override

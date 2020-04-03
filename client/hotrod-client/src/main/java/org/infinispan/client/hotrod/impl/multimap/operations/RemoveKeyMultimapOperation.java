@@ -15,6 +15,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * Implements "remove" for multimap cache as defined by  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot
@@ -31,9 +32,9 @@ public class RemoveKeyMultimapOperation extends AbstractKeyOperation<Boolean> {
    }
 
    @Override
-   public void executeOperation(Channel channel) {
+   public ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
-      sendArrayOperation(channel, keyBytes);
+      return sendArrayOperation(channel, keyBytes);
    }
 
    @Override

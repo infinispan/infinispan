@@ -54,6 +54,7 @@ import org.infinispan.commons.util.Util;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import net.jcip.annotations.GuardedBy;
@@ -672,8 +673,9 @@ public class ChannelFactory {
       }
 
       @Override
-      public void invoke(Channel channel) {
+      public ChannelFuture invoke(Channel channel) {
          releaseChannel(channel);
+         return null;
       }
 
       @Override

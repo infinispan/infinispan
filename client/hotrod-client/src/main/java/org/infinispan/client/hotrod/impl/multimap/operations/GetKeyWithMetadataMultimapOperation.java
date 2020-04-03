@@ -25,6 +25,7 @@ import org.infinispan.client.hotrod.multimap.MetadataCollection;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -46,9 +47,9 @@ public class GetKeyWithMetadataMultimapOperation<V> extends AbstractKeyOperation
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
-      sendArrayOperation(channel, keyBytes);
+      return sendArrayOperation(channel, keyBytes);
    }
 
    @Override

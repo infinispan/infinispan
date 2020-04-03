@@ -23,6 +23,7 @@ import org.infinispan.commons.util.Util;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * @author Galder Zamarreño
@@ -83,13 +84,13 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       // Note: since the HeaderDecoder now supports decoding both operations and events we don't have to
       // wait until all operations complete; the server will deliver responses and we'll just handle them regardless
       // of the order
       if (!channel.isActive()) {
          channelInactive(channel);
-         return;
+         return null;
       }
       ClientListener clientListener = extractClientListener();
 
@@ -105,7 +106,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
       ByteBufUtil.writeArray(buf, listenerId);
       codec.writeClientListenerParams(buf, clientListener, filterFactoryParams, converterFactoryParams);
       codec.writeClientListenerInterests(buf, ClientEventDispatcher.findMethods(listener).keySet());
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    private void cleanup(Channel channel) {

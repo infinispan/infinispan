@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -40,9 +41,9 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
-      sendArrayOperation(channel, keyBytes);
+      return sendArrayOperation(channel, keyBytes);
    }
 
    @Override

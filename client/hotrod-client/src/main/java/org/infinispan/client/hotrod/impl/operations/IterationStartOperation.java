@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * @author gustavonalle
@@ -41,7 +42,7 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       this.channel = channel;
       scheduleRead(channel);
 
@@ -49,7 +50,7 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
 
       codec.writeHeader(buf, header);
       codec.writeIteratorStartOperation(buf, segments, filterConverterFactory, batchSize, metadata, filterParameters);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    public void releaseChannel(Channel channel) {

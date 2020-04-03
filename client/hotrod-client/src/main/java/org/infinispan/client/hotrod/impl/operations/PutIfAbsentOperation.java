@@ -15,6 +15,7 @@ import org.jboss.logging.BasicLogger;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -40,9 +41,9 @@ public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
-      sendKeyValueOperation(channel);
+      return sendKeyValueOperation(channel);
    }
 
    @Override

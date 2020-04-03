@@ -15,6 +15,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * Represents a commit or rollback request from the {@link TransactionManager}.
@@ -34,12 +35,12 @@ public class CompleteTransactionOperation extends RetryOnFailureOperation<Intege
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
       ByteBuf buf = channel.alloc().buffer(estimateSize());
       codec.writeHeader(buf, header);
       ByteBufUtil.writeXid(buf, xid);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    @Override

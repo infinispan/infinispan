@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.DecoderException;
 
 /**
@@ -36,8 +37,8 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingResp
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      sendHeaderAndRead(channel);
+   protected ChannelFuture executeOperation(Channel channel) {
+      return sendHeaderAndRead(channel);
    }
 
    @Override

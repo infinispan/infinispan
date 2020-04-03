@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -40,7 +41,7 @@ public class GetAllOperation<K, V> extends StatsAffectingRetryingOperation<Map<K
    protected final Set<byte[]> keys;
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
 
       int bufSize = codec.estimateHeaderSize(header) + ByteBufUtil.estimateVIntSize(keys.size());
@@ -54,7 +55,7 @@ public class GetAllOperation<K, V> extends StatsAffectingRetryingOperation<Map<K
       for (byte[] key : keys) {
          ByteBufUtil.writeArray(buf, key);
       }
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    @Override

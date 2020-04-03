@@ -14,6 +14,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -36,7 +37,7 @@ public class GetStreamOperation extends AbstractKeyOperation<ChannelInputStream>
    }
 
    @Override
-   public void executeOperation(Channel channel) {
+   public ChannelFuture executeOperation(Channel channel) {
       this.channel = channel;
       scheduleRead(channel);
 
@@ -46,7 +47,7 @@ public class GetStreamOperation extends AbstractKeyOperation<ChannelInputStream>
       codec.writeHeader(buf, header);
       ByteBufUtil.writeArray(buf, keyBytes);
       ByteBufUtil.writeVInt(buf, offset);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    @Override

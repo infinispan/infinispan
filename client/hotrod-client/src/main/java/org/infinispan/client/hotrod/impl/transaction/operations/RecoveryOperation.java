@@ -20,6 +20,7 @@ import org.infinispan.commons.io.SignedNumeric;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * A recovery request from the {@link TransactionManager}.
@@ -59,11 +60,11 @@ public class RecoveryOperation extends RetryOnFailureOperation<Collection<Xid>> 
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
       ByteBuf buf = channel.alloc().buffer(estimateSize());
       codec.writeHeader(buf, header);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    private int estimateSize() {

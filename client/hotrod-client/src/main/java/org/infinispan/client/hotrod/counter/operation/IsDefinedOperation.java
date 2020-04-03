@@ -10,6 +10,7 @@ import org.infinispan.counter.api.CounterManager;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * A counter operation for {@link CounterManager#isDefined(String)}.
@@ -25,8 +26,8 @@ public class IsDefinedOperation extends BaseCounterOperation<Boolean> {
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      sendHeaderAndCounterNameAndRead(channel);
+   protected ChannelFuture executeOperation(Channel channel) {
+      return sendHeaderAndCounterNameAndRead(channel);
    }
 
    @Override

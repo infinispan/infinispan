@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -37,7 +38,7 @@ public class RemoveIfUnmodifiedOperation<V> extends AbstractKeyOperation<Version
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
 
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateArraySize(keyBytes) + 8);
@@ -45,7 +46,7 @@ public class RemoveIfUnmodifiedOperation<V> extends AbstractKeyOperation<Version
       codec.writeHeader(buf, header);
       ByteBufUtil.writeArray(buf, keyBytes);
       buf.writeLong(version);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    @Override

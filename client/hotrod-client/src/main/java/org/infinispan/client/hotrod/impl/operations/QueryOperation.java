@@ -21,6 +21,7 @@ import org.infinispan.query.remote.client.impl.QueryRequest;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * @author anistor@redhat.com
@@ -39,7 +40,7 @@ public final class QueryOperation extends RetryOnFailureOperation<Object> {
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       QueryRequest queryRequest = new QueryRequest();
       queryRequest.setQueryString(remoteQuery.getQueryString());
       if (remoteQuery.getStartOffset() > 0) {
@@ -64,7 +65,7 @@ public final class QueryOperation extends RetryOnFailureOperation<Object> {
       codec.writeHeader(buf, header);
       ByteBufUtil.writeVInt(buf, requestBytes.length);
       channel.write(buf);
-      channel.writeAndFlush(Unpooled.wrappedBuffer(requestBytes));
+      return channel.writeAndFlush(Unpooled.wrappedBuffer(requestBytes));
    }
 
    private List<QueryRequest.NamedParameter> getNamedParameters() {

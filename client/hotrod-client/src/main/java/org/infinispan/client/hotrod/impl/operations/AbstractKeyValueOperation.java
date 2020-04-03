@@ -14,6 +14,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -47,7 +48,7 @@ public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<
       this.maxIdleTimeUnit = maxIdleTimeUnit;
    }
 
-   protected void sendKeyValueOperation(Channel channel) {
+   protected ChannelFuture sendKeyValueOperation(Channel channel) {
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + keyBytes.length +
             codec.estimateExpirationSize(lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit) + value.length);
 
@@ -55,7 +56,7 @@ public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<
       ByteBufUtil.writeArray(buf, keyBytes);
       codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       ByteBufUtil.writeArray(buf, value);
-      channel.writeAndFlush(buf);
+      return channel.writeAndFlush(buf);
    }
 
    @Override

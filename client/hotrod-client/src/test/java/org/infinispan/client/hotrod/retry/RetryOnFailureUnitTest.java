@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.util.concurrent.EventExecutor;
 /**
  * Tests the number of retries.
@@ -113,7 +114,7 @@ public class RetryOnFailureUnitTest extends AbstractInfinispanTest {
       }
 
       @Override
-      protected void executeOperation(Channel channel) {
+      protected ChannelFuture executeOperation(Channel channel) {
          executeInvocationCount.incrementAndGet();
          if (!failOnTransport) {
             exceptionCaught(null, new RemoteNodeSuspectException("Induced Failure", 1L, (short) 1));
@@ -121,6 +122,7 @@ public class RetryOnFailureUnitTest extends AbstractInfinispanTest {
             //we can return null since it is not used
             complete(null);
          }
+         return null;
       }
 
       @Override

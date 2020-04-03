@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * A counter operation that returns the counter's value.
@@ -24,8 +25,8 @@ public class GetValueOperation extends BaseCounterOperation<Long> {
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      sendHeaderAndCounterNameAndRead(channel);
+   protected ChannelFuture executeOperation(Channel channel) {
+      return sendHeaderAndCounterNameAndRead(channel);
    }
 
    @Override

@@ -13,6 +13,7 @@ import org.infinispan.counter.api.CounterManager;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 /**
  * A counter operation for {@link CounterManager#getCounterNames()}.
@@ -30,10 +31,11 @@ public class GetCounterNamesOperation extends BaseCounterOperation<Collection<St
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   protected ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
-      sendHeader(channel);
+      ChannelFuture channelFuture = sendHeader(channel);
       setCacheName();
+      return channelFuture;
    }
 
    @Override

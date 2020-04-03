@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -32,9 +33,9 @@ public class RemoveOperation<V> extends AbstractKeyOperation<V> {
    }
 
    @Override
-   public void executeOperation(Channel channel) {
+   public ChannelFuture executeOperation(Channel channel) {
       scheduleRead(channel);
-      sendArrayOperation(channel, keyBytes);
+      return sendArrayOperation(channel, keyBytes);
    }
 
    @Override

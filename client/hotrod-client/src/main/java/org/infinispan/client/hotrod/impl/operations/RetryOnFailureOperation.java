@@ -24,6 +24,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.DecoderException;
 import net.jcip.annotations.Immutable;
 
@@ -68,14 +69,15 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
    }
 
    @Override
-   public void invoke(Channel channel) {
+   public ChannelFuture invoke(Channel channel) {
       try {
          if (trace) {
             log.tracef("About to start executing operation %s on %s", this, channel);
          }
-         executeOperation(channel);
+         return executeOperation(channel);
       } catch (Throwable t) {
          completeExceptionally(t);
+         return null;
       } finally {
          releaseChannel(channel);
       }
@@ -248,6 +250,6 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
     * If an error occurs during I/O, this class will detect it and retry the operation with a different channel by invoking the executeOperation method again.
     * @param channel the channel to use for I/O
     */
-   protected abstract void executeOperation(Channel channel);
+   protected abstract ChannelFuture executeOperation(Channel channel);
 
 }

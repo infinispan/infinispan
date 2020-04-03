@@ -6,11 +6,13 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 
 public class NoopChannelOperation extends CompletableFuture<Channel> implements ChannelOperation {
    @Override
-   public void invoke(Channel channel) {
+   public ChannelFuture invoke(Channel channel) {
       complete(channel);
+      return null;
    }
 
    @Override

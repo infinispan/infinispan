@@ -19,6 +19,7 @@
       <bundle>wrap:mvn:com.google.code.gson/gson/${version.gson}</bundle>
       <!-- Do not export the jboss-logging classes in the elytron jar -->
       <bundle>wrap:mvn:org.wildfly.security/wildfly-elytron/${version.org.wildfly.elytron}$Export-Package=org.wildfly.security.*</bundle>
+      <bundle>wrap:mvn:com.netflix.concurrency-limits/concurrency-limits-core/0.3.6</bundle>
    </feature>
 
    <feature name="infinispan-client-hotrod-with-query" version="${project.version}">
@@ -27,5 +28,6 @@
       <bundle>mvn:org.infinispan/infinispan-remote-query-client/${project.version}</bundle>
       <bundle>mvn:org.infinispan/infinispan-query-dsl/${project.version}</bundle>
       <bundle>wrap:mvn:com.google.code.gson/gson/${version.gson}</bundle>
+      <bundle>wrap:mvn:com.netflix.concurrency-limits/concurrency-limits-core/0.3.6</bundle>
    </feature>
 </features>
