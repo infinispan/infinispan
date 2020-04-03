@@ -130,6 +130,10 @@ public class CompletionStages {
     */
    public static <T, U> CompletionStage<U> handleAndCompose(CompletionStage<T> stage,
                                                             BiFunction<T, Throwable, CompletionStage<U>> handleFunction) {
+      if (isCompletedSuccessfully(stage)) {
+         T value = join(stage);
+         return handleFunction.apply(value, null);
+      }
       return stage.handle(handleFunction).thenCompose(Function.identity());
    }
 

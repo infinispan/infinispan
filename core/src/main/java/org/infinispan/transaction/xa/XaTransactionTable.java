@@ -19,6 +19,7 @@ import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -122,16 +123,23 @@ public class XaTransactionTable extends TransactionTable {
       if (localTransaction == null) {
          return CompletableFutures.completedExceptionFuture(new XAException(XAException.XAER_NOTA));
       }
-      CompletionStage<?> prepareStage;
+      CompletionStage<Boolean> commitStage;
       if (isOnePhase) {
          //isOnePhase being true means that we're the only participant in the distributed transaction and TM does the
          //1PC optimization. We run a 2PC though, as running only 1PC has a high chance of leaving the cluster in
          //inconsistent state.
-         prepareStage = txCoordinator.prepare(localTransaction);
+         commitStage = txCoordinator.prepare(localTransaction)
+               .thenCompose(ignore -> txCoordinator.commit(localTransaction, false));
       } else {
-         prepareStage = CompletableFutures.completedNull();
+         commitStage = txCoordinator.commit(localTransaction, false);
       }
-      return prepareStage.thenCompose(ignore -> txCoordinator.commit(localTransaction, false))
+      if (CompletionStages.isCompletedSuccessfully(commitStage)) {
+         boolean committedInOnePhase = CompletionStages.join(commitStage);
+         forgetSuccessfullyCompletedTransaction(recoveryManager, localTransaction.getXid(), localTransaction,
+               committedInOnePhase);
+         return CompletableFutures.completedNull();
+      }
+      return commitStage
             .thenApply(committedInOnePhase -> {
                forgetSuccessfullyCompletedTransaction(recoveryManager, localTransaction.getXid(), localTransaction,
                      committedInOnePhase);
