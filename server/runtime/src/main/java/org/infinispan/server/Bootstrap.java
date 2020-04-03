@@ -4,9 +4,12 @@ import static org.infinispan.server.logging.Messages.MSG;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.infinispan.commons.jdkspecific.Process;
@@ -171,5 +174,11 @@ public class Bootstrap extends Main {
       Process process = Process.getInstance();
       logger.info("JVM arguments = " + process.getArguments());
       logger.info("PID = " + process.getPid());
+      if (logger.isLoggable(Level.FINE)) {
+         URLClassLoader cl = (URLClassLoader) this.getClass().getClassLoader();
+         for(URL url : cl.getURLs()) {
+            logger.fine("JAR: " + url);
+         }
+      }
    }
 }
