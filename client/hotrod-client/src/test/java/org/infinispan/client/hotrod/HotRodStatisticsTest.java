@@ -9,16 +9,17 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Map;
 
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -28,47 +29,72 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.HotRodStatisticsTest")
 public class HotRodStatisticsTest extends AbstractInfinispanTest {
 
-   private HotRodServer hotrodServer;
-   private CacheContainer cacheContainer;
-   private RemoteCacheManager rcm;
    private RemoteCache remoteCache;
-   long startTime;
+   protected HotRodServer[] hotrodServers;
+
+   CacheMode cacheMode;
+   private HotRodStatisticsTest cacheMode(CacheMode cacheMode) {
+      this.cacheMode = cacheMode;
+      return this;
+   }
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new HotRodStatisticsTest().cacheMode(CacheMode.DIST_SYNC)
+      };
+   }
 
    @BeforeMethod
    protected void setup() throws Exception {
-      ConfigurationBuilder cfg = hotRodCacheConfiguration();
-      cfg.jmxStatistics().enable();
-      cacheContainer = TestCacheManagerFactory
-            .createClusteredCacheManagerEnforceJmxDomain(getClass().getSimpleName(), cfg);
 
-      hotrodServer = HotRodClientTestingUtil.startHotRodServer((EmbeddedCacheManager) cacheContainer);
-      startTime = System.currentTimeMillis();
+      final int numServers = 3;
+      hotrodServers = new HotRodServer[numServers];
+      for (int i = 0; i < numServers; i++) {
+         ConfigurationBuilder cfg = hotRodCacheConfiguration();
+         if (CacheMode.DIST_SYNC.equals(cacheMode)) {
+            cfg.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2);
+         } else if (CacheMode.REPL_SYNC.equals(cacheMode)) {
+            cfg.clustering().cacheMode(CacheMode.REPL_SYNC);
+         } else {
+            throw new IllegalStateException("Test scenario not implemented");
+         }
+         cfg.jmxStatistics().enable();
+         String jmxDomain = getClass().getSimpleName();
+         boolean exposeGlobalJmx = true;
+         boolean allowDuplicateDomains = true;
+         hotrodServers[i] = HotRodClientTestingUtil.startHotRodServer(
+               TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(jmxDomain, exposeGlobalJmx, allowDuplicateDomains, cfg));
+      }
+
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
+      clientBuilder.addServer().host("localhost").port(hotrodServers[0].getPort());
+      clientBuilder.clientIntelligence(ClientIntelligence.BASIC);
       clientBuilder.statistics().enable();
-      rcm = new RemoteCacheManager(clientBuilder.build());
+      RemoteCacheManager rcm = new RemoteCacheManager(clientBuilder.build());
       remoteCache = rcm.getCache();
    }
 
    @AfterMethod
    void tearDown() {
-      TestingUtil.killCacheManagers(cacheContainer);
-      killRemoteCacheManager(rcm);
-      killServers(hotrodServer);
+      for (HotRodServer server : hotrodServers) {
+         TestingUtil.killCacheManagers(server.getCacheManager());
+      }
+      killRemoteCacheManager(remoteCache.getRemoteCacheManager());
+      killServers(hotrodServers);
    }
 
    public void testAllStatsArePresent() {
       ServerStatistics serverStatistics = remoteCache.serverStatistics();
       Map<String, String> statsMap = serverStatistics.getStatsMap();
-      assertEquals(statsMap.get(ServerStatistics.STORES), "0");
-      assertEquals(statsMap.get(ServerStatistics.CURRENT_NR_OF_ENTRIES), "0");
-      assertEquals(statsMap.get(ServerStatistics.HITS),"0");
-      assertEquals(statsMap.get(ServerStatistics.MISSES),"0");
-      assertEquals(statsMap.get(ServerStatistics.REMOVE_HITS),"0");
-      assertEquals(statsMap.get(ServerStatistics.REMOVE_MISSES),"0");
-      assertEquals(statsMap.get(ServerStatistics.RETRIEVALS),"0");
-      assertEquals(statsMap.get(ServerStatistics.TOTAL_NR_OF_ENTRIES),"0");
+      assertEquals("0", statsMap.get(ServerStatistics.STORES));
+      assertEquals("0", statsMap.get(ServerStatistics.CURRENT_NR_OF_ENTRIES));
+      assertEquals("0", statsMap.get(ServerStatistics.HITS));
+      assertEquals("0", statsMap.get(ServerStatistics.MISSES));
+      assertEquals("0", statsMap.get(ServerStatistics.REMOVE_HITS));
+      assertEquals("0", statsMap.get(ServerStatistics.REMOVE_MISSES));
+      assertEquals("0", statsMap.get(ServerStatistics.RETRIEVALS));
+      assertEquals("0", statsMap.get(ServerStatistics.TOTAL_NR_OF_ENTRIES));
       assertEquals(0, remoteCache.size());
       assertTrue(remoteCache.isEmpty());
 
@@ -154,6 +180,23 @@ public class HotRodStatisticsTest extends AbstractInfinispanTest {
       remoteCache.clear();
       assertEquals((Integer)0, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.CURRENT_NR_OF_ENTRIES));
       assertEquals((Integer)2, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.TOTAL_NR_OF_ENTRIES));
+   }
+
+   public void testLocalNonBlockingGetStats() {
+      Integer max = 10;
+      for (int i = 0; i < max; i++) {
+         remoteCache.put("k" + i, "v" + i);
+
+         remoteCache.get("k" + i);
+         remoteCache.get("not_presented" + i);
+      }
+      assertEquals(max, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.HITS));
+      assertEquals(max, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.MISSES));
+   }
+
+   @Override
+   protected String parameters() {
+      return "cacheMode-" + cacheMode;
    }
 
 }
