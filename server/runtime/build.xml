@@ -14,9 +14,17 @@
       <copy todir="${output.dir}/boot" flatten="true">
          <fileset file="${project.build.directory}/${project.artifactId}-${project.version}-loader.jar"/>
       </copy>
-      <copy todir="${output.dir}/lib" flatten="true">
+      <copy todir="${output.dir}/lib">
          <fileset refid="maven.project.dependencies"/>
          <fileset file="${project.build.directory}/${project.artifactId}-${project.version}.jar"/>
+         <chainedmapper>
+            <flattenmapper/>
+            <!-- hack to rewrite the netty os-arch classifier -->
+            <compositemapper>
+               <regexpmapper from="netty-transport-native-epoll-(.*)-linux-x86_64\.jar" to="netty-transport-native-epoll-linux-x86_64-\1.jar"/>
+               <regexpmapper from="^(?!.*x86_64[.]jar$$).*$$" to="\0"/>
+            </compositemapper>
+         </chainedmapper>
       </copy>
       <copy todir="${test.lib.dir}" flatten="true">
          <fileset refid="maven.test.dependencies"/>
