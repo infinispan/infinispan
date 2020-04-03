@@ -2,7 +2,6 @@ package org.infinispan.transaction.xa;
 
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
@@ -62,7 +61,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     */
    @Override
    public int prepare(Xid externalXid) throws XAException {
-      return runRethrowingXAException(ignore -> txTable.prepare(externalXid));
+      return runRethrowingXAException(txTable.prepare(externalXid));
    }
 
    /**
@@ -70,7 +69,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     */
    @Override
    public void commit(Xid externalXid, boolean isOnePhase) throws XAException {
-      runRethrowingXAException(ignore -> txTable.commit(externalXid, isOnePhase));
+      runRethrowingXAException(txTable.commit(externalXid, isOnePhase));
    }
 
    /**
@@ -78,7 +77,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     */
    @Override
    public void rollback(Xid externalXid) throws XAException {
-      runRethrowingXAException(ignore -> txTable.rollback(externalXid));
+      runRethrowingXAException(txTable.rollback(externalXid));
    }
 
    @Override
@@ -93,7 +92,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
 
    @Override
    public void forget(Xid externalXid) throws XAException {
-      runRethrowingXAException(ignore -> txTable.forget(externalXid));
+      runRethrowingXAException(txTable.forget(externalXid));
    }
 
    @Override
@@ -183,9 +182,9 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       return (value & flag) != 0;
    }
 
-   private <T> T runRethrowingXAException(Function<Void, CompletionStage<T>> function) throws XAException {
+   private <T> T runRethrowingXAException(CompletionStage<T> completionStage) throws XAException {
       try {
-         return CompletionStages.join(function.apply(null));
+         return CompletionStages.join(completionStage);
       } catch (CompletionException e) {
          Throwable cause = e.getCause();
          if (cause instanceof XAException) {
