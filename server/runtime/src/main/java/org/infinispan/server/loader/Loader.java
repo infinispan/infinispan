@@ -9,8 +9,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Generic loader which constructs a classloader from all the jars found in some known locations and invokes the main
@@ -35,13 +36,17 @@ public class Loader {
    public static final String DEFAULT_SERVER_ROOT_DIR = "server";
 
    public static void main(String[] args) {
+      run(args, System.getProperties());
+   }
+
+   public static void run(String[] args, Properties properties) {
       if (args.length == 0) {
          System.err.println("You must specify a classname to launch");
       }
-      String home = System.getProperty(INFINISPAN_SERVER_HOME_PATH, System.getProperty("user.dir"));
+      String home = properties.getProperty(INFINISPAN_SERVER_HOME_PATH, properties.getProperty("user.dir"));
       ClassLoader bootClassLoader = Loader.class.getClassLoader();
       ClassLoader serverClassLoader = classLoaderFromPath(Paths.get(home, "lib"), bootClassLoader);
-      String root = System.getProperty(INFINISPAN_SERVER_ROOT_PATH, Paths.get(home, DEFAULT_SERVER_ROOT_DIR).toString());
+      String root = properties.getProperty(INFINISPAN_SERVER_ROOT_PATH, Paths.get(home, DEFAULT_SERVER_ROOT_DIR).toString());
       ClassLoader rootClassLoader = classLoaderFromPath(Paths.get(root, "lib"), serverClassLoader);
       Thread.currentThread().setContextClassLoader(rootClassLoader);
       try {
@@ -58,16 +63,21 @@ public class Loader {
 
    public static ClassLoader classLoaderFromPath(Path path, ClassLoader parent) {
       try {
-         Set<URL> jars = new LinkedHashSet<>();
+         Map<String, URL> jars = new HashMap<>();
          Files.walk(path)
                .filter(f -> f.toString().endsWith(".jar"))
                .forEach(jar -> {
                   try {
-                     jars.add(jar.toUri().toURL());
+                     String artifact = extractArtifactName(jar.getFileName().toString());
+                     if (jars.containsKey(artifact)) {
+                        throw new IllegalArgumentException("Duplicate JARs:\n" + jar + "\n" + jars.get(artifact));
+                     } else {
+                        jars.put(artifact, jar.toUri().toURL());
+                     }
                   } catch (MalformedURLException e) {
                   }
                });
-         final URL[] array = jars.toArray(new URL[jars.size()]);
+         final URL[] array = jars.values().toArray(new URL[jars.size()]);
          return AccessController.doPrivileged(
                (PrivilegedAction<URLClassLoader>) () -> {
                   if (parent == null)
@@ -75,8 +85,25 @@ public class Loader {
                   else
                      return new URLClassLoader(array, parent);
                });
+      } catch (RuntimeException e) {
+         throw e;
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
+   }
+
+   private static String extractArtifactName(String filename) {
+      int l = filename.length();
+      for (int i = 0; i < l; i++) {
+         char c = filename.charAt(i);
+         if (c == '-' && i < l - 1) {
+            c = filename.charAt(i + 1);
+            if (c >= '0' && c <= '9') {
+               return filename.substring(0, i);
+            }
+         }
+      }
+      // Could not obtain an artifact
+      return filename;
    }
 }
