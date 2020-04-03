@@ -2,9 +2,9 @@ package org.infinispan.transaction.xa.recovery;
 
 import java.util.Set;
 
-import javax.transaction.Status;
 import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.tx.Util;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -48,15 +48,9 @@ public class RecoveryAdminOperations {
          result.append("xid = [").append(i.getXid()).append("], ").append(SEPARATOR)
                .append("internalId = ").append(i.getInternalId()).append(SEPARATOR);
          result.append("status = [ ");
-         for (Integer status : i.getStatus()) {
-            if (status == Status.STATUS_PREPARED) {
-               result.append("_PREPARED_");
-            } else if (status == Status.STATUS_COMMITTED) {
-               result.append("_COMMITTED_");
-            } else if (status == Status.STATUS_ROLLEDBACK) {
-               result.append("_ROLLEDBACK_");
-            }
-         }
+         int status = i.getStatus();
+         if (status != -1)
+            result.append(Util.transactionStatusToString(status));
          result.append(" ]");
          result.append('\n');
       }
@@ -116,7 +110,7 @@ public class RecoveryAdminOperations {
       }
    }
 
-   private String completeBasedOnInternalId(Long internalId, boolean commit) {
+   private String completeBasedOnInternalId(long internalId, boolean commit) {
       RecoveryManager.InDoubtTxInfo inDoubtTxInfo = lookupRecoveryInfo(internalId);
       if (inDoubtTxInfo != null) {
          return completeTransaction(inDoubtTxInfo.getXid(), inDoubtTxInfo, commit);
@@ -156,10 +150,10 @@ public class RecoveryAdminOperations {
       return info;
    }
 
-   private RecoveryManager.InDoubtTxInfo lookupRecoveryInfo(Long internalId) {
+   private RecoveryManager.InDoubtTxInfo lookupRecoveryInfo(long internalId) {
       Set<RecoveryManager.InDoubtTxInfo> info = getRecoveryInfoFromCluster();
       for (RecoveryManager.InDoubtTxInfo i : info) {
-         if (i.getInternalId().equals(internalId)) {
+         if (i.getInternalId() == internalId) {
             log.tracef("Found matching recovery info: %s", i);
             return i;
          }
@@ -171,7 +165,7 @@ public class RecoveryAdminOperations {
       return "Transaction not found: " + XidImpl.printXid(formatId, globalTxId, branchQualifier);
    }
 
-   private String transactionNotFound(Long internalId) {
+   private String transactionNotFound(long internalId) {
       return "Transaction not found for internal id: " + internalId;
    }
 }

@@ -4,13 +4,12 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -21,29 +20,19 @@ import org.infinispan.remoting.transport.Address;
 */
 public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
    private Xid xid;
-   private Long internalId;
-   private IntSet status;
+   private long internalId;
+   private int status;
    private transient Set<Address> owners = new HashSet<>();
    private transient boolean isLocal;
 
-   public InDoubtTxInfoImpl(Xid xid, Long internalId, Integer status) {
-      this.xid = xid;
-      this.internalId = internalId;
-      if (status == null) {
-         this.status = IntSets.immutableEmptySet();
-      } else {
-         this.status = IntSets.immutableSet(status);
-      }
-   }
-
-   public InDoubtTxInfoImpl(Xid xid, long internalId, IntSet status) {
+   public InDoubtTxInfoImpl(Xid xid, long internalId, int status) {
       this.xid = xid;
       this.internalId = internalId;
       this.status = status;
    }
 
    public InDoubtTxInfoImpl(Xid xid, long internalId) {
-      this(xid, internalId, IntSets.immutableEmptySet());
+      this(xid, internalId, -1);
    }
 
    @Override
@@ -52,12 +41,12 @@ public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
    }
 
    @Override
-   public Long getInternalId() {
+   public long getInternalId() {
       return internalId;
    }
 
    @Override
-   public Set<Integer> getStatus() {
+   public int getStatus() {
       return status;
    }
 
@@ -66,8 +55,8 @@ public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
       return owners;
    }
 
-   public void addStatus(Set<Integer> statusSet) {
-      status.addAll(statusSet);
+   public void addStatus(int status) {
+      this.status = status;
    }
 
    public void addOwner(Address owner) {
@@ -92,12 +81,12 @@ public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
       public void writeObject(ObjectOutput output, InDoubtTxInfoImpl inDoubtTxInfoImpl) throws IOException {
          output.writeObject(inDoubtTxInfoImpl.getXid());
          output.writeLong(inDoubtTxInfoImpl.getInternalId());
-         output.writeObject(inDoubtTxInfoImpl.status);
+         output.writeInt(inDoubtTxInfoImpl.status);
       }
 
       @Override
       public InDoubtTxInfoImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new InDoubtTxInfoImpl((Xid) input.readObject(), input.readLong(), (IntSet) input.readObject());
+         return new InDoubtTxInfoImpl((Xid) input.readObject(), input.readLong(), input.readInt());
       }
 
       @Override
@@ -115,26 +104,17 @@ public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-
       InDoubtTxInfoImpl that = (InDoubtTxInfoImpl) o;
-
-      if (isLocal != that.isLocal) return false;
-      if (internalId != null ? !internalId.equals(that.internalId) : that.internalId != null) return false;
-      if (owners != null ? !owners.equals(that.owners) : that.owners != null) return false;
-      if (status != null ? !status.equals(that.status) : that.status != null) return false;
-      if (xid != null ? !xid.equals(that.xid) : that.xid != null) return false;
-
-      return true;
+      return internalId == that.internalId &&
+            status == that.status &&
+            isLocal == that.isLocal &&
+            Objects.equals(xid, that.xid) &&
+            Objects.equals(owners, that.owners);
    }
 
    @Override
    public int hashCode() {
-      int result = xid != null ? xid.hashCode() : 0;
-      result = 31 * result + (internalId != null ? internalId.hashCode() : 0);
-      result = 31 * result + (status != null ? status.hashCode() : 0);
-      result = 31 * result + (owners != null ? owners.hashCode() : 0);
-      result = 31 * result + (isLocal ? 1 : 0);
-      return result;
+      return Objects.hash(xid, internalId, status, owners, isLocal);
    }
 
    @Override

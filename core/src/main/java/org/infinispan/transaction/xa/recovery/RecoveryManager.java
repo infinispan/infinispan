@@ -147,14 +147,13 @@ public interface RecoveryManager {
       /**
        * Each xid has a unique long object associated to it. It makes possible the invocation of recovery operations.
        */
-      Long getInternalId();
+      long getInternalId();
 
       /**
-       * The value represent transaction's state as described by the {@code status} field. Multiple values are returned
-       * as it is possible for an in-doubt transaction to be at the same time e.g. prepared on one node and committed on
-       * the other.
+       * The value represent transaction's state as described by the {@code status} field.
+       * @return the {@link javax.transaction.Status} or -1 if not set.
        */
-      Set<Integer> getStatus();
+      int getStatus();
 
       /**
        * Returns the set of nodes where this transaction information is maintained.
