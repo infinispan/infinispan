@@ -4,15 +4,12 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.Ids;
 
 /**
@@ -59,14 +56,6 @@ public enum Flag {
     * SQL statement.
     */
    FORCE_WRITE_LOCK,
-   /**
-    * Skips checking whether a cache is in a receptive state, i.e. is {@link ComponentStatus#RUNNING}.  May break
-    * operation in weird ways!
-    *
-    * @deprecated This flag is no longer in use.
-    */
-   @Deprecated
-   SKIP_CACHE_STATUS_CHECK,
    /**
     * Forces asynchronous network calls where possible, even if otherwise configured to use synchronous network calls.
     * Only applicable to non-local, clustered caches.
@@ -245,38 +234,6 @@ public enum Flag {
    IGNORE_TRANSACTION,
    ;
 
-   /**
-    * Creates a copy of a Flag BitSet removing instances of FAIL_SILENTLY.
-    *
-    * @deprecated Since 9.0
-    */
-   @Deprecated
-   public static long copyWithoutRemotableFlags(long flagsBitSet) {
-      return FlagBitSets.copyWithoutRemotableFlags(flagsBitSet);
-   }
-
-   /**
-    * Creates a copy of a Flag set removing instances of FAIL_SILENTLY.
-    *
-    * @deprecated Since 9.0
-    */
-   @Deprecated
-   public static Set<Flag> copyWithoutRemotableFlags(Set<Flag> flags) {
-      //FAIL_SILENTLY should not be sent to remote nodes
-      if (flags != null && flags.contains(Flag.FAIL_SILENTLY)) {
-         EnumSet<Flag> copy = EnumSet.copyOf(flags);
-         copy.remove(Flag.FAIL_SILENTLY);
-         if (copy.isEmpty()) {
-            return Collections.emptySet();
-         }
-         else {
-            return copy;
-         }
-      } else {
-         return flags;
-      }
-   }
-
    private static final Flag[] CACHED_VALUES = values();
 
    private static Flag valueOf(int ordinal) {
@@ -304,7 +261,5 @@ public enum Flag {
       public Flag readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return MarshallUtil.unmarshallEnum(input, Flag::valueOf);
       }
-
    }
-
 }
