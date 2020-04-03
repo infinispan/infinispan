@@ -72,7 +72,6 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
@@ -330,14 +329,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       byte[] bytes = marshaller.objectToByteBuffer(er);
       ExceptionResponse rer = (ExceptionResponse) marshaller.objectFromByteBuffer(bytes);
       assert rer.getException().getClass().equals(er.getException().getClass()) : "Writen[" + er.getException().getClass() + "] and read[" + rer.getException().getClass() + "] objects should be the same";
-   }
-
-   public void testMIMECacheEntryMarshalling() throws Exception {
-      MIMECacheEntry entry = new MIMECacheEntry("rm", new byte[] {1, 2, 3});
-      byte[] bytes = marshaller.objectToByteBuffer(entry);
-      MIMECacheEntry rEntry = (MIMECacheEntry) marshaller.objectFromByteBuffer(bytes);
-      assert Arrays.equals(rEntry.data, entry.data);
-      assert rEntry.contentType.equals(entry.contentType);
    }
 
    @Test(expectedExceptions = MarshallingException.class)

@@ -95,7 +95,6 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.reactive.publisher.PublisherReducers;
 import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponseExternalizer;
 import org.infinispan.reactive.publisher.impl.commands.reduction.SegmentPublisherResult;
-import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.BiasRevocationResponse;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -207,7 +206,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new MetaParamExternalizers.LifespanExternalizer(), exts);
       addInternalExternalizer(new MetaParamExternalizers.EntryVersionParamExternalizer(), exts);
       addInternalExternalizer(new MetaParamExternalizers.MaxIdleExternalizer(), exts);
-      addInternalExternalizer(new MIMECacheEntry.Externalizer(), exts); // new
       addInternalExternalizer(new MortalCacheEntry.Externalizer(), exts);
       addInternalExternalizer(new MortalCacheValue.Externalizer(), exts);
       addInternalExternalizer(new MurmurHash3.Externalizer(), exts);
