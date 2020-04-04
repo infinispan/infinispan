@@ -218,6 +218,13 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
    }
 
+   public InfinispanGenericContainer getContainer(int i) {
+      if(containers.length <= i) {
+         throw new IllegalStateException("Container " + i + " has not been initialized");
+      }
+      return containers[i];
+   }
+
    private GenericContainer createContainer(int i) {
 
       if (this.volumes[i] == null) {

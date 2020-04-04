@@ -30,6 +30,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.Server;
 import org.infinispan.server.security.UserTool;
+import org.infinispan.server.test.api.TestUser;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
@@ -39,6 +40,8 @@ import org.wildfly.security.x500.cert.X509CertificateBuilder;
  * @since 10.0
  **/
 public abstract class AbstractInfinispanServerDriver implements InfinispanServerDriver {
+   public static final String DEFAULT_CLUSTERED_INFINISPAN_CONFIG_FILE_NAME = "infinispan.xml";
+
    public static final String TEST_HOST_ADDRESS = "org.infinispan.test.host.address";
    public static final String BASE_DN = "CN=%s,OU=Infinispan,O=JBoss,L=Red Hat";
    public static final String KEY_PASSWORD = "secret";
@@ -83,22 +86,9 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       if (!confDir.mkdirs()) {
          throw new RuntimeException("Failed to create server configuration directory " + confDir);
       }
-      URL configurationFileURL;
-      if (new File(configuration.configurationFile()).isAbsolute()) {
-         configurationFileURL = Exceptions.unchecked(() -> new File(configuration.configurationFile()).toURI().toURL());
-      } else {
-         configurationFileURL = getClass().getClassLoader().getResource(configuration.configurationFile());
-      }
-      if (configurationFileURL == null) {
-         throw new RuntimeException("Cannot find test configuration file: " + configuration.configurationFile());
-      }
-      Path configurationFilePath;
-      try {
-         configurationFilePath = Paths.get(configurationFileURL.toURI());
-         // Recursively copy the contents of the directory containing the configuration file to the test target
-         Util.recursiveDirectoryCopy(configurationFilePath.getParent(), confDir.toPath());
-      } catch (Exception e) {
-         throw new RuntimeException(e);
+      // if the file is not a default file, we need to copy the file from the resources folder to the server conf dir
+      if(!configuration.isDefaultFile()) {
+         copyProvidedServerConfigurationFile();
       }
       createUserFile("default");
       createKeyStores();
@@ -119,6 +109,26 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       stop();
       log.infof("Stopped server %s", name);
       status = ComponentStatus.TERMINATED;
+   }
+
+   private void copyProvidedServerConfigurationFile() {
+      URL configurationFileURL;
+      if (new File(configuration.configurationFile()).isAbsolute()) {
+         configurationFileURL = Exceptions.unchecked(() -> new File(configuration.configurationFile()).toURI().toURL());
+      } else {
+         configurationFileURL = getClass().getClassLoader().getResource(configuration.configurationFile());
+      }
+      if (configurationFileURL == null) {
+         throw new RuntimeException("Cannot find test configuration file: " + configuration.configurationFile());
+      }
+      Path configurationFilePath;
+      try {
+         configurationFilePath = Paths.get(configurationFileURL.toURI());
+         // Recursively copy the contents of the directory containing the configuration file to the test target
+         Util.recursiveDirectoryCopy(configurationFilePath.getParent(), confDir.toPath());
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
    }
 
    protected static File createServerHierarchy(File baseDir) {
@@ -157,10 +167,9 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       }
 
       // Create users with composite roles
-      UserTool.main("-b", "-s", rootDir.getAbsolutePath(), "-r", realm, "-u", "admin", "-p", "strongPassword", "-g", "AdminRole");
-      UserTool.main("-b", "-s", rootDir.getAbsolutePath(), "-r", realm, "-u", "writer", "-p", "somePassword", "-g", "WriterRole");
-      UserTool.main("-b", "-s", rootDir.getAbsolutePath(), "-r", realm, "-u", "reader", "-p", "password", "-g", "ReaderRole");
-      UserTool.main("-b", "-s", rootDir.getAbsolutePath(), "-r", realm, "-u", "supervisor", "-p", "lessStrongPassword", "-g", "SupervisorRole");
+      for(TestUser user : TestUser.values()) {
+         UserTool.main("-b", "-s", rootDir.getAbsolutePath(), "-r", realm, "-u", user.getUser(), "-p", user.getPassword(), "-g", user.getRole());
+      }
    }
 
    @Override

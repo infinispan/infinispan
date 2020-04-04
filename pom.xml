@@ -114,8 +114,7 @@
       <module>server/rest</module>
       <module>server/router</module>
       <module>server/runtime</module>
-      <module>server/testdriver/core</module>
-      <module>server/testdriver/junit4</module>
+      <module>server/testdriver</module>
       <module>server/tests</module>
       <module>client/rest-client</module>
       <module>client/hotrod-client</module>
@@ -280,6 +279,7 @@
       <versionx.javax.inject.javax.inject>1</versionx.javax.inject.javax.inject>
       <versionx.javax.persistence.javax.persistence-api>${version.javax.persistence}</versionx.javax.persistence.javax.persistence-api>
       <versionx.junit.junit>${version.junit}</versionx.junit.junit>
+      <versionx.junit.junit5>${version.junit5}</versionx.junit.junit5>
       <versionx.log4j.log4j>1.2.17</versionx.log4j.log4j>
       <versionx.mysql.mysql-connector-java>5.1.19</versionx.mysql.mysql-connector-java>
       <versionx.net.spy.spymemcached>2.12.1</versionx.net.spy.spymemcached>
@@ -736,6 +736,24 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${versionx.junit.junit}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${versionx.junit.junit5}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${versionx.junit.junit5}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <version>${versionx.junit.junit5}</version>
          </dependency>
          <dependency>
             <groupId>log4j</groupId>
@@ -1151,6 +1169,11 @@
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-testdriver-junit4</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-testdriver-junit5</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
@@ -2619,6 +2642,7 @@
             <plugins>
                <plugin>
                   <artifactId>maven-surefire-plugin</artifactId>
+                  <version>${version.maven.surefire}</version>
                   <configuration>
                      <!-- Run the tests with JDK8 -->
                      <jvm>${env.JAVA8_HOME}/bin/java</jvm>
@@ -2637,6 +2661,7 @@
                </plugin>
                <plugin>
                   <artifactId>maven-failsafe-plugin</artifactId>
+                  <version>${version.maven.surefire}</version>
                   <configuration>
                      <jvm>${env.JAVA8_HOME}/bin/java</jvm>
                      <argLine>${forkJvmArgs}</argLine>
