@@ -175,7 +175,8 @@
       <version.jetty>9.4.5.v20170502</version.jetty>
       <version.jgroups>4.2.1.Final</version.jgroups>
       <version.jsr107>1.1.0</version.jsr107>
-      <version.junit>4.13</version.junit>
+      <version.junit4>4.13</version.junit4>
+      <version.junit>5.6.1</version.junit>
       <version.karaf>4.2.3</version.karaf>
       <version.log4j>2.13.1</version.log4j>
       <version.logback>1.1.7</version.logback>

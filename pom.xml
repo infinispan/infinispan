@@ -331,6 +331,7 @@
       <versionx.javax.xml.bind.jaxb-api>${version.jaxb}</versionx.javax.xml.bind.jaxb-api>
       <versionx.jdom.jdom>1.0</versionx.jdom.jdom>
       <versionx.joda-time.joda-time>2.9.7</versionx.joda-time.joda-time>
+      <versionx.junit.junit4>${version.junit4}</versionx.junit.junit4>
       <versionx.junit.junit>${version.junit}</versionx.junit.junit>
       <versionx.log4j.log4j>1.2.17</versionx.log4j.log4j>
       <versionx.mysql.mysql-connector-java>5.1.19</versionx.mysql.mysql-connector-java>
@@ -1350,6 +1351,21 @@
          <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>${versionx.junit.junit4}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${versionx.junit.junit}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${versionx.junit.junit}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
             <version>${versionx.junit.junit}</version>
          </dependency>
          <dependency>
@@ -2451,6 +2467,11 @@
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-testdriver-junit4</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-testdriver-junit5</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
@@ -4890,6 +4911,7 @@
             <plugins>
                <plugin>
                   <artifactId>maven-surefire-plugin</artifactId>
+                  <version>${version.maven.surefire}</version>
                   <configuration>
                      <!-- Run the tests with JDK8 -->
                      <jvm>${env.JAVA8_HOME}/bin/java</jvm>
@@ -4908,6 +4930,7 @@
                </plugin>
                <plugin>
                   <artifactId>maven-failsafe-plugin</artifactId>
+                  <version>${version.maven.surefire}</version>
                   <configuration>
                      <jvm>${env.JAVA8_HOME}/bin/java</jvm>
                      <argLine>${forkJvmArgs}</argLine>

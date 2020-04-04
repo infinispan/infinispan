@@ -30,6 +30,11 @@
          <scope>provided</scope>
       </dependency>
       <dependency>
+         <groupId>org.junit.vintage</groupId>
+         <artifactId>junit-vintage-engine</artifactId>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <scope>provided</scope>
