@@ -21,10 +21,11 @@ public class InfinispanServerTestConfiguration {
    private final boolean jmx;
    private final boolean parallelStartup;
    private final List<InfinispanServerListener> listeners;
+   private boolean defaultFile;
 
    public InfinispanServerTestConfiguration(String configurationFile, int numServers, ServerRunMode runMode,
                                             Properties properties, String[] mavenArtifacts, JavaArchive[] archives,
-                                            boolean jmx, boolean parallelStartup,
+                                            boolean jmx, boolean parallelStartup, boolean defaultFile,
                                             List<InfinispanServerListener> listeners) {
       this.configurationFile = configurationFile;
       this.numServers = numServers;
@@ -34,6 +35,7 @@ public class InfinispanServerTestConfiguration {
       this.archives = archives;
       this.jmx = jmx;
       this.parallelStartup = parallelStartup;
+      this.defaultFile = defaultFile;
       this.listeners = Collections.unmodifiableList(listeners);
    }
 
@@ -67,6 +69,10 @@ public class InfinispanServerTestConfiguration {
 
    public boolean isParallelStartup() {
       return parallelStartup;
+   }
+
+   public boolean isDefaultFile() {
+      return defaultFile;
    }
 
    public List<InfinispanServerListener> listeners() {

@@ -199,7 +199,7 @@ public class HotRodCacheQueries {
 
       String query = "from sample_bank_account.User where name='Adrian'";
 
-      RestClient restClient = SERVER_TEST.registerResource(SERVERS.newRestClient(new RestClientConfigurationBuilder()));
+      RestClient restClient = SERVER_TEST.newRestClient(new RestClientConfigurationBuilder());
 
       RestResponse response = sync(restClient.cache(SERVER_TEST.getMethodName()).query(query));
 

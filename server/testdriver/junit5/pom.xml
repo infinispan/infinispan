@@ -1,0 +1,67 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-testdriver-parent-pom</artifactId>
+      <version>11.0.0-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
+   </parent>
+
+   <artifactId>infinispan-server-testdriver-junit5</artifactId>
+   <packaging>jar</packaging>
+   <name>Infinispan Server JUnit 5.x Test Driver</name>
+   <description>Infinispan Server Test Driver for JUnit 5.x</description>
+
+   <properties>
+      <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
+   </properties>
+   <dependencies>
+      <dependency>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter-api</artifactId>
+         <version>${versionx.junit.junit5}</version>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter-engine</artifactId>
+         <version>${versionx.junit.junit5}</version>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-testdriver-core</artifactId>
+         <scope>compile</scope>
+      </dependency>
+   </dependencies>
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <parallel>none</parallel>
+               <groups combine.self="override">${defaultJUnitGroups}</groups>
+               <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
+               <disableXmlReport>false</disableXmlReport>
+               <properties>
+                  <!-- Deactivate the default listeners which may cause OOME. Jenkins uses the surefire generated XML file. -->
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${junitListener}</listener>
+               </properties>
+               <argLine>-Xmx512m</argLine>
+            </configuration>
+            <dependencies>
+               <dependency>
+                  <groupId>org.apache.maven.surefire</groupId>
+                  <artifactId>surefire-junit-platform</artifactId>
+                  <version>${version.maven.surefire}</version>
+               </dependency>
+            </dependencies>
+         </plugin>
+      </plugins>
+   </build>
+</project>
+

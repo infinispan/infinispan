@@ -61,9 +61,11 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
          serverFutures.add(server.run());
          servers.add(server);
       }
-      // Ensure that the cluster has formed
+      // Ensure that the cluster has formed if we start more than one server
       List<DefaultCacheManager> cacheManagers = servers.stream().map(server -> server.getCacheManagers().values().iterator().next()).collect(Collectors.toList());
-      TestingUtil.blockUntilViewsReceived(TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS), cacheManagers.toArray(new CacheContainer[]{}));
+      if(cacheManagers.size() > 1) {
+         TestingUtil.blockUntilViewsReceived(TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS), cacheManagers.toArray(new CacheContainer[]{}));
+      }
    }
 
    @Override

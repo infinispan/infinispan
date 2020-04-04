@@ -1,13 +1,9 @@
 package org.infinispan.server.test.junit4;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-
-import org.infinispan.server.test.core.InfinispanServerListener;
-import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
+import org.infinispan.server.test.core.AbstractServerConfigBuilder;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
+
+import static org.infinispan.server.test.core.AbstractInfinispanServerDriver.DEFAULT_CLUSTERED_INFINISPAN_CONFIG_FILE_NAME;
 
 /**
  * Builder for {@link InfinispanServerRule}.
@@ -16,81 +12,33 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
  * @author Dan Berindei
  * @since 10.0
  **/
-public class InfinispanServerRuleBuilder {
-   private final String configurationFile;
-   private final Properties properties;
-   private String[] mavenArtifacts;
-   private int numServers = 2;
-   private ServerRunMode runMode = ServerRunMode.DEFAULT;
-   private JavaArchive[] archives;
-   private boolean jmx;
-   private boolean parallelStartup = true;
-   private final List<InfinispanServerListener> listeners = new ArrayList<>();
+public class InfinispanServerRuleBuilder extends AbstractServerConfigBuilder<InfinispanServerRuleBuilder> {
+   /**
+    * Use this method to instantiate a single clustered embedded server
+    *
+    * @return InfinispanServerRule
+    */
+   public static InfinispanServerRule server() {
+      return server(true);
+   }
+
+   public static InfinispanServerRule server(boolean container) {
+      return new InfinispanServerRuleBuilder(DEFAULT_CLUSTERED_INFINISPAN_CONFIG_FILE_NAME, true)
+            .numServers(1)
+            .runMode(container? ServerRunMode.CONTAINER : ServerRunMode.EMBEDDED)
+            .parallelStartup(false)
+            .build();
+   }
 
    public static InfinispanServerRuleBuilder config(String configurationFile) {
-      return new InfinispanServerRuleBuilder(configurationFile);
+      return new InfinispanServerRuleBuilder(configurationFile, false);
    }
 
-   private InfinispanServerRuleBuilder(String configurationFile) {
-      this.configurationFile = configurationFile;
-      this.properties = new Properties(System.getProperties()); // set the defaults
-      // also copy org.infinispan properties
-      System.getProperties().entrySet().stream().filter(e -> e.getKey().toString().startsWith("org.infinispan")).forEach(e -> properties.put(e.getKey(), e.getValue()));
-   }
-
-   public InfinispanServerRuleBuilder mavenArtifacts(String... mavenArtifacts) {
-      this.mavenArtifacts = mavenArtifacts;
-      return this;
-   }
-
-   public InfinispanServerRuleBuilder numServers(int numServers) {
-      this.numServers = numServers;
-      return this;
-   }
-
-   public InfinispanServerRuleBuilder runMode(ServerRunMode serverRunMode) {
-      this.runMode = serverRunMode;
-      return this;
-   }
-
-   /**
-    * Deployments
-    */
-   public InfinispanServerRuleBuilder artifacts(JavaArchive... archives) {
-      this.archives = archives;
-      return this;
-   }
-
-   /**
-    * Define a system property
-    */
-   public InfinispanServerRuleBuilder property(String name, String value) {
-      this.properties.setProperty(name, value);
-      return this;
-   }
-
-   public InfinispanServerRuleBuilder enableJMX() {
-      this.jmx = true;
-      return this;
-   }
-
-   public InfinispanServerRuleBuilder addListener(InfinispanServerListener listener) {
-      listeners.add(listener);
-      return this;
-   }
-
-   /**
-    * If false servers are started individually, waiting until they become available, before subsequent servers are started.
-    */
-   public InfinispanServerRuleBuilder parallelStartup(boolean parallel) {
-      this.parallelStartup = parallel;
-      return this;
+   private InfinispanServerRuleBuilder(String configurationFile, boolean defaultFile) {
+      super(configurationFile, defaultFile);
    }
 
    public InfinispanServerRule build() {
-      InfinispanServerTestConfiguration configuration =
-            new InfinispanServerTestConfiguration(configurationFile, numServers, runMode, this.properties, mavenArtifacts,
-                                                  archives, jmx, parallelStartup, listeners);
-      return new InfinispanServerRule(configuration);
+      return new InfinispanServerRule(createServerTestConfiguration());
    }
 }
