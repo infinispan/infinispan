@@ -124,9 +124,9 @@ public class ContextImpl implements Context, AeshContext {
          connection.connect(username, password);
       } catch (IOException e) {
          if (shell != null) {
-            shell.writeln(ANSI.RED_TEXT + e.getMessage() + ANSI.DEFAULT_TEXT);
+            shell.writeln(ANSI.RED_TEXT + e.getLocalizedMessage() + ANSI.DEFAULT_TEXT);
          } else {
-            System.err.println(e.getMessage());
+            System.err.println(e.getLocalizedMessage());
          }
       }
       refreshPrompt();
@@ -175,7 +175,7 @@ public class ContextImpl implements Context, AeshContext {
          refreshPrompt();
          return CommandResult.SUCCESS;
       } catch (Exception e) {
-         TerminalString error = new TerminalString(e.getMessage(), new TerminalColor(Color.RED, Color.DEFAULT, Color.Intensity.BRIGHT));
+         TerminalString error = new TerminalString(Util.getRootCause(e).getLocalizedMessage(), new TerminalColor(Color.RED, Color.DEFAULT, Color.Intensity.BRIGHT));
          shell.writeln(error.toString());
          refreshPrompt();
          return CommandResult.FAILURE;

@@ -1,0 +1,103 @@
+PATCH(1)
+========
+:doctype: manpage
+
+
+NAME
+----
+patch - manages ${infinispan.brand.name} server patches.
+
+
+SYNOPSIS
+--------
+*patch ls*
+
+*patch install* 'patch-file'
+
+*patch describe* 'patch-file'
+
+*patch rollback*
+
+*patch create* 'patch-file' 'target-server' 'source-server-1' ['source-server-2'...]
+
+
+DESCRIPTION
+-----------
+Manage (list, describe, install, rollback, create) ${infinispan.brand.name} server patches.
+Server patches contain a number of artifacts that upgrade a server in order to resolve issues or add new features and is
+distributed as a zip archive.
+A single server patch can be used to upgrade multiple server source versions to a specific target version.
+
+
+COMMAND SYNOPSIS
+----------------
+
+List patches installed on a server
+
+*patch ls*::
+Lists the patches currently installed on a server in order of installation.
+
+Install a patch on a server
+
+*patch install* 'patch-file'::
+Installs 'patch-file' on a server in the current directory.
+It is possible to specify a path to the server where the patch should be installed.
+
+Describe the contents of a patch archive file
+
+*patch describe* 'patch-file'::
+Describes the contents of the specified 'patch-file', i.e. the target version and the list of source versions that are supported.
+
+Create a patch file
+
+*patch create* 'patch-file' 'target-server' 'source-server-1' ['source-server-2'...]::
+Creates a patch file
+
+Rollback patches
+
+*patch rollback*::
+Rolls back the patch installed last (use the *patch ls* command to show the patches in the order they've been applied)
+
+
+PATCH DESCRIBE OPTIONS
+----------------------
+
+*-v, --verbose*::
+Shows the content of the patch, including information about individual files
+
+
+PATCH LIST OPTIONS
+------------------
+
+*--server*='path-to-server'::
+The path to the server if it is in a different location than the current 'ISPN_HOME'
+
+*-v, --verbose*::
+Shows the content of each installed patch, including information about individual files
+
+
+PATCH CREATE OPTIONS
+--------------------
+
+*-q, --qualifier*='name'::
+Specifies a description qualifier string for the patch, e.g. 'one-off for issue nnnn'
+
+
+PATCH INSTALL OPTIONS
+---------------------
+
+*--dry-run*::
+Shows the operations that will be performed but doesn't actually apply them
+
+*--server*='path-to-server'::
+The path to the server if it is in a different location than the current 'ISPN_HOME'
+
+
+PATCH ROLLBACK OPTIONS
+----------------------
+
+*--dry-run*::
+Shows the operations that will be performed but doesn't actually apply them
+
+*--server*='path-to-server'::
+The path to the server if it is in a different location than the current 'ISPN_HOME'
