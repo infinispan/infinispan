@@ -92,7 +92,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.jmx.annotations.DataType;
@@ -957,15 +956,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    <C> CompletionStage<Void> addListenerAsync(ListenerHolder listenerHolder, CacheEventFilter<? super K, ? super V> filter,
                         CacheEventConverter<? super K, ? super V, C> converter) {
       return notifier.addListenerAsync(listenerHolder, filter, converter, null);
-   }
-
-   void addListener(ListenerHolder listenerHolder, KeyFilter<? super K> filter) {
-      notifier.addListener(listenerHolder, filter);
-   }
-
-   @Override
-   public void addListener(Object listener, KeyFilter<? super K> filter) {
-      notifier.addListener(listener, filter);
    }
 
    @Override

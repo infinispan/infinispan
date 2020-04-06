@@ -119,7 +119,7 @@ public class CounterManagerNotificationManager {
          topologyListener.register(cache);
       }
       if (!listenersRegistered) {
-         this.cache.addListener(valueListener, CounterKeyFilter.getInstance());
+         this.cache.addListener(valueListener);
          listenersRegistered = true;
       }
    }

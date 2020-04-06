@@ -16,7 +16,6 @@ import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.configuration.format.PropertyFormatter;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -539,11 +538,6 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    @Override
    public CompletionStage<Void> addListenerAsync(Object listener) {
       return cache.addListenerAsync(listener);
-   }
-
-   @Override
-   public void addListener(Object listener, KeyFilter<? super K> filter) {
-      cache.addListener(listener, filter);
    }
 
    @Override

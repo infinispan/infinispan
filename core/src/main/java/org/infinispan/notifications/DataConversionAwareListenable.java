@@ -4,7 +4,6 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.notifications.cachelistener.ListenerHolder;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
@@ -28,14 +27,4 @@ public interface DataConversionAwareListenable<K, V> extends ClassLoaderAwareFil
 
    <C> CompletionStage<Void> addFilteredListenerAsync(ListenerHolder listenerHolder, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
                                 Set<Class<? extends Annotation>> filterAnnotations);
-
-   /**
-    *
-    * @param listenerHolder
-    * @param filter
-    * @param <C>
-    * @deprecated Method uses KeyFilter and is no longer supported
-    */
-   @Deprecated
-   <C> void addListener(ListenerHolder listenerHolder, KeyFilter<? super K> filter);
 }

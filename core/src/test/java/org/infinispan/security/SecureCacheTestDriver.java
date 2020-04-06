@@ -15,7 +15,6 @@ import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.conflict.ConflictManagerFactory;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.FooInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -31,13 +30,11 @@ public class SecureCacheTestDriver {
    private Metadata metadata;
    private NullListener listener;
    private FooInterceptor interceptor;
-   private KeyFilter<String> keyFilter;
    private CacheEventConverter<String, String, String> converter;
    private CacheEventFilter<String, String> keyValueFilter;
 
    public SecureCacheTestDriver() {
       interceptor = new FooInterceptor();
-      keyFilter = key -> true;
       keyValueFilter = (key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> true;
       converter = (key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> null;
       listener = new NullListener();
@@ -172,11 +169,6 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.LISTEN)
    public void testAddFilteredListenerAsync_Object_CacheEventFilter_CacheEventConverter_Set(SecureCache<String, String> cache) {
       CompletionStages.join(cache.addListenerAsync(listener, keyValueFilter, converter));
-   }
-
-   @TestCachePermission(AuthorizationPermission.LISTEN)
-   public void testAddListener_Object_KeyFilter(SecureCache<String, String> cache) {
-      cache.addListener(listener, keyFilter);
    }
 
    @TestCachePermission(AuthorizationPermission.BULK_READ)

@@ -45,7 +45,6 @@ import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.functional.MetaParam.MetaLifespan;
@@ -831,11 +830,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    @Override
    public void endBatch(boolean successful) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public void addListener(Object listener, KeyFilter<? super K> filter) {
       // TODO: Customise this generated block
    }
 

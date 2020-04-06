@@ -53,11 +53,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
-import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.filter.CompositeKeyFilter;
 import org.infinispan.filter.CompositeKeyValueFilter;
-import org.infinispan.filter.KeyFilterAsKeyValueFilter;
-import org.infinispan.filter.KeyValueFilterAsKeyFilter;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.globalstate.ScopeFilter;
@@ -88,7 +84,6 @@ import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplica
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterAsConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterAsKeyValueFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterAsKeyValueFilterConverter;
-import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterAsCacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterConverterAsCacheEventFilterConverter;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -157,8 +152,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new ClusterListenerRemoveCallable.Externalizer(), exts);
       addInternalExternalizer(new ClusterListenerReplicateCallable.Externalizer(), exts);
       addInternalExternalizer(new CollectionExternalizer(), exts);
-      addInternalExternalizer(new CollectionKeyFilter.Externalizer(), exts);
-      addInternalExternalizer(new CompositeKeyFilter.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new CompositeKeyValueFilter.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new DefaultConsistentHash.Externalizer(), exts);
       addInternalExternalizer(new DefaultConsistentHashFactory.Externalizer(), exts); // TODO: Untested in core
@@ -173,11 +166,8 @@ final class InternalExternalizers {
       addInternalExternalizer(new Flag.Externalizer(), exts);
       addInternalExternalizer(new FunctionMapper.Externalizer(), exts);
       addInternalExternalizer(new GlobalTransaction.Externalizer(), exts);
-      addInternalExternalizer(new KeyFilterAsCacheEventFilter.Externalizer(), exts);
-      addInternalExternalizer(new KeyFilterAsKeyValueFilter.Externalizer(), exts);
       addInternalExternalizer(new KeyValueFilterConverterAsCacheEventFilterConverter.Externalizer(), exts);
       addInternalExternalizer(new KeyValueFilterAsCacheEventFilter.Externalizer(), exts);
-      addInternalExternalizer(new KeyValueFilterAsKeyFilter.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new ImmortalCacheEntry.Externalizer(), exts);
       addInternalExternalizer(new ImmortalCacheValue.Externalizer(), exts);
       addInternalExternalizer(new Immutables.ImmutableMapWrapperExternalizer(), exts);

@@ -2,18 +2,15 @@ package org.infinispan.stream;
 
 import static org.testng.Assert.assertEquals;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.filter.CacheFilters;
-import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.testng.annotations.Test;
 
 /**
@@ -59,16 +56,17 @@ public abstract class BaseClusteredStreamIteratorTest extends BaseStreamIterator
    public void simpleTestRemoteFilter() {
       Map<Object, String> values = putValuesInCache();
       Iterator<Map.Entry<Object, String>> iter = values.entrySet().iterator();
-      Map.Entry<Object, String> excludedEntry = iter.next();
+      Object excludedKey = iter.next().getKey();
       // Remove it so comparison below will be correct
       iter.remove();
 
       Cache<MagicKey, String> cache = cache(1, CACHE_NAME);
 
-      Iterator<CacheEntry<MagicKey, String>> iterator = cache.getAdvancedCache().cacheEntrySet().stream().filter(
-              CacheFilters.predicate(new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(
-                              Collections.singleton(excludedEntry.getKey()))))).iterator();
+      Iterator<CacheEntry<MagicKey, String>>  iterator = cache.getAdvancedCache().cacheEntrySet().stream()
+            .filter(entry -> !Objects.equals(excludedKey, entry.getKey()))
+            .iterator();
+
       Map<MagicKey, String> results = mapFromIterator(iterator);
-      assertEquals(values, results);
+      assertEquals(results, values);
    }
 }

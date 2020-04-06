@@ -39,7 +39,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.ListenerHolder;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
@@ -920,17 +919,6 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
          return ((CacheImpl) unwrapped).addListenerAsync(listenerHolder);
       } else {
          return super.addListenerAsync(listener);
-      }
-   }
-
-   @Override
-   public void addListener(Object listener, KeyFilter<? super K> filter) {
-      ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, false);
-      Cache unwrapped = super.unwrapCache(this.cache);
-      if (unwrapped instanceof CacheImpl) {
-         ((CacheImpl) unwrapped).addListener(listenerHolder, filter);
-      } else {
-         super.addListener(listener, filter);
       }
    }
 

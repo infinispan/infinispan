@@ -19,13 +19,10 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
@@ -38,27 +35,7 @@ import io.reactivex.schedulers.Schedulers;
  */
 public class PersistenceUtil {
 
-   private static Log log = LogFactory.getLog(PersistenceUtil.class);
-
-   public static KeyFilter notNull(KeyFilter filter) {
-      return filter == null ? KeyFilter.ACCEPT_ALL_FILTER : filter;
-   }
-
    private static final int SEGMENT_NOT_PROVIDED = -1;
-
-   /**
-    *
-    * @param acl
-    * @param filter
-    * @param <K>
-    * @param <V>
-    * @return
-    * @deprecated Please use {@link #count(AdvancedCacheLoader, Predicate)} instead
-    */
-   @Deprecated
-   public static <K, V> int count(AdvancedCacheLoader<K, V> acl, KeyFilter<? super K> filter) {
-      return count(acl, (Predicate<? super K>) filter);
-   }
 
    public static <K, V> int count(AdvancedCacheLoader<K, V> acl, Predicate<? super K> filter) {
 
@@ -84,20 +61,6 @@ public class PersistenceUtil {
       return result.intValue();
    }
 
-   /**
-    *
-    * @param acl
-    * @param filter
-    * @param <K>
-    * @param <V>
-    * @return
-    * @deprecated since 9.3 Please use {@link #toKeySet(AdvancedCacheLoader, Predicate)} instead
-    */
-   @Deprecated
-   public static <K, V> Set<K> toKeySet(AdvancedCacheLoader<K, V> acl, KeyFilter<? super K> filter) {
-      return toKeySet(acl, (Predicate<? super K>) filter);
-   }
-
    // This method is blocking - but only invoked by user code
    @SuppressWarnings("checkstyle:forbiddenmethod")
    private static <E> E singleToValue(Single<E> single) {
@@ -109,22 +72,6 @@ public class PersistenceUtil {
          return Collections.emptySet();
       return singleToValue(Flowable.fromPublisher(acl.publishKeys(filter))
             .collectInto(new HashSet<>(), Set::add));
-   }
-
-   /**
-    *
-    * @param acl
-    * @param filter
-    * @param ief
-    * @param <K>
-    * @param <V>
-    * @return
-    * @deprecated Please use {@link #toEntrySet(AdvancedCacheLoader, Predicate, InternalEntryFactory)} instead
-    */
-   @Deprecated
-   public static <K, V> Set<InternalCacheEntry> toEntrySet(AdvancedCacheLoader<K, V> acl, KeyFilter<? super K> filter, final InternalEntryFactory ief) {
-      Set entrySet = toEntrySet(acl, (Predicate<? super K>) filter, ief);
-      return (Set<InternalCacheEntry>) entrySet;
    }
 
    public static <K, V> Set<InternalCacheEntry<K, V>> toEntrySet(AdvancedCacheLoader<K, V> acl, Predicate<? super K> filter, final InternalEntryFactory ief) {

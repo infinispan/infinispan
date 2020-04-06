@@ -66,7 +66,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.EmptyAsyncInterceptorChain;
 import org.infinispan.jmx.annotations.DataType;
@@ -1103,14 +1102,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public V replace(K key, V value) {
       return getAndReplaceInternal(key, value, defaultMetadata);
-   }
-
-   @Override
-   public void addListener(Object listener, KeyFilter<? super K> filter) {
-      if (!hasListeners && canFire(listener)) {
-         hasListeners = true;
-      }
-      cacheNotifier.addListener(listener, filter);
    }
 
    @Override

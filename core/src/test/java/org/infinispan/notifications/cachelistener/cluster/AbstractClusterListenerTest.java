@@ -3,19 +3,18 @@ package org.infinispan.notifications.cachelistener.cluster;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
-import java.util.Collections;
+import java.io.Serializable;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
-import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterAsCacheEventFilter;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -115,8 +114,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
 
    protected void testSimpleFilter(Object key) {
       final String keyToFilterOut = "filter-me";
-      testFilter(keyToFilterOut, key, null, new KeyFilterAsCacheEventFilter<Object>(
-              new CollectionKeyFilter(Collections.singleton(key), true)));
+      testFilter(keyToFilterOut, key, null, filter(key));
    }
 
    protected void testFilter(Object keyToFilterOut, Object keyToUse, Long lifespan, CacheEventFilter<? super Object, ? super String> filter) {
@@ -252,8 +250,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
 
       ClusterListener clusterListener = listener();
-      cache0.addListener(clusterListener, new KeyFilterAsCacheEventFilter<Object>(
-              new CollectionKeyFilter<Object>(Collections.singleton(keyToFilter), true)), new StringTruncator(0, 3));
+      cache0.addListener(clusterListener, filter(keyToFilter), new StringTruncator(0, 3));
 
       addClusteredCacheManager();
       waitForClusterToForm(CACHE_NAME);
@@ -675,8 +672,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
    protected void testSimpleExpirationFilter(Object key) {
       final String keyToFilterOut = "filter-me";
       final long commonLifespan = 1000l;
-      testExpirationFilter(keyToFilterOut, commonLifespan, key, commonLifespan, new KeyFilterAsCacheEventFilter<Object>(
-              new CollectionKeyFilter(Collections.singleton(key), true)));
+      testExpirationFilter(keyToFilterOut, commonLifespan, key, commonLifespan, filter(key));
    }
 
    protected void testExpirationFilter(Object keyToFilterOut, Long keyToFilterOutLifespan, Object keyToUse, Long keyToUselifespan, CacheEventFilter<? super Object, ? super String> filter) {
@@ -734,4 +730,8 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       verifySimpleExpirationEvents(clusterListener, clusterListener.hasIncludeState() ? 2 : 1, key, expectedValue);
    }
 
+   private CacheEventFilter<Object, String> filter(Object keyToFilter) {
+      return (Serializable & CacheEventFilter<Object, String>)
+            (k, oldValue, oldMetadata, newValue, newMetadata, eventType) -> Objects.equals(k, keyToFilter);
+   }
 }

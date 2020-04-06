@@ -84,7 +84,7 @@ public class CounterConfigurationManager {
       Map<String, CounterConfiguration> persisted = storage.loadAll();
       persisted.forEach((name, cfg) -> stateCache.putIfAbsent(stateKey(name), cfg));
       counterCacheStarted.set(false);
-      stateCache.addListener(listener, new ScopeFilter(COUNTER_SCOPE));
+      stateCache.addListener(listener, new ScopeFilter(COUNTER_SCOPE), null);
       if (!persisted.isEmpty() || stateCache.keySet().stream()
             .anyMatch(scopedState -> COUNTER_SCOPE.equals(scopedState.getScope()))) {
          //we have counter defined

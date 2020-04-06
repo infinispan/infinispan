@@ -8,6 +8,7 @@ import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -17,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.Immutables;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
@@ -25,8 +25,7 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.filter.CacheFilters;
-import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.filter.KeyFilterAsKeyValueFilter;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
@@ -163,9 +162,10 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
             return null;
          });
 
-         Iterator<CacheEntry<MagicKey, String>> iterator = cache0.getAdvancedCache().cacheEntrySet().stream().filter(
-                 CacheFilters.predicate(new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Immutables
-                 .immutableSetCopy(originalValues.keySet()), true)))).iterator();
+         KeyValueFilter<MagicKey, String> filter = (Serializable & KeyValueFilter<MagicKey, String>)(k, v, m) -> originalValues.containsKey(k);
+         Iterator<CacheEntry<MagicKey, String>> iterator = cache0.getAdvancedCache().cacheEntrySet().stream()
+               .filter(CacheFilters.predicate(filter))
+               .iterator();
 
          // we need this count since the map will replace same key'd value
          int count = 0;

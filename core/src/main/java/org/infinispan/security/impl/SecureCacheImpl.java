@@ -30,7 +30,6 @@ import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -92,12 +91,6 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
          CacheEventConverter<? super K, ? super V, C> converter) {
       authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
       return delegate.addListenerAsync(listener, filter, converter);
-   }
-
-   @Override
-   public void addListener(Object listener, KeyFilter<? super K> filter) {
-      authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
-      delegate.addListener(listener, filter);
    }
 
    @Override
