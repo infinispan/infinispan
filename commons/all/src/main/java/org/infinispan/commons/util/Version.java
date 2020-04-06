@@ -1,6 +1,7 @@
 package org.infinispan.commons.util;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Properties;
@@ -22,6 +23,12 @@ public class Version {
    private static final int PATCH_MASK = 0x00003f;
 
    private static final Version INSTANCE = new Version();
+   public static final String INFINISPAN_VERSION = "infinispan.version";
+   public static final String INFINISPAN_BRAND_NAME = "infinispan.brand.name";
+   public static final String INFINISPAN_CODENAME = "infinispan.codename";
+   public static final String INFINISPAN_CORE_SCHEMA_VERSION = "infinispan.core.schema.version";
+   public static final String INFINISPAN_MODULE_SLOT_PREFIX = "infinispan.module.slot.prefix";
+   public static final String INFINISPAN_MODULE_SLOT_VERSION = "infinispan.module.slot.version";
 
    private final String version;
    private final String brandname;
@@ -35,22 +42,28 @@ public class Version {
    private final String major;
    private final String minor;
 
-
    private Version() {
+      this(Version.class.getResourceAsStream("/META-INF/infinispan-version.properties"));
+   }
+
+   private Version(InputStream is) {
       Properties properties = new Properties();
-      try (InputStream is = Version.class.getResourceAsStream("/META-INF/infinispan-version.properties")) {
+      try {
          properties.load(is);
-      } catch (Exception e) {
+         // Closing it here is harmless
+         Util.close(is);
+      } catch (IOException e) {
+         // Ignore errors, we'll use fallbacks
       }
-      version = properties.getProperty("infinispan.version", "0.0.0-SNAPSHOT");
-      brandname = properties.getProperty("infinispan.brand.name", "Infinispan");
-      codename = properties.getProperty("infinispan.codename", "N/A");
-      schemaVersion = properties.getProperty("infinispan.core.schema.version", "0.0");
+      version = properties.getProperty(INFINISPAN_VERSION, "0.0.0-SNAPSHOT");
+      brandname = properties.getProperty(INFINISPAN_BRAND_NAME, "Infinispan");
+      codename = properties.getProperty(INFINISPAN_CODENAME, "N/A");
+      schemaVersion = properties.getProperty(INFINISPAN_CORE_SCHEMA_VERSION, "0.0");
       String parts[] = getParts(version);
       versionId = readVersionBytes(parts[0], parts[1], parts[2], parts[3]);
       versionShort = getVersionShort(version);
-      String modulePrefix = properties.getProperty("infinispan.module.slot.prefix", "ispn");
-      String moduleVersion = properties.getProperty("infinispan.module.slot.version", parts[0] + "." + parts[1]);
+      String modulePrefix = properties.getProperty(INFINISPAN_MODULE_SLOT_PREFIX, "ispn");
+      String moduleVersion = properties.getProperty(INFINISPAN_MODULE_SLOT_VERSION, parts[0] + "." + parts[1]);
       moduleSlot = String.format("%s-%s", modulePrefix, moduleVersion);
       marshallVersion = Short.valueOf(parts[0] + parts[1]);
       majorMinor = String.format("%s.%s", parts[0], parts[1]);
@@ -58,6 +71,24 @@ public class Version {
       minor = parts[1];
    }
 
+   public static Version from(InputStream is) {
+      return new Version(is);
+   }
+
+   /*
+    * The following methods are per-instance
+    */
+   public String version() {
+      return version;
+   }
+
+   public String brandName() {
+      return brandname;
+   }
+
+   /*
+    * The following methods use a singleton instance
+    */
    public static String getVersion() {
       return INSTANCE.version;
    }
