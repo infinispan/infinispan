@@ -48,25 +48,25 @@ public class Mocks {
     * Checkpoint name that is triggered to tell the test that the code has reached a spot just before invocation. This
     * thread will not proceed with the invocation until {@link Mocks#BEFORE_RELEASE} is released.
     */
-   public static final String BEFORE_INVOCATION = "pre_invoked";
+   public static final String BEFORE_INVOCATION = "before_invocation";
 
    /**
     * Checkpoint name that this code waits on before the invocation until the test triggers it. This will require
     * triggering per invocation if there are more than one.
     */
-   public static final String BEFORE_RELEASE = "pre_released";
+   public static final String BEFORE_RELEASE = "before_release";
 
    /**
     * Checkpoint name that is triggered to tell the test that the code has reached a spot just after invocation. This
     * thread will not proceed after the invocation until {@link Mocks#AFTER_RELEASE} is released.
     */
-   public static final String AFTER_INVOCATION = "post_invoked";
+   public static final String AFTER_INVOCATION = "after_invocation";
 
    /**
     * Checkpoint name that this code waits on after the invocation until the test triggers it. This will require
     * triggering per invocation if there are more than one.
     */
-   public static final String AFTER_RELEASE = "post_released";
+   public static final String AFTER_RELEASE = "after_release";
 
    /**
     * Delegates a Mockito invocation to a target object, and returns the mock instead of the target object.
