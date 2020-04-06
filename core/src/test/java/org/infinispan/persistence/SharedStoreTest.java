@@ -12,7 +12,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -45,15 +44,15 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
    @AfterMethod
    @Override
    protected void clearContent() throws Throwable {
-      List<CacheLoader<String, String>> cachestores = TestingUtil.cachestores(caches());
+      List<DummyInMemoryStore> cachestores = TestingUtil.cachestores(caches());
       super.clearContent();
       // Because the store is shared, the stats are not cleared between methods
       // In particular, the clear between methods is added to the statistics
       clearStoreStats(cachestores);
    }
 
-   private void clearStoreStats(List<CacheLoader<String, String>> cachestores) {
-      cachestores.forEach(store -> ((DummyInMemoryStore) store).clearStats());
+   private void clearStoreStats(List<DummyInMemoryStore> cachestores) {
+      cachestores.forEach(DummyInMemoryStore::clearStats);
    }
 
    public void testUnnecessaryWrites() throws PersistenceException {
@@ -67,10 +66,9 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
          assertEquals("value", c.get("key"));
       }
 
-      List<CacheLoader<Object, Object>> cacheStores = TestingUtil.cachestores(caches());
-      for (CacheLoader cs: cacheStores) {
-         assertTrue(cs.contains("key"));
-         DummyInMemoryStore dimcs = (DummyInMemoryStore) cs;
+      List<DummyInMemoryStore> cacheStores = TestingUtil.cachestores(caches());
+      for (DummyInMemoryStore dimcs: cacheStores) {
+         assertTrue(dimcs.contains("key"));
          assertEquals(0, dimcs.stats().get("clear").intValue());
          assertEquals(0,  dimcs.stats().get("clear").intValue());
          assertEquals(1,  dimcs.stats().get("write").intValue());
@@ -82,15 +80,14 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
          assertNull(c.get("key"));
       }
 
-      for (CacheLoader cs: cacheStores) {
-         DummyInMemoryStore dimcs = (DummyInMemoryStore) cs;
+      for (DummyInMemoryStore dimcs: cacheStores) {
          if (cacheMode.isScattered()) {
             // scattered cache leaves tombstones
-            MarshallableEntry entry = cs.loadEntry("key");
+            MarshallableEntry entry = dimcs.loadEntry("key");
             assert entry == null || entry.getValue() == null;
             assertEquals("Entry should have been replaced by tombstone", Integer.valueOf(2), dimcs.stats().get("write"));
          } else {
-            assert !cs.contains("key");
+            assert !dimcs.contains("key");
             assertEquals("Entry should have been removed from the cache store just once", Integer.valueOf(1), dimcs.stats().get("delete"));
          }
       }
@@ -100,10 +97,9 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
       cache(0).getAdvancedCache().withFlags(Flag.SKIP_SHARED_CACHE_STORE).put("key", "value");
       assert cache(0).get("key").equals("value");
 
-      List<CacheLoader<Object, Object>> cachestores = TestingUtil.cachestores(caches());
-      for (CacheLoader cs : cachestores) {
-         assert !cs.contains("key");
-         DummyInMemoryStore dimcs = (DummyInMemoryStore) cs;
+      List<DummyInMemoryStore> cacheStores = TestingUtil.cachestores(caches());
+      for (DummyInMemoryStore dimcs: cacheStores) {
+         assert !dimcs.contains("key");
          assert dimcs.stats().get("write") == 0 : "Cache store should NOT contain any entry. Put was with SKIP_SHARED_CACHE_STORE flag.";
       }
    }
@@ -124,12 +120,12 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
    }
 
    private void assertStoreStatInvocationEquals(Cache<?, ?> cache, String invocationName, int invocationCount) {
-      DummyInMemoryStore dims = TestingUtil.getFirstLoader(cache);
+      DummyInMemoryStore dims = TestingUtil.getFirstStore(cache);
       assertEquals(invocationCount, dims.stats().get(invocationName).intValue());
    }
 
    private void assertStoreDistinctInvocationAmount(Cache<?, ?> cache, int distinctInvocations) {
-      DummyInMemoryStore dims = TestingUtil.getFirstLoader(cache);
+      DummyInMemoryStore dims = TestingUtil.getFirstStore(cache);
       assertEquals(distinctInvocations, dims.stats().values().stream().filter(i -> i > 0).count());
    }
 }

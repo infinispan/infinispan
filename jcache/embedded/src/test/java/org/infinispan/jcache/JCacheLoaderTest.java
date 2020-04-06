@@ -90,7 +90,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
 
             // Load initial data in cache store
             int numEntries = loadInitialData(cm);
-            DummyInMemoryStore dummyStore = TestingUtil.getFirstWriter(cm.getCache("dummyStore"));
+            DummyInMemoryStore dummyStore = TestingUtil.getFirstStore(cm.getCache("dummyStore"));
 
             // Load all from cache store
             CompletionListenerFuture future = new CompletionListenerFuture();
@@ -98,7 +98,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
             cache.loadAll(keys, false, future);
             futureGet(future); // wait for key to be loaded
             assertTrue(future.isDone());
-            assertEquals(numEntries, dummyStore.stats().get("loadEntry").intValue());
+            assertEquals(numEntries, dummyStore.stats().get("load").intValue());
 
             // Load from memory
             assertEquals("v1", cache.get(1));
@@ -108,7 +108,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
             cache.loadAll(keys, true, future);
             futureGet(future); // wait for key to be loaded
             assertTrue(future.isDone());
-            assertEquals(numEntries * 2, dummyStore.stats().get("loadEntry").intValue());
+            assertEquals(numEntries * 2, dummyStore.stats().get("load").intValue());
          }
       });
    }

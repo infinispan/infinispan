@@ -42,7 +42,7 @@ public class PersistenceManagerAvailabilityTest extends SingleCacheManagerTest {
    public void testCacheAvailability() {
       Cache<Object, Object> cache = createManagerAndGetCache(0);
       cache.put(1, 1);
-      DummyInMemoryStore dims = TestingUtil.getFirstWriter(cache);
+      DummyInMemoryStore dims = TestingUtil.getFirstStore(cache);
       dims.setAvailable(false);
       PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
       eventually(() -> !pm.isAvailable());
@@ -70,7 +70,7 @@ public class PersistenceManagerAvailabilityTest extends SingleCacheManagerTest {
       cache.put(1, 1);
       PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
       assertTrue(pm.isAvailable());
-      DummyInMemoryStore dims = TestingUtil.getFirstWriter(cache);
+      DummyInMemoryStore dims = TestingUtil.getFirstStore(cache);
       dims.setAvailable(false);
       eventually(() -> !pm.isAvailable());
       eventuallyEquals(1, () -> pal.unavailableCount.get());

@@ -12,6 +12,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -74,7 +75,7 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
 
    private static <K, V> void writeToStore(Cache<K, V> cache, K key, V value) {
       MarshallableEntry entry = MarshalledEntryUtil.create(key, value, cache);
-      TestingUtil.getFirstWriter(cache).write(entry);
+      ((DummyInMemoryStore) TestingUtil.getFirstStore(cache)).write(entry);
    }
 
    private static CacheLoaderInterceptor cacheLoaderInterceptor(Cache<?, ?> cache) {
@@ -116,7 +117,7 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
 
    private void initStore(Cache<String, String> cache) {
       writeToStore(cache, key, value1);
-      assertTrue(TestingUtil.getFirstLoader(cache).contains(key));
+      assertTrue(((DummyInMemoryStore) TestingUtil.getFirstStore(cache)).contains(key));
       cacheLoaderInterceptor(cache).resetStatistics();
    }
 

@@ -2,8 +2,8 @@ package org.infinispan.persistence;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 @Test(testName = "persistence.IgnoreModificationsStoreTest", groups = "functional", sequential = true)
 @CleanupAfterMethod
 public class IgnoreModificationsStoreTest extends SingleCacheManagerTest {
-   AdvancedLoadWriteStore store;
+   DummyInMemoryStore store;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -37,7 +37,7 @@ public class IgnoreModificationsStoreTest extends SingleCacheManagerTest {
    @Override
    protected void setup() throws Exception {
       super.setup();
-      store = (AdvancedLoadWriteStore) TestingUtil.getFirstLoader(cache);
+      store = TestingUtil.getFirstStore(cache);
    }
 
    public void testReadOnlyCacheStore() throws PersistenceException {

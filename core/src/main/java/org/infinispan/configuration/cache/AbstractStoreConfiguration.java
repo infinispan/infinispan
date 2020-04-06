@@ -14,6 +14,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
    public static final AttributeDefinition<Boolean> FETCH_PERSISTENT_STATE = AttributeDefinition.builder("fetchPersistentState", false).xmlName("fetch-state").immutable().build();
    public static final AttributeDefinition<Boolean> PURGE_ON_STARTUP = AttributeDefinition.builder("purgeOnStartup", false).immutable().xmlName("purge").build();
    public static final AttributeDefinition<Boolean> IGNORE_MODIFICATIONS = AttributeDefinition.builder("ignoreModifications", false).immutable().xmlName("read-only").build();
+   public static final AttributeDefinition<Boolean> WRITE_ONLY = AttributeDefinition.builder("writeOnly", false).immutable().xmlName("write-only").build();
    public static final AttributeDefinition<Boolean> PRELOAD = AttributeDefinition.builder("preload", false).immutable().build();
    public static final AttributeDefinition<Boolean> SHARED = AttributeDefinition.builder("shared", false).immutable().build();
    public static final AttributeDefinition<Boolean> TRANSACTIONAL = AttributeDefinition.builder("transactional", false).immutable().build();
@@ -26,12 +27,13 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AbstractStoreConfiguration.class, FETCH_PERSISTENT_STATE, PURGE_ON_STARTUP,
-            IGNORE_MODIFICATIONS, PRELOAD, SHARED, TRANSACTIONAL, MAX_BATCH_SIZE, SEGMENTED, PROPERTIES);
+            IGNORE_MODIFICATIONS, WRITE_ONLY, PRELOAD, SHARED, TRANSACTIONAL, MAX_BATCH_SIZE, SEGMENTED, PROPERTIES);
    }
 
    private final Attribute<Boolean> fetchPersistentState;
    private final Attribute<Boolean> purgeOnStartup;
    private final Attribute<Boolean> ignoreModifications;
+   private final Attribute<Boolean> writeOnly;
    private final Attribute<Boolean> preload;
    private final Attribute<Boolean> shared;
    private final Attribute<Boolean> transactional;
@@ -53,6 +55,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
       this.fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE);
       this.purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP);
       this.ignoreModifications = attributes.attribute(IGNORE_MODIFICATIONS);
+      this.writeOnly = attributes.attribute(WRITE_ONLY);
       this.preload = attributes.attribute(PRELOAD);
       this.shared = attributes.attribute(SHARED);
       this.transactional = attributes.attribute(TRANSACTIONAL);
@@ -119,6 +122,15 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
    @Override
    public boolean ignoreModifications() {
       return ignoreModifications.get();
+   }
+
+   /**
+    * If true, any operation that reads from the cache won't be retrieved from the given store. This includes bulk
+    * operations as well.
+    */
+   @Override
+   public boolean writeOnly() {
+      return writeOnly.get();
    }
 
    @Override

@@ -12,6 +12,7 @@ import org.infinispan.commons.test.TestSuiteProgress;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.eviction.impl.EvictionWithConcurrentOperationsTest;
 import org.infinispan.notifications.cachelistener.CacheListenerVisibilityTest;
+import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestBlocking;
 import org.infinispan.test.TestingUtil;
@@ -86,6 +87,10 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
 
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, BlockingLocalTopologyManager.class);
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, AbstractControlledLocalTopologyManager.class);
+
+      // The join is used to allow for a sync API for test simplicity - where as the actual store invocation
+      // must be non blocking
+      builder.allowBlockingCallsInside(WaitNonBlockingStore.class.getName(), "join");
    }
 
    private static void writeJUnitReport(String testName, Throwable throwable, String type) {

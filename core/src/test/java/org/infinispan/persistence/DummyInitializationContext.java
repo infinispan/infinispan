@@ -1,5 +1,6 @@
 package org.infinispan.persistence;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
@@ -11,6 +12,7 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
+import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * @author Mircea Markus
@@ -26,13 +28,15 @@ public class DummyInitializationContext implements InitializationContext {
    ExecutorService executorService;
 
    GlobalConfiguration globalConfiguration;
+   BlockingManager manager;
 
    public DummyInitializationContext() {
    }
 
    public DummyInitializationContext(StoreConfiguration clc, Cache cache, PersistenceMarshaller marshaller,
                                      ByteBufferFactory byteBufferFactory, MarshallableEntryFactory marshalledEntryFactory,
-                                     ExecutorService executorService, GlobalConfiguration globalConfiguration) {
+                                     ExecutorService executorService, GlobalConfiguration globalConfiguration,
+                                     BlockingManager manager) {
       this.clc = clc;
       this.cache = cache;
       this.marshaller = marshaller;
@@ -40,6 +44,7 @@ public class DummyInitializationContext implements InitializationContext {
       this.marshalledEntryFactory = marshalledEntryFactory;
       this.executorService = executorService;
       this.globalConfiguration = globalConfiguration;
+      this.manager = manager;
    }
 
    @Override
@@ -76,6 +81,16 @@ public class DummyInitializationContext implements InitializationContext {
    @Override
    public ExecutorService getExecutor() {
       return executorService;
+   }
+
+   @Override
+   public Executor getNonBlockingExecutor() {
+      return executorService;
+   }
+
+   @Override
+   public BlockingManager getBlockingManager() {
+      return manager;
    }
 
    @Override

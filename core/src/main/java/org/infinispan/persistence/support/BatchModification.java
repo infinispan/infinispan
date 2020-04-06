@@ -17,7 +17,7 @@ import org.infinispan.persistence.spi.MarshallableEntry;
  * @author Ryan Emerson
  */
 public class BatchModification {
-   private final Map<Object, MarshallableEntry> marshalledEntries = new HashMap<>();
+   private final Map<Object, MarshallableEntry<Object, Object>> marshalledEntries = new HashMap<>();
    private final Set<Object> keysToRemove = new HashSet<>();
    private final Set<Object> affectedKeys;
 
@@ -25,7 +25,7 @@ public class BatchModification {
       this.affectedKeys = affectedKeys;
    }
 
-   public void addMarshalledEntry(Object key, MarshallableEntry marshalledEntry) {
+   public void addMarshalledEntry(Object key, MarshallableEntry<Object, Object> marshalledEntry) {
       keysToRemove.remove(key);
       marshalledEntries.put(key, marshalledEntry);
    }
@@ -43,7 +43,7 @@ public class BatchModification {
       return keysToRemove;
    }
 
-   public Collection<MarshallableEntry> getMarshallableEntries() {
+   public Collection<MarshallableEntry<Object, Object>> getMarshallableEntries() {
       return marshalledEntries.values();
    }
 }

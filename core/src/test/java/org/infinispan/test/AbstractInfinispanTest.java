@@ -84,7 +84,6 @@ public abstract class AbstractInfinispanTest {
                                                                           60L, TimeUnit.SECONDS,
                                                                           new SynchronousQueue<>(),
                                                                           defaultThreadFactory);
-
    public static final TimeService TIME_SERVICE = new EmbeddedTimeService();
 
    public static class OrderByInstance implements IMethodInterceptor {
@@ -186,7 +185,7 @@ public abstract class AbstractInfinispanTest {
    }
 
    @AfterMethod
-   protected void checkThreads() {
+   protected final void checkThreads() {
       int activeTasks = testExecutor.getActiveCount();
       if (activeTasks != 0) {
          log.errorf("There were %d active tasks found in the test executor service for class %s", activeTasks,
@@ -455,15 +454,20 @@ public abstract class AbstractInfinispanTest {
       } else if (field.getType().isArray()) {
          return (clazz.isAssignableFrom(field.getType().getComponentType()));
       } else if (Collection.class.isAssignableFrom(field.getType())) {
-         ParameterizedType collectionType = (ParameterizedType) field.getGenericType();
-         Type elementType = collectionType.getActualTypeArguments()[0];
-         if (elementType instanceof ParameterizedType) {
-            return clazz.isAssignableFrom(((Class<?>) ((ParameterizedType) elementType).getRawType()));
-         } else if (elementType instanceof Class<?>) {
-            return clazz.isAssignableFrom(((Class<?>) elementType));
-         } else {
-            return false;
+         Type fieldType = field.getGenericType();
+         if (fieldType instanceof Class<?>) {
+            return clazz.isAssignableFrom((Class<?>) fieldType);
          }
+         if (fieldType instanceof ParameterizedType) {
+            ParameterizedType collectionType = (ParameterizedType) fieldType;
+            Type elementType = collectionType.getActualTypeArguments()[0];
+            if (elementType instanceof ParameterizedType) {
+               return clazz.isAssignableFrom(((Class<?>) ((ParameterizedType) elementType).getRawType()));
+            } else if (elementType instanceof Class<?>) {
+               return clazz.isAssignableFrom(((Class<?>) elementType));
+            }
+         }
+         return false;
       } else {
          return false;
       }

@@ -5,8 +5,8 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
 public class PassivatePersistentTest extends AbstractInfinispanTest {
 
    Cache<String, String> cache;
-   AdvancedLoadWriteStore store;
+   DummyInMemoryStore store;
    TransactionManager tm;
    ConfigurationBuilder cfg;
    CacheContainer cm;
@@ -35,7 +35,7 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
                .purgeOnStartup(false);
       cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
-      store = (AdvancedLoadWriteStore) TestingUtil.getCacheLoader(cache);
+      store = TestingUtil.getFirstStore(cache);
       tm = TestingUtil.getTransactionManager(cache);
    }
 
@@ -57,7 +57,7 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
       cache.stop();
       cache.start();
       // The old store's marshaller is not working any more
-      store = (AdvancedLoadWriteStore) TestingUtil.getCacheLoader(cache);
+      store = TestingUtil.getFirstStore(cache);
 
       assert store.contains("k");
       assert "v".equals(cache.get("k"));

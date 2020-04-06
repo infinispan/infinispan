@@ -18,8 +18,7 @@ public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBui
     * store does not make sense, as the same persistent store that provides the data will just end
     * up receiving it. Therefore, if a shared cache store is used, the cache will not allow a
     * persistent state transfer even if a cache store has this property set to true. Finally,
-    * setting it to true only makes sense if in a clustered environment, and only 'replication' and
-    * 'invalidation' cluster modes are supported.
+    * setting it to true only makes sense if in a clustered environment.
     */
    S fetchPersistentState(boolean b);
 
@@ -36,7 +35,13 @@ public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBui
    S purgeOnStartup(boolean b);
 
    /**
+    * If true, this cache store will be only used to write entries.
+    */
+   S writeOnly(boolean b);
+
+   /**
     * If true, when the cache starts, data stored in the cache store will be pre-loaded into memory.
+    * If multiple cache stores are chained, only one of them can have this property enabled.
     * This is particularly useful when data in the cache store will be needed immediately after
     * startup and you want to avoid cache operations being delayed as a result of loading this data
     * lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance

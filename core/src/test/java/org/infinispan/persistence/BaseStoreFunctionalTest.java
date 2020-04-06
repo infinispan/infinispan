@@ -32,9 +32,9 @@ import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerStub;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
@@ -253,9 +253,8 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       cache.putAll(entriesMap);
 
       assertEquals(numberOfEntries, cache.size());
-      CacheLoader cl = TestingUtil.getCacheLoader(cache);
-      if (cl != null)
-         IntStream.range(0, numberOfEntries).forEach(i -> assertNotNull(cl.loadEntry(Integer.toString(i))));
+      WaitNonBlockingStore store = TestingUtil.getFirstStore(cache);
+      IntStream.range(0, numberOfEntries).forEach(i -> assertNotNull(store.loadEntry(Integer.toString(i))));
    }
 
    public void testLoadEntrySet() {
@@ -334,7 +333,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries,
+      public <K, V> CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry<K, V>> entries,
                                                               Predicate<? super StoreConfiguration> predicate, long flags) {
          passivate.set(true);
          return CompletableFutures.completedNull();

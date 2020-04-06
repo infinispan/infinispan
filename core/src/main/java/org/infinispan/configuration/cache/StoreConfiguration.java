@@ -42,6 +42,8 @@ public interface StoreConfiguration extends ConfigurationInfo {
     */
    boolean ignoreModifications();
 
+   boolean writeOnly();
+
    boolean preload();
 
    boolean shared();

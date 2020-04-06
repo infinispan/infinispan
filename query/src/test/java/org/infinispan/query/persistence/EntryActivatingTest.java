@@ -10,8 +10,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.indexedembedded.City;
@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
 public class EntryActivatingTest extends AbstractInfinispanTest {
 
    Cache<String, Country> cache;
-   AdvancedLoadWriteStore store;
+   WaitNonBlockingStore store;
    CacheContainer cm;
    SearchManager search;
 
@@ -100,7 +100,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
          ;
       cm = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
       cache = cm.getCache();
-      store = TestingUtil.getFirstLoader(cache);
+      store = TestingUtil.getFirstStore(cache);
       search = Search.getSearchManager(cache);
    }
 

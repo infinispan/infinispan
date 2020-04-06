@@ -101,7 +101,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
 
       if (!Thread.currentThread().isInterrupted()) {
-         persistenceManager.purgeExpired();
+         CompletionStages.join(persistenceManager.purgeExpired());
       }
    }
 
@@ -413,7 +413,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          if (marshallableEntry != null) {
             Metadata metadata = marshallableEntry.getMetadata();
             resultStage = cacheToUse.removeLifespanExpired(key, marshallableEntry.getValue(),
-                  metadata.lifespan() == -1 ? null : metadata.lifespan());
+                  metadata == null || metadata.lifespan() == -1 ? null : metadata.lifespan());
          } else {
             // Unfortunately stores don't pull the entry so we can't tell exactly why it expired and thus we have to remove
             // the entire value.  Unfortunately this could cause a concurrent write to be undone

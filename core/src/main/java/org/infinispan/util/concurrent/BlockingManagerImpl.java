@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
+
 @Scope(Scopes.GLOBAL)
 public class BlockingManagerImpl implements BlockingManager {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
@@ -36,8 +37,8 @@ public class BlockingManagerImpl implements BlockingManager {
    @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
    Executor blockingExecutor;
 
-   Scheduler blockingScheduler;
-   Scheduler nonBlockingScheduler;
+   private Scheduler blockingScheduler;
+   private Scheduler nonBlockingScheduler;
 
    @Start
    protected void start() {

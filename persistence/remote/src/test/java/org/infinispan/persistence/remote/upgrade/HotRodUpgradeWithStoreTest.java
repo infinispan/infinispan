@@ -109,7 +109,7 @@ public class HotRodUpgradeWithStoreTest extends AbstractInfinispanTest {
       return pm.getStores(DummyInMemoryStore.class).iterator().next();
    }
 
-   private int storeSize(TestCluster cluster) {
+   private long storeSize(TestCluster cluster) {
       return getDummyStore(cluster).size();
    }
 

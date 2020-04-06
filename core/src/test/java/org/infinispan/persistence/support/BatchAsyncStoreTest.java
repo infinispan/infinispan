@@ -49,8 +49,7 @@ public class BatchAsyncStoreTest extends SingleCacheManagerTest {
          .persistence()
             .addSingleFileStore()
                .async()
-                  .enable()
-                  .threadPoolSize(1);
+                  .enable();
    }
 
    @Test

@@ -8,8 +8,8 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -43,7 +43,7 @@ public class ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInB
       cache.put(key, value);
       DataContainer container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry entry = container.get(key);
-      CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
+      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
       assertNotNull("Key " + key + " does not exist in data container.", entry);
       assertEquals("Wrong value for key " + key + " in data container.", value, entry.getValue());
       MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
@@ -55,7 +55,7 @@ public class ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInB
    protected void assertInMemory(Object key, Object value) {
       DataContainer container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry entry = container.get(key);
-      CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
+      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
       assertNotNull("Key " + key + " does not exist in data container", entry);
       assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
       eventually(() -> loader.loadEntry(key) == null);
@@ -66,7 +66,7 @@ public class ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInB
    protected void assertNotInMemory(Object key, Object value) {
       DataContainer container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry entry = container.get(key);
-      CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
+      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
       assertNull("Key " + key + " exists in data container", entry);
       MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
       assertNotNull("Key " + key + " does not exist in cache loader", entryLoaded);

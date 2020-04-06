@@ -10,9 +10,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
@@ -54,8 +52,8 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest<?>> extends Bas
    public void clearStats() {
       for (Cache<String, String> c: caches) {
          log.trace("Clearing stats for cache store on cache "+ c);
-         AdvancedLoadWriteStore<String, String> cs = TestingUtil.getFirstWriter(c);
-         cs.clear();
+         DummyInMemoryStore store = TestingUtil.getFirstStore(c);
+         store.clear();
       }
 
       // Make sure to clean up any extra caches
@@ -71,8 +69,8 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest<?>> extends Bas
       DataContainer<String, String> dc1 = c1.getAdvancedCache().getDataContainer();
       assert dc1.size() == NUM_KEYS;
 
-      AdvancedCacheLoader<String, String> cs = TestingUtil.getFirstLoader(c1);
-      assertEquals(NUM_KEYS, PersistenceUtil.count(cs, null));
+      DummyInMemoryStore store = TestingUtil.getFirstStore(c1);
+      assertEquals(NUM_KEYS, store.size());
 
       addClusterEnabledCacheManager(TestDataSCI.INSTANCE, null, new TransportFlags().withFD(false));
       EmbeddedCacheManager cm2 = cacheManagers.get(1);
@@ -118,8 +116,8 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest<?>> extends Bas
 
       timeService.advance(1000);
 
-      AdvancedCacheLoader<String, String> cs = TestingUtil.getFirstLoader(c1);
-      assertEquals(1, cs.size());
+      DummyInMemoryStore store = TestingUtil.getFirstStore(c1);
+      assertEquals(1, store.size());
 
       addClusterEnabledCacheManager();
       EmbeddedCacheManager cm2 = cacheManagers.get(1);

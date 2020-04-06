@@ -24,8 +24,10 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -38,8 +40,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
@@ -53,6 +55,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.mockito.AdditionalAnswers;
 import org.testng.AssertJUnit;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
@@ -66,6 +69,8 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
    protected final AtomicInteger storeNamePrefix = new AtomicInteger(0);
    public final String storeName = getClass().getSimpleName();
+
+   protected final String PERSISTENT_LOCATION = CommonsTestingUtil.tmpDirectory(getClass());
 
    public EvictionWithConcurrentOperationsTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -472,7 +477,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       cache.put(key, value);
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.get(key);
-      CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
+      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
       assertNotNull("Key " + key + " does not exist in data container.", entry);
       assertEquals("Wrong value for key " + key + " in data container.", value, entry.getValue());
       MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
@@ -483,7 +488,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    protected void assertInMemory(Object key, Object value) {
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.get(key);
-      CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
+      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
       assertNotNull("Key " + key + " does not exist in data container", entry);
       assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
       MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
@@ -494,7 +499,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    protected void assertNotInMemory(Object key, Object value) {
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.get(key);
-      CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
+      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
       assertNull("Key " + key + " exists in data container", entry);
       MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
       assertNotNull("Key " + key + " does not exist in cache loader", entryLoaded);
@@ -506,7 +511,15 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       configurePersistence(builder);
       configureEviction(builder);
-      return TestCacheManagerFactory.createCacheManager(new EvictionWithConcurrentOperationsSCIImpl(), builder);
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.serialization().addContextInitializer(new EvictionWithConcurrentOperationsSCIImpl());
+      globalBuilder.globalState().persistentLocation(PERSISTENT_LOCATION);
+      return TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
+   }
+
+   @AfterClass(alwaysRun = true)
+   protected void clearTempDir() {
+      Util.recursiveFileRemove(PERSISTENT_LOCATION);
    }
 
    protected void configureEviction(ConfigurationBuilder builder) {

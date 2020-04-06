@@ -4,8 +4,8 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.TestingUtil;
@@ -60,7 +60,7 @@ public class PersistentStateTransferQueryIndexTest extends BaseReIndexingTest {
 
    private void checkCacheStoresContainPersons() throws PersistenceException {
       for (Cache<Object, Object> cache : caches()) {
-         CacheLoader store = TestingUtil.getFirstLoader(cache);
+         DummyInMemoryStore store = TestingUtil.getFirstStore(cache);
          for (int i = 0; i < persons.length; i++)
             assertEquals(persons[i], store.loadEntry(persons[i].getName()).getValue());
       }
@@ -68,7 +68,7 @@ public class PersistentStateTransferQueryIndexTest extends BaseReIndexingTest {
 
    private void checkCacheStoresEmpty() throws PersistenceException {
       for (Cache<Object, Object> cache : caches()) {
-         CacheLoader store = TestingUtil.getFirstLoader(cache);
+         DummyInMemoryStore store = TestingUtil.getFirstStore(cache);
          for (Person person : persons) {
             assert !store.contains(person.getName());
          }

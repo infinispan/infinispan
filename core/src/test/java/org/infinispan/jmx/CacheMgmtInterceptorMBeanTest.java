@@ -23,8 +23,8 @@ import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -43,7 +43,7 @@ import io.reactivex.rxjava3.exceptions.Exceptions;
 public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
    private ObjectName mgmtInterceptor;
    private AdvancedCache<?, ?> advanced;
-   private AdvancedLoadWriteStore loader;
+   private DummyInMemoryStore loader;
    private static final String JMX_DOMAIN = CacheMgmtInterceptorMBeanTest.class.getSimpleName();
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
@@ -69,7 +69,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       cache = cacheManager.getCache("test");
       advanced = cache.getAdvancedCache();
       mgmtInterceptor = getCacheObjectName(JMX_DOMAIN, "test(local)", "Statistics");
-      loader = TestingUtil.getFirstLoader(cache);
+      loader = TestingUtil.getFirstStore(cache);
 
       return cacheManager;
    }

@@ -11,6 +11,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
@@ -22,6 +23,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.reactivestreams.Publisher;
 
@@ -61,10 +63,19 @@ public class PersistenceUtil {
       return result.intValue();
    }
 
-   // This method is blocking - but only invoked by user code
-   @SuppressWarnings("checkstyle:forbiddenmethod")
+   // This method is blocking - but only invoked by tests or user code
+   @SuppressWarnings("checkstyle:ForbiddenMethod")
    private static <E> E singleToValue(Single<E> single) {
       return single.blockingGet();
+   }
+
+   // This method is blocking - but only invoked by tests or user code
+   @SuppressWarnings("checkstyle:ForbiddenMethod")
+   public static <K, V> Set<K> toKeySet(NonBlockingStore<K, V> nonBlockingStore, IntSet segments,
+         Predicate<? super K> filter) {
+      return Flowable.fromPublisher(nonBlockingStore.publishKeys(segments, filter))
+            .collect(Collectors.toSet())
+            .blockingGet();
    }
 
    public static <K, V> Set<K> toKeySet(AdvancedCacheLoader<K, V> acl, Predicate<? super K> filter) {

@@ -15,7 +15,6 @@ import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -76,8 +75,7 @@ public abstract class BaseStreamIteratorWithLoaderTest extends MultipleCacheMana
 
       cache0.putAll(originalValues);
 
-      PersistenceManager persistenceManager = TestingUtil.extractComponent(cache0, PersistenceManager.class);
-      DummyInMemoryStore store = persistenceManager.getStores(DummyInMemoryStore.class).iterator().next();
+      DummyInMemoryStore store = TestingUtil.getFirstStore(cache0);
 
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller(sci);
       try {

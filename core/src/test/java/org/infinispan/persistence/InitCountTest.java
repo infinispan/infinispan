@@ -7,10 +7,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.persistence.spi.CacheWriter;
-import org.infinispan.persistence.support.DelegatingCacheLoader;
-import org.infinispan.persistence.support.DelegatingCacheWriter;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -44,15 +40,10 @@ public class InitCountTest extends AbstractCacheTest {
       Cache<Object,Object> cache = cacheManager.getCache();
 
       try {
-         CacheLoader firstLoader = TestingUtil.getFirstLoader(cache);
-         CacheLoader undelegatedLoader = firstLoader instanceof DelegatingCacheLoader ? ((DelegatingCacheLoader) firstLoader).undelegate() : firstLoader;
-         CacheWriter firstWriter = TestingUtil.getFirstWriter(cache);
-         CacheWriter undelegatedWriter = firstWriter instanceof DelegatingCacheWriter ? ((DelegatingCacheWriter) firstWriter).undelegate() : firstWriter;
-         assertEquals(1, ((DummyInMemoryStore)undelegatedLoader).getInitCount());
-         assertEquals(1, ((DummyInMemoryStore)undelegatedWriter).getInitCount());
+         DummyInMemoryStore dims  = TestingUtil.getFirstStore(cache);
+         assertEquals(1, dims.getInitCount());
       } finally {
          TestingUtil.killCacheManagers(cacheManager);
       }
    }
-
 }

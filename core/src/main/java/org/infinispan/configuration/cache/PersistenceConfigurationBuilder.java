@@ -26,7 +26,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.persistence.spi.CacheLoader;
 
 /**
  * Configuration for cache stores.
@@ -86,7 +85,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
          return addClusterLoader();
       }
       if (name.equals(STORE.getLocalName())) {
-         CacheLoader store = Util.getInstance(qualifier, Thread.currentThread().getContextClassLoader());
+         Object store = Util.getInstance(qualifier, Thread.currentThread().getContextClassLoader());
          ConfiguredBy annotation = store.getClass().getAnnotation(ConfiguredBy.class);
          Class<? extends StoreConfigurationBuilder> builderClass = null;
          if (annotation != null) {
@@ -210,6 +209,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    public void validate() {
       boolean isLocalCache = builder.clustering().create().cacheMode().equals(CacheMode.LOCAL);
       int numFetchPersistentState = 0;
+      int numPreload = 0;
       for (StoreConfigurationBuilder<?, ?> b : stores) {
          b.validate();
          StoreConfiguration storeConfiguration = b.create();
@@ -226,11 +226,19 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
          if (storeConfiguration.async().enabled() && storeConfiguration.transactional()) {
             throw CONFIG.transactionalStoreCannotBeAsync(storeConfiguration.getClass().getSimpleName());
          }
-         if (storeConfiguration.fetchPersistentState())
+         if (storeConfiguration.fetchPersistentState()) {
             numFetchPersistentState++;
+         }
+         if (storeConfiguration.preload()) {
+            numPreload++;
+         }
       }
-      if (numFetchPersistentState > 1)
+      if (numFetchPersistentState > 1) {
          throw CONFIG.onlyOneFetchPersistentStoreAllowed();
+      }
+      if (numPreload > 1) {
+         throw CONFIG.onlyOnePreloadStoreAllowed();
+      }
 
       // If a store is present, the reaper expiration thread must be enabled.
       if (!stores.isEmpty()) {

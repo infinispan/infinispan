@@ -41,6 +41,7 @@ import org.infinispan.interceptors.impl.ContainerFullException;
 import org.infinispan.jmx.JmxDomainConflictException;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
@@ -2002,4 +2003,20 @@ public interface Log extends BasicLogger {
 
    @Message(value = "A store cannot be configured with both preload and purgeOnStartup", id = 589)
    CacheConfigurationException preloadAndPurgeOnStartupConflict();
+
+   @Message(value = "Store cannot be configured with both read and write only!", id = 590)
+   CacheConfigurationException storeBothReadAndWriteOnly();
+
+   @Message(value = "Store cannot be configured with purgeOnStartup or shared if it is read only!", id = 591)
+   CacheConfigurationException storeReadOnlyExceptions();
+
+   @Message(value = "Store cannot be configured with fetchPersistenceState or preload if it is write only!", id = 592)
+   CacheConfigurationException storeWriteOnlyExceptions();
+
+   @Message(value = "Store %s cannot be configured to be %s as the implementation specifies it is already %s!", id = 593)
+   CacheConfigurationException storeConfiguredHasBothReadAndWriteOnly(String storeClassName, NonBlockingStore.Characteristic configured,
+         NonBlockingStore.Characteristic implSpecifies);
+
+   @Message(value = "At most one store can be set to 'preload'!", id = 594)
+   CacheConfigurationException onlyOnePreloadStoreAllowed();
 }

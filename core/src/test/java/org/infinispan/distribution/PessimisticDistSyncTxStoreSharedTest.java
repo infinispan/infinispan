@@ -4,11 +4,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
@@ -60,7 +62,8 @@ public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersT
 
    @Test
    public void testInvalidPut() throws Exception {
-      Cache cache = cacheManagers.get(0).getCache("P006");
+      Cache<String, String> cache = cacheManagers.get(0).getCache("P006");
+      IntSet allSegments = IntSets.immutableRangeSet(cache.getCacheConfiguration().clustering().hash().numSegments());
 
       // add 1st 4 elements
       for(int i = 0; i < 4; i++){
@@ -68,8 +71,8 @@ public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersT
       }
 
       // lets check if all elements arrived
-      AdvancedCacheLoader cs1 = (AdvancedCacheLoader) TestingUtil.getCacheLoader(cache);
-      Set<Object> keys = PersistenceUtil.toKeySet(cs1, null);
+      DummyInMemoryStore cs1 = TestingUtil.getFirstStore(cache);
+      Set<Object> keys = PersistenceUtil.toKeySet(cs1, allSegments, null);
 
       Assert.assertEquals(keys.size(), 4);
 
@@ -86,14 +89,12 @@ public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersT
 
       Set mergedKeys = new HashSet();
       // add keys from all cache stores
-      AdvancedCacheLoader cs2 = (AdvancedCacheLoader) TestingUtil.getCacheLoader(cache);
+      DummyInMemoryStore cs2 = TestingUtil.getFirstStore(cache);
       log.debugf("Load from cache store via cache 1");
-      mergedKeys.addAll(PersistenceUtil.toKeySet(cs1, null));
+      mergedKeys.addAll(PersistenceUtil.toKeySet(cs1, allSegments, null));
       log.debugf("Load from cache store via cache 2");
-      mergedKeys.addAll(PersistenceUtil.toKeySet(cs2, null));
+      mergedKeys.addAll(PersistenceUtil.toKeySet(cs2, allSegments, null));
 
       Assert.assertEquals(mergedKeys.size(), 8);
-
    }
-
 }

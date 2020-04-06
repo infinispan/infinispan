@@ -19,8 +19,8 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -80,8 +80,8 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
 
       assertTrue(keysInDataContainer != numKeys); // some keys got evicted
 
-      AdvancedLoadWriteStore store = (AdvancedLoadWriteStore) TestingUtil.getCacheLoader(cache());
-      int keysInCacheStore = PersistenceUtil.count(store, null);
+      DummyInMemoryStore store = TestingUtil.getFirstStore(cache());
+      long keysInCacheStore = store.size();
 
       if (passivationEnabled) {
          assertEquals(numKeys, keysInDataContainer + keysInCacheStore);
@@ -93,8 +93,8 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       cache().stop();
       cache().start();
 
-      store = (AdvancedLoadWriteStore) TestingUtil.getCacheLoader(cache());
-      assertEquals(numKeys, PersistenceUtil.count(store, null));
+      store = TestingUtil.getFirstStore(cache());
+      assertEquals(numKeys, store.size());
 
       for (int i = 0; i < numKeys; i++) {
          assertEquals(i, cache().get(i));
@@ -240,8 +240,8 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
 
       assertTrue(keysInDataContainer != numKeys); // some keys got evicted
 
-      AdvancedLoadWriteStore store = (AdvancedLoadWriteStore) TestingUtil.getCacheLoader(cache());
-      int keysInCacheStore = PersistenceUtil.count(store, null);
+      DummyInMemoryStore dims = TestingUtil.getFirstStore(cache());
+      long keysInCacheStore = dims.size();
 
       if (passivationEnabled) {
          assertEquals(numKeys, keysInDataContainer + keysInCacheStore);
@@ -253,8 +253,8 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       cache().stop();
       cache().start();
 
-      store = (AdvancedLoadWriteStore) TestingUtil.getCacheLoader(cache());
-      assertEquals(numKeys, PersistenceUtil.count(store, null));
+      dims = TestingUtil.getFirstStore(cache());
+      assertEquals(numKeys, dims.size());
 
       for (int i = 0; i < numKeys; i++) {
          assertEquals(i, cache.getAdvancedCache().getCacheEntry(i).getValue());

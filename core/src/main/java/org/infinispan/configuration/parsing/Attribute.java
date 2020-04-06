@@ -167,6 +167,7 @@ public enum Attribute {
     THREAD_FACTORY,
     THREAD_NAME_PATTERN,
     THREAD_POLICY,
+    @Deprecated
     THREAD_POOL_SIZE,
     TIMEOUT,
     TOTAL_ORDER_EXECUTOR,
