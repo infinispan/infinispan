@@ -2,7 +2,6 @@ package org.infinispan.notifications;
 
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -18,17 +17,6 @@ import org.infinispan.util.concurrent.CompletionStages;
  * @see FilteringListenable
  */
 public interface ClassLoaderAwareFilteringListenable<K, V> extends FilteringListenable<K, V> {
-   /**
-    * Adds a listener to the component.  Typically, listeners would need to be annotated with {@link org.infinispan.notifications.Listener} and
-    * further to that, contain methods annotated appropriately, otherwise the listener will not be registered.
-    * <p/>
-    * See the {@link org.infinispan.notifications.Listener} annotation for more information.
-    * <p/>
-    *
-    * @param listener must not be null.
-    * @param classLoader class loader
-    */
-   void addListener(Object listener, KeyFilter<? super K> filter, ClassLoader classLoader);
 
    /**
     * Adds a listener with the provided filter and converter and using a given classloader when invoked.  See

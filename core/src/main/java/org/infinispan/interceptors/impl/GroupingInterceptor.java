@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.impl.GroupFilter;
@@ -100,7 +100,7 @@ public class GroupingInterceptor extends DDAsyncInterceptor {
       @CacheEntryActivated
       public void handleRemove(CacheEntryActivatedEvent<?, ?> event) {
          final Object key = event.getKey();
-         if (filter.accept(key)) {
+         if (filter.test(key)) {
             activatedKeys.add(factory.create(key, event.getValue(), event.getMetadata()));
          }
       }

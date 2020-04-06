@@ -25,8 +25,8 @@ import org.infinispan.lock.impl.entries.ClusteredLockValue;
 import org.infinispan.lock.impl.functions.IsLocked;
 import org.infinispan.lock.impl.functions.LockFunction;
 import org.infinispan.lock.impl.functions.UnlockFunction;
-import org.infinispan.lock.logging.Log;
 import org.infinispan.lock.impl.manager.EmbeddedClusteredLockManager;
+import org.infinispan.lock.logging.Log;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
@@ -80,12 +80,13 @@ public class ClusteredLockImpl implements ClusteredLock {
       this.clusteredLockManager = clusteredLockManager;
       this.pendingRequests = new ConcurrentLinkedQueue<>();
       this.readWriteMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(clusteredLockCache));
-      originator = clusteredLockCache.getCacheManager().getAddress();
-      requestExpirationScheduler = new RequestExpirationScheduler(clusteredLockManager.getScheduledExecutorService());
-      clusterChangeListener = new ClusterChangeListener();
-      lockReleasedListener = new LockReleasedListener();
+      this.originator = clusteredLockCache.getCacheManager().getAddress();
+      this.requestExpirationScheduler = new RequestExpirationScheduler(clusteredLockManager.getScheduledExecutorService());
+      this.clusterChangeListener = new ClusterChangeListener();
+      this.lockReleasedListener = new LockReleasedListener();
       this.clusteredLockCache.getCacheManager().addListener(clusterChangeListener);
-      this.clusteredLockCache.addListener(lockReleasedListener, new ClusteredLockFilter(lockKey));
+      this.clusteredLockCache.addFilteredListener(lockReleasedListener, new ClusteredLockFilter(lockKey), null,
+            Util.asSet(CacheEntryModified.class, CacheEntryRemoved.class));
    }
 
    public void stop() {

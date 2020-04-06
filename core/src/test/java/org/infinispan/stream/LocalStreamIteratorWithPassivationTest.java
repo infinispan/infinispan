@@ -17,15 +17,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.Immutables;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.filter.CacheFilters;
-import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
@@ -155,9 +152,9 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
             return null;
          });
 
-         Iterator<CacheEntry<String, String>> iterator = cache.getAdvancedCache().cacheEntrySet().stream().filter(
-                 CacheFilters.predicate(new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Immutables
-                         .immutableSetCopy(originalValues.keySet()), true)))).iterator();
+         Iterator<CacheEntry<String, String>> iterator = cache.getAdvancedCache().cacheEntrySet().stream()
+               .filter(CacheFilters.predicate((k, v, m) -> originalValues.containsKey(k)))
+               .iterator();
 
          // we need this count since the map will replace same key'd value
          int count = 0;

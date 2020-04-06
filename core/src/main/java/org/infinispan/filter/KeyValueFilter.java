@@ -6,10 +6,7 @@ import org.infinispan.metadata.Metadata;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * A filter for keys with their values.  This class is complemented by the {@link org.infinispan.filter.KeyFilter}
- * class.  This filter should be used in most cases over {@link org.infinispan.filter.KeyFilter} since it allows
- * for more control of the filtering since it provides the ability to filter on the value and metadata in addition
- * to the key.
+ * A filter for keys with their values.
  *
  * @author William Burns
  * @since 7.0

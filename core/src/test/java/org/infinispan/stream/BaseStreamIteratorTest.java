@@ -5,17 +5,19 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.Collections;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
@@ -24,13 +26,10 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.filter.CacheFilters;
-import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyValueFilterConverter;
-import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.commons.test.Exceptions;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -114,16 +113,14 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
    public void simpleTestLocalFilter() {
       Map<Object, String> values = putValuesInCache();
       Iterator<Map.Entry<Object, String>> iter = values.entrySet().iterator();
-      Map.Entry<Object, String> excludedEntry = iter.next();
+      Object excludedKey = iter.next().getKey();
       // Remove it so comparison below will be correct
       iter.remove();
 
       Cache<MagicKey, String> cache = cache(0, CACHE_NAME);
-
-      KeyValueFilter<MagicKey, String> filter = new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(
-              Collections.singleton(excludedEntry.getKey())));
-      Iterator<CacheEntry<MagicKey, String>> iterator = cache.getAdvancedCache().cacheEntrySet().stream().filter(
-              CacheFilters.predicate(filter)).iterator();
+      Iterator<CacheEntry<MagicKey, String>> iterator = cache.getAdvancedCache().cacheEntrySet().stream()
+            .filter(entry -> !Objects.equals(excludedKey, entry.getKey()))
+            .iterator();
       Map<MagicKey, String> results = mapFromIterator(iterator);
       assertEquals(values, results);
    }
@@ -132,14 +129,13 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
    public void testFilterAndConverterCombined() {
       Map<Object, String> values = putValuesInCache();
       Iterator<Map.Entry<Object, String>> iter = values.entrySet().iterator();
-      Map.Entry<Object, String> excludedEntry = iter.next();
+      Object excludedKey = iter.next().getKey();
       // Remove it so comparison below will be correct
       iter.remove();
 
-
       Cache<MagicKey, String> cache = cache(0, CACHE_NAME);
-      KeyValueFilterConverter<MagicKey, String, String> filterConverter = new CompositeKeyValueFilterConverter<>(
-            new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Collections.singleton(excludedEntry.getKey()))),
+      KeyValueFilter<Object, String> filter = (Serializable & KeyValueFilter<Object, String>)(k, v, m) -> !Objects.equals(k, excludedKey);
+      KeyValueFilterConverter<MagicKey, String, String> filterConverter = new CompositeKeyValueFilterConverter<>(filter,
             new StringTruncator(2, 5));
       try (CacheStream<CacheEntry<MagicKey, String>> stream = CacheFilters.filterAndConvert(
               cache.getAdvancedCache().cacheEntrySet().stream(), filterConverter)) {

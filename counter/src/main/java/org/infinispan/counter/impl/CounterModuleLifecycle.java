@@ -24,7 +24,6 @@ import org.infinispan.counter.impl.function.ReadFunction;
 import org.infinispan.counter.impl.function.RemoveFunction;
 import org.infinispan.counter.impl.function.ResetFunction;
 import org.infinispan.counter.impl.interceptor.CounterInterceptor;
-import org.infinispan.counter.impl.listener.CounterKeyFilter;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.counter.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.counter.logging.Log;
@@ -119,7 +118,6 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
 
       // Only required by GlobalMarshaller
       addAdvancedExternalizer(externalizerMap, ResetFunction.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, CounterKeyFilter.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, ReadFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, InitializeCounterFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, AddFunction.EXTERNALIZER);

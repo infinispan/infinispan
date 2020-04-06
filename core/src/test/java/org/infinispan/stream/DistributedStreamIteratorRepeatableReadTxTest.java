@@ -3,11 +3,14 @@ package org.infinispan.stream;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
+
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
@@ -20,9 +23,8 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
-import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyValueFilterConverter;
-import org.infinispan.filter.KeyFilterAsKeyValueFilter;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.testng.annotations.Test;
 
@@ -48,9 +50,9 @@ public class DistributedStreamIteratorRepeatableReadTxTest extends DistributedSt
          Object key = "filtered-key";
          cache.put(key, "filtered-value");
 
-         Iterator<CacheEntry<Object, String>> iterator = cache.getAdvancedCache().cacheEntrySet().stream().
-                 filter(CacheFilters.predicate(new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(
-                         Collections.singleton(key))))).iterator();
+         Iterator<CacheEntry<Object, String>> iterator = cache.getAdvancedCache().cacheEntrySet().stream()
+               .filter(entry -> !Objects.equals(key, entry.getKey()))
+               .iterator();
          Map<Object, String> results = mapFromIterator(iterator);
          assertEquals(values, results);
       } finally {
@@ -90,7 +92,6 @@ public class DistributedStreamIteratorRepeatableReadTxTest extends DistributedSt
    public void testKeyFilterConverterWithExistingTransaction() throws NotSupportedException, SystemException {
       Map<Object, String> values = putValuesInCache();
 
-
       Cache<Object, String> cache = cache(0, CACHE_NAME);
       TransactionManager tm = tm(cache);
       tm.begin();
@@ -111,10 +112,9 @@ public class DistributedStreamIteratorRepeatableReadTxTest extends DistributedSt
          acceptedKeys.add(key);
          acceptedKeys.add(extraEntry.getKey());
 
-         KeyValueFilterConverter<Object, String, String> filterConverter =
-               new CompositeKeyValueFilterConverter<>(
-                     new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(acceptedKeys, true)),
-                     new StringTruncator(2, 5));
+         KeyValueFilter<Object, String> filter = (Serializable & KeyValueFilter<Object, String>)(k, v, m) -> acceptedKeys.contains(k);
+         KeyValueFilterConverter<Object, String, String> filterConverter = new CompositeKeyValueFilterConverter<>(filter,
+               new StringTruncator(2, 5));
          try (CacheStream<CacheEntry<Object, String>> stream = CacheFilters.filterAndConvert(
                  cache.getAdvancedCache().cacheEntrySet().stream(), filterConverter)) {
             Map<Object, String> results = mapFromStream(stream);

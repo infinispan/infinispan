@@ -5,11 +5,12 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
@@ -106,7 +107,8 @@ public class CacheNotifierFilterTest extends MultipleCacheManagersTest {
       cache0.put(key, value);
 
       TestListener listener = new TestListener();
-      cache0.addListener(listener, new CollectionKeyFilter<>(Collections.singletonList(key)));
+      CacheEventFilter<String, String> filter = (k, oldValue, oldMetadata, newValue, newMetadata, eventType) -> !Objects.equals(k, key);
+      cache0.addFilteredListener(listener, filter, null, Util.asSet(CacheEntryVisited.class));
 
       assertEquals(value, cache0.get(key));
 
@@ -127,7 +129,7 @@ public class CacheNotifierFilterTest extends MultipleCacheManagersTest {
 
       TestListener listener = new TestListener();
       // This would block all cache events
-      cache0.addListener(listener, new CollectionKeyFilter<>(Collections.emptyList(), true));
+      cache0.addListener(listener, (key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> false, null);
 
       EmbeddedCacheManager cm = addClusterEnabledCacheManager();
       cm.createCache(CACHE_NAME, builderUsed.build());

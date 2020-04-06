@@ -4,7 +4,6 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -38,19 +37,6 @@ public interface FilteringListenable<K, V> extends Listenable {
    default <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter) {
       CompletionStages.join(addListenerAsync(listener, filter, converter));
    }
-
-   /**
-    * Adds a listener to the component.  Typically, listeners would need to be annotated with {@link org.infinispan.notifications.Listener} and
-    * further to that, contain methods annotated appropriately, otherwise the listener will not be registered.
-    * <p/>
-    * See the {@link org.infinispan.notifications.Listener} annotation for more information.
-    * <p/>
-    *
-    * @param listener must not be null.
-    * @deprecated Method uses KeyFilter and is no longer supported
-    */
-   @Deprecated
-   void addListener(Object listener, KeyFilter<? super K> filter);
 
    /**
     * Asynchronous version of {@link #addListener(Object, CacheEventFilter, CacheEventConverter)}

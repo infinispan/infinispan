@@ -1,6 +1,6 @@
 package org.infinispan.distribution.group.impl;
 
-import org.infinispan.filter.KeyFilter;
+import java.util.function.Predicate;
 
 /**
  * A key filter that accepts keys which belongs to the group.
@@ -8,7 +8,7 @@ import org.infinispan.filter.KeyFilter;
  * @author Pedro Ruivo
  * @since 7.0
  */
-public class GroupFilter<K> implements KeyFilter<K> {
+public class GroupFilter<K> implements Predicate<K> {
 
    private final Object groupName;
    private final GroupManager groupManager;
@@ -19,7 +19,7 @@ public class GroupFilter<K> implements KeyFilter<K> {
    }
 
    @Override
-   public boolean accept(K key) {
+   public boolean test(K key) {
       Object keyGroup = groupManager.getGroup(key);
       return keyGroup != null && keyGroup.equals(groupName);
    }

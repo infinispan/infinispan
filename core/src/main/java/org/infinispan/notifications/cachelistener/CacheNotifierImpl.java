@@ -67,7 +67,6 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.CacheFilters;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.ClusterExecutor;
@@ -124,7 +123,6 @@ import org.infinispan.notifications.cachelistener.filter.DelegatingCacheEntryLis
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
-import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFilter;
 import org.infinispan.notifications.impl.AbstractListenerImpl;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -1006,11 +1004,6 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       return addListenerAsync(listener, null, null, classLoader);
    }
 
-   @Override
-   public void addListener(Object listener, KeyFilter<? super K> filter, ClassLoader classLoader) {
-      CompletionStages.join(addListenerAsync(listener, new KeyFilterAsCacheEventFilter<>(filter), null, classLoader));
-   }
-
    private <C> CompletionStage<Void> addListenerInternal(Object listener, DataConversion keyDataConversion, DataConversion valueDataConversion,
                                         CacheEventFilter<? super K, ? super V> filter,
                                         CacheEventConverter<? super K, ? super V, C> converter, ClassLoader classLoader, boolean useStorageFormat) {
@@ -1225,11 +1218,6 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    }
 
    @Override
-   public void addListener(Object listener, KeyFilter<? super K> filter) {
-      addListener(listener, filter, null);
-   }
-
-   @Override
    public <C> CompletionStage<Void> addListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter) {
       return addListenerAsync(listener, filter, converter, null);
    }
@@ -1248,13 +1236,6 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public <C> CompletionStage<Void> addListenerAsync(ListenerHolder listenerHolder, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, ClassLoader classLoader) {
       return addListenerInternal(listenerHolder.getListener(), listenerHolder.getKeyDataConversion(), listenerHolder.getValueDataConversion(), filter, converter, classLoader, false);
-   }
-
-   @Override
-   public <C> void addListener(ListenerHolder listenerHolder, KeyFilter<? super K> filter) {
-      CompletionStages.join(addListenerInternal(listenerHolder.getListener(), listenerHolder.getKeyDataConversion(),
-            listenerHolder.getValueDataConversion(), new KeyFilterAsCacheEventFilter<>(filter), null, null,
-            listenerHolder.isFilterOnStorageFormat()));
    }
 
    @Override

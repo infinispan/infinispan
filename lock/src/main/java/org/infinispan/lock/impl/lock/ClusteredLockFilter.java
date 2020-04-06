@@ -8,9 +8,12 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.lock.impl.entries.ClusteredLockKey;
+import org.infinispan.lock.impl.entries.ClusteredLockValue;
 import org.infinispan.lock.impl.externalizers.ExternalizerIds;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.EventType;
 
 /**
  * This listener is used to monitor lock state changes.
@@ -19,7 +22,7 @@ import org.infinispan.lock.impl.externalizers.ExternalizerIds;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
-public class ClusteredLockFilter implements KeyFilter<ClusteredLockKey> {
+public class ClusteredLockFilter implements CacheEventFilter<ClusteredLockKey, ClusteredLockValue> {
 
    public static final AdvancedExternalizer<ClusteredLockFilter> EXTERNALIZER = new ClusteredLockFilter.Externalizer();
 
@@ -30,7 +33,7 @@ public class ClusteredLockFilter implements KeyFilter<ClusteredLockKey> {
    }
 
    @Override
-   public boolean accept(ClusteredLockKey key) {
+   public boolean accept(ClusteredLockKey key, ClusteredLockValue oldValue, Metadata oldMetadata, ClusteredLockValue newValue, Metadata newMetadata, EventType eventType) {
       return name.equals(key);
    }
 
