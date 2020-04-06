@@ -29,6 +29,7 @@ import org.aesh.command.invocation.CommandInvocation;
             Encoding.class,
             Get.class,
             Ls.class,
+            Patch.class,
             Put.class,
             Query.class,
             Remove.class,

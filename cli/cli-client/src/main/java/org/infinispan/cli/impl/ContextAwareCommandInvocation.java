@@ -1,6 +1,7 @@
 package org.infinispan.cli.impl;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;
 
@@ -122,5 +123,13 @@ public class ContextAwareCommandInvocation<CI extends CommandInvocation> impleme
 
    public CommandResult execute(List<CommandInputLine> cmds) {
       return context.execute(invocation.getShell(), cmds);
+   }
+
+   public PrintStream getShellOutput() {
+      return new PrintStream(new ShellOutputStreamAdapter(invocation.getShell()));
+   }
+
+   public PrintStream getShellError() {
+      return new PrintStream(new ShellOutputStreamAdapter(invocation.getShell()));
    }
 }

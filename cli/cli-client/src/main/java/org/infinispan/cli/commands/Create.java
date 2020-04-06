@@ -35,7 +35,7 @@ public class Create extends CliCommand {
       if (help) {
          commandInvocation.println(commandInvocation.getHelpInfo());
       }
-      return CommandResult.SUCCESS;
+      return CommandResult.FAILURE;
    }
 
    @CommandDefinition(name = Cache.CMD, description = "Create a cache", activator = ConnectionActivator.class)
