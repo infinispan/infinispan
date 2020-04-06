@@ -6,9 +6,8 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.BeforeMethod;
@@ -213,13 +212,13 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
    private void verifyCacheLoaderCount(int expectedCount, Cache... caches) {
       int count = 0;
       for (Cache<Object, Object> cache : caches) {
-         count += ((AdvancedCacheLoader) TestingUtil.getFirstLoader(cache)).size();
+         count += ((DummyInMemoryStore) TestingUtil.getFirstStore(cache)).size();
       }
       assertEquals(expectedCount, count);
    }
 
    protected void verifyInitialDataOnLoader(Cache<Object, Object> c) {
-      CacheLoader l = TestingUtil.getFirstLoader(c);
+      DummyInMemoryStore l = TestingUtil.getFirstStore(c);
       for (int i = 0; i < INSERTION_COUNT; ++i) {
          assertTrue("Didn't contain key " + i, l.contains("key " + i));
       }

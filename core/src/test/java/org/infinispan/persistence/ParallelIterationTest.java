@@ -9,20 +9,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
@@ -45,9 +44,9 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
    private static final int NUM_THREADS = 10;
    private static final int NUM_ENTRIES = 200;
 
-   protected AdvancedCacheLoader<Object, Object> loader;
-   protected AdvancedCacheWriter<Object, Object> writer;
+   protected WaitNonBlockingStore<Object, Object> store;
    protected ExecutorService executor;
+   protected IntSet allSegments;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -57,20 +56,10 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(global, cb);
-      loader = TestingUtil.getFirstLoader(manager.getCache());
-      writer = TestingUtil.getFirstWriter(manager.getCache());
-      executor = new ThreadPoolExecutor(NUM_THREADS, NUM_THREADS, 0L, TimeUnit.MILLISECONDS,
-            new SynchronousQueue<>(), getTestThreadFactory("iteration"),
-            new ThreadPoolExecutor.CallerRunsPolicy());
+      store = TestingUtil.getFirstStore(manager.getCache());
+      executor = testExecutor();
+      allSegments = IntSets.immutableRangeSet(manager.getCache().getCacheConfiguration().clustering().hash().numSegments());
       return manager;
-   }
-
-   @Override
-   protected void teardown() {
-      super.teardown();
-      if (executor != null) {
-         executor.shutdownNow();
-      }
    }
 
    protected abstract void configurePersistence(ConfigurationBuilder cb);
@@ -79,48 +68,32 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       return TestDataSCI.INSTANCE;
    }
 
-   public void testParallelIterationWithValueAndMetadata() {
-      runIterationTest(executor, true, true);
+   public void testParallelIterationWithValue() {
+      runIterationTest(executor, true);
    }
 
-   public void testParallelIterationWithValueWithoutMetadata() {
-      runIterationTest(executor, true, false);
+   public void testSequentialIterationWithValue() {
+      runIterationTest(new WithinThreadExecutor(), true);
    }
 
-   public void testSequentialIterationWithValueAndMetadata() {
-      runIterationTest(new WithinThreadExecutor(), true, true);
+   public void testParallelIterationWithoutValue() {
+      runIterationTest(executor, false);
    }
 
-   public void testSequentialIterationWithValueWithoutMetadata() {
-      runIterationTest(new WithinThreadExecutor(), true, false);
+   public void testSequentialIterationWithoutValue() {
+      runIterationTest(new WithinThreadExecutor(), false);
    }
 
-   public void testParallelIterationWithoutValueWithMetadata() {
-      runIterationTest(executor, false, true);
-   }
-
-   public void testParallelIterationWithoutValueOrMetadata() {
-      runIterationTest(executor, false, false);
-   }
-
-   public void testSequentialIterationWithoutValueWithMetadata() {
-      runIterationTest(new WithinThreadExecutor(), false, true);
-   }
-
-   public void testSequentialIterationWithoutValueOrMetadata() {
-      runIterationTest(new WithinThreadExecutor(), false, false);
-   }
-
-   private void runIterationTest(Executor executor, final boolean fetchValues,
-         boolean fetchMetadata) {
+   private void runIterationTest(Executor executor, final boolean fetchValues) {
       final ConcurrentMap<Integer, Integer> entries = new ConcurrentHashMap<>();
       final ConcurrentMap<Integer, Metadata> metadata = new ConcurrentHashMap<>();
       final AtomicBoolean sameKeyMultipleTimes = new AtomicBoolean();
 
-      assertEquals(loader.size(), 0);
+      assertEquals(store.sizeWait(allSegments), 0);
       insertData();
 
-      Flowable<MarshallableEntry<Object, Object>> flowable = Flowable.fromPublisher(loader.entryPublisher(null, fetchValues, fetchMetadata));
+      Flowable<MarshallableEntry<Object, Object>> flowable = Flowable.fromPublisher(
+            store.publishEntries(allSegments, null, fetchValues));
       flowable = flowable.doOnNext(me -> {
          Integer key = unwrapKey(me.getKey());
          if (fetchValues) {
@@ -173,7 +146,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
          } else {
             assertNull(entries.get(i), "For key " + i);
          }
-         if (fetchMetadata && hasMetadata(i)) {
+         if (hasMetadata(i)) {
             assertNotNull(metadata.get(i), "For key " + i);
             assertEquals(metadata.get(i).lifespan(), lifespan(i), "For key " + i);
             assertEquals(metadata.get(i).maxIdle(), maxIdle(i), "For key " + i);
@@ -188,7 +161,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
          long now = System.currentTimeMillis();
          Metadata metadata = insertMetadata(i) ? TestingUtil.metadata(lifespan(i), maxIdle(i)) : null;
          MarshallableEntry me = MarshalledEntryUtil.create(wrapKey(i), wrapValue(i, i), metadata, now, now, cache);
-         writer.write(me);
+         store.write(me);
       }
    }
 

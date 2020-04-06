@@ -21,6 +21,8 @@ import org.infinispan.util.EmbeddedTimeService;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.BlockingManagerImpl;
 import org.infinispan.util.concurrent.DataOperationOrderer;
+import org.infinispan.util.concurrent.NonBlockingManager;
+import org.infinispan.util.concurrent.NonBlockingManagerImpl;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
 
@@ -36,7 +38,7 @@ import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
       InboundInvocationHandler.class, PersistentUUIDManager.class,
       RemoteCommandsFactory.class, TimeService.class, DataOperationOrderer.class,
       GlobalStateManager.class, GlobalConfigurationManager.class,
-      SerializationContextRegistry.class, BlockingManager.class
+      SerializationContextRegistry.class, BlockingManager.class, NonBlockingManager.class
 })
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
@@ -63,6 +65,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return new SerializationContextRegistryImpl();
       else if (componentName.equals(BlockingManager.class.getName()))
          return new BlockingManagerImpl();
+      else if (componentName.equals(NonBlockingManager.class.getName()))
+         return new NonBlockingManagerImpl();
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);
    }

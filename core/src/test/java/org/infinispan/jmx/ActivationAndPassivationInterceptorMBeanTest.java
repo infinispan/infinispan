@@ -24,8 +24,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -45,7 +45,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
 
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
-   private AdvancedLoadWriteStore loader;
+   private DummyInMemoryStore loader;
    private ObjectName activationInterceptorObjName;
    private ObjectName passivationInterceptorObjName;
 
@@ -72,7 +72,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
             getCacheObjectName(JMX_DOMAIN, getDefaultCacheName() + "(local)", "Activation");
       passivationInterceptorObjName =
             getCacheObjectName(JMX_DOMAIN, getDefaultCacheName() + "(local)", "Passivation");
-      loader = TestingUtil.getFirstLoader(cache);
+      loader = TestingUtil.getFirstStore(cache);
    }
 
    @AfterMethod

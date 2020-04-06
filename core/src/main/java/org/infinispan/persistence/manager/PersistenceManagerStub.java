@@ -61,7 +61,8 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public void disableStore(String storeType) {
+   public CompletionStage<Void> disableStore(String storeType) {
+      return CompletableFutures.completedNull();
    }
 
    @Override
@@ -75,7 +76,8 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public void purgeExpired() {
+   public CompletionStage<Void> purgeExpired() {
+      return CompletableFutures.completedNull();
    }
 
    @Override
@@ -125,13 +127,13 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public CompletionStage<Integer> size(Predicate<? super StoreConfiguration> predicate) {
-      return CompletableFuture.completedFuture(0);
+   public CompletionStage<Long> size(Predicate<? super StoreConfiguration> predicate) {
+      return CompletableFuture.completedFuture(0L);
    }
 
    @Override
-   public CompletionStage<Integer> size(IntSet segments) {
-      return CompletableFuture.completedFuture(0);
+   public CompletionStage<Long> size(IntSet segments) {
+      return CompletableFuture.completedFuture(0L);
    }
 
    @Override
@@ -154,7 +156,7 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries, Predicate<? super StoreConfiguration> predicate, long flags) {
+   public <K, V> CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry<K, V>> entries, Predicate<? super StoreConfiguration> predicate, long flags) {
       return CompletableFutures.completedNull();
    }
 

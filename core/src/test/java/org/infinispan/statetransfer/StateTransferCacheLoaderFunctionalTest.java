@@ -10,8 +10,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.DelayedMarshallingPojo;
 import org.testng.annotations.Test;
@@ -54,7 +54,7 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
    }
 
    protected void verifyInitialDataOnLoader(Cache<Object, Object> c) throws Exception {
-      CacheLoader l = TestingUtil.getFirstLoader(c);
+      DummyInMemoryStore l = TestingUtil.getFirstStore(c);
       assert l.contains(A_B_AGE);
       assert l.contains(A_B_NAME);
       assert l.contains(A_C_AGE);
@@ -70,7 +70,7 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
    }
 
    protected void verifyNoDataOnLoader(Cache<Object, Object> c) throws Exception {
-      CacheLoader l = TestingUtil.getFirstLoader(c);
+      DummyInMemoryStore l = TestingUtil.getFirstStore(c);
       assert !l.contains(A_B_AGE);
       assert !l.contains(A_B_NAME);
       assert !l.contains(A_C_AGE);

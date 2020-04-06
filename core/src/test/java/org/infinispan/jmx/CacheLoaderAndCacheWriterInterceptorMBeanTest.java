@@ -13,8 +13,8 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -33,7 +33,7 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
 
    private ObjectName loaderInterceptorObjName;
    private ObjectName storeInterceptorObjName;
-   private AdvancedLoadWriteStore store;
+   private DummyInMemoryStore store;
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
@@ -56,7 +56,7 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
       loaderInterceptorObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "CacheLoader");
       storeInterceptorObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "CacheStore");
 
-      store = TestingUtil.getFirstLoader(cache);
+      store = TestingUtil.getFirstStore(cache);
       return cacheManager;
    }
 

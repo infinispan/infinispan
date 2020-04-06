@@ -173,7 +173,7 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
          }
       }
 
-      DummyInMemoryStore store = (DummyInMemoryStore) TestingUtil.getFirstLoader(cache(0, TEST_CACHE_NAME));
+      DummyInMemoryStore store = TestingUtil.getFirstStore(cache(0, TEST_CACHE_NAME));
       for (int i = 0; i < NUM_KEYS; i++) {
          String key = "key" + i;
          assertTrue("Key " + key + " is missing from the shared store", store.keySet().contains(key));
@@ -209,7 +209,7 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
    }
 
    private void printStoreContents() {
-      DummyInMemoryStore store = TestingUtil.getFirstLoader(cache(0, TEST_CACHE_NAME));
+      DummyInMemoryStore store = TestingUtil.getFirstStore(cache(0, TEST_CACHE_NAME));
       Set<Object> keySet = store.keySet();
       log.debugf("Shared store has %d keys: %s", keySet.size(), keySet);
    }

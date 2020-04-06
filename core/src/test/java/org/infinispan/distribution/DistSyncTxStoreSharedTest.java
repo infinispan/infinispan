@@ -4,7 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import org.infinispan.Cache;
-import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -33,7 +33,7 @@ public class DistSyncTxStoreSharedTest extends BaseDistStoreTest {
 
    public void testPutFromNonOwner() throws Exception {
       Cache<Object, String> cacheX = getFirstNonOwner("key1");
-      CacheLoader storeX = TestingUtil.getFirstLoader(cacheX);
+      DummyInMemoryStore storeX = TestingUtil.getFirstStore(cacheX);
       cacheX.put("key1", "v1");
       assertEquals("v1", cacheX.get("key1"));
       assertNotNull(storeX.loadEntry("key1"));

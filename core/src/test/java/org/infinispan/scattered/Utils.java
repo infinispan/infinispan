@@ -1,22 +1,22 @@
 package org.infinispan.scattered;
 
-import org.infinispan.Cache;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.test.TestingUtil;
-
-import java.util.List;
-
 import static org.infinispan.distribution.DistributionTestHelper.addressOf;
 import static org.infinispan.distribution.DistributionTestHelper.assertIsInContainerImmortal;
 import static org.infinispan.distribution.DistributionTestHelper.isOwner;
 import static org.infinispan.distribution.DistributionTestHelper.safeType;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+
+import java.util.List;
+
+import org.infinispan.Cache;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.test.TestingUtil;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -52,7 +52,7 @@ public class Utils {
    public static void assertInStores(List<? extends Cache> caches, String key, String value) {
       EntryVersion ownerVersion = null;
       for (Cache c: caches) {
-         CacheLoader store = TestingUtil.getFirstLoader(c);
+         DummyInMemoryStore store = TestingUtil.<DummyInMemoryStore, Object, Object>getFirstStore(c);
          if (isOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
             MarshallableEntry me = store.loadEntry(key);
@@ -66,7 +66,7 @@ public class Utils {
       }
       int equalVersions = 0;
       for (Cache c: caches) {
-         CacheLoader store = TestingUtil.getFirstLoader(c);
+         DummyInMemoryStore store = TestingUtil.<DummyInMemoryStore, Object, Object>getFirstStore(c);
          if (!isOwner(c, key)) {
             MarshallableEntry me = store.loadEntry(key);
             if (me != null && me.getMetadata() != null && ownerVersion.equals(me.getMetadata().version())) {

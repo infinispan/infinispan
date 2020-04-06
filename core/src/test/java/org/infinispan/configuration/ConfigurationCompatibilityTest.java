@@ -18,8 +18,7 @@ public class ConfigurationCompatibilityTest {
             .purgeOnStartup(false)
             .location(System.getProperty("java.io.tmpdir"))
             .async()
-               .enabled(true)
-               .threadPoolSize(5);
+               .enabled(true);
    }
 
 }

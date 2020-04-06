@@ -13,8 +13,8 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "persistence.PassivationFunctionalTest")
 public class PassivationFunctionalTest extends AbstractInfinispanTest {
    Cache<String, String> cache;
-   AdvancedLoadWriteStore store;
+   DummyInMemoryStore store;
    TransactionManager tm;
    ConfigurationBuilder cfg;
    CacheContainer cm;
@@ -49,7 +49,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
 
       cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
-      store = (AdvancedLoadWriteStore) TestingUtil.getCacheLoader(cache);
+      store = TestingUtil.getFirstStore(cache);
       tm = TestingUtil.getTransactionManager(cache);
    }
 

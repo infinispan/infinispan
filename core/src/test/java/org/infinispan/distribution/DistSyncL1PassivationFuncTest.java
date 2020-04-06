@@ -12,7 +12,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -21,8 +20,8 @@ public class DistSyncL1PassivationFuncTest extends BaseDistFunctionalTest {
 
    protected int MAX_ENTRIES = 4;
 
-   protected AdvancedCacheLoader ownerCacheStore;
-   protected AdvancedCacheLoader nonOwnerCacheStore;
+   protected DummyInMemoryStore ownerCacheStore;
+   protected DummyInMemoryStore nonOwnerCacheStore;
 
    public DistSyncL1PassivationFuncTest() {
       testRetVals = true;

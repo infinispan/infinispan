@@ -36,6 +36,11 @@ public abstract class AbstractStoreConfigurationChildBuilder<S> extends Abstract
    }
 
    @Override
+   public S writeOnly(boolean b) {
+      return (S)builder.writeOnly(b);
+   }
+
+   @Override
    public S preload(boolean b) {
       return (S)builder.preload(b);
    }

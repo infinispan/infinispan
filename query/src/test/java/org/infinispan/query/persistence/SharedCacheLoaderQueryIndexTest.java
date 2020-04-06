@@ -3,10 +3,11 @@ package org.infinispan.query.persistence;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.List;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.query.statetransfer.BaseReIndexingTest;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.TestingUtil;
@@ -35,8 +36,8 @@ public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
    public void testPreloadIndexingAfterAddingNewNode() {
       loadCacheEntries(this.<String, Person>caches().get(0));
 
-      for (CacheLoader<?, ?> cs : TestingUtil.cachestores(caches())) {
-         DummyInMemoryStore dimcs = (DummyInMemoryStore) cs;
+      List<DummyInMemoryStore> cacheStores = TestingUtil.cachestores(caches());
+      for (DummyInMemoryStore dimcs: cacheStores) {
          assertTrue("Cache misconfigured, maybe cache store not pointing to same place, maybe passivation on...etc", dimcs.contains(persons[0].getName()));
 
          int clear = dimcs.stats().get("clear");

@@ -118,7 +118,7 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
       }
 
       int count = container.sizeIncludingExpired();
-      Iterable<MarshallableEntry> iterable = () -> new IteratorMapper<>(container.iterator(), e -> marshalledEntryFactory.create((InternalCacheEntry) e));
+      Iterable<MarshallableEntry<Object, Object>> iterable = () -> new IteratorMapper<>(container.iterator(), e -> marshalledEntryFactory.create((InternalCacheEntry) e));
       return persistenceManager.writeBatchToAllNonTxStores(iterable, BOTH, 0)
                                .thenRun(() -> {
                                   long durationMillis = timeService.timeDuration(start, TimeUnit.MILLISECONDS);

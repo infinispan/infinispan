@@ -1,5 +1,6 @@
 package org.infinispan.persistence;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
@@ -11,6 +12,9 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
+import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
+
 /**
  * @author Mircea Markus
  * @since 6.0
@@ -24,14 +28,16 @@ public class InitializationContextImpl implements InitializationContext {
    private final TimeService timeService;
    private final ByteBufferFactory byteBufferFactory;
    private final MarshallableEntryFactory marshallableEntryFactory;
-   private final ExecutorService executorService;
+   private final Executor nonBlockingExecutor;
    private final GlobalConfiguration globalConfiguration;
+   private final BlockingManager blockingManager;
 
 
    public InitializationContextImpl(StoreConfiguration configuration, Cache cache, KeyPartitioner keyPartitioner,
                                     PersistenceMarshaller marshaller, TimeService timeService,
                                     ByteBufferFactory byteBufferFactory, MarshallableEntryFactory marshallableEntryFactory,
-                                    ExecutorService executorService, GlobalConfiguration globalConfiguration) {
+                                    Executor nonBlockingExecutor, GlobalConfiguration globalConfiguration,
+                                    BlockingManager blockingManager) {
       this.configuration = configuration;
       this.cache = cache;
       this.keyPartitioner = keyPartitioner;
@@ -39,8 +45,9 @@ public class InitializationContextImpl implements InitializationContext {
       this.timeService = timeService;
       this.byteBufferFactory = byteBufferFactory;
       this.marshallableEntryFactory = marshallableEntryFactory;
-      this.executorService = executorService;
+      this.nonBlockingExecutor = nonBlockingExecutor;
       this.globalConfiguration = globalConfiguration;
+      this.blockingManager = blockingManager;
    }
 
    @Override
@@ -74,9 +81,20 @@ public class InitializationContextImpl implements InitializationContext {
       return marshallableEntryFactory;
    }
 
+   @Deprecated
    @Override
    public ExecutorService getExecutor() {
-      return executorService;
+      return new WithinThreadExecutor();
+   }
+
+   @Override
+   public Executor getNonBlockingExecutor() {
+      return nonBlockingExecutor;
+   }
+
+   @Override
+   public BlockingManager getBlockingManager() {
+      return blockingManager;
    }
 
    @Override

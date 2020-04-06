@@ -21,10 +21,10 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -49,7 +49,7 @@ import org.testng.annotations.Test;
 @Test(testName = "persistence.UnnecessaryLoadingTest", groups = "functional", singleThreaded = true)
 @CleanupAfterMethod
 public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
-   AdvancedLoadWriteStore store;
+   DummyInMemoryStore store;
    private PersistenceManagerImpl persistenceManager;
 
    @Override
@@ -69,7 +69,7 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
    protected void setup() throws Exception {
       super.setup();
       persistenceManager = (PersistenceManagerImpl) TestingUtil.extractComponent(cache, PersistenceManager.class);
-      store = (AdvancedLoadWriteStore) persistenceManager.getAllWriters().get(1);
+      store = TestingUtil.getStore(cache, 1, false);
 
    }
 

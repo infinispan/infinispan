@@ -28,11 +28,17 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "persistence.support.AsyncStoreWithoutEvictionFunctionalTest")
 public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanTest {
-
    private EmbeddedCacheManager dcm;
 
    private boolean segmented;
    private String tmpDirectory;
+
+   @AfterClass(alwaysRun = true)
+   public void clearTempDir() {
+      if (tmpDirectory != null) {
+         Util.recursiveFileRemove(tmpDirectory);
+      }
+   }
 
    AsyncStoreWithoutEvictionFunctionalTest segmented(boolean segmented) {
       this.segmented = segmented;
@@ -64,7 +70,7 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
       cacheb.clustering().cacheMode(CacheMode.LOCAL)
             .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
             .persistence().addSingleFileStore().segmented(segmented)
-            .async().enable().threadPoolSize(10).modificationQueueSize(1000);
+            .async().enable().modificationQueueSize(1000);
 
       return TestCacheManagerFactory.createCacheManager(glob, cacheb);
    }
@@ -77,9 +83,6 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
    @AfterClass
    public void tearDown() throws Exception {
       TestingUtil.killCacheManagers(dcm);
-      if (tmpDirectory != null) {
-         Util.recursiveFileRemove(tmpDirectory);
-      }
    }
 
    @Test

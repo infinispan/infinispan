@@ -9,6 +9,7 @@ import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PURG
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SEGMENTED;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SHARED;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.TRANSACTIONAL;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.WRITE_ONLY;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.reflect.Method;
@@ -27,6 +28,7 @@ import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 
 public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfiguration, S extends AbstractStoreConfigurationBuilder<T, S>>
@@ -86,6 +88,12 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    @Override
    public S purgeOnStartup(boolean b) {
       attributes.attribute(PURGE_ON_STARTUP).set(b);
+      return self();
+   }
+
+   @Override
+   public S writeOnly(boolean b) {
+      attributes.attribute(WRITE_ONLY).set(b);
       return self();
    }
 
@@ -173,10 +181,24 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       boolean fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE).get();
       boolean purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP).get();
       boolean transactional = attributes.attribute(TRANSACTIONAL).get();
+      boolean readOnly = attributes.attribute(IGNORE_MODIFICATIONS).get();
+      boolean writeOnly = attributes.attribute(WRITE_ONLY).get();
       ConfigurationBuilder builder = getBuilder();
 
       if (purgeOnStartup && preload) {
          throw CONFIG.preloadAndPurgeOnStartupConflict();
+      }
+
+      if (readOnly && writeOnly) {
+         throw CONFIG.storeBothReadAndWriteOnly();
+      }
+
+      if (readOnly && (purgeOnStartup || shared)) {
+         throw CONFIG.storeReadOnlyExceptions();
+      }
+
+      if (writeOnly && (fetchPersistentState || preload)) {
+         throw CONFIG.storeWriteOnlyExceptions();
       }
 
       if (!shared && !fetchPersistentState && !purgeOnStartup
@@ -206,8 +228,8 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
          if (storeKlass.isAnnotationPresent(Store.class)) {
             Store storeProps = (Store) storeKlass.getAnnotation(Store.class);
             boolean segmented = attributes.attribute(SEGMENTED).get();
-            if (segmented && !SegmentedAdvancedLoadWriteStore.class.isAssignableFrom(storeKlass) &&
-                  !AbstractSegmentedStoreConfiguration.class.isAssignableFrom(configKlass)) {
+            if (segmented && !AbstractSegmentedStoreConfiguration.class.isAssignableFrom(configKlass)
+                  && !(SegmentedAdvancedLoadWriteStore.class.isAssignableFrom(storeKlass) || NonBlockingStore.class.isAssignableFrom(storeKlass))) {
                throw CONFIG.storeNotSegmented(storeKlass);
             }
             if (!storeProps.shared() && attributes.attribute(SHARED).get()) {

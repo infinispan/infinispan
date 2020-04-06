@@ -28,8 +28,8 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
@@ -338,8 +338,7 @@ public class IracMetadataStoreTest extends AbstractXSiteTest {
          if (isNotWriteOwner(cache, key)) {
             continue;
          }
-         CacheLoader<String, Object> cl = TestingUtil.getCacheLoader(cache);
-         assert cl != null;
+         WaitNonBlockingStore<String, Object> cl = TestingUtil.getFirstStore(cache);
          MarshallableEntry<String, Object> mEntry = cl.loadEntry(key);
          log.debugf("Checking CacheLoader in %s. entry=%s", DistributionTestHelper.addressOf(cache), mEntry);
          assertNotNull(String.format("CacheLoader entry is null for key %s", key), mEntry);

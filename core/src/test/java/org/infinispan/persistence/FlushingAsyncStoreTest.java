@@ -32,7 +32,7 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
                .storeName(this.getClass().getName())
                .slow(true)
-               .async().enable().threadPoolSize(1)
+               .async().enable()
          .build();
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(config);
       cacheManager.defineConfiguration(CACHE_NAME, config.build());

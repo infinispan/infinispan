@@ -21,10 +21,9 @@ import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -306,7 +305,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       } else {
          assertNull(entry);
       }
-      CacheLoader<String, String> loader = TestingUtil.getFirstLoader(testCache);
+      DummyInMemoryStore loader = TestingUtil.getFirstStore(testCache);
       if (expectPresent) {
          eventuallyEquals(entry, () -> loader.loadEntry(loaderKey));
       } else {
@@ -316,7 +315,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
 
    private void putIntoStore(String key, String value) {
       AdvancedCache<String, String> testCache = cacheManager.<String, String>getCache(CACHE_NAME).getAdvancedCache();
-      CacheWriter<String, String> writer = TestingUtil.getFirstWriter(testCache);
+      DummyInMemoryStore writer = TestingUtil.getFirstStore(testCache);
       Object writerKey = testCache.getKeyDataConversion().toStorage(key);
       Object writerValue = testCache.getValueDataConversion().toStorage(value);
       MarshallableEntry entry;

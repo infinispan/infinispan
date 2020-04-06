@@ -3,7 +3,8 @@ package org.infinispan.persistence.support;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.BuiltBy;
@@ -12,19 +13,19 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.decorators.AsyncStoreEvictionTest")
 public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
-
    // set to false to fix all the tests
    private static final boolean USE_ASYNC_STORE = true;
 
@@ -36,8 +37,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
          .passivation(passivation)
          .addStore(LockableStoreConfigurationBuilder.class)
          .async()
-            .enabled(USE_ASYNC_STORE)
-            .threadPoolSize(threads);
+            .enabled(USE_ASYNC_STORE);
       return config;
    }
 
@@ -65,7 +65,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
    }
 
    public static class LockableStore extends DummyInMemoryStore {
-      private final ReentrantLock lock = new ReentrantLock();
+      private volatile CompletableFuture<Void> future = CompletableFutures.completedNull();
 
       public LockableStore() {
          super();
@@ -73,23 +73,13 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
       }
 
       @Override
-      public void write(int segment, MarshallableEntry entry) {
-         lock.lock();
-         try {
-            super.write(segment, entry);
-         } finally {
-            lock.unlock();
-         }
+      public CompletionStage<Void> write(int segment, MarshallableEntry entry) {
+         return future.thenCompose(ignore -> super.write(segment, entry));
       }
 
       @Override
-      public boolean delete(int segment, Object key) {
-         lock.lock();
-         try {
-            return super.delete(segment, key);
-         } finally {
-            lock.unlock();
-         }
+      public CompletionStage<Boolean> delete(int segment, Object key) {
+         return future.thenCompose(ignore -> super.delete(segment, key));
       }
    }
 
@@ -114,8 +104,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
       TestingUtil.withCacheManager(new CacheCallable(config(passivation, 1)) {
          @Override
          public void call() {
-            // simulate slow back end store
-            store.lock.lock();
+            store.future = new CompletableFuture<>();
             try {
                cache.put("k1", "v1");
                cache.put("k2", "v2"); // force eviction of "k1"
@@ -125,7 +114,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
 
                assert "v3".equals(cache.get("k3")) : "cache must return k3 == v3 (was: " + cache.get("k3") + ")";
             } finally {
-               store.lock.unlock();
+               store.future.complete(null);
             }
          }
       });
@@ -152,7 +141,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
             });
 
             // simulate slow back end store
-            store.lock.lock();
+            store.future = new CompletableFuture<>();
             try {
                cache.put("k3", "v3");
                cache.put("k4", "v4"); // force eviction of "k3"
@@ -162,7 +151,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
 
                assert "v1".equals(cache.get("k1")) : "cache must return k1 == v1 (was: " + cache.get("k1") + ")";
             } finally {
-               store.lock.unlock();
+               store.future.complete(null);
             }
          }
       });
@@ -184,7 +173,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
             eventually(() -> store.loadEntry("k1") != null);
 
             // simulate slow back end store
-            store.lock.lock();
+            store.future = new CompletableFuture<>();
             try {
                cache.remove("k1");
                TestingUtil.sleepThread(100); // wait until the first AsyncProcessor thread is blocked
@@ -193,7 +182,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
 
                assert null == cache.get("k1") : "cache must return k1 == null (was: " + cache.get("k1") + ")";
             } finally {
-               store.lock.unlock();
+               store.future.complete(null);
             }
          }
       });

@@ -7,6 +7,8 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -16,9 +18,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -31,7 +33,6 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "persistence.PreloadWithAsyncStoreTest")
 public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
-
    private static final Object[] KEYS = new Object[]{"key_1", "key_2", "key_3", "key_4"};
    private static final Object[] VALUES = new Object[]{"value_1", "value_2", "value_3", "value_4"};
 
@@ -77,25 +78,25 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
       assertTrue("Preload should be enabled.", cache.getCacheConfiguration().persistence().preload());
       assertTrue("Async Store should be enabled.", cache.getCacheConfiguration().persistence().usingAsyncStore());
 
-      CacheLoader loader = TestingUtil.getFirstLoader(cache);
+      WaitNonBlockingStore store = TestingUtil.getStore(cache, 0, false);
 
-      assertNotInCacheAndStore(cache, loader, KEYS);
+      assertNotInCacheAndStore(cache, store, KEYS);
 
       for (int i = 0; i < KEYS.length; ++i) {
          cache.put(KEYS[i], VALUES[i]);
       }
 
       for (int i = 1; i < KEYS.length; i++) {
-         assertInCacheAndStore(cache, loader, KEYS[i], VALUES[i]);
+         assertInCacheAndStore(cache, store, KEYS[i], VALUES[i]);
       }
 
       DataContainer dataContainer = cache.getAdvancedCache().getDataContainer();
 
       assertEquals("Wrong number of keys in data container after puts.", KEYS.length, dataContainer.size());
-      assertEquals("Some exceptions has been caught during the puts.", 0, interceptor.exceptionsCaught);
+      assertEquals("Some exceptions has been caught during the puts.", 0, interceptor.exceptionsCaught.get());
       cache.stop();
       assertEquals("Expected empty data container after stop.", 0, dataContainer.size());
-      assertEquals("Some exceptions has been caught during the stop.", 0, interceptor.exceptionsCaught);
+      assertEquals("Some exceptions has been caught during the stop.", 0, interceptor.exceptionsCaught.get());
 
       cache.start();
       assertTrue("Preload should be enabled after restart.", cache.getCacheConfiguration().persistence().preload());
@@ -103,16 +104,16 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
 
       dataContainer = cache.getAdvancedCache().getDataContainer();
       assertEquals("Wrong number of keys in data container after preload.", KEYS.length, dataContainer.size());
-      assertEquals("Some exceptions has been caught during the preload.", 0, interceptor.exceptionsCaught);
+      assertEquals("Some exceptions has been caught during the preload.", 0, interceptor.exceptionsCaught.get());
 
       // Re-retrieve since the old reference might not be usable
-      loader = TestingUtil.getFirstLoader(cache);
+      store = TestingUtil.getStore(cache, 0, false);
       for (int i = 1; i < KEYS.length; i++) {
-         assertInCacheAndStore(cache, loader, KEYS[i], VALUES[i]);
+         assertInCacheAndStore(cache, store, KEYS[i], VALUES[i]);
       }
    }
 
-   private void assertInCacheAndStore(Cache cache, CacheLoader loader, Object key, Object value) throws PersistenceException {
+   private void assertInCacheAndStore(Cache cache, WaitNonBlockingStore loader, Object key, Object value) throws PersistenceException {
       InternalCacheValue se = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
       assertStoredEntry(se.getValue(), value, "Cache", key);
       MarshallableEntry me = loader.loadEntry(key);
@@ -124,7 +125,7 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
       assertEquals(src + " should contain value " + expectedValue + " under key " + key + " but was " + value, expectedValue, value);
    }
 
-   private <T> void assertNotInCacheAndStore(Cache cache, CacheLoader store, T... keys) throws PersistenceException {
+   private <T> void assertNotInCacheAndStore(Cache cache, WaitNonBlockingStore store, T... keys) throws PersistenceException {
       for (Object key : keys) {
          assertFalse("Cache should not contain key " + key, cache.getAdvancedCache().getDataContainer().containsKey(key));
          assertFalse("Store should not contain key " + key, store.contains(key));
@@ -160,14 +161,14 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
       }
    }
 
-   class ExceptionTrackerInterceptor extends BaseAsyncInterceptor {
+   static class ExceptionTrackerInterceptor extends BaseAsyncInterceptor {
 
-      private volatile int exceptionsCaught = 0;
+      private AtomicInteger exceptionsCaught = new AtomicInteger();
 
       @Override
       public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
          return invokeNextAndExceptionally(ctx, command, (rCtx, rCommand, throwable) -> {
-            exceptionsCaught++;
+            exceptionsCaught.incrementAndGet();
             throw throwable;
          });
       }
