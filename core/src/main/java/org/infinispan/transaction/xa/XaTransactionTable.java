@@ -124,12 +124,14 @@ public class XaTransactionTable extends TransactionTable {
          return CompletableFutures.completedExceptionFuture(new XAException(XAException.XAER_NOTA));
       }
       CompletionStage<Boolean> commitStage;
-      if (isOnePhase) {
-         //isOnePhase being true means that we're the only participant in the distributed transaction and TM does the
-         //1PC optimization. We run a 2PC though, as running only 1PC has a high chance of leaving the cluster in
-         //inconsistent state.
-         commitStage = txCoordinator.prepare(localTransaction)
-               .thenCompose(ignore -> txCoordinator.commit(localTransaction, false));
+
+      CompletionStage<Integer> prepareStage;
+      //isOnePhase being true means that we're the only participant in the distributed transaction and TM does the
+      //1PC optimization. We run a 2PC though, as running only 1PC has a high chance of leaving the cluster in
+      //inconsistent state.
+      if (isOnePhase && !CompletionStages.isCompletedSuccessfully(prepareStage = txCoordinator.prepare(localTransaction))) {
+         commitStage = prepareStage
+            .thenCompose(ignore -> txCoordinator.commit(localTransaction, false));
       } else {
          commitStage = txCoordinator.commit(localTransaction, false);
       }
