@@ -172,7 +172,11 @@ public class CompletionStages {
                                                             BiFunction<T, Throwable, CompletionStage<U>> handleFunction) {
       if (isCompletedSuccessfully(stage)) {
          T value = join(stage);
-         return handleFunction.apply(value, null);
+         try {
+            return handleFunction.apply(value, null);
+         } catch (Throwable t) {
+            return CompletableFutures.completedExceptionFuture(t);
+         }
       }
       return stage.handle(handleFunction).thenCompose(Function.identity());
    }
