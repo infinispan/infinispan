@@ -43,7 +43,7 @@ public class CacheWriterTxModificationsTest extends SingleCacheManagerTest {
       FunctionalMapImpl<Object, Object> functionalMap = FunctionalMapImpl.create(cache.getAdvancedCache());
       FunctionalMap.WriteOnlyMap<Object, Object> woMap = WriteOnlyMapImpl.create(functionalMap);
       FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(functionalMap);
-      DummyInMemoryStore store = TestingUtil.getFirstWriter(cache);
+      DummyInMemoryStore store = TestingUtil.getFirstStore(cache);
 
       cache.putAll(mapOf("remove", "initial",
                          "replace", "initial",

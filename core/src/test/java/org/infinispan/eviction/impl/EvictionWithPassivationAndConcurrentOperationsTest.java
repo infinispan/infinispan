@@ -18,10 +18,10 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PassivationPersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
@@ -176,7 +176,7 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
       cache.put(key, value);
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.peek(key);
-      CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
+      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
       assertNotNull("Key " + key + " does not exist in data container.", entry);
       assertEquals("Wrong value for key " + key + " in data container.", value, entry.getValue());
       MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
@@ -187,7 +187,7 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
    protected void assertInMemory(Object key, Object value) {
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.get(key);
-      CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
+      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
       assertNotNull("Key " + key + " does not exist in data container", entry);
       assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
       eventually(() -> loader.loadEntry(key) == null);
@@ -197,7 +197,7 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
    protected void assertNotInMemory(Object key, Object value) {
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.get(key);
-      CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
+      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
       assertNull("Key " + key + " exists in data container", entry);
       MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
       assertNotNull("Key " + key + " does not exist in cache loader", entryLoaded);

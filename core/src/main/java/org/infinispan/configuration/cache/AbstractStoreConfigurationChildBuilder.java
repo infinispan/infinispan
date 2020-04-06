@@ -36,6 +36,11 @@ public abstract class AbstractStoreConfigurationChildBuilder<S> extends Abstract
    }
 
    @Override
+   public S skipLoading(boolean b) {
+      return (S)builder.skipLoading(b);
+   }
+
+   @Override
    public S preload(boolean b) {
       return (S)builder.preload(b);
    }

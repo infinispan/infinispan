@@ -84,7 +84,7 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
       assertFalse(event.isPre());
       assertNotNull(event.getKey());
       // The dummy store produces value and metadata so lets make sure
-      if (TestingUtil.getCacheLoader(cache) instanceof DummyInMemoryStore) {
+      if (TestingUtil.getFirstStore(cache) instanceof DummyInMemoryStore) {
          assertEquals("v", event.getValue());
          assertNotNull(event.getMetadata());
       }

@@ -15,14 +15,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
@@ -45,9 +47,11 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
    private static final int NUM_THREADS = 10;
    private static final int NUM_ENTRIES = 200;
 
-   protected AdvancedCacheLoader<Object, Object> loader;
-   protected AdvancedCacheWriter<Object, Object> writer;
+   protected NonBlockingStore<Object, Object> loader;
+   protected NonBlockingStore<Object, Object> writer;
    protected ExecutorService executor;
+   protected IntSet allSegments;
+   protected KeyPartitioner keyPartitioner;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -57,11 +61,13 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(global, cb);
-      loader = TestingUtil.getFirstLoader(manager.getCache());
-      writer = TestingUtil.getFirstWriter(manager.getCache());
+      loader = TestingUtil.getFirstStore(manager.getCache());
+      writer = TestingUtil.getFirstStore(manager.getCache());
+      keyPartitioner = TestingUtil.extractComponent(cache, KeyPartitioner.class);
       executor = new ThreadPoolExecutor(NUM_THREADS, NUM_THREADS, 0L, TimeUnit.MILLISECONDS,
             new SynchronousQueue<>(), getTestThreadFactory("iteration"),
             new ThreadPoolExecutor.CallerRunsPolicy());
+      allSegments = IntSets.immutableRangeSet(cache.getCacheConfiguration().clustering().hash().numSegments());
       return manager;
    }
 
@@ -117,10 +123,11 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       final ConcurrentMap<Integer, Metadata> metadata = new ConcurrentHashMap<>();
       final AtomicBoolean sameKeyMultipleTimes = new AtomicBoolean();
 
-      assertEquals(loader.size(), 0);
+      assertEquals(loader.size(allSegments), 0);
       insertData();
 
-      Flowable<MarshallableEntry<Object, Object>> flowable = Flowable.fromPublisher(loader.entryPublisher(null, fetchValues, fetchMetadata));
+      Flowable<MarshallableEntry<Object, Object>> flowable = Flowable.fromPublisher(
+            loader.publishEntries(allSegments, null, fetchValues));
       flowable = flowable.doOnNext(me -> {
          Integer key = unwrapKey(me.getKey());
          if (fetchValues) {
@@ -188,7 +195,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
          long now = System.currentTimeMillis();
          Metadata metadata = insertMetadata(i) ? TestingUtil.metadata(lifespan(i), maxIdle(i)) : null;
          MarshallableEntry me = MarshalledEntryUtil.create(wrapKey(i), wrapValue(i, i), metadata, now, now, cache);
-         writer.write(me);
+         writer.write(keyPartitioner.getSegment(me.getKey()), me);
       }
    }
 

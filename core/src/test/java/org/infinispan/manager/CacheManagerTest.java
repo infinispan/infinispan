@@ -5,7 +5,7 @@ import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractGlobalComponentRegistry;
 import static org.infinispan.test.TestingUtil.getDefaultCacheName;
-import static org.infinispan.test.TestingUtil.getFirstLoader;
+import static org.infinispan.test.TestingUtil.getFirstStore;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.infinispan.test.TestingUtil.replaceComponent;
@@ -554,7 +554,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    private DummyInMemoryStore getDummyStore(Cache<String, String> cache1) {
-      return (DummyInMemoryStore) getFirstLoader(cache1);
+      return (DummyInMemoryStore) getFirstStore(cache1);
    }
 
    private DataContainer getDataContainer(Cache<String, String> cache) {

@@ -101,13 +101,19 @@ import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.marshall.persistence.impl.PersistenceMarshallerImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.NonBlockingStore;
+import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.DelegatingPersistenceManager;
+import org.infinispan.persistence.support.NonBlockingStoreAdapter;
+import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
+import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -932,10 +938,10 @@ public class TestingUtil {
       CompletionStages.join(persistenceManager.clearAllStores(BOTH));
    }
 
-   public static <K, V> List<CacheLoader<K, V>> cachestores(List<Cache<K, V>> caches) {
-      List<CacheLoader<K, V>> l = new LinkedList<>();
+   public static <K, V> List<DummyInMemoryStore> cachestores(List<Cache<K, V>> caches) {
+      List<DummyInMemoryStore> l = new LinkedList<>();
       for (Cache<K, V> c: caches)
-         l.add(TestingUtil.getFirstLoader(c));
+         l.add(TestingUtil.getFirstStore(c));
       return l;
    }
 
@@ -1588,22 +1594,53 @@ public class TestingUtil {
             .maxIdle(maxIdle != null ? maxIdle : -1).build();
    }
 
+   public static <T extends WaitNonBlockingStore<K, V>, K, V> T getFirstStore(Cache<K, V> cache) {
+      return getStore(cache, 0, true);
+   }
+
+   @SuppressWarnings({"unchecked", "unchecked cast"})
+   public static <T extends WaitNonBlockingStore<K, V>, K, V> T getStore(Cache<K, V> cache, int position, boolean unwrapped) {
+      PersistenceManagerImpl persistenceManager = getActualPersistenceManager(cache);
+      NonBlockingStore<K, V> nonBlockingStore = persistenceManager.<K, V>getAllStores(characteristics ->
+            ! characteristics.contains(NonBlockingStore.Characteristic.WRITE_ONLY)).get(position);
+      if (unwrapped && nonBlockingStore instanceof DelegatingNonBlockingStore) {
+         nonBlockingStore = ((DelegatingNonBlockingStore<K, V>) nonBlockingStore).delegate();
+      }
+      if (nonBlockingStore instanceof WaitNonBlockingStore) {
+         return (T) nonBlockingStore;
+      }
+      return (T) new WaitDelegatingNonBlockingStore<>(nonBlockingStore, extractComponent(cache, KeyPartitioner.class));
+   }
+
    public static <T extends CacheLoader<K, V>, K, V>  T getFirstLoader(Cache<K, V> cache) {
       PersistenceManagerImpl persistenceManager = getActualPersistenceManager(cache);
       //noinspection unchecked
-      return (T) persistenceManager.getAllLoaders().get(0);
+      NonBlockingStore<K, V> nonBlockingStore = persistenceManager.<K, V>getAllStores(characteristics ->
+            ! characteristics.contains(NonBlockingStore.Characteristic.WRITE_ONLY)).get(0);
+      // TODO: Once stores convert to non blocking implementations this will change
+      return (T) ((NonBlockingStoreAdapter<K, V>) nonBlockingStore).loader();
    }
 
    @SuppressWarnings("unchecked")
    public static <T extends CacheWriter<K, V>, K, V> T getFirstWriter(Cache<K, V> cache) {
+      return getWriter(cache, 0);
+   }
+
+   public static <T extends CacheWriter<K, V>, K, V> T getWriter(Cache<K, V> cache, int position) {
       PersistenceManagerImpl persistenceManager = getActualPersistenceManager(cache);
-      return (T) persistenceManager.getAllWriters().get(0);
+      NonBlockingStore<K, V> nonBlockingStore = persistenceManager.<K, V>getAllStores(characteristics ->
+            ! characteristics.contains(NonBlockingStore.Characteristic.READ_ONLY)).get(position);
+      // TODO: Once stores convert to non blocking implementations this will change
+      return (T) ((NonBlockingStoreAdapter<K, V>) nonBlockingStore).writer();
    }
 
    @SuppressWarnings("unchecked")
    public static <T extends CacheWriter<K, V>, K, V> T getFirstTxWriter(Cache<K, V> cache) {
       PersistenceManagerImpl persistenceManager = getActualPersistenceManager(cache);
-      return (T) persistenceManager.getAllTxWriters().get(0);
+      NonBlockingStore<K, V> nonBlockingStore = persistenceManager.<K, V>getAllStores(characteristics ->
+            characteristics.contains(NonBlockingStore.Characteristic.TRANSACTIONAL)).get(0);
+      // TODO: Once stores convert to non blocking implementations this will change
+      return (T) ((NonBlockingStoreAdapter<K, V>) nonBlockingStore).transactionalStore();
    }
 
    private static PersistenceManagerImpl getActualPersistenceManager(Cache<?, ?> cache) {

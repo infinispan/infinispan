@@ -15,9 +15,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -36,14 +36,14 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "persistence.WriteSkewCacheLoaderFunctionalTest")
 public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
 
-   CacheLoader loader;
+   DummyInMemoryStore loader;
    static final long LIFESPAN = 60000000; // very large lifespan so nothing actually expires
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = defineConfiguration();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(builder);
-      loader = TestingUtil.getFirstLoader(cm.getCache());
+      loader = TestingUtil.getFirstStore(cm.getCache());
       return cm;
    }
 
@@ -57,11 +57,11 @@ public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
       return builder;
    }
 
-   private void assertInCacheAndStore(Cache cache, CacheLoader loader, Object key, Object value) throws PersistenceException {
+   private void assertInCacheAndStore(Cache cache, DummyInMemoryStore loader, Object key, Object value) throws PersistenceException {
       assertInCacheAndStore(cache, loader, key, value, -1);
    }
 
-   private void assertInCacheAndStore(Cache cache, CacheLoader store, Object key, Object value, long lifespanMillis) throws PersistenceException {
+   private void assertInCacheAndStore(Cache cache, DummyInMemoryStore store, Object key, Object value, long lifespanMillis) throws PersistenceException {
       InternalCacheValue icv = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
       assertStoredEntry(icv.getValue(), value, icv.getLifespan(), lifespanMillis, "Cache", key);
       assertNotNull("For :" + icv, icv.getMetadata().version());
@@ -76,7 +76,7 @@ public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
       assertEquals(src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + lifespanMillis, expectedLifespan, lifespanMillis);
    }
 
-   private <T> void assertNotInCacheAndStore(Cache cache, CacheLoader store, T... keys) throws PersistenceException {
+   private <T> void assertNotInCacheAndStore(Cache cache, DummyInMemoryStore store, T... keys) throws PersistenceException {
       for (Object key : keys) {
          assertFalse("Cache should not contain key " + key, cache.getAdvancedCache().getDataContainer().containsKey(key));
          assertFalse("Store should not contain key " + key, store.contains(key));
@@ -113,7 +113,7 @@ public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
       assertEquals(4, c.size());
 
       // Re-retrieve since the old reference might not be usable
-      loader = TestingUtil.getFirstLoader(cache);
+      loader = TestingUtil.getFirstStore(cache);
       for (int i = 1; i < 5; i++) {
          if (i % 2 == 1)
             assertInCacheAndStore(cache, loader, "k" + i, "v" + i);

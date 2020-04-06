@@ -1,7 +1,7 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
-import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.test.TestingUtil;
 
 /**
@@ -24,7 +24,7 @@ public class StateTransferTestingUtil {
    public static final Integer FORTY = 40;
 
    public static void verifyNoDataOnLoader(Cache<Object, Object> c) throws Exception {
-      CacheLoader l = TestingUtil.getFirstLoader(c);
+      DummyInMemoryStore l = TestingUtil.getFirstStore(c);
       assert !l.contains(A_B_AGE);
       assert !l.contains(A_B_NAME);
       assert !l.contains(A_C_AGE);
@@ -51,7 +51,7 @@ public class StateTransferTestingUtil {
    }
 
    public static void verifyInitialDataOnLoader(Cache<Object, Object> c) throws Exception {
-      CacheLoader l = TestingUtil.getFirstLoader(c);
+      DummyInMemoryStore l = TestingUtil.getFirstStore(c);
       assert l.contains(A_B_AGE);
       assert l.contains(A_B_NAME);
       assert l.contains(A_C_AGE);

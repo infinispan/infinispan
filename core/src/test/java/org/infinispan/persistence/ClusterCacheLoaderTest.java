@@ -8,9 +8,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InCacheMode;
@@ -56,7 +56,7 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
    public void testRemoteLoadFromCacheLoader() throws Exception {
       Cache<String, String> cache1 = cache(0, "clusteredCl");
       Cache<String, String> cache2 = cache(1, "clusteredCl");
-      CacheWriter writer = TestingUtil.getFirstWriter(cache2);
+      DummyInMemoryStore writer = TestingUtil.getFirstStore(cache2);
 
       assertNull(cache1.get("key"));
       assertNull(cache2.get("key"));

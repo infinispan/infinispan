@@ -210,6 +210,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    public void validate() {
       boolean isLocalCache = builder.clustering().create().cacheMode().equals(CacheMode.LOCAL);
       int numFetchPersistentState = 0;
+      int numPreload = 0;
       for (StoreConfigurationBuilder<?, ?> b : stores) {
          b.validate();
          StoreConfiguration storeConfiguration = b.create();
@@ -226,11 +227,19 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
          if (storeConfiguration.async().enabled() && storeConfiguration.transactional()) {
             throw CONFIG.transactionalStoreCannotBeAsync(storeConfiguration.getClass().getSimpleName());
          }
-         if (storeConfiguration.fetchPersistentState())
+         if (storeConfiguration.fetchPersistentState()) {
             numFetchPersistentState++;
+         }
+         if (storeConfiguration.preload()) {
+            numPreload++;
+         }
       }
-      if (numFetchPersistentState > 1)
+      if (numFetchPersistentState > 1) {
          throw CONFIG.onlyOneFetchPersistentStoreAllowed();
+      }
+      if (numPreload > 1) {
+         throw CONFIG.onlyOnePreloadStoreAllowed();
+      }
 
       // If a store is present, the reaper expiration thread must be enabled.
       if (!stores.isEmpty()) {

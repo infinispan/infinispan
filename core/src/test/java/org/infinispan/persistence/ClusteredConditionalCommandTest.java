@@ -1,7 +1,7 @@
 package org.infinispan.persistence;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.infinispan.test.TestingUtil.getFirstWriter;
+import static org.infinispan.test.TestingUtil.getFirstStore;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -630,7 +630,7 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
 
       private DummyInMemoryStore cacheStore(Ownership ownership) {
          Cache<K, V> cache = cache(ownership);
-         return cache != null ? getFirstWriter(cache) : null;
+         return cache != null ? getFirstStore(cache) : null;
       }
 
       protected long loads(Ownership ownership) {

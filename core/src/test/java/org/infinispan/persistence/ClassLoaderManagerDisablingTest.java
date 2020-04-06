@@ -18,7 +18,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -88,13 +88,13 @@ public class ClassLoaderManagerDisablingTest extends AbstractInfinispanTest {
          cacheManager = TestCacheManagerFactory.createCacheManager(builder);
          Cache<Object, Object> cache = cacheManager.getCache();
          PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
-         Set<CacheLoader> stores = pm.getStores(CacheLoader.class);
+         Set<NonBlockingStore> stores = pm.getStores(NonBlockingStore.class);
          // Should have 2 before we disable
          assertEquals(2, stores.size());
 
          pm.disableStore(UnnecessaryLoadingTest.CountingStore.class.getName());
 
-         stores = pm.getStores(CacheLoader.class);
+         stores = pm.getStores(NonBlockingStore.class);
          assertEquals(1, stores.size());
 
          DummyInMemoryStore store = (DummyInMemoryStore) stores.iterator().next();

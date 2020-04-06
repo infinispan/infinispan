@@ -46,7 +46,7 @@ public interface PersistenceManager extends Lifecycle {
    /**
     * Marks the given storage as disabled.
     */
-   void disableStore(String storeType);
+   CompletionStage<Void> disableStore(String storeType);
 
    <T> Set<T> getStores(Class<T> storeClass);
 
@@ -55,7 +55,7 @@ public interface PersistenceManager extends Lifecycle {
    /**
     * Removes the expired entries from all the existing storage.
     */
-   void purgeExpired();
+   CompletionStage<Void> purgeExpired();
 
    /**
     * Invokes {@link org.infinispan.persistence.spi.AdvancedCacheWriter#clear()} on all the stores that aloes it.
@@ -162,7 +162,7 @@ public interface PersistenceManager extends Lifecycle {
       return loadFromAllStores(key, localInvocation, includeStores);
    }
 
-   default CompletionStage<Integer> size() {
+   default CompletionStage<Long> size() {
        return size(AccessMode.BOTH);
    }
 
@@ -172,7 +172,7 @@ public interface PersistenceManager extends Lifecycle {
     * @param predicate whether a loader can be used
     * @return size or -1 if size couldn't be computed
     */
-   CompletionStage<Integer> size(Predicate<? super StoreConfiguration> predicate);
+   CompletionStage<Long> size(Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Returns the count of how many entries are persisted within the given segments. The returned value will always
@@ -180,7 +180,7 @@ public interface PersistenceManager extends Lifecycle {
     * @param segments which segments to count entries from
     * @return how many entries are in the store which map to the given segments
     */
-   CompletionStage<Integer> size(IntSet segments);
+   CompletionStage<Long> size(IntSet segments);
 
    enum AccessMode implements Predicate<StoreConfiguration> {
       /**
@@ -295,7 +295,7 @@ public interface PersistenceManager extends Lifecycle {
     * @param predicate whether a given store should write the entry
     * @param flags Flags used during command invocation
     */
-   CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries, Predicate<? super StoreConfiguration> predicate, long flags);
+   <K, V> CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry<K, V>> entries, Predicate<? super StoreConfiguration> predicate, long flags);
 
    /**
     * Remove all entries from the underlying non-transactional stores as a single batch.

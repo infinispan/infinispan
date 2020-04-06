@@ -71,8 +71,8 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    }
 
    @Override
-   public void disableStore(String storeType) {
-      persistenceManager.disableStore(storeType);
+   public CompletionStage<Void> disableStore(String storeType) {
+      return persistenceManager.disableStore(storeType);
    }
 
    @Override
@@ -86,8 +86,8 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    }
 
    @Override
-   public void purgeExpired() {
-      persistenceManager.purgeExpired();
+   public CompletionStage<Void> purgeExpired() {
+      return persistenceManager.purgeExpired();
    }
 
    @Override
@@ -131,12 +131,12 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    }
 
    @Override
-   public CompletionStage<Integer> size(Predicate<? super StoreConfiguration> predicate) {
+   public CompletionStage<Long> size(Predicate<? super StoreConfiguration> predicate) {
       return persistenceManager.size(predicate);
    }
 
    @Override
-   public CompletionStage<Integer> size(IntSet segments) {
+   public CompletionStage<Long> size(IntSet segments) {
       return persistenceManager.size(segments);
    }
 
@@ -168,7 +168,7 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    }
 
    @Override
-   public CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry> entries,
+   public <K, V> CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry<K, V>> entries,
                                                            Predicate<? super StoreConfiguration> predicate, long flags) {
       return persistenceManager.writeBatchToAllNonTxStores(entries, predicate, flags);
    }
@@ -202,7 +202,7 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    }
 
    @Override
-   public CompletionStage<Integer> size() {
+   public CompletionStage<Long> size() {
       return persistenceManager.size();
    }
 

@@ -38,8 +38,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
@@ -472,7 +472,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       cache.put(key, value);
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.get(key);
-      CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
+      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
       assertNotNull("Key " + key + " does not exist in data container.", entry);
       assertEquals("Wrong value for key " + key + " in data container.", value, entry.getValue());
       MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
@@ -483,7 +483,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    protected void assertInMemory(Object key, Object value) {
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.get(key);
-      CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
+      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
       assertNotNull("Key " + key + " does not exist in data container", entry);
       assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
       MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
@@ -494,7 +494,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    protected void assertNotInMemory(Object key, Object value) {
       DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry<?, ?> entry = container.get(key);
-      CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
+      DummyInMemoryStore loader = TestingUtil.getFirstStore(cache);
       assertNull("Key " + key + " exists in data container", entry);
       MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
       assertNotNull("Key " + key + " does not exist in cache loader", entryLoaded);

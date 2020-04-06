@@ -167,12 +167,12 @@ public class PassivationPersistenceManager extends DelegatingPersistenceManager 
    }
 
    @Override
-   public CompletionStage<Integer> size(Predicate<? super StoreConfiguration> predicate) {
+   public CompletionStage<Long> size(Predicate<? super StoreConfiguration> predicate) {
       if (map.isEmpty()) {
          return super.size(predicate);
       }
       // We can't use optimized size and require iteration if we have entries
-      return CompletableFuture.completedFuture(-1);
+      return CompletableFuture.completedFuture(-1L);
    }
 
    public int pendingPassivations() {

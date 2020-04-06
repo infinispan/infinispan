@@ -290,20 +290,20 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    }
 
    @Override
-   public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
-      CompletionStage<Integer> sizeStage = trySizeOptimization(command.getFlagsBitSet());
+   public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) {
+      CompletionStage<Long> sizeStage = trySizeOptimization(command.getFlagsBitSet());
       return asyncValue(sizeStage).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         if ((Integer) rv == -1) {
+         if ((Long) rv == -1) {
             return super.visitSizeCommand(rCtx, rCommand);
          }
-         return ((Integer) rv).longValue();
+         return rv;
       });
 
    }
 
-   private CompletionStage<Integer> trySizeOptimization(long flagBitSet) {
+   private CompletionStage<Long> trySizeOptimization(long flagBitSet) {
       if (EnumUtil.containsAny(flagBitSet, FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_SIZE_OPTIMIZATION)) {
-         return CompletableFuture.completedFuture(-1);
+         return CompletableFuture.completedFuture(-1L);
       }
       // Get the size from any shared store that isn't async
       return persistenceManager.size(SHARED.and(NOT_ASYNC));
@@ -600,9 +600,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
 
       @Override
       public int size() {
-         int size = CompletionStages.join(trySizeOptimization(commandFlagBitSet));
+         long size = CompletionStages.join(trySizeOptimization(commandFlagBitSet));
          if (size >= 0) {
-            return size;
+            return (int) Math.min(size, Integer.MAX_VALUE);
          }
 
          long longSize = stream().count();

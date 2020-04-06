@@ -123,7 +123,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
       }
 
       if (!Thread.currentThread().isInterrupted()) {
-         persistenceManager.purgeExpired();
+         CompletionStages.join(persistenceManager.purgeExpired());
       }
    }
 

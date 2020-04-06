@@ -268,7 +268,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       if (getStatisticsEnabled())
          cacheStores.addAndGet(cmd.getMap().size());
 
-      Iterable<MarshallableEntry> iterable = () -> cmd.getMap().keySet().stream()
+      Iterable<MarshallableEntry<Object, Object>> iterable = () -> cmd.getMap().keySet().stream()
             .filter(filter)
             .map(key -> marshalledEntry(ctx, key))
             .filter(StreamMarshalling.nonNullPredicate())
@@ -477,7 +477,11 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          displayName = "Number of persisted entries"
    )
    public int getNumberOfPersistedEntries() {
-      return CompletionStages.join(persistenceManager.size());
+      long size = CompletionStages.join(persistenceManager.size());
+      if (size > Integer.MAX_VALUE) {
+         return Integer.MAX_VALUE;
+      }
+      return (int) size;
    }
 
    CompletionStage<Void> storeEntry(InvocationContext ctx, Object key, FlagAffectedCommand command) {
@@ -506,7 +510,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       return CompletableFutures.completedNull();
    }
 
-   MarshallableEntry marshalledEntry(InvocationContext ctx, Object key) {
+   MarshallableEntry<Object, Object> marshalledEntry(InvocationContext ctx, Object key) {
       InternalCacheValue<?> sv = entryFactory.getValueFromCtx(key, ctx);
       return sv != null ? marshalledEntryFactory.create(key, (InternalCacheValue) sv) : null;
    }

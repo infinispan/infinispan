@@ -8,6 +8,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.BaseDistStoreTest;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
@@ -55,7 +56,8 @@ public class RehashWithSharedStoreTest extends BaseDistStoreTest<Object, String,
 
       // Ensure the loader is shared!
       for (Cache<Object, String> c: Arrays.asList(c1, c2, c3)) {
-         assert TestingUtil.getFirstLoader(c).contains(k) : format("CacheStore on %s should contain key %s", c, k);
+         DummyInMemoryStore dims = TestingUtil.getFirstStore(c);
+         assert dims.contains(k) : format("CacheStore on %s should contain key %s", c, k);
       }
 
       Cache<Object, String> primaryOwner = owners[0];

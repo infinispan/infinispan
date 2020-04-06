@@ -119,7 +119,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return new CommandsFactoryImpl();
       } else if (componentName.equals(PersistenceManager.class.getName())) {
          if (configuration.persistence().usingStores()) {
-            PersistenceManagerImpl realPersistenceManager = new PersistenceManagerImpl();
+            PersistenceManager realPersistenceManager = new PersistenceManagerImpl();
             if (configuration.persistence().passivation()) {
                return new PassivationPersistenceManager(realPersistenceManager);
             }

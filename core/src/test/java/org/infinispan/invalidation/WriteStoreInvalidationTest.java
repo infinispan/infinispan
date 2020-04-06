@@ -38,7 +38,7 @@ public class WriteStoreInvalidationTest extends MultipleCacheManagersTest {
    @Test
    public void testSharedCacheStoreAfterInvalidation() {
       // Because the store is shared, statistics are also shared
-      DummyInMemoryStore store0 = TestingUtil.getFirstLoader(cache(0, cacheName));
+      DummyInMemoryStore store0 = TestingUtil.getFirstStore(cache(0, cacheName));
 
       store0.clearStats();
 
@@ -63,7 +63,7 @@ public class WriteStoreInvalidationTest extends MultipleCacheManagersTest {
    }
 
    private void assertStoreStats(DummyInMemoryStore store, int loads, int writes, int deletes) {
-      assertEquals(loads, store.stats().get("loadEntry").intValue());
+      assertEquals(loads, store.stats().get("load").intValue());
       assertEquals(writes, store.stats().get("write").intValue());
       assertEquals(deletes, store.stats().get("delete").intValue());
    }

@@ -1830,6 +1830,15 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="write-only" type="xs:boolean" default="${AbstractStore.writeOnly}">
+      <xs:annotation>
+        <xs:documentation>
+          Prevents data from being loaded from cache stores. Values are true /
+          false (default). If true, cache stores write entries only. Any
+          retrievals of data in the cache do not read from the cache store.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute name="max-batch-size" type="xs:int" default="${AbstractStore.maxBatchSize}">
       <xs:annotation>
         <xs:documentation>

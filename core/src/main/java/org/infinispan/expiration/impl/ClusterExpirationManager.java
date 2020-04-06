@@ -101,7 +101,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
 
       if (!Thread.currentThread().isInterrupted()) {
-         persistenceManager.purgeExpired();
+         CompletionStages.join(persistenceManager.purgeExpired());
       }
    }
 

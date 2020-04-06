@@ -55,7 +55,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    }
 
    DummyInMemoryStore getCacheStore(Cache cache) {
-      return (DummyInMemoryStore) TestingUtil.getFirstLoader(cache);
+      return (DummyInMemoryStore) TestingUtil.getFirstStore(cache);
    }
 
    public void testWithFlagsSemantics() {

@@ -11,8 +11,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
-import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.persistence.spi.CacheWriter;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
@@ -56,24 +55,24 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
       String key = "k4", value = "value4";
       for (Cache<Object, String> c : caches) assert c.isEmpty();
       Cache<Object, String> nonOwner = getFirstNonOwner(key);
-      CacheLoader nonOwnerStore = TestingUtil.getFirstLoader(nonOwner);
+      DummyInMemoryStore nonOwnerStore = TestingUtil.getFirstStore(nonOwner);
       assert !nonOwnerStore.contains(key);
       Object retval = nonOwner.put(key, value);
       asyncWait(key, PutKeyValueCommand.class);
 
       Cache[] owners = getOwners(key);
-      CacheLoader store = TestingUtil.getFirstLoader(owners[0]);
+      DummyInMemoryStore store = TestingUtil.<DummyInMemoryStore, Object, Object>getFirstStore(owners[0]);
       assertIsInContainerImmortal(owners[0], key);
       assert store.contains(key);
 
       for (int i = 1; i < owners.length; i++) {
-         store = TestingUtil.getFirstLoader(owners[i]);
+         store = TestingUtil.<DummyInMemoryStore, Object, Object>getFirstStore(owners[i]);
          assertIsInContainerImmortal(owners[i], key);
          assert store.contains(key);
       }
 
       for (Cache<Object, String> c : caches) {
-         store = TestingUtil.getFirstLoader(c);
+         store = TestingUtil.getFirstStore(c);
          assert store.contains(key);
          assertNumberOfInvocations(store, "write", 1);
       }
@@ -88,18 +87,18 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
       Cache[] owners = getOwners(key);
       Object retval = owners[0].put(key, value);
       asyncWait(key, PutKeyValueCommand.class);
-      CacheLoader store = TestingUtil.getFirstLoader(owners[0]);
+      DummyInMemoryStore store = TestingUtil.<DummyInMemoryStore, Object, Object>getFirstStore(owners[0]);
       assertIsInContainerImmortal(owners[0], key);
       assert store.contains(key);
 
       for (int i = 1; i < owners.length; i++) {
-         store = TestingUtil.getFirstLoader(owners[i]);
+         store = TestingUtil.<DummyInMemoryStore, Object, Object>getFirstStore(owners[i]);
          assertIsInContainerImmortal(owners[i], key);
          assert store.contains(key);
       }
 
       for (Cache<Object, String> c : caches) {
-         store = TestingUtil.getFirstLoader(c);
+         store = TestingUtil.getFirstStore(c);
          if (isOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
          }
@@ -124,7 +123,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
       c1.putAll(data);
       for (String key : keys) {
          for (Cache<Object, String> c : caches) {
-            CacheLoader store = TestingUtil.getFirstLoader(c);
+            DummyInMemoryStore store = TestingUtil.getFirstStore(c);
             if (isFirstOwner(c, key)) {
                assertIsInContainerImmortal(c, key);
             }
@@ -140,7 +139,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
       initAndTest();
 
       for (Cache<Object, String> c : caches) {
-         CacheLoader store = TestingUtil.getFirstLoader(c);
+         DummyInMemoryStore store = TestingUtil.getFirstStore(c);
          if (isFirstOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
             assert store.loadEntry(key).getValue().equals(value);
@@ -151,7 +150,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
       asyncWait("k1", RemoveCommand.class);
       if (testRetVals) assert value.equals(retval);
       for (Cache<Object, String> c : caches) {
-         CacheLoader store = TestingUtil.getFirstLoader(c);
+         DummyInMemoryStore store = TestingUtil.getFirstStore(c);
          MarshallableEntry me = store.loadEntry(key);
          if (me == null) {
             assertNumberOfInvocations(store, "delete", 1);
@@ -167,7 +166,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
       initAndTest();
 
       for (Cache<Object, String> c : caches) {
-         CacheLoader store = TestingUtil.getFirstLoader(c);
+         DummyInMemoryStore store = TestingUtil.getFirstStore(c);
          if (isFirstOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
             assert store.loadEntry(key).getValue().equals(value);
@@ -178,7 +177,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
       asyncWait(key, ReplaceCommand.class);
       if (testRetVals) assert value.equals(retval);
       for (Cache<Object, String> c : caches) {
-         CacheLoader store = TestingUtil.getFirstLoader(c);
+         DummyInMemoryStore store = TestingUtil.getFirstStore(c);
          if (isFirstOwner(c, key)) {
             assertIsInContainerImmortal(c, key);
          }
@@ -204,7 +203,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
        * it should clear the whole store regardless. Bear in mind that in the test, even though
        * the cache store is shared, each cache has each own cache store, that allows for checking
        * who execute puts, removes...etc. */
-      CacheLoader store = TestingUtil.getFirstLoader(c1);
+      DummyInMemoryStore store = TestingUtil.getFirstStore(c1);
 
       // DummyInMemoryStore is segmented, so only 1 clear should be invoked
       assertNumberOfInvocations(store, "clear", 1);
@@ -221,7 +220,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
       final String v2 = "stale-data";
 
       // Simulate c3 was by itself and someone wrote a value that is now stale
-      CacheWriter store = (CacheWriter) TestingUtil.getFirstLoader(c3);
+      DummyInMemoryStore store = TestingUtil.getFirstStore(c3);
       store.write(MarshalledEntryUtil.create(k, v2, c3));
 
       c1.put(k, v1);
