@@ -29,13 +29,10 @@ public class ManualIndexingTest extends MultipleCacheManagersTest {
          Cache<String, Car> cache = cacheManager.getCache();
          caches.add(cache);
       }
-      waitForClusterToForm("default",
-                           "LuceneIndexesMetadata",
-                           "LuceneIndexesData",
-                           "LuceneIndexesLocking");
+      waitForClusterToForm("default");
    }
 
-   public void testManualIndexing() throws Exception {
+   public void testManualIndexing() {
       caches.get(0).put("car A", new Car("ford", "blue", 400));
       caches.get(0).put("car B", new Car("megane", "white", 300));
       caches.get(0).put("car C", new Car("megane", "red", 500));
@@ -51,7 +48,7 @@ public class ManualIndexingTest extends MultipleCacheManagersTest {
    }
 
    private void assertNumberOfCars(int expectedCount, String carMake) {
-      for (Cache<?,?> cache : caches) {
+      for (Cache<?, ?> cache : caches) {
          QueryFactory queryFactory = Search.getQueryFactory(cache);
          Query query = queryFactory.create(String.format("FROM %s where make:'%s'", Car.class.getName(), carMake));
          assertEquals("Expected count not met on cache " + cache, expectedCount, query.getResultSize());
