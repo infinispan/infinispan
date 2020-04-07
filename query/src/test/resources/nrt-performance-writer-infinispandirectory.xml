@@ -30,8 +30,6 @@
             <!-- Write indexes in Infinispan -->
             <property name="default.directory_provider">local-heap</property>
             <property name="default.chunk_size">128000</property>
-            <property name="default.metadata_cachename">LuceneIndexesMetadataOWR</property>
-            <property name="default.data_cachename">LuceneIndexesDataOWR</property>
             <!-- The default is 10, but we don't want to waste many cycles in merging
              (tune for writes at cost of reader fragmentation) -->
             <property name="default.indexwriter.merge_factor">30</property>
@@ -46,14 +44,6 @@
             <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
       </local-cache>
-      <!-- *************************************** -->
-      <!--  Cache to store Lucene's file metadata  -->
-      <!-- *************************************** -->
-      <local-cache name="LuceneIndexesMetadataOWR" />
-      <!-- **************************** -->
-      <!--  Cache to store Lucene data  -->
-      <!-- **************************** -->
-      <local-cache name="LuceneIndexesDataOWR" />
    </cache-container>
 
 </infinispan>

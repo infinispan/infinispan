@@ -20,29 +20,5 @@
                 <property name="lucene_version">LUCENE_CURRENT</property>
             </indexing>
         </distributed-cache>
-
-        <replicated-cache name="LuceneIndexesMetadata" mode="SYNC" remote-timeout="25000">
-            <memory>
-                <off-heap/>
-            </memory>
-            <indexing enabled="false"/>
-            <state-transfer enabled="true"/>
-        </replicated-cache>
-
-        <distributed-cache name="LuceneIndexesData" mode="SYNC" remote-timeout="25000">
-            <memory>
-                <off-heap/>
-            </memory>
-            <indexing enabled="false"/>
-            <state-transfer enabled="true"/>
-        </distributed-cache>
-
-        <replicated-cache name="LuceneIndexesLocking" mode="SYNC" remote-timeout="25000">
-            <memory>
-                <off-heap/>
-            </memory>
-            <indexing enabled="false"/>
-            <state-transfer enabled="true"/>
-        </replicated-cache>
     </cache-container>
 </infinispan>

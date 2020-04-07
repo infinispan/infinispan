@@ -10,6 +10,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Block;
 import org.infinispan.query.test.QueryTestSCI;
@@ -30,7 +31,6 @@ public class OverlappingIndexMassIndexTest extends MultipleCacheManagersTest {
    protected List<Cache<String, Object>> caches = new ArrayList<>(NUM_NODES);
 
    @Override
-   @SuppressWarnings("unchecked")
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cacheCfg
@@ -39,7 +39,7 @@ public class OverlappingIndexMassIndexTest extends MultipleCacheManagersTest {
             .addIndexedEntity(Transaction.class)
             .addIndexedEntity(Block.class)
             .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
@@ -49,7 +49,7 @@ public class OverlappingIndexMassIndexTest extends MultipleCacheManagersTest {
       caches = caches();
    }
 
-   public void testReindex() throws Exception {
+   public void testReindex() {
       Transaction t1 = new Transaction(302, "04a27");
       Transaction t2 = new Transaction(256, "ae461");
       Transaction t3 = new Transaction(257, "ac537");

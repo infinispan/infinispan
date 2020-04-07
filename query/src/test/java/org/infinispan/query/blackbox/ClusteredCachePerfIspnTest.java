@@ -3,6 +3,7 @@ package org.infinispan.query.blackbox;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -23,7 +24,7 @@ public class ClusteredCachePerfIspnTest extends ClusteredCacheTest {
               .enable()
               .addIndexedEntity(Person.class)
               .addProperty("default.indexmanager", "near-real-time")
-              .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+              .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
               .addProperty("default.directory_provider", "local-heap")
               .addProperty("default.chunk_size", "128000")
               .addProperty("default.indexwriter.merge_factor", "30")

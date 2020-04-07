@@ -67,12 +67,12 @@ public class TestQueryHelperFactory {
          builder.indexing()
                .addProperty("default.directory_provider", "local-heap")
                .addProperty("lucene_version", "LUCENE_CURRENT")
-               .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");
+               .addProperty("error_handler", StaticTestingErrorHandler.class.getName());
       } else {
          builder.indexing()
                .addProperty("default.directory_provider", "local-heap")
                .addProperty("lucene_version", "LUCENE_CURRENT")
-               .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");
+               .addProperty("error_handler", StaticTestingErrorHandler.class.getName());
          if (cacheMode.isClustered()) {
             builder.clustering().stateTransfer().fetchInMemoryState(true);
          }

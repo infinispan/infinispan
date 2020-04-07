@@ -25,8 +25,8 @@
                   <indexed-entity>org.infinispan.test.integration.as.query.Book</indexed-entity>
                </indexed-entities>
                <!-- specify the managed index is to be shared across the nodes -->
-                <property name="default.directory_provider">local-heap</property>
-                <!-- Supporting exclusive index usage will require lock cleanup on crashed nodes to be implemented -->
+               <property name="default.directory_provider">local-heap</property>
+               <!-- Supporting exclusive index usage will require lock cleanup on crashed nodes to be implemented -->
                <property name="hibernate.search.default.exclusive_index_use">false</property>
             </indexing>
        </distributed-cache>
