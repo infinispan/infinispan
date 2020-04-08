@@ -1,7 +1,6 @@
 package org.infinispan.server.logging.events;
 
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
-import org.infinispan.marshall.protostream.impl.UUIDBridge;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 
@@ -14,7 +13,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
  */
 @AutoProtoSchemaBuilder(
       dependsOn = org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
-      includeClasses = {ServerEventImpl.class, UUIDBridge.class},
+      includeClasses = ServerEventImpl.class,
       schemaFileName = "persistence.event_logger.proto",
       schemaFilePath = "proto/generated",
       schemaPackageName = "org.infinispan.persistence.event_logger",
