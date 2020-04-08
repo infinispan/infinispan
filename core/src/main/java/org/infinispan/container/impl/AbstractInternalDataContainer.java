@@ -30,13 +30,12 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.DataOperationOrderer;
@@ -69,17 +68,10 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject protected DataOperationOrderer orderer;
 
-   protected boolean hasPassivation;
-
    protected final List<Consumer<Iterable<InternalCacheEntry<K, V>>>> listeners = new CopyOnWriteArrayList<>();
 
    protected abstract PeekableTouchableMap<K, V> getMapForSegment(int segment);
    protected abstract int getSegmentForKey(Object key);
-
-   @Start
-   public void start() {
-      hasPassivation = configuration.persistence().passivation();
-   }
 
    @Override
    public InternalCacheEntry<K, V> get(int segment, Object k) {
@@ -126,7 +118,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    }
 
    @Override
-   public void put(int segment, K k, V v, Metadata metadata, MetaParamsInternalMetadata internalMetadata, long createdTimestamp, long lastUseTimestamp) {
+   public void put(int segment, K k, V v, Metadata metadata, PrivateMetadata internalMetadata, long createdTimestamp, long lastUseTimestamp) {
       PeekableTouchableMap<K, V> entries = getMapForSegment(segment);
       if (entries != null) {
          boolean l1Entry = false;
@@ -356,6 +348,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    }
 
    static <K, V> Caffeine<K, V> caffeineBuilder() {
+      //noinspection unchecked
       return (Caffeine<K, V>) Caffeine.newBuilder();
    }
 

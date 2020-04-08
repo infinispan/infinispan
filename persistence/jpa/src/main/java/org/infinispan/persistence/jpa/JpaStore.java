@@ -21,8 +21,8 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.IdentifiableType;
-import javax.persistence.metamodel.ManagedType;
 import javax.persistence.metamodel.Metamodel;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.Type;
@@ -42,9 +42,9 @@ import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.executors.ExecutorAllCompletionService;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration;
 import org.infinispan.persistence.jpa.impl.EntityManagerFactoryRegistry;
 import org.infinispan.persistence.jpa.impl.MetadataEntity;
@@ -100,18 +100,16 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    public void start() {
       this.emf = emfRegistry.getEntityManagerFactory(configuration.persistenceUnitName());
 
-      ManagedType<?> mt;
+      EntityType<?> it;
       try {
-         mt = emf.getMetamodel().entity(this.configuration.entityClass());
+         it = emf.getMetamodel().entity(this.configuration.entityClass());
       } catch (IllegalArgumentException e) {
          throw new JpaStoreException("Entity class [" + this.configuration.entityClass().getName() + " specified in configuration is not recognized by the EntityManagerFactory with Persistence Unit [" + this.configuration.persistenceUnitName() + "]", e);
       }
 
-      if (!(mt instanceof IdentifiableType)) {
-         throw new JpaStoreException(
-               "Entity class must have one and only one identifier (@Id or @EmbeddedId)");
+      if (it == null) {
+         throw new JpaStoreException("Entity class must have one and only one identifier (@Id or @EmbeddedId)");
       }
-      IdentifiableType<?> it = (IdentifiableType<?>) mt;
       if (!it.hasSingleIdAttribute()) {
          throw new JpaStoreException(
                "Entity class has more than one identifier.  It must have only one identifier.");
@@ -667,12 +665,12 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       }
    }
 
-   private MetaParamsInternalMetadata getInternalMetadata(MetadataEntity entity) {
+   private PrivateMetadata getInternalMetadata(MetadataEntity entity) {
       if (entity == null || entity.getInternalMetadata() == null)
          return null;
 
       try {
-         return (MetaParamsInternalMetadata) marshaller.objectFromByteBuffer(entity.getInternalMetadata());
+         return (PrivateMetadata) marshaller.objectFromByteBuffer(entity.getInternalMetadata());
       } catch (Exception e) {
          throw new JpaStoreException("Failed to unmarshall internal metadata", e);
       }

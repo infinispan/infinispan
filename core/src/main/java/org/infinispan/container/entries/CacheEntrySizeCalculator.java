@@ -8,9 +8,9 @@ import org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheEntry;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * Implementation of a size calculator that calcultes only the size of the value assuming it is an InternalCacheEntry.
@@ -53,10 +53,8 @@ public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorH
          metadataAware = true;
       } else if (ice instanceof MetadataTransientCacheEntry) {
          metadataAware = true;
-      } else if (ice instanceof MetadataTransientMortalCacheEntry) {
-         metadataAware = true;
       } else {
-         metadataAware = false;
+         metadataAware = ice instanceof MetadataTransientMortalCacheEntry;
       }
       Metadata metadata;
       if (metadataAware) {
@@ -73,7 +71,7 @@ public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorH
    }
 
    @Override
-   public long calculateSize(K key, V value, Metadata metadata, MetaParamsInternalMetadata internalMetadata) {
+   public long calculateSize(K key, V value, Metadata metadata, PrivateMetadata internalMetadata) {
       long objSize = calculator.calculateSize(key, value);
 
       // This is for the surrounding ICE

@@ -12,9 +12,9 @@ import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * A transient cache value, to correspond with {@link TransientCacheEntry} which is {@link MetadataAware}
@@ -31,7 +31,7 @@ public class MetadataTransientCacheValue extends ImmortalCacheValue implements M
       this(value, null, metadata, lastUsed);
    }
 
-   protected MetadataTransientCacheValue(Object value, MetaParamsInternalMetadata internalMetadata, Metadata metadata,
+   protected MetadataTransientCacheValue(Object value, PrivateMetadata internalMetadata, Metadata metadata,
          long lastUsed) {
       super(value, internalMetadata);
       this.metadata = metadata;
@@ -103,7 +103,7 @@ public class MetadataTransientCacheValue extends ImmortalCacheValue implements M
       @Override
       public MetadataTransientCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object value = input.readObject();
-         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
          Metadata metadata = (Metadata) input.readObject();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          return new MetadataTransientCacheValue(value, internalMetadata, metadata, lastUsed);

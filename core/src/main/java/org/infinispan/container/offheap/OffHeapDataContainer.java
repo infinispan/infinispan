@@ -11,6 +11,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.AbstractInternalDataContainer;
 import org.infinispan.container.impl.PeekableTouchableMap;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 
 /**
@@ -23,8 +24,8 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
 
    private OffHeapConcurrentMap map;
 
+   @Start
    public void start() {
-      super.start();
       map = new OffHeapConcurrentMap(allocator, offHeapEntryFactory, null);
    }
 

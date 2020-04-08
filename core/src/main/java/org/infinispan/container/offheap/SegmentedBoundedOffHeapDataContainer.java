@@ -23,8 +23,8 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -38,7 +38,6 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();
 
-   private final OffHeapMapSupplier offHeapMapSupplier;
    private final OffHeapListener offHeapListener;
 
    @Inject ComponentRegistry componentRegistry;
@@ -68,7 +67,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
 
       this.maxSize = maxSize;
       this.useCount = type == EvictionType.COUNT;
-      offHeapMapSupplier = new OffHeapMapSupplier();
+      OffHeapMapSupplier offHeapMapSupplier = new OffHeapMapSupplier();
       this.lruLock = new ReentrantLock();
       firstAddress = 0;
 
@@ -101,7 +100,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
 
    @Override
    public void put(int segment, WrappedBytes key, WrappedBytes value, Metadata metadata,
-         MetaParamsInternalMetadata internalMetadata, long createdTimestamp,
+         PrivateMetadata internalMetadata, long createdTimestamp,
          long lastUseTimestamp) {
       super.put(segment, key, value, metadata, internalMetadata, createdTimestamp, lastUseTimestamp);
       // The following is called outside of the write lock specifically - since we may not have to evict and even

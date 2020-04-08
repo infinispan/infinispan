@@ -9,10 +9,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * A cache entry that is transient, i.e., it can be considered expired after a period of not being used.
@@ -29,7 +29,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       this(key, value, null, maxIdle, lastUsed);
    }
 
-   protected TransientCacheEntry(Object key, Object value, MetaParamsInternalMetadata internalMetadata, long maxIdle,
+   protected TransientCacheEntry(Object key, Object value, PrivateMetadata internalMetadata, long maxIdle,
          long lastUsed) {
       super(key, value, internalMetadata);
       this.maxIdle = maxIdle;
@@ -134,7 +134,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       public TransientCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object key = input.readObject();
          Object value = input.readObject();
-         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          long maxIdle = input.readLong();
          return new TransientCacheEntry(key, value, internalMetadata, maxIdle, lastUsed);

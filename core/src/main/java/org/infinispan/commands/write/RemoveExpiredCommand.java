@@ -12,7 +12,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 
 /**
@@ -99,7 +99,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
       }
       maxIdle = input.readBoolean();
       setFlagsBitSet(input.readLong());
-      setInternalMetadata((MetaParamsInternalMetadata) input.readObject());
+      setInternalMetadata((PrivateMetadata) input.readObject());
    }
 
    @Override

@@ -8,9 +8,9 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
 
 /**
@@ -25,9 +25,9 @@ public class XSiteState {
    private final Object key;
    private final Object value;
    private final Metadata metadata;
-   private final MetaParamsInternalMetadata internalMetadata;
+   private final PrivateMetadata internalMetadata;
 
-   private XSiteState(Object key, Object value, Metadata metadata, MetaParamsInternalMetadata internalMetadata) {
+   private XSiteState(Object key, Object value, Metadata metadata, PrivateMetadata internalMetadata) {
       this.key = key;
       this.value = value;
       this.metadata = metadata;
@@ -46,7 +46,7 @@ public class XSiteState {
       return metadata;
    }
 
-   public MetaParamsInternalMetadata internalMetadata() {
+   public PrivateMetadata internalMetadata() {
       return internalMetadata;
    }
 
@@ -92,7 +92,7 @@ public class XSiteState {
       @Override
       public XSiteState readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new XSiteState(input.readObject(), input.readObject(), (Metadata) input.readObject(),
-               (MetaParamsInternalMetadata) input.readObject());
+               (PrivateMetadata) input.readObject());
       }
    }
 }

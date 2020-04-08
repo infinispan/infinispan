@@ -7,8 +7,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.MarshalledValue;
@@ -60,8 +60,8 @@ public class MarshalledEntryFactoryImpl implements MarshallableEntryFactory {
    }
 
    @Override
-   public MarshallableEntry create(Object key, Object value, Metadata metadata,
-         MetaParamsInternalMetadata internalMetadata, long created, long lastUsed) {
+   public MarshallableEntry create(Object key, Object value, Metadata metadata, PrivateMetadata internalMetadata,
+         long created, long lastUsed) {
       return new MarshallableEntryImpl<>(key, value, metadata, internalMetadata, created, lastUsed, marshaller);
    }
 

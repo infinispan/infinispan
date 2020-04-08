@@ -5,6 +5,7 @@ import static org.infinispan.commons.util.Util.toStr;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
@@ -13,8 +14,8 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -28,7 +29,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    private Object newValue;
    private Metadata metadata;
    private boolean successful = true;
-   private MetaParamsInternalMetadata internalMetadata;
+   private PrivateMetadata internalMetadata;
 
    private ValueMatcher valueMatcher;
 
@@ -41,7 +42,6 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       super(key, segment, flagsBitSet, commandInvocationId);
       this.oldValue = oldValue;
       this.newValue = newValue;
-      //noinspection unchecked
       this.metadata = metadata;
       this.valueMatcher = oldValue != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_NON_NULL;
    }
@@ -84,7 +84,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
-      internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+      internalMetadata = (PrivateMetadata) input.readObject();
    }
 
    @Override
@@ -95,9 +95,9 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
 
       ReplaceCommand that = (ReplaceCommand) o;
 
-      if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) return false;
-      if (newValue != null ? !newValue.equals(that.newValue) : that.newValue != null) return false;
-      return oldValue != null ? oldValue.equals(that.oldValue) : that.oldValue == null;
+      return Objects.equals(metadata, that.metadata) &&
+            Objects.equals(newValue, that.newValue) &&
+            Objects.equals(oldValue, that.oldValue);
 
    }
 
@@ -182,12 +182,12 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
-   public MetaParamsInternalMetadata getInternalMetadata() {
+   public PrivateMetadata getInternalMetadata() {
       return internalMetadata;
    }
 
    @Override
-   public void setInternalMetadata(MetaParamsInternalMetadata internalMetadata) {
+   public void setInternalMetadata(PrivateMetadata internalMetadata) {
       this.internalMetadata = internalMetadata;
    }
 }

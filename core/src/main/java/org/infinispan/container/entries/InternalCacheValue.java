@@ -1,7 +1,7 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * A representation of an InternalCacheEntry that does not have a reference to the key.  This should be used if the key
@@ -70,7 +70,7 @@ public interface InternalCacheValue<V> {
 
    Metadata getMetadata();
 
-   MetaParamsInternalMetadata getInternalMetadata();
+   PrivateMetadata getInternalMetadata();
 
-   void setInternalMetadata(MetaParamsInternalMetadata internalMetadata);
+   void setInternalMetadata(PrivateMetadata internalMetadata);
 }

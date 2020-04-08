@@ -10,10 +10,10 @@ import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * A cache entry that is both transient and mortal.
@@ -37,7 +37,7 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       this(key, value, null, maxIdle, lifespan, lastUsed, created);
    }
 
-   protected TransientMortalCacheEntry(Object key, Object value, MetaParamsInternalMetadata internalMetadata,
+   protected TransientMortalCacheEntry(Object key, Object value, PrivateMetadata internalMetadata,
          long maxIdle, long lifespan, long lastUsed, long created) {
       super(key, value, internalMetadata);
       this.maxIdle = maxIdle;
@@ -160,7 +160,7 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       public TransientMortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object key = input.readObject();
          Object value = input.readObject();
-         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
          long lifespan = input.readLong();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);

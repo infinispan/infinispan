@@ -6,8 +6,8 @@ import java.util.Objects;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -27,12 +27,12 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
    volatile transient K key;
    volatile transient V value;
    volatile transient Metadata metadata;
-   volatile transient MetaParamsInternalMetadata internalMetadata;
+   volatile transient PrivateMetadata internalMetadata;
    transient org.infinispan.commons.marshall.Marshaller marshaller;
 
    MarshallableEntryImpl() {}
 
-   MarshallableEntryImpl(K key, V value, Metadata metadata, MetaParamsInternalMetadata internalMetadata, long created, long lastUsed, Marshaller marshaller) {
+   MarshallableEntryImpl(K key, V value, Metadata metadata, PrivateMetadata internalMetadata, long created, long lastUsed, Marshaller marshaller) {
       this.key = key;
       this.value = value;
       this.metadata = metadata;
@@ -95,7 +95,7 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
    }
 
    @Override
-   public MetaParamsInternalMetadata getInternalMetadata() {
+   public PrivateMetadata getInternalMetadata() {
       if (internalMetadata == null) {
          if (internalMetadataBytes == null)
             return null;
@@ -173,14 +173,13 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
       if (this == o) return true;
       if (!(o instanceof MarshallableEntryImpl)) return false;
 
-      MarshallableEntryImpl that = (MarshallableEntryImpl) o;
+      MarshallableEntryImpl<?, ?> that = (MarshallableEntryImpl<?, ?>) o;
 
-      if (getKeyBytes() != null ? !getKeyBytes().equals(that.getKeyBytes()) : that.getKeyBytes() != null) return false;
-      if (getMetadataBytes() != null ? !getMetadataBytes().equals(that.getMetadataBytes()) : that.getMetadataBytes() != null) return false;
-      if (!Objects.equals(getInternalMetadata(), that.getInternalMetadata())) return false;
-      if (getValueBytes() != null ? !getValueBytes().equals(that.getValueBytes()) : that.getValueBytes() != null) return false;
-      if (expiryTime() != that.expiryTime()) return false;
-      return true;
+      return Objects.equals(getKeyBytes(), that.getKeyBytes()) &&
+            Objects.equals(getMetadataBytes(), that.getMetadataBytes()) &&
+            Objects.equals(getInternalMetadata(), that.getInternalMetadata()) &&
+            Objects.equals(getValueBytes(), that.getValueBytes()) &&
+            expiryTime() == that.expiryTime();
    }
 
    @Override

@@ -6,7 +6,7 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * A command that modifies the cache in some way
@@ -80,8 +80,8 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, Top
     */
    CommandInvocationId getCommandInvocationId();
 
-   MetaParamsInternalMetadata getInternalMetadata(Object key);
+   PrivateMetadata getInternalMetadata(Object key);
 
-   void setInternalMetadata(Object key, MetaParamsInternalMetadata internalMetadata);
+   void setInternalMetadata(Object key, PrivateMetadata internalMetadata);
 
 }

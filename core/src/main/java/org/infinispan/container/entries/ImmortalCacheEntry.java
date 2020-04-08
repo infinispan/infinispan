@@ -7,10 +7,10 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * A cache entry that is immortal/cannot expire
@@ -24,7 +24,7 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       this(key, value, null);
    }
 
-   protected ImmortalCacheEntry(Object key, Object value, MetaParamsInternalMetadata internalMetadata) {
+   protected ImmortalCacheEntry(Object key, Object value, PrivateMetadata internalMetadata) {
       super(key, value, internalMetadata);
    }
 
@@ -106,7 +106,7 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       public ImmortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object key = input.readObject();
          Object value = input.readObject();
-         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
          return new ImmortalCacheEntry(key, value, internalMetadata);
       }
 

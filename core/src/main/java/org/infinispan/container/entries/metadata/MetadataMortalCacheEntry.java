@@ -11,9 +11,9 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.container.entries.AbstractInternalCacheEntry;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * A cache entry that is mortal and is {@link MetadataAware}
@@ -30,7 +30,7 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
       this(key, value, null, metadata, created);
    }
 
-   protected MetadataMortalCacheEntry(Object key, Object value, MetaParamsInternalMetadata internalMetadata,
+   protected MetadataMortalCacheEntry(Object key, Object value, PrivateMetadata internalMetadata,
          Metadata metadata, long created) {
       super(key, value, internalMetadata);
       this.metadata = metadata;
@@ -119,7 +119,7 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
       public MetadataMortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object key = input.readObject();
          Object value = input.readObject();
-         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
          Metadata metadata = (Metadata) input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
          return new MetadataMortalCacheEntry(key, value, internalMetadata, metadata, created);

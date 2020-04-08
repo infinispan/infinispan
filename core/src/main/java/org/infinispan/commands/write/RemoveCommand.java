@@ -14,8 +14,8 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 
 /**
@@ -30,7 +30,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
 
    protected Metadata metadata;
    protected ValueMatcher valueMatcher;
-   private MetaParamsInternalMetadata internalMetadata;
+   private PrivateMetadata internalMetadata;
 
    /**
     * When not null, value indicates that the entry should only be removed if the key is mapped to this value.
@@ -142,7 +142,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
       setFlagsBitSet(input.readLong());
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       commandInvocationId = CommandInvocationId.readFrom(input);
-      internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+      internalMetadata = (PrivateMetadata) input.readObject();
    }
 
    @Override
@@ -179,11 +179,11 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
       return isConditional() || super.isReturnValueExpected();
    }
 
-   public MetaParamsInternalMetadata getInternalMetadata() {
+   public PrivateMetadata getInternalMetadata() {
       return internalMetadata;
    }
 
-   public void setInternalMetadata(MetaParamsInternalMetadata internalMetadata) {
+   public void setInternalMetadata(PrivateMetadata internalMetadata) {
       this.internalMetadata = internalMetadata;
    }
 }

@@ -1,8 +1,8 @@
 package org.infinispan.persistence.spi;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * Defines an externally persisted entry. External stores that keep the data in serialised form should return an
@@ -54,7 +54,7 @@ public interface MarshallableEntry<K, V> {
    /**
     * @return {@code null} if there is no internal metadata associated with the object.
     */
-   MetaParamsInternalMetadata getInternalMetadata();
+   PrivateMetadata getInternalMetadata();
 
    long created();
 

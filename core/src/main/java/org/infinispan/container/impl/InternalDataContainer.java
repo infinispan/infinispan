@@ -9,8 +9,8 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -87,8 +87,7 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
     *
     * @since 10.0
     */
-   void put(int segment, K k, V v, Metadata metadata,
-         MetaParamsInternalMetadata internalMetadata, long createdTimestamp,
+   void put(int segment, K k, V v, Metadata metadata, PrivateMetadata internalMetadata, long createdTimestamp,
          long lastUseTimestamp);
 
    /**

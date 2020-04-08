@@ -6,8 +6,8 @@ import org.infinispan.commons.util.Immutables;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * Factory for generating immutable type wrappers for core types.
@@ -62,7 +62,6 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public boolean equals(Object o) {
          if (!(o instanceof InternalCacheEntry))
             return false;
@@ -207,12 +206,12 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
-      public final MetaParamsInternalMetadata getInternalMetadata() {
+      public final PrivateMetadata getInternalMetadata() {
          return entry.getInternalMetadata();
       }
 
       @Override
-      public void setInternalMetadata(MetaParamsInternalMetadata metadata) {
+      public void setInternalMetadata(PrivateMetadata metadata) {
          throw new UnsupportedOperationException();
       }
    }
@@ -261,6 +260,7 @@ public class CoreImmutables extends Immutables {
 
       @Override
       public <K> InternalCacheEntry<K, V> toInternalCacheEntry(K key) {
+         //noinspection unchecked
          return (InternalCacheEntry<K, V>)entry;
       }
 
@@ -275,12 +275,12 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
-      public MetaParamsInternalMetadata getInternalMetadata() {
+      public PrivateMetadata getInternalMetadata() {
          return entry.getInternalMetadata();
       }
 
       @Override
-      public void setInternalMetadata(MetaParamsInternalMetadata internalMetadata) {
+      public void setInternalMetadata(PrivateMetadata internalMetadata) {
          throw new UnsupportedOperationException();
       }
    }

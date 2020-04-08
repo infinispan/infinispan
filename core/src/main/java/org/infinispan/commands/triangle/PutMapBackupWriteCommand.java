@@ -10,8 +10,8 @@ import java.util.Map;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TriangleFunctionsUtil;
 
@@ -27,7 +27,7 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
 
    private Map<Object, Object> map;
    private Metadata metadata;
-   private Map<Object, MetaParamsInternalMetadata> internalMetadataMap;
+   private Map<Object, PrivateMetadata> internalMetadataMap;
 
    //for testing
    @SuppressWarnings("unused")

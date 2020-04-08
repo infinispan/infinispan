@@ -14,8 +14,8 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -36,7 +36,7 @@ public class ReadCommittedEntry implements MVCCEntry {
    protected long created = -1, lastUsed = -1;
    protected short flags = 0;
    protected Metadata metadata;
-   protected MetaParamsInternalMetadata internalMetadata;
+   protected PrivateMetadata internalMetadata;
 
    public ReadCommittedEntry(Object key, Object value, Metadata metadata) {
       this.key = key;
@@ -308,12 +308,12 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public MetaParamsInternalMetadata getInternalMetadata() {
+   public PrivateMetadata getInternalMetadata() {
       return internalMetadata;
    }
 
    @Override
-   public void setInternalMetadata(MetaParamsInternalMetadata metadata) {
+   public void setInternalMetadata(PrivateMetadata metadata) {
       this.internalMetadata = metadata;
    }
 
