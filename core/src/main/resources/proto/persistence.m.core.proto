@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-package org.infinispan.persistence.m.event_logger;
+package org.infinispan.persistence.m.core;
 
 /**
  * @TypeId(1005)
@@ -9,4 +9,6 @@ package org.infinispan.persistence.m.event_logger;
 message UUID {
     optional uint64 mostSigBits = 1;
     optional uint64 leastSigBits = 2;
+    optional fixed64 mostSigBitsFixed = 3;
+    optional fixed64 leastSigBitsFixed = 4;
 }

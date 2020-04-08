@@ -18,15 +18,20 @@ public class UUIDMarshaller implements MessageMarshaller<UUID> {
 
    @Override
    public UUID readFrom(ProtoStreamReader reader) throws IOException {
-      long mostSigBits = reader.readLong("mostSigBits");
-      long leastSigBits = reader.readLong("leastSigBits");
+      Long mostSigBits = reader.readLong("mostSigBits");
+      Long leastSigBits = reader.readLong("leastSigBits");
+
+      if (mostSigBits == null) {
+         mostSigBits = reader.readLong("mostSigBitsFixed");
+         leastSigBits = reader.readLong("leastSigBitsFixed");
+      }
       return new UUID(mostSigBits, leastSigBits);
    }
 
    @Override
    public void writeTo(ProtoStreamWriter writer, UUID uuid) throws IOException {
-      writer.writeLong("mostSigBits", uuid.getMostSignificantBits());
-      writer.writeLong("leastSigBits", uuid.getLeastSignificantBits());
+      writer.writeLong("mostSigBitsFixed", uuid.getMostSignificantBits());
+      writer.writeLong("leastSigBitsFixed", uuid.getLeastSignificantBits());
    }
 
    @Override

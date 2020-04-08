@@ -1,4 +1,4 @@
-package org.infinispan.server.logging.events;
+package org.infinispan.marshall.protostream.impl;
 
 import java.io.UncheckedIOException;
 import java.util.UUID;
@@ -10,13 +10,17 @@ import org.infinispan.protostream.SerializationContextInitializer;
 
 public class PersistenceContextManualInitializer implements SerializationContextInitializer {
 
+   public static final SerializationContextInitializer INSTANCE = new PersistenceContextManualInitializer();
+
    private static String type(String message) {
-      return String.format("org.infinispan.persistence.m.event_logger.%s", message);
+      return String.format("org.infinispan.persistence.m.core.%s", message);
    }
+
+   private PersistenceContextManualInitializer() {}
 
    @Override
    public String getProtoFileName() {
-      return "persistence.m.event_logger.proto";
+      return "persistence.m.core.proto";
    }
 
    @Override
