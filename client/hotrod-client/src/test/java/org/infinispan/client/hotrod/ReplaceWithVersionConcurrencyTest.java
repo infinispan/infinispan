@@ -92,7 +92,7 @@ public class ReplaceWithVersionConcurrencyTest extends MultiHotRodServersTest {
 
       private void incrementCounter() {
          while (true) {
-            VersionedValue<Integer> versioned = cache.getVersioned(key);
+            VersionedValue<Integer> versioned = cache.getWithMetadata(key);
             if (versioned == null) {
                if (cache.withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent(key, 1) == null) {
                   log.info("count=" + globalCounter.getAndIncrement() + ",prev=0,new=1 (first-put)");

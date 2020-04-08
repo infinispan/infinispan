@@ -140,7 +140,7 @@ public class RemoteAsyncAPITest extends SingleHotRodServerTest {
 
    public void testRemoveWithVersionAsync() throws Exception {
       remote().put("k", "v4");
-      VersionedValue value = remote().getVersioned("k");
+      VersionedValue value = remote().getWithMetadata("k");
 
       Future<Boolean> f = remote().removeWithVersionAsync("k", value.getVersion() + 1);
       testFuture(f, false);
@@ -153,7 +153,7 @@ public class RemoteAsyncAPITest extends SingleHotRodServerTest {
 
    public void testRemoveWithVersionAsyncWithListener() throws Exception {
       remote().put("k", "v4");
-      VersionedValue value = remote().getVersioned("k");
+      VersionedValue value = remote().getWithMetadata("k");
 
       CompletableFuture<Boolean> f = remote().removeWithVersionAsync("k", value.getVersion() + 1);
       testFutureWithListener(f, false);
@@ -192,12 +192,12 @@ public class RemoteAsyncAPITest extends SingleHotRodServerTest {
 
    public void testReplaceWithVersionAsync() throws Exception {
       remote().put("k", "v");
-      VersionedValue versioned1 = remote().getVersioned("k");
+      VersionedValue versioned1 = remote().getWithMetadata("k");
 
       Future<Boolean> f = remote().replaceWithVersionAsync("k", "v2", versioned1.getVersion());
       testFuture(f, true);
 
-      VersionedValue versioned2 = remote().getVersioned("k");
+      VersionedValue versioned2 = remote().getWithMetadata("k");
       assertNotEquals(versioned1.getVersion(), versioned2.getVersion());
       assertEquals(versioned2.getValue(), "v2");
 
@@ -208,12 +208,12 @@ public class RemoteAsyncAPITest extends SingleHotRodServerTest {
 
    public void testReplaceWithVersionAsyncWithListener() throws Exception {
       remote().put("k", "v");
-      VersionedValue versioned1 = remote().getVersioned("k");
+      VersionedValue versioned1 = remote().getWithMetadata("k");
 
       CompletableFuture<Boolean> f = remote().replaceWithVersionAsync("k", "v2", versioned1.getVersion());
       testFutureWithListener(f, true);
 
-      VersionedValue versioned2 = remote().getVersioned("k");
+      VersionedValue versioned2 = remote().getWithMetadata("k");
       assertNotEquals(versioned1.getVersion(), versioned2.getVersion());
       assertEquals(versioned2.getValue(), "v2");
 

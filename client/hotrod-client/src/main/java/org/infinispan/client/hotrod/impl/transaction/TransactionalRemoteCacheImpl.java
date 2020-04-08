@@ -13,7 +13,6 @@ import javax.transaction.TransactionManager;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.transaction.entry.TransactionEntry;
 import org.infinispan.client.hotrod.logging.Log;
@@ -77,15 +76,6 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
                         maxIdleTimeUnit),
                   remoteGet);
    }
-
-   @Override
-   public VersionedValue<V> getVersioned(K key) {
-      TransactionContext<K, V> txContext = getTransactionContext();
-      return txContext == null ?
-            super.getVersioned(key) :
-            txContext.computeSync(key, TransactionEntry::toVersionValue, remoteGet);
-   }
-
 
    @Override
    public MetadataValue<V> getWithMetadata(K key) {

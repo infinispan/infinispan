@@ -46,7 +46,6 @@ import org.infinispan.client.hotrod.impl.operations.ExecuteOperation;
 import org.infinispan.client.hotrod.impl.operations.GetAllParallelOperation;
 import org.infinispan.client.hotrod.impl.operations.GetOperation;
 import org.infinispan.client.hotrod.impl.operations.GetWithMetadataOperation;
-import org.infinispan.client.hotrod.impl.operations.GetWithVersionOperation;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.operations.PutAllParallelOperation;
@@ -253,21 +252,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       RemoteCloseableIterator remoteCloseableIterator = new RemoteCloseableIterator(operationsFactory, defaultMarshaller, batchSize, segments, true, dataFormat);
       remoteCloseableIterator.start();
       return remoteCloseableIterator;
-   }
-
-   @Override
-   public VersionedValue<V> getVersioned(K key) {
-      assertRemoteCacheManagerIsStarted();
-      if (ConfigurationProperties.isVersionPre12(remoteCacheManager.getConfiguration())) {
-         GetWithVersionOperation<V> op = operationsFactory.newGetWithVersionOperation(
-               keyAsObjectIfNeeded(key), keyToBytes(key), dataFormat);
-         return await(op.execute());
-      } else {
-         MetadataValue<V> result = getWithMetadata(key);
-         return result != null
-               ? new VersionedValueImpl<>(result.getVersion(), result.getValue())
-               : null;
-      }
    }
 
    @Override

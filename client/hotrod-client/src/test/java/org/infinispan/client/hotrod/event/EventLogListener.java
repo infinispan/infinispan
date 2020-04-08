@@ -171,10 +171,7 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
    }
 
    private long serverDataVersion(RemoteCache<K, ?> cache, K key) {
-      long v1 = cache.getVersioned(key).getVersion();
-      long v2 = cache.getWithMetadata(key).getVersion();
-      assertEquals(v1, v2);
-      return v1;
+      return cache.getWithMetadata(key).getVersion();
    }
 
    public void expectUnorderedEvents(ClientEvent.Type type, K... keys) {

@@ -63,10 +63,6 @@ public class SkipIndexingFlagTest extends SingleCacheManagerTest {
       performTest(RequestType.GET);
    }
 
-   public void testGetWithVersion() {
-      performTest(RequestType.GET_WITH_VERSION);
-   }
-
    public void testGetWithMetadata() {
       performTest(RequestType.GET_WITH_METADATA);
    }
@@ -168,12 +164,6 @@ public class SkipIndexingFlagTest extends SingleCacheManagerTest {
             cache.get(KEY);
          }
       },
-      GET_WITH_VERSION {
-         @Override
-         void execute(RemoteCache<String, String> cache) {
-            cache.getVersioned(KEY);
-         }
-      },
       GET_WITH_METADATA {
          @Override
          void execute(RemoteCache<String, String> cache) {
@@ -209,7 +199,7 @@ public class SkipIndexingFlagTest extends SingleCacheManagerTest {
       ;
 
       private static boolean expectsFlag(RequestType type) {
-         return type != CONTAINS && type != GET && type != GET_WITH_METADATA && type != GET_WITH_VERSION;
+         return type != CONTAINS && type != GET && type != GET_WITH_METADATA;
       }
 
       abstract void execute(RemoteCache<String, String> cache);

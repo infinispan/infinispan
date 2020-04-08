@@ -48,7 +48,7 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
       final ErrorInducingListener listener = new ErrorInducingListener();
       final byte[] key = HotRodClientTestingUtil.getKeyForServer(hotRodServer1);
       assertNull(remoteCache.putIfAbsent(key, 1));
-      final VersionedValue versioned = remoteCache.getVersioned(key);
+      final VersionedValue versioned = remoteCache.getWithMetadata(key);
       assertEquals(1, versioned.getValue());
       withListener(listener, () -> {
          assertFalse(listener.errorInduced);
@@ -62,7 +62,7 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
       final ErrorInducingListener listener = new ErrorInducingListener();
       final byte[] key = HotRodClientTestingUtil.getKeyForServer(hotRodServer1);
       assertNull(remoteCache.putIfAbsent(key, 1));
-      final VersionedValue versioned = remoteCache.getVersioned(key);
+      final VersionedValue versioned = remoteCache.getWithMetadata(key);
       assertEquals(1, versioned.getValue());
       withListener(listener, () -> {
          assertFalse(listener.errorInduced);

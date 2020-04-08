@@ -96,7 +96,7 @@ public class ExpiryTest extends MultiHotRodServersTest {
 
    public void testGlobalExpiryReplaceWithVersion() {
       client(0).getCache().put(8, "v0");
-      long version = client(0).getCache().getVersioned(8).getVersion();
+      long version = client(0).getCache().getWithMetadata(8).getVersion();
       RemoteCache<Integer, String> cache0 = client(0).getCache();
       Req.REPLACE_WITH_VERSION.execute(cache0, 8,"v1",version);
       expectCachedThenExpired(cache0, 8, "v1");
@@ -104,7 +104,7 @@ public class ExpiryTest extends MultiHotRodServersTest {
 
    public void testGlobalExpiryReplaceWithVersionFlag() {
       client(0).getCache().put(9, "v0");
-      long version = client(0).getCache().getVersioned(9).getVersion();
+      long version = client(0).getCache().getWithMetadata(9).getVersion();
       RemoteCache<Integer, String> cache0 = client(0).getCache();
       Req.REPLACE_WITH_VERSION.execute(client(0).<Integer, String>getCache().withFlags(Flag.SKIP_INDEXING),9,"v1",version);
       expectCachedThenExpired(cache0,9,"v1");

@@ -96,7 +96,7 @@ public class ClientEventsTest extends SingleHotRodServerTest {
          l.expectOnlyCreatedEvent(1);
          remote.replaceWithVersion(1, "one", 0);
          l.expectNoEvents();
-         VersionedValue<?> versioned = remote.getVersioned(1);
+         VersionedValue<?> versioned = remote.getWithMetadata(1);
          remote.replaceWithVersion(1, "one", versioned.getVersion());
          l.expectOnlyModifiedEvent(1);
       });
@@ -112,7 +112,7 @@ public class ClientEventsTest extends SingleHotRodServerTest {
          l.expectOnlyCreatedEvent(1);
          remote.removeWithVersion(1, 0);
          l.expectNoEvents();
-         VersionedValue<?> versioned = remote.getVersioned(1);
+         VersionedValue<?> versioned = remote.getWithMetadata(1);
          remote.removeWithVersion(1, versioned.getVersion());
          l.expectOnlyRemovedEvent(1);
       });

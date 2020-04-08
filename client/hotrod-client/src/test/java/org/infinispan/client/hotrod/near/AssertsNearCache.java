@@ -23,7 +23,6 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
@@ -68,12 +67,6 @@ class AssertsNearCache<K, V> {
 
    AssertsNearCache<K, V> getAsync(K key, V expected) throws ExecutionException, InterruptedException {
       assertEquals(expected, remote.getAsync(key).get());
-      return this;
-   }
-
-   AssertsNearCache<K, V> getVersioned(K key, V expected) {
-      VersionedValue<V> versioned = remote.getVersioned(key);
-      assertEquals(expected, versioned == null ? null : versioned.getValue());
       return this;
    }
 

@@ -161,7 +161,7 @@ public class EmbeddedHotRodCacheListenerTest extends AbstractInfinispanTest {
       embedded.addListener(l);
 
       remote.put("key", "value");
-      VersionedValue oldVersionedValue = remote.getVersioned("key");
+      VersionedValue oldVersionedValue = remote.getWithMetadata("key");
       assertEquals("value", oldVersionedValue.getValue());
       assertEquals(1, l.createdCounter);
       assertTrue(l.modified.isEmpty());
@@ -171,7 +171,7 @@ public class EmbeddedHotRodCacheListenerTest extends AbstractInfinispanTest {
 
       remote.put("key2", "value2");
       remote.put("key", "outOfVersionValue");
-      VersionedValue newVersionedValue = remote.getVersioned("key2");
+      VersionedValue newVersionedValue = remote.getWithMetadata("key2");
 
       l.reset();
 
@@ -191,7 +191,7 @@ public class EmbeddedHotRodCacheListenerTest extends AbstractInfinispanTest {
       assertEquals(1, l.visitedCounter);
 
       remote.put("newKey", "willBeOutOfDate");
-      VersionedValue oldVersionedValueToBeReplaced = remote.getVersioned("newKey");
+      VersionedValue oldVersionedValueToBeReplaced = remote.getWithMetadata("newKey");
       remote.put("newKey", "changedValue");
 
       l.reset();
@@ -203,7 +203,7 @@ public class EmbeddedHotRodCacheListenerTest extends AbstractInfinispanTest {
       assertTrue(l.visited.isEmpty());
 
       remote.put("newKey2", "willBeSuccessfullyChanged");
-      VersionedValue newVersionedValueToBeReplaced = remote.getVersioned("newKey2");
+      VersionedValue newVersionedValueToBeReplaced = remote.getWithMetadata("newKey2");
 
       l.reset();
 
