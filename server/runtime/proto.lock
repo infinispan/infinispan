@@ -65,31 +65,6 @@
           "name": "org.infinispan.persistence.event_logger"
         }
       }
-    },
-    {
-      "protopath": "persistence.m.event_logger.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "UUID",
-            "fields": [
-              {
-                "id": 1,
-                "name": "mostSigBits",
-                "type": "uint64"
-              },
-              {
-                "id": 2,
-                "name": "leastSigBits",
-                "type": "uint64"
-              }
-            ]
-          }
-        ],
-        "package": {
-          "name": "org.infinispan.persistence.m.event_logger"
-        }
-      }
     }
   ]
 }

@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-package org.infinispan.persistence.m.event_logger;
+package org.infinispan.persistence.m.core;
 
 /**
  * @TypeId(1005)

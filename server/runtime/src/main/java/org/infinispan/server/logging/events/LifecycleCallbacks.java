@@ -33,7 +33,6 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration gc) {
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
       ctxRegistry.addContextInitializer(MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
-      ctxRegistry.addContextInitializer(MarshallerType.PERSISTENCE, new PersistenceContextManualInitializer());
 
       EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
       InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);

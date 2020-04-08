@@ -47,6 +47,7 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
             ctx.addContextIntializers(scis);
 
          ctx.addContextIntializer(new PersistenceContextInitializerImpl())
+               .addContextIntializer(PersistenceContextManualInitializer.INSTANCE)
                .update();
       });
    }
