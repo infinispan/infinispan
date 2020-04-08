@@ -102,7 +102,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       args.add("SITE_LOCAL");
       args.add("-Djgroups.bind.address=SITE_LOCAL");
       args.add("-Dinfinispan.cluster.name=" + name);
-      args.add("-D" + TEST_HOST_ADDRESS + "=" + testHostAddress.getHostName());
+      args.add("-D" + TEST_HOST_ADDRESS + "=" + testHostAddress.getHostAddress());
       if (configuration.isJMXEnabled()) {
          args.add("-Dcom.sun.management.jmxremote.port=" + JMX_PORT);
          args.add("-Dcom.sun.management.jmxremote.authenticate=false");
