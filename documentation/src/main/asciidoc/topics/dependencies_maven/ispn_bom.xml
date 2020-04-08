@@ -1,3 +1,7 @@
+<properties>
+  <version.infinispan>{ispn_version}</version.infinispan>
+</properties>
+
 <dependencyManagement>
   <dependencies>
     <dependency>
@@ -5,11 +9,7 @@
       <artifactId>infinispan-bom</artifactId>
       <version>${version.infinispan}</version>
       <type>pom</type>
-    </dependency>
-    <dependency>
-      <groupId>org.infinispan.protostream</groupId>
-      <artifactId>protostream-processor</artifactId>
-      <scope>provided</scope>
+      <scope>import</scope>
     </dependency>
   </dependencies>
 </dependencyManagement>

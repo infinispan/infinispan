@@ -1,27 +1,14 @@
 [id='install_library']
-= Adding {brandname} Dependencies
-Add {brandname} dependencies to your project.
-
-//RHDG
-ifndef::productized[]
-.Prerequisites
-
-If necessary, you should set up JBoss Enterprise Maven repository access for
-your project.
-endif::productized[]
+//Community
+= Installing {brandname} in Library Mode
+Add {brandname} as an embedded library in your project.
 
 .Procedure
 
-* Add {brandname} dependencies to your `pom.xml`.
+* Add the `infinispan-core` artifact as a dependency in your `pom.xml` as
+follows:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::dependencies_maven/ispn_embedded.xml[]
 ----
-
-//RHDG
-ifndef::productized[]
-.Reference
-
-* link:https://access.redhat.com/maven-repository[JBoss Enterprise Maven Repository]
-endif::productized[]

@@ -1,5 +1,4 @@
 <dependency>
   <groupId>org.infinispan</groupId>
   <artifactId>infinispan-clustered-lock</artifactId>
-  <version>${version.infinispan}</version>
 </dependency>

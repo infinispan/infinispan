@@ -1,6 +1,7 @@
 [id='developing']
 :context: developing
 
+include::assembly_configuring_maven_repository.adoc[leveloffset=+0]
 include::{topics}/cache_manager.adoc[leveloffset=+0]
 include::{topics}/cache_api.adoc[leveloffset=+0]
 include::{topics}/encoding.adoc[leveloffset=+0]
@@ -12,7 +13,6 @@ include::{topics}/counters.adoc[leveloffset=+0]
 include::{topics}/locking.adoc[leveloffset=+0]
 include::assembly_cdi.adoc[leveloffset=+0]
 include::{topics}/transactions.adoc[leveloffset=+0]
-// dnaro: ISPN-11577
 ifndef::productized[]
 include::{topics}/functional_api.adoc[leveloffset=+0]
 endif::productized[]
