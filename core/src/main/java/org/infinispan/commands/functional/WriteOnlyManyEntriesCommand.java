@@ -41,8 +41,6 @@ public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteMan
       super(command);
       this.arguments = command.arguments;
       this.f = command.f;
-      this.keyDataConversion = command.keyDataConversion;
-      this.valueDataConversion = command.valueDataConversion;
    }
 
    public WriteOnlyManyEntriesCommand() {

@@ -9,8 +9,8 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, FunctionalCommand<K, V>, RemoteLockCommand {
@@ -24,7 +24,7 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
    long flags;
    DataConversion keyDataConversion;
    DataConversion valueDataConversion;
-   Map<Object, MetaParamsInternalMetadata> internalMetadataMap;
+   Map<Object, PrivateMetadata> internalMetadataMap;
 
    protected AbstractWriteManyCommand(CommandInvocationId commandInvocationId,
                                       Params params,
@@ -38,12 +38,14 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
       this.internalMetadataMap = new ConcurrentHashMap<>();
    }
 
-   protected <K, V> AbstractWriteManyCommand(AbstractWriteManyCommand<K, V> command) {
+   protected AbstractWriteManyCommand(AbstractWriteManyCommand<K, V> command) {
       this.commandInvocationId = command.commandInvocationId;
       this.topologyId = command.topologyId;
       this.params = command.params;
       this.flags = command.flags;
       this.internalMetadataMap = new ConcurrentHashMap<>(command.internalMetadataMap);
+      this.keyDataConversion = command.keyDataConversion;
+      this.valueDataConversion = command.valueDataConversion;
    }
 
    protected AbstractWriteManyCommand() {
@@ -148,12 +150,12 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
    }
 
    @Override
-   public MetaParamsInternalMetadata getInternalMetadata(Object key) {
+   public PrivateMetadata getInternalMetadata(Object key) {
       return internalMetadataMap.get(key);
    }
 
    @Override
-   public void setInternalMetadata(Object key, MetaParamsInternalMetadata internalMetadata) {
+   public void setInternalMetadata(Object key, PrivateMetadata internalMetadata) {
       this.internalMetadataMap.put(key, internalMetadata);
    }
 }

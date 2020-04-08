@@ -1,7 +1,7 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.commands.DataCommand;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * Mixes features from DataCommand and WriteCommand
@@ -11,17 +11,17 @@ import org.infinispan.functional.impl.MetaParamsInternalMetadata;
  */
 public interface DataWriteCommand extends WriteCommand, DataCommand {
 
-   MetaParamsInternalMetadata getInternalMetadata();
+   PrivateMetadata getInternalMetadata();
 
-   void setInternalMetadata(MetaParamsInternalMetadata internalMetadata);
+   void setInternalMetadata(PrivateMetadata internalMetadata);
 
    @Override
-   default MetaParamsInternalMetadata getInternalMetadata(Object key) {
+   default PrivateMetadata getInternalMetadata(Object key) {
       return key.equals(getKey()) ? getInternalMetadata() : null;
    }
 
    @Override
-   default void setInternalMetadata(Object key, MetaParamsInternalMetadata internalMetadata) {
+   default void setInternalMetadata(Object key, PrivateMetadata internalMetadata) {
       if (key.equals(getKey())) {
          setInternalMetadata(internalMetadata);
       }

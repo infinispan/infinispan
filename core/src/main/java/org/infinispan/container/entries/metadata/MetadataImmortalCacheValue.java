@@ -9,9 +9,9 @@ import java.util.Set;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * A form of {@link ImmortalCacheValue} that is {@link MetadataAware}.
@@ -27,7 +27,7 @@ public class MetadataImmortalCacheValue extends ImmortalCacheValue implements Me
       this(value, null, metadata);
    }
 
-   protected MetadataImmortalCacheValue(Object value, MetaParamsInternalMetadata internalMetadata, Metadata metadata) {
+   protected MetadataImmortalCacheValue(Object value, PrivateMetadata internalMetadata, Metadata metadata) {
       super(value, internalMetadata);
       this.metadata = metadata;
    }
@@ -64,7 +64,7 @@ public class MetadataImmortalCacheValue extends ImmortalCacheValue implements Me
       @Override
       public MetadataImmortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object value = input.readObject();
-         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
          Metadata metadata = (Metadata) input.readObject();
          return new MetadataImmortalCacheValue(value, internalMetadata, metadata);
       }

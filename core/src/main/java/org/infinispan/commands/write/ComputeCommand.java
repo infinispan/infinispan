@@ -15,8 +15,8 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 public class ComputeCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
 
@@ -26,7 +26,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    private Metadata metadata;
    private boolean computeIfPresent;
    private boolean successful = true;
-   private MetaParamsInternalMetadata internalMetadata;
+   private PrivateMetadata internalMetadata;
 
    public ComputeCommand() {
    }
@@ -122,7 +122,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
       metadata = (Metadata) input.readObject();
       commandInvocationId = CommandInvocationId.readFrom(input);
       setFlagsBitSet(input.readLong());
-      internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+      internalMetadata = (PrivateMetadata) input.readObject();
    }
 
    @Override
@@ -145,7 +145,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
 
       if (!Objects.equals(metadata, that.metadata)) return false;
       if (!Objects.equals(computeIfPresent, that.computeIfPresent)) return false;
-      return Objects.equals(remappingBiFunction, this.remappingBiFunction);
+      return Objects.equals(remappingBiFunction, that.remappingBiFunction);
    }
 
    @Override
@@ -173,12 +173,12 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
-   public MetaParamsInternalMetadata getInternalMetadata() {
+   public PrivateMetadata getInternalMetadata() {
       return internalMetadata;
    }
 
    @Override
-   public void setInternalMetadata(MetaParamsInternalMetadata internalMetadata) {
+   public void setInternalMetadata(PrivateMetadata internalMetadata) {
       this.internalMetadata = internalMetadata;
    }
 }

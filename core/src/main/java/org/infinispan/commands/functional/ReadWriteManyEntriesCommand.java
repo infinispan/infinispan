@@ -45,8 +45,6 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
       super(command);
       this.arguments = command.arguments;
       this.f = command.f;
-      this.keyDataConversion = command.getKeyDataConversion();
-      this.valueDataConversion = command.getValueDataConversion();
    }
 
    public ReadWriteManyEntriesCommand() {

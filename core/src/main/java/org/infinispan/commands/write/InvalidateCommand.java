@@ -16,7 +16,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 
@@ -41,7 +41,7 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    }
 
    public InvalidateCommand(long flagsBitSet, Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      this(flagsBitSet, commandInvocationId, keys == null || keys.isEmpty() ? Util.EMPTY_OBJECT_ARRAY : keys.toArray(new Object[keys.size()]));
+      this(flagsBitSet, commandInvocationId, keys == null || keys.isEmpty() ? Util.EMPTY_OBJECT_ARRAY : keys.toArray());
    }
 
    @Override
@@ -119,13 +119,13 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    }
 
    @Override
-   public MetaParamsInternalMetadata getInternalMetadata(Object key) {
+   public PrivateMetadata getInternalMetadata(Object key) {
       //TODO? support invalidation?
       return null;
    }
 
    @Override
-   public void setInternalMetadata(Object key, MetaParamsInternalMetadata internalMetadata) {
+   public void setInternalMetadata(Object key, PrivateMetadata internalMetadata) {
       //no-op
    }
 

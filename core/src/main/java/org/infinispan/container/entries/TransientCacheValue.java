@@ -8,8 +8,8 @@ import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * A transient cache value, to correspond with {@link TransientCacheEntry}
@@ -25,7 +25,7 @@ public class TransientCacheValue extends ImmortalCacheValue {
       this(value, null, maxIdle, lastUsed);
    }
 
-   protected TransientCacheValue(Object value, MetaParamsInternalMetadata internalMetadata, long maxIdle, long lastUsed) {
+   protected TransientCacheValue(Object value, PrivateMetadata internalMetadata, long maxIdle, long lastUsed) {
       super(value, internalMetadata);
       this.maxIdle = maxIdle;
       this.lastUsed = lastUsed;
@@ -123,7 +123,7 @@ public class TransientCacheValue extends ImmortalCacheValue {
       @Override
       public TransientCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object value = input.readObject();
-         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          long maxIdle = input.readLong();
          return new TransientCacheValue(value, internalMetadata, maxIdle, lastUsed);

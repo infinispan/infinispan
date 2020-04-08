@@ -2,6 +2,7 @@ package org.infinispan.container.offheap;
 
 import java.util.concurrent.atomic.LongAdder;
 
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -83,7 +84,7 @@ public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
     * @param metadataSize         The {@link org.infinispan.metadata.Metadata} size. If {@code writeMetadataSize} is
     *                             false, this parameter must include the size of mortal/transient entries (2 or 4
     *                             longs).
-    * @param internalMetadataSize The {@link org.infinispan.functional.impl.MetaParamsInternalMetadata} size.
+    * @param internalMetadataSize The {@link PrivateMetadata} size.
     * @return The off-heap entry size without alignment!
     */
    public static long offHeapEntrySize(boolean evictionEnabled, boolean writeMetadataSize, int keySize, int valueSize,

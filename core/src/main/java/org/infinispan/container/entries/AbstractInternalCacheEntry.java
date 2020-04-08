@@ -5,8 +5,8 @@ import java.util.Objects;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * An abstract internal cache entry that is typically stored in the data container
@@ -18,9 +18,9 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    protected Object key;
    protected Object value;
-   protected MetaParamsInternalMetadata internalMetadata;
+   protected PrivateMetadata internalMetadata;
 
-   protected AbstractInternalCacheEntry(Object key, Object value, MetaParamsInternalMetadata internalMetadata) {
+   protected AbstractInternalCacheEntry(Object key, Object value, PrivateMetadata internalMetadata) {
       this.key = key;
       this.value = value;
       this.internalMetadata = internalMetadata;
@@ -119,12 +119,12 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    }
 
    @Override
-   public final MetaParamsInternalMetadata getInternalMetadata() {
+   public final PrivateMetadata getInternalMetadata() {
       return internalMetadata;
    }
 
    @Override
-   public final void setInternalMetadata(MetaParamsInternalMetadata metadata) {
+   public final void setInternalMetadata(PrivateMetadata metadata) {
       this.internalMetadata = metadata;
    }
 

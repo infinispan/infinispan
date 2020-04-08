@@ -15,8 +15,8 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.ByteString;
 
 /**
@@ -34,7 +34,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    private Object key;
    private Object valueOrFunction;
    private Metadata metadata;
-   private MetaParamsInternalMetadata internalMetadata;
+   private PrivateMetadata internalMetadata;
 
    //for testing
    @SuppressWarnings("unused")
@@ -127,7 +127,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       readBase(input);
       operation = MarshallUtil.unmarshallEnum(input, SingleKeyBackupWriteCommand::valueOf);
       key = input.readObject();
-      internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+      internalMetadata = (PrivateMetadata) input.readObject();
       switch (operation) {
          case COMPUTE_IF_PRESENT:
          case COMPUTE_IF_ABSENT:

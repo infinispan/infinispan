@@ -40,8 +40,6 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       super(command);
       this.keys = command.keys;
       this.f = command.f;
-      this.keyDataConversion = command.keyDataConversion;
-      this.valueDataConversion = command.valueDataConversion;
    }
 
    public WriteOnlyManyCommand() {

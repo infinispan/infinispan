@@ -35,6 +35,7 @@ public interface ProtoStreamTypeIds {
    int JGROUPS_ADDRESS = 10;
    int PROTOBUF_VALUE_WRAPPER = 11;
    int MEDIA_TYPE = 12;
+   int PRIVATE_METADATA = MEDIA_TYPE + 1;
 
    // Priority counter values
    int COUNTER_VALUE = 125;

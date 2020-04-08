@@ -43,8 +43,6 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       super(command);
       this.keys = command.keys;
       this.f = command.f;
-      this.keyDataConversion = command.keyDataConversion;
-      this.valueDataConversion = command.valueDataConversion;
    }
 
    public ReadWriteManyCommand() {

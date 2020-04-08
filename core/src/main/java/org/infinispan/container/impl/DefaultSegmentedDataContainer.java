@@ -24,6 +24,7 @@ import org.infinispan.commons.util.ConcatIterator;
 import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.reactivestreams.Publisher;
 
@@ -55,8 +56,8 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       this.mapSupplier = Objects.requireNonNull(mapSupplier);
    }
 
+   @Start
    public void start() {
-      super.start();
       // Local (invalidation), replicated and scattered cache we just instantiate all the maps immediately
       // Scattered needs this for backups as they can be for any segment
       // Distributed needs them all only at beginning for preload of data - rehash event will remove others

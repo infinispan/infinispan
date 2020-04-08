@@ -23,9 +23,9 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * Factory that can create CacheEntry instances from off-heap memory.
@@ -101,7 +101,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
             Bits.putLong(metadataBytes, 0, lifespan);
             Bits.putLong(metadataBytes, 8, ice.getCreated());
             System.arraycopy(versionBytes, 0, metadataBytes, 16, versionBytes.length);
-         } else if (lifespan < 0 && maxIdle > -1) {
+         } else if (lifespan < 0) {
             type |= TRANSIENT;
             metadataBytes = new byte[16 + versionBytes.length];
             Bits.putLong(metadataBytes, 0, maxIdle);
@@ -324,7 +324,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          valueWrappedBytes = null;
       }
 
-      MetaParamsInternalMetadata internalMetadata = MetaParamsInternalMetadata.empty();
+      PrivateMetadata internalMetadata = PrivateMetadata.empty();
       if (internalMetadataSize > 0) {
          byte[] internalMetadataBytes = new byte[internalMetadataSize];
          MEMORY.getBytes(address, offset, internalMetadataBytes, 0, internalMetadataSize);
@@ -523,7 +523,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    }
 
    @Override
-   public long calculateSize(WrappedBytes key, WrappedBytes value, Metadata metadata, MetaParamsInternalMetadata internalMetadata) {
+   public long calculateSize(WrappedBytes key, WrappedBytes value, Metadata metadata, PrivateMetadata internalMetadata) {
       long totalSize = evictionEnabled ? 24 : 8;
       totalSize += HEADER_LENGTH;
       totalSize += key.getLength() + value.getLength();
@@ -675,7 +675,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       }
    }
 
-   private static boolean shouldWriteInternalMetadata(MetaParamsInternalMetadata metadata) {
+   private static boolean shouldWriteInternalMetadata(PrivateMetadata metadata) {
       return metadata != null && !metadata.isEmpty();
    }
 

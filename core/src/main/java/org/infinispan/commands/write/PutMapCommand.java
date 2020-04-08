@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandInvocationId;
@@ -20,8 +21,8 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 /**
@@ -39,7 +40,7 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    private Map<Object, Object> map;
    private Metadata metadata;
    private boolean isForwarded = false;
-   private Map<Object, MetaParamsInternalMetadata> internalMetadataMap;
+   private Map<Object, PrivateMetadata> internalMetadataMap;
 
    public CommandInvocationId getCommandInvocationId() {
       return commandInvocationId;
@@ -139,8 +140,8 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
 
       PutMapCommand that = (PutMapCommand) o;
 
-      if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) return false;
-      return map != null ? map.equals(that.map) : that.map == null;
+      return Objects.equals(metadata, that.metadata) &&
+            Objects.equals(map, that.map);
 
    }
 
@@ -250,12 +251,12 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    }
 
    @Override
-   public MetaParamsInternalMetadata getInternalMetadata(Object key) {
+   public PrivateMetadata getInternalMetadata(Object key) {
       return internalMetadataMap.get(key);
    }
 
    @Override
-   public void setInternalMetadata(Object key, MetaParamsInternalMetadata internalMetadata) {
+   public void setInternalMetadata(Object key, PrivateMetadata internalMetadata) {
       this.internalMetadataMap.put(key, internalMetadata);
    }
 

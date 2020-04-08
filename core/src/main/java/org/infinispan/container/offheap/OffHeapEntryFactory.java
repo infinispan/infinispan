@@ -3,8 +3,8 @@ package org.infinispan.container.offheap;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.KeyValueMetadataSizeCalculator;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * Factory that can create {@link InternalCacheEntry} objects that use off-heap heap memory.  These are stored by
@@ -108,14 +108,13 @@ public interface OffHeapEntryFactory extends KeyValueMetadataSizeCalculator<Wrap
    /**
     * Method used to calculate how much memory in size the key, value, metadata and internal metadata use.
     *
-    * @param key      The key for this entry to be used in size calculation
-    * @param value    The value for this entry to be used in size calculation
-    * @param metadata The metadata for this entry to be used in size calculation
-    * @param metadata The internal metadata for this entry to be used in size calculation
+    * @param key              The key for this entry to be used in size calculation
+    * @param value            The value for this entry to be used in size calculation
+    * @param metadata         The metadata for this entry to be used in size calculation
+    * @param internalMetadata The internal metadata for this entry to be used in size calculation
     * @return The size approximately in memory the key, value and metadata use.
     */
-   long calculateSize(WrappedBytes key, WrappedBytes value, Metadata metadata,
-         MetaParamsInternalMetadata internalMetadata);
+   long calculateSize(WrappedBytes key, WrappedBytes value, Metadata metadata, PrivateMetadata internalMetadata);
 
    /**
     * Update max idle time for an entry. This method will try to do an in place update of the access time, however if

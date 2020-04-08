@@ -8,8 +8,8 @@ import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * A mortal cache value, to correspond with {@link MortalCacheEntry}
@@ -26,7 +26,7 @@ public class MortalCacheValue extends ImmortalCacheValue {
       this(value, null, created, lifespan);
    }
 
-   protected MortalCacheValue(Object value, MetaParamsInternalMetadata internalMetadata, long created, long lifespan) {
+   protected MortalCacheValue(Object value, PrivateMetadata internalMetadata, long created, long lifespan) {
       super(value, internalMetadata);
       this.created = created;
       this.lifespan = lifespan;
@@ -117,7 +117,7 @@ public class MortalCacheValue extends ImmortalCacheValue {
       @Override
       public MortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object value = input.readObject();
-         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
          long lifespan = input.readLong();
          return new MortalCacheValue(value, internalMetadata, created, lifespan);

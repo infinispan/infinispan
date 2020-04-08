@@ -3,8 +3,8 @@ package org.infinispan.persistence.spi;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * Factory for {@link MarshallableEntry}.
@@ -63,11 +63,9 @@ public interface MarshallableEntryFactory<K,V> {
    MarshallableEntry<K,V> create(Object key);
 
    /**
-    * {@code metadata} defaults to null
-    * {@code created} defaults to -1
-    * {@code lastUsed} defaults to -1
+    * {@code metadata} defaults to null {@code created} defaults to -1 {@code lastUsed} defaults to -1
     *
-    * @see #create(Object, Object, Metadata, MetaParamsInternalMetadata, long, long)
+    * @see #create(Object, Object, Metadata, PrivateMetadata, long, long)
     */
    MarshallableEntry<K,V> create(Object key, Object value);
 
@@ -84,8 +82,8 @@ public interface MarshallableEntryFactory<K,V> {
     * {@link MarshallableEntry#getKeyBytes()}, {@link MarshallableEntry#getValueBytes()} and {@link
     * MarshallableEntry#getMetadataBytes()} methods.
     */
-   MarshallableEntry<K, V> create(Object key, Object value, Metadata metadata,
-         MetaParamsInternalMetadata internalMetadata, long created, long lastUsed);
+   MarshallableEntry<K, V> create(Object key, Object value, Metadata metadata, PrivateMetadata internalMetadata,
+         long created, long lastUsed);
 
    /**
     * Creates a {@link MarshallableEntry} instance from a {@code key} and an {@link InternalCacheValue}.

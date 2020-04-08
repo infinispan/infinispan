@@ -5,6 +5,7 @@ import static org.infinispan.commons.util.Util.toStr;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
@@ -13,8 +14,8 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#put(Object, Object)}
@@ -35,7 +36,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    private boolean successful = true;
    private Metadata metadata;
    private ValueMatcher valueMatcher;
-   private MetaParamsInternalMetadata internalMetadata;
+   private PrivateMetadata internalMetadata;
 
    public PutKeyValueCommand() {
    }
@@ -99,7 +100,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       commandInvocationId = CommandInvocationId.readFrom(input);
       setFlagsBitSet(input.readLong());
       putIfAbsent = input.readBoolean();
-      internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+      internalMetadata = (PrivateMetadata) input.readObject();
    }
 
    @Override
@@ -128,9 +129,9 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
       PutKeyValueCommand that = (PutKeyValueCommand) o;
 
-      if (putIfAbsent != that.putIfAbsent) return false;
-      if (value != null ? !value.equals(that.value) : that.value != null) return false;
-      return metadata != null ? metadata.equals(that.metadata) : that.metadata == null;
+      return putIfAbsent == that.putIfAbsent &&
+            Objects.equals(value, that.value) &&
+            Objects.equals(metadata, that.metadata);
 
    }
 
@@ -190,11 +191,11 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       return isConditional() || super.isReturnValueExpected();
    }
 
-   public MetaParamsInternalMetadata getInternalMetadata() {
+   public PrivateMetadata getInternalMetadata() {
       return internalMetadata;
    }
 
-   public void setInternalMetadata(MetaParamsInternalMetadata internalMetadata) {
+   public void setInternalMetadata(PrivateMetadata internalMetadata) {
       this.internalMetadata = internalMetadata;
    }
 }

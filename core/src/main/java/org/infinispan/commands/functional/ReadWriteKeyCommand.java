@@ -18,8 +18,8 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
@@ -78,7 +78,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       commandInvocationId = CommandInvocationId.readFrom(input);
       keyDataConversion = DataConversion.readFrom(input);
       valueDataConversion = DataConversion.readFrom(input);
-      internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+      internalMetadata = (PrivateMetadata) input.readObject();
    }
 
    @Override

@@ -21,8 +21,8 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
@@ -146,7 +146,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
    }
 
    @Override
-   public void start() {
+   public synchronized void start() {
       if (started) {
          throw new IllegalStateException("This store is already started!");
       }
@@ -311,7 +311,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
    }
 
    @Override
-   public void stop() {
+   public synchronized void stop() {
       try {
          logAppender.stopOperations();
          logAppender = null;
@@ -623,9 +623,9 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
                if (serializedValue != null && (filter == null || filter.test(key)) && !isSeqIdOld(seqId, key, serializedKey)) {
                   // EMPTY_BYTES is used to symbolize when fetchValue is false but there was an entry
                   final Object value = serializedValue == Util.EMPTY_BYTE_ARRAY ? null : marshaller.objectFromByteBuffer(serializedValue);
-                  MetaParamsInternalMetadata internalMetadata = serializedInternalMetadata == null ?
+                  PrivateMetadata internalMetadata = serializedInternalMetadata == null ?
                         null :
-                        (MetaParamsInternalMetadata) marshaller.objectFromByteBuffer(serializedInternalMetadata);
+                        (PrivateMetadata) marshaller.objectFromByteBuffer(serializedInternalMetadata);
                   if (entryMetadata == null)
                      return marshallableEntryFactory.create(key, value, null, internalMetadata, -1, -1);
 

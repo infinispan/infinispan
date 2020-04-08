@@ -9,10 +9,10 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * An immortal cache value, to correspond with {@link org.infinispan.container.entries.ImmortalCacheEntry}
@@ -23,13 +23,13 @@ import org.infinispan.metadata.Metadata;
 public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
 
    public Object value;
-   protected MetaParamsInternalMetadata internalMetadata;
+   protected PrivateMetadata internalMetadata;
 
    public ImmortalCacheValue(Object value) {
       this(value, null);
    }
 
-   protected ImmortalCacheValue(Object value, MetaParamsInternalMetadata internalMetadata) {
+   protected ImmortalCacheValue(Object value, PrivateMetadata internalMetadata) {
       this.value = value;
       this.internalMetadata = internalMetadata;
    }
@@ -91,12 +91,12 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
    }
 
    @Override
-   public final MetaParamsInternalMetadata getInternalMetadata() {
+   public final PrivateMetadata getInternalMetadata() {
       return internalMetadata;
    }
 
    @Override
-   public final void setInternalMetadata(MetaParamsInternalMetadata internalMetadata) {
+   public final void setInternalMetadata(PrivateMetadata internalMetadata) {
       this.internalMetadata = internalMetadata;
    }
 
@@ -150,7 +150,7 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
       @Override
       public ImmortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object value = input.readObject();
-         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
          return new ImmortalCacheValue(value, internalMetadata);
       }
 

@@ -11,9 +11,9 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.container.entries.AbstractInternalCacheEntry;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * A cache entry that is transient, i.e., it can be considered expired after a period of not being used, and {@link
@@ -31,7 +31,7 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
       this(key, value, null, metadata, lastUsed);
    }
 
-   protected MetadataTransientCacheEntry(Object key, Object value, MetaParamsInternalMetadata internalMetadata,
+   protected MetadataTransientCacheEntry(Object key, Object value, PrivateMetadata internalMetadata,
          Metadata metadata, long lastUsed) {
       super(key, value, internalMetadata);
       this.metadata = metadata;
@@ -126,7 +126,7 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
       public MetadataTransientCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object key = input.readObject();
          Object value = input.readObject();
-         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
          Metadata metadata = (Metadata) input.readObject();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          return new MetadataTransientCacheEntry(key, value, internalMetadata, metadata, lastUsed);

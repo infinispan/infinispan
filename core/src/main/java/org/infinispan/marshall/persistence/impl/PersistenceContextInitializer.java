@@ -6,6 +6,7 @@ import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
 import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
@@ -36,7 +37,8 @@ import org.infinispan.util.logging.events.EventLogLevel;
             NumericVersion.class,
             RemoteMetadata.class,
             SimpleClusteredVersion.class,
-            MarshallableUserObject.class
+            MarshallableUserObject.class,
+            PrivateMetadata.class
       },
       schemaFileName = "persistence.core.proto",
       schemaFilePath = "proto/generated",

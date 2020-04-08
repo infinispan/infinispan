@@ -14,9 +14,9 @@ import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.container.entries.versioned.Versioned;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * A form of {@link TransientMortalCacheValue} that is {@link Versioned}
@@ -32,7 +32,7 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
       this(value, null, metadata, created, lastUsed);
    }
 
-   protected MetadataTransientMortalCacheValue(Object value, MetaParamsInternalMetadata internalMetadata,
+   protected MetadataTransientMortalCacheValue(Object value, PrivateMetadata internalMetadata,
          Metadata metadata, long created, long lastUsed) {
       super(value, internalMetadata, metadata, created);
       this.lastUsed = lastUsed;
@@ -94,7 +94,7 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
       public MetadataTransientMortalCacheValue readObject(ObjectInput input)
             throws IOException, ClassNotFoundException {
          Object value = input.readObject();
-         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
          Metadata metadata = (Metadata) input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
