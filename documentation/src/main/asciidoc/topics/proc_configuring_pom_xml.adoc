@@ -1,0 +1,29 @@
+[id='configure_pom']
+= Configuring Your {brandname} POM
+Maven uses configuration files called Project Object Model (POM) files to
+define projects and manage builds. POM files are in XML format and describe the
+module and component dependencies, build order, and targets for the resulting
+project packaging and output.
+
+.Procedure
+
+. Open your project `pom.xml` for editing.
+. Define the `version.infinispan` property with the correct {brandname} version.
+. Include the `infinispan-bom` in a `dependencyManagement` section.
++
+The Bill Of Materials (BOM) controls dependency versions, which avoids version
+conflicts and means you do not need to set the version for each {brandname}
+artifact you add as a dependency to your project.
++
+. Save and close `pom.xml`.
+
+The following example shows the {brandname} version and BOM:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/ispn_bom.xml[]
+----
+
+.Next Steps
+
+Add {brandname} artifacts as dependencies to your `pom.xml` as required.

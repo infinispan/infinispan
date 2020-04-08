@@ -6,41 +6,14 @@
 // Conditional statements
 //
 :productized:
-:server:
-:library:
-
-//
-// Directory attributes
-//
-:stories: stories
-:topics: topics
-:imagesdir: {topics}/images
-:cli_help: {topics}/cli_help
-
-//
-// Product names and versions
-//
-
-:RedHat: Red Hat
-:portal: Red Hat customer portal
-
-:FullProductName: Red Hat Data Grid
-:ProductName: Data Grid
-:ProductShortName: RHDG
-:ProductVersion: 8.0
-:FullProductVersion: 8.0.0
-
-:keycloak: Red Hat SSO
 
 //
 // Special characters
 //
-
 :plusplus: ++
 :underscores: ___
 
 //
-// Community attributes
 // Defined in documentation/pom.xml
 //
 
@@ -55,18 +28,12 @@
 :moduleprefix: jdg
 :infinispanslot: jdg-8.0
 
-:download_url: https://access.redhat.com/jbossnetwork/restricted/listSoftware.html?product=data.grid&downloadType=distributions
-:javadocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/8.0/api
-:configdocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/8.0/configdocs/
 :wildflydocroot: https://docs.jboss.org/author/display/WFLY11
 :jdkdocroot: https://docs.oracle.com/javase/8/docs/api
 :javaeedocroot: https://docs.oracle.com/javaee/7/api
 
-//Jgroups
-:jgroups_docs: http://www.jgroups.org/manual4/index.html
-
 //
-// Server artifacts
+// Server
 //
 :server_home: $RHDG_HOME
 :server_root: ${rhdg.server.root}
@@ -80,6 +47,9 @@
 :k8s: OpenShift
 :okd: OKD
 
+:datagridservice: Data Grid service
+:cacheservice: Cache service
+
 //
 // OpenShift
 //
@@ -89,10 +59,18 @@
 :ocp: OpenShift Container Platform
 :osweb: OpenShift Web Console
 
-:osproduct: Red Hat Data Grid for OpenShift
-:osproductshort: Data Grid for OpenShift
-:datagridservice: Data Grid service
-:cacheservice: Cache service
+
+//
+// Projects
+//
+
+:keycloak: Red Hat SSO
+
+//
+// JGroups
+//
+
+:jgroups_docs: http://www.jgroups.org/manual4/index.html
 
 //
 // Include topic-specific attributes

@@ -6,7 +6,6 @@
     <dependency>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-spring5-remote</artifactId>
-        <version>${version.infinispan}</version>
     </dependency>
     <dependency>
         <groupId>org.springframework</groupId>
