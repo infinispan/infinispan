@@ -54,21 +54,6 @@
                 "type": "string"
               }
             ]
-          },
-          {
-            "name": "UUID",
-            "fields": [
-              {
-                "id": 1,
-                "name": "mostSigBits",
-                "type": "uint64"
-              },
-              {
-                "id": 2,
-                "name": "leastSigBits",
-                "type": "uint64"
-              }
-            ]
           }
         ],
         "imports": [
