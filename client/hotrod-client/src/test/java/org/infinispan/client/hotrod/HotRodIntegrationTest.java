@@ -112,32 +112,6 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assert remoteCache.containsKey("aKey");
    }
 
-   public void testGetVersionedCacheEntry() {
-      VersionedValue value = remoteCache.getVersioned("aKey");
-      assertNull("expected null but received: " + value, remoteCache.getVersioned("aKey"));
-      remoteCache.put("aKey", "aValue");
-      assert remoteCache.get("aKey").equals("aValue");
-      VersionedValue valueBinary = remoteCache.getVersioned("aKey");
-      assert valueBinary != null;
-      assertEquals(valueBinary.getValue(), "aValue");
-      log.info("Version is: " + valueBinary.getVersion());
-
-      //now put the same value
-      remoteCache.put("aKey", "aValue");
-      VersionedValue entry2 = remoteCache.getVersioned("aKey");
-      assertEquals(entry2.getValue(), "aValue");
-
-      assert entry2.getVersion() != valueBinary.getVersion();
-      assert !valueBinary.equals(entry2);
-
-      //now put a different value
-      remoteCache.put("aKey", "anotherValue");
-      VersionedValue entry3 = remoteCache.getVersioned("aKey");
-      assertEquals(entry3.getValue(), "anotherValue");
-      assert entry3.getVersion() != entry2.getVersion();
-      assert !entry3.equals(entry2);
-   }
-
    public void testGetWithMetadata() {
       MetadataValue<?> value = remoteCache.getWithMetadata("aKey");
       assertNull("expected null but received: " + value, value);
@@ -176,10 +150,10 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
 
       remoteCache.put("aKey", "aValue");
-      VersionedValue valueBinary = remoteCache.getVersioned("aKey");
+      VersionedValue valueBinary = remoteCache.getWithMetadata("aKey");
       assert remoteCache.replaceWithVersion("aKey", "aNewValue", valueBinary.getVersion());
 
-      VersionedValue entry2 = remoteCache.getVersioned("aKey");
+      VersionedValue entry2 = remoteCache.getWithMetadata("aKey");
       assert entry2.getVersion() != valueBinary.getVersion();
       assertEquals(entry2.getValue(), "aNewValue");
 
@@ -189,7 +163,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
    public void testReplaceIfUnmodifiedWithExpiry(Method m) throws InterruptedException {
       final int key = 1;
       remoteCache.put(key, v(m));
-      VersionedValue valueBinary = remoteCache.getVersioned(key);
+      VersionedValue valueBinary = remoteCache.getWithMetadata(key);
       int lifespanSecs = 3; // seconds
       long lifespan = TimeUnit.SECONDS.toMillis(lifespanSecs);
       long startTime = System.currentTimeMillis();
@@ -218,7 +192,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assertNull(remoteCache.replace(k, v));
 
       remoteCache.put(k, v);
-      VersionedValue valueBinary = remoteCache.getVersioned(k);
+      VersionedValue valueBinary = remoteCache.getWithMetadata(k);
       long lifespan = TimeUnit.SECONDS.toMillis(lifespanInSecs);
       long startTime = System.currentTimeMillis();
       CompletableFuture<Boolean> future = remoteCache.replaceWithVersionAsync(
@@ -226,7 +200,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assert future.get();
 
       while (true) {
-         VersionedValue entry2 = remoteCache.getVersioned(k);
+         VersionedValue entry2 = remoteCache.getWithMetadata(k);
          if (System.currentTimeMillis() >= startTime + lifespan)
             break;
          // version should have changed; value should have changed
@@ -240,20 +214,20 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
          Thread.sleep(50);
       }
 
-      assertNull(remoteCache.getVersioned(k));
+      assertNull(remoteCache.getWithMetadata(k));
    }
 
    public void testRemoveIfUnmodified() {
       assert !remoteCache.removeWithVersion("aKey", 12321212l);
 
       remoteCache.put("aKey", "aValue");
-      VersionedValue valueBinary = remoteCache.getVersioned("aKey");
+      VersionedValue valueBinary = remoteCache.getWithMetadata("aKey");
       assert remoteCache.removeWithVersion("aKey", valueBinary.getVersion());
       assertHotRodEquals(cacheManager, CACHE_NAME, "aKey", null);
 
       remoteCache.put("aKey", "aNewValue");
 
-      VersionedValue entry2 = remoteCache.getVersioned("aKey");
+      VersionedValue entry2 = remoteCache.getWithMetadata("aKey");
       assert entry2.getVersion() != valueBinary.getVersion();
       assertEquals(entry2.getValue(), "aNewValue");
 

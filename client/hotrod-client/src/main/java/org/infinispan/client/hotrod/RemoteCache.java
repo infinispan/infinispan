@@ -235,14 +235,6 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    CloseableIterator<Entry<Object, MetadataValue<Object>>> retrieveEntriesWithMetadata(Set<Integer> segments, int batchSize);
 
    /**
-    * Returns the {@link VersionedValue} associated to the supplied key param, or null if it doesn't exist.
-    *
-    * @deprecated Use {@link #getWithMetadata(Object)} instead
-    */
-   @Deprecated
-   VersionedValue<V> getVersioned(K key);
-
-   /**
     * Returns the {@link MetadataValue} associated to the supplied key param, or null if it doesn't exist.
     */
    MetadataValue<V> getWithMetadata(K key);

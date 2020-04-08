@@ -163,7 +163,7 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
       CASValue oldValue = cacheFactory.getMemcachedClient().gets(key1);
 
       // 2. Replace with Hot Rod
-      VersionedValue versioned = cacheFactory.getHotRodCache().getVersioned(key1);
+      VersionedValue versioned = cacheFactory.getHotRodCache().getWithMetadata(key1);
       assertTrue(cacheFactory.getHotRodCache().replaceWithVersion(key1, "v2", versioned.getVersion()));
 
       // 4. Get with Memcached and verify value/CAS
@@ -181,7 +181,7 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
       CASValue oldValue = cacheFactory.getMemcachedClient().gets(key1);
 
       // 2. Replace with Hot Rod
-      VersionedValue versioned = cacheFactory.getHotRodCache().getVersioned(key1);
+      VersionedValue versioned = cacheFactory.getHotRodCache().getWithMetadata(key1);
       assertTrue(cacheFactory.getHotRodCache().replaceWithVersion(key1, "v2", versioned.getVersion()));
 
       // 3. Replace with Embedded

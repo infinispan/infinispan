@@ -64,7 +64,7 @@ public class AvoidStaleNearCacheReadsTest extends SingleHotRodServerTest {
       repeated((i, remote) -> {
          String value = "v" + i;
          remote.replace(1, value);
-         VersionedValue<String> versioned = remote.getVersioned(1);
+         VersionedValue<String> versioned = remote.getWithMetadata(1);
          assertEquals(value, versioned.getValue());
       });
    }
@@ -72,7 +72,7 @@ public class AvoidStaleNearCacheReadsTest extends SingleHotRodServerTest {
    public void testAvoidStaleReadsAfterReplaceWithVersion() {
       repeated((i, remote) -> {
          String value = "v" + i;
-         VersionedValue<String> versioned = remote.getVersioned(1);
+         VersionedValue<String> versioned = remote.getWithMetadata(1);
          remote.replaceWithVersion(1, value, versioned.getVersion());
          assertEquals(value, remote.get(1));
       });
@@ -82,7 +82,7 @@ public class AvoidStaleNearCacheReadsTest extends SingleHotRodServerTest {
       repeated((i, remote) -> {
          String value = "v" + i;
          await(remote.putAsync(1, value));
-         VersionedValue<String> versioned = remote.getVersioned(1);
+         VersionedValue<String> versioned = remote.getWithMetadata(1);
          assertEquals(value, versioned.getValue());
          remote.removeWithVersion(1, versioned.getVersion());
          assertNull(remote.get(1));

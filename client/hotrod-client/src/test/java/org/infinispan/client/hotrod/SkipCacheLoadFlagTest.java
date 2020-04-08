@@ -61,10 +61,6 @@ public class SkipCacheLoadFlagTest extends SingleCacheManagerTest {
       performTest(RequestType.GET);
    }
 
-   public void testGetWithVersion() {
-      performTest(RequestType.GET_WITH_VERSION);
-   }
-
    public void testGetWithMetadata() {
       performTest(RequestType.GET_WITH_METADATA);
    }
@@ -162,12 +158,6 @@ public class SkipCacheLoadFlagTest extends SingleCacheManagerTest {
          @Override
          void execute(RemoteCache<String, String> cache) {
             cache.get(KEY);
-         }
-      },
-      GET_WITH_VERSION {
-         @Override
-         void execute(RemoteCache<String, String> cache) {
-            cache.getVersioned(KEY);
          }
       },
       GET_WITH_METADATA {

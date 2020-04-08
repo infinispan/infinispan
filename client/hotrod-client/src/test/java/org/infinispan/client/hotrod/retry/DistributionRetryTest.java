@@ -67,10 +67,10 @@ public class DistributionRetryTest extends AbstractRetryTest {
       assertEquals(true, remoteCache.containsKey(key));
    }
 
-   public void testGetWithVersion() throws Exception {
+   public void testGetWithMetadata() throws Exception {
       Object key = generateKeyAndShutdownServer();
       resetStats();
-      VersionedValue value = remoteCache.getVersioned(key);
+      VersionedValue value = remoteCache.getWithMetadata(key);
       assertEquals("v", value.getValue());
    }
 

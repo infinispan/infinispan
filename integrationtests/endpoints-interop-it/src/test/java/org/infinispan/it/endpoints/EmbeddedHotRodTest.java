@@ -141,7 +141,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       assertEquals(null, remote.put(key, "v1"));
-      VersionedValue<String> versioned = remote.getVersioned(key);
+      VersionedValue<String> versioned = remote.getWithMetadata(key);
       assertEquals("v1", versioned.getValue());
       assertTrue(0 != versioned.getVersion());
       assertFalse(remote.replaceWithVersion(key, "v2", Long.MAX_VALUE));
@@ -183,7 +183,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
-      VersionedValue<String> versioned = remote.getVersioned(key);
+      VersionedValue<String> versioned = remote.getWithMetadata(key);
       assertFalse(remote.withFlags(Flag.FORCE_RETURN_VALUE).removeWithVersion(key, Long.MAX_VALUE));
       assertTrue(remote.withFlags(Flag.FORCE_RETURN_VALUE).removeWithVersion(key, versioned.getVersion()));
       assertEquals(null, embedded.get(key));
@@ -221,13 +221,13 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
          // Replace with version
          remote.replaceWithVersion(1, "one", 0);
          l.expectNoEvents();
-         VersionedValue<?> versioned = remote.getVersioned(1);
+         VersionedValue<?> versioned = remote.getWithMetadata(1);
          remote.replaceWithVersion(1, "one", versioned.getVersion());
          l.expectOnlyModifiedEvent(1);
          // Remove with version
          remote.removeWithVersion(1, 0);
          l.expectNoEvents();
-         versioned = remote.getVersioned(1);
+         versioned = remote.getWithMetadata(1);
          remote.removeWithVersion(1, versioned.getVersion());
          l.expectOnlyRemovedEvent(1);
       });

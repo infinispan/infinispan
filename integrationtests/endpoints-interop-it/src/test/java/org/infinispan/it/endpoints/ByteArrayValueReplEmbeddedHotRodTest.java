@@ -48,7 +48,7 @@ public class ByteArrayValueReplEmbeddedHotRodTest extends AbstractInfinispanTest
       assertNull(remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, value1));
 
       // 2. Replace with HotRod
-      VersionedValue versioned = cacheFactory1.getHotRodCache().getVersioned(key);
+      VersionedValue versioned = cacheFactory1.getHotRodCache().getWithMetadata(key);
       assertTrue(cacheFactory1.getHotRodCache().replaceWithVersion(key, value2, versioned.getVersion()));
    }
 
@@ -61,7 +61,7 @@ public class ByteArrayValueReplEmbeddedHotRodTest extends AbstractInfinispanTest
       assertNull(remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, value));
 
       // 2. Remove with HotRod
-      VersionedValue versioned = cacheFactory1.getHotRodCache().getVersioned(key);
+      VersionedValue versioned = cacheFactory1.getHotRodCache().getWithMetadata(key);
       assertTrue(cacheFactory1.getHotRodCache().removeWithVersion(key, versioned.getVersion()));
    }
 

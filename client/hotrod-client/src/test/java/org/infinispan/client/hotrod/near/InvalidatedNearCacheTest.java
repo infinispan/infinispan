@@ -124,16 +124,6 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
       assertClient.getAsync(1, null).expectNearGetNull(1);
    }
 
-   public void testGetVersionedNearCache() {
-      assertClient.expectNoNearEvents();
-      assertClient.getVersioned(1, null).expectNearGetNull(1);
-      assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
-      assertClient.getVersioned(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
-      assertClient.getVersioned(1, "v1").expectNearGetValueVersion(1, "v1");
-      assertClient.remove(1).expectNearRemove(1);
-      assertClient.getVersioned(1, null).expectNearGetNull(1);
-   }
-
    public void testGetWithMetadataNearCache() {
       assertClient.expectNoNearEvents();
       assertClient.getWithMetadata(1, null).expectNearGetNull(1);

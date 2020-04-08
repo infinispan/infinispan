@@ -117,11 +117,6 @@ public class OperationsFactory implements HotRodConstants {
             cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version, dataFormat, clientStatistics);
    }
 
-   public <V> GetWithVersionOperation<V> newGetWithVersionOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
-      return new GetWithVersionOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics);
-   }
-
    public <V> GetWithMetadataOperation<V> newGetWithMetadataOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
       return new GetWithMetadataOperation<>(
             codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics);
