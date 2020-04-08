@@ -1,5 +1,4 @@
 <dependency>
   <groupId>org.infinispan</groupId>
   <artifactId>infinispan-multimap</artifactId>
-  <version>${version.infinispan}</version>
 </dependency>

@@ -1,5 +1,4 @@
 <dependency>
   <groupId>org.infinispan</groupId>
   <artifactId>infinispan-cdi-remote</artifactId>
-  <version>${version.infinispan}</version>
 </dependency>

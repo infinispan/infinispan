@@ -1,7 +1,11 @@
-[id='download_java_client']
+[id='get_java_client']
 = Getting the Hot Rod Java Client
+Add the Hot Rod Java client to your project.
 
-Add the `infinispan-client-hotrod` dependency to your `pom.xml` as follows:
+.Procedure
+
+* Add the `infinispan-client-hotrod` artifact as a dependency in your `pom.xml`
+as follows:
 
 [source,xml]
 ----

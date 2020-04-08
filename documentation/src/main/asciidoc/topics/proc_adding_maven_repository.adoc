@@ -1,0 +1,31 @@
+[id='mvn_settings']
+= Adding the {RedHat} GA Maven Repository
+Configure your Maven settings file, typically `~/.m2/settings.xml`, to include
+the {RedHat} GA repository. Alternatively, include the repository directly in
+your project `pom.xml` file.
+
+The following configuration uses the public {RedHat} Enterprise Maven
+repository. To use the {brandname} Maven repository that you downloaded from
+the {portal}, change the value of `url` elements to the correct location.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<repositories>
+  <repository>
+    <id>redhat-ga</id>
+    <name>{RedHat} GA Repository</name>
+    <url>https://maven.repository.redhat.com/ga/</url>
+  </repository>
+</repositories>
+<pluginRepositories>
+  <pluginRepository>
+    <id>redhat-ga</id>
+    <name>{RedHat} GA Repository</name>
+    <url>https://maven.repository.redhat.com/ga/</url>
+  </pluginRepository>
+</pluginRepositories>
+----
+
+.Reference
+
+* link:https://access.redhat.com/maven-repository[{RedHat} Enterprise Maven Repository]
