@@ -13,11 +13,12 @@ import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.SerializationConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
@@ -46,22 +47,12 @@ import org.infinispan.protostream.SerializationContextInitializer;
 @Scope(Scopes.GLOBAL)
 public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    private static final int PROTOSTREAM_DEFAULT_BUFFER_SIZE = 4096;
-   private static final BufferSizePredictor BUFFER_SIZE_PREDICTOR = new BufferSizePredictor() {
-      @Override
-      public int nextSize(Object obj) {
-         // Return the CodedOutputStream.DEFAULT_BUFFER_SIZE as this is equivalent to passing no estimate
-         return PROTOSTREAM_DEFAULT_BUFFER_SIZE;
-      }
-
-      @Override
-      public void recordSize(int previousSize) {
-      }
-   };
 
    @Inject GlobalComponentRegistry gcr;
    @Inject SerializationContextRegistry ctxRegistry;
-
-   private Marshaller userMarshaller;
+   @Inject @ComponentName(KnownComponentNames.USER_MARSHALLER)
+   ComponentRef<Marshaller> userMarshallerRef;
+   Marshaller userMarshaller;
 
    public PersistenceMarshallerImpl() {
    }
@@ -73,41 +64,16 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    @Start
    @Override
    public void start() {
-      userMarshaller = createUserMarshaller();
-      if (userMarshaller != null) {
-         PERSISTENCE.startingUserMarshaller(userMarshaller.getClass().getName());
-         userMarshaller.start();
-      }
-
-      // TODO can we move this to the registry?
-      String messageName = PersistenceContextInitializer.getFqTypeName(MarshallableUserObject.class);
-      ctxRegistry.addMarshaller(MarshallerType.PERSISTENCE, new MarshallableUserObject.Marshaller(messageName, getUserMarshaller()));
-   }
-
-   private Marshaller createUserMarshaller() {
-      GlobalConfiguration globalConfig = gcr.getGlobalConfiguration();
-      SerializationConfiguration serializationConfig = globalConfig.serialization();
-      Marshaller marshaller = serializationConfig.marshaller();
-      if (marshaller != null) {
-         marshaller.initialize(gcr.getCacheManager().getClassAllowList());
-         return marshaller;
-      }
-      return null;
+      userMarshaller = userMarshallerRef.running();
    }
 
    public Marshaller getUserMarshaller() {
-      return userMarshaller == null ? this : userMarshaller;
+      return userMarshaller;
    }
 
    @Override
    public void register(SerializationContextInitializer initializer) {
       ctxRegistry.addContextInitializer(MarshallerType.PERSISTENCE, initializer);
-   }
-
-   @Override
-   public void stop() {
-      if (userMarshaller != null)
-         userMarshaller.stop();
    }
 
    @Override
@@ -158,7 +124,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    @Override
    public BufferSizePredictor getBufferSizePredictor(Object o) {
       // TODO if persistenceClass, i.e. protobuf based, return estimate based upon schema
-      return userMarshaller != null ? userMarshaller.getBufferSizePredictor(o) : BUFFER_SIZE_PREDICTOR;
+      return userMarshaller.getBufferSizePredictor(o);
    }
 
    @Override
@@ -183,48 +149,29 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
 
    @Override
    public boolean isMarshallable(Object o) {
-      return isMarshallableWithProtoStream(o) || isUserMarshallable(o);
+      return isMarshallableWithPersistenceContext(o) || isUserMarshallable(o);
    }
 
    @Override
    public int sizeEstimate(Object o) {
-      if (isMarshallableWithProtoStream(o))
+      if (isMarshallableWithPersistenceContext(o))
          return PROTOSTREAM_DEFAULT_BUFFER_SIZE;
-
-      if (userMarshaller == null)
-         return 0;
 
       int userBytesEstimate = userMarshaller.getBufferSizePredictor(o.getClass()).nextSize(o);
       return MarshallableUserObject.size(userBytesEstimate);
    }
 
    private boolean requiresWrapping(Object o) {
-      return !isMarshallableWithProtoStream(o) && userMarshaller != null;
+      return !isMarshallableWithPersistenceContext(o);
    }
 
-   private boolean isMarshallableWithProtoStream(Object o) {
-      // If the user marshaller is null, then we rely on ProtoStream for all marshalling
-      if (userMarshaller == null) {
-         return o instanceof String ||
-               o instanceof Long ||
-               o instanceof Integer ||
-               o instanceof Double ||
-               o instanceof Float ||
-               o instanceof Boolean ||
-               o instanceof byte[] ||
-               o instanceof Byte ||
-               o instanceof Short ||
-               o instanceof Character ||
-               o instanceof java.util.Date ||
-               o instanceof java.time.Instant ||
-               getSerializationContext().canMarshall(o.getClass());
-      }
-      return getSerializationContext().canMarshall(o.getClass());
+   private boolean isMarshallableWithPersistenceContext(Object o) {
+      return ctxRegistry.getPersistenceCtx().canMarshall(o.getClass());
    }
 
    private boolean isUserMarshallable(Object o) {
       try {
-         return userMarshaller != null && userMarshaller.isMarshallable(o);
+         return userMarshaller.isMarshallable(o);
       } catch (Exception ignore) {
          return false;
       }

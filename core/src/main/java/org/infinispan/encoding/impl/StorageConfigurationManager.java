@@ -16,8 +16,6 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -74,15 +72,14 @@ public class StorageConfigurationManager {
    }
 
    @Inject
-   void injectDependencies(@ComponentName(KnownComponentNames.PERSISTENCE_MARSHALLER) PersistenceMarshaller persistenceMarshaller,
+   void injectDependencies(@ComponentName(KnownComponentNames.USER_MARSHALLER) Marshaller userMarshaller,
                            @ComponentName(KnownComponentNames.CACHE_NAME) String cacheName,
-                           InternalCacheRegistry icr, GlobalConfiguration gcr,
-                           EncoderRegistry encoderRegistry, Configuration configuration) {
+                           InternalCacheRegistry icr, GlobalConfiguration gcr, Configuration configuration) {
       boolean internalCache = icr.isInternalCache(cacheName);
       boolean embeddedMode = Configurations.isEmbeddedMode(gcr);
-      this.keyStorageMediaType = getStorageMediaType(configuration, embeddedMode, internalCache, persistenceMarshaller,
+      this.keyStorageMediaType = getStorageMediaType(configuration, embeddedMode, internalCache, userMarshaller,
                                                      true);
-      this.valueStorageMediaType = getStorageMediaType(configuration, embeddedMode, internalCache, persistenceMarshaller,
+      this.valueStorageMediaType = getStorageMediaType(configuration, embeddedMode, internalCache, userMarshaller,
                                                      false);
 
       if(keyStorageMediaType.equals(APPLICATION_UNKNOWN) || valueStorageMediaType.equals(APPLICATION_UNKNOWN)) {
@@ -91,10 +88,9 @@ public class StorageConfigurationManager {
    }
 
    private MediaType getStorageMediaType(Configuration configuration, boolean embeddedMode, boolean internalCache,
-                                         PersistenceMarshaller persistenceMarshaller, boolean isKey) {
+                                         Marshaller userMarshaller, boolean isKey) {
       EncodingConfiguration encodingConfiguration = configuration.encoding();
       ContentTypeConfiguration contentTypeConfiguration = isKey ? encodingConfiguration.keyDataType() : encodingConfiguration.valueDataType();
-      Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
       MediaType mediaType = userMarshaller.mediaType();
       // If explicitly configured, use the value provided
       if (contentTypeConfiguration.isMediaTypeChanged()) {

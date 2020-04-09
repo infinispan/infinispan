@@ -1,10 +1,5 @@
 package org.infinispan.commons.marshall;
 
-import java.io.IOException;
-
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -16,61 +11,23 @@ import org.infinispan.protostream.SerializationContextInitializer;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public class ProtoStreamMarshaller extends AbstractMarshaller {
-
-   private final SerializationContext serializationContext;
+public class ProtoStreamMarshaller extends ImmutableProtoStreamMarshaller {
 
    public ProtoStreamMarshaller() {
       this(ProtobufUtil.newSerializationContext());
    }
 
    public ProtoStreamMarshaller(SerializationContext serializationContext) {
-      this.serializationContext = serializationContext;
+      super(serializationContext);
    }
 
    public void register(SerializationContextInitializer initializer) {
-      initializer.registerSchema(serializationContext);
-      initializer.registerMarshallers(serializationContext);
+      initializer.registerSchema(getSerializationContext());
+      initializer.registerMarshallers(getSerializationContext());
    }
 
-   /**
-    * @return the SerializationContext instance to use
-    */
+   @Override
    public SerializationContext getSerializationContext() {
-      return serializationContext;
-   }
-
-   @Override
-   public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
-      return ProtobufUtil.fromWrappedByteArray(getSerializationContext(), buf, offset, length);
-   }
-
-   @Override
-   public boolean isMarshallable(Object o) {
-      // our marshaller can handle all of these primitive/scalar types as well even if we do not
-      // have a per-type marshaller defined in our SerializationContext
-      return o instanceof String ||
-            o instanceof Long ||
-            o instanceof Integer ||
-            o instanceof Double ||
-            o instanceof Float ||
-            o instanceof Boolean ||
-            o instanceof byte[] ||
-            o instanceof Byte ||
-            o instanceof Short ||
-            o instanceof Character ||
-            o instanceof java.util.Date ||
-            o instanceof java.time.Instant ||
-            getSerializationContext().canMarshall(o.getClass());
-   }
-
-   @Override
-   protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
-      return ByteBufferImpl.create(ProtobufUtil.toWrappedByteArray(getSerializationContext(), o));
-   }
-
-   @Override
-   public MediaType mediaType() {
-      return MediaType.APPLICATION_PROTOSTREAM;
+      return (SerializationContext) serializationContext;
    }
 }
