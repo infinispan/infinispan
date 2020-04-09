@@ -30,6 +30,7 @@ public class KnownComponentNames {
    public static final String CACHE_DEPENDENCY_GRAPH = "org.infinispan.CacheDependencyGraph";
    public static final String INTERNAL_MARSHALLER = "org.infinispan.marshaller.internal";
    public static final String PERSISTENCE_MARSHALLER = "org.infinispan.marshaller.persistence";
+   public static final String USER_MARSHALLER = "org.infinispan.marshaller.user";
 
    private static final Map<String, Integer> DEFAULT_THREAD_COUNT = new HashMap<>(7);
    private static final Map<String, Integer> DEFAULT_QUEUE_SIZE = new HashMap<>(7);

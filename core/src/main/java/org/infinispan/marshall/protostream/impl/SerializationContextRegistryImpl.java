@@ -7,11 +7,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.marshall.persistence.impl.PersistenceContextInitializer;
 import org.infinispan.marshall.persistence.impl.PersistenceContextInitializerImpl;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -24,45 +29,51 @@ import org.infinispan.protostream.SerializationContextInitializer;
 public class SerializationContextRegistryImpl implements SerializationContextRegistry {
 
    @Inject GlobalConfiguration globalConfig;
+   @Inject @ComponentName(KnownComponentNames.USER_MARSHALLER)
+   ComponentRef<Marshaller> userMarshaller;
 
    private final MarshallerContext global = new MarshallerContext();
    private final MarshallerContext persistence = new MarshallerContext();
+   private final SerializationContext user = ProtobufUtil.newSerializationContext();
 
    @Start
    public void start() {
-      // Add user configured SCIs to both the global and persistence context
+      // Add user configured SCIs
       List<SerializationContextInitializer> scis = globalConfig.serialization().contextInitializers();
-      update(GLOBAL, ctx -> {
-         if (scis != null)
-            ctx.addContextIntializers(scis);
+      if (scis != null) {
+         scis.forEach(sci -> register(sci, user));
+      }
 
-         ctx.addContextIntializer(new PersistenceContextInitializerImpl())
-               // Register Commons util so that KeyValueWithPrevious can be used with JCache remote
-               .addContextIntializer(new org.infinispan.commons.GlobalContextInitializerImpl())
-               .update();
-      });
+      String messageName = PersistenceContextInitializer.getFqTypeName(MarshallableUserObject.class);
+      BaseMarshaller userObjectMarshaller = new MarshallableUserObject.Marshaller(messageName, userMarshaller.wired());
+      update(GLOBAL, ctx ->
+            ctx.addContextIntializer(new PersistenceContextInitializerImpl())
+                  // Register Commons util so that KeyValueWithPrevious can be used with JCache remote
+                  .addContextIntializer(new org.infinispan.commons.GlobalContextInitializerImpl())
+                  .addMarshaller(userObjectMarshaller)
+                  .update()
+      );
 
-      update(PERSISTENCE, ctx -> {
-         if (scis != null)
-            ctx.addContextIntializers(scis);
-
-         ctx.addContextIntializer(new PersistenceContextInitializerImpl())
-               .update();
-      });
+      update(PERSISTENCE, ctx ->
+            ctx.addContextIntializer(new PersistenceContextInitializerImpl())
+                  .addMarshaller(userObjectMarshaller)
+                  .update()
+      );
    }
 
    @Override
    public ImmutableSerializationContext getGlobalCtx() {
-      synchronized (global) {
-         return global.ctx;
-      }
+      return global.ctx;
    }
 
    @Override
    public ImmutableSerializationContext getPersistenceCtx() {
-      synchronized (persistence) {
-         return persistence.ctx;
-      }
+      return persistence.ctx;
+   }
+
+   @Override
+   public ImmutableSerializationContext getUserCtx() {
+      return user;
    }
 
    @Override
@@ -92,11 +103,20 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
       }
    }
 
+   private static void register(SerializationContextInitializer sci, SerializationContext... ctxs) {
+      for (SerializationContext ctx : ctxs) {
+         sci.registerSchema(ctx);
+         sci.registerMarshallers(ctx);
+      }
+   }
+
+   // Required until IPROTO-136 is resolved to ensure that custom marshaller implementations are not overridden by
+   // non-core modules registering their SerializationContextInitializer(s) which depend on a core initializer.
    static class MarshallerContext {
       private final List<SerializationContextInitializer> initializers = new ArrayList<>();
       private final List<FileDescriptorSource> schemas = new ArrayList<>();
       private final List<BaseMarshaller<?>> marshallers = new ArrayList<>();
-      private SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      private final SerializationContext ctx = ProtobufUtil.newSerializationContext();
 
       MarshallerContext addContextIntializers(List<SerializationContextInitializer> scis) {
          initializers.addAll(scis);

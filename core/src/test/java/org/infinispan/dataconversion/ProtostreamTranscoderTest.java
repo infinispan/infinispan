@@ -37,7 +37,7 @@ public class ProtostreamTranscoderTest extends AbstractTranscoderTest {
    public void setUp() {
       dataSrc = " !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
       SerializationContextRegistry registry = Mockito.mock(SerializationContextRegistry.class);
-      Mockito.when(registry.getGlobalCtx()).thenReturn(ctx);
+      Mockito.when(registry.getUserCtx()).thenReturn(ctx);
       transcoder = new ProtostreamTranscoder(registry, ProtostreamTranscoderTest.class.getClassLoader());
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
