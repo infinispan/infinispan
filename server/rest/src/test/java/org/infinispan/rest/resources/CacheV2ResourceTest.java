@@ -54,6 +54,14 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       cm.defineConfiguration("indexedCache", getIndexedPersistedCache().build());
    }
 
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+            // [ISPN-11525] new CacheV2ResourceTest().withSecurity(true),
+            new CacheV2ResourceTest().withSecurity(false),
+      };
+   }
+
    private ConfigurationBuilder getIndexedPersistedCache() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.indexing().index(Index.PRIMARY_OWNER).autoConfig(true)

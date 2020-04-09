@@ -255,6 +255,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       this.serialization.read(template.serialization());
       this.shutdown.read(template.shutdown());
       this.threads.read(template.threads());
+      this.security.read(template.security());
       return this;
    }
 }
