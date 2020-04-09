@@ -14,4 +14,12 @@ public class CacheResourceOffHeapTest extends BaseCacheResourceTest {
       return configurationBuilder;
    }
 
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+            new CacheResourceOffHeapTest().withSecurity(false),
+            new CacheResourceOffHeapTest().withSecurity(true),
+      };
+   }
+
 }
