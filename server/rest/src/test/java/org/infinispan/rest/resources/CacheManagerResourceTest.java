@@ -58,6 +58,14 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       cm.defineConfiguration("template", templateConfig);
    }
 
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+            // [ISPN-11525] new CacheManagerResourceTest().withSecurity(true),
+            new CacheManagerResourceTest().withSecurity(false),
+      };
+   }
+
    private Configuration getCache1Config() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.statistics().enable().clustering().cacheMode(DIST_SYNC).partitionHandling().whenSplit(DENY_READ_WRITES);
