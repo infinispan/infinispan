@@ -58,10 +58,6 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
       this.classLoader = classLoader;
    }
 
-   private ImmutableSerializationContext ctx() {
-      return ctxRegistry.getGlobalCtx();
-   }
-
    @Override
    public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
       try {
@@ -78,14 +74,8 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
                decoded = convertTextToObject(content, contentType);
             }
             if (contentType.match(APPLICATION_JSON)) {
-               Reader reader;
                content = addTypeIfNeeded(content);
-               if (content instanceof byte[]) {
-                  reader = new InputStreamReader(new ByteArrayInputStream((byte[]) content));
-               } else {
-                  reader = new StringReader(content.toString());
-               }
-               return ProtobufUtil.fromCanonicalJSON(ctx(), reader);
+               return fromJsonCascading(content);
             }
             if (contentType.match(APPLICATION_UNKNOWN) || contentType.match(APPLICATION_PROTOSTREAM)) {
                return content;
@@ -97,10 +87,11 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
             if (unmarshalled instanceof byte[]) {
                return unmarshalled;
             }
-            return StandardConversions.convertJavaToProtoStream(unmarshalled, MediaType.APPLICATION_OBJECT, ctx());
+            ImmutableSerializationContext ctx = getCtxForMarshalling(unmarshalled);
+            return StandardConversions.convertJavaToProtoStream(unmarshalled, MediaType.APPLICATION_OBJECT, ctx);
          }
          if (destinationType.match(MediaType.TEXT_PLAIN)) {
-            Object decoded = ProtobufUtil.fromWrappedByteArray(ctx(), (byte[]) content);
+            Object decoded = unmarshallCascading((byte[]) content);
             if (decoded == null) return null;
             return decoded.toString().getBytes(destinationType.getCharset());
          }
@@ -108,7 +99,7 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
             return unmarshall((byte[]) content, contentType, destinationType);
          }
          if (destinationType.match(MediaType.APPLICATION_JSON)) {
-            String converted = ProtobufUtil.toCanonicalJSON(ctx(), (byte[]) content);
+            String converted = toJsonCascading((byte[]) content);
             String convertType = destinationType.getClassType();
             if (convertType == null)
                return StandardConversions.convertCharset(converted, contentType.getCharset(), destinationType.getCharset());
@@ -118,7 +109,8 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
          if (destinationType.equals(APPLICATION_UNKNOWN)) {
             //TODO: Remove wrapping of byte[] into WrappedByteArray from the Hot Rod Multimap operations.
             if (content instanceof WrappedByteArray) return content;
-            return StandardConversions.convertJavaToProtoStream(content, MediaType.APPLICATION_OBJECT, ctx());
+            ImmutableSerializationContext ctx = getCtxForMarshalling(content);
+            return StandardConversions.convertJavaToProtoStream(content, MediaType.APPLICATION_OBJECT, ctx);
          }
          throw logger.unsupportedContent(ProtostreamTranscoder.class.getSimpleName(), content);
       } catch (InterruptedException | IOException e) {
@@ -132,25 +124,93 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
    }
 
    private byte[] marshall(Object decoded, MediaType destinationType) throws IOException {
-      try {
-         if (isWrapped(destinationType)) return ProtobufUtil.toWrappedByteArray(ctx(), decoded);
-         return ProtobufUtil.toByteArray(ctx(), decoded);
-      } catch (IllegalArgumentException iae) {
-         throw new MarshallingException(iae.getMessage());
+      ImmutableSerializationContext ctx = getCtxForMarshalling(decoded);
+      if (isWrapped(destinationType)) {
+         return ProtobufUtil.toWrappedByteArray(ctx, decoded);
       }
+      return ProtobufUtil.toByteArray(ctx, decoded);
    }
 
    private Object unmarshall(byte[] bytes, MediaType contentType, MediaType destinationType) throws IOException {
-      try {
-         if (isWrapped(contentType)) return ProtobufUtil.fromWrappedByteArray(ctx(), bytes);
+      if (isWrapped(contentType))
+         return unmarshallCascading(bytes);
 
-         String type = destinationType.getClassType();
-         if (type == null) throw logger.missingTypeForUnwrappedPayload();
-         Class<?> destination = Util.loadClass(type, classLoader);
-         return ProtobufUtil.fromByteArray(ctx(), bytes, destination);
-      } catch (IllegalArgumentException iae) {
-         throw new MarshallingException(iae.getMessage());
+      String type = destinationType.getClassType();
+      if (type == null) throw logger.missingTypeForUnwrappedPayload();
+      Class<?> destination = Util.loadClass(type, classLoader);
+      ImmutableSerializationContext ctx = getCtxForMarshalling(destination);
+      return ProtobufUtil.fromByteArray(ctx, bytes, destination);
+   }
+
+   // Workaround until protostream provides support for cascading contexts IPROTO-139
+   private Object unmarshallCascading(byte[] bytes) throws IOException {
+      // First try to unmarshalling with the user context
+      try {
+         return ProtobufUtil.fromWrappedByteArray(ctxRegistry.getUserCtx(), bytes);
+      } catch (IllegalArgumentException e) {
+         logger.debugf("Unable to unmarshall bytes with user context, attempting global context");
+         try {
+            return ProtobufUtil.fromWrappedByteArray(ctxRegistry.getGlobalCtx(), bytes);
+         } catch (IllegalArgumentException iae) {
+            throw new MarshallingException(iae.getMessage());
+         }
       }
+   }
+
+   // Workaround until protostream provides support for cascading contexts IPROTO-139
+   private byte[] fromJsonCascading(Object content) throws IOException {
+      try {
+         return fromJson(content, ctxRegistry.getUserCtx());
+      } catch (IllegalArgumentException e) {
+         logger.debugf("Unable to process json with user context, attempting global context");
+         return fromJson(content, ctxRegistry.getGlobalCtx());
+      }
+   }
+
+   private byte[] fromJson(Object content, ImmutableSerializationContext ctx) throws IOException {
+      Reader reader;
+      if (content instanceof byte[]) {
+         reader = new InputStreamReader(new ByteArrayInputStream((byte[]) content));
+      } else {
+         reader = new StringReader(content.toString());
+      }
+      return ProtobufUtil.fromCanonicalJSON(ctx, reader);
+   }
+
+   // Workaround until protostream provides support for cascading contexts IPROTO-139
+   private String toJsonCascading(byte[] bytes) throws IOException {
+      try {
+         return ProtobufUtil.toCanonicalJSON(ctxRegistry.getUserCtx(), bytes);
+      } catch (IllegalArgumentException e) {
+         logger.debugf("Unable to read bytes with user context, attempting global context");
+         return ProtobufUtil.toCanonicalJSON(ctxRegistry.getGlobalCtx(), bytes);
+      }
+   }
+
+   private ImmutableSerializationContext getCtxForMarshalling(Object o) {
+      Class<?> clazz = o instanceof Class<?> ? (Class<?>) o : o.getClass();
+      if (isWrappedMessageClass(clazz) || ctxRegistry.getUserCtx().canMarshall(clazz))
+         return ctxRegistry.getUserCtx();
+
+      if (ctxRegistry.getGlobalCtx().canMarshall(clazz))
+         return ctxRegistry.getGlobalCtx();
+
+      throw logger.marshallerMissingFromUserAndGlobalContext(o.getClass().getName());
+   }
+
+   private boolean isWrappedMessageClass(Class<?> c) {
+      return c.equals(String.class) ||
+            c.equals(Long.class) ||
+            c.equals(Integer.class) ||
+            c.equals(Double.class) ||
+            c.equals(Float.class) ||
+            c.equals(Boolean.class) ||
+            c.equals(byte[].class) ||
+            c.equals(Byte.class) ||
+            c.equals(Short.class) ||
+            c.equals(Character.class) ||
+            c.equals(java.util.Date.class) ||
+            c.equals(java.time.Instant.class);
    }
 
    private Object addTypeIfNeeded(Object content) {

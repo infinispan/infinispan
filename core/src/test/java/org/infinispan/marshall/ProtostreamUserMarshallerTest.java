@@ -8,9 +8,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.infinispan.commons.marshall.ImmutableProtoStreamMarshaller;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.marshall.core.impl.DelegatingUserMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
@@ -66,10 +68,11 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
       }
    }
 
-   public void testProtostreamMarshallerLoaded() throws Exception {
+   public void testProtostreamMarshallerLoaded() {
       PersistenceMarshaller pm = TestingUtil.extractPersistenceMarshaller(manager(0));
       testIsMarshallableAndPut(pm, new ExampleUserPojo("A Pojo!"), new AnotherExampleUserPojo("And another one!"));
-      assertTrue(pm.getUserMarshaller() instanceof PersistenceMarshaller);
+      DelegatingUserMarshaller userMarshaller = (DelegatingUserMarshaller) pm.getUserMarshaller();
+      assertTrue(userMarshaller.getDelegate() instanceof ImmutableProtoStreamMarshaller);
    }
 
    private void testIsMarshallableAndPut(PersistenceMarshaller pm, Object... pojos) {

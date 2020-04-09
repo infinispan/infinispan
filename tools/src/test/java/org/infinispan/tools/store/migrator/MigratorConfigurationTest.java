@@ -47,21 +47,23 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
+import org.infinispan.marshall.core.impl.DelegatingUserMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.data.Person;
 import org.infinispan.tools.store.migrator.jdbc.JdbcConfigurationUtil;
 import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 import org.infinispan.tools.store.migrator.marshaller.infinispan8.Infinispan8Marshaller;
 import org.infinispan.tools.store.migrator.marshaller.infinispan9.Infinispan9Marshaller;
+import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -104,7 +106,8 @@ public class MigratorConfigurationTest {
       assertNotNull(marshaller);
       assertTrue(marshaller instanceof PersistenceMarshaller);
       PersistenceMarshaller pm = (PersistenceMarshaller) marshaller;
-      assertTrue(pm.getUserMarshaller() instanceof GenericJBossMarshaller);
+      DelegatingUserMarshaller userMarshaller = (DelegatingUserMarshaller) pm.getUserMarshaller();
+      AssertJUnit.assertTrue(userMarshaller.getDelegate() instanceof GenericJBossMarshaller);
    }
 
    public void testInfinipsan8MarshallerAndExternalizersLoaded() throws Exception {

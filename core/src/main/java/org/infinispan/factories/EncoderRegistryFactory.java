@@ -21,9 +21,6 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.core.EncoderRegistryImpl;
-import org.infinispan.marshall.persistence.PersistenceMarshaller;
-import org.infinispan.marshall.persistence.impl.PersistenceContextInitializer;
-import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 
 /**
@@ -36,8 +33,9 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
    // Must not start the global marshaller or it will be too late for modules to register their externalizers
    @Inject @ComponentName(KnownComponentNames.INTERNAL_MARSHALLER)
    ComponentRef<StreamingMarshaller> globalMarshaller;
-   @Inject @ComponentName(KnownComponentNames.PERSISTENCE_MARSHALLER)
-   PersistenceMarshaller persistenceMarshaller;
+   @Inject @ComponentName(KnownComponentNames.USER_MARSHALLER)
+   Marshaller userMarshaller;
+
    @Inject EmbeddedCacheManager embeddedCacheManager;
    @Inject SerializationContextRegistry ctxRegistry;
 
@@ -46,11 +44,6 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       ClassLoader classLoader = globalConfiguration.classLoader();
       EncoderRegistryImpl encoderRegistry = new EncoderRegistryImpl();
       ClassAllowList classAllowList = embeddedCacheManager.getClassAllowList();
-      // TODO Move registration to GlobalMarshaller ISPN-9622
-      String messageName = PersistenceContextInitializer.getFqTypeName(MarshallableUserObject.class);
-      Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
-      ctxRegistry.addMarshaller(SerializationContextRegistry.MarshallerType.GLOBAL,
-                                new MarshallableUserObject.Marshaller(messageName, userMarshaller));
 
       encoderRegistry.registerEncoder(IdentityEncoder.INSTANCE);
       encoderRegistry.registerEncoder(UTF8Encoder.INSTANCE);

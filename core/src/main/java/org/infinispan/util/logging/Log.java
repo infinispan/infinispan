@@ -2096,4 +2096,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "It is not allowed to have different indexing configuration for each indexed type in a cache.", id = 614)
    CacheConfigurationException foundDifferentIndexConfigPerType();
+
+   @Message(value = "Unable to unmarshall '%s' as a marshaller is not present in the user or global SerializationContext", id = 615)
+   MarshallingException marshallerMissingFromUserAndGlobalContext(String type);
 }

@@ -45,7 +45,7 @@ public class ProtostreamJsonTranscoderTest extends AbstractTranscoderTest {
       SerializationContext serCtx = ProtobufUtil.newSerializationContext();
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("person_definition.proto", PROTO_DEFINITIONS));
       SerializationContextRegistry registry = Mockito.mock(SerializationContextRegistry.class);
-      Mockito.when(registry.getGlobalCtx()).thenReturn(serCtx);
+      Mockito.when(registry.getUserCtx()).thenReturn(serCtx);
       transcoder = new ProtostreamTranscoder(registry, ProtostreamTranscoder.class.getClassLoader());
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
