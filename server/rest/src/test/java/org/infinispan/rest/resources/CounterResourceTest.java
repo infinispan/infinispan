@@ -38,6 +38,14 @@ public class CounterResourceTest extends AbstractRestResourceTest {
       counterManager.defineCounter("strong", CounterConfiguration.builder(CounterType.UNBOUNDED_STRONG).build());
    }
 
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+            new CounterResourceTest().withSecurity(false),
+            new CounterResourceTest().withSecurity(true),
+      };
+   }
+
    @Test
    public void testWeakCounterLifecycle() throws Exception {
       CounterConfiguration counterConfig = CounterConfiguration.builder(CounterType.WEAK)
