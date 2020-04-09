@@ -108,17 +108,27 @@ public class CLI {
          }
          switch (command) {
             case "-c":
-               parameter = iterator.next();
+               if (checkShortParameter(args, command, false)) {
+                  parameter = iterator.next();
+               }
                // Fall through
             case "--connect":
                connectionString = parameter;
+               if(connectionString == null) {
+                  connectionString="http://localhost:11222";
+               }
                break;
             case "-f":
-               parameter = iterator.next();
+               if (checkShortParameter(args, command, true)) {
+                   parameter = iterator.next();
+               }
                // Fall through
             case "--file":
                inputFile = parameter;
-               if ("-".equals(inputFile) || new File(inputFile).isFile()) {
+               if (inputFile == null) {
+                   stdErr.println(MSG.missingParameterForCmmand(command));
+                   exit(1);
+               } else if ("-".equals(inputFile) || new File(inputFile).isFile()) {
                   mode = CliMode.BATCH;
                } else {
                   stdErr.println(MSG.fileNotExists(inputFile));
@@ -126,13 +136,25 @@ public class CLI {
                }
                break;
             case "-t":
-               parameter = iterator.next();
+               if (checkShortParameter(args, command, true)) {
+                  parameter = iterator.next();
+                }
             case "--truststore":
+               if (parameter == null) {
+                   stdErr.println(MSG.missingParameterForCmmand(command));
+                   exit(1);
+               }
                trustStorePath = parameter;
                break;
             case "-s":
-               parameter = iterator.next();
+                if (checkShortParameter(args, command, true)) {
+                    parameter = iterator.next();
+                  }
             case "--truststore-password":
+                if (parameter == null) {
+                    stdErr.println(MSG.missingParameterForCmmand(command));
+                    exit(1);
+                }
                trustStorePassword = parameter;
                break;
             case "--trustall":
@@ -186,6 +208,28 @@ public class CLI {
             interactiveRun();
             break;
       }
+   }
+
+   private boolean checkShortParameter(String[] args, String command, boolean exit) {
+      boolean paramFound = false;
+      Iterator<String> iterator = Arrays.stream(args).iterator();
+      while (iterator.hasNext()) {
+         String argument = iterator.next();
+         if(argument.equals(command)) {
+            if(iterator.hasNext()) {
+               String param = iterator.next();
+               if(!param.startsWith("-") || param.length() == 1) {
+                  paramFound = true;
+               }
+            }
+            break;
+         }
+      }
+      if ( exit && !paramFound) {
+         stdErr.println(MSG.missingParameterForCmmand(command));
+         exit(1);
+      }
+      return paramFound;
    }
 
    private void batchRun() {

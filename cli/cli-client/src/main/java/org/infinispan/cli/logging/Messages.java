@@ -28,6 +28,9 @@ public interface Messages {
    @Message(value = "Invalid argument `%s`. The - prefix must be used only for single-character arguments.", id = 90003)
    String invalidShortArgument(String command);
 
+   @Message(value = "Missing parameter for `%s`.", id = 90004)
+   String missingParameterForCmmand(String command);
+
    @Message(value = "Username: ")
    String username();
 
