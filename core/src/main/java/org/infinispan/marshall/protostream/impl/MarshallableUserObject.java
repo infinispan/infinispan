@@ -2,10 +2,9 @@ package org.infinispan.marshall.protostream.impl;
 
 import java.io.IOException;
 
-import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.RawProtoStreamReader;
@@ -14,48 +13,35 @@ import org.infinispan.protostream.RawProtobufMarshaller;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.protostream.impl.WireFormat;
 
 /**
- * A wrapper message used by ProtoStream Marshallers to allow user objects to be marshalled/unmarshalled via the {@link
- * MarshallableUserObject.Marshaller} implementation, which delegates to the configured user marshaller in {@link
- * org.infinispan.configuration.global.SerializationConfiguration} if it exists.
+ * A wrapper message used by ProtoStream Marshallers to allow user objects to be marshalled/unmarshalled by delegating
+ * to the configured user marshaller in {@link org.infinispan.configuration.global.SerializationConfiguration} if it
+ * exists.
  * <p>
- * This abstraction hides the details of the configured user marshaller from our internal Pojos, so that all calls to
- * the configured user marshaller can be limited to the {@link MarshallableUserObject.Marshaller} instance.
- * <p>
- * In order to allow this object to be utilised by our internal ProtoStream annotated Pojos, we need to generate the
- * proto schema for this object using the protostream-processor and {@link org.infinispan.protostream.annotations.AutoProtoSchemaBuilder}.
- * Consequently, it's necessary for the generated marshaller to be overridden, therefore calls to {@link
- * org.infinispan.protostream.SerializationContext#registerMarshaller(BaseMarshaller)} must be made after the
- * registration of any generated {@link org.infinispan.protostream.SerializationContextInitializer}'s that contain this
- * class. To ensure that the marshaller generated for this class is never used, we throw a {@link IllegalStateException}
- * if the {@link ProtoFactory} constructor is called.
+ * This abstraction hides the details of the configured user marshaller from our internal Pojos.
  *
  * @author Ryan Emerson
  * @since 10.0
  */
 @ProtoTypeId(ProtoStreamTypeIds.MARSHALLABLE_USER_OBJECT)
-public class MarshallableUserObject<T> {
+public final class MarshallableUserObject<T> {
 
-   private final T object;
+   private T object;
+
+   @ProtoField(number = 1)
+   byte[] bytes;
 
    @ProtoFactory
    MarshallableUserObject(byte[] bytes) {
-      // no-op never actually used, as we override the default marshaller
-      throw new IllegalStateException(this.getClass().getSimpleName() + " marshaller not overridden in SerializationContext");
+      this.bytes = bytes;
    }
 
    public MarshallableUserObject(T object) {
       this.object = object;
    }
 
-   @ProtoField(number = 1)
-   byte[] getBytes() {
-      return Util.EMPTY_BYTE_ARRAY;
-   }
-
-   public T get() {
+   public T getObject() {
       return object;
    }
 
@@ -74,11 +60,9 @@ public class MarshallableUserObject<T> {
    }
 
    public static int size(int objectBytes) {
-      int typeId = ProtoStreamTypeIds.MARSHALLABLE_USER_OBJECT;
-      int typeIdSize = tagSize(19, 1) + computeUInt32SizeNoTag(typeId);
+      int typeIdSize = tagSize(19, 1) + computeUInt32SizeNoTag(ProtoStreamTypeIds.MARSHALLABLE_USER_OBJECT);
       int userBytesFieldSize = tagSize(1, 2) + computeUInt32SizeNoTag(objectBytes) + objectBytes;
       int wrappedMessageSize = tagSize(17, 2) + computeUInt32SizeNoTag(objectBytes);
-
       return typeIdSize + userBytesFieldSize + wrappedMessageSize;
    }
 
@@ -99,59 +83,42 @@ public class MarshallableUserObject<T> {
       }
    }
 
-   public static class Marshaller implements RawProtobufMarshaller<MarshallableUserObject> {
+   public static BaseMarshaller<MarshallableUserObject> makeMarshaller(RawProtobufMarshaller<MarshallableUserObject> protobufMarshaller, Marshaller userMarshaller) {
+      return new RawProtobufMarshaller<MarshallableUserObject>() {
 
-      private final String typeName;
-      private final org.infinispan.commons.marshall.Marshaller userMarshaller;
+         @Override
+         public Class<? extends MarshallableUserObject> getJavaClass() {
+            return protobufMarshaller.getJavaClass();
+         }
 
-      public Marshaller(String typeName, org.infinispan.commons.marshall.Marshaller userMarshaller) {
-         this.typeName = typeName;
-         this.userMarshaller = userMarshaller;
-      }
+         @Override
+         public String getTypeName() {
+            return protobufMarshaller.getTypeName();
+         }
 
-      @Override
-      public Class<MarshallableUserObject> getJavaClass() { return MarshallableUserObject.class; }
-
-      @Override
-      public String getTypeName() { return typeName; }
-
-      @Override
-      public MarshallableUserObject readFrom(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
-         try {
-            byte[] bytes = null;
-            boolean done = false;
-            while (!done) {
-               final int tag = in.readTag();
-               switch (tag) {
-                  case 0:
-                     done = true;
-                     break;
-                  case 1 << 3 | WireFormat.WIRETYPE_LENGTH_DELIMITED: {
-                     bytes = in.readByteArray();
-                     break;
-                  }
-                  default: {
-                     if (!in.skipField(tag)) done = true;
-                  }
-               }
+         @Override
+         public MarshallableUserObject readFrom(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {
+            MarshallableUserObject marshallableUserObject = protobufMarshaller.readFrom(ctx, in);
+            try {
+               marshallableUserObject.object = userMarshaller.objectFromByteBuffer(marshallableUserObject.bytes);
+               marshallableUserObject.bytes = null;
+            } catch (ClassNotFoundException e) {
+               throw new MarshallingException(e);
             }
-            Object userObject = userMarshaller.objectFromByteBuffer(bytes);
-            return new MarshallableUserObject<>(userObject);
-         } catch (ClassNotFoundException e) {
-            throw new MarshallingException(e);
+            return marshallableUserObject;
          }
-      }
 
-      @Override
-      public void writeTo(ImmutableSerializationContext ctx, RawProtoStreamWriter out, MarshallableUserObject marshallableUserObject) throws IOException {
-         try {
-            Object userObject = marshallableUserObject.get();
-            byte[] bytes = userMarshaller.objectToByteBuffer(userObject);
-            out.writeBytes(1, bytes);
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new CacheException(e);
+         @Override
+         public void writeTo(ImmutableSerializationContext ctx, RawProtoStreamWriter out, MarshallableUserObject marshallableUserObject) throws IOException {
+            try {
+               marshallableUserObject.bytes = userMarshaller.objectToByteBuffer(marshallableUserObject.object);
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+               throw new MarshallingException(e);
+            }
+            protobufMarshaller.writeTo(ctx, out, marshallableUserObject);
+            marshallableUserObject.bytes = null;
          }
-      }
+      };
    }
 }

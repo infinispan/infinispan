@@ -22,9 +22,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.core.EncoderRegistryImpl;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
-import org.infinispan.marshall.persistence.impl.PersistenceContextInitializer;
 import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
+import org.infinispan.protostream.RawProtobufMarshaller;
 
 /**
  * Factory for {@link EncoderRegistryImpl} objects.
@@ -47,10 +47,9 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       EncoderRegistryImpl encoderRegistry = new EncoderRegistryImpl();
       ClassWhiteList classWhiteList = embeddedCacheManager.getClassWhiteList();
       // TODO Move registration to GlobalMarshaller ISPN-9622
-      String messageName = PersistenceContextInitializer.getFqTypeName(MarshallableUserObject.class);
       Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
-      ctxRegistry.addMarshaller(SerializationContextRegistry.MarshallerType.GLOBAL,
-                                new MarshallableUserObject.Marshaller(messageName, userMarshaller));
+      RawProtobufMarshaller<MarshallableUserObject> baseMarshaller = (RawProtobufMarshaller<MarshallableUserObject>) ctxRegistry.getGlobalCtx().getMarshaller(MarshallableUserObject.class);
+      ctxRegistry.addMarshaller(SerializationContextRegistry.MarshallerType.GLOBAL, MarshallableUserObject.makeMarshaller(baseMarshaller, userMarshaller));
 
       encoderRegistry.registerEncoder(IdentityEncoder.INSTANCE);
       encoderRegistry.registerEncoder(UTF8Encoder.INSTANCE);

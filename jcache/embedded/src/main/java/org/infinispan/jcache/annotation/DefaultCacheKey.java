@@ -40,7 +40,7 @@ public class DefaultCacheKey implements GeneratedCacheKey {
    @ProtoFactory
    DefaultCacheKey(List<MarshallableUserObject> marshallableParams) {
       this.marshallableParams = marshallableParams;
-      this.parameters = marshallableParams.stream().map(MarshallableUserObject::get).toArray();
+      this.parameters = marshallableParams.stream().map(MarshallableUserObject::getObject).toArray();
       this.hashCode = deepHashCode(this.parameters);
    }
 

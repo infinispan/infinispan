@@ -16,7 +16,7 @@ public interface SerializationContextRegistry {
 
    void addProtoFile(MarshallerType type, FileDescriptorSource fileDescriptorSource);
 
-   void addMarshaller(MarshallerType type, BaseMarshaller marshaller);
+   void addMarshaller(MarshallerType type, BaseMarshaller<?> marshaller);
 
    void addContextInitializer(MarshallerType type, SerializationContextInitializer sci);
 

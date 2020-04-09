@@ -29,7 +29,7 @@ public class Bucket<V> {
 
    @ProtoFactory
    Bucket(HashSet<MarshallableUserObject<V>> wrappedValues) {
-      this.values = wrappedValues.stream().map(MarshallableUserObject::get).collect(Collectors.toSet());
+      this.values = wrappedValues.stream().map(MarshallableUserObject::getObject).collect(Collectors.toSet());
    }
 
    @ProtoField(number = 1, collectionImplementation = HashSet.class)

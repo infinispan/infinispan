@@ -1,11 +1,9 @@
 package org.infinispan.marshall.protostream.impl;
 
 import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType.GLOBAL;
-import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType.PERSISTENCE;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
@@ -25,6 +23,7 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
 
    @Inject GlobalConfiguration globalConfig;
 
+   //TODO [anistor] we should update SerializationContext directly and not use any synchronization
    private final MarshallerContext global = new MarshallerContext();
    private final MarshallerContext persistence = new MarshallerContext();
 
@@ -32,93 +31,77 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
    public void start() {
       // Add user configured SCIs to both the global and persistence context
       List<SerializationContextInitializer> scis = globalConfig.serialization().contextInitializers();
-      update(GLOBAL, ctx -> {
-         if (scis != null)
-            ctx.addContextIntializers(scis);
+      if (scis != null)
+         global.addContextInitializers(scis);
 
-         ctx.addContextIntializer(new PersistenceContextInitializerImpl())
-               // Register Commons util so that KeyValueWithPrevious can be used with JCache remote
-               .addContextIntializer(new org.infinispan.commons.GlobalContextInitializerImpl())
-               .update();
-      });
+      global.addContextInitializer(new PersistenceContextInitializerImpl())
+            // Register Commons util so that KeyValueWithPrevious can be used with JCache remote
+            .addContextInitializer(new org.infinispan.commons.GlobalContextInitializerImpl())
+            .update();
 
-      update(PERSISTENCE, ctx -> {
-         if (scis != null)
-            ctx.addContextIntializers(scis);
+      if (scis != null)
+         persistence.addContextInitializers(scis);
 
-         ctx.addContextIntializer(new PersistenceContextInitializerImpl())
-               .update();
-      });
+      persistence.addContextInitializer(new PersistenceContextInitializerImpl())
+                 .update();
    }
 
    @Override
    public ImmutableSerializationContext getGlobalCtx() {
-      synchronized (global) {
-         return global.ctx;
-      }
+      return global.ctx;
    }
 
    @Override
    public ImmutableSerializationContext getPersistenceCtx() {
-      synchronized (persistence) {
-         return persistence.ctx;
-      }
+      return persistence.ctx;
    }
 
    @Override
    public void addContextInitializer(MarshallerType type, SerializationContextInitializer sci) {
-      update(type, ctx -> ctx.addContextIntializer(sci).update());
+      MarshallerContext ctx = type == GLOBAL ? global : persistence;
+      ctx.addContextInitializer(sci).update();
    }
 
    @Override
    public void addProtoFile(MarshallerType type, FileDescriptorSource fileDescriptorSource) {
-      update(type, ctx -> ctx.addProtoFile(fileDescriptorSource).update());
+      MarshallerContext ctx = type == GLOBAL ? global : persistence;
+      ctx.addProtoFile(fileDescriptorSource).update();
    }
 
    @Override
-   public void addMarshaller(MarshallerType type, BaseMarshaller marshaller) {
-      update(type, ctx -> ctx.addMarshaller(marshaller).update());
+   public void addMarshaller(MarshallerType type, BaseMarshaller<?> marshaller) {
+      MarshallerContext ctx = type == GLOBAL ? global : persistence;
+      ctx.addMarshaller(marshaller).update();
    }
 
-   private void update(MarshallerType type, Consumer<MarshallerContext> consumer) {
-      if (type == GLOBAL) {
-         synchronized (global) {
-            consumer.accept(global);
-         }
-      } else {
-         synchronized (persistence) {
-            consumer.accept(persistence);
-         }
-      }
-   }
-
-   static class MarshallerContext {
+   private static final class MarshallerContext {
       private final List<SerializationContextInitializer> initializers = new ArrayList<>();
       private final List<FileDescriptorSource> schemas = new ArrayList<>();
       private final List<BaseMarshaller<?>> marshallers = new ArrayList<>();
-      private SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      private final SerializationContext ctx = ProtobufUtil.newSerializationContext();
 
-      MarshallerContext addContextIntializers(List<SerializationContextInitializer> scis) {
+      synchronized MarshallerContext addContextInitializers(List<SerializationContextInitializer> scis) {
          initializers.addAll(scis);
          return this;
       }
 
-      MarshallerContext addContextIntializer(SerializationContextInitializer sci) {
+      synchronized MarshallerContext addContextInitializer(SerializationContextInitializer sci) {
          initializers.add(sci);
          return this;
       }
 
-      MarshallerContext addProtoFile(FileDescriptorSource fileDescriptorSource) {
+      synchronized MarshallerContext addProtoFile(FileDescriptorSource fileDescriptorSource) {
          schemas.add(fileDescriptorSource);
          return this;
       }
 
-      MarshallerContext addMarshaller(BaseMarshaller marshaller) {
+      synchronized MarshallerContext addMarshaller(BaseMarshaller<?> marshaller) {
          marshallers.add(marshaller);
          return this;
       }
 
-      void update() {
+      synchronized void update() {
+         //TODO [anistor] the fact the we need to re-register everything each time is a symptom of a hidden problem. If we don't we see StoreTypeMultimapCacheTest failing
          initializers.forEach(sci -> {
             sci.registerSchema(ctx);
             sci.registerMarshallers(ctx);

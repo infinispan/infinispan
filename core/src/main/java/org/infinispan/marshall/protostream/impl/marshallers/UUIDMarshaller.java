@@ -30,7 +30,7 @@ public class UUIDMarshaller implements MessageMarshaller<UUID> {
    }
 
    @Override
-   public Class<? extends UUID> getJavaClass() {
+   public Class<UUID> getJavaClass() {
       return UUID.class;
    }
 
