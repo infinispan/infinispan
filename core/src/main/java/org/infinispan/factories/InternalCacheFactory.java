@@ -1,12 +1,13 @@
 package org.infinispan.factories;
 
 import static java.util.Objects.requireNonNull;
+import static org.infinispan.encoding.DataConversion.newKeyDataConversion;
+import static org.infinispan.encoding.DataConversion.newValueDataConversion;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -17,12 +18,10 @@ import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.cache.impl.StatsCollectingCache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
@@ -63,7 +62,11 @@ import org.infinispan.xsite.XSiteAdminOperations;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @since 4.0
  */
-public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFactory {
+public class InternalCacheFactory<K, V> {
+
+   private Configuration configuration;
+   private ComponentRegistry componentRegistry;
+   private BasicComponentRegistry basicComponentRegistry;
 
    /**
     * This implementation clones the configuration passed in before using it.
@@ -89,58 +92,51 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
    }
 
-   private AdvancedCache<K, V> createAndWire(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
-                                             String cacheName) throws Exception {
-      StreamingMarshaller marshaller = globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class, KnownComponentNames.INTERNAL_MARSHALLER);
+   private AdvancedCache<K, V> createAndWire(Configuration configuration,
+                                             GlobalComponentRegistry globalComponentRegistry,
+                                             String cacheName) {
+      StreamingMarshaller marshaller = globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class,
+                                                                                    KnownComponentNames.INTERNAL_MARSHALLER);
 
-      final BiFunction<DataConversion, DataConversion, AdvancedCache<K, V>> actualBuilder = (kc, kv) -> new CacheImpl<>(cacheName);
-      BiFunction<DataConversion, DataConversion, AdvancedCache<K, V>> usedBuilder;
+      AdvancedCache<K, V> cache = new CacheImpl<>(cacheName);
       // We can optimize REPL reads that meet some criteria. This allows us to bypass interceptor chain
       if (configuration.clustering().cacheMode().isReplicated() && !configuration.persistence().usingStores()
-            && !configuration.transaction().transactionMode().isTransactional() && configuration.clustering().stateTransfer().awaitInitialTransfer()) {
-         usedBuilder = (kc, kv) -> {
-            AbstractGetAdvancedCache<K, V, ?> cache = new GetReplCache<>(actualBuilder.apply(kc, kv));
-            if (configuration.statistics().available()) {
-               cache = new StatsCache<>(cache);
-            }
-            if (configuration.clustering().partitionHandling().whenSplit() != PartitionHandling.ALLOW_READ_WRITES) {
-               cache = new PartitionHandlingCache<>(cache);
-            }
-            return cache;
-         };
-      } else {
-         usedBuilder = actualBuilder;
+          && !configuration.transaction().transactionMode().isTransactional() &&
+          configuration.clustering().stateTransfer().awaitInitialTransfer()) {
+         cache = new GetReplCache<>(new CacheImpl<>(cacheName));
+         if (configuration.statistics().available()) {
+            cache = new StatsCache<>(cache);
+         }
+         if (configuration.clustering().partitionHandling().whenSplit() != PartitionHandling.ALLOW_READ_WRITES) {
+            cache = new PartitionHandlingCache<>(cache);
+         }
       }
 
-      AdvancedCache<K, V> cache = buildEncodingCache(usedBuilder, configuration);
+      AdvancedCache<K, V> encodedCache = buildEncodingCache(cache);
 
-      bootstrap(cacheName, cache, configuration, globalComponentRegistry, marshaller);
+      // TODO Register the cache without encoding in the component registry
+      bootstrap(cacheName, encodedCache, configuration, globalComponentRegistry, marshaller);
       if (marshaller != null) {
          componentRegistry.wireDependencies(marshaller);
       }
-      return cache;
+      return encodedCache;
    }
 
-   private AdvancedCache<K, V> buildEncodingCache(BiFunction<DataConversion, DataConversion, AdvancedCache<K, V>> wrappedCacheBuilder, Configuration configuration) {
-      ContentTypeConfiguration keyEncodingConfig = configuration.encoding().keyDataType();
-      ContentTypeConfiguration valueEncodingConfig = configuration.encoding().valueDataType();
+   private AdvancedCache<K, V> buildEncodingCache(AdvancedCache<K, V> wrappedCache) {
+      DataConversion keyDataConversion = newKeyDataConversion(null, ByteArrayWrapper.class);
+      DataConversion valueDataConversion = newValueDataConversion(null, ByteArrayWrapper.class);
 
-      MediaType keyType = keyEncodingConfig.mediaType();
-      MediaType valueType = valueEncodingConfig.mediaType();
-
-      DataConversion keyDataConversion = DataConversion.newKeyDataConversion(null, ByteArrayWrapper.class, keyType);
-      DataConversion valueDataConversion = DataConversion.newValueDataConversion(null, ByteArrayWrapper.class, valueType);
-
-      return new EncoderCache<>(wrappedCacheBuilder.apply(keyDataConversion, valueDataConversion), keyDataConversion, valueDataConversion);
+      return new EncoderCache<>(wrappedCache, keyDataConversion, valueDataConversion);
    }
 
-   private AdvancedCache<K, V> createSimpleCache(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
+   private AdvancedCache<K, V> createSimpleCache(Configuration configuration,
+                                                 GlobalComponentRegistry globalComponentRegistry,
                                                  String cacheName) {
       AdvancedCache<K, V> cache;
       if (configuration.statistics().available()) {
-         cache = buildEncodingCache((kc, vc) -> new StatsCollectingCache<>(cacheName, kc, vc), configuration);
+         cache = buildEncodingCache(new StatsCollectingCache<>(cacheName));
       } else {
-         cache = buildEncodingCache((kc, vc) -> new SimpleCacheImpl<>(cacheName, kc, vc), configuration);
+         cache = buildEncodingCache(new SimpleCacheImpl<>(cacheName));
       }
       this.configuration = configuration;
 
@@ -188,11 +184,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
       // The RollingUpgradeManager should always be added so it is registered in JMX.
       componentRegistry.registerComponent(new RollingUpgradeManager(), RollingUpgradeManager.class.getName(), true);
-   }
-
-   @Override
-   public Object construct(String componentName) {
-      throw new UnsupportedOperationException("Should never be invoked - this is a bootstrap factory.");
    }
 
    private static void assertKeyNotNull(Object key) {
@@ -290,7 +281,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       // We store the flags as bits passed from AdvancedCache.withFlags etc.
       private final long bitFlags;
 
-      public PartitionHandlingCache(AbstractGetAdvancedCache<K, V, ?> cache) {
+      public PartitionHandlingCache(AdvancedCache<K, V> cache) {
          this(cache, 0L);
       }
 
@@ -367,11 +358,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       @Inject TimeService timeService;
       private CacheMgmtInterceptor interceptor;
 
-      public StatsCache(AbstractGetAdvancedCache<K, V, ?> cache) {
-         this((AdvancedCache<K, V>) cache);
-      }
-
-      private StatsCache(AdvancedCache<K, V> cache) {
+      public StatsCache(AdvancedCache<K, V> cache) {
          super(cache, new AdvancedCacheWrapper<K, V>() {
             @Override
             public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
