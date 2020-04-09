@@ -64,6 +64,14 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       cm.defineConfiguration("rest", getDefaultCacheBuilder().build());
    }
 
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+            new CacheResourceTest().withSecurity(false),
+            new CacheResourceTest().withSecurity(true),
+      };
+   }
+
    @Test
    public void testLegacyPredefinedCache() throws Exception {
       putStringValueInCache("rest", "k1", "v1");
@@ -376,7 +384,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       String payload = getResourceAsString("person.proto", getClass().getClassLoader());
       putStringValueInCache("default", "k", payload);
 
-      HttpClient uncompressingClient = new HttpClient();
+      HttpClient uncompressingClient = createNewClient();
       try {
          uncompressingClient.start();
          uncompressingClient.getContentDecoderFactories().clear();

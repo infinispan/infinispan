@@ -38,6 +38,14 @@ public class TasksResourceTest extends AbstractRestResourceTest {
    public void tearDown() {
    }
 
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+            // [ISPN-11621] new TasksResourceTest().withSecurity(true),
+            new TasksResourceTest().withSecurity(false),
+      };
+   }
+
    @Test
    public void testTaskList() throws Exception {
       String baseURL = String.format("http://localhost:%d/rest/v2/tasks", restServer().getPort());

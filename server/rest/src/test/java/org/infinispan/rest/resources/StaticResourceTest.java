@@ -40,6 +40,14 @@ public class StaticResourceTest extends AbstractRestResourceTest {
       return client.newRequest(url).method(GET).send();
    }
 
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+            new StaticResourceTest().withSecurity(false),
+            new StaticResourceTest().withSecurity(true),
+      };
+   }
+
    @Test
    public void testGetFile() throws InterruptedException, ExecutionException, TimeoutException {
       ContentResponse response = call("static", "nonexistent.html");
