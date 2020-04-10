@@ -53,10 +53,9 @@ pipeline {
         stage('Commit version for documentation') {
             steps {
                 script {
-                    sh "sed -i \"s/^:ispn_version:.*$/:ispn_version: ${version}/\" documentation/src/main/asciidoc/topics/attributes/community-attributes.adoc"
+                    sh "sed -i \"s/^:ispn_version:.*\$/:ispn_version: ${version}/\" documentation/src/main/asciidoc/topics/attributes/community-attributes.adoc"
                     sh "git add 'documentation/src/main/asciidoc/topics/attributes/community-attributes.adoc'"
                     sh "git diff-index --quiet HEAD || git commit -m 'Committing ${version} to doc attribute file'"
-                    }
                 }
             }
         }
