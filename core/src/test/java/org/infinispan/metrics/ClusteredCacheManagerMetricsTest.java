@@ -31,7 +31,8 @@ public class ClusteredCacheManagerMetricsTest extends MultipleCacheManagersTest 
    @Override
    protected void createCacheManagers() throws Throwable {
       GlobalConfigurationBuilder globalConfig1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfig1.metrics().prefix("ispn").gauges(true).histograms(true).namesAsTags(true);
+      globalConfig1.cacheContainer().statistics(true)
+                   .metrics().prefix("ispn").gauges(true).histograms(true).namesAsTags(true);
 
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
       config.statistics().enable();
