@@ -2,7 +2,7 @@
 
 pipeline {
     agent {
-        label 'release'
+        label 'slave-group-release'
     }
 
     parameters {
