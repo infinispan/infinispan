@@ -2,10 +2,10 @@ package org.infinispan.distribution.rehash;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.util.ControlledRpcManager.replaceRpcManager;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
@@ -33,7 +34,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
@@ -159,9 +160,10 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
 
       final AdvancedCache<Object, Object> cache1 = advancedCache(1);
 
-      // Wait for the write CH to contain the joiner everywhere
-      eventually(() -> cache0.getRpcManager().getMembers().size() == 2 &&
-                       cache1.getRpcManager().getMembers().size() == 2);
+      // Wait for joiner to finish requesting segments, so that write commands are not blocked
+      StateTransferLock stateTransferLock1 = TestingUtil.extractComponent(cache1, StateTransferLock.class);
+      stateTransferLock1.transactionDataFuture(rebalanceTopologyId).get(10, SECONDS);
+      assertEquals(2, cache1.getRpcManager().getMembers().size());
 
       // Every PutKeyValueCommand will be blocked before committing the entry on cache1
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
