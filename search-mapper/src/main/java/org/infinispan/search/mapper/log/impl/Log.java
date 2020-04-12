@@ -40,4 +40,12 @@ public interface Log extends BasicLogger {
    @Message(id = ID_OFFSET_1 + 6, value = "Unable to load class [%1$s]")
    ClassLoadingException unableToLoadTheClass(String className, @Cause Throwable cause);
 
+   @Message(id = ID_OFFSET_1 + 7, value = "An indexed cannot be analyzed and ordered at the same time. " +
+         " Field '%1$s'.")
+   SearchException fieldSortableAndAnalyzed(String fieldName);
+
+   @Message(id = ID_OFFSET_1 + 8, value = "Index as null `DEFAULT_NULL_TOKEN` option is not supported anymore. " +
+         " Field '%1$s'.")
+   SearchException defaultNullTokenNotSupported(String fieldName);
+
 }
