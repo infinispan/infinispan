@@ -71,6 +71,15 @@
          <artifactId>h2</artifactId>
          <scope>test</scope>
       </dependency>
+
+      <!-- this dependency was provided by Hibernate Search 5 -->
+      <!-- maybe it is better to use Jackson 2 -->
+      <dependency>
+         <groupId>org.codehaus.jackson</groupId>
+         <artifactId>jackson-mapper-asl</artifactId>
+         <version>1.9.13</version>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>
