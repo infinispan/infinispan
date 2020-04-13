@@ -46,6 +46,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.MarshallableFunctions;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.commands.batch.CancelPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;
@@ -72,7 +73,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
 import io.reactivex.rxjava3.processors.PublishProcessor;
@@ -882,8 +882,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                               nextTopology, requestId);
                      }
                      // When this is complete - the retry below will kick in again and we will have a new topology
-                     return Completable.fromCompletionStage(
-                           stateTransferLock.topologyFuture(nextTopology)).toFlowable();
+                     return RxJavaInterop.voidCompletionStageToFlowable(stateTransferLock.topologyFuture(nextTopology));
                   }
                   Address localAddress = rpcManager.getAddress();
                   Map<Address, IntSet> targets = determineSegmentTargets(topology, segmentsToComplete, localAddress);

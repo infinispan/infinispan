@@ -15,6 +15,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -51,12 +52,40 @@ public final class CacheFilters {
     * @param converter the converter to utilize
     * @param <K> key type
     * @param <V> value type
-    * @param <C> convertered value type
+    * @param <C> converted value type
     * @return function based on the converter
     */
    public static <K, V, C> Function<CacheEntry<K, V>, CacheEntry<K, C>> function(
            Converter<? super K, ? super V, C> converter) {
       return new ConverterAsCacheEntryFunction<>(converter);
+   }
+
+   /**
+    * Creates a new {@link Function} using the provided filter convert. The {@link KeyValueFilterConverter#filterAndConvert(Object, Object, Metadata)}
+    * is invoked for every passed in CacheEntry. When a null value is returned from the filter converter instead of
+    * a null {@link CacheEntry} being returned, we instead return the {@link NullCacheEntry} as a sign of it. This
+    * allows this {@link Function} to be used in cases when a null value cannot be returned, such as reactive streams.
+    * <p>
+    * The {@link #notNullCacheEntryPredicate()} can be used to filter these values if needed.
+    * @param filterConverter the filter converter to utilize
+    * @param <K> key type
+    * @param <V> value type
+    * @param <C> converted value type
+    * @return function based on the filter converter
+    */
+   public static <K, V, C> Function<CacheEntry<K, V>, CacheEntry<K, C>> converterToFunction(KeyValueFilterConverter<? super K, ? super V, C> filterConverter) {
+      return new FilterConverterAsCacheEntryFunction<>(filterConverter);
+   }
+
+   /**
+    * Provides a predicate that can be used to filter out null cache entry objects as well as placeholder "null" entries
+    * of {@link NullCacheEntry} that can be returned from methods such as {@link #converterToFunction(KeyValueFilterConverter)}.
+    * @param <K> entry key type
+    * @param <V> entry value type
+    * @return a predicate to filter null entries
+    */
+   public static <K, V> Predicate<CacheEntry<K, V>> notNullCacheEntryPredicate() {
+      return NotNullCacheEntryPredicate.SINGLETON;
    }
 
    public static <K, V, C> CacheStream<C> filterAndConvertToValue(CacheStream<CacheEntry<K, V>> stream,
@@ -79,18 +108,55 @@ public final class CacheFilters {
     */
    public static <K, V, C> Stream<CacheEntry<K, C>> filterAndConvert(Stream<CacheEntry<K, V>> stream,
            KeyValueFilterConverter<? super K, ? super V, C> filterConverter) {
-      // Have to use flatMap instead of map/filter as reactive streams spec doesn't allow null values
-      return stream.flatMap(flatMap(filterConverter));
+      return stream.map(converterToFunction(filterConverter))
+            .filter(notNullCacheEntryPredicate());
    }
 
    public static <K, V, C> CacheStream<CacheEntry<K, C>> filterAndConvert(CacheStream<CacheEntry<K, V>> stream,
             KeyValueFilterConverter<? super K, ? super V, C> filterConverter) {
-      // Have to use flatMap instead of map/filter as reactive streams spec doesn't allow null values
-      return stream.flatMap(flatMap(filterConverter));
+      return stream.map(converterToFunction(filterConverter))
+            .filter(notNullCacheEntryPredicate());
    }
 
-   public static <K, V, C> Function<CacheEntry<K, V>, Stream<CacheEntry<K, C>>> flatMap(KeyValueFilterConverter<? super K, ? super V, C> filterConverter) {
-      return new FilterConverterAsCacheEntryFunction<>(filterConverter);
+   @Scope(Scopes.NONE)
+   static class NotNullCacheEntryPredicate<K, V> implements Predicate<CacheEntry<K, V>> {
+      private static final NotNullCacheEntryPredicate SINGLETON = new NotNullCacheEntryPredicate();
+
+      @Override
+      public boolean test(CacheEntry<K, V> kvCacheEntry) {
+         return kvCacheEntry != null && kvCacheEntry != NullCacheEntry.getInstance();
+      }
+   }
+
+   @Scope(Scopes.NONE)
+   static class FilterConverterAsCacheEntryFunction<K, V, C> implements Function<CacheEntry<K, V>, CacheEntry<K, C>> {
+      private final KeyValueFilterConverter<? super K, ? super V, C> filterConverter;
+
+      protected InternalEntryFactory factory;
+
+      FilterConverterAsCacheEntryFunction(KeyValueFilterConverter<? super K, ? super V, C> filterConverter) {
+         this.filterConverter = Objects.requireNonNull(filterConverter);
+      }
+
+      @Inject
+      public void inject(InternalEntryFactory factory, ComponentRegistry registry) {
+         this.factory = factory;
+         registry.wireDependencies(filterConverter);
+      }
+
+      @Override
+      public CacheEntry<K, C> apply(CacheEntry<K, V> kvCacheEntry) {
+         K key = kvCacheEntry.getKey();
+         V value = kvCacheEntry.getValue();
+         Metadata metadata = kvCacheEntry.getMetadata();
+         C converted = filterConverter.filterAndConvert(key, value, metadata);
+         if (converted == null) {
+            return NullCacheEntry.getInstance();
+         } else if (value == converted) {
+            return (CacheEntry<K, C>) kvCacheEntry;
+         }
+         return factory.create(key, converted, metadata);
+      }
    }
 
    @Scope(Scopes.NONE)
@@ -144,36 +210,6 @@ public final class CacheFilters {
    }
 
    @Scope(Scopes.NONE)
-   static class FilterConverterAsCacheEntryFunction<K, V, C> implements Function<CacheEntry<K, V>, Stream<CacheEntry<K, C>>> {
-      protected final KeyValueFilterConverter<? super K, ? super V, C> converter;
-
-      protected InternalEntryFactory factory;
-
-      public FilterConverterAsCacheEntryFunction(KeyValueFilterConverter<? super K, ? super V, C> converter) {
-         Objects.requireNonNull(converter);
-         this.converter = converter;
-      }
-
-      @Inject
-      public void inject(InternalEntryFactory factory, ComponentRegistry registry) {
-         this.factory = factory;
-         registry.wireDependencies(converter);
-      }
-
-      @Override
-      public Stream<CacheEntry<K, C>> apply(CacheEntry<K, V> kvCacheEntry) {
-         K key = kvCacheEntry.getKey();
-         V value = kvCacheEntry.getValue();
-         Metadata metadata = kvCacheEntry.getMetadata();
-         C converted = converter.filterAndConvert(key, value, metadata);
-         if (converted == null) {
-            return Stream.empty();
-         }
-         return Stream.of(factory.create(key, converted, metadata));
-      }
-   }
-
-   @Scope(Scopes.NONE)
    static class FilterConverterAsValueFunction<K, V, C> implements Function<CacheEntry<K, V>, Stream<C>> {
       protected final KeyValueFilterConverter<? super K, ? super V, C> converter;
 
@@ -203,6 +239,7 @@ public final class CacheFilters {
       private static final int CONVERTER_FUNCTION = 1;
       private static final int FILTER_CONVERTER_FUNCTION = 2;
       private static final int FILTER_CONVERTER_VALUE_FUNCTION = 3;
+      private static final int NOT_NULL_CACHE_ENTRY_PREDICATE = 4;
 
       private final Map<Class<?>, Integer> objects = new HashMap<>();
 
@@ -211,12 +248,14 @@ public final class CacheFilters {
          objects.put(ConverterAsCacheEntryFunction.class, CONVERTER_FUNCTION);
          objects.put(FilterConverterAsCacheEntryFunction.class, FILTER_CONVERTER_FUNCTION);
          objects.put(FilterConverterAsValueFunction.class, FILTER_CONVERTER_VALUE_FUNCTION);
+         objects.put(NotNullCacheEntryPredicate.class, NOT_NULL_CACHE_ENTRY_PREDICATE);
       }
 
       @Override
       public Set<Class<?>> getTypeClasses() {
          return Util.asSet(KeyValueFilterAsPredicate.class, ConverterAsCacheEntryFunction.class,
-                 FilterConverterAsCacheEntryFunction.class, FilterConverterAsValueFunction.class);
+                 FilterConverterAsCacheEntryFunction.class, FilterConverterAsValueFunction.class,
+                 NotNullCacheEntryPredicate.class);
       }
 
       @Override
@@ -236,10 +275,12 @@ public final class CacheFilters {
                output.writeObject(((ConverterAsCacheEntryFunction) object).converter);
                break;
             case FILTER_CONVERTER_FUNCTION:
-               output.writeObject(((FilterConverterAsCacheEntryFunction) object).converter);
+               output.writeObject(((FilterConverterAsCacheEntryFunction) object).filterConverter);
                break;
             case FILTER_CONVERTER_VALUE_FUNCTION:
                output.writeObject(((FilterConverterAsValueFunction) object).converter);
+               break;
+            case NOT_NULL_CACHE_ENTRY_PREDICATE:
                break;
             default:
                throw new IllegalArgumentException("Type " + number + " is not supported!");
@@ -258,6 +299,8 @@ public final class CacheFilters {
                return new FilterConverterAsCacheEntryFunction((KeyValueFilterConverter) input.readObject());
             case FILTER_CONVERTER_VALUE_FUNCTION:
                return new FilterConverterAsValueFunction((KeyValueFilterConverter) input.readObject());
+            case NOT_NULL_CACHE_ENTRY_PREDICATE:
+               return NotNullCacheEntryPredicate.SINGLETON;
             default:
                throw new IllegalArgumentException("Found invalid number " + number);
          }

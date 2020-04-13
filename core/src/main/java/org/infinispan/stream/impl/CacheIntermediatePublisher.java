@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
-import java.util.Queue;
 import java.util.Set;
 
 import org.infinispan.cache.impl.EncodingFunction;
@@ -26,17 +25,17 @@ import io.reactivex.rxjava3.core.Flowable;
  * @param <R>
  */
 public final class CacheIntermediatePublisher<R> implements ModifiedValueFunction<Publisher<Object>, Publisher<R>>, InjectableComponent {
-   private final Queue<IntermediateOperation> intOps;
+   private final Iterable<IntermediateOperation<?, ?, ?, ?>> intOps;
 
-   public CacheIntermediatePublisher(Queue<IntermediateOperation> intOps) {
+   public CacheIntermediatePublisher(Iterable<IntermediateOperation<?, ?, ?, ?>> intOps) {
       this.intOps = intOps;
    }
 
    @Override
    public Publisher<R> apply(Publisher<Object> objectPublisher) {
       Flowable<Object> innerPublisher = Flowable.fromPublisher(objectPublisher);
-      for (IntermediateOperation intOp : intOps) {
-         innerPublisher = intOp.mapFlowable(innerPublisher);
+      for (IntermediateOperation<?, ?, ?, ?> intOp : intOps) {
+         innerPublisher = intOp.mapFlowable((Flowable) innerPublisher);
       }
       return (Publisher<R>) innerPublisher;
    }
@@ -70,7 +69,7 @@ public final class CacheIntermediatePublisher<R> implements ModifiedValueFunctio
 
       @Override
       public CacheIntermediatePublisher readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new CacheIntermediatePublisher((Queue) input.readObject());
+         return new CacheIntermediatePublisher((Iterable) input.readObject());
       }
 
       @Override

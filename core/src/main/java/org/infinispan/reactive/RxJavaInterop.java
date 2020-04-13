@@ -1,13 +1,16 @@
 package org.infinispan.reactive;
 
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.functions.Function;
+import io.reactivex.rxjava3.processors.AsyncProcessor;
 
 /**
  * Static factory class that provides methods to obtain commonly used instances for interoperation between RxJava
@@ -17,6 +20,23 @@ import io.reactivex.rxjava3.functions.Function;
  */
 public class RxJavaInterop {
    private RxJavaInterop() { }
+
+   public static <R> Flowable<R> voidCompletionStageToFlowable(CompletionStage<Void> stage) {
+      if (CompletionStages.isCompletedSuccessfully(stage)) {
+         return Flowable.empty();
+      }
+      AsyncProcessor<R> ap = AsyncProcessor.create();
+
+      stage.whenComplete((value, t) -> {
+         if (t != null) {
+            ap.onError(t);
+         } else {
+            ap.onComplete();
+         }
+      });
+
+      return ap;
+   }
 
    /**
     * Provides a {@link Function} that can be used to convert from an instance of {@link java.util.Map.Entry} to
