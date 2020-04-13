@@ -19,7 +19,6 @@ import static org.infinispan.notifications.cachelistener.event.Event.Type.TRANSA
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,7 +26,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
@@ -129,6 +127,7 @@ import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.notifications.impl.AbstractListenerImpl;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.PublisherTransformers;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
@@ -139,7 +138,6 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.stream.impl.CacheIntermediatePublisher;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.intops.object.FilterOperation;
-import org.infinispan.stream.impl.intops.object.FlatMapOperation;
 import org.infinispan.stream.impl.intops.object.MapOperation;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -1083,25 +1081,25 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          if (trace) {
             log.tracef("Listener %s requests initial state for cache", generatedId);
          }
-         Queue<IntermediateOperation> intermediateOperations = new ArrayDeque<>();
+         Collection<IntermediateOperation<?, ?, ?, ?>> intermediateOperations = new ArrayList<>();
 
          if (keyDataConversion != DataConversion.IDENTITY_KEY && valueDataConversion != DataConversion.IDENTITY_VALUE) {
-            intermediateOperations.add(new MapOperation(EncoderEntryMapper.newCacheEntryMapper(
+            intermediateOperations.add(new MapOperation<>(EncoderEntryMapper.newCacheEntryMapper(
                   keyDataConversion, valueDataConversion, entryFactory)));
          }
 
          if (filter instanceof CacheEventFilterConverter && (filter == converter || converter == null)) {
-            // Hacky cast to prevent other casts
-            intermediateOperations.add(new FlatMapOperation(CacheFilters.flatMap(
-                  new CacheEventFilterConverterAsKeyValueFilterConverter<>((CacheEventFilterConverter) filter))));
+            intermediateOperations.add(new MapOperation<>(CacheFilters.converterToFunction(
+                  new CacheEventFilterConverterAsKeyValueFilterConverter<>((CacheEventFilterConverter<?, ?, ?>) filter))));
+            intermediateOperations.add(new FilterOperation<>(CacheFilters.notNullCacheEntryPredicate()));
          } else {
             if (filter != null) {
-               intermediateOperations.add(new FilterOperation(CacheFilters.predicate(
+               intermediateOperations.add(new FilterOperation<>(CacheFilters.predicate(
                      new CacheEventFilterAsKeyValueFilter<>(filter))));
             }
             if (converter != null) {
-               intermediateOperations.add(new MapOperation(CacheFilters.function(
-                     new CacheEventConverterAsConverter(converter))));
+               intermediateOperations.add(new MapOperation<>(CacheFilters.function(
+                     new CacheEventConverterAsConverter<>(converter))));
             }
          }
 
@@ -1111,7 +1109,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
    }
 
    private CompletionStage<Void> handlePublisher(CompletionStage<Void> currentStage,
-         Queue<IntermediateOperation> intermediateOperations, QueueingSegmentListener<K, V, ? extends Event<K, V>> handler,
+         Collection<IntermediateOperation<?, ?, ?, ?>> intermediateOperations, QueueingSegmentListener<K, V, ? extends Event<K, V>> handler,
          UUID generatedId, Listener l, Function<Object, Object> kc, Function<Object, Object> kv) {
       SegmentCompletionPublisher<CacheEntry<K, V>> publisher = publisherManager.running().entryPublisher(
             null, null, null, true,
@@ -1119,28 +1117,23 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
             DeliveryGuarantee.EXACTLY_ONCE, config.clustering().stateTransfer().chunkSize(),
             intermediateOperations.isEmpty() ? PublisherTransformers.identity() : new CacheIntermediatePublisher(intermediateOperations));
 
-      io.reactivex.rxjava3.functions.Function<Object, ? extends Publisher<Void>> itemDelayFunction = ice -> {
-         CompletionStage<Void> delay = handler.delayProcessing();
-         if (CompletionStages.isCompletedSuccessfully(delay)) {
-            return Flowable.empty();
-         }
-         return Completable.fromCompletionStage(delay).toFlowable();
-      };
+      Completable delayCompletable = Completable.defer(() -> Completable.fromCompletionStage(handler.delayProcessing()));
+
       Publisher<CacheEntry<K, V>> p = s -> publisher.subscribe(s, handler);
-      currentStage = Flowable.fromPublisher(p)
-            .delaySubscription(Completable.fromCompletionStage(currentStage).toFlowable())
-            .delay(itemDelayFunction)
-            .filter(ice -> handler.markKeyAsProcessing(ice.getKey()) != QueueingSegmentListener.REMOVED)
-            .delay(ice -> Completable.fromCompletionStage(raiseEventForInitialTransfer(generatedId, ice, l.clustered(),
-                  kc, kv)).toFlowable())
-            // Only request up to 20 at a time
-            .rebatchRequests(20)
-            .count()
-            .toFlowable()
-            // Make sure there are no more delays for processing after we have retrieved all values
-            .delay(itemDelayFunction)
-            .ignoreElements()
-            .toCompletionStage(null);
+
+      currentStage = currentStage.thenCompose(ignore ->
+            Flowable.fromPublisher(p)
+                  .startWith(delayCompletable)
+                  .filter(ice -> handler.markKeyAsProcessing(ice.getKey()) != QueueingSegmentListener.REMOVED)
+                  .delay(ice -> RxJavaInterop.voidCompletionStageToFlowable(
+                        raiseEventForInitialTransfer(generatedId, ice, l.clustered(), kc, kv)))
+                  // Only request up to 20 at a time
+                  .rebatchRequests(20)
+                  .ignoreElements()
+                  // Make sure there are no more delays for processing after we have retrieved all values
+                  .andThen(delayCompletable)
+                  .toCompletionStage(null)
+      );
 
       currentStage = currentStage.thenCompose(ignore -> {
          if (trace) {
@@ -1361,8 +1354,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
             log.tracef("Listener %s requests initial state for cache", generatedId);
          }
 
-         Queue<IntermediateOperation> intermediateOperations = new ArrayDeque<>();
-
+         Collection<IntermediateOperation<?, ?, ?, ?>> intermediateOperations = new ArrayList<>();
 
          MediaType storage = valueConversion.getStorageMediaType();
          MediaType keyReq = keyConversion.getRequestMediaType();
@@ -1411,22 +1403,22 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
                !Objects.equals(chainedValueDataConversion, valueDataConversion)) {
             componentRegistry.wireDependencies(chainedKeyDataConversion, false);
             componentRegistry.wireDependencies(chainedValueDataConversion, false);
-            intermediateOperations.add(new MapOperation(EncoderEntryMapper.newCacheEntryMapper(chainedKeyDataConversion,
+            intermediateOperations.add(new MapOperation<>(EncoderEntryMapper.newCacheEntryMapper(chainedKeyDataConversion,
                   chainedValueDataConversion, entryFactory)));
          }
 
          if (filter instanceof CacheEventFilterConverter && (filter == converter || converter == null)) {
-            // Hacky cast to prevent other casts
-            intermediateOperations.add(new FlatMapOperation(CacheFilters.flatMap(
-                  new CacheEventFilterConverterAsKeyValueFilterConverter<>((CacheEventFilterConverter) filter))));
+            intermediateOperations.add(new MapOperation<>(CacheFilters.converterToFunction(
+                  new CacheEventFilterConverterAsKeyValueFilterConverter<>((CacheEventFilterConverter<?, ?, ?>) filter))));
+            intermediateOperations.add(new FilterOperation<>(CacheFilters.notNullCacheEntryPredicate()));
          } else {
             if (filter != null) {
-               intermediateOperations.add(new FilterOperation(CacheFilters.predicate(
+               intermediateOperations.add(new FilterOperation<>(CacheFilters.predicate(
                      new CacheEventFilterAsKeyValueFilter<>(filter))));
             }
             if (converter != null) {
-               intermediateOperations.add(new MapOperation(CacheFilters.function(
-                     new CacheEventConverterAsConverter(converter))));
+               intermediateOperations.add(new MapOperation<>(CacheFilters.function(
+                     new CacheEventConverterAsConverter<>(converter))));
             }
          }
 

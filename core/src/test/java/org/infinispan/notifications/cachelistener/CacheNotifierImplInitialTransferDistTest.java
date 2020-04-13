@@ -280,7 +280,6 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       registerBlockingPublisher(checkPoint, cache);
 
-      checkPoint.triggerForever(Mocks.BEFORE_INVOCATION);
       checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
 
       try {
@@ -463,7 +462,6 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       CheckPoint checkPoint = new CheckPoint();
       checkPoint.triggerForever(Mocks.AFTER_RELEASE);
-      checkPoint.triggerForever(Mocks.AFTER_INVOCATION);
       int segmentToUse = cache.getAdvancedCache().getDistributionManager().getCacheTopology().getSegment(keyToChange);
 
       // do the operation, which should put it in the queue.
