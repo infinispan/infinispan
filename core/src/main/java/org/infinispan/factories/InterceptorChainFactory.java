@@ -30,6 +30,7 @@ import org.infinispan.interceptors.impl.AsyncInterceptorChainImpl;
 import org.infinispan.interceptors.impl.BatchingInterceptor;
 import org.infinispan.interceptors.impl.BiasedEntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
+import org.infinispan.interceptors.impl.CacheMetricsMgmtInterceptor;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
@@ -39,8 +40,8 @@ import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.GroupingInterceptor;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
-import org.infinispan.interceptors.impl.NonTxIracLocalSiteInterceptor;
 import org.infinispan.interceptors.impl.IsMarshallableInterceptor;
+import org.infinispan.interceptors.impl.NonTxIracLocalSiteInterceptor;
 import org.infinispan.interceptors.impl.NonTxIracRemoteSiteInterceptor;
 import org.infinispan.interceptors.impl.NotificationInterceptor;
 import org.infinispan.interceptors.impl.OptimisticTxIracLocalSiteInterceptor;
@@ -141,7 +142,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       // load the cache management interceptor next
       if (configuration.statistics().available()) {
-         interceptorChain.appendInterceptor(createInterceptor(new CacheMgmtInterceptor(), CacheMgmtInterceptor.class), false);
+         if (globalConfiguration.metrics().histograms()) {
+            interceptorChain.appendInterceptor(createInterceptor(new CacheMetricsMgmtInterceptor(), CacheMetricsMgmtInterceptor.class), false);
+         } else {
+            interceptorChain.appendInterceptor(createInterceptor(new CacheMgmtInterceptor(), CacheMgmtInterceptor.class), false);
+         }
       }
 
       // the state transfer interceptor sets the topology id and retries on topology changes

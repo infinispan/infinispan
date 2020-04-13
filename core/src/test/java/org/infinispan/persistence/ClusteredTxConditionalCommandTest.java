@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
  * @since 7.0
  */
 @Test(groups = "functional", testName = "persistence.ClusteredTxConditionalCommandTest")
-@InCacheMode({CacheMode.DIST_SYNC})
+@InCacheMode(CacheMode.DIST_SYNC)
 public class ClusteredTxConditionalCommandTest extends ClusteredConditionalCommandTest {
 
    // TX optimistic but without WSC!

@@ -53,13 +53,10 @@ public final class StripedCounters<T> {
    }
 
    public T stripeForCurrentThread() {
-      return stripes[threadIndex()];
-   }
-
-   private int threadIndex() {
       // Spread the thread id a bit, in case it's always a multiple of 16
       long id = Thread.currentThread().getId();
       id ^= id >>> 7 ^ id >>> 4;
-      return (int) (id & STRIPE_MASK);
+
+      return stripes[(int) (id & STRIPE_MASK)];
    }
 }

@@ -28,17 +28,11 @@ public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {
    public CompletionStage<Void> onEntryEviction(Map<K, Map.Entry<K,V>> evicted, FlagAffectedCommand command) {
       CompletionStage<Void> stage = cacheNotifier.notifyCacheEntriesEvicted(evicted.values(), ImmutableContext.INSTANCE, command);
       if (cfg.statistics().enabled()) {
-         updateEvictionStatistics(evicted);
+         CacheMgmtInterceptor mgmtInterceptor = interceptorChain.running().findInterceptorExtending(CacheMgmtInterceptor.class);
+         if (mgmtInterceptor != null) {     //todo [anistor] can this be null if stats are enabled ?
+            mgmtInterceptor.addEvictions(evicted.size());
+         }
       }
-
       return stage;
-   }
-
-   private void updateEvictionStatistics(Map<K, Map.Entry<K, V>> evicted) {
-      CacheMgmtInterceptor mgmtInterceptor =
-            interceptorChain.running().findInterceptorExtending(CacheMgmtInterceptor.class);
-      if (mgmtInterceptor != null) {
-         mgmtInterceptor.addEvictions(evicted.size());
-      }
    }
 }

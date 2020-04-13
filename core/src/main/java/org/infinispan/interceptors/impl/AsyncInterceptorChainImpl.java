@@ -33,7 +33,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.0
  */
 @Scope(Scopes.NAMED_CACHE)
-@SuppressWarnings("deprecation")
 public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    // Using the same list type everywhere may help with the optimization of the invocation context methods
    private static final ImmutableListCopy<AsyncInterceptor> EMPTY_INTERCEPTORS_LIST =
@@ -124,10 +123,9 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
       }
    }
 
-   private boolean interceptorMatches(AsyncInterceptor interceptor,
-                                        Class<? extends AsyncInterceptor> clazz) {
+   private boolean interceptorMatches(AsyncInterceptor interceptor, Class<? extends AsyncInterceptor> clazz) {
       Class<? extends AsyncInterceptor> interceptorType = interceptor.getClass();
-      return clazz == interceptorType;
+      return interceptorType.isAssignableFrom(clazz);
    }
 
    @Override
