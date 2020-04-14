@@ -527,3 +527,12 @@ The following command can be used to print all dependencies for a certain module
 ----
 java -jar jboss-modules.jar -deptree -mp modules/ "org.infinispan:{infinispanslot}"
 ----
+
+ifdef::productized[]
+===== Java Security Manager Policies
+When running on {wildflybrandname} with the Java Security Manager enabled, you
+might need to security permissions to allow access to resources such as files 
+or properties.
+
+For more information, see link:https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.2/html-single/how_to_configure_server_security/index#java_security_manager[Java Security Manager] in the {wildflybrandname} documentation.
+endif::productized[]

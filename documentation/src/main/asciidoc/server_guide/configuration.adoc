@@ -203,17 +203,13 @@ The following connector declaration enables a Memcached server using the _memcac
 
 include::topics/configuration/memcached_connector.adoc[]
 
-==== WebSocket
-
-include::topics/configuration/websocket_connector.adoc[]
-
 ==== REST
 
 include::topics/configuration/rest_connector.adoc[]
 
 ==== Common Protocol Connector Settings
 
-The HotRod, Memcached and WebSocket protocol connectors support a number of tuning attributes in their declaration:
+The HotRod and Memcached protocol connectors support a number of tuning attributes in their declaration:
 
 *  _worker-threads_ Sets the number of worker threads. Defaults to 160.
 *  _idle-timeout_ Specifies the maximum time in seconds that connections from client will be kept open without activity. Defaults to -1 (connections will never timeout)
