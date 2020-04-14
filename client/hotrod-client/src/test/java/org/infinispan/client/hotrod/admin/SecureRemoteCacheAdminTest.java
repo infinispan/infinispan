@@ -1,13 +1,10 @@
 package org.infinispan.client.hotrod.admin;
 
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
 import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
@@ -24,14 +21,6 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.admin.SecureRemoteCacheAdminTest")
 public class SecureRemoteCacheAdminTest extends RemoteCacheAdminTest {
-
-   @Override
-   protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = hotRodCacheConfiguration(
-            getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      builder.indexing().autoConfig(true);
-      createHotRodServers(2, builder);
-   }
 
    @Override
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
@@ -65,10 +54,10 @@ public class SecureRemoteCacheAdminTest extends RemoteCacheAdminTest {
          SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
          sap.addUser("admin", "realm", "password".toCharArray(), "admin", ProtobufMetadataManager.SCHEMA_MANAGER_ROLE);
          serverBuilder.authentication()
-               .enable()
-               .serverAuthenticationProvider(sap)
-               .serverName("localhost")
-               .addAllowedMech("CRAM-MD5");
+                      .enable()
+                      .serverAuthenticationProvider(sap)
+                      .serverName("localhost")
+                      .addAllowedMech("CRAM-MD5");
          HotRodServer server = Security.doPrivileged((PrivilegedExceptionAction<HotRodServer>) () -> HotRodClientTestingUtil.startHotRodServer(cm, serverBuilder));
          servers.add(server);
          return server;
