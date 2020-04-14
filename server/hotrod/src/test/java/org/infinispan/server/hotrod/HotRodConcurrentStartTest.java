@@ -3,22 +3,25 @@ package org.infinispan.server.hotrod;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.serverPort;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServerWithDelay;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
+import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.server.core.test.ServerTestingUtil;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
+import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**
@@ -29,36 +32,40 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "server.hotrod.HotRodConcurrentStartTest")
 public class HotRodConcurrentStartTest extends MultipleCacheManagersTest {
-   private int numberOfServers = 2;
-   private String cacheName = "hotRodConcurrentStart";
+   public static final int NUMBER_OF_SERVERS = 2;
+   public static final String CACHE_NAME = "hotRodConcurrentStart";
 
    @Override
    protected void createCacheManagers() {
-      for (int i = 0; i < numberOfServers; i++) {
-         EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration());
+      for (int i = 0; i < NUMBER_OF_SERVERS; i++) {
+         GlobalConfigurationBuilder globalConfig = GlobalConfigurationBuilder.defaultClusteredBuilder();
+         if (i == 0) {
+            // Delay the start of the first server's address cache
+            globalConfig.addModule(TestGlobalConfigurationBuilder.class).cacheStartingCallback(cr -> {
+               if (cr.getCacheName().startsWith(HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX)) {
+                  log.tracef("Delaying start of cache %s on %s", cr.getCacheName(),
+                             cr.getComponent(Transport.class).getAddress());
+                  TestingUtil.sleepThread(1000);
+               }
+            });
+         }
+         EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfig, null);
          cacheManagers.add(cm);
          ConfigurationBuilder cfg =
                hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-         cm.defineConfiguration(cacheName, cfg.build());
+         cm.defineConfiguration(CACHE_NAME, cfg.build());
       }
    }
 
-   public void testConcurrentStartup() throws InterruptedException, ExecutionException, TimeoutException {
+   public void testConcurrentStartup(Method m) throws Exception {
       int initialPort = serverPort();
 
       List<HotRodServer> servers = new ArrayList<>();
       try {
          List<Future<HotRodServer>> futures = new ArrayList<>();
-         futures.add(fork(() -> {
-            TestResourceTracker.testThreadStarted(this.getTestName());
-            HotRodServer server = startHotRodServerWithDelay(getCacheManagers().get(0), initialPort, 2000);
-            servers.add(server);
-            return server;
-         }));
-         for (int i = 1; i < numberOfServers; i++) {
+         for (int i = 0; i < NUMBER_OF_SERVERS; i++) {
             int finalI = i;
             futures.add(fork(() -> {
-               TestResourceTracker.testThreadStarted(this.getTestName());
                HotRodServer server = startHotRodServer(getCacheManagers().get(finalI), initialPort + (finalI * 10));
                servers.add(server);
                return server;
@@ -67,6 +74,11 @@ public class HotRodConcurrentStartTest extends MultipleCacheManagersTest {
 
          for (Future<HotRodServer> hotRodServerFuture : futures) {
             hotRodServerFuture.get(30, TimeUnit.SECONDS);
+         }
+
+         try (HotRodClient client = new HotRodClient(servers.get(0).getHost(), servers.get(0).getPort(),
+                                                     CACHE_NAME, 10, HotRodConstants.VERSION_30)) {
+            client.assertPut(m);
          }
       } finally {
          servers.forEach(ServerTestingUtil::killServer);

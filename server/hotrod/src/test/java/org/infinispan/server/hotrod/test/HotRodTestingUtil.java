@@ -46,7 +46,7 @@ import org.infinispan.server.hotrod.OperationStatus;
 import org.infinispan.server.hotrod.ServerAddress;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.server.hotrod.transport.SingleByteFrameDecoderChannelInitializer;
+import org.infinispan.server.hotrod.transport.TestHandlersChannelInitializer;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.util.KeyValuePair;
 
@@ -79,11 +79,11 @@ public class HotRodTestingUtil {
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, String defaultCacheName) {
-      return startHotRodServer(manager, serverPort(), 0, host(), serverPort(), 0, defaultCacheName);
+      return startHotRodServer(manager, serverPort(), 0, host(), serverPort(), defaultCacheName);
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, String proxyHost, int proxyPort) {
-      return startHotRodServer(manager, serverPort(), 0, proxyHost, proxyPort);
+      return startHotRodServer(manager, serverPort(), 0, proxyHost, proxyPort, null);
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port) {
@@ -91,19 +91,11 @@ public class HotRodTestingUtil {
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, String proxyHost, int proxyPort) {
-      return startHotRodServer(manager, port, 0, proxyHost, proxyPort);
+      return startHotRodServer(manager, port, 0, proxyHost, proxyPort, null);
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, int idleTimeout) {
-      return startHotRodServer(manager, port, idleTimeout, host(), port);
-   }
-
-   public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, int idleTimeout, String proxyHost, int proxyPort) {
-      return startHotRodServer(manager, port, idleTimeout, proxyHost, proxyPort, -1);
-   }
-
-   public static HotRodServer startHotRodServerWithDelay(EmbeddedCacheManager manager, int port, long delay) {
-      return startHotRodServer(manager, port, 0, host(), port, delay);
+      return startHotRodServer(manager, port, idleTimeout, host(), port, null);
    }
 
    public static HotRodServer startHotRodServerWithoutTransport(String... definedCaches) {
@@ -129,71 +121,42 @@ public class HotRodTestingUtil {
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, int idleTimeout,
-                                                String proxyHost, int proxyPort, long delay, String defaultCacheName) {
+                                                String proxyHost, int proxyPort, String defaultCacheName) {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
       builder.proxyHost(proxyHost).proxyPort(proxyPort).idleTimeout(idleTimeout);
       if (defaultCacheName != null) {
          builder.defaultCacheName(defaultCacheName);
       }
-      return startHotRodServer(manager, port, delay, builder);
+      return startHotRodServer(manager, port, builder);
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, int idleTimeout,
-                                                String proxyHost, int proxyPort, long delay) {
-      return startHotRodServer(manager, port, idleTimeout, proxyHost, proxyPort, delay, null);
+                                                String proxyHost, int proxyPort) {
+      return startHotRodServer(manager, port, idleTimeout, proxyHost, proxyPort, null);
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, HotRodServerConfigurationBuilder builder) {
-      return startHotRodServer(manager, host(), port, 0L, false, builder);
+      return startHotRodServer(manager, host(), port, builder);
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, HotRodServerConfigurationBuilder builder) {
-      return startHotRodServer(manager, serverPort(), 0L, builder);
+      return startHotRodServer(manager, serverPort(), builder);
    }
 
-   public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, long delay, HotRodServerConfigurationBuilder builder) {
-      return startHotRodServer(manager, host(), port, delay, false, builder);
-   }
-
-   public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, String host, int port, long delay, HotRodServerConfigurationBuilder builder) {
-      return startHotRodServer(manager, host, port, delay, false, builder);
-   }
-
-   public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, String host, int port, long delay, boolean perf, HotRodServerConfigurationBuilder builder) {
+   public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, String host, int port,
+                                                HotRodServerConfigurationBuilder builder) {
       log.infof("Start server in port %d", port);
       HotRodServer server = new HotRodServer() {
          @Override
-         protected ConfigurationBuilder createTopologyCacheConfig(long distSyncTimeout) {
-            if (delay > 0)
-               try {
-                  Thread.sleep(delay);
-               } catch (InterruptedException e) {
-                  throw new CacheException(e);
-               }
-
-            return super.createTopologyCacheConfig(distSyncTimeout);
-         }
-
-         @Override
          public ChannelInitializer<Channel> getInitializer() {
-            // Pass by name since we have circular dependency
-            if (perf) {
-               if (configuration.idleTimeout() > 0)
-                  return new NettyInitializers(
-                        new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()),
-                        new TimeoutEnabledChannelInitializer<>(this));
-               else // Idle timeout logic is disabled with -1 or 0 values
-                  return new NettyInitializers(new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()));
-            } else {
-               if (configuration.idleTimeout() > 0)
-                  return new NettyInitializers(
-                        new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()),
                         new TimeoutEnabledChannelInitializer<>(this), new SingleByteFrameDecoderChannelInitializer());
-               else // Idle timeout logic is disabled with -1 or 0 values
-                  return new NettyInitializers(
-                        new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()),
                         new SingleByteFrameDecoderChannelInitializer());
-            }
+            if (configuration.idleTimeout() > 0)
+               return new NettyInitializers(
+                     new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()),
+            else // Idle timeout logic is disabled with -1 or 0 values
+               return new NettyInitializers(
+                     new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()),
          }
       };
       String shortTestName = TestResourceTracker.getCurrentTestShortName();

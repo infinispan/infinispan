@@ -67,6 +67,10 @@ public final class TestModuleLifecycle implements ModuleLifecycle, DynamicModule
       if (testGlobalConfiguration == null)
          return;
 
+      if (testGlobalConfiguration.cacheStartCallback() != null) {
+         testGlobalConfiguration.cacheStartCallback().accept(cr);
+      }
+
       Map<String, Object> testCacheComponents = testGlobalConfiguration.cacheTestComponents(cacheName);
       if (testCacheComponents == null)
          return;
