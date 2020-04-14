@@ -424,11 +424,11 @@ include::json_examples/rest_query_request_body.json[]
 [id='rest_v2_query_reindex']
 = Re-indexing Data
 Re-index all data in caches with `GET` requests and the
-`?action=mass-index?mode={mode}` parameter.
+`?action=mass-index&mode={mode}` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET  /v2/caches/{cacheName}/search/indexes?action=mass-index?mode={mode}
+GET  /v2/caches/{cacheName}/search/indexes?action=mass-index&mode={mode}
 ----
 
 Values for the `mode` parameter are as follows:
