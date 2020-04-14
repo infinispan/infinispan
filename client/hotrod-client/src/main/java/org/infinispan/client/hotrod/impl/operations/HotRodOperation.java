@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.CompletableFuture;
@@ -116,9 +118,7 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
          if (cause instanceof HotRodClientException && ((HotRodClientException) cause).isServerError()) {
             // don't close the channel, server just sent an error, there's nothing wrong with the channel
          } else {
-            if (trace) {
-               log.tracef(cause, "Requesting %s close due to exception", channel);
-            }
+            HOTROD.closingChannelAfterError(channel, cause);
             channel.close();
          }
       } finally {

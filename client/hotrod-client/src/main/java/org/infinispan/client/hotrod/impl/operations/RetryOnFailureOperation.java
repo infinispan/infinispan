@@ -143,9 +143,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
             completeExceptionally(cause);
          } finally {
             if (channel != null) {
-               if (trace) {
-                  log.tracef(cause, "(1) %s Requesting %s close due to exception", this.toString(), channel);
-               }
+               HOTROD.closingChannelAfterError(channel, cause);
                channel.close();
             }
          }
@@ -172,9 +170,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
             if (headerDecoder != null) {
                channel.pipeline().remove(HeaderDecoder.NAME);
             }
-            if (trace) {
-               log.tracef(cause, "(2) Requesting %s close due to exception", channel);
-            }
+            HOTROD.closingChannelAfterError(channel, cause);
             channel.close();
             if (headerDecoder != null) {
                headerDecoder.failoverClientListeners();
@@ -183,7 +179,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          logAndRetryOrFail(cause, true);
          return null;
       } else if (cause instanceof RemoteNodeSuspectException) {
-         // Why can't we switch cluster here?
+         // TODO Clients should never receive a RemoteNodeSuspectException, see ISPN-11636
          logAndRetryOrFail(cause, false);
          return null;
       } else if (cause instanceof HotRodClientException && ((HotRodClientException) cause).isServerError()) {

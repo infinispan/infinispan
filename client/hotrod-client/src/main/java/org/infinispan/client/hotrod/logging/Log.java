@@ -344,4 +344,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Illegal attempt to redefine an already existing cache configuration: %s", id = 4097)
    IllegalArgumentException duplicateCacheConfiguration(String name);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Closing connection %s due to transport error", id = 4098)
+   void closingChannelAfterError(Channel channel, @Cause Throwable t);
 }
