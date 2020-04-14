@@ -10,7 +10,7 @@ import org.infinispan.client.hotrod.impl.multimap.RemoteMultimapCacheImpl;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
-public class RemoteMultimapCacheManager<K, V> implements MultimapCacheManager {
+public class RemoteMultimapCacheManager<K, V> implements MultimapCacheManager<K, V> {
 
    private final RemoteCacheManager remoteCacheManager;
 
@@ -21,7 +21,7 @@ public class RemoteMultimapCacheManager<K, V> implements MultimapCacheManager {
    @Override
    public RemoteMultimapCache<K, V> get(String cacheName) {
       RemoteCache<K, Collection<V>> cache = remoteCacheManager.getCache(cacheName);
-      RemoteMultimapCacheImpl multimapCache = new RemoteMultimapCacheImpl<>(remoteCacheManager, cache);
+      RemoteMultimapCacheImpl<K, V> multimapCache = new RemoteMultimapCacheImpl<>(remoteCacheManager, cache);
       multimapCache.init();
       return multimapCache;
    }

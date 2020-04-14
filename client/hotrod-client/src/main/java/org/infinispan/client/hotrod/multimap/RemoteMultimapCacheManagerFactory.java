@@ -11,7 +11,7 @@ public final class RemoteMultimapCacheManagerFactory {
    private RemoteMultimapCacheManagerFactory() {
    }
 
-   public static MultimapCacheManager from(RemoteCacheManager remoteCacheManager) {
-      return new RemoteMultimapCacheManager(remoteCacheManager);
+   public static <K, V> MultimapCacheManager<K, V> from(RemoteCacheManager remoteCacheManager) {
+      return new RemoteMultimapCacheManager<>(remoteCacheManager);
    }
 }
