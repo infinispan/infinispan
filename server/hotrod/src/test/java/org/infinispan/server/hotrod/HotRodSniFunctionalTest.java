@@ -39,15 +39,15 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "server.hotrod.HotRodSniFunctionalTest")
 public class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
 
-   private String defaultServerKeystore =
+   private final String defaultServerKeystore =
          getClass().getClassLoader().getResource("default_server_keystore.p12").getPath();
-   private String sniServerKeystore = getClass().getClassLoader().getResource("sni_server_keystore.p12").getPath();
-   private String noAuthorizedClientsServerKeystore =
+   private final String sniServerKeystore = getClass().getClassLoader().getResource("sni_server_keystore.p12").getPath();
+   private final String noAuthorizedClientsServerKeystore =
          getClass().getClassLoader().getResource("no_trusted_clients_keystore.p12").getPath();
 
-   private String defaultTrustedClientTruststore =
+   private final String defaultTrustedClientTruststore =
          getClass().getClassLoader().getResource("default_client_truststore.p12").getPath();
-   private String sniTrustedClientTruststore =
+   private final String sniTrustedClientTruststore =
          getClass().getClassLoader().getResource("sni_client_truststore.p12").getPath();
 
    @AfterMethod(alwaysRun = true)
@@ -185,7 +185,7 @@ public class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
       }
 
       public HotRodServer build() {
-         return startHotRodServer(cacheManager, serverPort(), -1, builder);
+         return startHotRodServer(cacheManager, serverPort(), builder);
       }
    }
 

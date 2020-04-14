@@ -39,7 +39,7 @@ public class HotRodAuthenticationTest extends HotRodSingleNodeTest {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
       builder.authentication().enable().addAllowedMech("CRAM-MD5").serverAuthenticationProvider(ssap)
              .serverName("localhost").addMechProperty(Sasl.POLICY_NOANONYMOUS, "true");
-      return startHotRodServer(cacheManager, HotRodTestingUtil.serverPort(), 0, builder);
+      return startHotRodServer(cacheManager, HotRodTestingUtil.serverPort(), builder);
    }
 
    public void testAuthMechList(Method m) {

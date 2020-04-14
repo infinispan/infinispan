@@ -248,9 +248,7 @@ public class TestCacheManagerFactory {
    public static EmbeddedCacheManager createClusteredCacheManager(GlobalConfigurationBuilder gcb,
                                                                   ConfigurationBuilder defaultCacheConfig,
                                                                   TransportFlags flags) {
-      amendGlobalConfiguration(gcb, flags);
-      amendJTA(defaultCacheConfig);
-      return newDefaultCacheManager(true, gcb, defaultCacheConfig);
+      return createClusteredCacheManager(true, gcb, defaultCacheConfig, flags);
    }
 
    public static EmbeddedCacheManager createClusteredCacheManager(boolean start, GlobalConfigurationBuilder gcb,

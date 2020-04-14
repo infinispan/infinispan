@@ -35,7 +35,7 @@ public class HotRodSingleClusteredNonLoopbackTest extends MultipleCacheManagersT
 
    private HotRodServer hotRodServer;
    private HotRodClient hotRodClient;
-   private String cacheName = "HotRodCache";
+   private final String cacheName = "HotRodCache";
 
    @Override
    protected void createCacheManagers() {
@@ -55,7 +55,7 @@ public class HotRodSingleClusteredNonLoopbackTest extends MultipleCacheManagersT
       SkipTestNG.skipIf(nonLoopInterfaces.isEmpty(), "No non-loop network interface");
       NetworkInterface iface = nonLoopInterfaces.iterator().next();
       String address = iface.getInetAddresses().nextElement().getHostAddress();
-      hotRodServer = startHotRodServer(cacheManagers.get(0), address, serverPort(), 0, getDefaultHotRodConfiguration());
+      hotRodServer = startHotRodServer(cacheManagers.get(0), address, serverPort(), getDefaultHotRodConfiguration());
       hotRodClient = new HotRodClient(address, hotRodServer.getPort(), cacheName, 60, (byte) 20);
    }
 

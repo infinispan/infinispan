@@ -1,10 +1,12 @@
 package org.infinispan.commands.module;
 
 import java.util.HashMap;
+import java.util.function.Consumer;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.factories.ComponentRegistry;
 
 /**
  * A {@link Builder} implementation of {@link TestGlobalConfiguration}.
@@ -31,6 +33,11 @@ public class TestGlobalConfigurationBuilder implements Builder<TestGlobalConfigu
       this.attributes.attribute(TestGlobalConfiguration.CACHE_TEST_COMPONENTS).get()
                      .computeIfAbsent(cacheName, name -> new HashMap<>())
                      .put(componentName, instance);
+      return this;
+   }
+
+   public TestGlobalConfigurationBuilder cacheStartingCallback(Consumer<ComponentRegistry> callback) {
+      this.attributes.attribute(TestGlobalConfiguration.CACHE_STARTING_CALLBACK).set(callback);
       return this;
    }
 

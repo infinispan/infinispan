@@ -3,13 +3,16 @@ package org.infinispan.commands.module;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.CollectionAttributeCopier;
+import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.configuration.serializing.SerializedWith;
+import org.infinispan.factories.ComponentRegistry;
 
 /**
  * An configuration for tests that want to register global components before the manager is created.
@@ -22,13 +25,16 @@ import org.infinispan.configuration.serializing.SerializedWith;
 public class TestGlobalConfiguration {
 
    static final AttributeDefinition<Map<String, Object>> GLOBAL_TEST_COMPONENTS =
-      AttributeDefinition.<Map<String, Object>>builder("globalTestComponents", new HashMap<>())
-         .initializer(HashMap::new)
-         .copier(CollectionAttributeCopier.INSTANCE).build();
+         AttributeDefinition.<Map<String, Object>>builder("globalTestComponents", new HashMap<>())
+               .initializer(HashMap::new)
+               .copier(CollectionAttributeCopier.INSTANCE).build();
    static final AttributeDefinition<Map<String, Map<String, Object>>> CACHE_TEST_COMPONENTS =
-      AttributeDefinition.<Map<String, Map<String, Object>>>builder("cacheTestComponents", new HashMap<>())
-         .initializer(HashMap::new)
-         .copier(CollectionAttributeCopier.INSTANCE).build();
+         AttributeDefinition.<Map<String, Map<String, Object>>>builder("cacheTestComponents", new HashMap<>())
+               .initializer(HashMap::new)
+               .copier(CollectionAttributeCopier.INSTANCE).build();
+   static final AttributeDefinition<Consumer<ComponentRegistry>> CACHE_STARTING_CALLBACK =
+         AttributeDefinition.<Consumer<ComponentRegistry>>builder("cacheStartingCallback", cr -> {})
+               .copier(IdentityAttributeCopier.INSTANCE).build();
 
    private final AttributeSet attributes;
 
@@ -37,7 +43,8 @@ public class TestGlobalConfiguration {
    }
 
    static AttributeSet attributeSet() {
-      return new AttributeSet(TestGlobalConfiguration.class, GLOBAL_TEST_COMPONENTS, CACHE_TEST_COMPONENTS);
+      return new AttributeSet(TestGlobalConfiguration.class, GLOBAL_TEST_COMPONENTS, CACHE_TEST_COMPONENTS,
+                              CACHE_STARTING_CALLBACK);
    }
 
    public AttributeSet attributes() {
@@ -76,5 +83,9 @@ public class TestGlobalConfiguration {
    @Override
    public int hashCode() {
       return attributes.hashCode();
+   }
+
+   public Consumer<ComponentRegistry> cacheStartCallback() {
+      return attributes.attribute(CACHE_STARTING_CALLBACK).get();
    }
 }
