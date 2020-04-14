@@ -428,7 +428,7 @@ Re-index all data in caches with `GET` requests and the
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET  /v2/caches/{cacheName}/search/indexes?action=mass-index?mode={mode}
+GET  /v2/caches/{cacheName}/search/indexes?action=mass-index&mode={mode}
 ----
 
 Values for the `mode` parameter are as follows:
