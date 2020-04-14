@@ -104,7 +104,6 @@ import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.TransactionInfo;
 import org.infinispan.stats.impl.ClusterCacheStatsImpl;
 import org.infinispan.stream.StreamMarshalling;
-import org.infinispan.stream.impl.AbstractCacheStream;
 import org.infinispan.stream.impl.CacheBiConsumers;
 import org.infinispan.stream.impl.CacheIntermediatePublisher;
 import org.infinispan.stream.impl.CacheStreamIntermediateReducer;
@@ -238,7 +237,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new EncoderValueMapper.Externalizer(), exts);
       addInternalExternalizer(new EncoderEntryMapper.Externalizer(), exts);
       addInternalExternalizer(new IntSetExternalizer(), exts);
-      addInternalExternalizer(new AbstractCacheStream.MapOpsExternalizer(), exts);
       addInternalExternalizer(new DataConversion.Externalizer(), exts);
       addInternalExternalizer(new ScopedState.Externalizer(), exts);
       addInternalExternalizer(new ScopeFilter.Externalizer(), exts);
