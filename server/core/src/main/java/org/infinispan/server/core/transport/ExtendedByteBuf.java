@@ -81,4 +81,13 @@ public class ExtendedByteBuf {
    public static void writeString(String msg, ByteBuf bf) {
       writeRangedBytes(msg.getBytes(CharsetUtil.UTF_8), bf);
    }
+
+   public static String hexDump(ByteBuf buf) {
+      int bufferLength = buf.readableBytes();
+      int dumpLength = Math.min(bufferLength, Util.HEX_DUMP_LIMIT);
+      byte[] data = new byte[dumpLength];
+      int pos = buf.readerIndex();
+      buf.getBytes(pos, data, 0, dumpLength);
+      return Util.hexDump(data, bufferLength);
+   }
 }

@@ -149,14 +149,14 @@ public class HotRodTestingUtil {
       HotRodServer server = new HotRodServer() {
          @Override
          public ChannelInitializer<Channel> getInitializer() {
-                        new TimeoutEnabledChannelInitializer<>(this), new SingleByteFrameDecoderChannelInitializer());
-                        new SingleByteFrameDecoderChannelInitializer());
             if (configuration.idleTimeout() > 0)
                return new NettyInitializers(
                      new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()),
+                     new TimeoutEnabledChannelInitializer<>(this), new TestHandlersChannelInitializer());
             else // Idle timeout logic is disabled with -1 or 0 values
                return new NettyInitializers(
                      new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()),
+                     new TestHandlersChannelInitializer());
          }
       };
       String shortTestName = TestResourceTracker.getCurrentTestShortName();

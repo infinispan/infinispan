@@ -72,6 +72,7 @@ public final class Util {
 
    private static final boolean IS_ARRAYS_DEBUG = Boolean.getBoolean("infinispan.arrays.debug");
    private static final int COLLECTIONS_LIMIT = Integer.getInteger("infinispan.collections.limit", 8);
+   public static final int HEX_DUMP_LIMIT = Integer.getInteger("infinispan.hexdump.limit", 64);
    private static final boolean IS_OSGI_CONTEXT;
 
    public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
@@ -84,6 +85,9 @@ public final class Util {
    private static final Log log = LogFactory.getLog(Util.class);
 
    private static final Set<Class<?>> BASIC_TYPES;
+
+   private static final String HEX_VALUES = "0123456789ABCDEF";
+   private static final char[] HEX_DUMP_CHARS = new char[256*2];
 
    /**
     * Current Java vendor. This variable is later used to differentiate LRU implementations
@@ -109,6 +113,17 @@ public final class Util {
       BASIC_TYPES.add(Long.class);
       BASIC_TYPES.add(Short.class);
       BASIC_TYPES.add(String.class);
+
+      for (char b = 0; b < 256; b++) {
+         if (0x20 <= b && b <= 0x7e) {
+            HEX_DUMP_CHARS[b * 2] = '\\';
+            HEX_DUMP_CHARS[b * 2 + 1] = b;
+         } else {
+            HEX_DUMP_CHARS[b * 2] = HEX_VALUES.charAt((b & 0xF0) >> 4);
+            HEX_DUMP_CHARS[b * 2 + 1] = HEX_VALUES.charAt((b & 0x0F));
+         }
+
+      }
    }
 
    /**
@@ -613,7 +628,7 @@ public final class Util {
    public static String printArray(byte[] array, boolean withHash) {
       if (array == null) return "null";
 
-      int limit = 8;
+      int limit = 16;
       StringBuilder sb = new StringBuilder();
       sb.append("[B0x");
       if (array.length <= limit || IS_ARRAYS_DEBUG) {
@@ -625,7 +640,7 @@ public final class Util {
             sb.append(']');
          }
       } else {
-         // Pick the first 8 characters and convert that part
+         // Pick the first limit characters and convert that part
          sb.append(toHexString(array, limit));
          sb.append("..[");
          sb.append(array.length);
@@ -638,30 +653,16 @@ public final class Util {
       return sb.toString();
    }
 
-   public static String toHexString(byte input[]) {
-      return input == null ? "null" : toHexString(input, input.length);
+   public static String toHexString(byte[] input) {
+      return toHexString(input, input != null ? input.length : 0);
    }
 
-   public static String toHexString(byte input[], int limit) {
-      if (input == null || input.length <= 0)
-         return "null";
-
-      char lookup[] = {'0', '1', '2', '3', '4', '5', '6', '7',
-                       '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
-
-      char[] result = new char[(input.length < limit ? input.length : limit) * 2];
-
-      int i = 0;
-      while (i < limit && i < input.length) {
-         result[2*i] = lookup[(input[i] >> 4) & 0x0F];
-         result[2*i+1] = lookup[(input[i] & 0x0F)];
-         i++;
-      }
-      return String.valueOf(result);
+   public static String toHexString(byte[] input, int limit) {
+      return toHexString(input, 0, limit);
    }
 
-   public static String toHexString(byte input[], int offset, int limit) {
-      if (input == null || input.length <= 0)
+   public static String toHexString(byte[] input, int offset, int limit) {
+      if (input == null)
          return "null";
 
       int length = limit - offset;
@@ -690,12 +691,8 @@ public final class Util {
    public static String threadDump() {
       StringBuilder threadDump = new StringBuilder();
       ThreadMXBean threadMx = ManagementFactory.getThreadMXBean();
-      if (threadMx.isObjectMonitorUsageSupported() && threadMx.isSynchronizerUsageSupported()) {
-         // Print lock info if, and only if, both object monitor usage and synchronizer usage are supported.
-          dumpThreadInfo(threadDump, true, threadMx);
-      } else {
-         dumpThreadInfo(threadDump, false, threadMx);
-      }
+      // Print lock info if, and only if, both object monitor usage and synchronizer usage are supported.
+      dumpThreadInfo(threadDump, threadMx.isObjectMonitorUsageSupported() && threadMx.isSynchronizerUsageSupported(), threadMx);
       return threadDump.toString();
    }
 
@@ -807,45 +804,38 @@ public final class Util {
       return Integer.toHexString(System.identityHashCode(o));
    }
 
-   private static final String HEX_VALUES = "0123456789ABCDEF";
-
-   public static String hexDump(byte[] buffer) {
-      StringBuilder buf = new StringBuilder(buffer.length << 1);
-      for (byte b : buffer)
-         addHexByte(buf, b);
-
-      return buf.toString();
+   public static String hexDump(byte[] data) {
+      return hexDump(data, data.length);
    }
 
    public static String hexDump(ByteBuffer buffer) {
       int bufferLength = buffer.remaining();
-      int dumpLength = Math.min(bufferLength, 100);
+      int dumpLength = Math.min(bufferLength, HEX_DUMP_LIMIT);
       byte[] data = new byte[dumpLength];
       int pos = buffer.position();
       buffer.get(data);
       buffer.position(pos);
-      StringBuilder sb = new StringBuilder(dumpLength * 2 + 30);
-      for (byte b : data) {
+      return hexDump(data, bufferLength);
+   }
+
+   public static String hexDump(byte[] buffer, int actualLength) {
+      StringBuilder sb = new StringBuilder(buffer.length * 2 + 30);
+      for (byte b : buffer) {
          addHexByte(sb, b);
       }
-      if (dumpLength < bufferLength) {
+      if (buffer.length <= actualLength) {
          sb.append("...");
       }
-      sb.append(" (").append(bufferLength).append(" bytes)");
+      sb.append(" (").append(actualLength).append(" bytes)");
       return sb.toString();
    }
 
    public static void addHexByte(StringBuilder buf, byte b) {
-      if (0x20 <= b && b <= 0x7e) {
-         buf.append('\\');
-         buf.append((char) b);
-      } else {
-         buf.append(HEX_VALUES.charAt((b & 0xF0) >> 4))
-            .append(HEX_VALUES.charAt((b & 0x0F)));
-      }
+      int offset = (b & 0xFF) * 2;
+      buf.append(HEX_DUMP_CHARS, offset, 2);
    }
 
-   private static void addSingleHexByte(StringBuilder buf, byte b) {
+   private static void addSingleHexChar(StringBuilder buf, byte b) {
       buf.append(HEX_VALUES.charAt(b & 0x0F));
    }
 
@@ -1030,10 +1020,10 @@ public final class Util {
             if ((aChar < 0x0020) || (aChar > 0x007e)) {
                out.append('\\');
                out.append('u');
-               addSingleHexByte(out, (byte)((aChar >> 12) & 0xF));
-               addSingleHexByte(out, (byte)((aChar >> 8) & 0xF));
-               addSingleHexByte(out, (byte)((aChar >> 4) & 0xF));
-               addSingleHexByte(out, (byte)(aChar & 0xF));
+               addSingleHexChar(out, (byte)((aChar >> 12) & 0xF));
+               addSingleHexChar(out, (byte)((aChar >> 8) & 0xF));
+               addSingleHexChar(out, (byte)((aChar >> 4) & 0xF));
+               addSingleHexChar(out, (byte)(aChar & 0xF));
             } else {
                out.append(aChar);
             }

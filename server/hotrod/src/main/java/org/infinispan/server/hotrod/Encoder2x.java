@@ -66,8 +66,6 @@ class Encoder2x implements VersionedEncoder {
 
    @Override
    public void writeEvent(Events.Event e, ByteBuf buf) {
-      if (trace)
-         log.tracef("Write event %s", e);
       writeHeaderNoTopology(buf, e.messageId, e.op);
       ExtendedByteBuf.writeRangedBytes(e.listenerId, buf);
       e.writeEvent(buf);

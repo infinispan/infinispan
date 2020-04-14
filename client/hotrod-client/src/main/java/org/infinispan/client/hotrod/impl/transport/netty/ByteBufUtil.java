@@ -111,27 +111,13 @@ public final class ByteBufUtil {
       return i;
    }
 
-   public static String hexDump(ByteBuf buf) {
-      if (buf.hasArray()) {
-         return Util.hexDump(buf.array());
-      }
-      int currentReaderIndex = buf.readerIndex();
-      try {
-         buf.resetReaderIndex();
-         if (buf.readerIndex() < buf.writerIndex()) {
-            byte[] bytes = new byte[Math.min(1024, buf.readableBytes())];
-            buf.getBytes(buf.readerIndex(), bytes);
-            String dump = Util.hexDump(bytes);
-            if (buf.readableBytes() > 1024) {
-               dump += "... " + (buf.readableBytes() - 1024) + " more bytes";
-            }
-            return dump;
-         } else {
-            return "ri: " + buf.readerIndex() + ", wi: " + buf.writerIndex();
-         }
-      } finally {
-         buf.readerIndex(currentReaderIndex);
-      }
+   public static String limitedHexDump(ByteBuf buf) {
+      int bufferLength = buf.readableBytes();
+      int dumpLength = Math.min(bufferLength, Util.HEX_DUMP_LIMIT);
+      byte[] data = new byte[dumpLength];
+      int pos = buf.readerIndex();
+      buf.getBytes(pos, data, 0, dumpLength);
+      return Util.hexDump(data, bufferLength);
    }
 
    /**
