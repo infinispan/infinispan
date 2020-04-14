@@ -14,7 +14,6 @@ import java.util.function.BiConsumer;
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SSLParameters;
 import javax.security.auth.Subject;
-import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
@@ -41,10 +40,8 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 
 class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
-   private static final CallbackHandler NOOP_HANDLER = callbacks -> {
-   };
-   private static Log log = LogFactory.getLog(ChannelInitializer.class);
-   private static boolean trace = log.isTraceEnabled();
+   private static final Log log = LogFactory.getLog(ChannelInitializer.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final Bootstrap bootstrap;
    private final SocketAddress unresolvedAddress;

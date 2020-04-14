@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.net.SocketAddress;
 import java.util.Deque;
 import java.util.NoSuchElementException;
@@ -34,6 +36,7 @@ import io.netty.util.internal.PlatformDependent;
 class ChannelPool {
    private static final AtomicIntegerFieldUpdater<TimeoutCallback> invokedUpdater = AtomicIntegerFieldUpdater.newUpdater(TimeoutCallback.class, "invoked");
    private static final Log log = LogFactory.getLog(ChannelPool.class);
+   private static final boolean trace = log.isTraceEnabled();
    private static final int MAX_FULL_CHANNELS_SEEN = 10;
 
    private final Deque<Channel> channels = PlatformDependent.newConcurrentDeque();
@@ -87,7 +90,8 @@ class ChannelPool {
       int current = created.get();
       while (current < maxConnections) {
          if (created.compareAndSet(current, current + 1)) {
-            active.incrementAndGet();
+            int currentActive = active.incrementAndGet();
+            if (trace) log.tracef("Creating new channel, created = %d, active = %d", current + 1, currentActive);
             // create new connection and apply callback
             createAndInvoke(callback);
             return;
@@ -101,8 +105,9 @@ class ChannelPool {
          case WAIT:
             break;
          case CREATE_NEW:
-            created.incrementAndGet();
-            active.incrementAndGet();
+            int currentCreated = created.incrementAndGet();
+            int currentActive = active.incrementAndGet();
+            if (trace) log.tracef("Creating new channel, created = %d, active = %d", currentCreated, currentActive);
             createAndInvoke(callback);
             return;
          default:
@@ -142,41 +147,41 @@ class ChannelPool {
                assert currentActive >= 0;
                int currentCreated = created.decrementAndGet();
                assert currentCreated >= 0;
+               if (trace) log.tracef(throwable, "Channel could not be created, created = %d, active = %d",
+                                     currentCreated, currentActive);
                callback.cancel(address, throwable);
             } else {
                callback.invoke(channel);
             }
          });
       } catch (Throwable t) {
-         active.decrementAndGet();
-         created.decrementAndGet();
+         int currentActive = active.decrementAndGet();
+         assert currentActive >= 0;
+         int currentCreated = created.decrementAndGet();
+         assert currentCreated >= 0;
+         if (trace) log.tracef(t, "Channel could not be created, created = %d, active = %d",
+                               currentCreated, currentActive);
          callback.cancel(address, t);
       }
    }
 
+   /**
+    * Release a channel back into the pool after an operation has finished.
+    */
    public void release(Channel channel, ChannelRecord record) {
+      int currentActive;
+
       // The channel can be closed when it's idle (due to idle timeout or closed connection)
-      boolean idle = record.isIdle();
-      if (!idle) {
-         int currentActive = active.decrementAndGet();
-         assert currentActive >= 0 : "Error releasing " + channel;
-         record.setIdle();
-      }
-
-      if (!channel.isActive()) {
-         int currentCreated = created.decrementAndGet();
-         assert currentCreated >= 0 : "Error releasing " + channel;
-         return;
-      } else if (idle) {
-         log.debugf("Not releasing idle non-closed channel %s", channel);
-         assert false;
+      if (record.isIdle()) {
+         HOTROD.warnf("Cannot release channel %s because it is idle", channel);
          return;
       }
 
-      if (terminated) {
-         log.debugf("Closing %s due to termination", channel);
-         channel.close();
-         return;
+      record.setIdle();
+      currentActive = active.decrementAndGet();
+      if (trace) log.tracef("Released channel %s, active = %d", channel, currentActive);
+      if (currentActive < 0) {
+         HOTROD.warnf("Invalid active count after releasing channel %s", channel);
       }
 
       ChannelOperation callback;
@@ -195,9 +200,32 @@ class ChannelPool {
       activateChannel(channel, callback, true);
    }
 
+   /**
+    * Update counts after a channel has been closed.
+    */
+   public void releaseClosedChannel(Channel channel, ChannelRecord channelRecord) {
+      if (channel.isActive()) {
+         HOTROD.warnf("Channel %s cannot be released because it is not closed", channel);
+         return;
+      }
+
+      int currentCreated = created.decrementAndGet();
+      boolean idle = channelRecord.isIdle();
+      int currentActive = !idle ? active.decrementAndGet() : active.get();
+      if (trace) log.tracef("Closed channel %s, created = %s, idle = %b, active = %d",
+                            channel, currentCreated, idle, currentActive);
+      if (currentCreated < 0) {
+         HOTROD.warnf("Invalid created count after closing channel %s", channel);
+      }
+      if (currentActive < 0) {
+         HOTROD.warnf("Invalid active count after closing channel %s", channel);
+      }
+   }
+
    private void activateChannel(Channel channel, ChannelOperation callback, boolean useExecutor) {
       assert channel.isActive() : "Channel " + channel + " is not active";
-      active.incrementAndGet();
+      int currentActive = active.incrementAndGet();
+      if (trace) log.tracef("Activated record %s, created = %d, active = %d", channel, created.get(), currentActive);
       ChannelRecord record = ChannelRecord.of(channel);
       record.setAcquired();
       if (useExecutor) {
@@ -206,7 +234,7 @@ class ChannelPool {
             try {
                callback.invoke(channel);
             } catch (Throwable t) {
-               log.tracef(t, "Requesting %s close due to exception", channel);
+               log.tracef(t, "Closing channel %s due to exception", channel);
                discardChannel(channel, record);
             }
          });
@@ -214,7 +242,7 @@ class ChannelPool {
          try {
             callback.invoke(channel);
          } catch (Throwable t) {
-            log.tracef(t, "Requesting %s close due to exception", channel);
+            log.tracef(t, "Closing channel %s due to exception", channel);
             discardChannel(channel, record);
             throw t;
          }
@@ -222,14 +250,7 @@ class ChannelPool {
    }
 
    private void discardChannel(Channel channel, ChannelRecord record) {
-      try {
-         channel.close();
-      } finally {
-         if (!record.isIdle()) {
-            active.decrementAndGet();
-            created.decrementAndGet();
-         }
-      }
+      channel.close();
    }
 
    public int getActive() {

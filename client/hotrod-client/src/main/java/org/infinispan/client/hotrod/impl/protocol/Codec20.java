@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
 import static org.infinispan.client.hotrod.impl.Util.await;
-import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.hexDump;
+import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.limitedHexDump;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
 
@@ -109,8 +109,7 @@ public class Codec20 implements Codec, HotRodConstants {
       }
    }
 
-   protected HeaderParams writeHeader(
-         ByteBuf buf, HeaderParams params, byte version) {
+   protected HeaderParams writeHeader(ByteBuf buf, HeaderParams params, byte version) {
       buf.writeByte(HotRodConstants.REQUEST_MAGIC);
       ByteBufUtil.writeVLong(buf, params.messageId);
       buf.writeByte(version);
@@ -123,8 +122,8 @@ public class Codec20 implements Codec, HotRodConstants {
       ByteBufUtil.writeVInt(buf, topologyId);
 
       if (trace)
-         getLog().tracef("[%s] Wrote header for messageId=%d to %s. Operation code: %#04x(%s). Flags: %#x. Topology id: %s",
-               new String(params.cacheName), params.messageId, buf, params.opCode,
+         getLog().tracef("[%s] Wrote header for messageId=%d. Operation code: %#04x(%s). Flags: %#x. Topology id: %s",
+               new String(params.cacheName), params.messageId, params.opCode,
                Names.of(params.opCode), joinedFlags, topologyId);
 
       return params;
@@ -143,22 +142,15 @@ public class Codec20 implements Codec, HotRodConstants {
          final Log localLog = getLog();
 
          if (trace)
-            localLog.tracef("Socket dump: %s", hexDump(buf));
+            localLog.tracef("Socket dump: %s", limitedHexDump(buf));
          throw HOTROD.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC, magic);
       }
-      long receivedMessageId = ByteBufUtil.readVLong(buf);
-      if (trace) {
-         getLog().tracef("Received response for messageId=%d", receivedMessageId);
-      }
-      return receivedMessageId;
+      return ByteBufUtil.readVLong(buf);
    }
 
    @Override
    public short readOpCode(ByteBuf buf) {
-      short receivedOpCode = buf.readUnsignedByte();
-      if (trace)
-         getLog().tracef("Received operation code is: %#04x(%s)", receivedOpCode, Names.of(receivedOpCode));
-      return receivedOpCode;
+      return buf.readUnsignedByte();
    }
 
    @Override

@@ -91,7 +91,7 @@ public class ChannelFactory {
    private volatile TopologyInfo topologyInfo;
 
    private volatile String currentClusterName;
-   private List<ClusterInfo> clusters = new ArrayList<>();
+   private final List<ClusterInfo> clusters = new ArrayList<>();
    // Topology age provides a way to avoid concurrent cluster view changes,
    // affecting a cluster switch. After a cluster switch, the topology age is
    // increased and so any old requests that might have received topology
@@ -99,7 +99,7 @@ public class ChannelFactory {
    private final AtomicInteger topologyAge = new AtomicInteger(0);
 
    private MarshallerRegistry marshallerRegistry;
-   private LongAdder totalRetries = new LongAdder();
+   private final LongAdder totalRetries = new LongAdder();
 
    public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId,
                      Marshaller marshaller, ExecutorService executorService,
@@ -301,9 +301,6 @@ public class ChannelFactory {
    }
 
    public void releaseChannel(Channel channel) {
-      if (trace) {
-         log.tracef("Releasing channel %s", channel);
-      }
       // Due to ISPN-7955 we need to keep addresses unresolved. However resolved and unresolved addresses
       // are not deemed equal, and that breaks the comparison in channelPool - had we used channel.remoteAddress()
       // we'd create another pool for this resolved address. Therefore we need to find out appropriate pool this

@@ -50,13 +50,11 @@ public class ChannelRecord extends CompletableFuture<Channel> implements Generic
    @Override
    public void operationComplete(ChannelFuture future) throws Exception {
       if (trace) {
-         log.tracef("Closing channel %s", get());
          if (!future.isSuccess()) {
             log.tracef(future.cause(), "Channel %s is closed, see exception for details", get());
          }
       }
-      // We need to release the channel to update its internal channel count
-      release(future.channel());
+      channelPool.releaseClosedChannel(future.channel(), this);
    }
 
    void setAcquired() {
