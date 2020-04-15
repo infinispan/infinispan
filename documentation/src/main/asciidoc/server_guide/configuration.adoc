@@ -217,6 +217,8 @@ The HotRod and Memcached protocol connectors support a number of tuning attribut
 *  _send-buffer-size_ Sets the size of the send buffer.
 *  _receive-buffer-size_ Sets the size of the receive buffer.
 
+include::topics/proc_starting_stopping_endpoints.adoc[leveloffset=+3]
+
 [[protocol_interoperability]]
 ==== Protocol Interoperability
 Clients exchange data with {brandname} through endpoints such as REST or Hot Rod.
