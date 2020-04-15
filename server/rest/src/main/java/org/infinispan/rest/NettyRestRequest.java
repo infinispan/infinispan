@@ -59,8 +59,7 @@ public class NettyRestRequest implements RestRequest {
       }
       String baseURI = uri.substring(0, lastSeparatorIdx);
       String resourceName = uri.substring(lastSeparatorIdx + 1, paramsSeparatorIdx != -1 ? paramsSeparatorIdx : uri.length());
-      String decodedPath = QueryStringDecoder.decodeComponent(baseURI);
-      return decodedPath + "/" + resourceName;
+      return baseURI + "/" + resourceName;
    }
 
    NettyRestRequest(FullHttpRequest request) throws IllegalArgumentException {
