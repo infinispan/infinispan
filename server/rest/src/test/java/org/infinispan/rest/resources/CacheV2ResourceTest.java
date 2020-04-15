@@ -120,6 +120,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       testCreateAndUseCache("a-b-c");
       testCreateAndUseCache("áb\\ćé/+-$");
       testCreateAndUseCache("org.infinispan.cache");
+      testCreateAndUseCache("a%25bc");
    }
 
    private void testCreateAndUseCache(String name) throws Exception {
@@ -144,6 +145,16 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(namesResponse).isOk();
       List<String> names = Arrays.asList(new ObjectMapper().readValue(namesResponse.getContentAsString(), String[].class));
       assertTrue(names.contains(name));
+
+      ContentResponse putResponse = client.newRequest(url + "/key")
+            .method(HttpMethod.POST)
+            .content(new StringContentProvider("value"))
+            .send();
+      ResponseAssertion.assertThat(putResponse).isOk();
+
+      ContentResponse getResponse = client.newRequest(url + "/key").send();
+      ResponseAssertion.assertThat(getResponse).isOk();
+      ResponseAssertion.assertThat(getResponse).containsReturnedText("value");
    }
 
    @Test
