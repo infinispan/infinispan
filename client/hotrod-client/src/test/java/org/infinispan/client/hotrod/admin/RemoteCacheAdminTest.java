@@ -92,6 +92,16 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       assertFalse(manager(1).cacheExists(cacheName));
    }
 
+   public void cacheGetOrCreateRemoveTestWithDefaultTemplateEnum(Method m) {
+      String cacheName = m.getName();
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).getOrCreateCache(cacheName, DefaultTemplate.DIST_ASYNC);
+      assertTrue(manager(0).cacheExists(cacheName));
+      assertTrue(manager(1).cacheExists(cacheName));
+      client(1).administration().removeCache(cacheName);
+      assertFalse(manager(0).cacheExists(cacheName));
+      assertFalse(manager(1).cacheExists(cacheName));
+   }
+
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000374.*")
    public void nonExistentTemplateTest(Method m) {
       String cacheName = m.getName();
