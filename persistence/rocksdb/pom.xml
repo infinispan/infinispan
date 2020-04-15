@@ -18,6 +18,10 @@
          <artifactId>protostream-processor</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-component-processor</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.rocksdb</groupId>
          <artifactId>rocksdbjni</artifactId>
       </dependency>
