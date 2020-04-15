@@ -9,16 +9,12 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.DateBridge;
-import org.hibernate.search.annotations.EncodingType;
 import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.FieldBridge;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.IndexedEmbedded;
-import org.hibernate.search.annotations.Resolution;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
-import org.hibernate.search.bridge.builtin.impl.BuiltinArrayBridge;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
+
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.Limits;
@@ -30,36 +26,23 @@ import org.infinispan.query.dsl.embedded.testdomain.Limits;
 @Indexed
 public class AccountHS implements Account, Serializable {
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
    @ProtoField(number = 1, defaultValue = "0")
    int id;
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
    @ProtoField(number = 2)
    String description;
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @DateBridge(encoding = EncodingType.STRING, resolution = Resolution.MILLISECOND)
-   @SortableField
    @ProtoField(number = 3)
    Date creationDate;
 
-   @IndexedEmbedded(targetElement = LimitsHS.class, indexNullAs = Field.DEFAULT_NULL_TOKEN)
-   @ProtoField(number = 4)
-   LimitsHS limits;
+   @ProtoField(number = 4) LimitsHS limits;
 
-   @IndexedEmbedded(targetElement = LimitsHS.class, indexNullAs = Field.DEFAULT_NULL_TOKEN)
-   @ProtoField(number = 5)
-   LimitsHS hardLimits;
+   @ProtoField(number = 5) LimitsHS hardLimits;
 
    // not indexed
    @ProtoField(number = 6, collectionImplementation = ArrayList.class)
    List<byte[]> blurb = new ArrayList<>();
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @FieldBridge(impl = BuiltinArrayBridge.class)
    @ProtoField(number = 7)
    Currency[] currencies = new Currency[0];
 
@@ -71,6 +54,8 @@ public class AccountHS implements Account, Serializable {
    }
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    public int getId() {
       return id;
    }
@@ -81,6 +66,8 @@ public class AccountHS implements Account, Serializable {
    }
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    public String getDescription() {
       return description;
    }
@@ -91,6 +78,8 @@ public class AccountHS implements Account, Serializable {
    }
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    public Date getCreationDate() {
       return creationDate;
    }
@@ -101,7 +90,8 @@ public class AccountHS implements Account, Serializable {
    }
 
    @Override
-   public Limits getLimits() {
+   @IndexedEmbedded
+   public LimitsHS getLimits() {
       return limits;
    }
 
@@ -111,7 +101,8 @@ public class AccountHS implements Account, Serializable {
    }
 
    @Override
-   public Limits getHardLimits() {
+   @IndexedEmbedded
+   public LimitsHS getHardLimits() {
       return hardLimits;
    }
 
@@ -146,6 +137,7 @@ public class AccountHS implements Account, Serializable {
    }
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
    public Currency[] getCurrencies() {
       return currencies;
    }

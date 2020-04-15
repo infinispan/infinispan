@@ -125,8 +125,7 @@ public class RemoteQueryStringTest extends QueryStringTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty("directory.type", "local-heap");
       return builder;
    }
 

@@ -34,8 +34,7 @@ public class TwoCachesSharedIndexTest extends MultiHotRodServersTest {
    public Configuration buildIndexedConfig() {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty("directory.type", "local-heap");
       return builder.build();
    }
 

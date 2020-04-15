@@ -81,8 +81,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       cfgBuilder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty("directory.type", "local-heap");
       cfgBuilder.expiration().disableReaper();
       return cfgBuilder;
    }

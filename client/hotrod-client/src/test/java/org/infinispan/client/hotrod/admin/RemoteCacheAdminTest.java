@@ -33,6 +33,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -45,7 +46,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
             getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      builder.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      builder.indexing().enable().addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       createHotRodServers(2, builder);
    }
 

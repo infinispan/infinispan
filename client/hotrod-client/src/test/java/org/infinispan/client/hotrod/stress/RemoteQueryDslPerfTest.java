@@ -57,8 +57,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
       builder.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
       builder.indexing().enable()
             .addIndexedEntity(UserHS.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty("directory.type", "local-heap");
       createClusteredCaches(1, TestDomainSCI.INSTANCE, builder);
 
       cache = manager(0).getCache();
@@ -131,7 +130,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
    }
 
    public void testEmbeddedQueryDslExecution() throws Exception {
-      QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
+      QueryFactory qf = Search.getQueryFactory(cache);
       QueryBuilder qb = qf.from(UserHS.class)
             .having("name").eq("John1");
 

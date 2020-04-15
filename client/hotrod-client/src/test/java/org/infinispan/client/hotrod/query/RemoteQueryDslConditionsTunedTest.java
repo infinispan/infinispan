@@ -1,12 +1,13 @@
 package org.infinispan.client.hotrod.query;
 
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.remote.impl.ProgrammaticSearchMappingProviderImpl;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
+import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -26,24 +27,27 @@ public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsF
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable()
-            .addProperty("default.indexmanager", "near-real-time")
-            .addProperty("default.indexBase", indexDirectory)
-            .addProperty("default.exclusive_index_use", "true")
-            .addProperty("default.indexwriter.merge_factor", "30")
-            .addProperty("default.indexwriter.merge_max_size", "4096")
-            .addProperty("default.indexwriter.ram_buffer_size", "220")
-            .addProperty("default.locking_strategy", "native")
-            .addProperty("default.sharding_strategy.nbr_of_shards", String.valueOf(NUM_SHARDS));
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.FILE)
+            .addProperty(SearchConfig.DIRECTORY_ROOT, indexDirectory)
+            .addProperty(SearchConfig.THREAD_POOL_SIZE, String.valueOf(NUM_SHARDS))
+            .addProperty(SearchConfig.QUEUE_COUNT, String.valueOf(NUM_SHARDS))
+            .addProperty(SearchConfig.QUEUE_SIZE, "4096")
+            .addProperty(SearchConfig.COMMIT_INTERVAL, "10000")
+            .addProperty(SearchConfig.SHARDING_STRATEGY, SearchConfig.HASH)
+            .addProperty(SearchConfig.NUMBER_OF_SHARDS, String.valueOf(NUM_SHARDS));
 
       return builder;
    }
 
    @Override
    public void testIndexPresence() {
-      SearchIntegrator searchIntegrator = TestingUtil.extractComponent(cache, SearchIntegrator.class);
-      assertTrue(searchIntegrator.getIndexBindings().containsKey(ProtobufValueWrapper.INDEXING_TYPE));
-      for (int shard = 0; shard < NUM_SHARDS; shard++) {
-         assertNotNull(searchIntegrator.getIndexManager(ProgrammaticSearchMappingProviderImpl.getIndexName(cache.getName()) + '.' + shard));
-      }
+      SearchMapping searchMapping = TestingUtil.extractComponent(cache, SearchMappingHolder.class)
+            .getSearchMapping();
+
+      // we have indexing for remote query!
+      assertTrue(searchMapping.allIndexedTypes().containsValue(ProtobufValueWrapper.class));
+
+      // we have some indexes for this cache
+      assertEquals(2, searchMapping.allIndexedTypes().size());
    }
 }

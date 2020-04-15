@@ -2,6 +2,7 @@ package org.infinispan.query.dsl.embedded;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -24,8 +25,7 @@ public class ObjectStorageQueryDslConditionsTest extends QueryDslConditionsTest 
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
             .addIndexedEntity(getModelFactory().getTransactionImplClass())
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       createClusteredCaches(1, cfg);
    }
 }

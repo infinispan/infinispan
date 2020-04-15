@@ -84,8 +84,7 @@ public class RemoteQueryProtostreamAnnotationsDisableIndexingTest extends Single
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty("directory.type", "local-heap");
 
       return TestCacheManagerFactory.createServerModeCacheManager(builder);
    }

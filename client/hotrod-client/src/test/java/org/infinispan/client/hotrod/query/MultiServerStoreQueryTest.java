@@ -20,6 +20,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.testng.annotations.Test;
 
@@ -89,12 +90,13 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
    public Configuration buildIndexedConfig(String storeName) {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("default.worker.execution", "async")
-            .addProperty("default.index_flush_interval", "500")
-            .addProperty("default.indexwriter.merge_factor", "30")
-            .addProperty("default.indexwriter.merge_max_size", "1024")
-            .addProperty("default.indexwriter.ram_buffer_size", "256");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+            .addProperty(SearchConfig.THREAD_POOL_SIZE, "6")
+            .addProperty(SearchConfig.QUEUE_COUNT, "6")
+            .addProperty(SearchConfig.QUEUE_SIZE, "4096")
+            .addProperty(SearchConfig.COMMIT_INTERVAL, "10000")
+            .addProperty(SearchConfig.SHARDING_STRATEGY, SearchConfig.HASH)
+            .addProperty(SearchConfig.NUMBER_OF_SHARDS, "6");
       builder.memory().storageType(storageType);
       if (evictionSize > 0) {
          builder.memory().size(evictionSize);

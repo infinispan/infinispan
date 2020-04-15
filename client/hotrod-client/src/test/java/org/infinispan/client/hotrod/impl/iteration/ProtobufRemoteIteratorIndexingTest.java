@@ -32,7 +32,7 @@ public class ProtobufRemoteIteratorIndexingTest extends MultiHotRodServersTest i
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      cfg.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      cfg.indexing().enable().addProperty("directory.type", "local-heap");
       createHotRodServers(NUM_NODES, hotRodCacheConfiguration(cfg));
 
       waitForClusterToForm();

@@ -64,7 +64,7 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
    public ConfigurationBuilder buildIndexedConfig() {
       ConfigurationBuilder builder = hotRodCacheConfiguration(new ConfigurationBuilder());
       builder.memory().storageType(storageType).indexing().enable()
-            .addProperty("default.directory_provider", "local-heap");
+            .addProperty("directory.type", "local-heap");
       return builder;
    }
 

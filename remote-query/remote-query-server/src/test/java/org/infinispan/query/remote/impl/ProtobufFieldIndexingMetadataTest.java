@@ -45,8 +45,7 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty("directory.type", "local-heap");
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 

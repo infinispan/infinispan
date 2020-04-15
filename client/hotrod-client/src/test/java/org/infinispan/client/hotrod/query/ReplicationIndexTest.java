@@ -54,7 +54,7 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
 
       // Add the test caches
       org.infinispan.configuration.cache.ConfigurationBuilder builder = getDefaultClusteredCacheConfig(REPL_SYNC, isTransactional());
-      builder.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      builder.indexing().enable().addProperty("directory.type", "local-heap");
       cacheManager.defineConfiguration(CACHE_NAME, builder.build());
 
       // Wait for state transfer on the test caches

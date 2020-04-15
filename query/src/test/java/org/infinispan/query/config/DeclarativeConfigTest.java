@@ -1,21 +1,18 @@
 package org.infinispan.query.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Set;
 
-import org.hibernate.search.engine.spi.EntityIndexBinding;
-import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
-import org.hibernate.search.indexes.spi.IndexManager;
-import org.hibernate.search.spi.SearchIntegrator;
-import org.hibernate.search.store.impl.RAMDirectoryProvider;
+import org.apache.lucene.store.ByteBuffersDirectory;
+import org.hibernate.search.engine.backend.index.IndexManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.helper.SearchConfig;
+import org.infinispan.query.helper.IndexAccessor;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -35,8 +32,7 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
             "         <indexed-entities>\n" +
             "            <indexed-entity>org.infinispan.query.test.Person</indexed-entity>\n" +
             "         </indexed-entities>\n" +
-            "         <property name=\"default.directory_provider\">local-heap</property>\n" +
-            "         <property name=\"lucene_version\">LUCENE_CURRENT</property>\n" +
+            "         <property name=\"" + SearchConfig.DIRECTORY_TYPE + "\">" + SearchConfig.HEAP + "</property>\n" +
             "      </indexing>\n" +
             "   </local-cache>\n" +
             "</cache-container>"
@@ -62,14 +58,9 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
    }
 
    public void testPropertiesWhereRead() {
-      SearchIntegrator searchFactory = TestQueryHelperFactory.extractSearchFactory(cache);
-      EntityIndexBinding indexBindingForEntity = searchFactory.getIndexBindings().get(Person.class);
-      Set<IndexManager> managers = indexBindingForEntity.getIndexManagerSelector().all();
-      assertEquals(1, managers.size());
-      IndexManager manager = managers.iterator().next();
-      assertNotNull(manager);
-      assertTrue(manager instanceof DirectoryBasedIndexManager);
-      DirectoryBasedIndexManager dbim = (DirectoryBasedIndexManager) manager;
-      assertTrue(dbim.getDirectoryProvider() instanceof RAMDirectoryProvider);
+      IndexAccessor accessorTest = IndexAccessor.of(cache, Person.class);
+      IndexManager indexManager = accessorTest.getIndexManager();
+      assertThat(indexManager).isNotNull();
+      assertThat(accessorTest.getDirectory()).isInstanceOf(ByteBuffersDirectory.class);
    }
 }

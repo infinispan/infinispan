@@ -26,7 +26,7 @@ public class IndexedRestSearchTest extends BaseRestSearchTest {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configurationBuilder.indexing()
             .enable()
-            .addProperty("default.directory_provider", "local-heap");
+            .addProperty("directory.type", "local-heap");
       return configurationBuilder;
    }
 

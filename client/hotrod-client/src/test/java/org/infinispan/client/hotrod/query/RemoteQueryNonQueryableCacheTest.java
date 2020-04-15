@@ -10,6 +10,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -53,16 +54,20 @@ public class RemoteQueryNonQueryableCacheTest extends SingleHotRodServerTest {
 
    private Configuration createIndexedCache() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      builder.indexing().enable().addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       return builder.build();
    }
 
    @Test
    public void testQueryable() {
       executeQuery(DEFAULT_CACHE);
-      executeQuery(INDEXED_CACHE);
       executeQuery(PROTOBUF_CACHE);
       executeQuery(POJO_CACHE);
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN014054.*")
+   public void assertErrorForIndexedCacheButWithoutIndexedEntities() {
+      executeQuery(INDEXED_CACHE);
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028015.*")

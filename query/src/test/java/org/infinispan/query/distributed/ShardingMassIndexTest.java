@@ -7,6 +7,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.queries.faceting.Car;
@@ -35,11 +36,10 @@ public class ShardingMassIndexTest extends MultipleCacheManagersTest {
             .indexing()
             .enable()
             .addIndexedEntity(Car.class)
-            .addProperty("hibernate.search.car.sharding_strategy.nbr_of_shards", "2")
-            .addProperty("hibernate.search.car.1.directory_provider", "local-heap")
-            .addProperty("hibernate.search.car.0.indexmanager", "near-real-time")
-            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName())
+            .addProperty(SearchConfig.SHARDING_STRATEGY, SearchConfig.HASH)
+            .addProperty(SearchConfig.NUMBER_OF_SHARDS, "2");
 
       createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
       waitForClusterToForm(getDefaultCacheName());

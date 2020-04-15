@@ -38,8 +38,7 @@ public class ClientListenerWithIndexingAndProtobufTest extends MultiHotRodServer
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       cfgBuilder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty("directory.type", "local-heap");
 
       createHotRodServers(NUM_NODES, cfgBuilder);
       waitForClusterToForm();

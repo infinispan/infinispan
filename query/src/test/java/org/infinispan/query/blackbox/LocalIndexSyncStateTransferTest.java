@@ -11,6 +11,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.IndexedQueryMode;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
@@ -34,7 +35,7 @@ public class LocalIndexSyncStateTransferTest extends MultipleCacheManagersTest {
       builder.indexing().enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
-            .addProperty("default.directory_provider", "local-heap");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       return builder;
    }
 

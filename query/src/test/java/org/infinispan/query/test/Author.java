@@ -8,10 +8,8 @@ import org.hibernate.search.annotations.Indexed;
 @Indexed
 public class Author {
 
-   @Field
    private String name;
 
-   @Field
    private String surname;
 
    public Author(String name, String surname) {
@@ -19,6 +17,7 @@ public class Author {
       this.surname = surname;
    }
 
+   @Field
    public String getName() {
       return name;
    }
@@ -27,6 +26,7 @@ public class Author {
       this.name = name;
    }
 
+   @Field
    public String getSurname() {
       return surname;
    }

@@ -3,21 +3,18 @@ package org.infinispan.query.test;
 import java.io.Serializable;
 
 import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
+import org.hibernate.search.annotations.Indexed;
 import org.infinispan.protostream.annotations.ProtoField;
 
 @Indexed(index = "anotherclass")
 public class AnotherGrassEater implements Serializable {
 
-   @Field(store = Store.YES)
    private String name;
-   @Field(store = Store.YES)
+
    private String blurb;
 
-   @Field(store = Store.NO)
-   @SortableField
    private int age;
 
    public AnotherGrassEater() {
@@ -28,6 +25,7 @@ public class AnotherGrassEater implements Serializable {
       this.blurb = blurb;
    }
 
+   @Field(store = Store.YES)
    @ProtoField(number = 1)
    public String getName() {
       return name;
@@ -37,6 +35,7 @@ public class AnotherGrassEater implements Serializable {
       this.name = name;
    }
 
+   @Field(store = Store.YES)
    @ProtoField(number = 2)
    public String getBlurb() {
       return blurb;
@@ -44,6 +43,16 @@ public class AnotherGrassEater implements Serializable {
 
    public void setBlurb(String blurb) {
       this.blurb = blurb;
+   }
+
+   @SortableField
+   @Field(store = Store.NO)
+   public int getAge() {
+      return age;
+   }
+
+   public void setAge(int age) {
+      this.age = age;
    }
 
    @Override

@@ -19,6 +19,7 @@ import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.CustomKey3;
@@ -300,25 +301,6 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
-   public void testFullTextFilterOnOff() {
-      loadTestingData();
-
-      Query<Person> query = createQuery("blurb:'Eats' AND blurb:'cheese'", Person.class);
-
-      assertEquals(1, getNumberOfHits(query.execute()));
-      List<Person> result = query.execute().list();
-
-      Person person = result.get(0);
-      assertEquals("Mini Goat", person.getName());
-      assertEquals("Eats cheese", person.getBlurb());
-
-      //Disabling the fullTextFilter.
-      query = createQuery("blurb:'Eats'", Person.class);
-
-      assertEquals(2, getNumberOfHits(query.execute()));
-      StaticTestingErrorHandler.assertAllGood(cache);
-   }
-
    @Test(expectedExceptions = UnsupportedOperationException.class)
    public void testIteratorRemove() {
       loadTestingData();
@@ -416,6 +398,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       QueryResult<Person> result = cacheQuery.execute();
       assertEquals(2, getNumberOfHits(result));   // NOTE: getResultSize() ignores pagination (maxResults, firstResult)
       assertEquals(1, result.list().size());
+
       try (CloseableIterator<?> eagerIterator = cacheQuery.iterator()) {
          assertEquals(1, countElements(eagerIterator));
       }
@@ -475,9 +458,8 @@ public class LocalCacheTest extends SingleCacheManagerTest {
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       enhanceConfig(cfg);
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
    }

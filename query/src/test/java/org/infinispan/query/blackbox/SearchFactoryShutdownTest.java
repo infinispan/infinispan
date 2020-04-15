@@ -3,11 +3,13 @@ package org.infinispan.query.blackbox;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.Person;
+import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -33,18 +35,18 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
                .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing()
                .enable()
-               .addIndexedEntity(Person.class)
-               .addProperty("default.directory_provider", "local-heap")
-               .addProperty("lucene_version", "LUCENE_CURRENT");
+               .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+               .addIndexedEntity(Person.class);
          cc = TestCacheManagerFactory.createCacheManager(cfg);
          Cache<?, ?> cache = cc.getCache();
-         SearchIntegrator sfi = TestingUtil.extractComponent(cache, SearchIntegrator.class);
+         SearchMappingHolder smh = TestingUtil.extractComponent(cache, SearchMappingHolder.class);
+         SearchMapping searchMapping = smh.getSearchMapping();
 
-         assertFalse(sfi.isStopped());
+         assertFalse(searchMapping.isClose());
 
          cc.stop();
 
-         assertTrue(sfi.isStopped());
+         assertTrue(searchMapping.isClose());
       } finally {
          // proper cleanup for exceptional execution
          TestingUtil.killCacheManagers(cc);

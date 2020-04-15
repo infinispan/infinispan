@@ -1,6 +1,7 @@
 package org.infinispan.query.partitionhandling;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.Test;
 
@@ -16,8 +17,8 @@ public class NonSharedIndexWithLocalCachesTest extends NonSharedIndexTest {
       configurationBuilder.indexing()
             .enable()
             .addIndexedEntity(Person.class)
-            .addProperty("default.indexmanager", "near-real-time")
-            .addProperty("default.directory_provider", "local-heap");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+            .addProperty(SearchConfig.COMMIT_INTERVAL, "10000");
       return configurationBuilder;
    }
 

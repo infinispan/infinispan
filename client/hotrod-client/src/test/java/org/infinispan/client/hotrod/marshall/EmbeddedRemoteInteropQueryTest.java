@@ -93,9 +93,8 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       builder.indexing().enable()
-             .addIndexedEntities(UserHS.class, AccountHS.class, TransactionHS.class)
-             .addProperty("default.directory_provider", "local-heap")
-             .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addIndexedEntities(UserHS.class, AccountHS.class, TransactionHS.class)
+            .addProperty("directory.type", "local-heap");
       return builder;
    }
 
@@ -275,7 +274,8 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
-      Query q = qf.create("from sample_bank_account.Transaction where longDescription:'f2f'");
+      // Hibernate Search 6 does not support fields that are sortable and full text at the same time
+      Query q = qf.create("from sample_bank_account.Transaction where longDescription='Expenses for Infinispan F2F meeting'");
 
       List<Transaction> list = q.list();
       assertEquals(1, list.size());

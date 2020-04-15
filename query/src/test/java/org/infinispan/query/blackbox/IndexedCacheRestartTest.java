@@ -17,6 +17,7 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.query.Search;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.indexedembedded.Book;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -47,8 +48,7 @@ public class IndexedCacheRestartTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable()
             .addIndexedEntity(Book.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       // Test that the query module doesn't break user-configured custom interceptors
       // Not needed since ISPN-10262, as the query module is no longer configuring any custom interceptors
       final NoOpInterceptor noOpInterceptor = new NoOpInterceptor();

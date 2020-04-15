@@ -15,7 +15,7 @@ public class RemoteQueryStringBroadcastTest extends RemoteQueryStringTest {
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
-      cfgBuilder.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      cfgBuilder.indexing().enable().addProperty("directory.type", "local-heap");
       return cfgBuilder;
    }
 

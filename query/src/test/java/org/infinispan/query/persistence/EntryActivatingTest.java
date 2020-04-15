@@ -4,7 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
 
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -14,9 +13,11 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.indexedembedded.City;
 import org.infinispan.query.indexedembedded.Country;
 import org.infinispan.query.test.QueryTestSCI;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -34,7 +35,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
    WaitNonBlockingStore store;
    CacheContainer cm;
    QueryFactory queryFactory;
-   SearchIntegrator searchIntegrator;
+   SearchMappingHolder searchMappingHolder;
 
    @BeforeClass
    public void setUp() {
@@ -75,7 +76,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       verifyFullTextHasMatches(1);
 
       cache.stop();
-      assert searchIntegrator.isStopped();
+      assert searchMappingHolder.getSearchMapping().isClose();
       TestingUtil.killCacheManagers(cm);
 
       // Now let's check the entry is not re-indexed during data preloading:
@@ -96,14 +97,13 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
          .indexing()
             .enable()
             .addIndexedEntity(Country.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT")
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
          ;
       cm = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
       cache = cm.getCache();
       store = TestingUtil.getFirstStore(cache);
       queryFactory = Search.getQueryFactory(cache);
-      searchIntegrator = TestingUtil.extractComponent(cache, SearchIntegrator.class);
+      searchMappingHolder = TestingUtil.extractComponent(cache, SearchMappingHolder.class);
    }
 
    private void verifyFullTextHasMatches(int i) {

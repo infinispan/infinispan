@@ -4,10 +4,10 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 
 import java.io.IOException;
 
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -39,7 +39,6 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
       });
    }
 
-   @Test
    public void verifyIndexEnabledCorrectly() throws IOException {
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.fromXml("configuration-parsing-test.xml")) {
@@ -59,16 +58,16 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
     * @param cache the cache to extract indexing from
     */
    private void assertIndexingEnabled(Cache<Object, Object> cache, boolean expected) {
-      SearchIntegrator searchIntegrator = null;
+      SearchMappingHolder searchMapping = null;
       try {
-         searchIntegrator = ComponentRegistryUtils.getSearchIntegrator(cache);
+         searchMapping = ComponentRegistryUtils.getSearchMappingHolder(cache);
       } catch (IllegalStateException e) {
          // ignored here, we deal with it later
       }
-      if (expected && searchIntegrator == null) {
+      if (expected && searchMapping == null) {
          Assert.fail("SearchIntegrator not found but expected for cache " + cache.getName());
       }
-      if (!expected && searchIntegrator != null) {
+      if (!expected && searchMapping != null) {
          Assert.fail("SearchIntegrator not expected but found for cache " + cache.getName());
       }
       //verify as well that the indexing interceptor is (not) there:

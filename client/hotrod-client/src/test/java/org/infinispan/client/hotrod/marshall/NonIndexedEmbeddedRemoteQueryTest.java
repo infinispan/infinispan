@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.marshall;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -24,11 +23,5 @@ public class NonIndexedEmbeddedRemoteQueryTest extends EmbeddedRemoteInteropQuer
       builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       return builder;
-   }
-
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type sample_bank_account.Transaction unless the property is indexed and analyzed.")
-   @Override
-   public void testRemoteFullTextQuery() {
-      super.testRemoteFullTextQuery();
    }
 }

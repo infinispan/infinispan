@@ -30,7 +30,7 @@ public class HotRodQueryIspnDirectoryTest extends HotRodQueryTest {
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = super.getConfigurationBuilder();
-      builder.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      builder.indexing().enable().addProperty("directory.type", "local-heap");
       return builder;
    }
 

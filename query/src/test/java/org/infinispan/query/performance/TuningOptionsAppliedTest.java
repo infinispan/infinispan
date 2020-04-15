@@ -1,17 +1,13 @@
 package org.infinispan.query.performance;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.IOException;
 
-import org.hibernate.search.backend.configuration.impl.IndexWriterSetting;
-import org.hibernate.search.backend.spi.LuceneIndexingParameters;
-import org.hibernate.search.backend.spi.LuceneIndexingParameters.ParameterSet;
-import org.hibernate.search.indexes.impl.NRTIndexManager;
-import org.hibernate.search.indexes.spi.IndexManager;
-import org.hibernate.search.spi.SearchIntegrator;
-import org.hibernate.search.store.DirectoryProvider;
-import org.hibernate.search.store.impl.FSDirectoryProvider;
-import org.infinispan.Cache;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.helper.IndexAccessor;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -31,44 +27,20 @@ public class TuningOptionsAppliedTest extends AbstractInfinispanTest {
    public void verifyFSDirectoryOptions() throws IOException {
       EmbeddedCacheManager embeddedCacheManager = TestCacheManagerFactory.fromXml("nrt-performance-writer.xml");
       try {
-         SearchIntegrator si = extractSearchFactoryImplementor(embeddedCacheManager);
-         NRTIndexManager nrti = verifyShardingOptions(si, 6);
-         verifyIndexWriterOptions(nrti, 220, 4096, 30);
-         verifyUsesFSDirectory(nrti);
+         IndexAccessor indexAccessor = IndexAccessor.of(embeddedCacheManager.getCache("Indexed"), Person.class);
+         verifyShardingOptions(indexAccessor, 6);
+         verifyUsesFSDirectory(indexAccessor);
       } finally {
          TestingUtil.killCacheManagers(embeddedCacheManager);
       }
    }
 
-   private SearchIntegrator extractSearchFactoryImplementor(EmbeddedCacheManager embeddedCacheManager) {
-      Cache<Object, Object> cache = embeddedCacheManager.getCache("Indexed");
-      cache.put("hey this type exists", new Person("id", "name", 3));
-
-      return TestingUtil.extractComponent(cache, SearchIntegrator.class);
+   private void verifyShardingOptions(IndexAccessor accessorForTests, int expectedShards) {
+      assertThat(accessorForTests.getShardsForTests()).hasSize(expectedShards);
    }
 
-   private NRTIndexManager verifyShardingOptions(SearchIntegrator searchIntegrator, int expectedShards) {
-      for (int i = 0; i < expectedShards; i++)
-         Assert.assertNotNull(searchIntegrator.getIndexManager("person." + i), "person." + i + " IndexManager missing!");
-      Assert.assertNull(searchIntegrator.getIndexManager("person." + expectedShards), "An IndexManager too much was created!");
-
-      IndexManager indexManager = searchIntegrator.getIndexManager("person.0");
-      Assert.assertTrue(indexManager instanceof NRTIndexManager);
-      NRTIndexManager nrtIM = (NRTIndexManager) indexManager;
-      return nrtIM;
+   private void verifyUsesFSDirectory(IndexAccessor accessorForTests) {
+      Directory directory = accessorForTests.getDirectory();
+      Assert.assertTrue(directory instanceof FSDirectory);
    }
-
-   private void verifyUsesFSDirectory(NRTIndexManager nrtIM) {
-      DirectoryProvider directoryProvider = nrtIM.getDirectoryProvider();
-      Assert.assertTrue(directoryProvider instanceof FSDirectoryProvider);
-   }
-
-   private void verifyIndexWriterOptions(NRTIndexManager nrtIM, Integer expectedRAMBuffer, Integer expectedMaxMergeSize, Integer expectedMergeFactor) {
-      LuceneIndexingParameters indexingParameters = nrtIM.getIndexingParameters();
-      ParameterSet indexParameters = indexingParameters.getIndexParameters();
-      Assert.assertEquals(indexParameters.getCurrentValueFor(IndexWriterSetting.RAM_BUFFER_SIZE), expectedRAMBuffer);
-      Assert.assertEquals(indexParameters.getCurrentValueFor(IndexWriterSetting.MERGE_MAX_SIZE), expectedMaxMergeSize);
-      Assert.assertEquals(indexParameters.getCurrentValueFor(IndexWriterSetting.MERGE_FACTOR), expectedMergeFactor);
-   }
-
 }

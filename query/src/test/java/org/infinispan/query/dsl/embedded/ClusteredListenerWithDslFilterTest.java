@@ -44,7 +44,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
    public void testEventFilter() {
       QueryFactory qf = Search.getQueryFactory(cache(0));
 
-      Query query = qf.from(org.infinispan.query.test.Person.class)
+      Query query = qf.from(Person.class)
             .having("age").lte(31)
             .build();
 
@@ -95,7 +95,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
    public void testEventFilterAndConverter() {
       QueryFactory qf = Search.getQueryFactory(cache(0));
 
-      Query query = qf.from(org.infinispan.query.test.Person.class)
+      Query query = qf.from(Person.class)
             .having("age").lte(31)
             .select("name", "age")
             .build();

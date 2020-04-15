@@ -53,8 +53,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, useTransactions()));
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty("directory.type", "local-heap");
 
       createHotRodServers(3, builder);
 

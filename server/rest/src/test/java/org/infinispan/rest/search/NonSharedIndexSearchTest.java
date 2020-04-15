@@ -15,7 +15,7 @@ public class NonSharedIndexSearchTest extends BaseRestSearchTest {
    @Override
    ConfigurationBuilder getConfigBuilder() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
-      builder.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      builder.indexing().enable().addProperty("directory.type", "local-heap");
       return builder;
    }
 

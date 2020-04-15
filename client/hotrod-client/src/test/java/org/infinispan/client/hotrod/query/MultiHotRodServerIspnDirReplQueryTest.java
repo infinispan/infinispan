@@ -23,7 +23,7 @@ public class MultiHotRodServerIspnDirReplQueryTest extends MultiHotRodServerIspn
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.indexing()
             .enable()
-            .addProperty("default.directory_provider", "local-heap");
+            .addProperty("directory.type", "local-heap");
 
       for (EmbeddedCacheManager cm : cacheManagers) {
          cm.defineConfiguration(TEST_CACHE, builder.build());

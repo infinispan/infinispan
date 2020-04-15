@@ -59,7 +59,7 @@ public class ClusteredIT {
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
       if (indexed) {
          builder.indexing().enable()
-               .addProperty("default.directory_provider", "local-heap")
+               .addProperty("directory.type", "local-heap")
                .addProperty("infinispan.query.lucene.max-boolean-clauses", "1025");
       }
 

@@ -4,12 +4,10 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.List;
 
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -25,8 +23,9 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.AbstractQueryDslTest;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
-import org.infinispan.query.remote.impl.ProgrammaticSearchMappingProviderImpl;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
+import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
@@ -96,8 +95,7 @@ public class RemoteQueryDisableIndexingTest extends AbstractQueryDslTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty("directory.type", "local-heap");
       return builder;
    }
 
@@ -108,17 +106,14 @@ public class RemoteQueryDisableIndexingTest extends AbstractQueryDslTest {
    }
 
    public void testEmptyIndexIsPresent() {
-      SearchIntegrator searchIntegrator = TestingUtil.extractComponent(cache, SearchIntegrator.class);
+      SearchMapping searchMapping = TestingUtil.extractComponent(cache, SearchMappingHolder.class)
+            .getSearchMapping();
 
       // we have indexing for remote query!
-      assertTrue(searchIntegrator.getIndexBindings().containsKey(ProtobufValueWrapper.INDEXING_TYPE));
+      assertTrue(searchMapping.allIndexedTypes().containsValue(ProtobufValueWrapper.class));
 
-      // we have an index for this cache
-      String indexName = ProgrammaticSearchMappingProviderImpl.getIndexName(cache.getName());
-      assertNotNull(searchIntegrator.getIndexManager(indexName));
-
-      // index must be empty
-      assertEquals(0, searchIntegrator.getStatistics().getNumberOfIndexedEntities(ProtobufValueWrapper.class.getName()));
+      // we have some indexes for this cache
+      assertEquals(2, searchMapping.allIndexedTypes().size());
    }
 
    public void testEqNonIndexedType() {

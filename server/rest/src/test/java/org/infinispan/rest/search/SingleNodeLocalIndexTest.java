@@ -15,7 +15,7 @@ public class SingleNodeLocalIndexTest extends BaseRestSearchTest {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.clustering().cacheMode(CacheMode.LOCAL);
       configurationBuilder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap");
+            .addProperty("directory.type", "local-heap");
       return configurationBuilder;
    }
 

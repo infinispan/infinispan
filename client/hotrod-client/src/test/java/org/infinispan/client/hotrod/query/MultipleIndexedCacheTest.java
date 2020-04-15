@@ -41,7 +41,7 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
 
    public Configuration buildIndexedConfig() {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      builder.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      builder.indexing().enable().addProperty("directory.type", "local-heap");
       return builder.build();
    }
 
