@@ -6,6 +6,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
@@ -30,9 +31,8 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
          cacheCfg.indexing()
                .enable()
                .addIndexedEntity(Car.class)
-               .addProperty("default.directory_provider", "local-heap")
-               .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
-               .addProperty("lucene_version", "LUCENE_CURRENT");
+               .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+               .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
          cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);
          holder.newConfigurationBuilder(defaultName).read(cacheCfg.build());
       }, NUM_NODES);

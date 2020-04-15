@@ -36,8 +36,7 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.indexing().enable()
              .addIndexedEntity("TestEntity")
-             .addProperty("default.directory_provider", "local-heap")
-             .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addProperty("directory.type", "local-heap");
 
       EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
       Cache<String, String> metadataCache = manager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);

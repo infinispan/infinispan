@@ -10,6 +10,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Block;
@@ -19,7 +20,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
 /**
- * Test for the MassIndexer for different entities sharing the same index and cache.
+ * Test for the MassIndexer for different entities sharing the same cache.
  *
  * @author gustavonalle
  * @since 7.1
@@ -38,9 +39,8 @@ public class OverlappingIndexMassIndexTest extends MultipleCacheManagersTest {
             .enable()
             .addIndexedEntity(Transaction.class)
             .addIndexedEntity(Block.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
 
       createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
 

@@ -5,14 +5,10 @@ import java.util.Date;
 
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Analyzer;
-import org.hibernate.search.annotations.DateBridge;
-import org.hibernate.search.annotations.EncodingType;
 import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.NumericField;
-import org.hibernate.search.annotations.Resolution;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 
@@ -21,44 +17,30 @@ import org.infinispan.query.dsl.embedded.testdomain.Transaction;
  * @since 7.0
  */
 @Indexed
-@Analyzer(definition = "standard")
 public class TransactionHS implements Transaction, Serializable {
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
    private int id;
 
-   @Field(store = Store.NO, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
-   @SortableField
    private String description;
 
-   @Field
-   @SortableField
    private String longDescription;
 
-   @Field
-   @Analyzer(definition = "ngram")
    private String notes;
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
    private int accountId;
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @DateBridge(encoding = EncodingType.STRING, resolution = Resolution.MILLISECOND)
    private Date date;
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @NumericField
-   @SortableField
    private double amount;
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
    private boolean isDebit;
 
    // not indexed!
    private boolean isValid;
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    @ProtoField(number = 1, defaultValue = "0")
    public int getId() {
       return id;
@@ -70,6 +52,8 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    @ProtoField(number = 2)
    public String getDescription() {
       return description;
@@ -81,6 +65,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
+   @Field
    @ProtoField(number = 3)
    public String getLongDescription() {
       return longDescription;
@@ -92,6 +77,8 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
+   @Field
+   @Analyzer(definition = "ngram")
    @ProtoField(number = 4)
    public String getNotes() {
       return notes;
@@ -103,6 +90,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
    @ProtoField(number = 5, defaultValue = "0")
    public int getAccountId() {
       return accountId;
@@ -114,6 +102,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
    @ProtoField(number = 6)
    public Date getDate() {
       return date;
@@ -125,6 +114,8 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    @ProtoField(number = 7, defaultValue = "0")
    public double getAmount() {
       return amount;
@@ -136,6 +127,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
    @ProtoField(number = 8, defaultValue = "false")
    public boolean isDebit() {
       return isDebit;

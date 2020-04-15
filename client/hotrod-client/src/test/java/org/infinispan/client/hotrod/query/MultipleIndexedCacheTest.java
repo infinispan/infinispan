@@ -43,7 +43,7 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
       builder.indexing().enable()
              .addIndexedEntity("sample_bank_account.User")
              .addIndexedEntity("sample_bank_account.Account")
-             .addProperty("default.directory_provider", "local-heap");
+             .addProperty("directory.type", "local-heap");
       return builder.build();
    }
 

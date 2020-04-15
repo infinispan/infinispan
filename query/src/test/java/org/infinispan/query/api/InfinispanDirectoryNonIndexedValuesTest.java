@@ -2,6 +2,7 @@ package org.infinispan.query.api;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -21,10 +22,8 @@ public class InfinispanDirectoryNonIndexedValuesTest extends NonIndexedValuesTes
             .enable()
             .addIndexedEntity(TestEntity.class)
             .addIndexedEntity(AnotherTestEntity.class)
-            .addProperty("default.indexmanager", "near-real-time")
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, c);
    }
 

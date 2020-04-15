@@ -2,6 +2,7 @@ package org.infinispan.query.distributed;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.Block;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.query.test.Transaction;
@@ -25,8 +26,7 @@ public class OverlappingDistMassIndexTest extends OverlappingIndexMassIndexTest 
             .enable()
             .addIndexedEntity(Transaction.class)
             .addIndexedEntity(Block.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
 
       createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
 

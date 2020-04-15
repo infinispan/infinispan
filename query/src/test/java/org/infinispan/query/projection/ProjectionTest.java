@@ -1,13 +1,13 @@
 package org.infinispan.query.projection;
 
-import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
+import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -15,6 +15,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.helper.SearchConfig;
+import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -29,8 +31,7 @@ public class ProjectionTest extends SingleCacheManagerTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.indexing().enable()
             .addIndexedEntity(Foo.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
       Cache<Object, Object> cache = cacheManager.getCache();
       queryFactory = Search.getQueryFactory(cache);
@@ -62,30 +63,34 @@ public class ProjectionTest extends SingleCacheManagerTest {
       assertQueryReturns(cacheQuery, new Object[]{foo.baz, foo.bar});
    }
 
-   private Query<?> createProjectionQuery(String... projection) {
+   private <T> Query<T> createProjectionQuery(String... projection) {
       String selectClause = String.join(",", projection);
       String q = String.format("SELECT %s FROM %s WHERE bar:'bar1'", selectClause, Foo.class.getName());
       return queryFactory.create(q);
    }
 
-   private void assertQueryReturns(Query<?> cacheQuery, Object[] expected) {
+   private void assertQueryReturns(Query<?> cacheQuery, Object expected) {
       assertQueryListContains(cacheQuery.execute().list(), expected);
       try (CloseableIterator<?> eagerIterator = cacheQuery.iterator()) {
          assertQueryIteratorContains(eagerIterator, expected);
       }
    }
 
-   private void assertQueryListContains(List<?> list, Object[] expected) {
+   private void assertQueryListContains(List<?> list, Object expected) {
       assert list.size() == 1;
-      Object[] array = (Object[]) list.get(0);
-      assertArrayEquals(expected, array);
+      Object value = list.get(0);
+      assertThat(value).isEqualTo(expected);
    }
 
-   private void assertQueryIteratorContains(CloseableIterator<?> iterator, Object[] expected) {
+   private void assertQueryIteratorContains(CloseableIterator<?> iterator, Object expected) {
       assert iterator.hasNext();
-      Object[] array = (Object[]) iterator.next();
-      assert Arrays.equals(array, expected);
+      Object value = iterator.next();
+      assertThat(value).isEqualTo(expected);
       assert !iterator.hasNext();
+   }
+
+   private static EntityReferenceImpl entityReference(Class<?> type, String key) {
+      return new EntityReferenceImpl(PojoRawTypeIdentifier.of(type), type.getSimpleName(), key);
    }
 
    @Indexed(index = "FooIndex")

@@ -6,17 +6,16 @@ import java.util.Set;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
+import org.hibernate.search.mapper.pojo.automaticindexing.ReindexOnUpdate;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexingDependency;
 
 @Indexed
 public class Book {
 
-   @Field
    private String title;
 
-   @Field
    private String description;
 
-   @IndexedEmbedded
    private Set<Author> authors;
 
    public Book(String title, String description, Set<Author> authors) {
@@ -25,6 +24,7 @@ public class Book {
       this.authors = authors;
    }
 
+   @Field
    public String getTitle() {
       return title;
    }
@@ -33,6 +33,7 @@ public class Book {
       this.title = title;
    }
 
+   @Field
    public String getDescription() {
       return description;
    }
@@ -41,6 +42,8 @@ public class Book {
       this.description = description;
    }
 
+   @IndexedEmbedded
+   @IndexingDependency(reindexOnUpdate = ReindexOnUpdate.NO)
    public Set<Author> getAuthors() {
       return authors;
    }

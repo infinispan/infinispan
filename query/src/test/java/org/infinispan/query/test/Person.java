@@ -4,39 +4,24 @@ import java.io.Serializable;
 import java.util.Date;
 
 import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.DateBridge;
 import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.FilterCacheModeType;
-import org.hibernate.search.annotations.FullTextFilterDef;
-import org.hibernate.search.annotations.FullTextFilterDefs;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.Resolution;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
+import org.hibernate.search.annotations.Indexed;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * @author Navin Surtani
  */
 @Indexed(index = "person")
-@FullTextFilterDefs({
-      @FullTextFilterDef(name = "personFilter", impl = PersonBlurbFilterFactory.class, cache = FilterCacheModeType.INSTANCE_AND_DOCIDSETRESULTS),
-      @FullTextFilterDef(name = "personAgeFilter", impl = PersonAgeFilterFactory.class, cache = FilterCacheModeType.INSTANCE_AND_DOCIDSETRESULTS)
-})
 public class Person implements Serializable {
 
-   @Field(store = Store.YES)
    private String name;
 
-   @Field(store = Store.YES)
    private String blurb;
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
    private int age;
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @DateBridge(resolution = Resolution.DAY)
    private Date dateOfGraduation;
 
    private String nonIndexedField;
@@ -58,6 +43,7 @@ public class Person implements Serializable {
       this.dateOfGraduation = dateOfGraduation;
    }
 
+   @Field(store = Store.YES)
    @ProtoField(number = 1)
    public String getName() {
       return name;
@@ -67,6 +53,7 @@ public class Person implements Serializable {
       this.name = name;
    }
 
+   @Field(store = Store.YES)
    @ProtoField(number = 2)
    public String getBlurb() {
       return blurb;
@@ -76,6 +63,8 @@ public class Person implements Serializable {
       this.blurb = blurb;
    }
 
+   @SortableField
+   @Field(store = Store.YES, analyze = Analyze.NO)
    @ProtoField(number = 3, defaultValue = "0")
    public int getAge() {
       return age;
@@ -94,6 +83,7 @@ public class Person implements Serializable {
       this.nonIndexedField = nonIndexedField;
    }
 
+   @Field(store = Store.YES, analyze = Analyze.NO)
    @ProtoField(number = 5)
    public Date getDateOfGraduation() {
       return dateOfGraduation;

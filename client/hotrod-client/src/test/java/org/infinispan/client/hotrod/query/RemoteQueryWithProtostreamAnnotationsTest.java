@@ -129,8 +129,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.indexing().enable()
              .addIndexedEntity("Memo")
-             .addProperty("default.directory_provider", "local-heap")
-             .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addProperty("directory.type", "local-heap");
 
       EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
 

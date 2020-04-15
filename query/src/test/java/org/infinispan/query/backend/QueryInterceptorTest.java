@@ -6,19 +6,14 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
-import java.io.Serializable;
 import java.nio.file.Files;
 import java.util.concurrent.atomic.LongAdder;
 
 import org.apache.lucene.index.SegmentInfos;
-import org.hibernate.search.backend.spi.Work;
-import org.hibernate.search.backend.spi.WorkType;
-import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
@@ -29,7 +24,8 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEven
 import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.query.helper.SearchConfig;
+import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -85,6 +81,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
 
             cache.put("key1", person1);
             cache.put("key2", person2);
+            forceCommit(cache);
 
             // Notification is non blocking
             eventuallyEquals(1, cacheListener::numberOfPassivations);
@@ -112,6 +109,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
             Cache<String, Person> cache = cm.getCache();
             cache.put("key1", person1);
             cache.put("key2", person2);
+            forceCommit(cache);
             assertTrue(luceneIndexTracker.indexChanged());
          }
       });
@@ -144,6 +142,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
             cache.put("P2", person2);
             cache.put("C1", car1);
             cache.put("C2", car2);
+            forceCommit(cache);
 
             assertEquals(2, countIndex(Car.class, cache));
             assertEquals(2, countIndex(Person.class, cache));
@@ -161,60 +160,6 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
       });
    }
 
-   @Test
-   public void shouldDeleteFromAllIndexesById() {
-      withCacheManager(new CacheManagerCallable(createVolatileCacheManager()) {
-         @Override
-         public void call() {
-            Cache<String, Object> cache = cm.getCache();
-
-            // Configure Query interceptor to ignore deletes of previous values
-            SearchWorkCreator searchWorkCreator = new IgnoreDeletesSearchWorkCreator();
-            QueryInterceptor queryInterceptor = cache.getAdvancedCache().getComponentRegistry().getComponent(QueryInterceptor.class);
-            KeyPartitioner keyPartitioner = ComponentRegistryUtils.getKeyPartitioner(cache);
-            queryInterceptor.setSearchWorkCreator(searchWorkCreator);
-
-            // Override entity
-            cache.put("key", person1);
-            cache.put("key", car1);
-
-            // Old entity will be left in the indexes
-            assertEquals(1, cache.size());
-            assertEquals(1, countIndex(Person.class, cache));
-            assertEquals(1, countIndex(Car.class, cache));
-
-            // Remove by id from all indexes
-            queryInterceptor.removeFromIndexes(NoTransactionContext.INSTANCE, "key", keyPartitioner.getSegment("key"));
-
-            // Assert indexes are empty
-            assertEquals(1, cache.size());
-            assertEquals(0, countIndex(Person.class, cache));
-            assertEquals(0, countIndex(Car.class, cache));
-         }
-      });
-   }
-
-   private static final class IgnoreDeletesSearchWorkCreator implements SearchWorkCreator {
-
-      @Override
-      public Work createPerEntityTypeWork(IndexedTypeIdentifier entityType, WorkType workType) {
-         return SearchWorkCreator.DEFAULT.createPerEntityTypeWork(entityType, workType);
-      }
-
-      @Override
-      public Work createPerEntityWork(Object entity, Serializable id, WorkType workType) {
-         if (workType.equals(WorkType.DELETE)) {
-            return null;
-         }
-         return SearchWorkCreator.DEFAULT.createPerEntityWork(entity, id, workType);
-      }
-
-      @Override
-      public Work createPerEntityWork(Serializable id, IndexedTypeIdentifier entityType, WorkType workType) {
-         return SearchWorkCreator.DEFAULT.createPerEntityWork(id, entityType, workType);
-      }
-   }
-
    protected EmbeddedCacheManager createCacheManager(int maxEntries) throws Exception {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalBuilder.globalState().enable().persistentLocation(storeDir.getAbsolutePath());
@@ -227,25 +172,18 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
             .indexing().enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(Car.class)
-            .addProperty("default.directory_provider", "filesystem")
-            .addProperty("default.indexBase", indexDir.getAbsolutePath())
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.FILE)
+            .addProperty(SearchConfig.DIRECTORY_ROOT, indexDir.getAbsolutePath());
       return TestCacheManagerFactory.createCacheManager(globalBuilder, b);
-   }
-
-   protected EmbeddedCacheManager createVolatileCacheManager() {
-      ConfigurationBuilder b = new ConfigurationBuilder();
-      b.indexing().enable()
-            .addIndexedEntity(Person.class)
-            .addIndexedEntity(Car.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
-      return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, b);
    }
 
    private long countIndex(Class<?> entityType, Cache<?, ?> cache) {
       Query<?> query = Search.getQueryFactory(cache).create("FROM " + entityType.getName());
       return query.execute().hitCount().orElse(-1);
+   }
+
+   private void forceCommit(Cache<?, ?> cache) {
+      TestQueryHelperFactory.extractSearchMapping(cache).scopeAll().workspace().flush();
    }
 
    private static final class LuceneIndexTracker {

@@ -13,6 +13,7 @@ import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
@@ -37,7 +38,7 @@ public class SharedIndexTest extends BasePartitionHandlingTest {
       configurationBuilder.indexing()
             .enable()
             .addIndexedEntity(Person.class)
-            .addProperty("default.directory_provider", "local-heap");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       return configurationBuilder;
    }
 

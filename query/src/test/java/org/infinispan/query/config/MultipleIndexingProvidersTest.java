@@ -15,8 +15,8 @@ public class MultipleIndexingProvidersTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable()
              .addIndexedEntity(TestEntity.class)
-             .addProperty("org.infinispan.query.config.MultipleIndexingProvidersTest$TestEntity.directory_provider", "filesystem")
-             .addProperty("default.directory_provider", "local-heap");
+             .addProperty("org.infinispan.query.config.MultipleIndexingProvidersTest$TestEntity.directory.type", "filesystem")
+             .addProperty("directory.type", "local-heap");
 
       builder.build();
    }

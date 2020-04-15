@@ -7,12 +7,14 @@ import java.io.File;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.helper.SearchConfig;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
- * Verifies the Query DSL functionality for Filesystem directory_provider.
+ * Verifies the Query DSL functionality for Filesystem directory.type.
  *
  * @author Anna Manukyan
  * @author anistor@redhat.com
@@ -34,9 +36,9 @@ public class FilesystemQueryDslConditionsTest extends QueryDslConditionsTest {
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
             .addIndexedEntity(getModelFactory().getTransactionImplClass())
-            .addProperty("default.directory_provider", "filesystem")
-            .addProperty("default.indexBase", indexDirectory)
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.FILE)
+            .addProperty(SearchConfig.DIRECTORY_ROOT, indexDirectory)
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       createClusteredCaches(1, cfg);
    }
 

@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.TimeZone;
 
-import org.hibernate.search.exception.SearchException;
+import org.hibernate.search.util.common.SearchException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
@@ -32,6 +32,7 @@ import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AddressHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterTest;
@@ -71,8 +72,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
             .addIndexedEntity(TransactionHS.class)
             .addIndexedEntity(TheEntity.class)
             .addIndexedEntity(Book.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       createClusteredCaches(1, DslSCI.INSTANCE, cfg);
    }
 
@@ -366,7 +366,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
       assertEquals(3, list.size());
    }
 
-   @Test(expectedExceptions = SearchException.class, expectedExceptionsMessageRegExp = "Unable to find field notes in org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS")
+   @Test(expectedExceptions = SearchException.class)
    public void testBuildLuceneQueryOnNonIndexedField() {
       IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("select notes from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS where notes like 'TBD%'", qe.getPropertyHelper());
       qe.buildLuceneQuery(parsingResult, null, -1, -1);
@@ -498,14 +498,14 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
       buildQuery("from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS where isValid = 90");
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014037: Invalid boolean literal '90'")
+   @Test(expectedExceptions = ParsingException.class)
    public void testInvalidIndexedBooleanComparison() {
       buildQuery("from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS where isDebit = 90");
    }
 
    public void testBooleanComparison() {
       IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS " +
-            "WHERE isDebit = false", qe.getPropertyHelper());
+            "WHERE debit = false", qe.getPropertyHelper());
       IndexedQuery<?> q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
 
       List<?> list = q.list();

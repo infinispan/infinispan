@@ -4,18 +4,16 @@ import java.io.Serializable;
 
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
+import org.hibernate.search.annotations.Indexed;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 @Indexed(index="indexA")
 public class TestEntity implements Serializable {
 
-   @Field(store = Store.YES, analyze=Analyze.NO)
    private String name;
 
-   @Field(store = Store.YES)
    private String surname;
 
    private long id;
@@ -37,11 +35,13 @@ public class TestEntity implements Serializable {
       this.note = note;
    }
 
+   @Field(store = Store.YES, analyze=Analyze.NO)
    @ProtoField(number = 1)
    public String getName() {
       return name;
    }
 
+   @Field(store = Store.YES)
    @ProtoField(number = 2)
    public String getSurname() {
       return surname;

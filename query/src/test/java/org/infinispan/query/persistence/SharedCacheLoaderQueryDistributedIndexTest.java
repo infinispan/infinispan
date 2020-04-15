@@ -1,6 +1,7 @@
 package org.infinispan.query.persistence;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.helper.SearchConfig;
 import org.testng.annotations.Test;
 
 /**
@@ -15,9 +16,6 @@ public class SharedCacheLoaderQueryDistributedIndexTest extends SharedCacheLoade
       super.configureCache(builder);
 
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "infinispan")
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
-
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
    }
 }

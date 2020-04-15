@@ -32,7 +32,7 @@ public class DeclarativeAutoConfigTest extends AbstractInfinispanTest {
             assertEquals(properties.getProperty("hibernate.search.default.exclusive_index_use"), "true");
             assertEquals(properties.getProperty("hibernate.search.default.reader.strategy"), "shared");
             assertEquals(properties.getProperty("hibernate.search.default.indexmanager"), "near-real-time");
-            assertEquals(properties.getProperty("hibernate.search.default.directory_provider"), "filesystem");
+            assertEquals(properties.getProperty("hibernate.search.backends.infinispan_backend.directory.type"), "filesystem");
 
             cacheConfiguration = cm.getCacheConfiguration("dist-with-default");
             properties = cacheConfiguration.indexing().properties();
@@ -41,7 +41,7 @@ public class DeclarativeAutoConfigTest extends AbstractInfinispanTest {
             assertEquals(properties.getProperty("hibernate.search.default.exclusive_index_use"), "true");
             assertEquals(properties.getProperty("hibernate.search.default.reader.strategy"), "shared");
             assertEquals(properties.getProperty("hibernate.search.default.indexmanager"), "near-real-time");
-            assertEquals(properties.getProperty("hibernate.search.default.directory_provider"), "filesystem");
+            assertEquals(properties.getProperty("hibernate.search.backends.infinispan_backend.directory.type"), "filesystem");
          }
       });
    }

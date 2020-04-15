@@ -8,13 +8,11 @@ import org.hibernate.search.annotations.Indexed;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-@Indexed(index = "commonIndex")
+@Indexed(index = "transactionIndex")
 public class Transaction implements Serializable {
 
-   @Field(analyze = Analyze.NO)
    private final int size;
 
-   @Field
    private final String script;
 
    @ProtoFactory
@@ -23,11 +21,13 @@ public class Transaction implements Serializable {
       this.script = script;
    }
 
+   @Field(analyze = Analyze.NO)
    @ProtoField(number = 1, defaultValue = "0")
    public int getSize() {
       return size;
    }
 
+   @Field
    @ProtoField(number = 2)
    public String getScript() {
       return script;

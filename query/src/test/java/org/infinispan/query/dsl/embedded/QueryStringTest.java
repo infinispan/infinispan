@@ -16,6 +16,7 @@ import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.BeforeClass;
@@ -39,8 +40,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
          .addIndexedEntity(getModelFactory().getUserImplClass())
          .addIndexedEntity(getModelFactory().getAccountImplClass())
          .addIndexedEntity(getModelFactory().getTransactionImplClass())
-         .addProperty("default.directory_provider", "local-heap")
-         .addProperty("lucene_version", "LUCENE_CURRENT");
+         .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       createClusteredCaches(1, cfg);
    }
 

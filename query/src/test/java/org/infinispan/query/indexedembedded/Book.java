@@ -8,9 +8,9 @@ import org.hibernate.search.annotations.Indexed;
 @Indexed
 public class Book implements Serializable {
 
-   @Field String title;
-   @Field String author;
-   @Field String editor;
+   String title;
+   String author;
+   String editor;
 
    public Book(String title, String author, String editor) {
       this.title = title;
@@ -18,4 +18,18 @@ public class Book implements Serializable {
       this.editor = editor;
    }
 
+   @Field
+   public String getTitle() {
+      return title;
+   }
+
+   @Field
+   public String getAuthor() {
+      return author;
+   }
+
+   @Field
+   public String getEditor() {
+      return editor;
+   }
 }

@@ -1,20 +1,17 @@
 package org.infinispan.query.dsl.embedded;
 
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.hibernate.search.spi.SearchIntegrator;
-import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
-import org.infinispan.test.TestingUtil;
+import org.infinispan.query.helper.SearchConfig;
+import org.infinispan.query.helper.TestQueryHelperFactory;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.testng.annotations.Test;
 
 /**
@@ -43,8 +40,7 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
 
    protected Map<String, String> getIndexConfig() {
       Map<String, String> configs = new HashMap<>();
-      configs.put("default.directory_provider", "local-heap");
-      configs.put("lucene_version", "LUCENE_CURRENT");
+      configs.put(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       return configs;
    }
 
@@ -82,21 +78,19 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
    }
 
    private void checkIndexPresence(Cache<?, ?> cache) {
-      SearchIntegrator searchIntegrator = TestingUtil.extractComponent(cache, SearchIntegrator.class);
+      SearchMapping searchMapping = TestQueryHelperFactory.extractSearchMapping(cache);
 
-      verifyClassIsIndexed(searchIntegrator, getModelFactory().getUserImplClass());
-      verifyClassIsIndexed(searchIntegrator, getModelFactory().getAccountImplClass());
-      verifyClassIsIndexed(searchIntegrator, getModelFactory().getTransactionImplClass());
-      verifyClassIsNotIndexed(searchIntegrator, getModelFactory().getAddressImplClass());
+      verifyClassIsIndexed(searchMapping, getModelFactory().getUserImplClass());
+      verifyClassIsIndexed(searchMapping, getModelFactory().getAccountImplClass());
+      verifyClassIsIndexed(searchMapping, getModelFactory().getTransactionImplClass());
+      verifyClassIsNotIndexed(searchMapping, getModelFactory().getAddressImplClass());
    }
 
-   private void verifyClassIsNotIndexed(SearchIntegrator searchIntegrator, Class<?> type) {
-      assertFalse(searchIntegrator.getIndexBindings().containsKey(PojoIndexedTypeIdentifier.convertFromLegacy(type)));
-      assertNull(searchIntegrator.getIndexManager(type.getName()));
+   private void verifyClassIsNotIndexed(SearchMapping searchMapping, Class<?> type) {
+      assertThat(searchMapping.allIndexedTypes()).doesNotContainValue(type);
    }
 
-   private void verifyClassIsIndexed(SearchIntegrator searchIntegrator, Class<?> type) {
-      assertTrue(searchIntegrator.getIndexBindings().containsKey(PojoIndexedTypeIdentifier.convertFromLegacy(type)));
-      assertNotNull(searchIntegrator.getIndexManager(type.getName()));
+   private void verifyClassIsIndexed(SearchMapping searchMapping, Class<?> type) {
+      assertThat(searchMapping.allIndexedTypes()).containsValue(type);
    }
 }

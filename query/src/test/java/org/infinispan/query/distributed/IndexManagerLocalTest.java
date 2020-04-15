@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -33,10 +34,8 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
             .indexing()
             .enable()
             .addIndexedEntity(Person.class)
-            .addProperty("lucene_version", "LUCENE_CURRENT")
-            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
-            .addProperty("default.indexmanager", "near-real-time")
-            .addProperty("default.directory_provider", "local-heap");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
 
       if (transactionsEnabled()) {
          builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);

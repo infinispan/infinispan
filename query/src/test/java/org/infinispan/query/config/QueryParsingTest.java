@@ -11,6 +11,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
@@ -32,14 +33,14 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
       Configuration memoryCfg = namedConfigurations.get("memory-searchable").build();
       assertTrue(memoryCfg.indexing().enabled());
-      assertEquals(2, memoryCfg.indexing().properties().size());
-      assertEquals(memoryCfg.indexing().properties().getProperty("default.directory_provider"), "local-heap");
+      assertEquals(1, memoryCfg.indexing().properties().size());
+      assertEquals(memoryCfg.indexing().properties().getProperty(SearchConfig.DIRECTORY_TYPE), SearchConfig.HEAP);
 
       Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
       assertTrue(diskCfg.indexing().enabled());
-      assertEquals(diskCfg.indexing().properties().size(), 4);
-      assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "filesystem");
-      assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.cats.exclusive_index_use"), "true");
+      assertEquals(diskCfg.indexing().properties().size(), 2);
+      assertEquals(diskCfg.indexing().properties().getProperty(SearchConfig.DIRECTORY_TYPE), SearchConfig.FILE);
+      assertEquals(diskCfg.indexing().properties().getProperty(SearchConfig.DIRECTORY_ROOT), "target/");
 
       Configuration replDefaults = namedConfigurations.get("repl-with-default").build();
       assertTrue(replDefaults.indexing().enabled());
@@ -52,26 +53,27 @@ public class QueryParsingTest extends AbstractInfinispanTest {
       Map<String, ConfigurationBuilder> namedConfigurations = holder.getNamedConfigurationBuilders();
       Configuration defaultConfiguration = namedConfigurations.get("default").build();
 
-      assertEquals(defaultConfiguration.indexing().properties().size(), 2);
+      assertEquals(defaultConfiguration.indexing().properties().size(), 1);
       assertTrue(defaultConfiguration.indexing().enabled());
-      assertEquals(defaultConfiguration.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "local-heap");
+      assertEquals(defaultConfiguration.indexing().properties()
+            .getProperty(SearchConfig.DIRECTORY_TYPE), SearchConfig.HEAP);
 
       Configuration nonSearchableCfg = namedConfigurations.get("not-searchable").build();
       assertFalse(nonSearchableCfg.indexing().enabled());
 
       Configuration simpleCfg = namedConfigurations.get("simple").build();
       assertTrue(simpleCfg.indexing().enabled());
-      assertEquals(simpleCfg.indexing().properties().size(), 2);
+      assertEquals(simpleCfg.indexing().properties().size(), 1);
 
       Configuration memoryCfg = namedConfigurations.get("memory-searchable").build();
       assertTrue(memoryCfg.indexing().enabled());
-      assertEquals(memoryCfg.indexing().properties().size(), 2);
-      assertEquals(memoryCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "local-heap");
+      assertEquals(memoryCfg.indexing().properties().size(), 1);
+      assertEquals(memoryCfg.indexing().properties().getProperty(SearchConfig.DIRECTORY_TYPE), SearchConfig.HEAP);
 
       Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
       assertTrue(diskCfg.indexing().enabled());
-      assertEquals(diskCfg.indexing().properties().size(), 4);
-      assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "filesystem");
-      assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.cats.exclusive_index_use"), "true");
+      assertEquals(diskCfg.indexing().properties().size(), 2);
+      assertEquals(diskCfg.indexing().properties().getProperty(SearchConfig.DIRECTORY_TYPE), SearchConfig.FILE);
+      assertEquals(diskCfg.indexing().properties().getProperty(SearchConfig.DIRECTORY_ROOT), "target/");
    }
 }

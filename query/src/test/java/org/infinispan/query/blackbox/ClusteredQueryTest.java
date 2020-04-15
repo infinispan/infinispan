@@ -4,6 +4,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -14,8 +15,6 @@ import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 import org.apache.lucene.index.IndexReader;
-import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
@@ -26,12 +25,13 @@ import org.infinispan.query.Search;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.helper.SearchConfig;
+import org.infinispan.query.helper.IndexAccessor;
 import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -74,8 +74,8 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
             .clustering().hash().numOwners(numOwners())
             .indexing().enable()
             .addIndexedEntity(Person.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", StaticTestingErrorHandler.class.getName());
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       if (storageType != null) {
          cacheCfg.memory()
                  .storageType(storageType);
@@ -107,6 +107,8 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 
+   // TODO HSEARCH-3323 Restore support for scrolling
+   @Test(enabled = false)
    public void testLazyOrdered() {
       Query<Person> cacheQuery = createSortedQuery();
 
@@ -125,6 +127,8 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 
+   // TODO HSEARCH-3323 Restore support for scrolling
+   @Test(enabled = false)
    public void testLazyNonOrdered() {
       try (CloseableIterator<Person> ignored = cacheQuery.iterator()) {
          assertEquals(10, cacheQuery.execute().hitCount().orElse(-1));
@@ -348,7 +352,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       assertEquals("name14", results.get(9).getName());
    }
 
-   public void testPartialIckleQuery() {
+   public void testPartialIckleQuery() throws IOException {
       String query = String.format("FROM %s p", Person.class.getName());
 
       Query<Person> machine1Results = queryFactory1.create(query, IndexedQueryMode.FETCH);
@@ -364,9 +368,8 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 
-   private int countLocalIndex(Cache<String, Person> cache) {
-      ExtendedSearchIntegrator esi = (ExtendedSearchIntegrator) TestingUtil.extractComponent(cache, SearchIntegrator.class);
-      IndexReader indexReader = esi.getIndexManager("person").getReaderProvider().openIndexReader();
+   private int countLocalIndex(Cache<String, Person> cache) throws IOException {
+      IndexReader indexReader = IndexAccessor.of(cache, Person.class).getIndexReader();
       return indexReader.numDocs();
    }
 
@@ -387,7 +390,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    @Test
-   public void testBroadcastNativeInfinispanMatchAllQuery() {
+   public void testBroadcastNativeInfinispanMatchAllQuery() throws Exception {
       String q = String.format("FROM %s", Person.class.getName());
       Query<Person> partialResultQuery = queryFactory1.create(q, IndexedQueryMode.FETCH);
       Query<Person> fullResultQuery = Search.getQueryFactory(cacheAMachine2).create(q);
@@ -426,7 +429,8 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 
-   @Test
+   // TODO HSEARCH-3323 Restore support for scrolling
+   @Test(enabled = false)
    public void testIckleProjectionsLazyRetrieval() {
       String query = String.format("SELECT name, blurb FROM %s p ORDER BY age", Person.class.getName());
 

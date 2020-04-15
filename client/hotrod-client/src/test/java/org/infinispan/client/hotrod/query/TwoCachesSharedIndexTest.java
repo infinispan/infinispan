@@ -38,8 +38,7 @@ public class TwoCachesSharedIndexTest extends MultiHotRodServersTest {
       builder.indexing().enable()
              .addIndexedEntity("sample_bank_account.User")
              .addIndexedEntity("sample_bank_account.Account")
-             .addProperty("default.directory_provider", "local-heap")
-             .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addProperty("directory.type", "local-heap");
       return builder.build();
    }
 

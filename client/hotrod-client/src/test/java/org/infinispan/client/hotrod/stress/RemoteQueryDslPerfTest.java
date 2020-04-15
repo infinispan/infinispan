@@ -18,6 +18,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
@@ -58,8 +59,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
       builder.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
       builder.indexing().enable()
              .addIndexedEntity(UserHS.class)
-             .addProperty("default.directory_provider", "local-heap")
-             .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addProperty("directory.type", "local-heap");
       createClusteredCaches(1, TestDomainSCI.INSTANCE, builder);
 
       cache = manager(0).getCache();
@@ -128,7 +128,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
    }
 
    public void testEmbeddedQueryDslExecution() {
-      QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
+      QueryFactory qf = Search.getQueryFactory(cache);
       String queryString = String.format("FROM %s WHERE name = 'John1'", UserHS.class.getName());
 
       final long startTs = System.nanoTime();

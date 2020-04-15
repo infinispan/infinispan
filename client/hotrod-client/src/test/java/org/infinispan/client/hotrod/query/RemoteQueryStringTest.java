@@ -129,8 +129,7 @@ public class RemoteQueryStringTest extends QueryStringTest {
              .addIndexedEntity("sample_bank_account.Account")
              .addIndexedEntity("sample_bank_account.Transaction")
              .addIndexedEntity("sample_bank_account.AnalyzerTestEntity")
-             .addProperty("default.directory_provider", "local-heap")
-             .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addProperty("directory.type", "local-heap");
       return builder;
    }
 

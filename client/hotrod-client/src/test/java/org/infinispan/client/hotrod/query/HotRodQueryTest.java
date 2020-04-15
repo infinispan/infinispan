@@ -85,8 +85,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable()
              .addIndexedEntity("sample_bank_account.User")
-             .addProperty("default.directory_provider", "local-heap")
-             .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addProperty("directory.type", "local-heap");
       return builder;
    }
 

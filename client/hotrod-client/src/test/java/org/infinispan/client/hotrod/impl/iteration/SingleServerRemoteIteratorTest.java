@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -117,9 +116,9 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest imple
       int cacheSize = 100;
       populateCache(cacheSize, i -> "value " + i, cache);
 
-      Set<Map.Entry<Object, Object>> entries = new HashSet<>();
+      Set<Entry<Object, Object>> entries = new HashSet<>();
 
-      try (CloseableIterator<Map.Entry<Object, Object>> iterator = cache.retrieveEntries(null, null, 5)) {
+      try (CloseableIterator<Entry<Object, Object>> iterator = cache.retrieveEntries(null, null, 5)) {
          while (iterator.hasNext()) {
             entries.add(iterator.next());
          }

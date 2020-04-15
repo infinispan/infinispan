@@ -24,8 +24,8 @@ public class HotRodQueryFileSystemTest extends HotRodQueryIspnDirectoryTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = super.getConfigurationBuilder();
       builder.indexing()
-            .addProperty("default.directory_provider", "filesystem")
-            .addProperty("default.indexBase", indexDirectory);
+            .addProperty("directory.type", "local-filesystem")
+            .addProperty("directory.root", indexDirectory);
       return builder;
    }
 

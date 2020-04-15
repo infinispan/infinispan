@@ -1,10 +1,19 @@
 package org.infinispan.client.hotrod.marshall;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
 
+import java.util.Date;
+import java.util.List;
+
+import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.embedded.testdomain.Transaction;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
@@ -29,6 +38,22 @@ public class NonIndexedEmbeddedRemoteQueryTest extends EmbeddedRemoteInteropQuer
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type sample_bank_account.Transaction unless the property is indexed and analyzed.")
    @Override
    public void testRemoteFullTextQuery() {
-      super.testRemoteFullTextQuery();
+      Transaction transaction = new TransactionHS();
+      transaction.setId(3);
+      transaction.setDescription("Hotel");
+      transaction.setLongDescription("Expenses for Infinispan F2F meeting");
+      transaction.setAccountId(2);
+      transaction.setAmount(99);
+      transaction.setDate(new Date(42));
+      transaction.setDebit(true);
+      transaction.setValid(true);
+      cache.put(transaction.getId(), transaction);
+
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query<Transaction> q = qf.create("from sample_bank_account.Transaction where longDescription:'Expenses for Infinispan F2F meeting'");
+
+      List<Transaction> list = q.execute().list();
+      assertEquals(1, list.size());
    }
 }

@@ -10,6 +10,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -27,8 +28,7 @@ public class DegeneratedClusterMassIndexingTest extends MultipleCacheManagersTes
       cfg.indexing()
             .enable()
             .addIndexedEntity(Car.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
 
       addClusterEnabledCacheManager(cfg);
       waitForClusterToForm();

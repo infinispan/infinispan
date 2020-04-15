@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -21,6 +22,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -44,8 +46,7 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
             .enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       builder.persistence().addStore(new DummyInMemoryStoreConfigurationBuilder(builder.persistence()));
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, builder);
       cache = cacheManager.getCache();
@@ -133,7 +134,7 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
    }
 
    private List<Person> sortByAge(List<Person> people) {
-      people.sort(Comparator.comparingInt(Person::getAge));
+      new ArrayList<>(people).sort(Comparator.comparingInt(Person::getAge));
       return people;
    }
 

@@ -14,19 +14,14 @@ import org.hibernate.search.annotations.IndexedEmbedded;
 @Indexed
 public class Book implements Serializable {
 
-   @Field
    private String title;
 
-   @Field
    private String publisher;
 
-   @Field(analyze = Analyze.NO)
    private String isbn;
 
-   @Field
    private String preface;
 
-   @IndexedEmbedded
    private Author author;
 
    public Book(String title, String publisher, Author author, String preface) {
@@ -36,6 +31,7 @@ public class Book implements Serializable {
       this.preface = preface;
    }
 
+   @Field
    public String getTitle() {
       return title;
    }
@@ -44,6 +40,7 @@ public class Book implements Serializable {
       this.title = title;
    }
 
+   @Field
    public String getPublisher() {
       return publisher;
    }
@@ -52,6 +49,7 @@ public class Book implements Serializable {
       this.publisher = publisher;
    }
 
+   @Field(analyze = Analyze.NO)
    public String getIsbn() {
       return isbn;
    }
@@ -60,6 +58,7 @@ public class Book implements Serializable {
       this.isbn = isbn;
    }
 
+   @Field
    public String getPreface() {
       return preface;
    }
@@ -68,6 +67,7 @@ public class Book implements Serializable {
       this.preface = preface;
    }
 
+   @IndexedEmbedded
    public Author getAuthor() {
       return author;
    }

@@ -20,19 +20,7 @@
             <indexed-entities>
                <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
             </indexed-entities>
-            <property name="default.directory_provider">local-heap</property>
-            <!-- Write indexes in Infinispan -->
-            <property name="default.chunk_size">128000</property>
-            <!-- The default is 10, but we don't want to waste many cycles in merging
-             (tune for writes at cost of reader fragmentation) -->
-            <property name="default.indexwriter.merge_factor">30</property>
-            <!-- Never create segments larger than 1GB -->
-            <property name="default.indexwriter.merge_max_size">1024</property>
-            <!-- IndexWriter flush buffer size in MB -->
-            <property name="default.indexwriter.ram_buffer_size">256</property>
-            <!-- Enable sharding on writers
-            <property name="default.sharding_strategy.nbr_of_shards">6</property> -->
-            <property name="lucene_version">LUCENE_CURRENT</property>
+            <property name="directory.type">local-heap</property>
          </indexing>
          <state-transfer timeout="480000" enabled="true" />
       </distributed-cache>

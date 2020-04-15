@@ -31,7 +31,6 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.rest.RequestHeader;
 import org.infinispan.rest.RestTestSCI;
 import org.infinispan.rest.assertion.ResponseAssertion;
@@ -350,13 +349,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
          ResponseAssertion.assertThat(response).isBadRequest();
       } else {
          ResponseAssertion.assertThat(response).isOk();
-         Json stats = Json.read(response.getBody());
-         Json indexClassNames = stats.at("indexed_class_names");
-         String indexedClass = ProtobufValueWrapper.class.getName();
-
-         assertEquals(indexClassNames.at(0).asString(), indexedClass);
-         assertNotNull(stats.at("indexed_entities_count"));
-         assertTrue(stats.at("index_sizes").at(CACHE_NAME + "_protobuf").asInteger() > 0);
+         // TODO HSEARCH-3129 Restore support for statistics
       }
    }
 

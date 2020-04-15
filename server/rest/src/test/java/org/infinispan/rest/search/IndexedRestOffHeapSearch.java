@@ -18,7 +18,7 @@ public class IndexedRestOffHeapSearch extends BaseRestSearchTest {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configurationBuilder.indexing().enable()
                           .addIndexedEntity("org.infinispan.rest.search.entity.Person")
-                          .addProperty("default.directory_provider", "local-heap");
+                          .addProperty("directory.type", "local-heap");
       configurationBuilder.memory().storageType(StorageType.OFF_HEAP);
       return configurationBuilder;
    }

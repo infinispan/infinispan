@@ -2,6 +2,7 @@ package org.infinispan.query.blackbox;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
@@ -26,9 +27,8 @@ public class ClusteredPessimisticLockingCacheTest extends ClusteredCacheTest {
             .enable()
             .addIndexedEntity(Person.class)
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       enhanceConfig(cacheCfg);
       createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
       cache1 = cache(0);

@@ -1,6 +1,5 @@
 package org.infinispan.query.dsl.embedded.testdomain.hsearch;
 
-import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -10,17 +9,14 @@ import java.util.stream.Collectors;
 
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.IndexedEmbedded;
-import org.hibernate.search.annotations.NumericField;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
-import org.hibernate.search.bridge.builtin.impl.BuiltinIterableBridge;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
+
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
-import org.infinispan.query.dsl.embedded.testdomain.User;
 
 /**
  * @author anistor@redhat.com
@@ -29,36 +25,22 @@ import org.infinispan.query.dsl.embedded.testdomain.User;
 @Indexed
 public class UserHS extends UserBase {
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
    private int id;
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @FieldBridge(impl = BuiltinIterableBridge.class)
    private Set<Integer> accountIds;
 
-   @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
-   @SortableField
    private String surname;
 
-   @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
    private String salutation;
 
-   @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = "-1")
-   @NumericField
-   @SortableField
    private Integer age;  // yes, not the birth date :)
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
    private Gender gender;
 
-   @IndexedEmbedded(targetElement = AddressHS.class)
    private List<Address> addresses;
 
-   @Field(analyze = Analyze.NO, store = Store.YES, index = Index.YES)
    private Instant creationDate;
 
-   //@Field(analyze = Analyze.NO, store = Store.YES, index = Index.NO)
    private Instant passwordExpirationDate;
 
    /**
@@ -67,6 +49,8 @@ public class UserHS extends UserBase {
    private String notes;
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    @ProtoField(number = 2, defaultValue = "0")
    public int getId() {
       return id;
@@ -78,6 +62,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
    @ProtoField(number = 3, collectionImplementation = HashSet.class)
    public Set<Integer> getAccountIds() {
       return accountIds;
@@ -89,6 +74,8 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    @ProtoField(number = 4)
    public String getSurname() {
       return surname;
@@ -100,6 +87,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
    @ProtoField(number = 5)
    public String getSalutation() {
       return salutation;
@@ -111,6 +99,8 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    @ProtoField(number = 6)
    public Integer getAge() {
       return age;
@@ -122,6 +112,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   @Field(store = Store.YES, analyze = Analyze.NO)
    @ProtoField(number = 7)
    public Gender getGender() {
       return gender;
@@ -133,6 +124,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   @IndexedEmbedded(targetType = AddressHS.class)
    public List<Address> getAddresses() {
       return addresses;
    }
@@ -142,9 +134,10 @@ public class UserHS extends UserBase {
       this.addresses = addresses;
    }
 
+   @IndexedEmbedded(targetType = AddressHS.class)
    @ProtoField(number = 8, collectionImplementation = ArrayList.class)
-   List<AddressHS> getHSAddresses() {
-      return addresses  == null ? null : addresses.stream().map(AddressHS.class::cast).collect(Collectors.toList());
+   public List<AddressHS> getHSAddresses() {
+      return addresses == null ? null : addresses.stream().map(AddressHS.class::cast).collect(Collectors.toList());
    }
 
    void setHSAddresses(List<AddressHS> addresses) {
@@ -165,6 +158,7 @@ public class UserHS extends UserBase {
 
    @Override
    @ProtoField(number = 10)
+   @Field(analyze = Analyze.NO, store = Store.YES, index = Index.YES)
    public Instant getCreationDate() {
       return creationDate;
    }
@@ -238,26 +232,5 @@ public class UserHS extends UserBase {
             ", creationDate='" + creationDate + '\'' +
             ", passwordExpirationDate=" + passwordExpirationDate +
             '}';
-   }
-}
-
-/**
- * Parent class for UserHS to demonstrate inheritance of indexed attributes.
- */
-abstract class UserBase implements User, Serializable {
-
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
-   protected String name;
-
-   @Override
-   @ProtoField(number = 1)
-   public String getName() {
-      return name;
-   }
-
-   @Override
-   public void setName(String name) {
-      this.name = name;
    }
 }
