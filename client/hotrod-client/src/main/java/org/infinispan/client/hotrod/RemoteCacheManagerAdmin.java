@@ -13,7 +13,7 @@ import org.infinispan.commons.configuration.BasicConfiguration;
 public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCacheManagerAdmin, BasicConfiguration> {
 
    /**
-    * Creates a cache on the remote server cluster using the specified template.
+    * Creates a cache on the remote server cluster using the specified template name.
     *
     * @param name the name of the cache to create
     * @param template the template to use for the cache. If null, the configuration marked as default on the server
@@ -25,7 +25,8 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
    <K, V> RemoteCache<K, V> createCache(String name, String template) throws HotRodClientException;
 
    /**
-    * Creates a cache on the remote server cluster using the specified template.
+    * Creates a cache on the remote server cluster using the specified default configuration template
+    * present in the server.
     *
     * @param name the name of the cache to create
     * @param template {@link DefaultTemplate} enum
@@ -49,7 +50,7 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
 
    /**
     * Retrieves an existing cache on the remote server cluster. If it doesn't exist, it will be created using the
-    * specified template.
+    * specified template name.
     *
     * @param name the name of the cache to create
     * @param template the template to use for the cache. If null, the configuration marked as default on the server
@@ -59,6 +60,17 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     */
    @Override
    <K, V> RemoteCache<K, V> getOrCreateCache(String name, String template) throws HotRodClientException;
+
+   /**
+    *  Retrieves an existing cache on the remote server cluster. If it doesn't exist, it will be created using the
+    *  specified default template that is present in the server.
+    *
+    * @param name the name of the cache to create
+    * @param template {@link DefaultTemplate} enum
+    * @return the cache
+    * @throws HotRodClientException
+    */
+   <K, V> RemoteCache<K, V> getOrCreateCache(String name, DefaultTemplate template) throws HotRodClientException;
 
    /**
     * Retrieves an existing cache on the remote server cluster. If it doesn't exist, it will be created using the
