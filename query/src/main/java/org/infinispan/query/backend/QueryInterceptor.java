@@ -127,7 +127,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    protected void start() {
       stopping.set(false);
       boolean isClustered = cache.getCacheConfiguration().clustering().cacheMode().isClustered();
-      if (indexInspector.hasLocalIndexes() && isClustered) {
+      if (isClustered) {
          segmentListener = new SegmentListener(cache, this::purgeIndex);
          this.cache.addListener(segmentListener);
       }
@@ -150,10 +150,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
       if (value == null) return cacheMode.isReplicated() || ctx.isOriginLocal();
 
-      IndexModificationStrategy strategy = indexInspector.hasSharedIndex(value.getClass()) ?
-            IndexModificationStrategy.PRIMARY_OWNER : IndexModificationStrategy.ALL;
-
-      return strategy.shouldModifyIndexes(command, ctx, distributionManager, rpcManager, key);
+      return IndexModificationStrategy.ALL.shouldModifyIndexes(command, ctx, distributionManager, rpcManager, key);
    }
 
    /**
@@ -337,10 +334,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       for (int segment : segments) {
          DeletionQuery deletionQuery = new SingularTermDeletionQuery(SEGMENT_FIELD, String.valueOf(segment));
          for (IndexedTypeIdentifier type : searchFactory.getIndexBindings().keySet()) {
-            if (!indexInspector.hasSharedIndex(type.getPojoType())) {
-               Work deleteWork = new DeleteByQueryWork(type, deletionQuery);
-               performSearchWork(deleteWork, NoTransactionContext.INSTANCE);
-            }
+            Work deleteWork = new DeleteByQueryWork(type, deletionQuery);
+            performSearchWork(deleteWork, NoTransactionContext.INSTANCE);
          }
       }
    }

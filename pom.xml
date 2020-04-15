@@ -143,7 +143,6 @@
       <module>integrationtests/cdi-jcache-it</module>
       <module>integrationtests/security-it</module>
       <module>integrationtests/security-manager-it</module>
-      <module>integrationtests/elasticsearch-indexmanager-it</module>
       <module>integrationtests/cdi-weld-se-it</module>
       <module>integrationtests/spring-boot-it</module>
       <module>client/marshaller</module>
@@ -464,11 +463,6 @@
       <versionx.org.eclipse.platform.org.eclipse.osgi>3.12.50</versionx.org.eclipse.platform.org.eclipse.osgi>
       <versionx.org.eclipse.sisu.org.eclipse.sisu.inject>${version.eclipse.sisu}</versionx.org.eclipse.sisu.org.eclipse.sisu.inject>
       <versionx.org.eclipse.sisu.org.eclipse.sisu.plexus>${version.eclipse.sisu}</versionx.org.eclipse.sisu.org.eclipse.sisu.plexus>
-      <versionx.org.elasticsearch.client.elasticsearch-rest-client>${version.elasticsearch}</versionx.org.elasticsearch.client.elasticsearch-rest-client>
-      <versionx.org.elasticsearch.client.elasticsearch-rest-client-sniffer>${version.elasticsearch}</versionx.org.elasticsearch.client.elasticsearch-rest-client-sniffer>
-      <versionx.org.elasticsearch.elasticsearch>${version.elasticsearch}</versionx.org.elasticsearch.elasticsearch>
-      <versionx.org.elasticsearch.jna>4.4.0-1</versionx.org.elasticsearch.jna>
-      <versionx.org.elasticsearch.securesm>1.2</versionx.org.elasticsearch.securesm>
       <versionx.org.fusesource.jansi.jansi>1.18</versionx.org.fusesource.jansi.jansi>
       <versionx.org.glassfish.javax.enterprise.concurrent>1.0</versionx.org.glassfish.javax.enterprise.concurrent>
       <versionx.org.glassfish.jaxb.jaxb-core>${version.glassfish.jaxb}</versionx.org.glassfish.jaxb.jaxb-core>
@@ -478,14 +472,11 @@
       <versionx.org.hamcrest.hamcrest-library>${version.hamcrest}</versionx.org.hamcrest.hamcrest-library>
       <versionx.org.hdrhistogram.HdrHistogram>2.1.9</versionx.org.hdrhistogram.HdrHistogram>
       <versionx.org.hibernate.common.hibernate-commons-annotations>5.0.5.Final</versionx.org.hibernate.common.hibernate-commons-annotations>
-      <versionx.org.hibernate.elasticsearch-client-jbossmodules.elasticsearch-client-jbossmodules>5.6.8.hibernate01</versionx.org.hibernate.elasticsearch-client-jbossmodules.elasticsearch-client-jbossmodules>
       <versionx.org.hibernate.gson-jbossmodules.gson-jbossmodules>${version.gson.featurepack}</versionx.org.hibernate.gson-jbossmodules.gson-jbossmodules>
       <versionx.org.hibernate.hibernate-core>${version.hibernate.core}</versionx.org.hibernate.hibernate-core>
       <versionx.org.hibernate.hibernate-osgi>${version.hibernate.core}</versionx.org.hibernate.hibernate-osgi>
       <versionx.org.hibernate.hibernate-search-backend-jms>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-backend-jms>
-      <versionx.org.hibernate.hibernate-search-elasticsearch>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-elasticsearch>
       <versionx.org.hibernate.hibernate-search-engine>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-engine>
-      <versionx.org.hibernate.hibernate-search-jbossmodules-elasticsearch>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-jbossmodules-elasticsearch>
       <versionx.org.hibernate.hibernate-search-jbossmodules-engine>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-jbossmodules-engine>
       <versionx.org.hibernate.hibernate-search-orm>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-orm>
       <versionx.org.hibernate.hibernate-search-serialization-avro>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-serialization-avro>
@@ -2069,34 +2060,6 @@
             <version>${versionx.org.eclipse.sisu.org.eclipse.sisu.plexus}</version>
          </dependency>
          <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
-            <version>${versionx.org.elasticsearch.elasticsearch}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>jna</artifactId>
-            <version>${versionx.org.elasticsearch.jna}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>securesm</artifactId>
-            <version>${versionx.org.elasticsearch.securesm}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-client</artifactId>
-            <version>${versionx.org.elasticsearch.client.elasticsearch-rest-client}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-client-sniffer</artifactId>
-            <version>${versionx.org.elasticsearch.client.elasticsearch-rest-client-sniffer}</version>
-         </dependency>
-         <dependency>
             <groupId>org.fusesource.jansi</groupId>
             <artifactId>jansi</artifactId>
             <version>${versionx.org.fusesource.jansi.jansi}</version>
@@ -2162,11 +2125,6 @@
          </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-search-elasticsearch</artifactId>
-            <version>${versionx.org.hibernate.hibernate-search-elasticsearch}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate</groupId>
             <artifactId>hibernate-search-engine</artifactId>
             <version>${versionx.org.hibernate.hibernate-search-engine}</version>
          </dependency>
@@ -2176,12 +2134,6 @@
             <version>${versionx.org.hibernate.hibernate-search-engine}</version>
             <scope>test</scope>
             <classifier>tests</classifier>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-search-jbossmodules-elasticsearch</artifactId>
-            <version>${versionx.org.hibernate.hibernate-search-jbossmodules-elasticsearch}</version>
-            <type>zip</type>
          </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>
@@ -2223,12 +2175,6 @@
             <groupId>org.hibernate.common</groupId>
             <artifactId>hibernate-commons-annotations</artifactId>
             <version>${versionx.org.hibernate.common.hibernate-commons-annotations}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate.elasticsearch-client-jbossmodules</groupId>
-            <artifactId>elasticsearch-client-jbossmodules</artifactId>
-            <version>${versionx.org.hibernate.elasticsearch-client-jbossmodules.elasticsearch-client-jbossmodules}</version>
-            <type>zip</type>
          </dependency>
          <dependency>
             <groupId>org.hibernate.gson-jbossmodules</groupId>
@@ -3852,12 +3798,6 @@
                   <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
                   <linkXRef>false</linkXRef>
                </configuration>
-            </plugin>
-
-            <plugin>
-               <groupId>com.github.alexcojocaru</groupId>
-               <artifactId>elasticsearch-maven-plugin</artifactId>
-               <version>${version.elasticsearch.plugin}</version>
             </plugin>
             <plugin>
                <groupId>org.apache.karaf.tooling</groupId>
