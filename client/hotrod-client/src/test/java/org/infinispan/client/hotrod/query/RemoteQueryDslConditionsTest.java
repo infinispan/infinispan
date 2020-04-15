@@ -10,13 +10,11 @@ import static org.infinispan.query.dsl.Expression.param;
 import static org.infinispan.query.dsl.Expression.sum;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
 
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -37,8 +35,9 @@ import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.dsl.embedded.QueryDslConditionsTest;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
-import org.infinispan.query.remote.impl.ProgrammaticSearchMappingProviderImpl;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
+import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
@@ -113,8 +112,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
              .addIndexedEntity("sample_bank_account.User")
              .addIndexedEntity("sample_bank_account.Account")
              .addIndexedEntity("sample_bank_account.Transaction")
-             .addProperty("default.directory_provider", "local-heap")
-             .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addProperty("directory.type", "local-heap");
       return builder;
    }
 
@@ -126,10 +124,14 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
    @Override
    public void testIndexPresence() {
-      SearchIntegrator searchIntegrator = TestingUtil.extractComponent(cache, SearchIntegrator.class);
+      SearchMapping searchMapping = TestingUtil.extractComponent(cache, SearchMappingHolder.class)
+            .getSearchMapping();
 
-      assertTrue(searchIntegrator.getIndexBindings().containsKey(ProtobufValueWrapper.INDEXING_TYPE));
-      assertNotNull(searchIntegrator.getIndexManager(ProgrammaticSearchMappingProviderImpl.getIndexName(cache.getName())));
+      // we have indexing for remote query!
+      assertTrue(searchMapping.allIndexedTypes().containsValue(ProtobufValueWrapper.class));
+
+      // we have some indexes for this cache
+      assertEquals(2, searchMapping.allIndexedTypes().size());
    }
 
    @Override

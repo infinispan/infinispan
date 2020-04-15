@@ -17,7 +17,7 @@ public class NonSharedIndexSearchTest extends BaseRestSearchTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       builder.indexing().enable()
              .addIndexedEntity("org.infinispan.rest.search.entity.Person")
-             .addProperty("default.directory_provider", "local-heap");
+             .addProperty("directory.type", "local-heap");
       return builder;
    }
 }

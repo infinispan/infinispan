@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.search.annotations.Field;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.descriptors.Type;
 
@@ -18,6 +19,7 @@ public class Person implements Serializable {
 
    private String surname;
 
+   @Field
    private Integer age;
 
    private Address address;

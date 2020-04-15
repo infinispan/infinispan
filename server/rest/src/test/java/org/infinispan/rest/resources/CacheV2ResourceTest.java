@@ -81,7 +81,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.indexing().enable()
             .addIndexedEntity("Entity")
-            .addProperty("default.directory_provider", "local-heap")
+            .addProperty("directory.type", "local-heap")
             .statistics().enable()
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
       return builder;
@@ -302,7 +302,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       // Indexed
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.indexing().addProperty("default.directory_provider", "local-heap").enable();
+      builder.indexing().addProperty("directory.type", "local-heap").enable();
       builder.indexing().enable();
       createCache(builder, "cacheIndexed");
       details = getCacheDetail("cacheIndexed");

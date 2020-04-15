@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.embedded;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.infinispan.query.dsl.Expression.avg;
 import static org.infinispan.query.dsl.Expression.count;
 import static org.infinispan.query.dsl.Expression.max;
@@ -25,8 +26,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.search.spi.SearchIntegrator;
-import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.objectfilter.ParsingException;
@@ -42,6 +41,9 @@ import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.query.helper.SearchConfig;
+import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -69,8 +71,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
             .addIndexedEntity(getModelFactory().getTransactionImplClass())
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       createClusteredCaches(1, DslSCI.INSTANCE, cfg);
    }
 
@@ -239,22 +240,21 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testIndexPresence() {
-      SearchIntegrator searchIntegrator = TestingUtil.extractComponent((Cache<?, ?>) getCacheForQuery(), SearchIntegrator.class);
+      SearchMapping searchMapping = TestingUtil.extractComponent((Cache<?, ?>) getCacheForQuery(), SearchMappingHolder.class)
+            .getSearchMapping();
 
-      verifyClassIsIndexed(searchIntegrator, getModelFactory().getUserImplClass());
-      verifyClassIsIndexed(searchIntegrator, getModelFactory().getAccountImplClass());
-      verifyClassIsIndexed(searchIntegrator, getModelFactory().getTransactionImplClass());
-      verifyClassIsNotIndexed(searchIntegrator, getModelFactory().getAddressImplClass());
+      verifyClassIsIndexed(searchMapping, getModelFactory().getUserImplClass());
+      verifyClassIsIndexed(searchMapping, getModelFactory().getAccountImplClass());
+      verifyClassIsIndexed(searchMapping, getModelFactory().getTransactionImplClass());
+      verifyClassIsNotIndexed(searchMapping, getModelFactory().getAddressImplClass());
    }
 
-   private void verifyClassIsNotIndexed(SearchIntegrator searchIntegrator, Class<?> type) {
-      assertFalse(searchIntegrator.getIndexBindings().containsKey(PojoIndexedTypeIdentifier.convertFromLegacy(type)));
-      assertNull(searchIntegrator.getIndexManager(type.getName()));
+   private void verifyClassIsNotIndexed(SearchMapping searchMapping, Class<?> type) {
+      assertThat(searchMapping.allIndexedTypes()).doesNotContainValue(type);
    }
 
-   private void verifyClassIsIndexed(SearchIntegrator searchIntegrator, Class<?> type) {
-      assertTrue(searchIntegrator.getIndexBindings().containsKey(PojoIndexedTypeIdentifier.convertFromLegacy(type)));
-      assertNotNull(searchIntegrator.getIndexManager(type.getName()));
+   private void verifyClassIsIndexed(SearchMapping searchMapping, Class<?> type) {
+      assertThat(searchMapping.allIndexedTypes()).containsValue(type);
    }
 
    public void testQueryFactoryType() {
@@ -915,6 +915,8 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .orderBy("surname", SortOrder.ASC)
             .orderBy("age", SortOrder.ASC)
             .having("age").isNull()
+            // if @Field#indexNullAs is defined null values for Search 6 are not null
+            .or().having("age").equal(-1)
             .build();
 
       List<Object[]> list = q.list();
@@ -933,6 +935,8 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .select("name", "age")
             .not().having("age").isNull()
+            // if @Field#indexNullAs is defined null values for Search 6 are not null
+            .and().not().having("age").equal(-1)
             .build();
 
       List<Object[]> list = q.list();
@@ -1457,6 +1461,8 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("age").isNull()
+            // if @Field#indexNullAs is defined null values for Search 6 are not null
+            .or().having("age").equal(-1)
             .build();
 
       List<User> list = q.list();
@@ -1470,6 +1476,8 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .not().having("age").isNull()
+            // if @Field#indexNullAs is defined null values for Search 6 are not null
+            .and().not().having("age").equal(-1)
             .build();
 
       List<User> list = q.list();
@@ -2715,7 +2723,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(143.50909d, (Double) list.get(0)[0], 0.0001d);
       assertEquals(7893d, (Double) list.get(0)[1], 0.0001d);
       assertEquals(55L, list.get(0)[2]);
-      assertEquals(java.util.Date.class, list.get(0)[3].getClass());
+      assertEquals(Date.class, list.get(0)[3].getClass());
       assertEquals(makeDate("2013-01-01"), list.get(0)[3]);
       assertEquals(2, list.get(0)[4]);
    }
@@ -2731,7 +2739,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals(java.util.Date.class, list.get(0)[0].getClass());
+      assertEquals(Date.class, list.get(0)[0].getClass());
       assertEquals(makeDate("2013-02-27"), list.get(0)[0]);
    }
 

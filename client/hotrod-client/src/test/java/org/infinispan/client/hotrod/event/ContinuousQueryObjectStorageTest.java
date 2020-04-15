@@ -80,8 +80,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
       cfgBuilder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cfgBuilder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cfgBuilder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty("directory.type", "local-heap");
       cfgBuilder.expiration().disableReaper();
       return cfgBuilder;
    }

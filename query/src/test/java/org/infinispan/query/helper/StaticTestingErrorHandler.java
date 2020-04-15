@@ -1,32 +1,29 @@
 package org.infinispan.query.helper;
 
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.infinispan.query.helper.IndexAccessor.extractFailureHandler;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.atomic.AtomicReference;
-
-import org.hibernate.search.exception.ErrorContext;
-import org.hibernate.search.exception.ErrorHandler;
-import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.engine.reporting.EntityIndexingFailureContext;
+import org.hibernate.search.engine.reporting.FailureContext;
+import org.hibernate.search.engine.reporting.FailureHandler;
 import org.infinispan.Cache;
-import org.infinispan.query.backend.WrappingErrorHandler;
-import org.infinispan.test.TestingUtil;
 
-public class StaticTestingErrorHandler implements ErrorHandler {
+public class StaticTestingErrorHandler implements FailureHandler {
 
    private final AtomicReference faulty = new AtomicReference();
 
    @Override
-   public void handle(ErrorContext context) {
-      faulty.compareAndSet(null, new ThrowableWrapper(context.getOperationAtFault().toString(), context.getThrowable()));
+   public void handle(FailureContext context) {
+      faulty.compareAndSet(null, new ThrowableWrapper(context.getFailingOperation().toString(), context.getThrowable()));
    }
 
    @Override
-   public void handleException(String errorMsg, Throwable exception) {
-      faulty.compareAndSet(null, new ThrowableWrapper(errorMsg, exception));
+   public void handle(EntityIndexingFailureContext context) {
+      faulty.compareAndSet(null, new ThrowableWrapper(context.getFailingOperation().toString(), context.getThrowable()));
    }
 
    private Object getAndReset() {
@@ -52,14 +49,9 @@ public class StaticTestingErrorHandler implements ErrorHandler {
    }
 
    public static StaticTestingErrorHandler extract(Cache cache) {
-      SearchIntegrator searchFactory = TestingUtil.extractComponent(cache, SearchIntegrator.class);
-      ErrorHandler errorHandler = searchFactory.getErrorHandler();
-      assertNotNull(errorHandler);
-      if (errorHandler instanceof WrappingErrorHandler) {
-         errorHandler = ((WrappingErrorHandler) errorHandler).unwrap();
-      }
-      assertTrue(errorHandler instanceof StaticTestingErrorHandler);
-      return (StaticTestingErrorHandler) errorHandler;
+      FailureHandler failureHandler = extractFailureHandler(cache);
+      assertTrue(failureHandler instanceof StaticTestingErrorHandler);
+      return (StaticTestingErrorHandler) failureHandler;
    }
 
    public static class ThrowableWrapper {
@@ -82,7 +74,5 @@ public class StaticTestingErrorHandler implements ErrorHandler {
          }
          return w.toString();
       }
-
    }
-
 }

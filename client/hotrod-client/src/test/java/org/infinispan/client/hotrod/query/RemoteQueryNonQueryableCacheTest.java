@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.query;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
@@ -10,8 +11,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.TestDataSCI;
-import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -32,7 +34,7 @@ public class RemoteQueryNonQueryableCacheTest extends SingleHotRodServerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createServerModeCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder());
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createServerModeCacheManager(TestDomainSCI.INSTANCE, new ConfigurationBuilder());
 
       cm.defineConfiguration(DEFAULT_CACHE, new ConfigurationBuilder().build());
       cm.defineConfiguration(INDEXED_CACHE, createIndexedCache());
@@ -53,7 +55,11 @@ public class RemoteQueryNonQueryableCacheTest extends SingleHotRodServerTest {
 
    private Configuration createIndexedCache() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      builder.indexing().enable()
+            .addIndexedEntity("sample_bank_account.User")
+            .addIndexedEntity("sample_bank_account.Account")
+            .addIndexedEntity("sample_bank_account.Transaction")
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       return builder.build();
    }
 
@@ -71,9 +77,8 @@ public class RemoteQueryNonQueryableCacheTest extends SingleHotRodServerTest {
    }
 
    private void executeQuery(String cacheName) {
-      RemoteCache<String, Person> remoteCache = remoteCacheManager.getCache(cacheName);
-      remoteCache.put("1", new Person("John"));
-      Query<Person> q = Search.getQueryFactory(remoteCache).create("FROM org.infinispan.test.core.Person");
+      RemoteCache<String, User> remoteCache = remoteCacheManager.getCache(cacheName);
+      Query<User> q = Search.getQueryFactory(remoteCache).create("FROM sample_bank_account.User");
       q.execute();
    }
 }

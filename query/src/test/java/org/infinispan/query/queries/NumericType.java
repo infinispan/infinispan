@@ -10,21 +10,33 @@ import org.hibernate.search.annotations.Store;
  *
  * @author Anna Manukyan
  */
-@Indexed(index = "person")
+@Indexed(index = "numeric")
 public class NumericType {
 
-   @Field(store = Store.YES, analyze = Analyze.YES)
    private int num1;
 
-   @Field(store = Store.YES, analyze = Analyze.YES)
    private int num2;
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
    private String name;
 
    public NumericType(int num1, int num2) {
       this.num1 = num1;
       this.num2 = num2;
+   }
+
+   @Field(store = Store.YES, analyze = Analyze.YES)
+   public int getNum1() {
+      return num1;
+   }
+
+   @Field(store = Store.YES, analyze = Analyze.YES)
+   public int getNum2() {
+      return num2;
+   }
+
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   public String getName() {
+      return name;
    }
 
    public void setName(String name) {

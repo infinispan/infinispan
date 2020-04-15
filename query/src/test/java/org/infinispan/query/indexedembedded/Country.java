@@ -19,9 +19,18 @@ public class Country implements Serializable {
    public Long id;
 
    @ProtoField(number = 2)
-   public @Field String countryName;
+   public String countryName;
 
    @ProtoField(number = 3, collectionImplementation = HashSet.class)
-   public @IndexedEmbedded Set<City> cities = new HashSet<>();
+   public Set<City> cities = new HashSet<>();
 
+   @Field
+   public String getCountryName() {
+      return countryName;
+   }
+
+   @IndexedEmbedded
+   public Set<City> getCities() {
+      return cities;
+   }
 }

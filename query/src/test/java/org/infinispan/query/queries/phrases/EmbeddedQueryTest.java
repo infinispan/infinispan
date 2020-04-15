@@ -9,6 +9,7 @@ import java.util.Set;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.test.Author;
 import org.infinispan.query.test.Book;
@@ -79,8 +80,7 @@ public class EmbeddedQueryTest extends SingleCacheManagerTest {
             .indexing().enable()
             .addIndexedEntity(Book.class)
             .addIndexedEntity(Author.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 }

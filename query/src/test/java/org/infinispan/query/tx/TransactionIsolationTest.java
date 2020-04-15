@@ -22,17 +22,20 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.tx.TransactionIsolationTest")
+@CleanupAfterMethod
 public class TransactionIsolationTest extends MultipleCacheManagersTest {
    private static final Person RADIM = new Person("Radim", "So young!", 29);
    private static final Person TRISTAN = new Person("Tristan", "Too old.", 44);
@@ -52,8 +55,7 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
       builder.indexing().enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
-            .addProperty("hibernate.search.default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       createClusteredCaches(2, QueryTestSCI.INSTANCE, builder);
    }
 

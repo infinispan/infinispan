@@ -62,7 +62,7 @@ public class ClusteredIT {
       if (indexed) {
          builder.indexing().enable()
                 .addIndexedEntity("sample_bank_account.User")
-                .addProperty("default.directory_provider", "local-heap")
+                .addProperty("directory.type", "local-heap")
                 .addProperty("infinispan.query.lucene.max-boolean-clauses", "1025");
       }
 

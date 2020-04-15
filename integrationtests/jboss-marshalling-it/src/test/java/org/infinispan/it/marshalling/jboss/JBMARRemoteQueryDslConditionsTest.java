@@ -4,13 +4,9 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 
-import org.hibernate.search.spi.SearchIntegrator;
-import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -25,6 +21,8 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.QueryDslConditionsTest;
+import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
@@ -94,8 +92,7 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
              .addIndexedEntity(getModelFactory().getUserImplClass())
              .addIndexedEntity(getModelFactory().getAccountImplClass())
              .addIndexedEntity(getModelFactory().getTransactionImplClass())
-             .addProperty("default.directory_provider", "local-heap")
-             .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addProperty("directory.type", "local-heap");
       return builder;
    }
 
@@ -107,22 +104,20 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
    @Override
    public void testIndexPresence() {
-      SearchIntegrator searchIntegrator = TestingUtil.extractComponent(cache, SearchIntegrator.class);
+      SearchMapping searchMapping = TestingUtil.extractComponent(cache, SearchMappingHolder.class).getSearchMapping();
 
-      verifyClassIsIndexed(searchIntegrator, getModelFactory().getUserImplClass());
-      verifyClassIsIndexed(searchIntegrator, getModelFactory().getAccountImplClass());
-      verifyClassIsIndexed(searchIntegrator, getModelFactory().getTransactionImplClass());
-      verifyClassIsNotIndexed(searchIntegrator, getModelFactory().getAddressImplClass());
+      verifyClassIsIndexed(searchMapping, getModelFactory().getUserImplClass());
+      verifyClassIsIndexed(searchMapping, getModelFactory().getAccountImplClass());
+      verifyClassIsIndexed(searchMapping, getModelFactory().getTransactionImplClass());
+      verifyClassIsNotIndexed(searchMapping, getModelFactory().getAddressImplClass());
    }
 
-   private void verifyClassIsNotIndexed(SearchIntegrator searchIntegrator, Class<?> type) {
-      assertFalse(searchIntegrator.getIndexBindings().containsKey(PojoIndexedTypeIdentifier.convertFromLegacy(type)));
-      assertNull(searchIntegrator.getIndexManager(type.getName()));
+   private void verifyClassIsNotIndexed(SearchMapping searchMapping, Class<?> type) {
+      assertNull(searchMapping.indexedEntity(type));
    }
 
-   private void verifyClassIsIndexed(SearchIntegrator searchIntegrator, Class<?> type) {
-      assertTrue(searchIntegrator.getIndexBindings().containsKey(PojoIndexedTypeIdentifier.convertFromLegacy(type)));
-      assertNotNull(searchIntegrator.getIndexManager(type.getName()));
+   private void verifyClassIsIndexed(SearchMapping searchMapping, Class<?> type) {
+      assertNotNull(searchMapping.indexedEntity(type));
    }
 
    @Override

@@ -15,6 +15,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
@@ -58,8 +59,7 @@ public class NamedParamsPerfTest extends AbstractQueryDslTest {
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().enable()
             .addIndexedEntity(Person.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       createClusteredCaches(1, cfg);
    }
 

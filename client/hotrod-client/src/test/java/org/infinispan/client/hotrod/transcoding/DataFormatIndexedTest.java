@@ -16,7 +16,7 @@ public class DataFormatIndexedTest extends DataFormatTest {
    @Override
    protected ConfigurationBuilder buildCacheConfig() {
       ConfigurationBuilder parentBuilder = hotRodCacheConfiguration();
-      parentBuilder.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      parentBuilder.indexing().enable().addProperty("directory.type", "local-heap");
       return parentBuilder;
    }
 }

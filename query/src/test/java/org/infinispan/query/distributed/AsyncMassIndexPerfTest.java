@@ -10,7 +10,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
@@ -20,6 +19,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.massindex.IndexUpdater;
@@ -53,14 +53,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    private static final boolean TX_ENABLED = false;
    private static final String MERGE_FACTOR = "30";
    private static final CacheMode CACHE_MODE = CacheMode.LOCAL;
-   private static final IndexManager INDEX_MANAGER = IndexManager.DIRECTORY;
    private static final Provider DIRECTORY_PROVIDER = Provider.LOCAL_HEAP;
-
-   /**
-    * Hibernate search backend used. Either sync or async (commit every 1s by default)
-    */
-   private static final WorkerMode WORKER_MODE = WorkerMode.sync;
-
    /**
     * For status report during insertion
     */
@@ -81,12 +74,9 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
       }
       cacheCfg.indexing().enable()
             .addIndexedEntity(Transaction.class)
-            .addProperty("default.directory_provider", DIRECTORY_PROVIDER.toString())
-            .addProperty("default.indexmanager", INDEX_MANAGER.toString())
-            .addProperty("default.indexwriter.merge_factor", MERGE_FACTOR)
-            .addProperty("hibernate.search.default.worker.execution", WORKER_MODE.toString())
-            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, DIRECTORY_PROVIDER.toString())
+            .addProperty(SearchConfig.IO_MERGE_FACTOR, MERGE_FACTOR)
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
 
       if (!local) {
          createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
@@ -160,8 +150,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    private enum Provider {
       LOCAL_HEAP("local-heap"),
-      FILESYSTEM("filesystem");
-
+      FILESYSTEM("local-filesystem");
       private final String cfg;
 
       Provider(String cfg) {
@@ -174,14 +163,9 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
       }
    }
 
-   private enum WorkerMode {
-      async,
-      sync
-   }
-
    private enum IndexManager {
-      NRT("near-real-time"),
-      DIRECTORY("directory-based");
+      NRT("10000"),
+      DIRECTORY("0");
       private final String cfg;
 
       IndexManager(String cfg) {
@@ -276,10 +260,9 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    }
 
    private void flushIndex() {
-      IndexUpdater indexUpdater = new IndexUpdater(ComponentRegistryUtils.getSearchIntegrator(cache1),
-            ComponentRegistryUtils.getKeyTransformationHandler(cache1),
-            ComponentRegistryUtils.getTimeService(cache1));
-      indexUpdater.flush(Collections.singleton(new PojoIndexedTypeIdentifier(Transaction.class)));
+      IndexUpdater indexUpdater = new IndexUpdater(ComponentRegistryUtils.getSearchMappingHolder(cache1),
+            ComponentRegistryUtils.getKeyTransformationHandler(cache1));
+      indexUpdater.flush(Collections.singleton(Transaction.class));
    }
 
    static class StopTimer {

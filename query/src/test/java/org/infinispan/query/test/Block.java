@@ -6,16 +6,17 @@ import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
+import org.hibernate.search.mapper.pojo.automaticindexing.ReindexOnUpdate;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexingDependency;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-@Indexed(index = "commonIndex")
+@Indexed(index = "blockIndex")
 public class Block implements Serializable {
 
    @Field(analyze = Analyze.NO)
    private final int height;
 
-   @IndexedEmbedded
    private final Transaction latest;
 
    @ProtoFactory
@@ -29,6 +30,8 @@ public class Block implements Serializable {
       return height;
    }
 
+   @IndexedEmbedded
+   @IndexingDependency(reindexOnUpdate = ReindexOnUpdate.NO)
    @ProtoField(number = 2)
    public Transaction getLatest() {
       return latest;

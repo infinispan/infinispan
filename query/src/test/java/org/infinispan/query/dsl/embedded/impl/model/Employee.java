@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.SortableField;
+import org.hibernate.search.annotations.Store;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.DocumentId;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
 
@@ -16,59 +18,127 @@ import org.hibernate.search.annotations.IndexedEmbedded;
 @Indexed
 public class Employee {
 
-   @DocumentId
    public String id;
 
-   @Field(analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
    public String name;
 
-   @Field
    public long position;
 
-   @Field(indexNullAs = "-1")
-   public long code;
+   public Long code;
 
-   @Field
    public String text;
 
-   @Field(analyze = Analyze.NO)
    public String title;
+
+   public String otherInfo;
+
+   public Company author;
+
+   public List<ContactDetails> contactDetails = new ArrayList<>();
+
+   public List<ContactDetails> alternativeContactDetails = new ArrayList<>();
+
+   @DocumentId
+   @Field(analyze = Analyze.NO, store = Store.YES)
+   public String getId() {
+      return id;
+   }
+
+   @Field(analyze = Analyze.NO, store = Store.YES)
+   public String getName() {
+      return name;
+   }
+
+   @SortableField
+   @Field(analyze = Analyze.NO)
+   public Long getPosition() {
+      return position;
+   }
+
+   @SortableField
+   @Field(indexNullAs = "-1", analyze = Analyze.NO)
+   public Long getCode() {
+      return code;
+   }
+
+   @Field(store = Store.YES)
+   public String getText() {
+      return text;
+   }
+
+   @SortableField
+   @Field(analyze = Analyze.NO)
+   public String getTitle() {
+      return title;
+   }
 
    @Field(name = "analyzedInfo", analyze = Analyze.YES)
    @Field(name = "someMoreInfo", analyze = Analyze.NO)
    @Field(name = "sameInfo", analyze = Analyze.NO)
-   public String otherInfo;
-
-   @IndexedEmbedded(indexNullAs = Field.DEFAULT_NULL_TOKEN)
-   public Company author;
-
-   @IndexedEmbedded
-   public List<ContactDetails> contactDetails = new ArrayList<>();
+   public String getOtherInfo() {
+      return otherInfo;
+   }
 
    @IndexedEmbedded
-   public List<ContactDetails> alternativeContactDetails = new ArrayList<>();
+   public Company getAuthor() {
+      return author;
+   }
+
+   @IndexedEmbedded
+   public List<ContactDetails> getContactDetails() {
+      return contactDetails;
+   }
+
+   @IndexedEmbedded
+   public List<ContactDetails> getAlternativeContactDetails() {
+      return alternativeContactDetails;
+   }
 
    public static class ContactDetails {
 
-      @Field(analyze = Analyze.NO)
       public String email;
 
-      @Field(analyze = Analyze.NO)
       public String phoneNumber;
 
-      @IndexedEmbedded
       public ContactAddress address;
+
+      @Field(analyze = Analyze.NO, store = Store.YES)
+      public String getEmail() {
+         return email;
+      }
+
+      @Field(analyze = Analyze.NO)
+      public String getPhoneNumber() {
+         return phoneNumber;
+      }
+
+      @IndexedEmbedded
+      public ContactAddress getAddress() {
+         return address;
+      }
 
       public static class ContactAddress {
 
-         @Field(analyze = Analyze.NO)
          public String address;
 
-         @Field(analyze = Analyze.NO)
          public String postCode;
 
-         @IndexedEmbedded(depth = 3)
          public List<ContactAddress> alternatives = new ArrayList<>();
+
+         @Field(analyze = Analyze.NO)
+         public String getAddress() {
+            return address;
+         }
+
+         @Field(analyze = Analyze.NO)
+         public String getPostCode() {
+            return postCode;
+         }
+
+         @IndexedEmbedded(depth = 3)
+         public List<ContactAddress> getAlternatives() {
+            return alternatives;
+         }
       }
    }
 }

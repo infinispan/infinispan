@@ -12,6 +12,7 @@ import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -35,13 +36,14 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(false);
       cfg.indexing().enable()
             .addIndexedEntity(Person.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
    private long indexSize(Cache<?, ?> cache) {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
+      // queryFactory.refresh(Object.class);
+
       Query<?> query = queryFactory.create("FROM " + Person.class.getName());
       return query.execute().hitCount().orElse(-1);
    }
@@ -87,7 +89,7 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
       verifyFindsPerson(0, "name" + 0);
    }
 
-   protected void verifyFindsPerson(int expectedCount, String name) {
+   protected void verifyFindsPerson(int expectedCount, String name) throws Exception {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       String q = String.format("FROM %s where name:'%s'", Person.class.getName(), name);
       Query cacheQuery = queryFactory.create(q);

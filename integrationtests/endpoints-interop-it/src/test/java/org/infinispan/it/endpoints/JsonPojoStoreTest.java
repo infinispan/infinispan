@@ -20,7 +20,7 @@ public class JsonPojoStoreTest extends BaseJsonTest {
       ConfigurationBuilder indexedCache = new ConfigurationBuilder();
 
       indexedCache.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap");
+            .addProperty("directory.type", "local-heap");
 
       indexedCache.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
       indexedCache.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);

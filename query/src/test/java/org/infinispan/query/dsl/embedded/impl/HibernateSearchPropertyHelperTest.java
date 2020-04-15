@@ -2,16 +2,17 @@ package org.infinispan.query.dsl.embedded.impl;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.NumericField;
-import org.hibernate.search.testsupport.junit.SearchFactoryHolder;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.DocumentId;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
+import org.infinispan.query.helper.SearchMappingHelper;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -20,14 +21,14 @@ import org.junit.Test;
  */
 public class HibernateSearchPropertyHelperTest {
 
-   @Rule
-   public SearchFactoryHolder factoryHolder = new SearchFactoryHolder(TestEntity.class);
-
    private HibernateSearchPropertyHelper propertyHelper;
 
    @Before
    public void setup() {
-      propertyHelper = new HibernateSearchPropertyHelper(factoryHolder.getSearchFactory(), new ReflectionEntityNamesResolver(null));
+      SearchMappingHolder mappingHolder = mock(SearchMappingHolder.class);
+      when(mappingHolder.getSearchMapping()).thenReturn(
+            SearchMappingHelper.createSearchMappingForTests(TestEntity.class));
+      propertyHelper = new HibernateSearchPropertyHelper(mappingHolder, new ReflectionEntityNamesResolver(null));
    }
 
    private Object convertToPropertyType(Class<?> type, String propertyName, String value) {
@@ -75,31 +76,55 @@ public class HibernateSearchPropertyHelperTest {
    }
 
    @Indexed
-   static class TestEntity {
+   public static class TestEntity {
 
-      @DocumentId
       public String id;
 
-      @Field(analyze = Analyze.NO)
       public String name;
 
-      @Field(analyze = Analyze.YES)
       public String description;
 
-      @Field(analyze = Analyze.NO)
-      @NumericField
       public int i;
 
-      @Field(analyze = Analyze.NO)
-      @NumericField
       public long l;
 
-      @Field(analyze = Analyze.NO)
-      @NumericField
       public float f;
 
-      @Field(analyze = Analyze.NO)
-      @NumericField
       public double d;
+
+      @DocumentId
+      public String getId() {
+         return id;
+      }
+
+      @Field(analyze = Analyze.NO)
+      public String getName() {
+         return name;
+      }
+
+      @Field(analyze = Analyze.YES)
+      public String getDescription() {
+         return description;
+      }
+
+      @Field(analyze = Analyze.NO)
+      public int getI() {
+         return i;
+      }
+
+      @Field(analyze = Analyze.NO)
+      public long getL() {
+         return l;
+      }
+
+      @Field(analyze = Analyze.NO)
+      public float getF() {
+         return f;
+      }
+
+      @Field(analyze = Analyze.NO)
+      public double getD() {
+         return d;
+      }
    }
 }

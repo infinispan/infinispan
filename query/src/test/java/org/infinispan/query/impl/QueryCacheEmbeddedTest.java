@@ -15,8 +15,9 @@ import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.Search;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.embedded.impl.LuceneQueryParsingResult;
+import org.infinispan.query.dsl.embedded.impl.SearchQueryParsingResult;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -39,8 +40,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().enable()
             .addIndexedEntity(UserHS.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
 
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
@@ -84,10 +84,10 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       Query<?> query = Search.getQueryFactory(cache).create(queryString);
       query.execute().list();
 
-      // ensure the query cache has it now: one FilterParsingResult and one LuceneQueryParsingResult
+      // ensure the query cache has it now: one FilterParsingResult and one SearchQueryParsingResult
       assertEquals(2, internalCache.size());
       Set<Class<?>> cacheValueClasses = internalCache.values().stream().map(Object::getClass).collect(Collectors.toSet());
-      Set<Class<?>> expectedCachedValueClasses = Sets.newLinkedHashSet(IckleParsingResult.class, LuceneQueryParsingResult.class);
+      Set<Class<?>> expectedCachedValueClasses = Sets.newLinkedHashSet(IckleParsingResult.class, SearchQueryParsingResult.class);
       assertEquals(expectedCachedValueClasses, cacheValueClasses);
 
       // ensure the QueryCreator does not get invoked now

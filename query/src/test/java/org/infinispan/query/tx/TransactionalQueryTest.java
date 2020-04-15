@@ -13,7 +13,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.query.nulls.SCIImpl;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -29,8 +29,7 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
          .indexing()
             .enable()
             .addIndexedEntity(Session.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       return TestCacheManagerFactory.createCacheManager(new SCIImpl(), cfg);
    }
 

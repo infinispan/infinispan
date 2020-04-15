@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -20,6 +19,8 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.QueryTestSCI;
+import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
@@ -43,11 +44,13 @@ public class TestQueryHelperFactory {
       return query.execute().list();
    }
 
-   public static SearchIntegrator extractSearchFactory(Cache<?, ?> cache) {
+   public static SearchMapping extractSearchMapping(Cache<?, ?> cache) {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
-      SearchIntegrator component = componentRegistry.getComponent(SearchIntegrator.class);
+      SearchMappingHolder component = componentRegistry.getComponent(SearchMappingHolder.class);
       assertNotNull(component);
-      return component;
+      SearchMapping searchMapping = component.getSearchMapping();
+      assertNotNull(searchMapping);
+      return searchMapping;
    }
 
    public static List<EmbeddedCacheManager> createTopologyAwareCacheNodes(int numberOfNodes, CacheMode cacheMode, boolean transactional,
@@ -68,14 +71,12 @@ public class TestQueryHelperFactory {
 
       if (isRamDirectoryProvider) {
          builder.indexing()
-               .addProperty("default.directory_provider", "local-heap")
-               .addProperty("lucene_version", "LUCENE_CURRENT")
-               .addProperty("error_handler", StaticTestingErrorHandler.class.getName());
+               .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+               .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       } else {
          builder.indexing()
-               .addProperty("default.directory_provider", "local-heap")
-               .addProperty("lucene_version", "LUCENE_CURRENT")
-               .addProperty("error_handler", StaticTestingErrorHandler.class.getName());
+               .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+               .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
          if (cacheMode.isClustered()) {
             builder.clustering().stateTransfer().fetchInMemoryState(true);
          }

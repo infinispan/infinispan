@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.Search;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.queries.NumericType;
 import org.infinispan.query.test.AnotherGrassEater;
@@ -51,8 +52,7 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
             .addIndexedEntity(NumericType.class)
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
    }
 
@@ -108,7 +108,7 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
       assertEquals(person2, found.get(1));
       assertEquals(person3, found.get(2));
 
-      cacheQuery = createCacheQuery(Person.class, "name:'Goat'^3.5 OR age:[* to 20]^2");
+      cacheQuery = createCacheQuery(Person.class, "name:'Goat'^9.5 OR age:[* to 20]^2");
       found = cacheQuery.execute().list();
 
       assertEquals(3, found.size());

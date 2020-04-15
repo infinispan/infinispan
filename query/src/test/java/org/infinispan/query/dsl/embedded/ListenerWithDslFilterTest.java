@@ -20,6 +20,7 @@ import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -43,8 +44,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
       ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();
       cfgBuilder.indexing().enable()
                 .addIndexedEntity(Person.class)
-                .addProperty("default.directory_provider", "local-heap")
-                .addProperty("lucene_version", "LUCENE_CURRENT");
+                .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       return cfgBuilder;
    }
 

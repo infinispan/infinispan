@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -26,8 +27,7 @@ public class BooksExampleTest extends SingleCacheManagerTest {
          .indexing()
             .enable()
             .addIndexedEntity(Book.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
    }
 

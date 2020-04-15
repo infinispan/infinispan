@@ -2,6 +2,7 @@ package org.infinispan.query.partitionhandling;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.Test;
 
@@ -15,10 +16,9 @@ public class NonSharedIndexTest extends SharedIndexTest {
    protected ConfigurationBuilder cacheConfiguration() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.indexing()
-                          .enable()
-                          .addIndexedEntity(Person.class)
-                          .addProperty("default.directory_provider", "local-heap")
-                          .addProperty("lucene_version", "LUCENE_CURRENT");
+            .enable()
+            .addIndexedEntity(Person.class)
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       return configurationBuilder;
    }
 

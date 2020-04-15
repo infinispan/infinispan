@@ -16,7 +16,7 @@ public class SingleNodeLocalIndexTest extends BaseRestSearchTest {
       configurationBuilder.clustering().cacheMode(CacheMode.LOCAL);
       configurationBuilder.indexing().enable()
                           .addIndexedEntity("org.infinispan.rest.search.entity.Person")
-                          .addProperty("default.directory_provider", "local-heap");
+                          .addProperty("directory.type", "local-heap");
       return configurationBuilder;
    }
 

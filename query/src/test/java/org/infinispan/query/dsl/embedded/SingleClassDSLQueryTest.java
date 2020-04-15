@@ -12,6 +12,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -40,8 +41,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
    protected void configureCache(ConfigurationBuilder builder) {
       builder.indexing().enable()
             .addIndexedEntity(Person.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
    }
 
    @BeforeClass(alwaysRun = true)
@@ -127,13 +127,12 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
       String getGender();
    }
 
-   static abstract class PersonBase implements PersonInterface {
+   public static abstract class PersonBase implements PersonInterface {
 
       String name;
 
       String surname;
 
-      @Field(analyze = Analyze.NO)
       int age;
 
       PersonBase(String name, String surname, int age) {
@@ -142,22 +141,26 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
          this.age = age;
       }
 
-      @Field(analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
-      public String getSurname() {
-         return surname;
-      }
-
       @Field(analyze = Analyze.NO)
       @Override
       public String getName() {
          return name;
       }
+
+      @Field(analyze = Analyze.NO)
+      public String getSurname() {
+         return surname;
+      }
+
+      @Field(analyze = Analyze.NO)
+      public int getAge() {
+         return age;
+      }
    }
 
    @Indexed
-   static class Person extends PersonBase {
+   public static class Person extends PersonBase {
 
-      @Field(analyze = Analyze.NO)
       String driverLicenseId;
 
       String gender;
@@ -166,6 +169,11 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
          super(name, surname, age);
          this.driverLicenseId = driverLicenseId;
          this.gender = gender;
+      }
+
+      @Field(analyze = Analyze.NO)
+      public String getDriverLicenseId() {
+         return driverLicenseId;
       }
 
       @Field(analyze = Analyze.NO)

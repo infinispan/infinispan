@@ -20,6 +20,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.testng.annotations.Test;
 
@@ -89,13 +90,14 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
    public Configuration buildIndexedConfig(String storeName) {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.indexing().enable()
-             .addIndexedEntity("News")
-             .addProperty("default.directory_provider", "local-heap")
-             .addProperty("default.worker.execution", "async")
-             .addProperty("default.index_flush_interval", "500")
-             .addProperty("default.indexwriter.merge_factor", "30")
-             .addProperty("default.indexwriter.merge_max_size", "1024")
-             .addProperty("default.indexwriter.ram_buffer_size", "256");
+            .addIndexedEntity("News")
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+            .addProperty(SearchConfig.IO_STRATEGY, SearchConfig.NEAR_REAL_TIME)
+            .addProperty(SearchConfig.COMMIT_INTERVAL, "500")
+            .addProperty(SearchConfig.IO_MERGE_FACTOR, "30")
+            .addProperty(SearchConfig.IO_MERGE_MAX_SIZE, "1024")
+            .addProperty(SearchConfig.IO_WRITER_RAM_BUFFER_SIZE, "256");
+
       builder.memory().storageType(storageType);
       if (evictionSize > 0) {
          builder.memory().size(evictionSize);
@@ -117,9 +119,9 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
       SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       String protoFile = protoSchemaBuilder.fileName("news.proto")
-                                           .addClass(News.class)
-                                           .addClass(NewsKey.class)
-                                           .build(serializationContext);
+            .addClass(News.class)
+            .addClass(NewsKey.class)
+            .build(serializationContext);
 
       //initialize server-side serialization context
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);

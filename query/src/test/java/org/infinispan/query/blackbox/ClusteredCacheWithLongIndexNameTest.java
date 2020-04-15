@@ -16,6 +16,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -49,8 +50,7 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
             .indexing()
             .enable()
             .addIndexedEntity(ClassWithLongIndexName.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
       return cacheCfg;
    }
 
@@ -82,7 +82,6 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
    @Indexed(index = "default_taskworker-java__com.google.appengine.api.datastore.Entity")
    public static class ClassWithLongIndexName implements Serializable {
 
-      @Field(store = Store.YES)
       @ProtoField(number = 1)
       String name;
 
@@ -99,6 +98,11 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
          return name != null ? name.equals(that.name) : that.name == null;
       }
 
+      @Field(store = Store.YES)
+      public String getName() {
+         return name;
+      }
+
       @Override
       public int hashCode() {
          return name != null ? name.hashCode() : 0;
@@ -111,7 +115,7 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
    }
 
    @AutoProtoSchemaBuilder(
-         includeClasses = ClusteredCacheWithLongIndexNameTest.ClassWithLongIndexName.class,
+         includeClasses = ClassWithLongIndexName.class,
          schemaFileName = "test.query.blackbox.ClusteredCacheWithLongIndexNameTest.proto",
          schemaFilePath = "proto/generated",
          schemaPackageName = "org.infinispan.test.ClusteredCacheWithLongIndexNameTest",

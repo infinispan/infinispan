@@ -64,7 +64,7 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
       builder.memory().storageType(storageType)
              .indexing().enable()
              .addIndexedEntity("sample_bank_account.User")
-             .addProperty("default.directory_provider", "local-heap");
+             .addProperty("directory.type", "local-heap");
       return builder;
    }
 

@@ -11,10 +11,8 @@ import org.hibernate.search.annotations.Store;
  */
 public class Author implements Serializable {
 
-   @Field(store = Store.YES)
    private String name;
 
-   @Field
    private String surname;
 
    public Author(String name, String surname) {
@@ -22,6 +20,7 @@ public class Author implements Serializable {
       this.surname = surname;
    }
 
+   @Field(store = Store.YES)
    public String getName() {
       return name;
    }
@@ -30,6 +29,7 @@ public class Author implements Serializable {
       this.name = name;
    }
 
+   @Field
    public String getSurname() {
       return surname;
    }

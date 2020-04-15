@@ -29,6 +29,7 @@ import org.infinispan.distribution.Ownership;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.query.Search;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
@@ -91,9 +92,8 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
             .enable()
             .addIndexedEntity(Person.class)
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP)
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       cacheCfg.memory()
             .storageType(storageType);
       enhanceConfig(cacheCfg);
@@ -548,6 +548,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       Query<Person> cacheQuery = createQuery(cache1, "blurb:'Eats'");
 
       int counter = 0;
+      // TODO HSEARCH-3323 Restore support for scrolling
       try (CloseableIterator<Person> found = cacheQuery.iterator()) {
          while (found.hasNext()) {
             found.next();

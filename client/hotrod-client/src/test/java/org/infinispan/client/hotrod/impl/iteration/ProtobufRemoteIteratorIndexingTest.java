@@ -35,7 +35,7 @@ public class ProtobufRemoteIteratorIndexingTest extends MultiHotRodServersTest i
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cfg.indexing().enable()
          .addIndexedEntity("sample_bank_account.Account")
-         .addProperty("default.directory_provider", "local-heap");
+         .addProperty("directory.type", "local-heap");
       createHotRodServers(NUM_NODES, hotRodCacheConfiguration(cfg));
       waitForClusterToForm();
    }

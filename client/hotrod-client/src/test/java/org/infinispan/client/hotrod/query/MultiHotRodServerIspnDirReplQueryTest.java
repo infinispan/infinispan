@@ -8,7 +8,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
 
 /**
- * Verifies the functionality of the Queries in case of REPL infinispan directory_provider for clustered Hotrod servers.
+ * Verifies the functionality of the Queries in case of REPL infinispan directory.type for clustered Hotrod servers.
  *
  * @author Anna Manukyan
  */
@@ -23,7 +23,7 @@ public class MultiHotRodServerIspnDirReplQueryTest extends MultiHotRodServerIspn
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.indexing().enable()
              .addIndexedEntity("sample_bank_account.User")
-             .addProperty("default.directory_provider", "local-heap");
+             .addProperty("directory.type", "local-heap");
 
       for (EmbeddedCacheManager cm : cacheManagers) {
          cm.defineConfiguration(TEST_CACHE, builder.build());

@@ -20,7 +20,7 @@ public class RemoteQueryStringBroadcastHAIndexTest extends RemoteQueryStringBroa
                 .addIndexedEntity("sample_bank_account.Account")
                 .addIndexedEntity("sample_bank_account.Transaction")
                 .addIndexedEntity("sample_bank_account.AnalyzerTestEntity")
-                .addProperty("default.directory_provider", "local-heap");
+                .addProperty("directory.type", "local-heap");
       return cfgBuilder;
    }
 }

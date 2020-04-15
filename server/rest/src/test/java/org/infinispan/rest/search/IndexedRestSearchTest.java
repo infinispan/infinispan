@@ -30,7 +30,7 @@ public class IndexedRestSearchTest extends BaseRestSearchTest {
       configurationBuilder.indexing()
             .enable()
             .addIndexedEntity("org.infinispan.rest.search.entity.Person")
-            .addProperty("default.directory_provider", "local-heap");
+            .addProperty("directory.type", "local-heap");
       return configurationBuilder;
    }
 

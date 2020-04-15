@@ -1,14 +1,12 @@
 package org.infinispan.query.remote.impl.indexing;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.lucene.search.Query;
-import org.hibernate.search.query.engine.spi.EntityInfo;
-import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.engine.search.query.SearchQuery;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -17,10 +15,14 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
-import org.infinispan.query.remote.impl.ProgrammaticSearchMappingProviderImpl;
+import org.infinispan.query.Search;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
+import org.infinispan.query.remote.impl.mapping.SerializationContextSearchMapping;
+import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
+import org.infinispan.search.mapper.scope.SearchScope;
+import org.infinispan.search.mapper.session.SearchSession;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
@@ -38,8 +40,7 @@ public class ProtobufValueWrapperIndexingTest extends SingleCacheManagerTest {
          .memory().encoding().value().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE)
          .indexing().enable()
          .addIndexedEntity("sample_bank_account.User")
-         .addProperty("default.directory_provider", "local-heap")
-         .addProperty("lucene_version", "LUCENE_CURRENT");
+         .addProperty("directory.type", "local-heap");
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalBuilder.serialization().addContextInitializer(TestDomainSCI.INSTANCE);
       return TestCacheManagerFactory.createCacheManager(globalBuilder, cfg);
@@ -50,28 +51,27 @@ public class ProtobufValueWrapperIndexingTest extends SingleCacheManagerTest {
 
       MarshallerRegistration.registerMarshallers(serCtx);
 
+      // Create Search 6 mapping from current SerializationContext:
+      SearchMappingHolder mappingHolder = Search.getSearchManager(cache).unwrap(SearchMappingHolder.class);
+      SerializationContextSearchMapping.acquire(serCtx).buildMapping(mappingHolder);
+      SearchMapping searchMapping = mappingHolder.getSearchMapping();
+      assertNotNull(searchMapping);
+
       // Store some test data:
       cache.put(new byte[]{1, 2, 3}, createUser("Adrian", "Nistor"));
       cache.put(new byte[]{4, 5, 6}, createUser("John", "Batman"));
 
-      SearchIntegrator searchFactory = TestingUtil.extractComponent(cache, SearchIntegrator.class);
-      assertNotNull(searchFactory.getIndexManager(ProgrammaticSearchMappingProviderImpl.getIndexName(cache.getName())));
+      SearchSession session = searchMapping.getMappingSession();
+      SearchScope<byte[]> scope = session.scope(byte[].class, "sample_bank_account.User");
+      SearchQuery<Object> query = session.search(scope)
+            .select(f -> f.field("surname"))
+            .where(f -> f.match().field("name").matching("Adrian"))
+            .toQuery();
 
-      Query luceneQuery2 = searchFactory.buildQueryBuilder().forEntity(ProtobufValueWrapper.class).get()
-            .keyword()
-            .onField("name")
-            .ignoreFieldBridge()
-            .ignoreAnalyzer()
-            .matching("Adrian")
-            .createQuery();
+      List<Object> result = query.fetchAllHits();
 
-      List<EntityInfo> queryEntityInfos = searchFactory.createHSQuery(luceneQuery2, ProtobufValueWrapper.class)
-            .projection("surname")
-            .queryEntityInfos();
-
-      assertEquals(1, queryEntityInfos.size());
-      EntityInfo entityInfo = queryEntityInfos.get(0);
-      assertEquals("Nistor", entityInfo.getProjection()[0]);
+      assertEquals(1, result.size());
+      assertEquals("Nistor", result.get(0));
    }
 
    private User createUser(String name, String surname) {

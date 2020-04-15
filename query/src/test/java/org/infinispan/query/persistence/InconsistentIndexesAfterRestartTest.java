@@ -24,6 +24,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -32,8 +33,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * Tests persistent index state us in synch with the values stored in a CacheLoader
- * after a CacheManager is restarted.
+ * Tests persistent index state us in synch with the values stored in a CacheLoader after a CacheManager is restarted.
  *
  * @author Jan Slezak
  * @author Sanne Grinovero
@@ -42,131 +42,130 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.persistence.InconsistentIndexesAfterRestartTest")
 public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest {
 
-    private static String TMP_DIR;
+   private static String TMP_DIR;
 
-    @Test
-    public void testPutSearchablePersistentWithoutBatchingWithoutTran() throws Exception {
-        testPutTwice(false, false);
-    }
+   @Test
+   public void testPutSearchablePersistentWithoutBatchingWithoutTran() throws Exception {
+      testPutTwice(false, false);
+   }
 
-    @Test
-    public void testPutSearchablePersistentWithBatchingWithoutTran() throws Exception {
-        testPutTwice(true, false);
-    }
+   @Test
+   public void testPutSearchablePersistentWithBatchingWithoutTran() throws Exception {
+      testPutTwice(true, false);
+   }
 
-    @Test
-    public void testPutSearchablePersistentWithBatchingInTran() throws Exception {
-        testPutTwice(true, true);
-    }
+   @Test
+   public void testPutSearchablePersistentWithBatchingInTran() throws Exception {
+      testPutTwice(true, true);
+   }
 
-    private void testPutTwice(boolean batching, boolean inTran) throws Exception {
-       testPutOperation(batching, inTran);
-       testPutOperation(batching, inTran);
-    }
+   private void testPutTwice(boolean batching, boolean inTran) throws Exception {
+      testPutOperation(batching, inTran);
+      testPutOperation(batching, inTran);
+   }
 
-    private void testPutOperation(boolean batching, final boolean inTran) {
-       withCacheManager(new CacheManagerCallable(getCacheManager(batching)) {
-          @Override
-          public void call() throws Exception {
-             Cache<Object, Object> c = cm.getCache();
-             if (inTran) c.getAdvancedCache().getTransactionManager().begin();
-             c.put("key1", new SEntity(1, "name1", "surname1"));
-             if (inTran) c.getAdvancedCache().getTransactionManager().commit();
-             assertEquals(searchByName("name1", c).size(), 1, "should be 1, even repeating this");
-          }
-       });
-    }
+   private void testPutOperation(boolean batching, final boolean inTran) {
+      withCacheManager(new CacheManagerCallable(getCacheManager(batching)) {
+         @Override
+         public void call() throws Exception {
+            Cache<Object, Object> c = cm.getCache();
+            if (inTran) c.getAdvancedCache().getTransactionManager().begin();
+            c.put("key1", new SEntity(1, "name1", "surname1"));
+            if (inTran) c.getAdvancedCache().getTransactionManager().commit();
+            assertEquals(searchByName("name1", c).size(), 1, "should be 1, even repeating this");
+         }
+      });
+   }
 
-    private EmbeddedCacheManager getCacheManager(boolean batchingEnabled) {
-       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
-       globalBuilder.globalState().enable().persistentLocation(TMP_DIR);
-       globalBuilder.serialization().addContextInitializer(SCI.INSTANCE);
+   private EmbeddedCacheManager getCacheManager(boolean batchingEnabled) {
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.globalState().enable().persistentLocation(TMP_DIR);
+      globalBuilder.serialization().addContextInitializer(SCI.INSTANCE);
 
-       ConfigurationBuilder builder = new ConfigurationBuilder();
-       builder
-          .persistence()
-          .addSingleFileStore()
-             .fetchPersistentState(true)
-          .indexing()
-             .enable()
-             .addIndexedEntity(SEntity.class)
-             .addProperty("default.directory_provider", "filesystem")
-             .addProperty("lucene_version", "LUCENE_CURRENT")
-             .addProperty("default.indexBase", Paths.get(TMP_DIR, "idx").toString())
-          .invocationBatching()
-             .enable(batchingEnabled);
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder
+            .persistence()
+            .addSingleFileStore()
+            .fetchPersistentState(true)
+            .indexing()
+            .enable()
+            .addIndexedEntity(SEntity.class)
+            .addProperty(SearchConfig.DIRECTORY_TYPE, SearchConfig.FILE)
+            .addProperty(SearchConfig.DIRECTORY_ROOT, Paths.get(TMP_DIR, "idx").toString())
+            .invocationBatching()
+            .enable(batchingEnabled);
 
-       return TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
-    }
+      return TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
+   }
 
-    private List searchByName(String name, Cache c) {
-        QueryFactory queryFactory = Search.getQueryFactory(c);
-        Query<?> q = queryFactory.create(SEntity.searchByName(name));
-        long resultSize = q.execute().hitCount().orElse(-1);
-        List<?> l = q.list();
-        assert l.size() == resultSize;
-        return q.list();
-    }
+   private List searchByName(String name, Cache c) {
+      QueryFactory queryFactory = Search.getQueryFactory(c);
+      Query<?> q = queryFactory.create(SEntity.searchByName(name));
+      long resultSize = q.execute().hitCount().orElse(-1);
+      List<?> l = q.list();
+      assert l.size() == resultSize;
+      return q.list();
+   }
 
-    @Indexed
-    public static class SEntity implements Serializable {
+   @Indexed
+   public static class SEntity implements Serializable {
 
-        public static final String IDX_NAME = "name";
+      public static final String IDX_NAME = "name";
 
-        private final long id;
+      private final long id;
 
-        @Field(store = Store.YES)
-        private final String name;
+      private final String name;
 
-        @Field (store = Store.YES)
-        private final String surname;
+      private final String surname;
 
-        @ProtoFactory
-        SEntity(long id, String name, String surname) {
-            this.id = id;
-            this.name = name;
-            this.surname = surname;
-        }
+      @ProtoFactory
+      SEntity(long id, String name, String surname) {
+         this.id = id;
+         this.name = name;
+         this.surname = surname;
+      }
 
-        @ProtoField(number = 1, defaultValue = "0")
-        public long getId() {
-            return id;
-        }
+      @ProtoField(number = 1, defaultValue = "0")
+      public long getId() {
+         return id;
+      }
 
-        @ProtoField(number = 2)
-        public String getName() {
-            return name;
-        }
+      @Field(store = Store.YES)
+      @ProtoField(number = 2)
+      public String getName() {
+         return name;
+      }
 
-        @ProtoField(number = 3)
-        public String getSurname() {
-            return surname;
-        }
+      @Field(store = Store.YES)
+      @ProtoField(number = 3)
+      public String getSurname() {
+         return surname;
+      }
 
-        @Override
-        public String toString() {
-            return "SEntity{" +
-                    "id=" + id +
-                    ", name='" + name + '\'' +
-                    ", surname='" + surname + '\'' +
-                    '}';
-        }
+      @Override
+      public String toString() {
+         return "SEntity{" +
+               "id=" + id +
+               ", name='" + name + '\'' +
+               ", surname='" + surname + '\'' +
+               '}';
+      }
 
-       public static String searchByName(String name) {
-           return String.format("FROM %s WHERE %s:'%s'", SEntity.class.getName(), IDX_NAME, name.toLowerCase());
-       }
-    }
+      public static String searchByName(String name) {
+         return String.format("FROM %s WHERE %s:'%s'", SEntity.class.getName(), IDX_NAME, name.toLowerCase());
+      }
+   }
 
-    @BeforeClass
-    protected void setUpTempDir() {
-       TMP_DIR = CommonsTestingUtil.tmpDirectory(this.getClass());
-       new File(TMP_DIR).mkdirs();
-    }
+   @BeforeClass
+   protected void setUpTempDir() {
+      TMP_DIR = CommonsTestingUtil.tmpDirectory(this.getClass());
+      new File(TMP_DIR).mkdirs();
+   }
 
-    @AfterClass
-    protected void clearTempDir() {
-       Util.recursiveFileRemove(TMP_DIR);
-    }
+   @AfterClass
+   protected void clearTempDir() {
+      Util.recursiveFileRemove(TMP_DIR);
+   }
 
    @AutoProtoSchemaBuilder(
          includeClasses = SEntity.class,
@@ -176,6 +175,6 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
          service = false
    )
    interface SCI extends SerializationContextInitializer {
-      InconsistentIndexesAfterRestartTest.SCI INSTANCE = new SCIImpl();
+      SCI INSTANCE = new SCIImpl();
    }
 }

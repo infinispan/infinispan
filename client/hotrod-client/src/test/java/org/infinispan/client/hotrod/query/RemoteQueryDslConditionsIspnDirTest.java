@@ -9,7 +9,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.testng.annotations.Test;
 
 /**
- * Verifying the functionality of remote queries for infinispan directory_provider.
+ * Verifying the functionality of remote queries for infinispan directory.type.
  *
  * @author Anna Manukyan
  * @author anistor@redhat.com
@@ -41,7 +41,7 @@ public class RemoteQueryDslConditionsIspnDirTest extends RemoteQueryDslCondition
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = super.getConfigurationBuilder();
-      builder.indexing().addProperty("default.directory_provider", "local-heap");
+      builder.indexing().addProperty("directory.type", "local-heap");
       return builder;
    }
 }
