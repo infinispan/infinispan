@@ -156,11 +156,15 @@ class ChannelPool {
          });
       } catch (Throwable t) {
          int currentActive = active.decrementAndGet();
-         assert currentActive >= 0;
          int currentCreated = created.decrementAndGet();
-         assert currentCreated >= 0;
          if (trace) log.tracef(t, "Channel could not be created, created = %d, active = %d",
                                currentCreated, currentActive);
+         if (currentCreated < 0) {
+            HOTROD.warnf("Invalid created count after channel create failure");
+         }
+         if (currentActive < 0) {
+            HOTROD.warnf("Invalid active count after channel create failure");
+         }
          callback.cancel(address, t);
       }
    }

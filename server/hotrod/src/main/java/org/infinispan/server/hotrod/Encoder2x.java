@@ -338,7 +338,7 @@ class Encoder2x implements VersionedEncoder {
 
    @Override
    public ByteBuf multimapCollectionResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, Collection<byte[]> values) {
-      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
+      ByteBuf buf = writeHeader(header, server, channel, status);
       ExtendedByteBuf.writeUnsignedInt(values.size(), buf);
       for (byte[] v : values) {
          ExtendedByteBuf.writeRangedBytes(v, buf);

@@ -60,14 +60,13 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
       if (throwable != null) {
          writeException(header, throwable);
       } else try {
-         OperationStatus status = OperationStatus.KeyDoesNotExist;
-         CacheEntry<WrappedByteArray, Collection<WrappedByteArray>> ce = null;
-         Collection<byte[]> result = null;
-         if (entry.isPresent()) {
-            status = OperationStatus.Success;
-            ce = entry.get();
-            result = mapToCollectionOfByteArrays(ce.getValue());
+         if (!entry.isPresent()) {
+            writeNotExist(header);
+            return;
          }
+         OperationStatus status = OperationStatus.Success;
+         CacheEntry<WrappedByteArray, Collection<WrappedByteArray>> ce = entry.get();
+         Collection<byte[]> result = mapToCollectionOfByteArrays(ce.getValue());
          writeResponse(header, header.encoder().multimapEntryResponse(header, server, channel, status, ce, result));
       } catch (Throwable t2) {
          writeException(header, t2);
