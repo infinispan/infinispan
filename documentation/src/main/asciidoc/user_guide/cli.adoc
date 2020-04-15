@@ -29,11 +29,9 @@ The following is a list of command-line switches which affect how the CLI can be
 
 * JMX over RMI is the traditional way in which JMX clients connect to MBeanServers. Please refer to the link:http://docs.oracle.com/javase/6/docs/technotes/guides/management/agent.html[JDK Monitoring and Management] documentation for details on how to configure the process to be monitored
 
-
-* JMX over JBoss Remoting is the protocol of choice when your {brandname} application is running within WildFly or EAP.
+* JMX over JBoss Remoting is the protocol of choice when your {brandname} application is running inside {wildflybrandname}.
 
 The connection to the application can also be initiated from within the CLI using the connect command.
-
 
 ----
 [disconnected//]> connect jmx://localhost:12000
@@ -404,3 +402,5 @@ The CLI understands the following types:
 
 ==== Time Values
 A time value is an integer number followed by time unit suffix: days (d), hours (h), minutes (m), seconds (s), milliseconds (ms).
+
+include::topics/proc_starting_stopping_endpoints.adoc[leveloffset=+3]

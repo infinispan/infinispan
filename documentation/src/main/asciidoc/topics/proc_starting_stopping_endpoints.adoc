@@ -1,0 +1,36 @@
+[id='starting_stopping_endpoints']
+= Starting and Stopping {brandname} Endpoints
+Use the Command-Line Interface (CLI) to start and stop {brandname} endpoint connectors.
+
+Commands to start and stop endpoint connectors:
+
+* Apply to individual endpoints. To stop or start all endpoint connectors, you must run the command on each endpoint connector.
+* Take effect on single nodes only (not cluster-wide).
+
+.Procedure
+
+. Start the CLI and connect to {brandname}.
+. List the endpoint connectors in the `datagrid-infinispan-endpoint`
+subsystem, as follows:
++
+----
+[standalone@localhost:9990 /] ls subsystem=datagrid-infinispan-endpoint
+hotrod-connector     memcached-connector  rest-connector       router-connector
+----
++
+. Navigate to the endpoint connector you want to start or stop, for example:
++
+----
+[standalone@localhost:9990 /] cd subsystem=datagrid-infinispan-endpoint
+
+[standalone@localhost:9990 subsystem=datagrid-infinispan-endpoint] cd rest-connector=rest-connector
+----
+. Use the `:stop-connector` and `:start-connector` commands as appropriate.
++
+----
+[standalone@localhost:9990 rest-connector=rest-connector] :stop-connector
+{"outcome" => "success"}
+
+[standalone@localhost:9990 rest-connector=rest-connector] :start-connector
+{"outcome" => "success"}
+----
