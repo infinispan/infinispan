@@ -408,24 +408,6 @@ Example with filesystem:
 include::config_examples/indexing_near_real_time_fs.xml[]
 ----
 
-==== External indexes
-
-Apart from having shared and non-shared indexes managed by {brandname} itself, it is possible to offload indexing to a third party search engine: currently
-{brandname} supports Elasticsearch as a external index storage.
-
-===== Elasticsearch IndexManager (experimental)
-
-This index manager forwards all indexes to an external Elasticsearch server. This is an experimental integration and some features may not be available,
-for example `indexNullAs` for `@IndexedEmbedded` annotations is link:https://hibernate.atlassian.net/browse/HSEARCH-2389[not currently supported].
-
-Configuration:
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::config_examples/indexing_elasticsearch.xml[]
-----
-
-More information about Elasticsearch integration, including the full description of the configuration properties can be found at the link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#elasticsearch-integration[Hibernate Search manual].
 
 [[query_autoconfig]]
 ==== Automatic configuration

@@ -1,15 +1,10 @@
 package org.infinispan.query.impl.massindex;
 
-import static org.infinispan.query.impl.massindex.MassIndexStrategyFactory.calculateStrategy;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -17,12 +12,9 @@ import java.util.function.BiConsumer;
 
 import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
-import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
@@ -33,9 +25,6 @@ import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.IndexInspector;
-import org.infinispan.query.impl.massindex.MassIndexStrategy.CleanExecutionMode;
-import org.infinispan.query.impl.massindex.MassIndexStrategy.FlushExecutionMode;
-import org.infinispan.query.impl.massindex.MassIndexStrategy.IndexingExecutionMode;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -70,7 +59,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       }
    };
 
-   public DistributedExecutorMassIndexer(AdvancedCache cache, SearchIntegrator searchIntegrator,
+   public DistributedExecutorMassIndexer(AdvancedCache<?, ?> cache, SearchIntegrator searchIntegrator,
                                          KeyTransformationHandler keyTransformationHandler, TimeService timeService) {
       this.cache = cache;
       this.searchIntegrator = searchIntegrator;
@@ -100,21 +89,10 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    @Override
    public CompletableFuture<Void> reindex(Object... keys) {
       CompletableFuture<Void> future = null;
-      Set<Object> everywhereSet = new HashSet<>();
-      Set<Object> primeownerSet = new HashSet<>();
+      Set<Object> keySet = new HashSet<>();
       for (Object key : keys) {
          if (cache.containsKey(key)) {
-            Class<?> indexedType = cache.get(key).getClass();
-            MassIndexStrategy strategy = calculateStrategy(indexInspector, new PojoIndexedTypeIdentifier(indexedType));
-            IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
-            switch (indexingStrategy) {
-               case ALL:
-                  everywhereSet.add(key);
-                  break;
-               case PRIMARY_OWNER:
-                  primeownerSet.add(key);
-                  break;
-            }
+            keySet.add(key);
          } else {
             LOG.warn("cache contains no mapping for the key");
          }
@@ -124,52 +102,9 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
             throw new CacheException(t);
          }
       };
-      if (everywhereSet.size() > 0) {
-         IndexWorker indexWorkEverywhere =
-               new IndexWorker(cache.getName(), null, false, false, false, false, everywhereSet);
-
-         future = executor.submitConsumer(indexWorkEverywhere, triConsumer);
-      }
-      if (primeownerSet.size() > 0) {
-         Map<Address, Set<Object>> targets = new HashMap<>();
-         DistributionManager distributionManager = cache.getDistributionManager();
-         if (distributionManager != null) {
-            LocalizedCacheTopology localizedCacheTopology = cache.getDistributionManager().getCacheTopology();
-            for (Object key : primeownerSet) {
-               Address primary = localizedCacheTopology.getDistribution(key).primary();
-               Set<Object> keysForAddress = targets.get(primary);
-               if (keysForAddress == null) {
-                  keysForAddress = new HashSet<>();
-                  targets.put(primary, keysForAddress);
-               }
-               keysForAddress.add(key);
-            }
-            List<CompletableFuture<Void>> futures;
-            if (future != null) {
-               futures = new ArrayList<>(targets.size() + 1);
-               futures.add(future);
-            } else {
-               futures = new ArrayList<>(targets.size());
-            }
-            for (Map.Entry<Address, Set<Object>> entry : targets.entrySet()) {
-               IndexWorker indexWorkEverywhere =
-                     new IndexWorker(cache.getName(), null, false, false, false, false, entry.getValue());
-
-               // TODO: need to change this to not index
-               futures.add(executor.filterTargets(Collections.singleton(entry.getKey())).submitConsumer(indexWorkEverywhere, triConsumer));
-            }
-            future = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-         } else {
-            // This is a local only cache with no distribution manager
-            IndexWorker indexWorkEverywhere =
-                  new IndexWorker(cache.getName(), null, false, false, false, false, primeownerSet);
-            CompletableFuture<Void> localFuture = executor.submitConsumer(indexWorkEverywhere, triConsumer);
-            if (future != null) {
-               future = CompletableFuture.allOf(future, localFuture);
-            } else {
-               future = localFuture;
-            }
-         }
+      if (keySet.size() > 0) {
+         IndexWorker indexWorker = new IndexWorker(cache.getName(), null, false, keySet);
+         future = executor.submitConsumer(indexWorker, triConsumer);
       }
       return future != null ? future : CompletableFutures.completedNull();
    }
@@ -191,26 +126,13 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
                lock.unlock();
             }
          };
-         Map<MassIndexStrategy, Set<IndexedTypeIdentifier>> strategyPerType = new HashMap<>();
+         Set<IndexedTypeIdentifier> indexedTypes = new HashSet<>();
          for (IndexedTypeIdentifier indexedType : searchIntegrator.getIndexBindings().keySet()) {
-            MassIndexStrategy strategy = calculateStrategy(indexInspector, indexedType);
-            strategyPerType.computeIfAbsent(strategy, s -> new HashSet<>()).add(indexedType);
+            indexedTypes.add(indexedType);
          }
          try {
-            strategyPerType.forEach((strategy, indexedTypes) -> {
-               boolean workerClean = true, workerFlush = true;
-               if (strategy.getCleanStrategy() == CleanExecutionMode.ONCE_BEFORE) {
-                  indexUpdater.purge(indexedTypes);
-                  workerClean = false;
-               }
-               if (strategy.getFlushStrategy() == FlushExecutionMode.ONCE_AFTER) {
-                  toFlush.addAll(indexedTypes);
-                  workerFlush = false;
-               }
-               IndexWorker indexWork = new IndexWorker(cache.getName(), indexedTypes, workerFlush, workerClean,
-                     skipIndex, strategy.getIndexingStrategy() == IndexingExecutionMode.PRIMARY_OWNER, null);
-               futures.add(executor.submitConsumer(indexWork, TRI_CONSUMER));
-            });
+            IndexWorker indexWork = new IndexWorker(cache.getName(), indexedTypes, skipIndex, null);
+            futures.add(executor.submitConsumer(indexWork, TRI_CONSUMER));
             CompletableFuture<Void> compositeFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
             return compositeFuture.whenCompleteAsync(flushIfNeeded, localExecutor);
          } catch (Throwable t) {

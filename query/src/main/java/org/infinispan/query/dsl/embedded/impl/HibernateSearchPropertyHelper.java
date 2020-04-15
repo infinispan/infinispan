@@ -51,8 +51,6 @@ import org.infinispan.objectfilter.impl.util.StringHelper;
  */
 public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
 
-   private static final String ES_DATE_BRIDGE_CLASS_NAME = "org.hibernate.search.elasticsearch.bridge.builtin.impl.ElasticsearchDateBridge";
-
    private final SearchIntegrator searchFactory;
 
    public HibernateSearchPropertyHelper(SearchIntegrator searchFactory, EntityNameResolver entityNameResolver) {
@@ -132,8 +130,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(DateTools.stringToDate(value));
             return calendar;
-         } else if (bridge instanceof StringEncodingDateBridge || bridge instanceof NumericEncodingDateBridge
-               || bridge.getClass().getName().equals(ES_DATE_BRIDGE_CLASS_NAME)) {
+         } else if (bridge instanceof StringEncodingDateBridge || bridge instanceof NumericEncodingDateBridge) {
             return DateTools.stringToDate(value);
          } else {
             return value;

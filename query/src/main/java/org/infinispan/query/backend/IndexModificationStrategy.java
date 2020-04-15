@@ -4,7 +4,6 @@ import org.hibernate.search.spi.IndexingMode;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
@@ -47,22 +46,6 @@ public enum IndexModificationStrategy {
          return info.isPrimary() || info.isWriteOwner() &&
                (ctx.isInTxScope() || !ctx.isOriginLocal() || command != null && command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER));
       }
-   },
-
-   /**
-    * Only events target to the primary owner will trigger indexing of the data
-    */
-   PRIMARY_OWNER {
-      @Override
-      public boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx,
-                                         DistributionManager distributionManager, RpcManager rpcManager, Object key) {
-         if (key == null) {
-            return ctx.isOriginLocal();
-         }
-         return (command == null || !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) &&
-               (distributionManager == null || distributionManager.getCacheTopology().getDistribution(key).isPrimary());
-
-      }
    };
 
    public abstract boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx,
@@ -77,14 +60,6 @@ public enum IndexModificationStrategy {
     */
    public static IndexModificationStrategy configuredStrategy(SearchIntegrator searchFactory, Configuration cfg) {
       IndexingMode indexingMode = searchFactory.unwrap(SearchIntegrator.class).getIndexingMode();
-      if (indexingMode == IndexingMode.MANUAL) {
-         return MANUAL;
-      } else {
-         if (cfg.indexing().index() == Index.PRIMARY_OWNER) {
-            return PRIMARY_OWNER;
-         } else {
-            return ALL;
-         }
-      }
+      return indexingMode == IndexingMode.MANUAL ? MANUAL : ALL;
    }
 }

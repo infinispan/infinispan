@@ -51,7 +51,7 @@ final class ClusteredQueryInvoker {
       this.myAddress = rpcManager.getAddress();
       this.rpcOptions = new RpcOptions(DeliverOrder.NONE, 10000, TimeUnit.MILLISECONDS);
       IndexInspector indexInspector = ComponentRegistryUtils.getIndexInspector(cache);
-      this.partitioner = new QueryPartitioner(cache, indexInspector);
+      this.partitioner = new QueryPartitioner(cache);
    }
 
    /**
@@ -89,7 +89,7 @@ final class ClusteredQueryInvoker {
     */
    List<QueryResponse> broadcast(ClusteredQueryOperation operation) {
       Class<?> targetEntity = operation.getQueryDefinition().getIndexedType();
-      Map<Address, BitSet> split = partitioner.split(targetEntity);
+      Map<Address, BitSet> split = partitioner.split();
       SegmentsClusteredQueryCommand localCommand = new SegmentsClusteredQueryCommand(cache.getName(), operation, split.get(myAddress));
       // invoke on own node
       Future<QueryResponse> localResponse = localInvoke(localCommand);

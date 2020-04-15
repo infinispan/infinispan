@@ -162,7 +162,6 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    private enum IndexManager {
       NRT("near-real-time"),
-      ELASTIC_SEARCH("elasticsearch"),
       DIRECTORY("directory-based");
       private final String cfg;
 
