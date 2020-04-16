@@ -16,15 +16,25 @@ the cache, the file won't shrink, and neither will be de-fragmented.
 
 These are the available configuration options for the single file cache store:
 
-* `path` where data will be stored. (e.g., `path="/tmp/myDataStore"`).
-By default, the location is `Infinispan-SingleFileStore`.
+* `path` is the file-system location where {brandname} stores data.
 +
-For embedded {brandname} deployments, you should set an absolute path as the
-value otherwise the path is relative to the current working directory.
+For embedded deployments, {brandname} stores data to the current working
+directory. To store data in a different location, specify the absolute path to
+that directory as the value.
 +
-For {brandname} server deployments, you should create a path declaration and
+For server deployments, {brandname} stores data in
+ifndef::productized[]
+`$ISPN_HOME/data`.
+endif::productized[]
+ifdef::productized[]
+`$RHDG_HOME/data`.
+endif::productized[]
+You should not change the default location for {brandname} server. In other
+words, do not set a value for `path` with server deployments.
+
+you should create a path declaration and
 use the `relative-to` attribute for the file store location. If you set
-`relative-to` to a directory location or environment variable, {brandname} 
+`relative-to` to a directory location or environment variable, {brandname}
 server startup fails.
 
 * `max-entries` specifies the maximum number of entries to keep in this file
@@ -67,12 +77,8 @@ store.
 
 [source,xml,options=nowrap]
 ----
-<paths>
-  <path name="my.dir" path="/MyCacheStore"/>
-</paths>
-...
 <persistence>
-   <file-store relative-to="my.dir" max-entries="5000"/>
+   <file-store max-entries="5000"/>
 </persistence>
 ----
 
