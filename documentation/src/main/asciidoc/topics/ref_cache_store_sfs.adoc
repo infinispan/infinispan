@@ -21,14 +21,25 @@ defragmented.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/persistence_file_store.xml[]
+<persistence>
+   <file-store max-entries="5000"/>
+</persistence>
 ----
 
 .Programmatic configuration
 
+* For embedded deployments, do the following:
+
 [source,java,options=nowrap]
 ----
 include::code_examples/ConfigSingleFileStore.java[]
+----
+
+* For server deployments, do the following:
+
+[source,java,options=nowrap]
+----
+include::code_examples/ConfigSingleFileStoreRemote.java[]
 ----
 
 .Segmentation
@@ -40,5 +51,6 @@ data maps.
 
 .Reference
 
+* link:#setting_persistent_location-persistence[Setting a Global Persistent Location]
 * link:{configdocroot}infinispan-config-{schemaversion}.html[{brandname} configuration schema]
-link:{javadocroot}/org/infinispan/persistence/file/SingleFileStore.html[SingleFileStore]
+* link:{javadocroot}/org/infinispan/persistence/file/SingleFileStore.html[SingleFileStore]
