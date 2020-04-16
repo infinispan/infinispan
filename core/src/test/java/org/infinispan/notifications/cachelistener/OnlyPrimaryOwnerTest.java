@@ -68,8 +68,8 @@ public class OnlyPrimaryOwnerTest {
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
       when(mockCache.getCacheManager()).thenReturn(cacheManager);
       when(mockCache.getAdvancedCache()).thenReturn(mockCache);
-      when(mockCache.getKeyDataConversion()).thenReturn(DataConversion.DEFAULT_KEY);
-      when(mockCache.getValueDataConversion()).thenReturn(DataConversion.DEFAULT_VALUE);
+      when(mockCache.getKeyDataConversion()).thenReturn(DataConversion.IDENTITY_KEY);
+      when(mockCache.getValueDataConversion()).thenReturn(DataConversion.IDENTITY_VALUE);
       when(mockCache.getStatus()).thenReturn(ComponentStatus.INITIALIZING);
       ComponentRegistry componentRegistry = mock(ComponentRegistry.class);
       when(mockCache.getComponentRegistry()).thenReturn(componentRegistry);

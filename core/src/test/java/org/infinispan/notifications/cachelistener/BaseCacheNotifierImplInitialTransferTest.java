@@ -134,8 +134,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
       when(mockCache.getCacheManager()).thenReturn(cacheManager);
       when(mockCache.getAdvancedCache()).thenReturn(mockCache);
-      when(mockCache.getKeyDataConversion()).thenReturn(DataConversion.DEFAULT_KEY);
-      when(mockCache.getValueDataConversion()).thenReturn(DataConversion.DEFAULT_VALUE);
+      when(mockCache.getKeyDataConversion()).thenReturn(DataConversion.IDENTITY_KEY);
+      when(mockCache.getValueDataConversion()).thenReturn(DataConversion.IDENTITY_VALUE);
       Configuration config = new ConfigurationBuilder().clustering().cacheMode(cacheMode).build();
       when(mockCache.getStatus()).thenReturn(ComponentStatus.INITIALIZING);
 

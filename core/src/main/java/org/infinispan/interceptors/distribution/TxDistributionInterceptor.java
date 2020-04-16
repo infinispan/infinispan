@@ -589,7 +589,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          // We rely on the fact that when isOwner is false that this never blocks
          assert CompletionStages.isCompletedSuccessfully(stage);
          MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
-         EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry, DataConversion.DEFAULT_KEY, DataConversion.DEFAULT_VALUE);
+         EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry, DataConversion.IDENTITY_KEY, DataConversion.IDENTITY_VALUE);
          for (Mutation mutation : mutationsIterator.next()) {
             mutation.apply(readWriteEntryView);
             cacheEntry.updatePreviousValue();

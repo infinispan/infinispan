@@ -44,9 +44,25 @@ import org.infinispan.registry.InternalCacheRegistry;
 @Scope(Scopes.NONE)
 public final class DataConversion {
 
+   /**
+    * @deprecated Since 11.0. To be removed in 14.0, with no replacement.
+    */
+   @Deprecated
    public static final DataConversion DEFAULT_KEY = new DataConversion(IdentityEncoder.INSTANCE, ByteArrayWrapper.INSTANCE, true);
+   /**
+    * @deprecated Since 11.0. To be removed in 14.0, with no replacement.
+    */
+   @Deprecated
    public static final DataConversion DEFAULT_VALUE = new DataConversion(IdentityEncoder.INSTANCE, ByteArrayWrapper.INSTANCE, false);
+   /**
+    * @deprecated Since 11.0. To be removed in 14.0. For internal use only.
+    */
+   @Deprecated
    public static final DataConversion IDENTITY_KEY = new DataConversion(IdentityEncoder.INSTANCE, IdentityWrapper.INSTANCE, true);
+   /**
+    * @deprecated Since 11.0. To be removed in 14.0. For internal use only.
+    */
+   @Deprecated
    public static final DataConversion IDENTITY_VALUE = new DataConversion(IdentityEncoder.INSTANCE, IdentityWrapper.INSTANCE, false);
 
    // On the origin node the conversion is initialized with the encoder/wrapper classes, on remote nodes with the ids
@@ -325,29 +341,18 @@ public final class DataConversion {
       return new DataConversion(encoderClass, wrapperClass, MediaType.APPLICATION_OBJECT, false);
    }
 
-   private static boolean isDefault(DataConversion dataConversion) {
-      return dataConversion == null || dataConversion.isKey && dataConversion.equals(DEFAULT_KEY) ||
-            !dataConversion.isKey && dataConversion.equals(DEFAULT_VALUE);
-   }
-
    public static void writeTo(ObjectOutput output, DataConversion dataConversion) throws IOException {
       byte flags = 0;
-      boolean isDefault = isDefault(dataConversion);
-      if (isDefault) flags = 1;
       if (dataConversion.isKey) flags = (byte) (flags | 2);
       output.writeByte(flags);
-      if (!isDefault) {
-         output.writeShort(dataConversion.encoder.id());
-         output.writeByte(dataConversion.wrapper.id());
-         output.writeObject(dataConversion.requestMediaType);
-      }
+      output.writeShort(dataConversion.encoder.id());
+      output.writeByte(dataConversion.wrapper.id());
+      output.writeObject(dataConversion.requestMediaType);
    }
 
    public static DataConversion readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       byte flags = input.readByte();
       boolean isKey = ((flags & 2) == 2);
-      if (((flags & 1) == 1))
-         return isKey ? DEFAULT_KEY : DEFAULT_VALUE;
 
       short encoderId = input.readShort();
       byte wrapperId = input.readByte();

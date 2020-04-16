@@ -57,7 +57,7 @@ public class EagerIteratorTest {
          String k = invocation.getArguments()[0].toString();
          return dummyResults.get(k);
       });
-      when(cache.getKeyDataConversion()).thenAnswer(new Returns(DataConversion.DEFAULT_KEY));
+      when(cache.getKeyDataConversion()).thenAnswer(new Returns(DataConversion.IDENTITY_KEY));
 
       iterator = new EagerIterator<>(entityInfos, new EntityLoader(cache, keyTransformationHandler), getFetchSize());
    }

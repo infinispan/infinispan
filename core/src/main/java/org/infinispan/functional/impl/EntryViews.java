@@ -41,7 +41,7 @@ public final class EntryViews {
    }
 
    public static <K, V> ReadEntryView<K, V> readOnly(CacheEntry entry) {
-      return new EntryBackedReadOnlyView<>(entry, DataConversion.DEFAULT_KEY, DataConversion.DEFAULT_VALUE);
+      return new EntryBackedReadOnlyView<>(entry, DataConversion.IDENTITY_KEY, DataConversion.IDENTITY_VALUE);
    }
 
    public static <K, V> ReadEntryView<K, V> readOnly(K key, V value, Metadata metadata) {
