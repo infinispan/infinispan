@@ -1,5 +1,9 @@
 = Upgrading from 10.1 to 11.0
 
+== Wildfly modules
+
+The Wildfly modules are not distributed anymore, they will be migrated to the Wildfly project.
+
 == Cross Site Replication
 
 * The `org.infinispan.xsite.CustomFailurePolicy` interface has been deprecated and it will be replaced by

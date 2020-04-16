@@ -58,18 +58,6 @@
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-rest</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.infinispan.wildfly</groupId>
-            <artifactId>infinispan-server-commons</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan.wildfly</groupId>
-            <artifactId>infinispan-server-jgroups</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan.wildfly</groupId>
-            <artifactId>infinispan-wildfly-infinispan</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -114,8 +102,6 @@
                                 <jar>infinispan-cachestore-rocksdb</jar>
                                 <jar>infinispan-cachestore-remote</jar>
                                 <jar>infinispan-cachestore-rest</jar>
-                                <jar>infinispan-server-jgroups</jar>
-                                <jar>infinispan-wildfly-infinispan</jar>
                             </jars>
                         </configuration>
                     </execution>
@@ -173,7 +159,6 @@
                                 <schemaversion>${schemaVersion}</schemaversion>
                                 <brandname>${infinispan.brand.name}</brandname>
                                 <fullbrandname>${infinispan.brand.name}</fullbrandname>
-                                <wildflybrandname>${wildfly.brand.name}</wildflybrandname>
                                 <moduleprefix>${infinispan.module.slot.prefix}</moduleprefix>
                                 <infinispanslot>${infinispanslot}</infinispanslot>
                                 <defaults>${defaults.file}</defaults>

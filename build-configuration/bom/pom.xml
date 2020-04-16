@@ -203,44 +203,6 @@
             <!-- TODO should be here? -->
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-feature-pack-client</artifactId>
-                <version>${version.infinispan}</version>
-                <type>zip</type>
-            </dependency>
-            <!-- TODO should be here? -->
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-feature-pack-commons</artifactId>
-                <version>${version.infinispan}</version>
-                <type>zip</type>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-feature-pack-embedded</artifactId>
-                <version>${version.infinispan}</version>
-                <type>zip</type>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-feature-pack-embedded-query</artifactId>
-                <version>${version.infinispan}</version>
-                <type>zip</type>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-feature-pack-server</artifactId>
-                <version>${version.infinispan}</version>
-                <type>zip</type>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-feature-pack-wf-modules</artifactId>
-                <version>${version.infinispan}</version>
-                <type>zip</type>
-            </dependency>
-            <!-- TODO should be here? -->
-            <dependency>
-                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-hibernate-cache-spi</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
@@ -417,11 +379,6 @@
                 <groupId>org.infinispan.protostream</groupId>
                 <artifactId>protostream-processor</artifactId>
                 <version>${version.protostream}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan.wildfly</groupId>
-                <artifactId>infinispan-wildfly-infinispan</artifactId>
-                <version>${version.infinispan}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

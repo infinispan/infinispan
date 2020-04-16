@@ -136,10 +136,8 @@
       <module>cdi/embedded</module>
       <module>cdi/remote</module>
       <module>lock</module>
-      <module>wildfly</module>
       <module>jcache</module>
       <module>integrationtests</module>
-      <module>integrationtests/wildfly-modules</module>
       <module>integrationtests/endpoints-interop-it</module>
       <module>integrationtests/jboss-marshalling-it</module>
       <module>integrationtests/cdi-jcache-it</module>
@@ -635,7 +633,6 @@
       <versionx.org.picketbox.picketbox-infinispan>${version.picketbox}</versionx.org.picketbox.picketbox-infinispan>
       <versionx.org.picketlink.picketlink-api>${version.picketlink}</versionx.org.picketlink.picketlink-api>
       <versionx.org.projectodd.vdx.vdx-core>${version.projectodd}</versionx.org.projectodd.vdx.vdx-core>
-      <versionx.org.projectodd.vdx.vdx-wildfly>${version.projectodd}</versionx.org.projectodd.vdx.vdx-wildfly>
       <versionx.org.reactivestreams.reactive-streams>${version.reactivestreams}</versionx.org.reactivestreams.reactive-streams>
       <versionx.org.rocksdb.rocksdbjni>${version.rocksdb}</versionx.org.rocksdb.rocksdbjni>
       <versionx.org.skyscreamer.jsonassert>1.3.0</versionx.org.skyscreamer.jsonassert>
@@ -672,47 +669,9 @@
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
       <versionx.org.tukaani.xz>1.0</versionx.org.tukaani.xz>
       <versionx.org.twdata.maven.mojo-executor>2.2.0</versionx.org.twdata.maven.mojo-executor>
-      <versionx.org.wildfly.arquillian.wildfly-arquillian-common>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-common>
-      <versionx.org.wildfly.arquillian.wildfly-arquillian-common-domain>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-common-domain>
       <versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>
-      <versionx.org.wildfly.arquillian.wildfly-arquillian-protocol-jmx>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-protocol-jmx>
-      <versionx.org.wildfly.arquillian.wildfly-arquillian-testenricher-msc>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-testenricher-msc>
-      <versionx.org.wildfly.client.wildfly-client-config>1.0.1.Final</versionx.org.wildfly.client.wildfly-client-config>
       <versionx.org.wildfly.common.wildfly-common>1.5.1.Final</versionx.org.wildfly.common.wildfly-common>
-      <versionx.org.wildfly.core.wildfly-cli>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-cli>
-      <versionx.org.wildfly.core.wildfly-controller>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-controller>
-      <versionx.org.wildfly.core.wildfly-controller-client>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-controller-client>
-      <versionx.org.wildfly.core.wildfly-core-management-client>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-core-management-client>
-      <versionx.org.wildfly.core.wildfly-core-security>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-core-security>
-      <versionx.org.wildfly.core.wildfly-core-security-api>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-core-security-api>
-      <versionx.org.wildfly.core.wildfly-core-test-runner>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-core-test-runner>
       <versionx.org.wildfly.core.wildfly-core-testsuite-shared>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-core-testsuite-shared>
-      <versionx.org.wildfly.core.wildfly-deployment-repository>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-deployment-repository>
-      <versionx.org.wildfly.core.wildfly-domain-http-interface>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-domain-http-interface>
-      <versionx.org.wildfly.core.wildfly-domain-management>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-domain-management>
-      <versionx.org.wildfly.core.wildfly-elytron-integration>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-elytron-integration>
-      <versionx.org.wildfly.core.wildfly-embedded>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-embedded>
-      <versionx.org.wildfly.core.wildfly-host-controller>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-host-controller>
-      <versionx.org.wildfly.core.wildfly-io>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-io>
-      <versionx.org.wildfly.core.wildfly-jmx>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-jmx>
-      <versionx.org.wildfly.core.wildfly-launcher>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-launcher>
-      <versionx.org.wildfly.core.wildfly-management-client-content>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-management-client-content>
-      <versionx.org.wildfly.core.wildfly-model-test>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-model-test>
-      <versionx.org.wildfly.core.wildfly-network>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-network>
-      <versionx.org.wildfly.core.wildfly-platform-mbean>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-platform-mbean>
-      <versionx.org.wildfly.core.wildfly-process-controller>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-process-controller>
-      <versionx.org.wildfly.core.wildfly-protocol>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-protocol>
-      <versionx.org.wildfly.core.wildfly-remoting>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-remoting>
-      <versionx.org.wildfly.core.wildfly-request-controller>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-request-controller>
-      <versionx.org.wildfly.core.wildfly-server>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-server>
-      <versionx.org.wildfly.core.wildfly-subsystem-test>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-subsystem-test>
-      <versionx.org.wildfly.core.wildfly-subsystem-test-framework>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-subsystem-test-framework>
-      <versionx.org.wildfly.core.wildfly-threads>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-threads>
-      <versionx.org.wildfly.core.wildfly-version>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-version>
-      <versionx.org.wildfly.extras.creaper.creaper-commands>1.1.0</versionx.org.wildfly.extras.creaper.creaper-commands>
-      <versionx.org.wildfly.extras.creaper.creaper-core>1.1.0</versionx.org.wildfly.extras.creaper.creaper-core>
-      <versionx.org.wildfly.legacy.test.wildfly-legacy-spi>3.0.0.Final</versionx.org.wildfly.legacy.test.wildfly-legacy-spi>
-      <versionx.org.wildfly.legacy.test.wildfly-legacy-versions>3.0.0.Final</versionx.org.wildfly.legacy.test.wildfly-legacy-versions>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.1.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
       <versionx.org.wildfly.openssl.natives>${version.org.wildfly.openssl}</versionx.org.wildfly.openssl.natives>
       <versionx.org.wildfly.openssl.wildfly-openssl-linux-i386>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-linux-i386>
@@ -721,26 +680,7 @@
       <versionx.org.wildfly.openssl.wildfly-openssl-solaris-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-solaris-x86_64>
       <versionx.org.wildfly.openssl.wildfly-openssl-windows-i386>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-windows-i386>
       <versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>
-      <versionx.org.wildfly.security.elytron-web.undertow-server>1.6.0.Final</versionx.org.wildfly.security.elytron-web.undertow-server>
       <versionx.org.wildfly.security.wildfly-elytron>${version.org.wildfly.elytron}</versionx.org.wildfly.security.wildfly-elytron>
-      <versionx.org.wildfly.security.wildfly-security-manager>1.1.2.Final</versionx.org.wildfly.security.wildfly-security-manager>
-      <versionx.org.wildfly.transaction.wildfly-transaction-client>1.1.8.Final</versionx.org.wildfly.transaction.wildfly-transaction-client>
-      <versionx.org.wildfly.wildfly-clustering-common>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-common>
-      <versionx.org.wildfly.wildfly-clustering-infinispan-spi>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-infinispan-spi>
-      <versionx.org.wildfly.wildfly-clustering-marshalling-api>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-marshalling-api>
-      <versionx.org.wildfly.wildfly-clustering-marshalling-spi>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-marshalling-spi>
-      <versionx.org.wildfly.wildfly-clustering-service>${version.org.wildfly}</versionx.org.wildfly.wildfly-clustering-service>
-      <versionx.org.wildfly.wildfly-dist>${version.org.wildfly}</versionx.org.wildfly.wildfly-dist>
-      <versionx.org.wildfly.wildfly-ee>${version.org.wildfly}</versionx.org.wildfly.wildfly-ee>
-      <versionx.org.wildfly.wildfly-feature-pack>${version.org.wildfly}</versionx.org.wildfly.wildfly-feature-pack>
-      <versionx.org.wildfly.wildfly-http-client.wildfly-http-client-common>1.0.18.Final</versionx.org.wildfly.wildfly-http-client.wildfly-http-client-common>
-      <versionx.org.wildfly.wildfly-http-client.wildfly-http-naming-client>1.0.18.Final</versionx.org.wildfly.wildfly-http-client.wildfly-http-naming-client>
-      <versionx.org.wildfly.wildfly-http-client.wildfly-http-transaction-client>1.0.18.Final</versionx.org.wildfly.wildfly-http-client.wildfly-http-transaction-client>
-      <versionx.org.wildfly.wildfly-iiop-openjdk>${version.org.wildfly}</versionx.org.wildfly.wildfly-iiop-openjdk>
-      <versionx.org.wildfly.wildfly-naming>${version.org.wildfly}</versionx.org.wildfly.wildfly-naming>
-      <versionx.org.wildfly.wildfly-naming-client>1.0.9.Final</versionx.org.wildfly.wildfly-naming-client>
-      <versionx.org.wildfly.wildfly-security>${version.org.wildfly}</versionx.org.wildfly.wildfly-security>
-      <versionx.org.wildfly.wildfly-transactions>${version.org.wildfly}</versionx.org.wildfly.wildfly-transactions>
       <versionx.org.yaml.snakeyaml>1.18</versionx.org.yaml.snakeyaml>
       <versionx.software.amazon.ion.java>1.0.2</versionx.software.amazon.ion.java>
       <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
@@ -2393,18 +2333,6 @@
             <classifier>tests</classifier>
          </dependency>
          <dependency>
-            <groupId>org.infinispan.wildfly</groupId>
-            <artifactId>infinispan-server-commons</artifactId>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan.wildfly</groupId>
-            <artifactId>infinispan-server-commons</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-core</artifactId>
             <type>test-jar</type>
@@ -2458,18 +2386,6 @@
             <artifactId>infinispan-spring5-common</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan.wildfly</groupId>
-            <artifactId>infinispan-server-jgroups</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan.wildfly</groupId>
-            <artifactId>infinispan-server-jgroups</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
@@ -3301,11 +3217,6 @@
             <version>${versionx.org.projectodd.vdx.vdx-core}</version>
          </dependency>
          <dependency>
-            <groupId>org.projectodd.vdx</groupId>
-            <artifactId>vdx-wildfly</artifactId>
-            <version>${versionx.org.projectodd.vdx.vdx-wildfly}</version>
-         </dependency>
-         <dependency>
             <groupId>org.reactivestreams</groupId>
             <artifactId>reactive-streams</artifactId>
             <version>${versionx.org.reactivestreams.reactive-streams}</version>
@@ -3519,73 +3430,6 @@
             <version>${versionx.org.twdata.maven.mojo-executor}</version>
          </dependency>
          <dependency>
-            <groupId>${appserver.groupId}</groupId>
-            <artifactId>wildfly-clustering-common</artifactId>
-            <version>${versionx.org.wildfly.wildfly-clustering-common}</version>
-         </dependency>
-         <dependency>
-            <groupId>${appserver.groupId}</groupId>
-            <artifactId>wildfly-clustering-infinispan-spi</artifactId>
-            <version>${versionx.org.wildfly.wildfly-clustering-infinispan-spi}</version>
-         </dependency>
-         <dependency>
-            <groupId>${appserver.groupId}</groupId>
-            <artifactId>wildfly-clustering-marshalling-api</artifactId>
-            <version>${versionx.org.wildfly.wildfly-clustering-marshalling-api}</version>
-         </dependency>
-         <dependency>
-            <groupId>${appserver.groupId}</groupId>
-            <artifactId>wildfly-clustering-marshalling-spi</artifactId>
-            <version>${versionx.org.wildfly.wildfly-clustering-marshalling-spi}</version>
-         </dependency>
-         <dependency>
-            <groupId>${appserver.groupId}</groupId>
-            <artifactId>wildfly-clustering-service</artifactId>
-            <version>${versionx.org.wildfly.wildfly-clustering-service}</version>
-         </dependency>
-         <dependency>
-            <groupId>${appserver.groupId}</groupId>
-            <artifactId>wildfly-dist</artifactId>
-            <version>${versionx.org.wildfly.wildfly-dist}</version>
-            <type>zip</type>
-         </dependency>
-         <dependency>
-            <groupId>${appserver.groupId}</groupId>
-            <artifactId>wildfly-ee</artifactId>
-            <version>${versionx.org.wildfly.wildfly-ee}</version>
-         </dependency>
-         <dependency>
-            <groupId>${appserver.groupId}</groupId>
-            <artifactId>wildfly-feature-pack</artifactId>
-            <version>${versionx.org.wildfly.wildfly-feature-pack}</version>
-            <type>zip</type>
-         </dependency>
-         <dependency>
-            <groupId>${appserver.groupId}</groupId>
-            <artifactId>wildfly-iiop-openjdk</artifactId>
-            <version>${versionx.org.wildfly.wildfly-iiop-openjdk}</version>
-         </dependency>
-         <dependency>
-            <groupId>${appserver.groupId}</groupId>
-            <artifactId>wildfly-naming</artifactId>
-            <version>${versionx.org.wildfly.wildfly-naming}</version>
-         </dependency>
-         <dependency>
-            <groupId>${appserver.groupId}</groupId>
-            <artifactId>wildfly-naming-client</artifactId>
-            <version>${versionx.org.wildfly.wildfly-naming-client}</version>
-         </dependency>
-         <dependency>
-            <groupId>${appserver.groupId}</groupId>
-            <artifactId>wildfly-security</artifactId>
-            <version>${versionx.org.wildfly.wildfly-security}</version>
-         </dependency>
-         <dependency>
-            <groupId>${appserver.groupId}</groupId>
-            <artifactId>wildfly-transactions</artifactId>
-            <version>${versionx.org.wildfly.wildfly-transactions}</version>
-         </dependency>
-         <dependency>
             <groupId>org.wildfly.openssl</groupId>
             <artifactId>wildfly-openssl-java</artifactId>
             <version>${version.org.wildfly.openssl}</version>
@@ -3622,38 +3466,9 @@
          </dependency>
          <dependency>
             <groupId>org.wildfly.arquillian</groupId>
-            <artifactId>wildfly-arquillian-common</artifactId>
-            <version>${versionx.org.wildfly.arquillian.wildfly-arquillian-common}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.arquillian</groupId>
-            <artifactId>wildfly-arquillian-common-domain</artifactId>
-            <version>${versionx.org.wildfly.arquillian.wildfly-arquillian-common-domain}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.arquillian</groupId>
             <artifactId>wildfly-arquillian-container-managed</artifactId>
             <version>${versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed}</version>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.arquillian</groupId>
-            <artifactId>wildfly-arquillian-protocol-jmx</artifactId>
-            <version>${versionx.org.wildfly.arquillian.wildfly-arquillian-protocol-jmx}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.arquillian</groupId>
-            <artifactId>wildfly-arquillian-testenricher-msc</artifactId>
-            <version>${versionx.org.wildfly.arquillian.wildfly-arquillian-testenricher-msc}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.client</groupId>
-            <artifactId>wildfly-client-config</artifactId>
-            <version>${versionx.org.wildfly.client.wildfly-client-config}</version>
          </dependency>
          <dependency>
             <groupId>org.wildfly.common</groupId>
@@ -3662,219 +3477,14 @@
          </dependency>
          <dependency>
             <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-cli</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-cli}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-controller</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-controller}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-controller-client</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-controller-client}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-core-management-client</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-core-management-client}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-core-security</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-core-security}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-core-security-api</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-core-security-api}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-core-test-runner</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-core-test-runner}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-core-testsuite-shared</artifactId>
             <version>${versionx.org.wildfly.core.wildfly-core-testsuite-shared}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-deployment-repository</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-deployment-repository}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-domain-http-interface</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-domain-http-interface}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-domain-management</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-domain-management}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-elytron-integration</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-elytron-integration}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-embedded</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-embedded}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-host-controller</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-host-controller}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-io</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-io}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-jmx</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-jmx}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-launcher</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-launcher}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-management-client-content</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-management-client-content}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-model-test</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-model-test}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-network</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-network}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-platform-mbean</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-platform-mbean}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-process-controller</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-process-controller}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-protocol</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-protocol}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-remoting</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-remoting}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-request-controller</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-request-controller}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-server</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-server}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-subsystem-test</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-subsystem-test}</version>
-            <type>pom</type>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-subsystem-test-framework</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-subsystem-test-framework}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-threads</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-threads}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-version</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-version}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.extras.creaper</groupId>
-            <artifactId>creaper-commands</artifactId>
-            <version>${versionx.org.wildfly.extras.creaper.creaper-commands}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.extras.creaper</groupId>
-            <artifactId>creaper-core</artifactId>
-            <version>${versionx.org.wildfly.extras.creaper.creaper-core}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.legacy.test</groupId>
-            <artifactId>wildfly-legacy-spi</artifactId>
-            <version>${versionx.org.wildfly.legacy.test.wildfly-legacy-spi}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.legacy.test</groupId>
-            <artifactId>wildfly-legacy-versions</artifactId>
-            <version>${versionx.org.wildfly.legacy.test.wildfly-legacy-versions}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron</artifactId>
             <version>${versionx.org.wildfly.security.wildfly-elytron}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-security-manager</artifactId>
-            <version>${versionx.org.wildfly.security.wildfly-security-manager}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.security.elytron-web</groupId>
-            <artifactId>undertow-server</artifactId>
-            <version>${versionx.org.wildfly.security.elytron-web.undertow-server}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.transaction</groupId>
-            <artifactId>wildfly-transaction-client</artifactId>
-            <version>${versionx.org.wildfly.transaction.wildfly-transaction-client}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.wildfly-http-client</groupId>
-            <artifactId>wildfly-http-client-common</artifactId>
-            <version>${versionx.org.wildfly.wildfly-http-client.wildfly-http-client-common}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.wildfly-http-client</groupId>
-            <artifactId>wildfly-http-naming-client</artifactId>
-            <version>${versionx.org.wildfly.wildfly-http-client.wildfly-http-naming-client}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.wildfly-http-client</groupId>
-            <artifactId>wildfly-http-transaction-client</artifactId>
-            <version>${versionx.org.wildfly.wildfly-http-client.wildfly-http-transaction-client}</version>
          </dependency>
          <dependency>
             <groupId>org.yaml</groupId>
@@ -4004,11 +3614,6 @@
             <plugin>
                <groupId>org.wildfly.build</groupId>
                <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
-               <version>${version.org.wildfly.build-tools}</version>
-            </plugin>
-            <plugin>
-               <groupId>org.wildfly.build</groupId>
-               <artifactId>wildfly-feature-pack-build-maven-plugin</artifactId>
                <version>${version.org.wildfly.build-tools}</version>
             </plugin>
             <plugin>
