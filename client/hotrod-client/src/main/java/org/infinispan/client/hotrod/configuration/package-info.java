@@ -8,7 +8,7 @@
  * <p>The following table describes the individual properties
  * and the related programmatic configuration API.</p>
  *
- * <table cellspacing="0" cellpadding="3" border="0">
+ * <table cellspacing="0" cellpadding="3" border="1">
  *    <thead>
  *       <tr>
  *          <th>Name</th>
@@ -352,19 +352,19 @@
  *          <td><b>infinispan.client.hotrod.near_cache.mode</b></td>
  *          <td>String ({@link org.infinispan.client.hotrod.configuration.NearCacheMode} enum name)</td>
  *          <td>{@link org.infinispan.client.hotrod.configuration.NearCacheMode#DISABLED DISABLED}</td>
- *          <td>The default near-cache {@link org.infinispan.client.hotrod.configuration.NearCacheConfigurationBuilder#mode(NearCacheMode) mode}</td>
+ *          <td>The default near-cache {@link org.infinispan.client.hotrod.configuration.NearCacheConfigurationBuilder#mode(NearCacheMode) mode}. It is preferable to use the per-cache configuration.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.near_cache.max_entries</b></td>
  *          <td>Integer</td>
  *          <td>-1 (no limit)</td>
- *          <td>The {@link org.infinispan.client.hotrod.configuration.NearCacheConfigurationBuilder#maxEntries(int) maximum} number of entries to keep in the local cache.</td>
+ *          <td>The {@link org.infinispan.client.hotrod.configuration.NearCacheConfigurationBuilder#maxEntries(int) maximum} number of entries to keep in the local cache. It is preferable to use the per-cache configuration.</td>
  *       </tr>
  *       <tr>
- *          <td><b>infinispan.client.hotrod.near_cache.name_pattern</b></td>
+ *          <td><b><s>infinispan.client.hotrod.near_cache.name_pattern</s></b></td>
  *          <td>String (regex pattern, see {@link java.util.regex.Pattern})</td>
  *          <td>null (matches all cache names)</td>
- *          <td>A {@link org.infinispan.client.hotrod.configuration.NearCacheConfigurationBuilder#cacheNamePattern(String) regex} which matches caches for which near-caching should be enabled.</td>
+ *          <td>A {@link org.infinispan.client.hotrod.configuration.NearCacheConfigurationBuilder#cacheNamePattern(String) regex} which matches caches for which near-caching should be enabled. This property is deprecated and it is preferable to use the per-cache configuration.</td>
  *       </tr>
  *       <tr>
  *          <th colspan="4">XSite properties</th>
@@ -406,6 +406,46 @@
  *           <td>Default value {@link org.infinispan.client.hotrod.configuration.StatisticsConfiguration#JMX_DOMAIN}</td>
  *           <td>Relates to {@link org.infinispan.client.hotrod.configuration.StatisticsConfigurationBuilder#jmxDomain(java.lang.String)}</td>
  *        </tr>
+ *        <tr>
+ *           <th colspan="4">Per-cache properties</th>
+ *        </tr>
+ *        <tr>
+ *           <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.configuration</b></td>
+ *           <td>XML</td>
+ *           <td>N/A</td>
+ *           <td>The server-side configuration to use, in XML format, in case the specified cache does not exist when accessing it.</td>
+ *        </tr>
+ *        <tr>
+ *           <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.template_name</b></td>
+ *           <td>String</td>
+ *           <td>N/A</td>
+ *           <td>The server-side configuration template name to use, in case the specified cache does not exist when accessing it</td>
+ *        </tr>
+ *        <tr>
+ *           <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.near_cache.mode</b></td>
+ *           <td>String ({@link org.infinispan.client.hotrod.configuration.NearCacheMode} enum name)</td>
+ *          <td>{@link org.infinispan.client.hotrod.configuration.NearCacheMode#DISABLED DISABLED}</td>
+ *          <td>The near-cache {@link org.infinispan.client.hotrod.configuration.RemoteCacheConfigurationBuilder#nearCacheMode(org.infinispan.client.hotrod.configuration.NearCacheMode)} (NearCacheMode) mode} for this cache</td>
+ *        </tr>
+ *        <tr>
+ *          <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.near_cache.max_entries</b></td>
+ *          <td>Integer</td>
+ *          <td>-1 (no limit)</td>
+ *          <td>The {@link org.infinispan.client.hotrod.configuration.RemoteCacheConfigurationBuilder#nearCacheMaxEntries(int) maximum} number of entries to keep locally for the specified cache.</td>
+ *       </tr>
+ *       <tr>
+ *          <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.force_return_values</b></td>
+ *          <td>Boolean</td>
+ *          <td>false</td>
+ *          <td>Whether to {@link org.infinispan.client.hotrod.configuration.RemoteCacheConfigurationBuilder#forceReturnValues(boolean) return&nbsp;values} for puts/removes for the specified cache.</td>
+ *       </tr>
+ *       <tr>
+ *          <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.transaction.transaction_mode</b></td>
+ *          <td>String ({@link org.infinispan.client.hotrod.configuration.TransactionMode} enum name)</td>
+ *          <td>{@link org.infinispan.client.hotrod.configuration.TransactionMode#NONE NONE}</td>
+ *          <td>The default {@link org.infinispan.client.hotrod.configuration.RemoteCacheConfigurationBuilder#transactionMode(TransactionMode) transaction&nbsp;mode} for the specified cache.</td>
+ *       </tr>
+
  *    </tbody>
  * </table>
  *

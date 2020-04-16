@@ -231,4 +231,20 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
       }
    }
 
+   public void testNearCachePerCache() {
+      cacheManager.defineConfiguration("closecache", new org.infinispan.configuration.cache.ConfigurationBuilder().build());
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
+      builder.remoteCache("closecache").nearCacheMode(NearCacheMode.INVALIDATED);
+      RemoteCacheManager manager = new RemoteCacheManager(builder.build());
+      try {
+         RemoteCache nearcache = manager.getCache("closecache");
+         assertTrue(nearcache instanceof InvalidatedNearRemoteCache);
+         RemoteCache cache = manager.getCache();
+         assertFalse(cache instanceof InvalidatedNearRemoteCache);
+      } finally {
+         HotRodClientTestingUtil.killRemoteCacheManager(manager);
+      }
+   }
+
 }

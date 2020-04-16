@@ -10,7 +10,7 @@ servers. When entries are updated or removed on the server-side, entries in the
 near cache are invalidated. If keys are requested after they are invalidated,
 clients must fetch the keys from the server again.
 
-You can also configure the number of entries that can near caches can contain.
+You can also configure the number of entries that near caches can contain.
 When the maximum is reached, near-cached entries are evicted.
 
 .Near cache considerations
@@ -31,7 +31,7 @@ cache within the boundaries of the client JVM.
 
 .Procedure
 
-. Set the near cache mode to `INVALIDATED` in the client configuration.
+. Set the near cache mode to `INVALIDATED` in the client configuration for the caches you want
 . Define the size of the near cache by specifying the maximum number of entries.
 
 [source,java]
@@ -40,34 +40,18 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 ...
 
-// Bounded invalidated near cache
-ConfigurationBuilder bounded = new ConfigurationBuilder();
-bounded.nearCache()
-  .mode(NearCacheMode.INVALIDATED)
-  .maxEntries(100);
-
-// Unbounded invalidated near cache
-ConfigurationBuilder unbounded = new ConfigurationBuilder();
-unbounded.nearCache()
-  .mode(NearCacheMode.INVALIDATED)
-  .maxEntries(-1);
+// Configure different near cache settings for specific caches
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder
+  .remoteCache("bounded")
+    .nearCacheMode(NearCacheMode.INVALIDATED)
+    .nearCacheMaxEntries(100);
+  .remoteCache("unbounded").nearCache()
+    .nearCacheMode(NearCacheMode.INVALIDATED)
+    .nearCacheMaxEntries(-1);
 ----
 
-[TIP]
+[NOTE]
 ====
-Use `cacheNamePattern()` to define a regular expression to match caches for
-which you want to enable near caching. Because the configuration is shared for
-all caches from the `RemoteCacheManager`, this lets you enable near-caching for
-only the caches that match the regular expression.
+We strongly discourage the use of the global near cache settings in favour of per-cache configuration.
 ====
-
-[source,java]
-----
-// Bounded invalidated near cache with pattern matching
-ConfigurationBuilder bounded = new ConfigurationBuilder();
-bounded.nearCache()
-  .mode(NearCacheMode.INVALIDATED)
-  .maxEntries(100)
-  // Enable near-cache only for caches whose name starts with 'near'
-  .cacheNamePattern("near.*");
-----
