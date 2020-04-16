@@ -70,12 +70,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-feature-pack-wf-modules</artifactId>
-         <type>zip</type>
-      </dependency>
-
-      <dependency>
          <groupId>javax.cache</groupId>
          <artifactId>cache-api</artifactId>
          <scope>provided</scope>
@@ -158,23 +152,6 @@
             </executions>
          </plugin>
          <plugin>
-            <groupId>org.wildfly.build</groupId>
-            <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>provision-modules</id>
-                  <goals>
-                     <goal>build</goal>
-                  </goals>
-                  <phase>compile</phase>
-                  <configuration>
-                     <config-file>wildfly-provisioning.xml</config-file>
-                     <server-name>${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}</server-name>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
@@ -224,7 +201,6 @@
                            <property name="infinispan.brand.version" value="${infinispan.brand.version}"/>
                            <property name="infinispan.brand.prefix" value="${infinispan.brand.prefix}"/>
                            <property name="infinispan.brand.name" value="${infinispan.brand.name}"/>
-                           <property name="wildfly.brand.prefix" value="${wildfly.brand.prefix}"/>
                         </ant>
                      </target>
                   </configuration>
@@ -297,20 +273,6 @@
                         <descriptor>src/main/assemblies/src.xml</descriptor>
                      </descriptors>
                      <finalName>${infinispan.brand.prefix}-${infinispan.brand.version}</finalName>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>assemble-modules</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>single</goal>
-                  </goals>
-                  <configuration>
-                     <appendAssemblyId>false</appendAssemblyId>
-                     <finalName>${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}</finalName>
-                     <descriptors>
-                        <descriptor>src/main/assemblies/wildfly.xml</descriptor>
-                     </descriptors>
                   </configuration>
                </execution>
                <execution>

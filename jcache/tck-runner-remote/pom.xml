@@ -27,7 +27,7 @@
       <ispnserver.dist>${basedir}/target/infinispan-server</ispnserver.dist>
       <ispnserver.config.file>${project.build.testOutputDirectory}/infinispan.xml</ispnserver.config.file>
       <server.dir.parent>${project.build.directory}</server.dir.parent>
-      <server.dir.name>infinispan-${wildfly.brand.prefix}-server-${project.version}</server.dir.name>
+      <server.dir.name>infinispan-server-${project.version}</server.dir.name>
       <server.dir>${server.dir.parent}/${server.dir.name}</server.dir>
       <mcast.ip>234.99.54.14</mcast.ip>
       <server.jvm>${env.JAVA_HOME}</server.jvm>

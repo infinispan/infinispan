@@ -92,8 +92,6 @@
       <infinispan.base.version>11.0</infinispan.base.version>
       <infinispan.module.slot>${infinispan.module.slot.prefix}-${infinispan.base.version}</infinispan.module.slot>
       <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
-      <wildfly.brand.name>WildFly</wildfly.brand.name>
-      <wildfly.brand.prefix>wildfly</wildfly.brand.prefix>
 
       <!-- jboss repository urls -->
       <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>
@@ -190,7 +188,6 @@
       <version.netty>4.1.45.Final</version.netty>
       <version.okhttp>3.14.6</version.okhttp>
       <version.openjdk.jmh>1.12</version.openjdk.jmh>
-      <version.org.wildfly>${appserver.version}</version.org.wildfly>
       <version.org.wildfly.arquillian>2.2.0.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.core>10.0.0.Final</version.org.wildfly.core>
       <version.org.wildfly.elytron>1.11.0.Final</version.org.wildfly.elytron>
