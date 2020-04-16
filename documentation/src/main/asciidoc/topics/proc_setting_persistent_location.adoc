@@ -9,9 +9,6 @@ The global persistent location must be unique to each {brandname} instance. To
 share data between multiple instances, use a shared persistent location.
 ====
 
-When using file-based cache stores, the directories you define for storage are
-relative to the global persistent location.
-
 {brandname} servers use the `{server_home}/server/data` directory as the global
 persistent location.
 
@@ -40,8 +37,33 @@ public GlobalStateConfigurationBuilder persistentLocation(String path, String re
 }
 ----
 
-{brandname} logs the following message if you attempt to use a directory
-outside the global persistent location with file-based cache stores:
+.File-Based Cache Stores and Global Persistent Location
+
+When using file-based cache stores, you can optionally specify filesystem
+directories for storage. Unless absolute paths are declared, directories are
+always relative to the global persistent location.
+
+For example, you configure your global persistent location as follows:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<global-state>
+   <persistent-location path="/tmp/example" relative-to="my.data"/>
+</global-state>
+----
+
+You then configure a Single File cache store that uses a path named
+`myDataStore` as follows:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<file-store path="myDataStore"/>
+----
+
+In this case, the configuration results in a Single File cache store in `/tmp/example/myDataStore/myCache.dat`
+
+If you attempt to set an absolute path that resides outside the global
+persistent location, {brandname} throws the following exception:
 
 ----
 ISPN000558: "The store location 'foo' is not a child of the global persistent location 'bar'"

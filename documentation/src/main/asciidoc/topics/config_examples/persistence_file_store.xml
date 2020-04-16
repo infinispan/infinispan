@@ -1,3 +1,0 @@
-<persistence>
-   <file-store path="myDataStore" max-entries="5000"/>
-</persistence>
