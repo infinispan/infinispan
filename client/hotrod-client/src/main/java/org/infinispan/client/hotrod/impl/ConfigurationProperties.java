@@ -97,6 +97,14 @@ public class ConfigurationProperties {
    public static final String CLUSTER_PROPERTIES_PREFIX = ICH + "cluster";
    public static final Pattern CLUSTER_PROPERTIES_PREFIX_REGEX =
          Pattern.compile('^' + ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX + '.');
+   // Cache properties
+   public static final String CACHE_PREFIX= ICH + "cache.";
+   public static final String CACHE_CONFIGURATION_SUFFIX = ".configuration";
+   public static final String CACHE_FORCE_RETURN_VALUES_SUFFIX = ".force_return_values";
+   public static final String CACHE_NEAR_CACHE_MODE_SUFFIX = ".near_cache.mode";
+   public static final String CACHE_NEAR_CACHE_MAX_ENTRIES_SUFFIX = ".near_cache.max_entries";
+   public static final String CACHE_TEMPLATE_NAME_SUFFIX = ".template_name";
+   public static final String CACHE_TRANSACTION_MODE_SUFFIX = ".transaction_mode";
 
    // defaults
    public static final int DEFAULT_KEY_SIZE = 64;

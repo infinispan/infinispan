@@ -1,0 +1,107 @@
+package org.infinispan.client.hotrod.configuration;
+
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
+/**
+ * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
+ * @since 11.0
+ **/
+@BuiltBy(RemoteCacheConfigurationBuilder.class)
+public class RemoteCacheConfiguration {
+   public static final AttributeDefinition<String> CONFIGURATION = AttributeDefinition.builder("configuration", null, String.class).build();
+   public static final AttributeDefinition<Boolean> FORCE_RETURN_VALUES = AttributeDefinition.builder("force-return-values", false, Boolean.class).build();
+   public static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
+   public static final AttributeDefinition<NearCacheMode> NEAR_CACHE_MODE = AttributeDefinition.builder("near-cache-mode", NearCacheMode.DISABLED).build();
+   public static final AttributeDefinition<Integer> NEAR_CACHE_MAX_ENTRIES = AttributeDefinition.builder("near-cache-max-entries", -1).build();
+   public static final AttributeDefinition<String> TEMPLATE_NAME = AttributeDefinition.builder("template-name", null, String.class).build();
+   public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder("transaction-mode", TransactionMode.NONE).build();
+
+   static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(RemoteCacheConfiguration.class, CONFIGURATION, FORCE_RETURN_VALUES, NAME, NEAR_CACHE_MODE, NEAR_CACHE_MAX_ENTRIES, TEMPLATE_NAME, TRANSACTION_MODE);
+   }
+
+   private final Attribute<String> configuration;
+   private final Attribute<Boolean> forceReturnValues;
+   private final Attribute<String> name;
+   private final Attribute<NearCacheMode> nearCacheMode;
+   private final Attribute<Integer> nearCacheMaxEntries;
+   private final Attribute<String> templateName;
+   private final Attribute<TransactionMode> transactionMode;
+   private final AttributeSet attributes;
+
+   RemoteCacheConfiguration(AttributeSet attributes) {
+      this.attributes = attributes.checkProtection();
+      configuration = attributes.attribute(CONFIGURATION);
+      forceReturnValues = attributes.attribute(FORCE_RETURN_VALUES);
+      name = attributes.attribute(NAME);
+      nearCacheMode = attributes.attribute(NEAR_CACHE_MODE);
+      nearCacheMaxEntries = attributes.attribute(NEAR_CACHE_MAX_ENTRIES);
+      templateName = attributes.attribute(TEMPLATE_NAME);
+      transactionMode = attributes.attribute(TRANSACTION_MODE);
+   }
+
+   public String configuration() {
+      return configuration.get();
+   }
+
+   public boolean forceReturnValues() {
+      return forceReturnValues.get();
+   }
+
+   public String name() {
+      return name.get();
+   }
+
+   public NearCacheMode nearCacheMode() {
+      return nearCacheMode.get();
+   }
+
+   public int nearCacheMaxEntries() {
+      return nearCacheMaxEntries.get();
+   }
+
+   public String templateName() {
+      return templateName.get();
+   }
+
+   public TransactionMode transactionMode() {
+      return transactionMode.get();
+   }
+
+   AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public String toString() {
+      return "RemoteCacheConfiguration [attributes=" + attributes + "]";
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (getClass() != obj.getClass())
+         return false;
+      RemoteCacheConfiguration other = (RemoteCacheConfiguration) obj;
+      if (attributes == null) {
+         if (other.attributes != null)
+            return false;
+      } else if (!attributes.equals(other.attributes))
+         return false;
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+      return result;
+   }
+}

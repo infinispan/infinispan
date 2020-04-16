@@ -33,6 +33,8 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
+import org.infinispan.client.hotrod.configuration.NearCacheMode;
+import org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration;
 import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.counter.impl.RemoteCounterManager;
@@ -59,6 +61,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.BytesOnlyMarshaller;
 import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
@@ -127,7 +130,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
                "org.wildfly.security.sasl.gssapi.WildFlyElytronSaslGssapiProvider",
                "org.wildfly.security.sasl.gs2.WildFlyElytronSaslGs2Provider"
          )) {
-            Provider provider = (Provider)Class.forName(name).getConstructor(new Class[]{}).newInstance(new Object[]{});
+            Provider provider = (Provider) Class.forName(name).getConstructor(new Class[]{}).newInstance(new Object[]{});
             SecurityActions.addSecurityProvider(provider);
          }
       } catch (Exception e) {
@@ -353,7 +356,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
       synchronized (cacheName2RemoteCache) {
          for (RemoteCacheHolder rcc : cacheName2RemoteCache.values()) {
-            startRemoteCache(rcc);
+            startRemoteCache(rcc, codec);
          }
       }
 
@@ -370,7 +373,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    @Override
    public boolean isTransactional(String cacheName) {
       ClientStatistics stats = ClientStatistics.dummyClientStatistics(timeService);
-      OperationsFactory factory = createOperationFactory(cacheName, false, stats);
+      OperationsFactory factory = createOperationFactory(cacheName, false, codec, stats);
       return checkTransactionSupport(cacheName, factory, log);
    }
 
@@ -427,52 +430,84 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName, boolean forceReturnValueOverride,
                                                       TransactionMode transactionModeOverride, TransactionManager transactionManagerOverride) {
-      synchronized (cacheName2RemoteCache) {
-         RemoteCacheKey key = new RemoteCacheKey(cacheName, forceReturnValueOverride);
-         if (!cacheName2RemoteCache.containsKey(key)) {
-            TransactionMode transactionMode = getTransactionMode(transactionModeOverride);
-            RemoteCacheImpl<K, V> result;
-            if (transactionMode == TransactionMode.NONE) {
-               result = createRemoteCache(cacheName);
-            } else {
-               if (!this.isTransactional(cacheName)) {
-                  throw HOTROD.cacheDoesNotSupportTransactions(cacheName);
-               }
-               TransactionManager transactionManager = getTransactionManager(transactionManagerOverride);
-               result = createRemoteTransactionalCache(cacheName, forceReturnValueOverride,
-                     transactionMode == TransactionMode.FULL_XA, transactionMode, transactionManager);
-            }
-            RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride);
-            startRemoteCache(rcc);
+      RemoteCacheConfiguration cacheConfiguration = configuration.remoteCaches().get(cacheName);
+      boolean forceReturnValue = forceReturnValueOverride ? true : (cacheConfiguration != null ? cacheConfiguration.forceReturnValues() : configuration.forceReturnValues());
+      RemoteCacheKey key = new RemoteCacheKey(cacheName, forceReturnValue);
+      if (cacheName2RemoteCache.containsKey(key)) {
+         return cacheName2RemoteCache.get(key).remoteCache();
+      }
 
-            PingResponse pingResponse = result.resolveStorage();
-            // If ping not successful assume that the cache does not exist
-            if (pingResponse.isCacheNotFound()) {
+      OperationsFactory operationsFactory = createOperationFactory(cacheName, forceReturnValue, codec, null);
+      PingResponse pingResponse;
+      if (started) {
+         // Verify if the cache exists on the server first
+         pingResponse = await(operationsFactory.newFaultTolerantPingOperation().execute());
+
+         // If ping not successful assume that the cache does not exist
+         if (pingResponse.isCacheNotFound()) {
+            // We may be able to create it. Don't use RemoteCacheAdmin for this, since it would end up calling this method again
+            Map<String, byte[]> params = new HashMap<>(2);
+            params.put(RemoteCacheManagerAdminImpl.CACHE_NAME, cacheName.getBytes(HotRodConstants.HOTROD_STRING_CHARSET));
+            if (cacheConfiguration != null && cacheConfiguration.templateName() != null) {
+               params.put(RemoteCacheManagerAdminImpl.CACHE_TEMPLATE, cacheConfiguration.templateName().getBytes(HotRodConstants.HOTROD_STRING_CHARSET));
+            } else if (cacheConfiguration != null && cacheConfiguration.configuration() != null) {
+               params.put(RemoteCacheManagerAdminImpl.CACHE_CONFIGURATION, new XMLStringConfiguration(cacheConfiguration.configuration()).toXMLString(cacheName).getBytes(HotRodConstants.HOTROD_STRING_CHARSET));
+            } else {
+               // We cannot create the cache
                return null;
             }
-
-            result.start();
-            // If ping on startup is disabled, or cache is defined in server
-            cacheName2RemoteCache.put(key, rcc);
-            return result;
-         } else {
-            return cacheName2RemoteCache.get(key).remoteCache();
+            // Create and re-ping
+            OperationsFactory adminOperationsFactory = new OperationsFactory(channelFactory, codec, listenerNotifier, configuration);
+            pingResponse = await(adminOperationsFactory.newAdminOperation("@@cache@getorcreate", params).execute().thenCompose(s -> operationsFactory.newFaultTolerantPingOperation().execute()));
          }
+      } else {
+         pingResponse = PingResponse.EMPTY;
+      }
+
+      TransactionMode transactionMode = getTransactionMode(transactionModeOverride);
+      RemoteCacheImpl<K, V> remoteCache;
+      if (transactionMode == TransactionMode.NONE) {
+         remoteCache = createRemoteCache(cacheName);
+      } else {
+         if (!await(checkTransactionSupport(cacheName, operationsFactory).toCompletableFuture())) {
+            throw HOTROD.cacheDoesNotSupportTransactions(cacheName);
+         } else {
+            TransactionManager transactionManager = getTransactionManager(transactionManagerOverride);
+            remoteCache = createRemoteTransactionalCache(cacheName, forceReturnValueOverride,
+                  transactionMode == TransactionMode.FULL_XA, transactionMode, transactionManager);
+         }
+      }
+
+      synchronized (cacheName2RemoteCache) {
+         RemoteCacheHolder holder = new RemoteCacheHolder(remoteCache, forceReturnValueOverride);
+         startRemoteCache(holder, operationsFactory.getCodec());
+         remoteCache.resolveStorage(pingResponse.isObjectStorage());
+         cacheName2RemoteCache.putIfAbsent(key, holder);
+         return holder.remoteCache();
       }
    }
 
    private <K, V> RemoteCacheImpl<K, V> createRemoteCache(String cacheName) {
-      switch (configuration.nearCache().mode()) {
+      RemoteCacheConfiguration remoteCacheConfiguration = configuration.remoteCaches().get(cacheName);
+      NearCacheConfiguration nearCache;
+      if (remoteCacheConfiguration != null) {
+         nearCache = new NearCacheConfiguration(remoteCacheConfiguration.nearCacheMode(), remoteCacheConfiguration.nearCacheMaxEntries());
+      } else {
+         Pattern pattern = configuration.nearCache().cacheNamePattern();
+         if (pattern == null || pattern.matcher(cacheName).matches()) {
+            nearCache = configuration.nearCache();
+         } else {
+            nearCache = new NearCacheConfiguration(NearCacheMode.DISABLED, -1);
+         }
+      }
+
+      switch (nearCache.mode()) {
          case INVALIDATED:
-            Pattern pattern = configuration.nearCache().cacheNamePattern();
-            if (pattern == null || pattern.matcher(cacheName).matches()) {
-               if (log.isTraceEnabled()) {
-                  log.tracef("Enabling near-caching for cache '%s'", cacheName);
-               }
-               return new InvalidatedNearRemoteCache<>(this, cacheName, timeService,
-                     createNearCacheService(cacheName, configuration.nearCache()));
+            if (log.isTraceEnabled()) {
+               log.tracef("Enabling near-caching for cache '%s'", cacheName);
             }
-            // else fallthrough
+            return new InvalidatedNearRemoteCache<>(this, cacheName, timeService,
+                  createNearCacheService(cacheName, configuration.nearCache()));
          case DISABLED:
          default:
             return new RemoteCacheImpl<>(this, cacheName, timeService);
@@ -484,17 +519,17 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    /**
-    * @deprecated Replaced by {@code #createNearCacheService(String, NearCacheConfiguration)}.
+    * @deprecated since 10.0. To be removed in 12.0. Replaced by {@code #createNearCacheService(String, NearCacheConfiguration)}.
     */
    @Deprecated
    protected <K, V> NearCacheService<K, V> createNearCacheService(NearCacheConfiguration cfg) {
       return NearCacheService.create(cfg, listenerNotifier);
    }
 
-   private void startRemoteCache(RemoteCacheHolder remoteCacheHolder) {
+   private void startRemoteCache(RemoteCacheHolder remoteCacheHolder, Codec codec) {
       RemoteCacheImpl<?, ?> remoteCache = remoteCacheHolder.remoteCache();
       OperationsFactory operationsFactory = createOperationFactory(remoteCache.getName(),
-            remoteCacheHolder.forceReturnValue, remoteCache.getClientStatistics());
+            remoteCacheHolder.forceReturnValue, codec, remoteCache.getClientStatistics());
       initRemoteCache(remoteCache, operationsFactory);
       remoteCache.start();
    }
@@ -523,6 +558,10 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       return HotRodConstants.DEFAULT_CACHE_NAME_BYTES;
    }
 
+   /**
+    * Access to administration operations (cache creation, removal, etc)
+    * @return an instance of {@link RemoteCacheManagerAdmin} which can perform administrative operations on the server.
+    */
    public RemoteCacheManagerAdmin administration() {
       OperationsFactory operationsFactory = new OperationsFactory(channelFactory, codec, listenerNotifier, configuration);
       return new RemoteCacheManagerAdminImpl(this, operationsFactory, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
@@ -535,11 +574,18 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             });
    }
 
+   /**
+    * See {@link #stop()}
+    */
    @Override
    public void close() {
       stop();
    }
 
+   /**
+    * Access to counter operations
+    * @return an instance of {@link CounterManager} which can perform counter operations on the server.
+    */
    CounterManager getCounterManager() {
       return counterManager;
    }
@@ -628,7 +674,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       return channelFactory.getRetries();
    }
 
-   private OperationsFactory createOperationFactory(String cacheName, boolean forceReturnValue,
+   private OperationsFactory createOperationFactory(String cacheName, boolean forceReturnValue, Codec codec,
                                                     ClientStatistics stats) {
       return new OperationsFactory(channelFactory, cacheName, forceReturnValue, codec, listenerNotifier, configuration,
             stats);

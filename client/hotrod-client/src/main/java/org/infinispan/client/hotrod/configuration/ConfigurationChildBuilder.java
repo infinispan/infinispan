@@ -49,7 +49,7 @@ public interface ConfigurationChildBuilder {
     * For replicated (vs distributed) Hot Rod server clusters, the client balances requests to the
     * servers according to this strategy.
     *
-    * @deprecated since 9.3, use {@link #balancingStrategy(Supplier)} instead.
+    * @deprecated since 9.3. To be removed in 12.0. Use {@link #balancingStrategy(Supplier)} instead.
     */
    @Deprecated
    ConfigurationBuilder balancingStrategy(FailoverRequestBalancingStrategy balancingStrategy);
@@ -70,7 +70,7 @@ public interface ConfigurationChildBuilder {
     * Specifies the {@link ClassLoader} used to find certain resources used by configuration when specified by name
     * (e.g. certificate stores). Infinispan will search through the classloader which loaded this class, the system
     * classloader, the TCCL and the OSGi classloader (if applicable).
-    * @deprecated since 9.0.  If you need to load configuration resources from other locations, you will need to do so
+    * @deprecated since 9.0. To be removed in 12.0. If you need to load configuration resources from other locations, you will need to do so
     * yourself and use the appropriate configuration methods (e.g. {@link SslConfigurationBuilder#sslContext(javax.net.ssl.SSLContext)})
     */
    @Deprecated
@@ -155,7 +155,7 @@ public interface ConfigurationChildBuilder {
     * This property defines the protocol version that this client should use. Defaults to the latest protocol version
     * supported by this client.
     *
-    * @deprecated Use {@link ConfigurationChildBuilder#version(ProtocolVersion)} instead.
+    * @deprecated since 9.0. To be removed in 12.0. Use {@link ConfigurationChildBuilder#version(ProtocolVersion)} instead.
     */
    @Deprecated
    ConfigurationBuilder protocolVersion(String protocolVersion);
@@ -221,6 +221,13 @@ public interface ConfigurationChildBuilder {
     * Transaction configuration
     */
    TransactionConfigurationBuilder transaction();
+
+   /**
+    * Per-cache configuration
+    * @param name the name of the cache to which specific configuration should be applied
+    * @return the {@link RemoteCacheConfigurationBuilder} for the cache
+    */
+   RemoteCacheConfigurationBuilder remoteCache(String name);
 
    /**
     * Configures this builder using the specified properties. See {@link ConfigurationBuilder} for a list.

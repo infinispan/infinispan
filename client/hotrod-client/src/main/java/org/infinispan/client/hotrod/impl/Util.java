@@ -5,6 +5,7 @@ import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 import java.net.SocketTimeoutException;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -28,18 +29,17 @@ public class Util {
 
       @Override
       public byte[] getGlobalTransactionId() {
-         return new byte[] {1};
+         return new byte[]{1};
       }
 
       @Override
       public byte[] getBranchQualifier() {
-         return new byte[] {1};
+         return new byte[]{1};
       }
    };
 
    private Util() {
    }
-
 
 
    public static <T> T await(CompletableFuture<T> cf) {
@@ -80,6 +80,17 @@ public class Util {
       } else {
          return new TransportException(e.getCause(), null);
       }
+   }
+
+   public static CompletionStage<Boolean> checkTransactionSupport(String cacheName, OperationsFactory factory) {
+      PrepareTransactionOperation op = factory.newPrepareTransactionOperation(DUMMY_XID, true, Collections.emptyList(),
+            false, 60000);
+      return op.execute().handle((integer, throwable) -> {
+         if (throwable != null) {
+            HOTROD.invalidTxServerConfig(cacheName, throwable);
+         }
+         return throwable == null;
+      });
    }
 
    public static boolean checkTransactionSupport(String cacheName, OperationsFactory factory, Log log) {

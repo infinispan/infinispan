@@ -332,4 +332,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "OAUTHBEARER mechanism selected without providing a token", id = 4093)
    CacheConfigurationException oauthBearerWithoutToken();
+
+   @Message(value = "Cannot specify both template name and configuration for '%s'", id = 4094)
+   CacheConfigurationException remoteCacheTemplateNameXorConfiguration(String name);
 }
