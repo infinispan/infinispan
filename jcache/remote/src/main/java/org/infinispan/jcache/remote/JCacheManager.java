@@ -2,6 +2,7 @@ package org.infinispan.jcache.remote;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.Objects;
 import java.util.Properties;
@@ -34,6 +35,14 @@ public class JCacheManager extends AbstractJCacheManager {
 
    public JCacheManager(URI uri, ClassLoader classLoader, CachingProvider provider, Properties properties) {
       super(uri, classLoader, provider, properties, false);
+
+      try(InputStream is = uri.toURL().openStream()) {
+
+      } catch (MalformedURLException e) {
+         // Ignore
+      } catch (IOException e) {
+         throw new RuntimeException("Could not load "+uri, e);
+      }
 
       ConfigurationBuilder builder = getConfigurationBuilder(properties);
 

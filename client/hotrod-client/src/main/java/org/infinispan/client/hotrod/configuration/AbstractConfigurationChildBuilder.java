@@ -197,6 +197,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
+   public RemoteCacheConfigurationBuilder remoteCache(String name) {
+      return builder.remoteCache(name);
+   }
+
+   @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       return builder.withProperties(properties);
    }

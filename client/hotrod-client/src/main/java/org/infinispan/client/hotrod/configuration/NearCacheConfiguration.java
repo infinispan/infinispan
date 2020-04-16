@@ -8,6 +8,10 @@ public class NearCacheConfiguration {
    private final int maxEntries;
    private final Pattern cacheNamePattern;
 
+   public NearCacheConfiguration(NearCacheMode mode, int maxEntries) {
+      this(mode, maxEntries, null);
+   }
+
    public NearCacheConfiguration(NearCacheMode mode, int maxEntries, Pattern cacheNamePattern) {
       this.mode = mode;
       this.maxEntries = maxEntries;
