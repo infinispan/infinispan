@@ -6,6 +6,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +84,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final List<ClusterConfigurationBuilder> clusters = new ArrayList<>();
    private Features features;
    private final List<SerializationContextInitializer> contextInitializers = new ArrayList<>();
+   private Map<String, RemoteCacheConfigurationBuilder> remoteCacheBuilders;
 
    public ConfigurationBuilder() {
       this.classLoader = new WeakReference<>(Thread.currentThread().getContextClassLoader());
@@ -92,6 +94,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.nearCache = new NearCacheConfigurationBuilder(this);
       this.transaction = new TransactionConfigurationBuilder(this);
       this.statistics = new StatisticsConfigurationBuilder(this);
+      this.remoteCacheBuilders = new HashMap<>();
    }
 
    @Override
@@ -260,6 +263,10 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return this;
    }
 
+   /**
+    * @deprecated since 11.0. To be removed in 14.0. Use {@link RemoteCacheConfigurationBuilder#nearCacheMode(NearCacheMode)} and {@link RemoteCacheConfigurationBuilder#nearCacheMaxEntries(int)} instead.
+    */
+   @Deprecated
    public NearCacheConfigurationBuilder nearCache() {
       return nearCache;
    }
@@ -341,6 +348,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public RemoteCacheConfigurationBuilder remoteCache(String name) {
+      return remoteCacheBuilders.computeIfAbsent(name, (n) -> new RemoteCacheConfigurationBuilder(this, n));
+   }
+
+   @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
 
@@ -413,6 +425,15 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          parseServers(entry.getValue(), (host, port) -> cluster.addClusterNode(host, port));
       });
 
+      Set<String> cachesNames = typed.keySet().stream()
+            .filter(k -> ((String) k).startsWith(ConfigurationProperties.CACHE_PREFIX))
+            .map(k -> ((String) k).substring(ConfigurationProperties.CACHE_PREFIX.length(), ((String) k).indexOf('.', ConfigurationProperties.CACHE_PREFIX.length())))
+            .collect(Collectors.toSet());
+
+      for(String cacheName : cachesNames) {
+         this.remoteCache(cacheName).withProperties(typed);
+      }
+
       statistics.withProperties(properties);
       return this;
    }
@@ -454,9 +475,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          handleNullMarshaller();
       }
 
+      Map<String, RemoteCacheConfiguration> remoteCaches = remoteCacheBuilders.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().create()));
+
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
             consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
-            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create(), statistics.create(), features, contextInitializers);
+            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create(), statistics.create(), features, contextInitializers, remoteCaches);
    }
 
    // Method that handles default marshaller - needed as a placeholder

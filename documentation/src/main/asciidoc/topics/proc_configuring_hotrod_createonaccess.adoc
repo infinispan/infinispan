@@ -1,0 +1,21 @@
+[id='hotrod_create_caches_on_access']
+= Creating server caches on first access
+
+The normal behaviour of a Hot Rod Java client when attempting to access a non-existent cache is to return `null` from the `getCache("name")` invocation.
+It is possible to have the Hot Rod Java clients automatically create requested caches on the server on first access using either a specific template or a full configuration.
+
+[source,java]
+----
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.NearCacheMode;
+...
+
+// Specify the server-side template or configuration to use
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder
+  .remoteCache("my-cache")
+    .templateName("org.infinispan.DIST_SYNC")
+  .remoteCache("another-cache")
+    .configuration("<infinispan><cache-container><distributed-cache name=\"another-cache\"/></cache-container></infinispan>");
+
+----

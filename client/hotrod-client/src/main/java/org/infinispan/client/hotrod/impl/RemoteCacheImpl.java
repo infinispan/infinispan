@@ -904,14 +904,9 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return copy;
    }
 
-   public PingResponse resolveStorage() {
-      if (remoteCacheManager.isStarted()) {
-         PingResponse result = ping();
-         this.isObjectStorage = operationsFactory.getCodec().isObjectStorageHinted(result);
-         this.defaultDataFormat.initialize(remoteCacheManager, isObjectStorage);
-         return result;
-      }
-      return PingResponse.EMPTY;
+   public void resolveStorage(boolean objectStorage) {
+      this.isObjectStorage = objectStorage;
+      this.defaultDataFormat.initialize(remoteCacheManager, isObjectStorage);
    }
 
    @Override
