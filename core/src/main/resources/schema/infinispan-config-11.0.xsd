@@ -1858,9 +1858,11 @@
         <xs:attribute name="path" type="xs:string">
           <xs:annotation>
             <xs:documentation>
-              Defines a location in the root path, specified in "relative-to",
-              where the cache state is stored. Defaults to the name of the
-              cache container.
+              Specifies a filesystem directory for data. The value can be a
+              relative or absolute path. Relative paths are created relative to
+              the configured global persistent location. Absolute paths must be
+              subdirectories of the global persistent location, otherwise an
+              exception is thrown.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
