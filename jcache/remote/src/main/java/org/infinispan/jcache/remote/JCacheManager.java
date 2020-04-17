@@ -33,18 +33,10 @@ public class JCacheManager extends AbstractJCacheManager {
    private RemoteCacheManager cm;
    private RemoteCacheManager cmForceReturnValue;
 
-   public JCacheManager(URI uri, ClassLoader classLoader, CachingProvider provider, Properties properties) {
-      super(uri, classLoader, provider, properties, false);
+   public JCacheManager(URI uri, ClassLoader classLoader, CachingProvider provider, Properties userProperties) {
+      super(uri, classLoader, provider, userProperties, false);
 
-      try(InputStream is = uri.toURL().openStream()) {
-
-      } catch (MalformedURLException e) {
-         // Ignore
-      } catch (IOException e) {
-         throw new RuntimeException("Could not load "+uri, e);
-      }
-
-      ConfigurationBuilder builder = getConfigurationBuilder(properties);
+      ConfigurationBuilder builder = getConfigurationBuilder(uri, userProperties);
 
       org.infinispan.client.hotrod.configuration.Configuration configuration = builder.build();
       cm = new RemoteCacheManager(configuration, true);
@@ -62,25 +54,42 @@ public class JCacheManager extends AbstractJCacheManager {
       }
    }
 
-   private ConfigurationBuilder getConfigurationBuilder(Properties userProperties) {
+   private ConfigurationBuilder getConfigurationBuilder(URI uri, Properties userProperties) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      InputStream is;
-      if (userProperties != null && !userProperties.isEmpty()) {
-         this.properties = userProperties;
-         builder.withProperties(userProperties);
-      } else if ((is = findPropertiesFile()) != null) {
-         Properties fileProperties = new Properties();
-         try {
-            fileProperties.load(is);
-            this.properties = fileProperties;
-            builder.withProperties(fileProperties);
-         } catch (IOException e) {
-            throw new CacheException("Unable to load properties from `hotrod-client.properties`", e);
+
+      // Attempt to load the URI as a Hot Rod properties file
+      try (InputStream is = uri.toURL().openStream()) {
+         Properties properties = new Properties();
+         properties.load(is);
+         // Merge all of the user properties which will override any properties in the config file
+         if (userProperties != null) {
+            properties.putAll(userProperties);
          }
-      } else {
-         builder.addServer().host("127.0.0.1").port(11222);
+         builder.withProperties(properties);
+         this.properties = properties;
+         return builder;
+      } catch (IllegalArgumentException | MalformedURLException e) {
+         // The URI did not point to a hotrod-client.properties file, fall-through and use other strategies
+      } catch (IOException e) {
+         throw new CacheException("Could not load configuration", e);
       }
-      return builder;
+
+      // See if there is a hotrod-client.properties file in the classpath first
+      try (InputStream is = findPropertiesFile()) {
+         Properties properties = new Properties();
+         // Load only if found
+         if (is != null) {
+            properties.load(is);
+         }
+         // Merge all of the user properties which will override any properties in the config file
+         if (userProperties != null) {
+            properties.putAll(userProperties);
+         }
+         this.properties = properties;
+         return builder.withProperties(properties);
+      } catch (IOException e) {
+         throw new CacheException("Could not load configuration", e);
+      }
    }
 
    private InputStream findPropertiesFile() {

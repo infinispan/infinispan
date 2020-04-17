@@ -21,13 +21,23 @@ specification, and explains key aspects of the API.
 include::dependencies_maven/jcache.xml[]
 ----
 
-== Create a local cache
-Creating a local cache, using default configuration options as defined by the
+== Create an embedded cache
+Creating an embedded cache, using default configuration options as defined by the
 JCache API specification, is as simple as doing the following:
 
 [source,java]
 ----
 include::code_examples/JCacheCreateCache.java[]
+----
+
+== Use a custom embedded configuration
+
+It is possible to use a custom embedded {brandname} configuration file by
+passing the URI pointing to it to the `CachingProvider.getCacheManager(URI)` call:
+
+[source,java]
+----
+include::code_examples/JCacheCreateCacheCustomConfig.java[]
 ----
 
 WARNING: By default, the JCache API specifies that data should be stored as
@@ -45,7 +55,6 @@ Alternatively, JCache can be configured to store data by reference
 include::code_examples/CreateCacheMutableConfiguration.java[]
 ----
 
-
 == Create a remote cache
 Creating a remote cache (client-server mode), using default configuration options
 as defined by the JCache API specification, is as simple as doing the following:
@@ -57,6 +66,16 @@ include::code_examples/JCacheCreateRemoteCache.java[]
 
 NOTE: In order to use the org.infinispan.jcache.remote.JCachingProvider, infinispan-jcache-remote-<version>.jar
 and all its transitive dependencies need to be on put your classpath.
+
+== Use a custom remote configuration
+
+It is possible to use a custom remote (Hot Rod) {brandname} configuration file by
+passing the URI pointing to it to the `CachingProvider.getCacheManager(URI)` call:
+
+[source,java]
+----
+include::code_examples/JCacheCreateRemoteCacheCustomConfig.java[]
+----
 
 == Store and retrieve data
 Even though JCache API does not extend neither
