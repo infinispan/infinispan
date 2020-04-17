@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Properties;
 
 import javax.cache.CacheManager;
@@ -22,16 +23,25 @@ public class JCacheConfigurationPropertiesFileTest extends AbstractInfinispanTes
       Class<?> clazz = this.getClass();
       ClassLoader cl = clazz.getClassLoader();
       CachingProvider provider = Caching.getCachingProvider(cl);
-      Properties testProperties = getProperties(cl);
+      Properties testProperties = getProperties(cl, "hotrod-client.properties");
       try (CacheManager cm = provider.getCacheManager(URI.create(clazz.getName()), cl)) {
          assertEquals(testProperties, cm.getProperties());
       }
    }
 
-   public Properties getProperties(ClassLoader cl) {
-      InputStream is = FileLookupFactory.newInstance().lookupFile("hotrod-client.properties", cl);
-      Properties testProperties = new Properties();
-      try {
+   public void testPropertiesURIConfiguration() throws URISyntaxException {
+      Class<?> clazz = this.getClass();
+      ClassLoader cl = clazz.getClassLoader();
+      CachingProvider provider = Caching.getCachingProvider(cl);
+      Properties testProperties = getProperties(cl, "hotrod-client-custom.properties");
+      try (CacheManager cm = provider.getCacheManager(cl.getResource("hotrod-client-custom.properties").toURI(), cl)) {
+         assertEquals(testProperties, cm.getProperties());
+      }
+   }
+
+   public Properties getProperties(ClassLoader cl, String name) {
+      try (InputStream is = FileLookupFactory.newInstance().lookupFile(name, cl)) {
+         Properties testProperties = new Properties();
          testProperties.load(is);
          return testProperties;
       } catch (IOException e) {
