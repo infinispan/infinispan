@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -18,20 +17,19 @@ import org.infinispan.remoting.transport.Address;
  * @since 10.1
  */
 final class QueryPartitioner {
-   private final Cache<?, ?> cache;
+   private final AdvancedCache<?, ?> cache;
    private final int numSegments;
 
-   public QueryPartitioner(Cache<?, ?> cache) {
+   public QueryPartitioner(AdvancedCache<?, ?> cache) {
       this.cache = cache;
       ClusteringConfiguration clustering = cache.getCacheConfiguration().clustering();
       this.numSegments = clustering.hash().numSegments();
    }
 
    public Map<Address, BitSet> split() {
-      AdvancedCache<?, ?> advancedCache = cache.getAdvancedCache();
-      List<Address> members = advancedCache.getRpcManager().getMembers();
-      Address localAddress = advancedCache.getRpcManager().getAddress();
-      LocalizedCacheTopology cacheTopology = advancedCache.getDistributionManager().getCacheTopology();
+      List<Address> members = cache.getRpcManager().getMembers();
+      Address localAddress = cache.getRpcManager().getAddress();
+      LocalizedCacheTopology cacheTopology = cache.getDistributionManager().getCacheTopology();
       BitSet bitSet = new BitSet();
       Map<Address, BitSet> segmentsPerMember = new LinkedHashMap<>(members.size());
 
@@ -46,5 +44,4 @@ final class QueryPartitioner {
       }
       return segmentsPerMember;
    }
-
 }

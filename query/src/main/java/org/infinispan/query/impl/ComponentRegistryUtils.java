@@ -45,11 +45,6 @@ public final class ComponentRegistryUtils {
       return getRequiredComponent(cache, SearchIntegrator.class);
    }
 
-   public static IndexInspector getIndexInspector(Cache<?, ?> cache) {
-      ensureIndexed(cache);
-      return getRequiredComponent(cache, IndexInspector.class);
-   }
-
    public static KeyPartitioner getKeyPartitioner(Cache<?, ?> cache) {
       return getRequiredComponent(cache, KeyPartitioner.class);
    }

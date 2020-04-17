@@ -42,11 +42,11 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
@@ -93,7 +93,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject IndexInspector indexInspector;
 
-   private final IndexModificationStrategy indexingMode;
    private final SearchIntegrator searchFactory;
    private final KeyTransformationHandler keyTransformationHandler;
    private final AtomicBoolean stopping = new AtomicBoolean(false);
@@ -109,12 +108,10 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private SegmentListener segmentListener;
 
    public QueryInterceptor(SearchIntegrator searchFactory, KeyTransformationHandler keyTransformationHandler,
-                           IndexModificationStrategy indexingMode,
                            ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues,
                            AdvancedCache<?, ?> cache) {
       this.searchFactory = searchFactory;
       this.keyTransformationHandler = keyTransformationHandler;
-      this.indexingMode = indexingMode;
       this.isManualIndexing = searchFactory.getIndexingMode() == IndexingMode.MANUAL;
       this.txOldValues = txOldValues;
       this.valueDataConversion = cache.getValueDataConversion();
@@ -139,18 +136,16 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    private boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx, Object key, Object value) {
-      if (indexingMode != null) {
-         return indexingMode.shouldModifyIndexes(command, ctx, distributionManager, rpcManager, key);
-      }
-
       if (isManualIndexing) return false;
 
-      CacheMode cacheMode = cacheConfiguration.clustering().cacheMode();
-      if (!cacheMode.isClustered()) return true;
+      if (key == null || distributionManager == null) {
+         return true;
+      }
 
-      if (value == null) return cacheMode.isReplicated() || ctx.isOriginLocal();
-
-      return IndexModificationStrategy.ALL.shouldModifyIndexes(command, ctx, distributionManager, rpcManager, key);
+      DistributionInfo info = distributionManager.getCacheTopology().getDistribution(key);
+      // If this is a backup node we should modify the entry in the remote context
+      return info.isPrimary() || info.isWriteOwner() &&
+            (ctx.isInTxScope() || !ctx.isOriginLocal() || command != null && command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER));
    }
 
    /**
