@@ -109,13 +109,12 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private SegmentListener segmentListener;
 
    public QueryInterceptor(SearchIntegrator searchFactory, KeyTransformationHandler keyTransformationHandler,
-                           IndexModificationStrategy indexingMode,
                            ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues,
                            AdvancedCache<?, ?> cache) {
       this.searchFactory = searchFactory;
       this.keyTransformationHandler = keyTransformationHandler;
-      this.indexingMode = indexingMode;
       this.isManualIndexing = searchFactory.getIndexingMode() == IndexingMode.MANUAL;
+      this.indexingMode = isManualIndexing ? IndexModificationStrategy.MANUAL : IndexModificationStrategy.ALL;
       this.txOldValues = txOldValues;
       this.valueDataConversion = cache.getValueDataConversion();
       this.keyDataConversion = cache.getKeyDataConversion();
