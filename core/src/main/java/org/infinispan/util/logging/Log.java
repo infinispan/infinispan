@@ -1912,9 +1912,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Configured store '%s' is segmented and may use a large number of file descriptors", id = 564)
    void segmentedStoreUsesManyFileDescriptors(String storeName);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Index.LOCAL is no longer supported since version 10.0. Deprecated usages are automatically converted to Index.PRIMARY_OWNER. Please update your configuration!", id = 565)
-   void indexLocalIsNotSupported();
+   @Message(value = "Index.%s is no longer supported. Please update your configuration!", id = 565)
+   CacheConfigurationException indexModeNotSupported(String indexMode);
 
    @Message(value = "Thread Pool Factory %s is blocking, but pool %s requires non blocking threads", id = 566)
    CacheConfigurationException threadPoolFactoryIsBlocking(String name, String poolName);
@@ -1938,7 +1937,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException crossSiteUnavailable();
 
    @LogMessage(level = WARN)
-   @Message(value = "index() is deprecated and its value is automatically detected when indexing is enabled.", id = 572)
+   @Message(value = "index mode attribute is deprecated and should no longer be specified because its value is automatically detected. Most previously supported values are no longer supported. Please check the upgrade guide.", id = 572)
    void indexModeDeprecated();
 
    @Message(value = "Cannot recreate persisted configuration for cache '%s' because configuration %n%s%n is incompatible with the existing configuration %n%s", id = 573)

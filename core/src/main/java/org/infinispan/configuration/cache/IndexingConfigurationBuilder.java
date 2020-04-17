@@ -199,6 +199,10 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
             // throw new CacheConfigurationException("Cache configuration must not declare indexed entities if it is not indexed");
          }
       }
+
+      if (index() == Index.PRIMARY_OWNER) {
+         throw CONFIG.indexModeNotSupported(Index.PRIMARY_OWNER.name());
+      }
    }
 
    @Override

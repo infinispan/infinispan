@@ -1,9 +1,6 @@
 package org.infinispan.query.backend;
 
-import org.hibernate.search.spi.IndexingMode;
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
@@ -50,16 +47,4 @@ public enum IndexModificationStrategy {
 
    public abstract boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx,
                                                DistributionManager distributionManager, RpcManager rpcManager, Object key);
-
-   /**
-    * For a given configuration, define which IndexModificationStrategy is going to be used.
-    *
-    * @param searchFactory
-    * @param cfg
-    * @return the appropriate IndexModificationStrategy
-    */
-   public static IndexModificationStrategy configuredStrategy(SearchIntegrator searchFactory, Configuration cfg) {
-      IndexingMode indexingMode = searchFactory.unwrap(SearchIntegrator.class).getIndexingMode();
-      return indexingMode == IndexingMode.MANUAL ? MANUAL : ALL;
-   }
 }

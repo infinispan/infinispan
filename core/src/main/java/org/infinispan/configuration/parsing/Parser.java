@@ -2641,9 +2641,8 @@ public class Parser implements ConfigurationParser {
                if (reader.getSchema().since(11, 0)) {
                   CONFIG.indexModeDeprecated();
                }
-               if ("LOCAL".equals(value)) {
-                  value = "PRIMARY_OWNER";
-                  CONFIG.indexLocalIsNotSupported();
+               if ("LOCAL".equals(value) || "PRIMARY_OWNER".equals(value)) {
+                  throw CONFIG.indexModeNotSupported(value);
                }
                Index index = Index.valueOf(value);
                builder.indexing().index(index);
