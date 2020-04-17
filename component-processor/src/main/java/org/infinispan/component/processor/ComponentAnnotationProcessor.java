@@ -22,6 +22,7 @@ import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
+import javax.lang.model.AnnotatedConstruct;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -168,12 +169,13 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
       }
 
       TypeElement moduleClassElement = elements().getTypeElement(moduleClassAndPackages.getKey());
-      if (moduleClassElement == null || moduleClassElement.getAnnotation(InfinispanModule.class) == null) {
-         info(null, "Ignoring invalid module implementation %s", moduleImplementationName);
+      InfinispanModule moduleAnnotation = moduleClassElement != null ?
+                                          getAnnotation(moduleClassElement, InfinispanModule.class) : null;
+      if (moduleAnnotation == null) {
+         error(null, "Ignoring invalid module implementation %s", moduleImplementationName);
          return;
       }
 
-      InfinispanModule moduleAnnotation = moduleClassElement.getAnnotation(InfinispanModule.class);
       String classPrefix = moduleToClassPrefix(moduleAnnotation.name());
 
       Set<String> packages = moduleClassAndPackages.getValue();
@@ -196,6 +198,18 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
 
       modelBuilder.parsedTypes = parsedTypes;
       modelBuilder.setModuleClass(moduleClassElement, moduleAnnotation, classPrefix);
+   }
+
+   private <A extends Annotation> A getAnnotation(AnnotatedConstruct moduleClassElement, Class<A> annotationType) {
+      try {
+         return moduleClassElement.getAnnotation(annotationType);
+      } catch (ClassCastException e) {
+         // The annotation has unresolved values
+         // java.lang.ClassCastException: class com.sun.tools.javac.code.Attribute$UnresolvedClass
+         // cannot be cast to class com.sun.tools.javac.code.Attribute$Class
+         // The code doesn't compile anyway, so we can ignore the annotation.
+         return null;
+      }
    }
 
    private static String extractAttributeName(String setterOrGetter) {
@@ -276,15 +290,15 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
          Model.AnnotatedType savedType = currentType;
          String qualifiedName = e.getQualifiedName().toString();
 
-         InfinispanModule moduleAnnotation = e.getAnnotation(InfinispanModule.class);
+         InfinispanModule moduleAnnotation = getAnnotation(e, InfinispanModule.class);
          if (moduleAnnotation != null) {
             String classPrefix = moduleToClassPrefix(moduleAnnotation.name());
             setModuleClass(e, moduleAnnotation, classPrefix);
          }
 
-         Scope scope = e.getAnnotation(Scope.class);
-         MBean mbean = e.getAnnotation(MBean.class);
-         boolean survivesRestarts = e.getAnnotation(SurvivesRestarts.class) != null;
+         Scope scope = getAnnotation(e, Scope.class);
+         MBean mbean = getAnnotation(e, MBean.class);
+         boolean survivesRestarts = getAnnotation(e, SurvivesRestarts.class) != null;
 
          if (!survivesRestarts) {
             requireAnnotationOnSubType(e, SurvivesRestarts.class);
@@ -328,14 +342,14 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
       }
 
       private void setModuleClass(TypeElement e, InfinispanModule moduleAnnotation, String classPrefix) {
-         validateModule(e);
+         validateModule(e, moduleAnnotation);
 
          String modulePackageName = elements().getPackageOf(e).getQualifiedName().toString();
          module = new Model.Module(moduleAnnotation, e.getQualifiedName().toString(), modulePackageName, classPrefix);
       }
 
-      private void validateModule(TypeElement e) {
-         String moduleName = e.getAnnotation(InfinispanModule.class).name();
+      private void validateModule(TypeElement e, InfinispanModule moduleAnnotation) {
+         String moduleName = moduleAnnotation.name();
          if (!MODULE_NAME_PATTERN.matcher(moduleName).matches()) {
             error(e, "@InfinispanModule name attribute must include only letters, digits or `-`");
          }
@@ -350,7 +364,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
       @Override
       public Void visitExecutable(ExecutableElement e, Void ignored) {
          String methodName = e.getSimpleName().toString();
-         if (e.getAnnotation(Inject.class) != null) {
+         if (getAnnotation(e, Inject.class) != null) {
             validatePackagePrivate(e, Scope.class);
             if (isValidComponent(e, Inject.class)) {
                List<Model.InjectField> parameters = e.getParameters().stream()
@@ -363,13 +377,13 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
          addLifecycleMethod(e, PostStart.class, c -> c.postStartMethods, PostStart::priority);
          addLifecycleMethod(e, Stop.class, c -> c.stopMethods, Stop::priority);
 
-         if (e.getAnnotation(PostStart.class) != null) {
+         if (getAnnotation(e, PostStart.class) != null) {
             warn(e, "The @PostStart annotation is deprecated and will be ignored in the future");
          }
 
-         if (e.getAnnotation(ManagedAttribute.class) != null && isValidMComponent(e, ManagedAttribute.class)) {
-            ManagedAttribute attribute = e.getAnnotation(ManagedAttribute.class);
-            String name = attribute.name();
+         if (getAnnotation(e, ManagedAttribute.class) != null && isValidMComponent(e, ManagedAttribute.class)) {
+            ManagedAttribute attribute = getAnnotation(e, ManagedAttribute.class);
+            String name = attribute != null ? attribute.name() : "";
             if (name.isEmpty()) {
                name = extractAttributeName(methodName);
             }
@@ -392,12 +406,12 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
             currentType.mComponent.attributes.add(new Model.MAttribute(name, methodName, attribute, true, type, boxedType, is));
          }
 
-         if (e.getAnnotation(ManagedOperation.class) != null)
+         if (getAnnotation(e, ManagedOperation.class) != null)
             if (isValidMComponent(e, ManagedOperation.class)) {
-               ManagedOperation operation = e.getAnnotation(ManagedOperation.class);
+               ManagedOperation operation = getAnnotation(e, ManagedOperation.class);
                List<Model.MParameter> parameters = new ArrayList<>();
                for (VariableElement parameter : e.getParameters()) {
-                  Parameter parameterAnnotation = parameter.getAnnotation(Parameter.class);
+                  Parameter parameterAnnotation = getAnnotation(parameter, Parameter.class);
                   String name = (parameterAnnotation != null && !parameterAnnotation.name().isEmpty()) ?
                                 parameterAnnotation.name() : parameter.getSimpleName().toString();
                   String type = types().erasure(parameter.asType()).toString();
@@ -423,7 +437,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
       void addLifecycleMethod(ExecutableElement e, Class<A> annotationType,
                               Function<Model.Component, List<Model.LifecycleMethod>> methodsExtractor,
                               Function<A, Integer> priorityExtractor) {
-         A annotation = e.getAnnotation(annotationType);
+         A annotation = getAnnotation(e, annotationType);
          if (annotation == null)
             return;
 
@@ -456,7 +470,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
             for (Element element : superAccessorType.getEnclosedElements()) {
                if (element.getKind() == ElementKind.METHOD &&
                    element.getSimpleName().contentEquals(method.getSimpleName()) &&
-                   element.getAnnotation(annotationType) != null) {
+                   getAnnotation(element, annotationType) != null) {
                   // Method is already included in the super class lifecycle, ignore it
                   return true;
                }
@@ -469,7 +483,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
 
       @Override
       public Void visitVariable(VariableElement e, Void ignored) {
-         if (e.getAnnotation(Inject.class) != null) {
+         if (getAnnotation(e, Inject.class) != null) {
             validatePackagePrivate(e, Scope.class);
 
             if (isValidComponent(e, Inject.class)) {
@@ -477,7 +491,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
             }
          }
 
-         ManagedAttribute attribute = e.getAnnotation(ManagedAttribute.class);
+         ManagedAttribute attribute = getAnnotation(e, ManagedAttribute.class);
          if (attribute != null) {
             if (isValidMComponent(e, ManagedAttribute.class)) {
                String name = e.getSimpleName().toString();
@@ -505,7 +519,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
       private void requireSameScope(TypeElement e, Scope scope) {
          for (TypeMirror superType : types().directSupertypes(e.asType())) {
             Element superTypeElement = ((DeclaredType) superType).asElement();
-            Scope superScope = superTypeElement.getAnnotation(Scope.class);
+            Scope superScope = getAnnotation(superTypeElement, Scope.class);
             if (superScope != null && superScope.value() != Scopes.NONE) {
                if (scope.value() != superScope.value()) {
                   error(e, "Scope declared on class %s (%s) does not match scope inherited from %s (%s)",
@@ -564,7 +578,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
       private void requireAnnotationOnSubType(TypeElement typeElement, Class<? extends Annotation> typeAnnotation) {
          for (TypeMirror supertype : types().directSupertypes(typeElement.asType())) {
             TypeElement superTypeElement = (TypeElement) ((DeclaredType) supertype).asElement();
-            if (superTypeElement.getAnnotation(typeAnnotation) != null) {
+            if (getAnnotation(superTypeElement, typeAnnotation) != null) {
                error(typeElement, "Type %s must have annotation @%s because it extends/implements %s. " +
                                   "Note that interface annotations are not inherited",
                      typeElement.getSimpleName(), typeAnnotation.getSimpleName(), superTypeElement.getSimpleName());
@@ -589,7 +603,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
       }
 
       private List<String> getFactoryComponentNames(TypeElement typeElement) {
-         DefaultFactoryFor factoryAnnotation = typeElement.getAnnotation(DefaultFactoryFor.class);
+         DefaultFactoryFor factoryAnnotation = getAnnotation(typeElement, DefaultFactoryFor.class);
          List<String> componentNames = new ArrayList<>();
          if (factoryAnnotation != null) {
             TypeElement defaultFactoryForType = elements().getTypeElement(DefaultFactoryFor.class.getName());
@@ -620,7 +634,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
       }
 
       private String getComponentName(VariableElement parameter, String componentTypeName) {
-         ComponentName nameAnnotation = parameter.getAnnotation(ComponentName.class);
+         ComponentName nameAnnotation = getAnnotation(parameter, ComponentName.class);
          return nameAnnotation != null ? nameAnnotation.value() : componentTypeName;
       }
 
@@ -636,7 +650,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
       private TypeElement getSuperClass(TypeElement typeElement, Class<? extends Annotation> annotationClass) {
          TypeElement superElement = (TypeElement) types().asElement(typeElement.getSuperclass());
 
-         if (superElement == null || superElement.getAnnotation(annotationClass) != null)
+         if (superElement == null || getAnnotation(superElement, annotationClass) != null)
             return superElement;
 
          return getSuperClass(superElement, annotationClass);
