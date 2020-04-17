@@ -63,33 +63,32 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       IndexUpdater indexUpdater = new IndexUpdater(searchIntegrator, keyTransformationHandler, timeService);
       KeyPartitioner keyPartitioner = ComponentRegistryUtils.getKeyPartitioner(cache);
 
+      DataConversion keyDataConversion = reindexCache.getKeyDataConversion();
       if (keys == null || keys.size() == 0) {
          preIndex(indexUpdater);
          if (!skipIndex) {
             try (Stream<CacheEntry<Object, Object>> stream = reindexCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
                   .cacheEntrySet().stream()) {
-               Iterator<CacheEntry<Object, Object>> iterator = stream.iterator();
-               while (iterator.hasNext()) {
-                  CacheEntry<Object, Object> next = iterator.next();
-                  Object key = next.getKey();
-                  Object storedKey = reindexCache.getKeyDataConversion().toStorage(key);
-                  Object value = next.getValue();
+               stream.forEach(entry -> {
+                  Object key = entry.getKey();
+                  Object storedKey = keyDataConversion.toStorage(key);
+                  Object value = entry.getValue();
                   if (valueFilterable) {
                      value = valueWrapper.wrap(value);
                   }
                   int segment = keyPartitioner.getSegment(storedKey);
                   if (value != null && indexedTypes.contains(PojoIndexedTypeIdentifier.convertFromLegacy(value.getClass()))) {
-                     indexUpdater.updateIndex(next.getKey(), value, segment);
+                     indexUpdater.updateIndex(entry.getKey(), value, segment);
                   }
-               }
+               });
             }
          }
          postIndex(indexUpdater);
       } else {
          Set<Class<?>> classSet = new HashSet<>();
          for (Object key : keys) {
-            Object storedKey = reindexCache.getKeyDataConversion().toStorage(key);
-            Object unwrappedKey = reindexCache.getKeyDataConversion().getWrapper().unwrap(storedKey);
+            Object storedKey = keyDataConversion.toStorage(key);
+            Object unwrappedKey = keyDataConversion.getWrapper().unwrap(storedKey);
             Object value = cache.get(key);
             if (value != null) {
                indexUpdater.updateIndex(unwrappedKey, value, keyPartitioner.getSegment(storedKey));
