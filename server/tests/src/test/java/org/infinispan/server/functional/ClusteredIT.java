@@ -7,11 +7,11 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
@@ -40,6 +40,7 @@ import org.junit.runners.Suite;
       HotRodCacheContinuousQueries.class,
       HotRodListenerWithDslFilter.class,
       IgnoreCaches.class,
+      JCacheOperations.class
 })
 public class ClusteredIT {
 
