@@ -628,27 +628,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public Encoder getKeyEncoder() {
-      return keyDataConversion.getEncoder();
-   }
-
-   @Override
-   public Encoder getValueEncoder() {
-      return valueDataConversion.getEncoder();
-   }
-
-   @Override
-   public Wrapper getKeyWrapper() {
-      return keyDataConversion.getWrapper();
-   }
-
-   @Override
-   public Wrapper getValueWrapper() {
-      return valueDataConversion.getWrapper();
-   }
-
-
-   @Override
    public DataConversion getKeyDataConversion() {
       return keyDataConversion;
    }

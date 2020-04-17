@@ -835,31 +835,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     */
    AdvancedCache<K, V> withStorageMediaType();
 
-
-   /**
-    * @return The associated {@link Encoder} for the keys.
-    * @deprecated Use {@link #getKeyDataConversion()} and then {@link DataConversion#getEncoder()}
-    */
-   Encoder getKeyEncoder();
-
-   /**
-    * @return The associated {@link Encoder} for the cache's values.
-    * @deprecated Use {@link #getValueDataConversion()} ()} and then {@link DataConversion#getEncoder()}
-    */
-   Encoder getValueEncoder();
-
-   /**
-    * @return The associated {@link Wrapper} for the cache's keys.
-    * @deprecated Use {@link #getKeyDataConversion()} and then {@link DataConversion#getWrapper()}
-    */
-   Wrapper getKeyWrapper();
-
-   /**
-    * @return The associated {@link Wrapper} for the cache's values.
-    * @deprecated Use {@link #getValueDataConversion()} ()} and then {@link DataConversion#getWrapper()}
-    */
-   Wrapper getValueWrapper();
-
    /**
     * @return The associated {@link DataConversion} for the keys.
     */

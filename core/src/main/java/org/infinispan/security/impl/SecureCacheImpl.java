@@ -786,26 +786,6 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public Encoder getKeyEncoder() {
-      return delegate.getKeyEncoder();
-   }
-
-   @Override
-   public Encoder getValueEncoder() {
-      return delegate.getValueEncoder();
-   }
-
-   @Override
-   public Wrapper getKeyWrapper() {
-      return delegate.getKeyWrapper();
-   }
-
-   @Override
-   public Wrapper getValueWrapper() {
-      return delegate.getValueWrapper();
-   }
-
-   @Override
    public DataConversion getKeyDataConversion() {
       return delegate.getKeyDataConversion();
    }
