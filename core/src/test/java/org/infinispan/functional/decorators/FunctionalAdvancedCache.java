@@ -604,26 +604,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public Encoder getKeyEncoder() {
-      return cache.getKeyEncoder();
-   }
-
-   @Override
-   public Encoder getValueEncoder() {
-      return cache.getValueEncoder();
-   }
-
-   @Override
-   public Wrapper getKeyWrapper() {
-      return cache.getKeyWrapper();
-   }
-
-   @Override
-   public Wrapper getValueWrapper() {
-      return cache.getValueWrapper();
-   }
-
-   @Override
    public DataConversion getKeyDataConversion() {
       return cache.getKeyDataConversion();
    }

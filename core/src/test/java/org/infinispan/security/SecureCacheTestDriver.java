@@ -743,26 +743,6 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.NONE)
-   public void testGetKeyEncoder(SecureCache<String, String> cache) {
-      cache.getKeyEncoder();
-   }
-
-   @TestCachePermission(AuthorizationPermission.NONE)
-   public void testGetValueEncoder(SecureCache<String, String> cache) {
-      cache.getValueEncoder();
-   }
-
-   @TestCachePermission(AuthorizationPermission.NONE)
-   public void testGetKeyWrapper(SecureCache<String, String> cache) {
-      cache.getKeyWrapper();
-   }
-
-   @TestCachePermission(AuthorizationPermission.NONE)
-   public void testGetValueWrapper(SecureCache<String, String> cache) {
-      cache.getValueWrapper();
-   }
-
-   @TestCachePermission(AuthorizationPermission.NONE)
    public void testGetKeyDataConversion(SecureCache<String, String> cache) {
       cache.getKeyDataConversion();
    }

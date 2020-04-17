@@ -773,26 +773,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public Encoder getKeyEncoder() {
-      return getKeyDataConversion().getEncoder();
-   }
-
-   @Override
-   public Encoder getValueEncoder() {
-      return getValueDataConversion().getEncoder();
-   }
-
-   @Override
-   public Wrapper getKeyWrapper() {
-      return getKeyDataConversion().getWrapper();
-   }
-
-   @Override
-   public Wrapper getValueWrapper() {
-      return getValueDataConversion().getWrapper();
-   }
-
-   @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
       if (keyWrapperClass == IdentityWrapper.class && valueWrapperClass == IdentityWrapper.class) {
          return this;
