@@ -108,7 +108,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    @Override
    public void start() {
-      Path location = PersistenceUtil.getQualifiedLocation(ctx.getGlobalConfiguration(), configuration.location(), ctx.getCache().getName(), "data");
+      Path location = PersistenceUtil.getLocation(ctx.getGlobalConfiguration(), configuration.location());
       try {
          file = new File(location.toFile(), ctx.getCache().getName() + ".dat");
          if (!file.exists()) {
