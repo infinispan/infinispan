@@ -65,7 +65,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    }
 
    private File getFileStore() {
-      return new File(location, String.format("%1$s/data/%1$s.dat", CACHE_NAME));
+      return new File(location, CACHE_NAME + ".dat");
    }
 
    public void testReadsAndWrites() throws ExecutionException, InterruptedException {
@@ -148,7 +148,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       long [] fileSizesWithoutPurge = new long [times];
       long [] fileSizesWithPurge = new long [times];
-      File file = getFileStore();
+      File file = new File(location, CACHE_NAME + ".dat");
 
       // Write values for all keys iteratively such that the entry size increases during each iteration
       // Also record the file size after each such iteration.
