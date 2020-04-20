@@ -208,21 +208,24 @@ public class PersistenceUtil {
    }
 
    public static Path getQualifiedLocation(GlobalConfiguration globalConfiguration, String location, String cacheName, String qualifier) {
+      Path persistentLocation = getLocation(globalConfiguration, location);
+      return persistentLocation.resolve(Paths.get(sanitizedCacheName(cacheName), qualifier));
+   }
+
+   public static Path getLocation(GlobalConfiguration globalConfiguration, String location) {
       Path persistentLocation = Paths.get(globalConfiguration.globalState().persistentLocation());
-      if (location == null) {
-         return persistentLocation.resolve(Paths.get(sanitizedCacheName(cacheName), qualifier));
-      } else {
-         Path path = Paths.get(location);
-         if (path.isAbsolute()) {
-            // Ensure that the path lives under the global persistent location
-            if (path.startsWith(persistentLocation)) {
-               return Paths.get(location, sanitizedCacheName(cacheName), qualifier);
-            } else {
-               throw PERSISTENCE.forbiddenStoreLocation(path, persistentLocation);
-            }
+      if (location == null)
+         return persistentLocation;
+
+      Path path = Paths.get(location);
+      if (path.isAbsolute()) {
+         // Ensure that the path lives under the global persistent location
+         if (path.startsWith(persistentLocation)) {
+            return path;
          } else {
-            return persistentLocation.resolve(path.resolve(Paths.get(sanitizedCacheName(cacheName), qualifier)));
+            throw PERSISTENCE.forbiddenStoreLocation(path, persistentLocation);
          }
       }
+      return persistentLocation.resolve(path);
    }
 }
