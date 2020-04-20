@@ -11,6 +11,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.health.Health;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
+import org.infinispan.security.actions.GetCacheConfigurationFromManagerAction;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheManagerHealthAction;
@@ -33,6 +34,12 @@ final class SecurityActions {
 
    static Configuration getCacheConfiguration(AdvancedCache<?, ?> cache) {
       GetCacheConfigurationAction action = new GetCacheConfigurationAction(cache);
+      return doPrivileged(action);
+   }
+
+   static Configuration getCacheConfigurationFromManager(final EmbeddedCacheManager cacheManager, String cacheName) {
+      GetCacheConfigurationFromManagerAction action = new GetCacheConfigurationFromManagerAction(cacheManager,
+            cacheName);
       return doPrivileged(action);
    }
 

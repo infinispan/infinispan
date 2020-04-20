@@ -8,6 +8,7 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
 
+import java.security.PrivilegedAction;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -29,6 +30,8 @@ import org.infinispan.tasks.TaskManager;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
+
+import javax.security.auth.Subject;
 
 /**
  * @since 10.1
@@ -68,14 +71,17 @@ public class TasksResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> createScriptTask(RestRequest request) {
       String taskName = request.variables().get("taskName");
-      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance().withSubject(request.getSubject());
       ScriptingManager scriptingManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ScriptingManager.class);
       NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
       ContentSource contents = request.contents();
       byte[] bytes = contents.rawContent();
       MediaType sourceType = request.contentType() == null ? APPLICATION_JAVASCRIPT : request.contentType();
       String script = StandardConversions.convertTextToObject(bytes, sourceType);
-      scriptingManager.addScript(taskName, script);
+      Subject.doAs(request.getSubject(), (PrivilegedAction<Void>) () -> {
+         scriptingManager.addScript(taskName, script);
+         return null;
+      });
       return completedFuture(builder.build());
    }
 
@@ -89,7 +95,11 @@ public class TasksResource implements ResourceHandler {
             taskContext.addParameter(k.substring(6), v.get(0));
          }
       });
-      return taskManager.runTask(taskName, taskContext).thenApply(result -> {
+
+      CompletionStage<Object> runResult = Subject.doAs(request.getSubject(),
+            (PrivilegedAction<CompletionStage<Object>>) () -> taskManager.runTask(taskName, taskContext));
+
+      return runResult.thenApply(result -> {
          NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
          try {
             if (result instanceof byte[]) {

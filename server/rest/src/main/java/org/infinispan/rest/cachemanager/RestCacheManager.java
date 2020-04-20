@@ -114,8 +114,8 @@ public class RestCacheManager<V> {
    }
 
    public CompletionStage<CacheEntry<Object, V>> getPrivilegedInternalEntry(AdvancedCache<Object, V> cache, Object key, boolean skipListener) {
-      cache = skipListener ? cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION) : cache;
-      return SecurityActions.getCacheEntryAsync(cache, key);
+      AdvancedCache<Object, V> cacheSkip = skipListener ? cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION) : cache;
+      return SecurityActions.getCacheEntryAsync(cacheSkip, key);
    }
 
    private CompletionStage<CacheEntry<Object, V>> getInternalEntry(AdvancedCache<Object, V> cache, Object key, boolean skipListener) {

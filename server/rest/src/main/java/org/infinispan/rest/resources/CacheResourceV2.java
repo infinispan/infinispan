@@ -242,7 +242,6 @@ public class CacheResourceV2 extends CacheResource {
       ConfigurationBuilder finalCfgBuilder = cfgBuilder;
       return CompletableFuture.supplyAsync(() -> {
          administration.createCache(cacheName, finalCfgBuilder.build());
-
          responseBuilder.status(OK);
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
@@ -332,7 +331,7 @@ public class CacheResourceV2 extends CacheResource {
       if (cache == null)
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build());
 
-      Configuration cacheConfiguration = cache.getCacheConfiguration();
+      Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
 
       String entity;
       if (accept.getTypeSubtype().equals(APPLICATION_XML_TYPE)) {

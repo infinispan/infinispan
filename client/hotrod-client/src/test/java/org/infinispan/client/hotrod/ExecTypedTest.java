@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.scripting.ScriptingManager.SCRIPT_CACHE;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -28,7 +29,6 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.ExecTypedTest")
 public class ExecTypedTest extends MultiHotRodServersTest {
 
-   private static final String SCRIPT_CACHE = "___script_cache";
    private static final int NUM_SERVERS = 2;
    static final String NAME = "exec-typed-cache";
    RemoteCacheManager execClient;

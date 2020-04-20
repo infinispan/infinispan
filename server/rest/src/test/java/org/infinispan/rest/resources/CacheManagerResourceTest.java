@@ -47,6 +47,14 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    private Configuration templateConfig;
 
    @Override
+   public Object[] factory() {
+      return new Object[]{
+            new CacheManagerResourceTest().withSecurity(true),
+            new CacheManagerResourceTest().withSecurity(false)
+      };
+   }
+
+   @Override
    protected void defineCaches(EmbeddedCacheManager cm) {
       cache1Config = getCache1Config();
       cache2Config = getCache2Config();
@@ -56,14 +64,6 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       cm.defineConfiguration("cache1", cache1Config);
       cm.defineConfiguration("cache2", cache2Config);
       cm.defineConfiguration("template", templateConfig);
-   }
-
-   @Override
-   public Object[] factory() {
-      return new Object[]{
-            // [ISPN-11525] new CacheManagerResourceTest().withSecurity(true),
-            new CacheManagerResourceTest().withSecurity(false),
-      };
    }
 
    private Configuration getCache1Config() {
@@ -142,7 +142,8 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       String json = response.getContentAsString();
       JsonNode jsonNode = mapper.readTree(json);
       List<String> names = asText(jsonNode.findValues("name"));
-      Set<String> expectedNames = Util.asSet("defaultcache", "___protobuf_metadata", "___script_cache", "cache1", "cache2");
+      Set<String> expectedNames = Util.asSet("defaultcache", "cache1", "cache2");
+
       assertEquals(expectedNames, new HashSet<>(names));
 
       List<String> status = asText(jsonNode.findValues("status"));
@@ -174,6 +175,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       assertTrue(hasRemoteBackup.contains("false"));
 
       List<String> health = asText(jsonNode.findValues("health"));
+
       assertTrue(health.contains("HEALTHY"));
    }
 
@@ -189,7 +191,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
 
       String json = response.getContentAsString();
       EmbeddedCacheManager embeddedCacheManager = cacheManagers.get(0);
-      GlobalConfiguration globalConfiguration = embeddedCacheManager.getCacheManagerConfiguration();
+      GlobalConfiguration globalConfiguration = embeddedCacheManager.withSubject(ADMIN_USER).getCacheManagerConfiguration();
       String globalConfigJSON = jsonWriter.toJSON(globalConfiguration);
       assertEquals(globalConfigJSON, json);
    }
@@ -199,7 +201,6 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       String url = String.format("http://localhost:%d/rest/v2/cache-managers/default/config", restServer().getPort());
       ContentResponse response = client.newRequest(url).header(HttpHeader.ACCEPT, MediaType.APPLICATION_XML_TYPE).send();
       ResponseAssertion.assertThat(response).isOk();
-
 
       String xml = response.getContentAsString();
       ParserRegistry parserRegistry = new ParserRegistry();
