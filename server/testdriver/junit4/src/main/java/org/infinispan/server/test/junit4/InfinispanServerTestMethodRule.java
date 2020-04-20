@@ -32,6 +32,7 @@ import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.scripting.ScriptingManager;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -244,7 +245,7 @@ public class InfinispanServerTestMethodRule implements TestRule {
    }
 
    public String addScript(RemoteCacheManager remoteCacheManager, String script) {
-      RemoteCache<String, String> scriptCache = remoteCacheManager.getCache("___script_cache");
+      RemoteCache<String, String> scriptCache = remoteCacheManager.getCache(ScriptingManager.SCRIPT_CACHE);
       try (InputStream in = this.getClass().getClassLoader().getResourceAsStream(script)) {
          scriptCache.put(getMethodName(), CommonsTestingUtil.loadFileAsString(in));
       } catch (Exception e) {

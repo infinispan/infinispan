@@ -1,6 +1,7 @@
 package org.infinispan.health;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * An entry point for checking health status.
@@ -19,6 +20,13 @@ public interface Health {
      * Returns per cache health.
      */
     List<CacheHealth> getCacheHealth();
+
+    /**
+     * Returns per cache health for the provided cache names.
+     *
+     * @param cacheNames
+     */
+    List<CacheHealth> getCacheHealth(Set<String> cacheNames);
 
     /**
      * Gets basic information about the host.
