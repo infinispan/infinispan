@@ -40,6 +40,7 @@ import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.framework.ContentSource;
+import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
@@ -50,7 +51,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-public class CacheResourceV2 extends CacheResource {
+/**
+ * REST resource to manage the caches.
+ *
+ * @since 10.0
+ */
+public class CacheResourceV2 extends CacheResource implements ResourceHandler {
 
    private static final int STREAM_BATCH_SIZE = 1000;
 
@@ -199,7 +205,6 @@ public class CacheResourceV2 extends CacheResource {
       ConfigurationBuilder finalCfgBuilder = cfgBuilder;
       return CompletableFuture.supplyAsync(() -> {
          administration.createCache(cacheName, finalCfgBuilder.build());
-
          responseBuilder.status(OK);
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
@@ -289,7 +294,7 @@ public class CacheResourceV2 extends CacheResource {
       if (cache == null)
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build());
 
-      Configuration cacheConfiguration = cache.getCacheConfiguration();
+      Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
 
       String entity;
       if (accept.getTypeSubtype().equals(APPLICATION_XML_TYPE)) {

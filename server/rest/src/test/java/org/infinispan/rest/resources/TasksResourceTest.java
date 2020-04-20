@@ -41,7 +41,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            // [ISPN-11621] new TasksResourceTest().withSecurity(true),
+            new TasksResourceTest().withSecurity(true),
             new TasksResourceTest().withSecurity(false),
       };
    }
@@ -52,7 +52,6 @@ public class TasksResourceTest extends AbstractRestResourceTest {
       ContentResponse response = client.newRequest(baseURL).method(GET).send();
       ResponseAssertion.assertThat(response).isOk();
       JsonNode jsonNode = mapper.readTree(response.getContent());
-      System.out.println(jsonNode);
       assertEquals(4, jsonNode.size());
       JsonNode task = jsonNode.get(0);
       assertEquals("Dummy", task.get("type").asText());
