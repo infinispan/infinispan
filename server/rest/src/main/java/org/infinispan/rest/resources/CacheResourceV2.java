@@ -54,6 +54,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+/**
+ * REST resource to manage the caches.
+ *
+ * @since 10.0
+ */
 public class CacheResourceV2 extends BaseCacheResource implements ResourceHandler {
 
    private static final int STREAM_BATCH_SIZE = 1000;
@@ -243,7 +248,6 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       ConfigurationBuilder finalCfgBuilder = cfgBuilder;
       return CompletableFuture.supplyAsync(() -> {
          administration.createCache(cacheName, finalCfgBuilder.build());
-
          responseBuilder.status(OK);
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
@@ -333,7 +337,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       if (cache == null)
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build());
 
-      Configuration cacheConfiguration = cache.getCacheConfiguration();
+      Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
 
       String entity;
       if (accept.getTypeSubtype().equals(APPLICATION_XML_TYPE)) {

@@ -57,8 +57,8 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            // [ISPN-11525] new CacheV2ResourceTest().withSecurity(true),
-            new CacheV2ResourceTest().withSecurity(false),
+            new CacheV2ResourceTest().withSecurity(true),
+            new CacheV2ResourceTest().withSecurity(false)
       };
    }
 
@@ -180,18 +180,31 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).bodyNotEmpty();
       String cache1Cfg = response.getContentAsString();
 
-
       response = client.newRequest(url + "cache2?action=config").method(GET).send();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).bodyNotEmpty();
       String cache2Cfg = response.getContentAsString();
 
       assertEquals(cache1Cfg, cache2Cfg);
+   }
 
-      response = client.newRequest(url + "cache1").method(HttpMethod.DELETE).send();
+   @Test
+   public void testCreateDeleteCache() throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/", restServer().getPort());
+
+      String xml = getResourceAsString("cache.xml", getClass().getClassLoader());
+
+      ContentResponse response = client.newRequest(url + "cacheCRUD").header("Content-type", APPLICATION_XML_TYPE)
+            .method(HttpMethod.POST).header("flags", "VOLATILE").content(new StringContentProvider(xml)).send();
       ResponseAssertion.assertThat(response).isOk();
 
-      response = client.newRequest(url + "cache1?action=stats").method(GET).send();
+      response = client.newRequest(url + "cacheCRUD?action=stats").method(GET).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      response = client.newRequest(url + "cacheCRUD").method(HttpMethod.DELETE).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      response = client.newRequest(url + "cacheCRUD?action=stats").method(GET).send();
       ResponseAssertion.assertThat(response).isNotFound();
    }
 
