@@ -41,7 +41,6 @@ import org.testng.annotations.Test;
  */
 @Test(groups = {"functional", "smoke"}, testName = "client.hotrod.ExecTest")
 public class ExecTest extends MultiHotRodServersTest {
-   private static final String SCRIPT_CACHE = "___script_cache";
    static final String REPL_CACHE = "R";
    static final String DIST_CACHE = "D";
 
@@ -118,7 +117,7 @@ public class ExecTest extends MultiHotRodServersTest {
       defineInAll(cacheName, builder);
       try (InputStream is = this.getClass().getResourceAsStream("/distExec.js")) {
          String script = loadFileAsString(is);
-         manager(0).getCache(SCRIPT_CACHE).put("testScriptExecutionWithPassingParams.js", script);
+         manager(0).getCache(ScriptingManager.SCRIPT_CACHE).put("testScriptExecutionWithPassingParams.js", script);
       }
       populateCache(cacheName);
 
@@ -151,7 +150,6 @@ public class ExecTest extends MultiHotRodServersTest {
       waitForClusterToForm(cacheName);
 
       RemoteCache<String, String> cache = clients.get(0).getCache(cacheName);
-      RemoteCache<String, String> scriptCache = clients.get(1).getCache(SCRIPT_CACHE);
       ScriptingUtils.loadData(cache, "/macbeth.txt");
       ScriptingManager scriptingManager = manager(0).getGlobalComponentRegistry().getComponent(ScriptingManager.class);
       loadScript("/wordCountStream_dist.js", scriptingManager, "wordCountStream_dist.js");

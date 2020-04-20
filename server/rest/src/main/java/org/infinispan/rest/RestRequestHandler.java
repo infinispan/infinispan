@@ -85,6 +85,7 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
          // Ensure that the authorization header, if needed, has not changed
          String authz = request.headers().get(HttpHeaderNames.AUTHORIZATION);
          if (Objects.equals(authz, authorization)) {
+            restRequest.setSubject(subject);
             handleRestRequest(ctx, restRequest, invocationLookup);
             return;
          } else {
@@ -97,9 +98,8 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
          boolean hasError = authThrowable != null;
          boolean authorized = authResponse.getStatus() != UNAUTHORIZED.code();
          if (!hasError && authorized) {
-            subject = restRequest.getSubject();
             authorization = restRequest.getAuthorizationHeader();
-            restRequest.setSubject(subject);
+            subject = restRequest.getSubject();
             handleRestRequest(ctx, restRequest, invocationLookup);
          } else {
             try {

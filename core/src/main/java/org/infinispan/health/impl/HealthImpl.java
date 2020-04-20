@@ -1,6 +1,7 @@
 package org.infinispan.health.impl;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.health.CacheHealth;
@@ -29,6 +30,13 @@ public class HealthImpl implements Health {
    @Override
    public List<CacheHealth> getCacheHealth() {
       return embeddedCacheManager.getCacheNames().stream()
+            .map(cacheName -> new CacheHealthImpl(SecurityActions.getCache(embeddedCacheManager, cacheName)))
+            .collect(Collectors.toList());
+   }
+
+   @Override
+   public List<CacheHealth> getCacheHealth(Set<String> cacheNames) {
+      return cacheNames.stream()
             .map(cacheName -> new CacheHealthImpl(SecurityActions.getCache(embeddedCacheManager, cacheName)))
             .collect(Collectors.toList());
    }
