@@ -1,7 +1,7 @@
 *.txt  text
 *.java text diff=java
 *.sh   text
-*.bat  text
+*.bat  text eol=crlf
 *.xml  text
 *.py   text diff=python
 *.rb   text diff=ruby
