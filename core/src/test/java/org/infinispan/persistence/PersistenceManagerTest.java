@@ -33,9 +33,9 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
 
-import io.reactivex.Flowable;
-import io.reactivex.internal.functions.Functions;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.internal.functions.Functions;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 
 /**
  * A {@link PersistenceManager} unit test.
@@ -78,7 +78,7 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
          subscriber.await(10, TimeUnit.SECONDS);
          subscriber.assertNoErrors();
          subscriber.assertComplete();
-         return subscriber.valueCount();
+         return subscriber.values().size();
       });
       assertTrue(before.await(30, TimeUnit.SECONDS));
       Future<Void> stopFuture = fork(persistenceManager::stop);

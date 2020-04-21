@@ -39,7 +39,7 @@ import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * A filesystem-based implementation of a {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore}. This file store

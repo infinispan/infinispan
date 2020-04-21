@@ -21,7 +21,7 @@ import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
-import io.reactivex.exceptions.UndeliverableException;
+import io.reactivex.rxjava3.exceptions.UndeliverableException;
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.integration.BlockHoundIntegration;
 

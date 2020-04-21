@@ -87,7 +87,6 @@ import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.util.EntryLoader;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.stream.impl.local.AbstractLocalCacheStream;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.KeyStreamSupplier;
@@ -104,8 +103,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @since 9.0
@@ -222,7 +221,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
             .map(me -> PersistenceUtil.convert(me, iceFactory))
             .doOnNext(ice -> entryFactory.wrapExternalEntry(ctx, ice.getKey(), ice, true, false))
             .lastElement()
-            .to(RxJavaInterop.maybeToCompletionStage());
+            .toCompletionStage(null);
       return asyncInvokeNext(ctx, command, publisherStage);
    }
 

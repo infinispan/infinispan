@@ -10,8 +10,8 @@ import org.infinispan.query.dsl.Query;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
-import io.reactivex.Flowable;
-import io.reactivex.processors.UnicastProcessor;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 /**
  * Implements the {@link Publisher<KeyValueEntry<K, V>>} using RXJava and Flowable API.

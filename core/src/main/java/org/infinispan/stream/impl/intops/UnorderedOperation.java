@@ -2,7 +2,7 @@ package org.infinispan.stream.impl.intops;
 
 import java.util.stream.BaseStream;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Performs unordered operation on a {@link BaseStream}

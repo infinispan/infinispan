@@ -46,13 +46,11 @@ import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
-import io.reactivex.internal.functions.Functions;
+import io.reactivex.rxjava3.core.Flowable;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -218,7 +216,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
          return keyFlowable.map(key -> entryFactory.create(key));
       }
       if (configuration.rawValues()) {
-         io.reactivex.functions.Predicate<Map.Entry<Object, ?>> filterToUse = filter == null ? null :
+         io.reactivex.rxjava3.functions.Predicate<Map.Entry<Object, ?>> filterToUse = filter == null ? null :
                e -> filter.test(wrap(e.getKey()));
          if (!fetchMetadata) {
             // Only pass segments if we are running segmented mode (denoted by keyPartitioner being non null)
@@ -258,7 +256,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
 
    private static <E> Flowable<E> entryFlowable(CloseableIterator<E> closeableIteratorSet) {
       return Flowable.using(
-            Functions.justCallable(closeableIteratorSet),
+            () -> closeableIteratorSet,
             iter -> Flowable.fromIterable(() -> iter),
             AutoCloseable::close);
    }
@@ -328,7 +326,8 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
             // of the putAll to ensure that only a single batch is sent at a time
             .doOnNext(entries -> remoteCache.putAll(entries.stream().collect(Collectors.toMap(this::getKey, this::getValue))))
             .doOnError(PersistenceException::new)
-            .to(RxJavaInterop.flowableToCompletionStage());
+            .ignoreElements()
+            .toCompletionStage(null);
    }
 
    @Override
@@ -340,7 +339,8 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
    public void clear(IntSet segments) {
       CompletionStage<Void> stage = publishKeys(segments, null)
             .doOnNext(k -> remoteCache.remove(k))
-            .to(RxJavaInterop.flowableToCompletionStage());
+            .ignoreElements()
+            .toCompletionStage(null);
       CompletionStages.join(stage);
    }
 

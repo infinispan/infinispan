@@ -21,8 +21,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.reactive.publisher.impl.commands.reduction.PublisherResult;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
-import io.reactivex.processors.UnicastProcessor;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 @Scope(Scopes.NAMED_CACHE)
 public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherManager<K, V> {

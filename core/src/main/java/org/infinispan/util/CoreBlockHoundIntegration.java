@@ -20,7 +20,7 @@ import org.jgroups.JChannel;
 import org.jgroups.fork.ForkChannel;
 import org.kohsuke.MetaInfServices;
 
-import io.reactivex.internal.operators.flowable.BlockingFlowableIterable;
+import io.reactivex.rxjava3.internal.operators.flowable.BlockingFlowableIterable;
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.integration.BlockHoundIntegration;
 

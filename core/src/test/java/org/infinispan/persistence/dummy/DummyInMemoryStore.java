@@ -18,10 +18,11 @@ import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.persistence.Store;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.IntSet;
@@ -40,15 +41,14 @@ import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.AbstractSegmentedAdvancedLoadWriteStore;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
 import org.testng.AssertJUnit;
 
-import io.reactivex.Flowable;
-import io.reactivex.internal.functions.Functions;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.internal.functions.Functions;
 
 /**
  * A Dummy cache store which stores objects in memory. Instance of the store can be shared

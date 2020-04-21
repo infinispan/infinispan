@@ -16,12 +16,11 @@ import org.infinispan.commands.GetAllCommandStressTest;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.test.fwk.InCacheMode;
 import org.reactivestreams.Publisher;
 import org.testng.annotations.Test;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 @Test(groups = "stress", testName = "PublisherManagerGetKeyStressTest", timeOut = 15*60*1000)
 @InCacheMode(CacheMode.DIST_SYNC)
@@ -44,7 +43,7 @@ public class PublisherManagerGetKeyStressTest extends GetAllCommandStressTest {
                .reduce((map1, map2) -> {
                   map1.putAll(map2);
                   return map1;
-               }).to(RxJavaInterop.maybeToCompletionStage());
+               }).toCompletionStage();
 
    @SerializeWith(value = MapReducer.MapReducerExternalizer.class)
    private static class MapReducer<K, V> implements Function<Publisher<Map.Entry<K, V>>, CompletionStage<Map<K, V>>> {
@@ -59,7 +58,7 @@ public class PublisherManagerGetKeyStressTest extends GetAllCommandStressTest {
          Map<K, V> startingMap = new HashMap<>();
          return Flowable.fromPublisher(entryPublisher)
                .collectInto(startingMap, (map, e) ->
-                     map.put(e.getKey(), e.getValue())).to(RxJavaInterop.singleToCompletionStage());
+                     map.put(e.getKey(), e.getValue())).toCompletionStage();
       }
 
       static final class MapReducerExternalizer implements Externalizer<MapReducer> {

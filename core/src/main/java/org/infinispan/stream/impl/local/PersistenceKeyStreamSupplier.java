@@ -22,7 +22,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * StreamSupplier that allows for creating streams where they utilize the {@link PersistenceManager} to publish keys

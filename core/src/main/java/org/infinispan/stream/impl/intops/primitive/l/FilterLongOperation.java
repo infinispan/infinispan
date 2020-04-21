@@ -5,7 +5,7 @@ import java.util.stream.LongStream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Performs filter operation on a {@link LongStream}

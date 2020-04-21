@@ -21,13 +21,13 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
-import io.reactivex.exceptions.MissingBackpressureException;
-import io.reactivex.internal.fuseable.SimplePlainQueue;
-import io.reactivex.internal.queue.SpscArrayQueue;
-import io.reactivex.internal.queue.SpscLinkedArrayQueue;
-import io.reactivex.internal.subscriptions.EmptySubscription;
-import io.reactivex.internal.subscriptions.SubscriptionHelper;
-import io.reactivex.internal.util.BackpressureHelper;
+import io.reactivex.rxjava3.exceptions.MissingBackpressureException;
+import io.reactivex.rxjava3.internal.fuseable.SimplePlainQueue;
+import io.reactivex.rxjava3.internal.queue.SpscArrayQueue;
+import io.reactivex.rxjava3.internal.queue.SpscLinkedArrayQueue;
+import io.reactivex.rxjava3.internal.subscriptions.EmptySubscription;
+import io.reactivex.rxjava3.internal.subscriptions.SubscriptionHelper;
+import io.reactivex.rxjava3.internal.util.BackpressureHelper;
 import net.jcip.annotations.GuardedBy;
 
 /**

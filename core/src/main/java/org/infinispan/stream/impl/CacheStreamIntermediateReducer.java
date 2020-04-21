@@ -16,7 +16,7 @@ import org.infinispan.marshall.core.Ids;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Reducer implementation for Distributed Publisher that converts between CacheStream operations to an

@@ -38,7 +38,7 @@ import org.reactivestreams.Publisher;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 
 @Test(groups = "functional", testName = "org.infinispan.api.client.impl.KeyValueStoreSearchTest")
 public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
@@ -170,7 +170,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
       continuously.subscribe(personTestSubscriber);
 
 
-      personTestSubscriber.assertSubscribed();
+      assertTrue(personTestSubscriber.hasSubscription());
 
       updateOneValue();
 
@@ -186,7 +186,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
       Publisher<KeyValueEntry<String, Person>> continuously = store.findContinuously(queryRequest);
       continuously.subscribe(personTestSubscriber);
 
-      personTestSubscriber.assertSubscribed();
+      assertTrue(personTestSubscriber.hasSubscription());
       personTestSubscriber.assertValueCount(0);
 
       updateOneValue();
@@ -205,7 +205,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
       Publisher<KeyValueEntry<String, Person>> continuously = store.findContinuously(queryRequest);
       continuously.subscribe(personTestSubscriber);
 
-      personTestSubscriber.assertSubscribed();
+      assertTrue(personTestSubscriber.hasSubscription());
       personTestSubscriber.assertValueCount(0);
 
       await(store.clear());

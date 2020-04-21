@@ -6,7 +6,7 @@ import java.util.stream.IntStream;
 
 import org.infinispan.stream.impl.intops.MappingOperation;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Performs map to double operation on a {@link IntStream}

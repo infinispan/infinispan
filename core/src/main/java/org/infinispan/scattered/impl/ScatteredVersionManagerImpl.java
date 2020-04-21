@@ -40,7 +40,6 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -53,7 +52,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -142,16 +141,18 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
       // TODO: implement start after shutdown
       AtomicInteger maxTopologyId = new AtomicInteger(preloadedTopologyId);
       Publisher<MarshallableEntry<Object, Object>> publisher = persistenceManager.publishEntries(false, true);
-      CompletionStage<Void> stage = Flowable.fromPublisher(publisher).doOnNext(me -> {
-         Metadata metadata = me.getMetadata();
-         EntryVersion entryVersion = metadata.version();
-         if (entryVersion instanceof SimpleClusteredVersion) {
-            int entryTopologyId = ((SimpleClusteredVersion) entryVersion).getTopologyId();
-            if (maxTopologyId.get() < entryTopologyId) {
-               maxTopologyId.updateAndGet(current -> Math.max(current, entryTopologyId));
-            }
-         }
-      }).to(RxJavaInterop.flowableToCompletionStage());
+      CompletionStage<Void> stage = Flowable.fromPublisher(publisher)
+            .doOnNext(me -> {
+               Metadata metadata = me.getMetadata();
+               EntryVersion entryVersion = metadata.version();
+               if (entryVersion instanceof SimpleClusteredVersion) {
+                  int entryTopologyId = ((SimpleClusteredVersion) entryVersion).getTopologyId();
+                  if (maxTopologyId.get() < entryTopologyId) {
+                     maxTopologyId.updateAndGet(current -> Math.max(current, entryTopologyId));
+                  }
+               }
+            }).ignoreElements()
+            .toCompletionStage(null);
       CompletionStages.join(stage);
       if (maxTopologyId.get() > 0) {
          clusterTopologyManager.setInitialCacheTopologyId(componentRegistry.getCacheName(), maxTopologyId.get() + 1);

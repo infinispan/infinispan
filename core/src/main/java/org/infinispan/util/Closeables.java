@@ -5,8 +5,8 @@ import java.util.Iterator;
 import org.infinispan.commons.util.CloseableIterator;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
-import io.reactivex.disposables.Disposable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.disposables.Disposable;
 
 /**
  * This class is used solely for the purpose of converting classes only in core to corresponding closeable variants.
@@ -26,7 +26,7 @@ public class Closeables {
     * @return an iterator that when closed will cancel the subscription
     */
    public static <E> CloseableIterator<E> iterator(Publisher<E> publisher, int fetchSize) {
-      // This iterator from rxjava2 implements Disposable akin to Closeable
+      // This iterator from rxjava3 implements Disposable akin to Closeable
       Flowable<E> flowable = Flowable.fromPublisher(publisher);
       @SuppressWarnings("checkstyle:forbiddenmethod")
       Iterable<E> iterable = flowable.blockingIterable(fetchSize);

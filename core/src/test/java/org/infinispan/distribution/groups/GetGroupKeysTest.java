@@ -32,7 +32,7 @@ import org.infinispan.util.logging.Log;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * It tests the grouping advanced interface.

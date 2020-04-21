@@ -41,7 +41,8 @@ import org.infinispan.util.logging.LogFactory;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import io.reactivex.Flowable;
+
+import io.reactivex.rxjava3.core.Flowable;
 import net.jcip.annotations.ThreadSafe;
 
 /**

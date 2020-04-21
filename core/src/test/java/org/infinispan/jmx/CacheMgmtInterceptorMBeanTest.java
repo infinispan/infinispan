@@ -31,7 +31,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import io.reactivex.exceptions.Exceptions;
+import io.reactivex.rxjava3.exceptions.Exceptions;
 
 /**
  * Test functionality in {@link org.infinispan.interceptors.impl.CacheMgmtInterceptor}.

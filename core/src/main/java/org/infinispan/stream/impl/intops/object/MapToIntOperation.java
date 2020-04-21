@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.stream.impl.intops.MappingOperation;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Performs map to int operation on a regular {@link Stream}

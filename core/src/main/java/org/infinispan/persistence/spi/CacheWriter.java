@@ -3,10 +3,9 @@ package org.infinispan.persistence.spi;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.api.Lifecycle;
-import org.infinispan.reactive.RxJavaInterop;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -51,7 +50,8 @@ public interface CacheWriter<K, V> extends Lifecycle {
    default CompletionStage<Void> bulkUpdate(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
       return Flowable.fromPublisher(publisher)
             .doOnNext(this::write)
-            .to(RxJavaInterop.flowableToCompletionStage());
+            .ignoreElements()
+            .toCompletionStage(null);
    }
 
    /**

@@ -7,7 +7,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.impl.intops.MappingOperation;
 import org.infinispan.util.function.SerializableFunction;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Performs map to operation on a regular {@link Stream}

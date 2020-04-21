@@ -19,8 +19,8 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
-import io.reactivex.processors.UnicastProcessor;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 /**
  * Implements the {@link KeyValueStore} interface

@@ -1,7 +1,5 @@
 package org.infinispan.statetransfer;
 
-import static org.infinispan.reactive.RxJavaInterop.completionStageToCompletable;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,10 +30,10 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import io.reactivex.Completable;
-import io.reactivex.CompletableObserver;
-import io.reactivex.Flowable;
-import io.reactivex.disposables.Disposable;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.CompletableObserver;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.disposables.Disposable;
 
 /**
  * Outbound state transfer task. Pushes data segments to another cluster member on request. Instances of
@@ -145,7 +143,7 @@ public class OutboundTransferTask {
                    if (previousBatch.isEmpty())
                       return Completable.complete();
 
-                   return completionStageToCompletable(sendEntries(previousBatch, false));
+                   return Completable.fromCompletionStage(sendEntries(previousBatch, false));
                 }, 1)
                 .subscribe(new CompletableObserver() {
                    @Override

@@ -38,7 +38,6 @@ import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.Health;
 import org.infinispan.health.HealthStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
@@ -55,7 +54,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * REST resource to manage the cache container.
@@ -233,9 +232,9 @@ public class CacheManagerResource implements ResourceHandler {
                } catch (JsonProcessingException e) {
                   responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
                }
-               return responseBuilder.build();
+               return (RestResponse) responseBuilder.build();
             })
-            .to(RxJavaInterop.singleToCompletionStage());
+            .toCompletionStage();
    }
 
    private CompletionStage<RestResponse> getAllCachesConfiguration(RestRequest request) {

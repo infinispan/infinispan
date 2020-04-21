@@ -22,9 +22,9 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
-import io.reactivex.Scheduler;
-import io.reactivex.internal.functions.Functions;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Scheduler;
+import io.reactivex.rxjava3.internal.functions.Functions;
 
 /**
  * Persistence Utility that is useful for internal classes. Normally methods that require non public classes, such as

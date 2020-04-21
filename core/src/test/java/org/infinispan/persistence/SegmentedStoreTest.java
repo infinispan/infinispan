@@ -21,7 +21,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.reactivestreams.Publisher;
 import org.testng.annotations.Test;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Test that ensures that various segment based methods work properly

@@ -33,7 +33,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Test concurrent reads, writes, and clear operations on the SingleFileStore.

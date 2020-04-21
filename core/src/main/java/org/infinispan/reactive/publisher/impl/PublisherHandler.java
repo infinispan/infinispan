@@ -35,9 +35,9 @@ import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 
-import io.reactivex.Flowable;
-import io.reactivex.FlowableSubscriber;
-import io.reactivex.internal.subscriptions.SubscriptionHelper;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableSubscriber;
+import io.reactivex.rxjava3.internal.subscriptions.SubscriptionHelper;
 import net.jcip.annotations.GuardedBy;
 
 /**

@@ -27,12 +27,11 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Local file-based cache store, optimized for write-through use with strong consistency guarantees
@@ -193,7 +192,8 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                      return null;
                   }
                   return null;
-               }).to(RxJavaInterop.flowableToCompletionStage());
+               }).ignoreElements()
+               .toCompletionStage(null);
          CompletionStages.join(stage);
       }
       logAppender.setSeqId(maxSeqId.get() + 1);

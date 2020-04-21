@@ -140,7 +140,7 @@ import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.ProtocolStack;
 import org.testng.AssertJUnit;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 public class TestingUtil {
    private static final Log log = LogFactory.getLog(TestingUtil.class);

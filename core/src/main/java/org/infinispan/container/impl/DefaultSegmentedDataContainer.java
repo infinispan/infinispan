@@ -27,7 +27,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Stop;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * DataContainer implementation that internally stores entries in an array of maps. This array is indexed by
@@ -47,7 +47,7 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    protected final Supplier<PeekableTouchableMap<K, V>> mapSupplier;
    protected boolean shouldStopSegments;
 
-   protected io.reactivex.functions.Predicate<InternalCacheEntry<K, V>> notExpiredPredicate;
+   protected io.reactivex.rxjava3.functions.Predicate<InternalCacheEntry<K, V>> notExpiredPredicate;
 
 
    public DefaultSegmentedDataContainer(Supplier<PeekableTouchableMap<K, V>> mapSupplier, int numSegments) {

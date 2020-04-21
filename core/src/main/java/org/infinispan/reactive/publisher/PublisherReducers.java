@@ -23,12 +23,11 @@ import java.util.stream.Collector;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.util.Util;
-import org.infinispan.reactive.RxJavaInterop;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
-import io.reactivex.Single;
-import io.reactivex.internal.functions.Functions;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.internal.functions.Functions;
 
 /**
  * Static factory method class to provide various reducers and finalizers for use with distributed Publisher. Note
@@ -149,7 +148,7 @@ public class PublisherReducers {
       public CompletionStage<Boolean> apply(Publisher<E> ePublisher) {
          return Flowable.fromPublisher(ePublisher)
                .all(predicate::test)
-               .to(RxJavaInterop.singleToCompletionStage());
+               .toCompletionStage();
       }
    }
 
@@ -165,7 +164,7 @@ public class PublisherReducers {
       public CompletionStage<Boolean> apply(Publisher<E> ePublisher) {
          return Flowable.fromPublisher(ePublisher)
                .any(predicate::test)
-               .to(RxJavaInterop.singleToCompletionStage());
+               .toCompletionStage();
       }
    }
 
@@ -176,7 +175,7 @@ public class PublisherReducers {
       public CompletionStage<Boolean> apply(Publisher<Boolean> booleanPublisher) {
          return Flowable.fromPublisher(booleanPublisher)
                .all(Functions.equalsWith(Boolean.TRUE))
-               .to(RxJavaInterop.singleToCompletionStage());
+               .toCompletionStage();
       }
    }
 
@@ -194,7 +193,7 @@ public class PublisherReducers {
                // This is to ensure at least the default value is provided - this shouldnt be required - but
                // the disconnect between reducer and finalizer for collector leaves this ambiguous
                .switchIfEmpty(Single.fromCallable(collector.supplier()::get))
-               .to(RxJavaInterop.singleToCompletionStage());
+               .toCompletionStage();
       }
    }
 
@@ -211,7 +210,7 @@ public class PublisherReducers {
       public CompletionStage<E> apply(Publisher<I> iPublisher) {
          return Flowable.fromPublisher(iPublisher)
                .collect(supplier::get, accumulator::accept)
-               .to(RxJavaInterop.singleToCompletionStage());
+               .toCompletionStage();
       }
    }
 
@@ -226,7 +225,7 @@ public class PublisherReducers {
       public CompletionStage<E> apply(Publisher<I> iPublisher) {
          return Flowable.fromPublisher(iPublisher)
                .collect(collector.supplier()::get, collector.accumulator()::accept)
-               .to(RxJavaInterop.singleToCompletionStage());
+               .toCompletionStage();
       }
    }
 
@@ -244,7 +243,7 @@ public class PublisherReducers {
                   biConsumer.accept(e1, e2);
                   return e1;
                })
-               .to(RxJavaInterop.maybeToCompletionStage());
+               .toCompletionStage(null);
       }
    }
 
@@ -255,7 +254,7 @@ public class PublisherReducers {
       public CompletionStage<E> apply(Publisher<E> ePublisher) {
          return Flowable.fromPublisher(ePublisher)
                .firstElement()
-               .to(RxJavaInterop.maybeToCompletionStage());
+               .toCompletionStage(null);
       }
    }
 
@@ -276,7 +275,7 @@ public class PublisherReducers {
                   }
                   return e2;
                })
-               .to(RxJavaInterop.maybeToCompletionStage());
+               .toCompletionStage(null);
       }
    }
 
@@ -297,7 +296,7 @@ public class PublisherReducers {
                   }
                   return e1;
                })
-               .to(RxJavaInterop.maybeToCompletionStage());
+               .toCompletionStage(null);
       }
    }
 
@@ -313,7 +312,7 @@ public class PublisherReducers {
       public CompletionStage<Boolean> apply(Publisher<E> ePublisher) {
          return Flowable.fromPublisher(ePublisher)
                .all(predicate.negate()::test)
-               .to(RxJavaInterop.singleToCompletionStage());
+               .toCompletionStage();
       }
    }
 
@@ -324,7 +323,7 @@ public class PublisherReducers {
       public CompletionStage<Boolean> apply(Publisher<Boolean> booleanPublisher) {
          return Flowable.fromPublisher(booleanPublisher)
                .any(Functions.equalsWith(Boolean.TRUE))
-               .to(RxJavaInterop.singleToCompletionStage());
+               .toCompletionStage();
       }
    }
 
@@ -341,7 +340,7 @@ public class PublisherReducers {
       public CompletionStage<E> apply(Publisher<I> iPublisher) {
          return Flowable.fromPublisher(iPublisher)
                .reduce(identity, biFunction::apply)
-               .to(RxJavaInterop.singleToCompletionStage());
+               .toCompletionStage();
       }
    }
 
@@ -357,8 +356,8 @@ public class PublisherReducers {
       @Override
       public CompletionStage<E> apply(Publisher<I> iPublisher) {
          return Flowable.fromPublisher(iPublisher)
-               .reduceWith((Callable<E>) initialSupplier, biFunction::apply)
-               .to(RxJavaInterop.singleToCompletionStage());
+               .reduceWith(initialSupplier::call, biFunction::apply)
+               .toCompletionStage();
       }
    }
 
@@ -373,7 +372,7 @@ public class PublisherReducers {
       public CompletionStage<E> apply(Publisher<E> ePublisher) {
          return Flowable.fromPublisher(ePublisher)
                .reduce(operator::apply)
-               .to(RxJavaInterop.maybeToCompletionStage());
+               .toCompletionStage(null);
       }
    }
 
@@ -384,7 +383,7 @@ public class PublisherReducers {
       public CompletionStage<Long> apply(Publisher<?> longPublisher) {
          return Flowable.fromPublisher(longPublisher)
                .count()
-               .to(RxJavaInterop.singleToCompletionStage());
+               .toCompletionStage();
       }
    }
 
@@ -395,7 +394,7 @@ public class PublisherReducers {
       public CompletionStage<Long> apply(Publisher<Long> longPublisher) {
          return Flowable.fromPublisher(longPublisher)
                .reduce((long) 0, Long::sum)
-               .to(RxJavaInterop.singleToCompletionStage());
+               .toCompletionStage();
       }
    }
 
@@ -422,7 +421,7 @@ public class PublisherReducers {
          } else {
             arraySingle = listSingle.map(l -> l.toArray((E[]) Util.EMPTY_OBJECT_ARRAY));
          }
-         return arraySingle.to(RxJavaInterop.singleToCompletionStage());
+         return arraySingle.toCompletionStage();
       }
    }
 
@@ -451,7 +450,7 @@ public class PublisherReducers {
                return array;
             }).switchIfEmpty(Single.just((E[]) Util.EMPTY_OBJECT_ARRAY));
          }
-         return arraySingle.to(RxJavaInterop.singleToCompletionStage());
+         return arraySingle.toCompletionStage();
       }
    }
 

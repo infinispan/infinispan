@@ -49,12 +49,12 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.TransactionalCacheWriter;
 import org.infinispan.persistence.support.BatchModification;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
-import io.reactivex.internal.functions.Functions;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * {@link org.infinispan.persistence.spi.AdvancedCacheLoader} implementation that stores the entries in a database.
@@ -288,7 +288,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          CompletableFuture<Void> future = new CompletableFuture<>();
          Flowable.fromPublisher(publisher)
                .doOnNext(this::write)
-               .subscribe(Functions.emptyConsumer(), future::completeExceptionally, () -> future.complete(null));
+               .subscribe(RxJavaInterop.emptyConsumer(), future::completeExceptionally, () -> future.complete(null));
          return future;
       }
 
@@ -304,7 +304,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
                      JdbcUtil.safeClose(kvp.getValue());
                      connectionFactory.releaseConnection(kvp.getKey());
                   })
-            .subscribe(Functions.emptyConsumer(), future::completeExceptionally, () -> future.complete(null));
+            .subscribe(RxJavaInterop.emptyConsumer(), future::completeExceptionally, () -> future.complete(null));
       return future;
    }
 
