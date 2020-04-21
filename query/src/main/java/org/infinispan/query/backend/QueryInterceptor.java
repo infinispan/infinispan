@@ -42,11 +42,11 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
@@ -93,7 +93,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject IndexInspector indexInspector;
 
-   private final IndexModificationStrategy indexingMode;
    private final SearchIntegrator searchFactory;
    private final KeyTransformationHandler keyTransformationHandler;
    private final AtomicBoolean stopping = new AtomicBoolean(false);
@@ -114,7 +113,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       this.searchFactory = searchFactory;
       this.keyTransformationHandler = keyTransformationHandler;
       this.isManualIndexing = searchFactory.getIndexingMode() == IndexingMode.MANUAL;
-      this.indexingMode = isManualIndexing ? IndexModificationStrategy.MANUAL : IndexModificationStrategy.ALL;
       this.txOldValues = txOldValues;
       this.valueDataConversion = cache.getValueDataConversion();
       this.keyDataConversion = cache.getKeyDataConversion();
@@ -137,19 +135,17 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       stopping.set(true);
    }
 
-   private boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx, Object key, Object value) {
-      if (indexingMode != null) {
-         return indexingMode.shouldModifyIndexes(command, ctx, distributionManager, rpcManager, key);
-      }
-
+   private boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx, Object key) {
       if (isManualIndexing) return false;
 
-      CacheMode cacheMode = cacheConfiguration.clustering().cacheMode();
-      if (!cacheMode.isClustered()) return true;
+      if (distributionManager == null || key == null) {
+         return true;
+      }
 
-      if (value == null) return cacheMode.isReplicated() || ctx.isOriginLocal();
-
-      return IndexModificationStrategy.ALL.shouldModifyIndexes(command, ctx, distributionManager, rpcManager, key);
+      DistributionInfo info = distributionManager.getCacheTopology().getDistribution(key);
+      // If this is a backup node we should modify the entry in the remote context
+      return info.isPrimary() || info.isWriteOwner() &&
+            (ctx.isInTxScope() || !ctx.isOriginLocal() || command != null && command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER));
    }
 
    /**
@@ -431,11 +427,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       boolean skipIndexCleanup = command != null && command.hasAnyFlag(FlagBitSets.SKIP_INDEX_CLEANUP);
       if (!skipIndexCleanup) {
          if (oldValue == UNKNOWN) {
-            if (shouldModifyIndexes(command, ctx, storedKey, newValue)) {
+            if (shouldModifyIndexes(command, ctx, storedKey)) {
                removeFromIndexes(transactionContext, key, segment);
             }
          } else if (indexInspector.isIndexedType(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
-               && shouldModifyIndexes(command, ctx, storedKey, oldValue)) {
+               && shouldModifyIndexes(command, ctx, storedKey)) {
             removeFromIndexes(oldValue, key, transactionContext, segment);
          } else if (trace) {
             log.tracef("Index cleanup not needed for %s -> %s", oldValue, newValue);
@@ -444,7 +440,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          log.tracef("Skipped index cleanup for command %s", command);
       }
       if (indexInspector.isIndexedType(newValue)) {
-         if (shouldModifyIndexes(command, ctx, storedKey, newValue)) {
+         if (shouldModifyIndexes(command, ctx, storedKey)) {
             // This means that the entry is just modified so we need to update the indexes and not add to them.
             updateIndexes(skipIndexCleanup, newValue, key, transactionContext, segment);
          } else {
@@ -462,7 +458,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    private void processClearCommand(InvocationContext ctx, ClearCommand command, Object rv) {
-      if (shouldModifyIndexes(command, ctx, null, null)) {
+      if (shouldModifyIndexes(command, ctx, null)) {
          purgeAllIndexes(NoTransactionContext.INSTANCE);
       }
    }

@@ -44,7 +44,6 @@ import org.infinispan.metrics.impl.CacheMetricsRegistration;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Transformer;
-import org.infinispan.query.backend.IndexModificationStrategy;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
