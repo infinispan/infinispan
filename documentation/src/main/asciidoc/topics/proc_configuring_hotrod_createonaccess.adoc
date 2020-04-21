@@ -1,21 +1,38 @@
 [id='hotrod_create_caches_on_access']
-= Creating server caches on first access
+= Creating Caches on First Access
+When Hot Rod Java clients attempt to access caches that do not exist, they
+return `null` for `getCache("$cacheName")` invocations.
 
-The normal behaviour of a Hot Rod Java client when attempting to access a non-existent cache is to return `null` from the `getCache("name")` invocation.
-It is possible to have the Hot Rod Java clients automatically create requested caches on the server on first access using either a specific template or a full configuration.
+You can change this default behavior so that clients automatically create
+caches on first access using caches configuration templates or {brandname}
+cache definitions in XML format.
 
-[source,java]
+.Programmatic procedure
+
+[source,java,options="nowrap"]
 ----
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 ...
 
-// Specify the server-side template or configuration to use
 ConfigurationBuilder builder = new ConfigurationBuilder();
 builder
   .remoteCache("my-cache")
-    .templateName("org.infinispan.DIST_SYNC")
+    .templateName("org.infinispan.DIST_SYNC") <1>
   .remoteCache("another-cache")
-    .configuration("<infinispan><cache-container><distributed-cache name=\"another-cache\"/></cache-container></infinispan>");
-
+    .configuration("<infinispan><cache-container><distributed-cache name=\"another-cache\"/></cache-container></infinispan>"); <2>
 ----
+
+<1> Creates a cache named `my-cache` that uses the `org.infinispan.DIST_SYNC` template.
+<2> Creates a cache named `another-cache` that uses the specified XML definition.
+
+.Hot Rod client properties
+
+[source,options="nowrap"]
+----
+infinispan.client.hotrod.cache.my-cache.template_name=org.infinispan.DIST_SYNC <1>
+infinispan.client.hotrod.cache.another-cache.configuration=<infinispan><cache-container><distributed-cache name=\"another-cache\"/></cache-container></infinispan> <2>
+----
+
+<1> Creates a cache named `my-cache` that uses the `org.infinispan.DIST_SYNC` template.
+<2> Creates a cache named `another-cache` that uses the specified XML definition.

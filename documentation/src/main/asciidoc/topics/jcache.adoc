@@ -21,19 +21,18 @@ specification, and explains key aspects of the API.
 include::dependencies_maven/jcache.xml[]
 ----
 
-== Create an embedded cache
-Creating an embedded cache, using default configuration options as defined by the
-JCache API specification, is as simple as doing the following:
+== Creating embedded caches
+
+* Create embedded caches that use the default JCache API configuration as follows:
 
 [source,java]
 ----
 include::code_examples/JCacheCreateCache.java[]
 ----
 
-== Use a custom embedded configuration
+=== Configuring embedded caches
 
-It is possible to use a custom embedded {brandname} configuration file by
-passing the URI pointing to it to the `CachingProvider.getCacheManager(URI)` call:
+* Pass the URI for custom {brandname} configuration to the `CachingProvider.getCacheManager(URI)` call as follows:
 
 [source,java]
 ----
@@ -55,22 +54,24 @@ Alternatively, JCache can be configured to store data by reference
 include::code_examples/CreateCacheMutableConfiguration.java[]
 ----
 
-== Create a remote cache
-Creating a remote cache (client-server mode), using default configuration options
-as defined by the JCache API specification, is as simple as doing the following:
+== Creating remote caches
+
+To create caches on remote {brandname} server
+
+. Add `infinispan-jcache-remote-<version>.jar` and all transitive dependencies to your classpath.
+. Create caches on remote {brandname} servers and use the default JCache API configuration as follows:
 
 [source,java]
 ----
 include::code_examples/JCacheCreateRemoteCache.java[]
 ----
 
-NOTE: In order to use the org.infinispan.jcache.remote.JCachingProvider, infinispan-jcache-remote-<version>.jar
-and all its transitive dependencies need to be on put your classpath.
+=== Configuring remote caches
 
-== Use a custom remote configuration
+Hot Rod configuration files include `infinispan.client.hotrod.cache.*`
+properties that you can use to customize remote caches.
 
-It is possible to use a custom remote (Hot Rod) {brandname} configuration file by
-passing the URI pointing to it to the `CachingProvider.getCacheManager(URI)` call:
+* Pass the URI for your `hotrod-client.properties` file to the `CachingProvider.getCacheManager(URI)` call as follows:
 
 [source,java]
 ----
