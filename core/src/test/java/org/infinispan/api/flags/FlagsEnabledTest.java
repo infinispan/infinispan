@@ -113,7 +113,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
 
    public void testWithFlagsAndDelegateCache() {
       final AdvancedCache<Integer, String> c1 =
-            new CustomDelegateCache<>(this.<Integer, String>advancedCache(0, cacheName));
+            new CustomDelegateCache<>(this.advancedCache(0, cacheName));
       final AdvancedCache<Integer, String> c2 = advancedCache(1, cacheName);
 
       c1.withFlags(CACHE_MODE_LOCAL).put(1, "v1");
@@ -191,7 +191,12 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
          extends AbstractDelegatingAdvancedCache<K, V> {
 
       public CustomDelegateCache(AdvancedCache<K, V> cache) {
-         super(cache, CustomDelegateCache::new);
+         super(cache);
+      }
+
+      @Override
+      public AdvancedCache rewrap(AdvancedCache newDelegate) {
+         return new CustomDelegateCache(newDelegate);
       }
    }
 

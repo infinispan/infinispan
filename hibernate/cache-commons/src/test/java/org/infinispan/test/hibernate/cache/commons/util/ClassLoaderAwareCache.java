@@ -52,6 +52,11 @@ public class ClassLoaderAwareCache<K, V> extends AbstractDelegatingAdvancedCache
    }
 
    @Override
+   public AdvancedCache rewrap(AdvancedCache newDelegate) {
+      return new ClassLoaderAwareCache(newDelegate, classLoaderRef.get());
+   }
+
+   @Override
    public Stats getStats() {
       return this.getAdvancedCache().getStats();
    }

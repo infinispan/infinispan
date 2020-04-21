@@ -17,7 +17,6 @@ import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.cache.impl.StatsCollectingCache;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
@@ -64,7 +63,6 @@ import org.infinispan.xsite.XSiteAdminOperations;
  */
 public class InternalCacheFactory<K, V> {
 
-   private Configuration configuration;
    private ComponentRegistry componentRegistry;
    private BasicComponentRegistry basicComponentRegistry;
 
@@ -126,7 +124,7 @@ public class InternalCacheFactory<K, V> {
       DataConversion keyDataConversion = newKeyDataConversion(null, ByteArrayWrapper.class);
       DataConversion valueDataConversion = newValueDataConversion(null, ByteArrayWrapper.class);
 
-      return new EncoderCache<>(wrappedCache, keyDataConversion, valueDataConversion);
+      return new EncoderCache<>(wrappedCache, null, null, keyDataConversion, valueDataConversion);
    }
 
    private AdvancedCache<K, V> createSimpleCache(Configuration configuration,
@@ -138,7 +136,6 @@ public class InternalCacheFactory<K, V> {
       } else {
          cache = buildEncodingCache(new SimpleCacheImpl<>(cacheName));
       }
-      this.configuration = configuration;
 
       componentRegistry = new SimpleComponentRegistry<>(cacheName, configuration, cache, globalComponentRegistry);
 
@@ -158,8 +155,6 @@ public class InternalCacheFactory<K, V> {
     */
    private void bootstrap(String cacheName, AdvancedCache<?, ?> cache, Configuration configuration,
                           GlobalComponentRegistry globalComponentRegistry, StreamingMarshaller globalMarshaller) {
-      this.configuration = configuration;
-
       // injection bootstrap stuff
       componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader());
 
@@ -198,7 +193,8 @@ public class InternalCacheFactory<K, V> {
    }
 
    @Scope(Scopes.NAMED_CACHE)
-   static abstract class AbstractGetAdvancedCache<K, V, T extends AbstractGetAdvancedCache<K, V, T>> extends AbstractDelegatingAdvancedCache<K, V> {
+   static abstract class AbstractGetAdvancedCache<K, V, T extends AbstractGetAdvancedCache<K, V, T>>
+         extends AbstractDelegatingAdvancedCache<K, V> {
 
       @Inject
       protected ComponentRegistry componentRegistry;
@@ -207,8 +203,8 @@ public class InternalCacheFactory<K, V> {
       @Inject
       KeyPartitioner keyPartitioner;
 
-      public AbstractGetAdvancedCache(AdvancedCache<K, V> cache, AdvancedCacheWrapper<K, V> wrapper) {
-         super(cache, wrapper);
+      public AbstractGetAdvancedCache(AdvancedCache<K, V> cache) {
+         super(cache);
       }
 
       /**
@@ -286,21 +282,15 @@ public class InternalCacheFactory<K, V> {
       }
 
       private PartitionHandlingCache(AdvancedCache<K, V> cache, long bitFlags) {
-         super(cache, new AdvancedCacheWrapper<K, V>() {
-            @Override
-            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
-               throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> self, AdvancedCache<K, V> newDelegate) {
-               PartitionHandlingCache<K, V> prev = (PartitionHandlingCache<K, V>) self;
-               PartitionHandlingCache<K, V> newCache = new PartitionHandlingCache<>(newDelegate, prev.bitFlags);
-               newCache.internalWire(prev);
-               return newCache;
-            }
-         });
+         super(cache);
          this.bitFlags = bitFlags;
+      }
+
+      @Override
+      public AdvancedCache rewrap(AdvancedCache newDelegate) {
+         PartitionHandlingCache newCache = new PartitionHandlingCache<>(newDelegate, this.bitFlags);
+         newCache.internalWire(this);
+         return newCache;
       }
 
       @Override
@@ -359,20 +349,15 @@ public class InternalCacheFactory<K, V> {
       private CacheMgmtInterceptor interceptor;
 
       public StatsCache(AdvancedCache<K, V> cache) {
-         super(cache, new AdvancedCacheWrapper<K, V>() {
-            @Override
-            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
-               throw new UnsupportedOperationException();
-            }
+         super(cache);
+      }
 
-            @Override
-            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> self, AdvancedCache<K, V> newDelegate) {
-               StatsCache<K, V> newCache = new StatsCache<>(newDelegate);
-               newCache.internalWire((StatsCache<K, V>) self);
-               newCache.interceptorStart();
-               return newCache;
-            }
-         });
+      @Override
+      public AdvancedCache rewrap(AdvancedCache newDelegate) {
+         StatsCache newCache = new StatsCache<>(newDelegate);
+         newCache.internalWire(this);
+         newCache.interceptorStart();
+         return newCache;
       }
 
       @Override
@@ -417,21 +402,15 @@ public class InternalCacheFactory<K, V> {
 //      }
 
       private GetReplCache(AdvancedCache<K, V> cache/*, AtomicBoolean hasListeners*/) {
-         super(cache, new AdvancedCacheWrapper<K, V>() {
-            @Override
-            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
-               throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> self, AdvancedCache<K, V> newDelegate) {
-               GetReplCache<K, V> oldCache = (GetReplCache<K, V>) self;
-               GetReplCache<K, V> newCache = new GetReplCache<K, V>(newDelegate/*, oldCache.hasListeners*/);
-               newCache.internalWire(oldCache);
-               return newCache;
-            }
-         });
+         super(cache);
 //         this.hasListeners = hasListeners;
+      }
+
+      @Override
+      public AdvancedCache rewrap(AdvancedCache newDelegate) {
+         GetReplCache newCache = new GetReplCache<>(newDelegate/*, oldCache.hasListeners*/);
+         newCache.internalWire(this);
+         return newCache;
       }
 
       @Override
