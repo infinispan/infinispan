@@ -53,5 +53,7 @@ builder
 
 [NOTE]
 ====
-We strongly discourage the use of the global near cache settings in favour of per-cache configuration.
+You should always configure near caching on a per-cache basis. Even though
+{brandname} provides global near cache configuration properties, you should not 
+use them.
 ====

@@ -413,13 +413,13 @@
  *           <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.configuration</b></td>
  *           <td>XML</td>
  *           <td>N/A</td>
- *           <td>The server-side configuration to use, in XML format, in case the specified cache does not exist when accessing it.</td>
+ *           <td>Provides a cache definition, in XML format, to use when clients request caches that do not exist.</td>
  *        </tr>
  *        <tr>
  *           <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.template_name</b></td>
  *           <td>String</td>
  *           <td>N/A</td>
- *           <td>The server-side configuration template name to use, in case the specified cache does not exist when accessing it</td>
+ *           <td>Names a cache configuration template to use when clients request caches that do not exist. The cache template must be available on the server.</td>
  *        </tr>
  *        <tr>
  *           <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.near_cache.mode</b></td>
