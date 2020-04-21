@@ -55,7 +55,9 @@ import org.infinispan.util.concurrent.CompletionStages;
  */
 @Scope(Scopes.NAMED_CACHE)
 public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
-
+   // InternalCacheFactory.buildEncodingCache doesn't have a component registry to pass to the constructor.
+   // We inject these after the component registry has been created,
+   // and every other caller of the constructor passes non-null values.
    @Inject InternalEntryFactory entryFactory;
    @Inject BasicComponentRegistry componentRegistry;
 
@@ -64,23 +66,19 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    private final Function<V, V> decodedValueForRead = this::valueFromStorage;
 
-   public EncoderCache(AdvancedCache<K, V> cache, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      super(cache, new AdvancedCacheWrapper<K, V>() {
-         @Override
-         public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
-            throw new UnsupportedOperationException();
-         }
-
-         // we cannot pass a reference to self to superconstructor, so we need to provide it explicitly to the wrapper
-         @Override
-         public AdvancedCache<K, V> wrap(AdvancedCache<K, V> self, AdvancedCache<K, V> newDelegate) {
-            EncoderCache newCache = new EncoderCache<>(newDelegate, keyDataConversion, valueDataConversion);
-            ((EncoderCache) self).initState(newCache, ((EncoderCache) self));
-            return newCache;
-         }
-      });
+   public EncoderCache(AdvancedCache<K, V> cache, InternalEntryFactory entryFactory,
+                       BasicComponentRegistry componentRegistry,
+                       DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      super(cache);
+      this.entryFactory = entryFactory;
+      this.componentRegistry = componentRegistry;
       this.keyDataConversion = keyDataConversion;
       this.valueDataConversion = valueDataConversion;
+   }
+
+   @Override
+   public AdvancedCache rewrap(AdvancedCache newDelegate) {
+      return new EncoderCache(newDelegate, entryFactory, componentRegistry, keyDataConversion, valueDataConversion);
    }
 
    private Set<?> encodeKeysForWrite(Set<?> keys) {
@@ -497,25 +495,15 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       componentRegistry.wireDependencies(valueDataConversion, true);
    }
 
-   private void initState(EncoderCache<K, V> encoderCache, EncoderCache<K, V> template) {
-      encoderCache.entryFactory = template.entryFactory;
-      encoderCache.componentRegistry = template.componentRegistry;
-   }
-
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass) {
       checkSubclass(keyEncoderClass, Encoder.class);
       checkSubclass(valueEncoderClass, Encoder.class);
 
-      if (allIdentity(keyEncoderClass, valueEncoderClass, keyDataConversion.getWrapperClass(),
-            valueDataConversion.getWrapperClass())) {
-         return cache;
-      }
-
       DataConversion newKeyDataConversion = keyDataConversion.withEncoding(keyEncoderClass);
       DataConversion newValueDataConversion = valueDataConversion.withEncoding(valueEncoderClass);
-      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, newValueDataConversion);
-      initState(encoderCache, this);
+      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, entryFactory, componentRegistry,
+                                                           newKeyDataConversion, newValueDataConversion);
       encoderCache.lookupEncoderWrapper();
       return encoderCache;
    }
@@ -524,15 +512,10 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoderClass) {
       checkSubclass(encoderClass, Encoder.class);
 
-      if (allIdentity(encoderClass, encoderClass, keyDataConversion.getWrapperClass(),
-            valueDataConversion.getWrapperClass())) {
-         return cache;
-      }
-
       DataConversion newKeyDataConversion = keyDataConversion.withEncoding(encoderClass);
       DataConversion newValueDataConversion = valueDataConversion.withEncoding(encoderClass);
-      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, newValueDataConversion);
-      initState(encoderCache, this);
+      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, entryFactory, componentRegistry,
+                                                           newKeyDataConversion, newValueDataConversion);
       encoderCache.lookupEncoderWrapper();
       return encoderCache;
    }
@@ -541,14 +524,9 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    public AdvancedCache<K, V> withKeyEncoding(Class<? extends Encoder> encoderClass) {
       checkSubclass(encoderClass, Encoder.class);
 
-      if (allIdentity(encoderClass, valueDataConversion.getEncoderClass(), keyDataConversion.getWrapperClass(),
-            valueDataConversion.getWrapperClass())) {
-         return cache;
-      }
-
       DataConversion newKeyDataConversion = keyDataConversion.withEncoding(encoderClass);
-      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, valueDataConversion);
-      initState(encoderCache, this);
+      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, entryFactory, componentRegistry,
+                                                           newKeyDataConversion, valueDataConversion);
       encoderCache.lookupEncoderWrapper();
       return encoderCache;
    }
@@ -579,15 +557,10 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       checkSubclass(keyWrapperClass, Wrapper.class);
       checkSubclass(valueWrapperClass, Wrapper.class);
 
-      if (allIdentity(keyDataConversion.getEncoderClass(), valueDataConversion.getEncoderClass(), keyWrapperClass,
-            valueWrapperClass)) {
-         return cache;
-      }
-
       DataConversion newKeyDataConversion = keyDataConversion.withWrapping(keyWrapperClass);
       DataConversion newValueDataConversion = valueDataConversion.withWrapping(valueWrapperClass);
-      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, newValueDataConversion);
-      initState(encoderCache, this);
+      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, entryFactory, componentRegistry,
+                                                           newKeyDataConversion, newValueDataConversion);
       encoderCache.lookupEncoderWrapper();
       return encoderCache;
    }
@@ -607,8 +580,8 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    private AdvancedCache<K, V> withMediaType(MediaType kType, MediaType vType) {
       DataConversion newKeyDataConversion = keyDataConversion.withRequestMediaType(kType);
       DataConversion newValueDataConversion = valueDataConversion.withRequestMediaType(vType);
-      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, newValueDataConversion);
-      initState(encoderCache, this);
+      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, entryFactory, componentRegistry,
+                                                           newKeyDataConversion, newValueDataConversion);
       encoderCache.lookupEncoderWrapper();
       return encoderCache;
    }
@@ -913,7 +886,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public CompletionStage<Void> addListenerAsync(Object listener) {
-      Cache unwrapped = super.unwrapCache(this.cache);
+      Cache unwrapped = unwrapCache(this.cache);
       if (unwrapped instanceof CacheImpl) {
          ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, false);
          return ((CacheImpl) unwrapped).addListenerAsync(listenerHolder);
@@ -931,7 +904,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public <C> CompletionStage<Void> addListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter,
                                CacheEventConverter<? super K, ? super V, C> converter) {
-      Cache unwrapped = super.unwrapCache(this.cache);
+      Cache unwrapped = unwrapCache(this.cache);
       if (unwrapped instanceof CacheImpl) {
          ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, false);
          return ((CacheImpl) unwrapped).addListenerAsync(listenerHolder, filter, converter);
@@ -953,7 +926,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
                                        CacheEventFilter<? super K, ? super V> filter,
                                        CacheEventConverter<? super K, ? super V, C> converter,
                                        Set<Class<? extends Annotation>> filterAnnotations) {
-      Cache unwrapped = super.unwrapCache(this.cache);
+      Cache unwrapped = unwrapCache(this.cache);
       if (unwrapped instanceof CacheImpl) {
          ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, false);
          return ((CacheImpl) unwrapped).addFilteredListenerAsync(listenerHolder, filter, converter, filterAnnotations);
@@ -970,7 +943,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public <C> CompletionStage<Void> addStorageFormatFilteredListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
-      Cache unwrapped = super.unwrapCache(this.cache);
+      Cache<?, ?> unwrapped = unwrapCache(this.cache);
       if (unwrapped instanceof CacheImpl) {
          ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, true);
          return ((CacheImpl) unwrapped).addFilteredListenerAsync(listenerHolder, filter, converter, filterAnnotations);

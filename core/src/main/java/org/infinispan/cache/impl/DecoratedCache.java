@@ -65,6 +65,11 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
+   public AdvancedCache rewrap(AdvancedCache newDelegate) {
+      throw new UnsupportedOperationException("Decorated caches should not delegate wrapping operations");
+   }
+
+   @Override
    public AdvancedCache<K, V> with(final ClassLoader classLoader) {
       if (classLoader == null) throw new IllegalArgumentException("ClassLoader cannot be null!");
       return this;
