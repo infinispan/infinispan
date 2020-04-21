@@ -127,7 +127,6 @@ import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.notifications.impl.AbstractListenerImpl;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.partitionhandling.AvailabilityMode;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.PublisherTransformers;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
@@ -150,7 +149,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Helper class that handles all notifications to registered listeners.
@@ -1119,19 +1119,19 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             DeliveryGuarantee.EXACTLY_ONCE, config.clustering().stateTransfer().chunkSize(),
             intermediateOperations.isEmpty() ? PublisherTransformers.identity() : new CacheIntermediatePublisher(intermediateOperations));
 
-      io.reactivex.functions.Function<Object, ? extends Publisher<Void>> itemDelayFunction = ice -> {
+      io.reactivex.rxjava3.functions.Function<Object, ? extends Publisher<Void>> itemDelayFunction = ice -> {
          CompletionStage<Void> delay = handler.delayProcessing();
          if (CompletionStages.isCompletedSuccessfully(delay)) {
             return Flowable.empty();
          }
-         return RxJavaInterop.completionStageToCompletable(delay).toFlowable();
+         return Flowable.fromCompletionStage(delay);
       };
       Publisher<CacheEntry<K, V>> p = s -> publisher.subscribe(s, handler);
       currentStage = Flowable.fromPublisher(p)
-            .delaySubscription(RxJavaInterop.completionStageToMaybe(currentStage).toFlowable())
+            .delaySubscription(Flowable.fromCompletionStage(currentStage))
             .delay(itemDelayFunction)
             .filter(ice -> handler.markKeyAsProcessing(ice.getKey()) != QueueingSegmentListener.REMOVED)
-            .delay(ice -> RxJavaInterop.completionStageToCompletable(raiseEventForInitialTransfer(generatedId, ice, l.clustered(),
+            .delay(ice -> Completable.fromCompletionStage(raiseEventForInitialTransfer(generatedId, ice, l.clustered(),
                   kc, kv)).toFlowable())
             // Only request up to 20 at a time
             .rebatchRequests(20)
@@ -1139,7 +1139,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             .toFlowable()
             // Make sure there are no more delays for processing after we have retrieved all values
             .delay(itemDelayFunction)
-            .to(RxJavaInterop.flowableToCompletionStage());
+            .ignoreElements()
+            .toCompletionStage(null);
 
       currentStage = currentStage.thenCompose(ignore -> {
          if (trace) {

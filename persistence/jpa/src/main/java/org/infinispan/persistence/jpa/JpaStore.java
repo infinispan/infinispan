@@ -53,15 +53,15 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
-import io.reactivex.Scheduler;
-import io.reactivex.internal.functions.Functions;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Scheduler;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * NOTE: This store can return expired keys or entries on any given operation if
@@ -452,7 +452,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                   throw (JpaStoreException) e;
                throw new JpaStoreException("Exception caught in bulkUpdate()", e);
             })
-            .subscribe(Functions.emptyConsumer(), future::completeExceptionally, () -> future.complete(null));
+            .subscribe(RxJavaInterop.emptyConsumer(), future::completeExceptionally, () -> future.complete(null));
       return future;
    }
 

@@ -1,20 +1,20 @@
 package org.infinispan.util.rxjava;
 
+import java.util.Objects;
 import java.util.PrimitiveIterator;
 import java.util.function.IntFunction;
 
 import org.infinispan.commons.util.IntSet;
 import org.reactivestreams.Subscriber;
 
-import io.reactivex.Flowable;
-import io.reactivex.annotations.Nullable;
-import io.reactivex.exceptions.Exceptions;
-import io.reactivex.internal.functions.ObjectHelper;
-import io.reactivex.internal.fuseable.ConditionalSubscriber;
-import io.reactivex.internal.subscriptions.BasicQueueSubscription;
-import io.reactivex.internal.subscriptions.EmptySubscription;
-import io.reactivex.internal.subscriptions.SubscriptionHelper;
-import io.reactivex.internal.util.BackpressureHelper;
+import io.reactivex.rxjava3.annotations.Nullable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.exceptions.Exceptions;
+import io.reactivex.rxjava3.internal.fuseable.ConditionalSubscriber;
+import io.reactivex.rxjava3.internal.subscriptions.BasicQueueSubscription;
+import io.reactivex.rxjava3.internal.subscriptions.EmptySubscription;
+import io.reactivex.rxjava3.internal.subscriptions.SubscriptionHelper;
+import io.reactivex.rxjava3.internal.util.BackpressureHelper;
 
 /**
  * Flowable implementation that will produce entries by providing every int in the given set to the provided IntFunction.
@@ -103,7 +103,7 @@ public class FlowableFromIntSetFunction<T> extends Flowable<T> {
             }
          }
          T val = intFunction.apply(it.nextInt());
-         return ObjectHelper.requireNonNull(val, "IntFunction.apply(OfInt.nextInt()) returned a null value");
+         return Objects.requireNonNull(val, "IntFunction.apply(OfInt.nextInt()) returned a null value");
       }
 
 

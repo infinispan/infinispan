@@ -22,7 +22,7 @@ import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

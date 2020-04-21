@@ -4,7 +4,7 @@ import java.util.stream.BaseStream;
 
 import org.infinispan.factories.ComponentRegistry;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Intermediate operation that can be applied to a stream to change its processing.

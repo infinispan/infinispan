@@ -307,7 +307,7 @@
       <versionx.io.protostuff.protostuff-core>${version.protostuff}</versionx.io.protostuff.protostuff-core>
       <versionx.io.protostuff.protostuff-runtime>${version.protostuff}</versionx.io.protostuff.protostuff-runtime>
       <versionx.io.protostuff.protostuff-runtime-registry>${version.protostuff}</versionx.io.protostuff.protostuff-runtime-registry>
-      <versionx.io.reactivex.rxjava2.rxjava>${version.rxjava}</versionx.io.reactivex.rxjava2.rxjava>
+      <versionx.io.reactivex.rxjava3.rxjava>${version.rxjava}</versionx.io.reactivex.rxjava3.rxjava>
       <versionx.jakarta-regexp.jakarta-regexp>1.4</versionx.jakarta-regexp.jakarta-regexp>
       <versionx.javax.activation.activation>1.1.1</versionx.javax.activation.activation>
       <versionx.javax.activation.javax.activation-api>1.2.0</versionx.javax.activation.javax.activation-api>
@@ -1156,9 +1156,9 @@
             <version>${versionx.io.protostuff.protostuff-runtime-registry}</version>
          </dependency>
          <dependency>
-            <groupId>io.reactivex.rxjava2</groupId>
+            <groupId>io.reactivex.rxjava3</groupId>
             <artifactId>rxjava</artifactId>
-            <version>${versionx.io.reactivex.rxjava2.rxjava}</version>
+            <version>${versionx.io.reactivex.rxjava3.rxjava}</version>
          </dependency>
          <dependency>
             <groupId>jakarta-regexp</groupId>

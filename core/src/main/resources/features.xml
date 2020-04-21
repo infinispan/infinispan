@@ -9,7 +9,7 @@
 
       <bundle>mvn:org.infinispan/infinispan-core/${project.version}</bundle>
       <bundle>mvn:org.jgroups/jgroups/${version.jgroups}</bundle>
-      <bundle>mvn:io.reactivex.rxjava2/rxjava/${version.rxjava}</bundle>
+      <bundle>mvn:io.reactivex.rxjava3/rxjava/${version.rxjava}</bundle>
       <bundle>mvn:org.reactivestreams/reactive-streams/${version.reactivestreams}</bundle>
       <bundle>wrap:mvn:org.eclipse.microprofile.config/microprofile-config-api/${version.microprofile-config-api}</bundle>
       <bundle>wrap:mvn:org.eclipse.microprofile.metrics/microprofile-metrics-api/${version.microprofile-metrics-api}</bundle>

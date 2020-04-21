@@ -69,7 +69,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Implementation of {@link CacheStream} that provides support for lazily distributing stream methods to appropriate
@@ -402,7 +402,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
     * we can guarantee to notify the user after all elements have been processed of which segments were completed.
     * All methods except for accept(int) are guaranteed to be called sequentially and in a safe manner.
     */
-   private class CompletionSegmentTracker implements IntConsumer, io.reactivex.functions.Consumer<Object> {
+   private class CompletionSegmentTracker implements IntConsumer, io.reactivex.rxjava3.functions.Consumer<Object> {
       private final Consumer<Supplier<PrimitiveIterator.OfInt>> listener;
       private final Map<Object, IntSet> awaitingNotification;
       volatile IntSet completedSegments;

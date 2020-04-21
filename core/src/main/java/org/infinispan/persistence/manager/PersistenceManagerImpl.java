@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
@@ -105,7 +104,6 @@ import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.persistence.support.ComposedSegmentedLoadWriteStore;
 import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.persistence.support.DelegatingCacheWriter;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -113,10 +111,12 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import io.reactivex.Flowable;
-import io.reactivex.Scheduler;
-import io.reactivex.Single;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Scheduler;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Supplier;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import net.jcip.annotations.GuardedBy;
 
 @Scope(Scopes.NAMED_CACHE)
@@ -158,7 +158,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @GuardedBy("storesMutex")
    private final Map<Object, StoreStatus> storeStatuses = new HashMap<>();
    private AdvancedPurgeListener<Object, Object> advancedListener;
-   private final Callable<Semaphore> publisherSemaphoreCallable = () -> {
+   private final Supplier<Semaphore> publisherSemaphoreCallable = () -> {
       publisherSemaphore.acquire();
       return publisherSemaphore;
    };
@@ -391,7 +391,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             .concatMapSingle(me -> preloadKey(flaggedCache, me))
             .count()
             .subscribeOn(blockingScheduler)
-            .to(RxJavaInterop.singleToCompletionStage())
+            .toCompletionStage()
             .thenAccept(insertAmount -> {
                this.preloaded = insertAmount < maxEntries;
                log.debugf("Preloaded %d keys in %s", insertAmount, Util.prettyPrintTime(timeService.timeDuration(start, MILLISECONDS)));
@@ -1035,7 +1035,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                })
                .subscribeOn(blockingScheduler)
                .observeOn(nonBlockingScheduler)
-               .to(RxJavaInterop.singleToCompletionStage());
+               .toCompletionStage();
 
       } finally {
          storesMutex.readLock().unlock();
@@ -1384,8 +1384,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
       } else {
          stage = cache.putAsync(me.getKey(), me.getValue(), metadata);
       }
-      return RxJavaInterop.completionStageToMaybe(stage)
-            .toSingle(me);
+      return Maybe.fromCompletionStage(stage)
+            .defaultIfEmpty(me);
    }
 
    private void resumeIfNeeded(Transaction transaction) {

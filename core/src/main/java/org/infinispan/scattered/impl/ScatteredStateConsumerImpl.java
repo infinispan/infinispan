@@ -40,7 +40,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
@@ -52,12 +51,11 @@ import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateConsumerImpl;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -284,7 +282,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
             persistenceManager.publishEntries(completedSegments, k -> !dataContainer.containsKey(k), true, true,
                                               Configurations::isStateTransferStore);
          try {
-            CompletionStage<Void> stage = Flowable.fromPublisher(persistencePublisher)
+            blockingSubscribe(Flowable.fromPublisher(persistencePublisher)
                   .doOnNext(me -> {
                      try {
                         Metadata metadata = me.getMetadata();
@@ -305,8 +303,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                      } catch (CacheException e) {
                         log.failedLoadingValueFromCacheStore(me.getKey(), e);
                      }
-                  }).to(RxJavaInterop.flowableToCompletionStage());
-            CompletionStages.join(stage);
+                  }));
          } catch (CacheException e) {
             PERSISTENCE.failedLoadingKeysFromCacheStore(e);
          }
@@ -353,6 +350,12 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       if (chunkCounter.get() == 0) {
          notifyEndOfStateTransferIfNeeded();
       }
+   }
+
+   // This should be fixed in https://issues.redhat.com/browse/ISPN-10864
+   @SuppressWarnings("checkstyle:ForbiddenMethod")
+   private void blockingSubscribe(Flowable<?> flowable) {
+      flowable.blockingSubscribe();
    }
 
    private <T> List<T> offerAndDrain(BlockingQueue<T> queue, T element) {

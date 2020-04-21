@@ -6,7 +6,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * A collection type that returns special Cache based streams that have additional options to tweak behavior.
@@ -49,6 +49,6 @@ public interface CacheCollection<E> extends CloseableIteratorCollection<E> {
     */
    @Experimental
    default Publisher<E> localPublisher(IntSet segments) {
-      return Flowable.fromIterable(() -> stream().filterKeySegments(segments).iterator());
+      return Flowable.fromStream(stream().filterKeySegments(segments));
    }
 }

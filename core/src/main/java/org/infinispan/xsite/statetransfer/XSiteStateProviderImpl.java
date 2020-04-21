@@ -12,7 +12,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -33,21 +32,19 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.RetryOnFailureXSiteCommand;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.commands.XSiteStateTransferFinishSendCommand;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * It contains the logic to send state to another site.
@@ -215,7 +212,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
             }
 
             try {
-               CompletionStage<Void> stage = Flowable.fromIterable(dataContainer)
+               blockingSubscribe(Flowable.fromIterable(dataContainer)
                      .filter(ice -> shouldSendKey(ice.getKey()))
                      .map(ice -> {
                         if (trace) {
@@ -233,8 +230,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
                            // This will terminate the flowable early
                            throw new CacheException(t);
                         }
-                     }).to(RxJavaInterop.flowableToCompletionStage());
-                CompletionStages.join(stage);
+                     }));
             } catch (Throwable t) {
                error = true;
                XSITE.unableToSendXSiteState(xSiteBackup.getSiteName(), t);
@@ -255,7 +251,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
                Publisher<MarshallableEntry<Object, Object>> loaderPublisher =
                   persistenceManager.publishEntries(k -> shouldSendKey(k) && !dataContainer.containsKey(k), true, true,
                                                     Configurations::isStateTransferStore);
-               CompletionStage<Void> stage = Flowable.fromPublisher(loaderPublisher)
+               blockingSubscribe(Flowable.fromPublisher(loaderPublisher)
                      .map(XSiteState::fromCacheLoader)
                      .takeUntil(l -> canceled)
                      .buffer(chunkSize)
@@ -268,8 +264,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
                            // This will terminate the flowable early
                            throw new CacheException(throwable);
                         }
-                     }).to(RxJavaInterop.flowableToCompletionStage());
-               CompletionStages.join(stage);
+                     }));
                if (canceled) {
                   log.debugf("[X-Site State Transfer - %s] State transfer canceled!", xSiteBackup.getSiteName());
                   return;
@@ -305,5 +300,11 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
                ", canceled=" + canceled +
                '}';
       }
+   }
+
+   // This should be fixed in https://issues.redhat.com/browse/ISPN-11398
+   @SuppressWarnings("checkstyle:ForbiddenMethod")
+   private void blockingSubscribe(Flowable<?> flowable) {
+      flowable.blockingSubscribe();
    }
 }

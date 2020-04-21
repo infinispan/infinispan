@@ -5,7 +5,7 @@ import java.util.stream.LongStream;
 
 import org.infinispan.stream.impl.intops.MappingOperation;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Performs as double operation on a {@link LongStream}

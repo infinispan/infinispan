@@ -31,9 +31,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
 
-import io.reactivex.Flowable;
-import io.reactivex.observers.BaseTestConsumer;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 
 
 /**
@@ -156,7 +155,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       }
 
       // We should receive all of those elements now
-      subscriber.awaitCount(NUM_ENTRIES - batchsize, BaseTestConsumer.TestWaitStrategy.SLEEP_10MS, TimeUnit.SECONDS.toMillis(10));
+      subscriber.awaitCount(NUM_ENTRIES - batchsize);
 
       // Now request on the main thread - which should guarantee requests from different threads
       // We only have 10 elements left, but request 1 more just because and we can verify we only got 10
@@ -165,7 +164,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       subscriber.awaitDone(10, TimeUnit.SECONDS);
 
       subscriber.assertNoErrors();
-      assertEquals(NUM_ENTRIES, subscriber.valueCount());
+      assertEquals(NUM_ENTRIES, subscriber.values().size());
 
       assertFalse(sameKeyMultipleTimes.get());
       for (int i = 0; i < NUM_ENTRIES; i++) {

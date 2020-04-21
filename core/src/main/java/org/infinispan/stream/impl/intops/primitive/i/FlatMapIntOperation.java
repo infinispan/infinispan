@@ -4,10 +4,9 @@ import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.stream.impl.intops.FlatMappingOperation;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Performs flat map operation on a {@link IntStream}
@@ -35,6 +34,6 @@ public class FlatMapIntOperation implements FlatMappingOperation<Integer, IntStr
 
    @Override
    public Flowable<Integer> mapFlowable(Flowable<Integer> input) {
-      return input.flatMap(i -> RxJavaInterop.fromStream(function.apply(i).boxed()));
+      return input.concatMapStream(i -> function.apply(i).boxed());
    }
 }

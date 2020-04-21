@@ -19,7 +19,7 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 
 @Test(groups = "functional", testName = "org.infinispan.api.client.impl.KeyyValueStoreSimpleTest")
 public class ListenersKeyValueStoreTest extends SingleHotRodServerTest {

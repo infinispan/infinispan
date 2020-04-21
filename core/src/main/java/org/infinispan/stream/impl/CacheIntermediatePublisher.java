@@ -18,7 +18,7 @@ import org.infinispan.stream.impl.intops.MappingOperation;
 import org.infinispan.stream.impl.intops.object.MapOperation;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Function that is used to encapsulate multiple intermediate operations and perform them lazily when the function

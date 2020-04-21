@@ -26,7 +26,7 @@ import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 @Test(groups = "functional", testName = "reactive.publisher.impl.SimpleLocalPublisherMangerTest")
 @InCacheMode({CacheMode.REPL_SYNC, CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC})

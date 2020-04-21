@@ -34,7 +34,7 @@ import org.mockito.stubbing.Stubber;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Utility methods for dealing with Mockito mocks.

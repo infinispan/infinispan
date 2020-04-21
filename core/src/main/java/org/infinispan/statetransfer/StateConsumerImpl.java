@@ -10,7 +10,6 @@ import static org.infinispan.context.Flag.SKIP_SHARED_CACHE_STORE;
 import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
-import static org.infinispan.reactive.RxJavaInterop.completionStageToCompletable;
 import static org.infinispan.util.concurrent.CompletionStages.handleAndCompose;
 import static org.infinispan.util.concurrent.CompletionStages.ignoreValue;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
@@ -79,7 +78,6 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
@@ -107,7 +105,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -1085,9 +1084,9 @@ public class StateConsumerImpl implements StateConsumer {
                      .buffer(configuration.clustering().stateTransfer().chunkSize())
                      .concatMapCompletable(keysToRemove -> {
                         removedEntriesCounter.addAndGet(keysToRemove.size());
-                        return completionStageToCompletable(invalidateBatch(keysToRemove));
+                        return Completable.fromCompletionStage(invalidateBatch(keysToRemove));
                      })
-                     .to(RxJavaInterop.completableToCompletionStage())
+                     .toCompletionStage(null)
                      .thenRun(() -> {
                         if (trace) log.tracef("Removed %d keys, data container now has %d keys",
                                               removedEntriesCounter.get(), dataContainer.sizeIncludingExpired());

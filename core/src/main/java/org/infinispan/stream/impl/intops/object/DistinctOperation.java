@@ -4,7 +4,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Performs distinct operation on a regular {@link Stream}

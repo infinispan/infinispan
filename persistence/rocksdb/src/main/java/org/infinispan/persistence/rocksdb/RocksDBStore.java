@@ -48,7 +48,6 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
@@ -67,8 +66,8 @@ import org.rocksdb.RocksIterator;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 
-import io.reactivex.Flowable;
-import io.reactivex.internal.functions.Functions;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.internal.functions.Functions;
 
 @Store
 @ConfiguredBy(RocksDBStoreConfiguration.class)
@@ -702,7 +701,8 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
                   .doOnError(e -> {
                       throw new PersistenceException(e);
                   })
-                  .to(RxJavaInterop.flowableToCompletionStage());
+                  .ignoreElements()
+                  .toCompletionStage(null);
         }
 
         void deleteBatch(Iterable<Object> keys) {
@@ -736,7 +736,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
 
         int size(IntSet segments) {
             CompletionStage<Long> stage = Flowable.fromPublisher(publishKeys(segments, null))
-                  .count().to(RxJavaInterop.singleToCompletionStage());
+                  .count().toCompletionStage();
 
             long count = CompletionStages.join(stage);
             if (count > Integer.MAX_VALUE) {

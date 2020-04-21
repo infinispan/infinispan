@@ -23,8 +23,8 @@ import org.reactivestreams.Publisher;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import io.reactivex.Flowable;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 
 @Test(groups = "functional", testName = "org.infinispan.api.client.impl.KeyyValueStoreSimpleTest")
 public class KeyValueStoreTest extends SingleHotRodServerTest {
@@ -124,7 +124,7 @@ public class KeyValueStoreTest extends SingleHotRodServerTest {
 
       subscriber.awaitCount(100);
 
-      assertEquals(100, subscriber.valueCount());
+      assertEquals(100, subscriber.values().size());
    }
 
    public void testEntries() {
@@ -137,6 +137,6 @@ public class KeyValueStoreTest extends SingleHotRodServerTest {
 
       subscriber.awaitCount(100);
 
-      assertEquals(100, subscriber.valueCount());
+      assertEquals(100, subscriber.values().size());
    }
 }

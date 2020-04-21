@@ -23,8 +23,8 @@ import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.processors.FlowableProcessor;
-import io.reactivex.processors.PublishProcessor;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
+import io.reactivex.rxjava3.processors.PublishProcessor;
 
 /**
  * Cluster stream manager that also pays attention to partition status and properly closes iterators and throws

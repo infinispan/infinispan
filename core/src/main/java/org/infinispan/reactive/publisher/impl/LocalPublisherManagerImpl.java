@@ -34,7 +34,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.commands.reduction.PublisherResult;
 import org.infinispan.reactive.publisher.impl.commands.reduction.SegmentPublisherResult;
 import org.infinispan.stream.StreamMarshalling;
@@ -46,15 +45,17 @@ import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Scheduler;
-import io.reactivex.functions.Predicate;
-import io.reactivex.internal.functions.Functions;
-import io.reactivex.parallel.ParallelFlowable;
-import io.reactivex.processors.FlowableProcessor;
-import io.reactivex.processors.UnicastProcessor;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableConverter;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Scheduler;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Predicate;
+import io.reactivex.rxjava3.internal.functions.Functions;
+import io.reactivex.rxjava3.parallel.ParallelFlowable;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * LocalPublisherManager that publishes entries from the local node only. This class handles suspecting segments
@@ -188,7 +189,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
             }
             return entry;
          });
-         return RxJavaInterop.completionStageToMaybe(future);
+         return Maybe.fromCompletionStage(future);
       }).filter(e -> e != NullCacheEntry.getInstance());
    }
 
@@ -207,7 +208,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
    }
 
    private <I, R> SegmentAwarePublisher<R> specificKeyPublisher(IntSet segment, Set<K> keysToInclude,
-         io.reactivex.functions.Function<Flowable<K>, Flowable<I>> conversionFunction,
+         FlowableConverter<K, Flowable<I>> conversionFunction,
          Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
       return (subscriber, completedSegmentConsumer, lostSegmentConsumer) ->
             Flowable.fromIterable(keysToInclude)
@@ -556,7 +557,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       return handleSpecificObjects(parallelPublisher, keysToInclude, keysToExclude, keyFlowable ->
             // Filter out all the keys that aren't in the cache
             keyFlowable.concatMapMaybe(key ->
-               RxJavaInterop.completionStageToMaybe(cache.containsKeyAsync(key)
+               Maybe.fromCompletionStage(cache.containsKeyAsync(key)
                      .thenApply(contains -> contains ? key : null))
             )
       , collator, finalizer);
@@ -577,7 +578,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
                         }
                         return entry;
                      });
-                     return RxJavaInterop.completionStageToMaybe(future);
+                     return Maybe.fromCompletionStage(future);
                   }).filter(e -> e != NullCacheEntry.getInstance())
             , collator, finalizer);
    }
@@ -595,10 +596,11 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          // we could use it, but unfortunately it does not.
          Flowable<R> stageFlowable = keyFlowable.window(16)
                .flatMapSingle(keys -> {
-                  CompletionStage<R> stage = keyTransformer.apply(keys)
-                        .subscribeOn(nonBlockingScheduler)
+                  // Due to window abandonment (check RxJava3 docs) we must subscribe synchronously and then
+                  // observe on the publisher for parallelism
+                  CompletionStage<R> stage = keyTransformer.apply(keys.observeOn(nonBlockingScheduler))
                         .to(collator::apply);
-                  return RxJavaInterop.completionStageToSingle(stage);
+                  return Single.fromCompletionStage(stage);
                });
          return finalizer.apply(stageFlowable).thenApply(ignoreSegmentsFunction());
       } else {
@@ -684,7 +686,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
             }
             return Maybe.just(value);
          }
-         return RxJavaInterop.completionStageToMaybe(stage);
+         return Maybe.fromCompletionStage(stage);
       }, false, parallel ? cpuCount : 1);
    }
 

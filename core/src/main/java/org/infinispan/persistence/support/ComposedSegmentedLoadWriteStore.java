@@ -23,13 +23,13 @@ import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
-import io.reactivex.internal.functions.Functions;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.internal.functions.Functions;
 
 /**
  * Segmented store that creates multiple inner stores for each segment. This is used by stores that are not segmented
@@ -200,7 +200,9 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
                   groupedFlowable
                         .buffer(configuration.maxBatchSize())
                         .doOnNext(batch -> stores.get(groupedFlowable.getKey()).deleteBatch(batch))
-                  , stores.length()).to(RxJavaInterop.flowableToCompletionStage());
+                  , stores.length())
+            .ignoreElements()
+            .toCompletionStage(null);
       CompletionStages.join(stage);
    }
 
@@ -213,10 +215,10 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
                         .buffer(configuration.maxBatchSize())
                         .flatMapCompletable(batch -> {
                            CompletionStage<Void> stage = stores.get(groupedFlowable.getKey()).bulkUpdate(Flowable.fromIterable(batch));
-                           return RxJavaInterop.completionStageToCompletable(stage);
+                           return Completable.fromCompletionStage(stage);
                            // Make sure to set the parallelism level to how many groups will be created
                         }), false, stores.length())
-            .to(RxJavaInterop.completableToCompletionStage());
+            .toCompletionStage(null);
    }
 
    @Override

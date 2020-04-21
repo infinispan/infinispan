@@ -8,7 +8,7 @@ import org.infinispan.query.dsl.Query;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Implements {@link Publisher<T>} interface for client/server mode.

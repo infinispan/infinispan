@@ -8,12 +8,11 @@ import org.infinispan.CacheSet;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.commands.reduction.PublisherResult;
 import org.infinispan.reactive.publisher.impl.commands.reduction.SegmentPublisherResult;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * LocalPublisherManager that handles cases when a non segmented store are present. In this case we optimize
@@ -55,8 +54,7 @@ public class NonSegmentedLocalPublisherManagerImpl<K, V> extends LocalPublisherM
       if (keysToExclude != null) {
          flowable = flowable.filter(i -> !keysToExclude.contains(toKeyFunction.apply(i)));
       }
-      return RxJavaInterop.completionStageToMaybe(transformer.apply(flowable))
-            .toFlowable();
+      return Flowable.fromCompletionStage(transformer.apply(flowable));
    }
 
    @Override

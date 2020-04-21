@@ -17,8 +17,8 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
-import io.reactivex.processors.FlowableProcessor;
-import io.reactivex.processors.UnicastProcessor;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 public class ClientListenerImpl<K, V> implements Publisher {
    private RemoteCache<Object, Object> cache;

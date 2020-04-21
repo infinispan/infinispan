@@ -4,10 +4,9 @@ import java.util.function.DoubleFunction;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.stream.impl.intops.FlatMappingOperation;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Performs flat map operation on a {@link DoubleStream}
@@ -35,6 +34,6 @@ public class FlatMapDoubleOperation implements FlatMappingOperation<Double, Doub
 
    @Override
    public Flowable<Double> mapFlowable(Flowable<Double> input) {
-      return input.flatMap(d -> RxJavaInterop.fromStream(function.apply(d).boxed()));
+      return input.concatMapStream(d -> function.apply(d).boxed());
    }
 }
