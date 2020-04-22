@@ -1848,13 +1848,6 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="relative-to" type="xs:string">
-          <xs:annotation>
-            <xs:documentation>
-              Defines the root path on the file system where data is stored.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
         <xs:attribute name="path" type="xs:string">
           <xs:annotation>
             <xs:documentation>

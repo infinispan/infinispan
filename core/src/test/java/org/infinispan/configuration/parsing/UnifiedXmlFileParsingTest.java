@@ -443,7 +443,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertFalse(c.persistence().passivation());
             SingleFileStoreConfiguration fileStore = (SingleFileStoreConfiguration) c.persistence().stores().get(0);
             assertFalse(fileStore.fetchPersistentState());
-            assertEquals(System.getProperty("java.io.tmpdir") + File.separator + "path", fileStore.location());
+            assertEquals("path", fileStore.location());
             assertFalse(fileStore.purgeOnStartup());
             assertTrue(fileStore.preload());
             assertFalse(fileStore.shared());
