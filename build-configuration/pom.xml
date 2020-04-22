@@ -130,7 +130,7 @@
       <version.apache.maven>3.5.4</version.apache.maven>
       <version.apache.maven.resolver>1.1.0</version.apache.maven.resolver>
       <version.apache.maven.wagon>2.6</version.apache.maven.wagon>
-      <version.arquillian>1.4.0.Final</version.arquillian>
+      <version.arquillian>1.4.1.Final</version.arquillian>
       <version.asm>2.2.3</version.asm>
       <version.asm.ow2>6.2.1</version.asm.ow2>
       <version.byteman>4.0.6</version.byteman>
@@ -202,7 +202,7 @@
       <version.ops4j.pax.swissbox>1.8.3</version.ops4j.pax.swissbox>
       <version.ops4j.pax.url>2.5.2</version.ops4j.pax.url>
       <version.org.wildfly>${appserver.version}</version.org.wildfly>
-      <version.org.wildfly.arquillian>2.1.1.Final</version.org.wildfly.arquillian>
+      <version.org.wildfly.arquillian>2.2.0.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.core>6.0.2.Final</version.org.wildfly.core>
       <version.osgi>4.3.1</version.osgi>
       <version.pax.exam>4.11.0</version.pax.exam>
