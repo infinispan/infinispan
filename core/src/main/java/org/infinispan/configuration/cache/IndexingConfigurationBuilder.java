@@ -38,26 +38,23 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    public IndexingConfigurationBuilder enabled(boolean enabled) {
+      if (attributes.attribute(INDEX).isModified()) {
+         throw CONFIG.indexEnabledAndIndexModeAreExclusive();
+      }
       attributes.attribute(ENABLED).set(enabled);
       return this;
    }
 
    public IndexingConfigurationBuilder enable() {
-      attributes.attribute(ENABLED).set(true);
-      return this;
+      return enabled(true);
    }
 
    public IndexingConfigurationBuilder disable() {
-      attributes.attribute(ENABLED).set(false);
-      return this;
+      return enabled(false);
    }
 
    public boolean enabled() {
       return attributes.attribute(ENABLED).get();
-   }
-
-   Index index() {
-      return attributes.attribute(INDEX).get();
    }
 
    /**
@@ -138,10 +135,15 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    /**
     * Indicates indexing mode
-    * @deprecated This configuration can be removed as the index mode is calculated automatically.
+    *
+    * @deprecated Since 11. This configuration will be removed in next major version as the index mode is calculated
+    * automatically.
     */
    @Deprecated
    public IndexingConfigurationBuilder index(Index index) {
+      if (attributes.attribute(ENABLED).isModified()) {
+         throw CONFIG.indexEnabledAndIndexModeAreExclusive();
+      }
       enabled(index != null && index != Index.NONE);
       attributes.attribute(INDEX).set(index);
       return this;
@@ -202,7 +204,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          }
       }
 
-      if (index() == Index.PRIMARY_OWNER) {
+      if (attributes.attribute(INDEX).get() == Index.PRIMARY_OWNER) {
          throw CONFIG.indexModeNotSupported(Index.PRIMARY_OWNER.name());
       }
    }

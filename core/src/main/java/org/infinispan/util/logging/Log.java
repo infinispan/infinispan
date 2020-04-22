@@ -1966,4 +1966,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Failed to migrate persisted data.", id = 580)
    PersistenceException persistedDataMigrationFailed(@Cause Throwable cause);
+
+   @Message(value = "The indexing 'enabled' and the legacy 'index' configs attributes are mutually exclusive", id = 581)
+   CacheConfigurationException indexEnabledAndIndexModeAreExclusive();
 }
