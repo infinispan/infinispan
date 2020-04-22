@@ -1535,5 +1535,16 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <!-- Profile used to compile the default (Java 8) code with a Java 9 or later compiler -->
+            <id>jigsaw</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <testjvm.jigsawArgs>--add-modules=java.se</testjvm.jigsawArgs>
+            </properties>
+        </profile>
     </profiles>
 </project>
