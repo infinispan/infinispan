@@ -70,7 +70,6 @@ pipeline {
                 // Dump any dump files to the console
                 sh 'find . -name "*.dump*" -exec echo {} \\; -exec cat {} \\;'
                 sh 'find . -name "hs_err_*" -exec echo {} \\; -exec grep "^# " {} \\;'
-                sh 'find . -name "server.log" -exec echo {} \\; -exec cat {} \\;'
             }
         }
     }
@@ -79,7 +78,8 @@ pipeline {
         always {
             // Archive logs and dump files
             sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" -o -name "*.hprof" \\) -exec xz {} \\;'
-            archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz,documentation/target/generated-html/**,**/*-reports/**/TEST-*.xml'
+            sh 'xz server/integration/testsuite/target/server/node1/standalone/log/server.log'
+            archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz,documentation/target/generated-html/**,**/*-reports/**/TEST-*.xml,server/integration/testsuite/target/server/node1/standalone/log/server.log.xz'
 
             // Clean
             sh 'git clean -qfdx || echo "git clean failed, exit code $?"'
