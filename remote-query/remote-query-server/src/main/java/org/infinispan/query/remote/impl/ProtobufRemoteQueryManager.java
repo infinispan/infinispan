@@ -7,6 +7,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.objectfilter.Matcher;
@@ -34,7 +35,8 @@ final class ProtobufRemoteQueryManager extends BaseRemoteQueryManager {
       MediaType valueMediaType = getValueDataConversion().getStorageMediaType();
       boolean isProtoBuf = valueMediaType.match(APPLICATION_PROTOSTREAM);
       if (isProtoBuf || !customStorage && isIndexed) {
-         getValueDataConversion().overrideWrapper(ProtobufWrapper.class, cr);
+         StorageConfigurationManager storageConfigurationManager = cr.getComponent(StorageConfigurationManager.class);
+         storageConfigurationManager.overrideWrapper(storageConfigurationManager.getKeyWrapper(), ProtobufWrapper.INSTANCE);
       }
       this.queryEngine = new RemoteQueryEngine(cache, isIndexed);
       EncoderRegistry encoderRegistry = cr.getGlobalComponentRegistry().getComponent(EncoderRegistry.class);

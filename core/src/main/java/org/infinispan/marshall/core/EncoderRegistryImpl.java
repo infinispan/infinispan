@@ -125,7 +125,7 @@ public class EncoderRegistryImpl implements EncoderRegistry {
    @Override
    public Wrapper getWrapper(Class<? extends Wrapper> clazz, byte wrapperId) {
       if (clazz == null && wrapperId == WrapperIds.NO_WRAPPER) {
-         throw new NullPointerException("Wrapper class or identifier must be provided!");
+         return null;
       }
 
       Wrapper wrapper;

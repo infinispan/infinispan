@@ -18,14 +18,9 @@ import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.dataconversion.WrapperIds;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.configuration.cache.ContentTypeConfiguration;
-import org.infinispan.configuration.cache.EncodingConfiguration;
-import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -33,7 +28,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.registry.InternalCacheRegistry;
 
 /**
@@ -76,9 +70,10 @@ public final class DataConversion {
 
    private transient MediaType storageMediaType;
    private transient Encoder encoder;
-   private transient Wrapper wrapper;
+   private transient Wrapper customWrapper;
    private transient Transcoder transcoder;
    private transient EncoderRegistry encoderRegistry;
+   private transient StorageConfigurationManager storageConfigurationManager;
 
    private DataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass,
                           MediaType requestMediaType, boolean isKey) {
@@ -104,7 +99,7 @@ public final class DataConversion {
 
    private DataConversion(Encoder encoder, Wrapper wrapper, boolean isKey) {
       this.encoder = encoder;
-      this.wrapper = wrapper;
+      this.customWrapper = wrapper;
       this.encoderClass = encoder.getClass();
       this.wrapperClass = wrapper.getClass();
       this.isKey = isKey;
@@ -116,7 +111,7 @@ public final class DataConversion {
 
    public DataConversion withRequestMediaType(MediaType requestMediaType) {
       if (Objects.equals(this.requestMediaType, requestMediaType)) return this;
-      return new DataConversion(null, this.wrapperClass, requestMediaType, this.isKey);
+      return new DataConversion(this.encoderClass, this.wrapperClass, requestMediaType, this.isKey);
    }
 
    public DataConversion withEncoding(Class<? extends Encoder> encoderClass) {
@@ -124,6 +119,10 @@ public final class DataConversion {
       return new DataConversion(encoderClass, this.wrapperClass, this.requestMediaType, this.isKey);
    }
 
+   /**
+    * @deprecated Since 11.0. To be removed in 14.0, with no replacement.
+    */
+   @Deprecated
    public DataConversion withWrapping(Class<? extends Wrapper> wrapperClass) {
       if (Objects.equals(this.wrapperClass, wrapperClass)) return this;
       return new DataConversion(this.encoderClass, wrapperClass, this.requestMediaType, this.isKey);
@@ -134,35 +133,9 @@ public final class DataConversion {
     */
    @Deprecated
    public void overrideWrapper(Class<? extends Wrapper> newWrapper, ComponentRegistry cr) {
-      this.wrapper = null;
+      this.customWrapper = null;
       this.wrapperClass = newWrapper;
       cr.wireDependencies(this);
-   }
-
-   /**
-    * Obtain the configured {@link MediaType} for this instance, or assume sensible defaults.
-    */
-   private MediaType getStorageMediaType(Configuration configuration, boolean embeddedMode, boolean internalCache, PersistenceMarshaller persistenceMarshaller) {
-      EncodingConfiguration encodingConfiguration = configuration.encoding();
-      ContentTypeConfiguration contentTypeConfiguration = isKey ? encodingConfiguration.keyDataType() : encodingConfiguration.valueDataType();
-      Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
-      MediaType mediaType = userMarshaller.mediaType();
-      boolean heap = configuration.memory().storageType() == StorageType.OBJECT;
-      // If explicitly configured, use the value provided
-      if (contentTypeConfiguration.isMediaTypeChanged()) {
-         return contentTypeConfiguration.mediaType();
-      }
-      // Indexed caches started by the server will assume application/protostream as storage media type
-      if (!embeddedMode && configuration.indexing().enabled() && contentTypeConfiguration.mediaType() == null) {
-         return MediaType.APPLICATION_PROTOSTREAM;
-      }
-      if (internalCache) return MediaType.APPLICATION_OBJECT;
-
-      if (embeddedMode) {
-         return heap ? MediaType.APPLICATION_OBJECT : mediaType;
-      }
-
-      return MediaType.APPLICATION_UNKNOWN;
    }
 
    /**
@@ -196,25 +169,23 @@ public final class DataConversion {
    }
 
    @Inject
-   public void injectDependencies(@ComponentName(KnownComponentNames.PERSISTENCE_MARSHALLER) PersistenceMarshaller persistenceMarshaller,
-                                  @ComponentName(KnownComponentNames.CACHE_NAME) String cacheName,
-                                  InternalCacheRegistry icr, GlobalConfiguration gcr,
-                                  EncoderRegistry encoderRegistry, Configuration configuration) {
-      this.encoderRegistry = encoderRegistry;
-      if (this.encoder != null && this.wrapper != null) {
+   void injectDependencies(@ComponentName(KnownComponentNames.CACHE_NAME) String cacheName,
+                           InternalCacheRegistry icr, GlobalConfiguration gcr,
+                           StorageConfigurationManager storageConfigurationManager, EncoderRegistry encoderRegistry) {
+      if (this.encoder != null && this.customWrapper != null) {
          // This must be one of the static encoders, we can't inject any component in it
          return;
       }
-      boolean internalCache = icr.isInternalCache(cacheName);
-      boolean embeddedMode = Configurations.isEmbeddedMode(gcr);
-      this.storageMediaType = getStorageMediaType(configuration, embeddedMode, internalCache, persistenceMarshaller);
+      this.storageMediaType = storageConfigurationManager.getStorageMediaType(isKey);
 
-      lookupEncoder(encoderRegistry);
-      this.lookupWrapper();
+      this.encoderRegistry = encoderRegistry;
+      this.storageConfigurationManager = storageConfigurationManager;
+      this.customWrapper = encoderRegistry.getWrapper(wrapperClass, wrapperId);
+      this.lookupEncoder();
       this.lookupTranscoder();
    }
 
-   private void lookupEncoder(EncoderRegistry encoderRegistry) {
+   private void lookupEncoder() {
       boolean isEncodingEmpty = encoderClass == null && encoderId == EncoderIds.NO_ENCODER;
       Class<? extends Encoder> actualEncoderClass = isEncodingEmpty ? IdentityEncoder.class : encoderClass;
       this.encoder = encoderRegistry.getEncoder(actualEncoderClass, encoderId);
@@ -241,20 +212,16 @@ public final class DataConversion {
       }
    }
 
-   private void lookupWrapper() {
-      this.wrapper = encoderRegistry.getWrapper(wrapperClass, wrapperId);
-   }
-
    public Object fromStorage(Object stored) {
       if (stored == null) return null;
-      Object fromStorage = encoder.fromStorage(wrapper.unwrap(stored));
+      Object fromStorage = encoder.fromStorage(getWrapper().unwrap(stored));
       return transcoder == null ? fromStorage : transcoder.transcode(fromStorage, storageMediaType, requestMediaType);
    }
 
    public Object toStorage(Object toStore) {
       if (toStore == null) return null;
       toStore = transcoder == null ? toStore : transcoder.transcode(toStore, requestMediaType, storageMediaType);
-      return wrapper.wrap(encoder.toStorage(toStore));
+      return getWrapper().wrap(encoder.toStorage(toStore));
    }
 
    /**
@@ -264,6 +231,7 @@ public final class DataConversion {
       if (stored == null) return null;
 
       // Keys are indexed as stored, without the wrapper
+      Wrapper wrapper = getWrapper();
       if (isKey) return wrapper.unwrap(stored);
 
       // If the value wrapper is indexable, just use it
@@ -286,14 +254,25 @@ public final class DataConversion {
       return encoder;
    }
 
+   /**
+    * @deprecated Since 11.0. To be removed in 14.0, with no replacement.
+    */
+   @Deprecated
    public Wrapper getWrapper() {
-      return wrapper;
+      if (customWrapper != null)
+         return customWrapper;
+
+      return storageConfigurationManager.getWrapper(isKey);
    }
 
    public Class<? extends Encoder> getEncoderClass() {
       return encoderClass;
    }
 
+   /**
+    * @deprecated Since 11.0. To be removed in 14.0, with no replacement.
+    */
+   @Deprecated
    public Class<? extends Wrapper> getWrapperClass() {
       return wrapperClass;
    }
@@ -304,38 +283,62 @@ public final class DataConversion {
       if (o == null || getClass() != o.getClass()) return false;
       DataConversion that = (DataConversion) o;
       return isKey == that.isKey &&
-            Objects.equals(encoder, that.encoder) &&
-            Objects.equals(wrapper, that.wrapper) &&
-            Objects.equals(transcoder, that.transcoder) &&
-            Objects.equals(requestMediaType, that.requestMediaType);
+             Objects.equals(encoder, that.encoder) &&
+             Objects.equals(customWrapper, that.customWrapper) &&
+             Objects.equals(transcoder, that.transcoder) &&
+             Objects.equals(requestMediaType, that.requestMediaType);
    }
 
    @Override
    public String toString() {
       return "DataConversion{" +
-            "encoderClass=" + encoderClass +
-            ", wrapperClass=" + wrapperClass +
-            ", requestMediaType=" + requestMediaType +
-            ", storageMediaType=" + storageMediaType +
-            ", encoderId=" + encoderId +
-            ", wrapperId=" + wrapperId +
-            ", encoder=" + encoder +
-            ", wrapper=" + wrapper +
-            ", isKey=" + isKey +
-            ", transcoder=" + transcoder +
-            '}';
+             "encoderClass=" + encoderClass +
+             ", wrapperClass=" + wrapperClass +
+             ", requestMediaType=" + requestMediaType +
+             ", storageMediaType=" + storageMediaType +
+             ", encoderId=" + encoderId +
+             ", wrapperId=" + wrapperId +
+             ", encoder=" + encoder +
+             ", wrapper=" + customWrapper +
+             ", isKey=" + isKey +
+             ", transcoder=" + transcoder +
+             '}';
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(encoderClass, wrapperClass, isKey);
+      return Objects.hash(encoderClass, wrapperClass, requestMediaType, isKey);
    }
 
+   /**
+    * @return A new instance with an {@link IdentityEncoder} and request type {@link MediaType#APPLICATION_OBJECT}.
+    * @since 11.0
+    */
+   public static DataConversion newKeyDataConversion() {
+      return new DataConversion(IdentityEncoder.class, null, MediaType.APPLICATION_OBJECT, true);
+   }
+
+   /**
+    * @return A new instance with an {@link IdentityEncoder} and request type {@link MediaType#APPLICATION_OBJECT}.
+    * @since 11.0
+    */
+   public static DataConversion newValueDataConversion() {
+      return new DataConversion(IdentityEncoder.class, null, MediaType.APPLICATION_OBJECT, false);
+   }
+
+   /**
+    * @deprecated Since 11.0. To be removed in 14.0. Replaced by {@link #newKeyDataConversion()}.
+    */
+   @Deprecated
    public static DataConversion newKeyDataConversion(Class<? extends Encoder> encoderClass,
                                                      Class<? extends Wrapper> wrapperClass) {
       return new DataConversion(encoderClass, wrapperClass, MediaType.APPLICATION_OBJECT, true);
    }
 
+   /**
+    * @deprecated Since 11.0. To be removed in 14.0. Replaced by {@link #newValueDataConversion()}.
+    */
+   @Deprecated
    public static DataConversion newValueDataConversion(Class<? extends Encoder> encoderClass,
                                                        Class<? extends Wrapper> wrapperClass) {
       return new DataConversion(encoderClass, wrapperClass, MediaType.APPLICATION_OBJECT, false);
@@ -346,7 +349,11 @@ public final class DataConversion {
       if (dataConversion.isKey) flags = (byte) (flags | 2);
       output.writeByte(flags);
       output.writeShort(dataConversion.encoder.id());
-      output.writeByte(dataConversion.wrapper.id());
+      if (dataConversion.customWrapper != null) {
+         output.writeByte(dataConversion.customWrapper.id());
+      } else {
+         output.writeByte(WrapperIds.NO_WRAPPER);
+      }
       output.writeObject(dataConversion.requestMediaType);
    }
 

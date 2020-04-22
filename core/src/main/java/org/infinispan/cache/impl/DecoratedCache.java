@@ -110,27 +110,25 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoderClass) {
-      return new EncoderCache<>(this, getKeyDataConversion().withEncoding(encoderClass),
-            getValueDataConversion().withEncoding(encoderClass));
+      throw new UnsupportedOperationException("Encoding requires EncoderCache");
    }
 
 
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass) {
-      return new EncoderCache<>(this, getKeyDataConversion().withEncoding(keyEncoderClass),
-            getValueDataConversion().withEncoding(valueEncoderClass));
+      throw new UnsupportedOperationException("Encoding requires EncoderCache");
    }
 
+   @Deprecated
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapperClass) {
-      return new EncoderCache<>(this, getKeyDataConversion().withWrapping(wrapperClass),
-            getValueDataConversion().withWrapping(wrapperClass));
+      throw new UnsupportedOperationException("Wrapping requires EncoderCache");
    }
 
+   @Deprecated
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
-      return new EncoderCache<>(this, getKeyDataConversion().withWrapping(keyWrapperClass),
-            getValueDataConversion().withWrapping(valueWrapperClass));
+      throw new UnsupportedOperationException("Wrapping requires EncoderCache");
    }
 
    @Override
@@ -657,7 +655,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CompletionStage<Void> addListenerAsync(Object listener) {
-      return cacheImplementation.notifier.addListenerAsync(listener, (ClassLoader) null);
+      return cacheImplementation.notifier.addListenerAsync(listener, null);
    }
 
    @Override

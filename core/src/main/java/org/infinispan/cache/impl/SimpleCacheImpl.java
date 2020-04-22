@@ -121,8 +121,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
          CacheEntryExpired.class};
 
    private final String name;
-   private DataConversion keyDataConversion;
-   private DataConversion valueDataConversion;
 
    @Inject ComponentRegistry componentRegistry;
    @Inject Configuration configuration;
@@ -136,19 +134,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    private boolean hasListeners = false;
 
    public SimpleCacheImpl(String cacheName) {
-      this(cacheName, DataConversion.IDENTITY_KEY, DataConversion.IDENTITY_VALUE);
-   }
-
-   public SimpleCacheImpl(String cacheName, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       this.name = cacheName;
-      this.keyDataConversion = keyDataConversion;
-      this.valueDataConversion = valueDataConversion;
-   }
-
-   @Inject
-   public void injectDependencies() {
-      componentRegistry.wireDependencies(keyDataConversion);
-      componentRegistry.wireDependencies(valueDataConversion);
    }
 
    @Override
@@ -629,12 +615,12 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public DataConversion getKeyDataConversion() {
-      return keyDataConversion;
+      throw new UnsupportedOperationException("Conversion requires EncoderCache");
    }
 
    @Override
    public DataConversion getValueDataConversion() {
-      return valueDataConversion;
+      throw new UnsupportedOperationException("Conversion requires EncoderCache");
    }
 
    @Override
