@@ -155,7 +155,9 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @return <code>this</code>, for method chaining
     */
    public IndexingConfigurationBuilder autoConfig(boolean autoConfig) {
-      if (autoConfig) enable();
+      if (autoConfig && !attributes.attribute(ENABLED).isModified()) {
+         enable();
+      }
       attributes.attribute(AUTO_CONFIG).set(autoConfig);
       return this;
    }
