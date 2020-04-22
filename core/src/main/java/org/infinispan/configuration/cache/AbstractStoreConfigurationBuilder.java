@@ -171,7 +171,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       boolean shared = attributes.attribute(SHARED).get();
       boolean fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE).get();
       boolean purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP).get();
-      boolean preload = attributes.attribute(PRELOAD).get();
       boolean transactional = attributes.attribute(TRANSACTIONAL).get();
       ConfigurationBuilder builder = getBuilder();
 
@@ -184,13 +183,8 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
          throw CONFIG.attributeNotAllowedInInvalidationMode(FETCH_PERSISTENT_STATE.name());
       }
 
-      if (shared) {
-         if (!builder.clustering().cacheMode().isClustered())
-            throw CONFIG.sharedStoreWithLocalCache();
-
-         if (!preload && builder.indexing().enabled()
-               && builder.indexing().index() == Index.PRIMARY_OWNER && !getBuilder().template())
-            CONFIG.localIndexingWithSharedCacheLoaderRequiresPreload();
+      if (shared && !builder.clustering().cacheMode().isClustered()) {
+         throw CONFIG.sharedStoreWithLocalCache();
       }
 
       if (transactional && !builder.transaction().transactionMode().isTransactional())

@@ -715,9 +715,9 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Use of the 'loader' element to configure a store is deprecated, please use the 'store' element instead", id = 190)
 //   void deprecatedLoaderAsStoreConfiguration();
 
-   @LogMessage(level = DEBUG)
-   @Message(value = "When indexing locally a cache with shared cache loader, preload must be enabled", id = 191)
-   void localIndexingWithSharedCacheLoaderRequiresPreload();
+//   @LogMessage(level = DEBUG)
+//   @Message(value = "When indexing locally a cache with shared cache loader, preload must be enabled", id = 191)
+//   void localIndexingWithSharedCacheLoaderRequiresPreload();
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "hash's 'numVirtualNodes' attribute has been deprecated. Please use hash.numSegments instead", id = 192)

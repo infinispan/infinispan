@@ -89,7 +89,9 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
 
    /**
     * Returns the indexing mode of this cache.
-    * @deprecated This configuration can be removed as the index mode is calculated automatically.
+    *
+    * @deprecated Since 11. This configuration will be removed in next major version as the index mode is calculated
+    * automatically.
     */
    @Deprecated
    public Index index() {
