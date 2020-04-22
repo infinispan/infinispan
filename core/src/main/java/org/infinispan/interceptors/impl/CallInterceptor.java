@@ -121,11 +121,9 @@ import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.internal.functions.Functions;
 
 /**
  * Always at the end of the chain, directly in front of the cache. Simply calls into the cache using reflection. If the
@@ -1170,8 +1168,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
       @Override
       public Publisher<CacheEntry<K, V>> localPublisher(IntSet segments) {
-         return new FlowableFromIntSetFunction<>(segments, dataContainer::publisher)
-               .flatMap(Functions.identity());
+         return Flowable.fromStream(segments.intStream().mapToObj(dataContainer::publisher))
+               .concatMap(RxJavaInterop.identityFunction());
       }
    }
 
@@ -1242,8 +1240,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
       @Override
       public Publisher<K> localPublisher(IntSet segments) {
-         return new FlowableFromIntSetFunction<>(segments, dataContainer::publisher)
-               .flatMap(Functions.identity())
+         return Flowable.fromStream(segments.intStream().mapToObj(dataContainer::publisher))
+               .concatMap(RxJavaInterop.identityFunction())
                .map(RxJavaInterop.entryToKeyFunction());
       }
    }

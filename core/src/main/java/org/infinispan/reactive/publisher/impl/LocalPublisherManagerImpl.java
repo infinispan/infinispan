@@ -34,6 +34,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.commands.reduction.PublisherResult;
 import org.infinispan.reactive.publisher.impl.commands.reduction.SegmentPublisherResult;
 import org.infinispan.stream.StreamMarshalling;
@@ -41,7 +42,6 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
@@ -51,7 +51,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Predicate;
-import io.reactivex.rxjava3.internal.functions.Functions;
 import io.reactivex.rxjava3.parallel.ParallelFlowable;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
@@ -246,7 +245,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          Flowable<Publisher<R>> segmentPublishers;
          switch (deliveryGuarantee) {
             case AT_MOST_ONCE:
-                segmentPublishers = new FlowableFromIntSetFunction<>(segments, segment -> {
+                segmentPublishers = Flowable.fromStream(segments.intStream().mapToObj(segment -> {
                    Publisher<I> publisher = set.localPublisher(segment);
                    if (predicate != null) {
                       publisher = Flowable.fromPublisher(publisher)
@@ -254,7 +253,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
                    }
                   return Flowable.fromPublisher(transformer.apply(publisher))
                         .doOnComplete(() -> completedSegmentConsumer.accept(segment));
-                });
+                }));
 
                break;
             case AT_LEAST_ONCE:
@@ -267,7 +266,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
                // Check topology before submitting
                listener.verifyTopology(distributionManager.getCacheTopology());
 
-               segmentPublishers = new FlowableFromIntSetFunction<>(segments, segment -> {
+               segmentPublishers = Flowable.fromStream(segments.intStream().mapToObj(segment -> {
                   if (!concurrentSet.contains(segment)) {
                      return Flowable.empty();
                   }
@@ -284,13 +283,13 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
                               lostSegmentConsumer.accept(segment);
                            }
                         });
-               });
+               }));
                break;
             default:
                throw new UnsupportedOperationException("Unsupported delivery guarantee: " + deliveryGuarantee);
          }
 
-         segmentPublishers.concatMap(Functions.identity()).subscribe(s);
+         segmentPublishers.concatMap(RxJavaInterop.identityFunction()).subscribe(s);
       }
    }
 
@@ -513,7 +512,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          Set<K> keysToExclude, Function<I, K> toKeyFunction, IntSet segments,
          Function<? super Publisher<I>, ? extends CompletionStage<R>> collator,
          SegmentListener listener, IntSet concurrentSegments) {
-      return combineStages(new FlowableFromIntSetFunction<>(segments, segment -> {
+      return combineStages(Flowable.fromStream(segments.intStream().mapToObj(segment -> {
          Flowable<I> innerFlowable = Flowable.fromPublisher(set.localPublisher(segment))
                // If we complete the iteration try to remove the segment - so it can't be suspected
                .doOnComplete(() -> concurrentSegments.remove(segment));
@@ -538,7 +537,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
             }
             return CompletableFuture.completedFuture(value);
          });
-      }), false);
+      })), false);
    }
 
    private AdvancedCache<K, V> getCache(DeliveryGuarantee deliveryGuarantee, boolean includeLoader) {

@@ -48,9 +48,9 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
 import org.rocksdb.BuiltinComparator;
 import org.rocksdb.ColumnFamilyDescriptor;
@@ -67,7 +67,6 @@ import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.internal.functions.Functions;
 
 @Store
 @ConfiguredBy(RocksDBStoreConfiguration.class)
@@ -1110,9 +1109,9 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
             if (segments != null && segments.size() == 1) {
                 return publish(segments.iterator().nextInt(), function);
             }
-            return new FlowableFromIntSetFunction<>(segments == null ? IntSets.immutableRangeSet(handles.length()) : segments,
-                  i -> publish(i, function))
-                  .concatMap(Functions.identity());
+            IntSet segmentsToUse = segments == null ? IntSets.immutableRangeSet(handles.length()) : segments;
+            return Flowable.fromStream(segmentsToUse.intStream().mapToObj(i -> publish(i, function)))
+                  .concatMap(RxJavaInterop.identityFunction());
         }
 
         @Override

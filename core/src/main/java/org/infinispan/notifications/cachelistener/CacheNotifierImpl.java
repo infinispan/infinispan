@@ -1124,11 +1124,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          if (CompletionStages.isCompletedSuccessfully(delay)) {
             return Flowable.empty();
          }
-         return Flowable.fromCompletionStage(delay);
+         return Completable.fromCompletionStage(delay).toFlowable();
       };
       Publisher<CacheEntry<K, V>> p = s -> publisher.subscribe(s, handler);
       currentStage = Flowable.fromPublisher(p)
-            .delaySubscription(Flowable.fromCompletionStage(currentStage))
+            .delaySubscription(Completable.fromCompletionStage(currentStage).toFlowable())
             .delay(itemDelayFunction)
             .filter(ice -> handler.markKeyAsProcessing(ice.getKey()) != QueueingSegmentListener.REMOVED)
             .delay(ice -> Completable.fromCompletionStage(raiseEventForInitialTransfer(generatedId, ice, l.clustered(),

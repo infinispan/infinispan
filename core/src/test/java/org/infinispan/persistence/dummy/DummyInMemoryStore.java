@@ -40,15 +40,14 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.AbstractSegmentedAdvancedLoadWriteStore;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
 import org.testng.AssertJUnit;
 
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.internal.functions.Functions;
 
 /**
  * A Dummy cache store which stores objects in memory. Instance of the store can be shared
@@ -218,13 +217,13 @@ public class DummyInMemoryStore extends AbstractSegmentedAdvancedLoadWriteStore 
       log.tracef("Publishing entries in store %s with filter %s", storeName, filter);
       Flowable<Map.Entry<Object, byte[]>> flowable;
       if (configuration.segmented()) {
-       flowable = new FlowableFromIntSetFunction<>(segments, segment -> {
+       flowable = Flowable.fromStream(segments.intStream().mapToObj(segment -> {
             Map<Object, byte[]> map = store.get(segment);
             if (map == null) {
                return Flowable.<Map.Entry<Object, byte[]>>empty();
             }
             return Flowable.fromIterable(map.entrySet());
-         }).flatMap(Functions.identity());
+         })).flatMap(RxJavaInterop.identityFunction());
       } else {
          flowable = Flowable.fromIterable(store.get(0).entrySet())
             .filter(e -> {
