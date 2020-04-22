@@ -121,8 +121,8 @@ public class InternalCacheFactory<K, V> {
    }
 
    private AdvancedCache<K, V> buildEncodingCache(AdvancedCache<K, V> wrappedCache) {
-      DataConversion keyDataConversion = newKeyDataConversion(null, ByteArrayWrapper.class);
-      DataConversion valueDataConversion = newValueDataConversion(null, ByteArrayWrapper.class);
+      DataConversion keyDataConversion = newKeyDataConversion();
+      DataConversion valueDataConversion = newValueDataConversion();
 
       return new EncoderCache<>(wrappedCache, null, null, keyDataConversion, valueDataConversion);
    }

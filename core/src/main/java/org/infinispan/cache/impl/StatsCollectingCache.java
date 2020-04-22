@@ -6,16 +6,15 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.stats.Stats;
 import org.infinispan.stats.impl.StatsCollector;
 import org.infinispan.stats.impl.StatsImpl;
-import org.infinispan.commons.time.TimeService;
 
 /**
  * Wraps existing {@link AdvancedCache} to collect statistics
@@ -28,10 +27,6 @@ public class StatsCollectingCache<K, V> extends SimpleCacheImpl<K, V> {
 
    public StatsCollectingCache(String cacheName) {
       super(cacheName);
-   }
-
-   public StatsCollectingCache(String cacheName, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      super(cacheName, keyDataConversion, valueDataConversion);
    }
 
    @Override

@@ -1,7 +1,6 @@
 package org.infinispan.util;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ForwardingCacheEntry;
 
@@ -22,7 +21,7 @@ public class EntryWrapper<K, V> extends ForwardingCacheEntry<K, V> {
     * @param entry the actual entry
     */
    public EntryWrapper(Cache<K, V> cache, CacheEntry<K, V> entry) {
-      this.cache = (Cache<K, V>) cache.getAdvancedCache().withStorageMediaType().withEncoding(IdentityEncoder.class);
+      this.cache = cache;
       // Don't double wrap, but take the most recent
       if (entry instanceof EntryWrapper) {
          this.entry = ((EntryWrapper<K, V>) entry).entry;

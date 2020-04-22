@@ -59,9 +59,6 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
-import org.infinispan.commons.dataconversion.IdentityWrapper;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
@@ -82,6 +79,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
@@ -90,6 +88,7 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.impl.Params;
@@ -170,6 +169,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Inject LocalTopologyManager localTopologyManager;
    @Inject StateTransferManager stateTransferManager;
    @Inject InvocationHelper invocationHelper;
+   @Inject StorageConfigurationManager storageConfigurationManager;
+   // TODO Remove after all ISPN-11584 is fixed and the AdvancedCache methods are implemented in EncoderCache
+   @Inject ComponentRef<AdvancedCache> encoderCache;
 
    protected Metadata defaultMetadata;
    private final String name;
@@ -407,8 +409,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          keyDataConversion = biFunctionMapper.getKeyDataConversion();
          valueDataConversion = biFunctionMapper.getValueDataConversion();
       } else {
-         keyDataConversion = getKeyDataConversion();
-         valueDataConversion = getValueDataConversion();
+         keyDataConversion = encoderCache.running().getKeyDataConversion();
+         valueDataConversion = encoderCache.running().getValueDataConversion();
       }
       ReadWriteKeyCommand<K, V, V> command = commandsFactory.buildReadWriteKeyCommand(key,
             new MergeFunction<>(value, remappingFunction, metadata), keyPartitioner.getSegment(key),
@@ -726,68 +728,47 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoderClass) {
-      if (encoderClass == IdentityEncoder.class) {
-         return this;
-      }
-      return new EncoderCache<>(this, getKeyDataConversion().withEncoding(encoderClass), getValueDataConversion().withEncoding(encoderClass));
+      throw new UnsupportedOperationException("Encoding requires EncoderCache");
    }
 
    @Override
    public AdvancedCache<?, ?> withKeyEncoding(Class<? extends Encoder> encoderClass) {
-      if (encoderClass == IdentityEncoder.class) {
-         return this;
-      }
-      return new EncoderCache<>(this, getKeyDataConversion().withEncoding(encoderClass), getValueDataConversion());
+      throw new UnsupportedOperationException("Encoding requires EncoderCache");
    }
 
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass) {
-      if (keyEncoderClass == IdentityEncoder.class && valueEncoderClass == IdentityEncoder.class) {
-         return this;
-      }
-      return new EncoderCache<>(this, getKeyDataConversion().withEncoding(keyEncoderClass), getValueDataConversion().withEncoding(valueEncoderClass));
+      throw new UnsupportedOperationException("Encoding requires EncoderCache");
    }
 
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapperClass) {
-      if (wrapperClass == IdentityWrapper.class) {
-         return this;
-      }
-      return new EncoderCache<>(this, getKeyDataConversion().withWrapping(wrapperClass), getValueDataConversion().withWrapping(wrapperClass));
+      throw new UnsupportedOperationException("Wrapping requires EncoderCache");
    }
 
    @Override
    public AdvancedCache<K, V> withMediaType(String keyMediaType, String valueMediaType) {
-      MediaType km = MediaType.fromString(keyMediaType);
-      MediaType vm = MediaType.fromString(valueMediaType);
-      return new EncoderCache<>(this, getKeyDataConversion().withRequestMediaType(km), getValueDataConversion().withRequestMediaType(vm));
+      throw new UnsupportedOperationException("Conversion requires EncoderCache");
    }
 
    @Override
    public AdvancedCache<K, V> withStorageMediaType() {
-      MediaType keyStorage = getKeyDataConversion().getStorageMediaType();
-      MediaType valueStorage = getValueDataConversion().getStorageMediaType();
-      DataConversion newKeyDataConversion = getKeyDataConversion().withRequestMediaType(keyStorage);
-      DataConversion newValueDataConversion = getKeyDataConversion().withRequestMediaType(valueStorage);
-      return new EncoderCache<>(this,newKeyDataConversion, newValueDataConversion);
+      throw new UnsupportedOperationException("Conversion requires EncoderCache");
    }
 
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
-      if (keyWrapperClass == IdentityWrapper.class && valueWrapperClass == IdentityWrapper.class) {
-         return this;
-      }
-      return new EncoderCache<>(this, getKeyDataConversion().withWrapping(keyWrapperClass), getValueDataConversion().withWrapping(valueWrapperClass));
+      throw new UnsupportedOperationException("Conversion requires EncoderCache");
    }
 
    @Override
    public DataConversion getKeyDataConversion() {
-      return DataConversion.IDENTITY_KEY;
+      throw new UnsupportedOperationException("Conversion requires EncoderCache");
    }
 
    @Override
    public DataConversion getValueDataConversion() {
-      return DataConversion.IDENTITY_VALUE;
+      throw new UnsupportedOperationException("Conversion requires EncoderCache");
    }
 
    @ManagedOperation(
@@ -1683,9 +1664,20 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       assertKeyNotNull(key);
       assertValueNotNull(value);
       assertFunctionNotNull(remappingFunction);
+      DataConversion keyDataConversion;
+      DataConversion valueDataConversion;
+      //TODO: Correctly propagate DataConversion objects https://issues.redhat.com/browse/ISPN-11584
+      if (remappingFunction instanceof BiFunctionMapper) {
+         BiFunctionMapper biFunctionMapper = (BiFunctionMapper) remappingFunction;
+         keyDataConversion = biFunctionMapper.getKeyDataConversion();
+         valueDataConversion = biFunctionMapper.getValueDataConversion();
+      } else {
+         keyDataConversion = encoderCache.running().getKeyDataConversion();
+         valueDataConversion = encoderCache.running().getValueDataConversion();
+      }
       ReadWriteKeyCommand<K, V, V> command = commandsFactory.buildReadWriteKeyCommand(key,
             new MergeFunction<>(value, remappingFunction, metadata), keyPartitioner.getSegment(key),
-            Params.fromFlagsBitSet(flags), getKeyDataConversion(), getValueDataConversion());
+            Params.fromFlagsBitSet(flags), keyDataConversion, valueDataConversion);
       return invocationHelper.invokeAsync(contextBuilder, command, 1);
    }
 

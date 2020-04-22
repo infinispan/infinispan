@@ -8,15 +8,9 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.functional.EntryView;
-import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.marshall.persistence.PersistenceMarshaller;
-import org.infinispan.registry.InternalCacheRegistry;
 
 /**
  * Helper class for marshalling, also hiding implementations of {@link Mutation} from the interface.
@@ -88,14 +82,8 @@ final class Mutations {
 
       @Override
       public void inject(ComponentRegistry registry) {
-         GlobalConfiguration globalConfiguration = registry.getGlobalComponentRegistry().getGlobalConfiguration();
-         EncoderRegistry encoderRegistry = registry.getComponent(EncoderRegistry.class);
-         Configuration configuration = registry.getComponent(Configuration.class);
-         InternalCacheRegistry icr = registry.getComponent(InternalCacheRegistry.class);
-         String cacheName = registry.getComponent(String.class, KnownComponentNames.CACHE_NAME);
-         PersistenceMarshaller persistenceMarshaller = registry.getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
-         keyDataConversion.injectDependencies(persistenceMarshaller, cacheName, icr, globalConfiguration, encoderRegistry, configuration);
-         valueDataConversion.injectDependencies(persistenceMarshaller, cacheName, icr, globalConfiguration, encoderRegistry, configuration);
+         registry.wireDependencies(keyDataConversion);
+         registry.wireDependencies(valueDataConversion);
       }
    }
 

@@ -4,6 +4,7 @@ import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.encoding.DataConversion;
 
 /**
  * Manages existent {@link Encoder}, {@link Wrapper} and {@link Transcoder} instances.
@@ -16,6 +17,10 @@ public interface EncoderRegistry {
 
    boolean isRegistered(Class<? extends Encoder> encoderClass);
 
+   /**
+    * @deprecated Since 11.0. To be removed in 14.0, with {@link DataConversion#getWrapper()}
+    */
+   @Deprecated
    Wrapper getWrapper(Class<? extends Wrapper> wrapperClass, byte wrapperId);
 
    /**
@@ -23,6 +28,10 @@ public interface EncoderRegistry {
     */
    void registerEncoder(Encoder encoder);
 
+   /**
+    * @deprecated Since 11.0. To be removed in 14.0, with {@link DataConversion#getWrapper()}
+    */
+   @Deprecated
    void registerWrapper(Wrapper wrapper);
 
    void registerTranscoder(Transcoder transcoder);
@@ -50,5 +59,4 @@ public interface EncoderRegistry {
     * @since 11.0
     */
    Object convert(Object o, MediaType from, MediaType to);
-
 }

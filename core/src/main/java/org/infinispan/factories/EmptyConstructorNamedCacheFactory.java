@@ -26,6 +26,7 @@ import org.infinispan.distribution.L1Manager;
 import org.infinispan.distribution.RemoteValueRetrievedListener;
 import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.distribution.impl.L1ManagerImpl;
+import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.eviction.impl.ActivationManagerImpl;
@@ -101,7 +102,7 @@ import org.infinispan.xsite.status.TakeOfflineManager;
                               OrderedUpdatesManager.class, ScatteredVersionManager.class, TransactionOriginatorChecker.class,
                               BiasManager.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class, PublisherHandler.class,
                               InvocationHelper.class, TakeOfflineManager.class, IracManager.class, IracVersionGenerator.class,
-                              BackupReceiver.class
+                              BackupReceiver.class, StorageConfigurationManager.class
 })
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
@@ -112,7 +113,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return isTransactional ? new TransactionalInvocationContextFactory()
                : new NonTransactionalInvocationContextFactory();
       } else if (componentName.equals(CacheNotifier.class.getName())) {
-         return new CacheNotifierImpl();
+         return new CacheNotifierImpl<>();
       } else if (componentName.equals(CacheConfigurationMBean.class.getName())) {
          return new CacheConfigurationMBean();
       } else if (componentName.equals(CommandsFactory.class.getName())) {
@@ -141,7 +142,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       } else if (componentName.equals(StateTransferLock.class.getName())) {
          return new StateTransferLockImpl();
       } else if (componentName.equals(EvictionManager.class.getName())) {
-         return new EvictionManagerImpl();
+         return new EvictionManagerImpl<>();
       } else if (componentName.equals(L1Manager.class.getName())) {
          return new L1ManagerImpl();
       } else if (componentName.equals(TransactionFactory.class.getName())) {
@@ -186,7 +187,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          }
       } else if (componentName.equals(ScatteredVersionManager.class.getName())) {
          if (configuration.clustering().cacheMode().isScattered()) {
-            return new ScatteredVersionManagerImpl();
+            return new ScatteredVersionManagerImpl<>();
          } else {
             return null;
          }
@@ -230,6 +231,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return configuration.clustering().cacheMode().isClustered() ?
                new ClusteredCacheBackupReceiver(configuration, componentRegistry.getCacheName()) :
                null;
+      } else if (componentName.equals(StorageConfigurationManager.class.getName())) {
+         return new StorageConfigurationManager();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);
