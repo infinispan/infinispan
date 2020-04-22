@@ -191,7 +191,11 @@ have a vastly superior performance. On the other hand, enabling indexing can imp
 
 ===== General format
 
-To enable indexing via XML, you need to add the `<indexing enabled="true">` element to your cache configuration, and optionally pass additional properties.
+To enable indexing via XML, you need to add the `<indexing>` element to your cache configuration, and optionally pass additional properties.
+
+NOTE: The presence of an `<indexing>` element which omits the `enabled` attribute will auto-enable indexing for your
+convenience, even though the default value of the `enabled` attribute is defined as `"false"` in the XSD schema.
+This behaviour exists only on schemas starting with version 11.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
@@ -208,6 +212,9 @@ ConfigurationBuilder cacheCfg = ...
 cacheCfg.indexing().enable()
       .addProperty("property name", "propery value")
 ----
+
+NOTE: When using programmatic configuration, indexing must be enabled explicitly by invoking the `enable()` method, as
+no auto-enabling mechanism exist for programmatic configuration as in the case of XML configuration.
 
 ===== Index names
 

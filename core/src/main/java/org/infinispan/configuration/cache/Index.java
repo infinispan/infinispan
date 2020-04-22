@@ -24,9 +24,10 @@ public enum Index {
 
    /**
     * Only the primary owner of an entry will add it to the index.
-    * <p><em>WARNING:</em> This mode is no longer supported since version 11. A configuration error will be raised if
-    * encountered.
+    *
+    * @deprecated This mode is no longer supported since version 11. A configuration error will be raised if encountered.
     */
+   @Deprecated
    PRIMARY_OWNER;
 
    /**
