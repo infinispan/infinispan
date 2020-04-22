@@ -78,7 +78,6 @@ pipeline {
         always {
             // Archive logs and dump files
             sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" -o -name "*.hprof" \\) -exec xz {} \\;'
-            sh 'xz server/integration/testsuite/target/server/node1/standalone/log/server.log'
             archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz,documentation/target/generated-html/**,**/*-reports/**/TEST-*.xml,server/integration/testsuite/target/server/node1/standalone/log/server.log.xz'
 
             // Clean
