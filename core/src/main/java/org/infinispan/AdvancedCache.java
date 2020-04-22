@@ -798,6 +798,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param keyWrapper   {@link Wrapper} for the keys.
     * @param valueWrapper {@link Wrapper} for the values.
     * @return {@link AdvancedCache} where all operations will use the supplied wrappers.
+    * @deprecated Since 11.0. To be removed in 14.0, with no replacement.
     */
    AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapper, Class<? extends Wrapper> valueWrapper);
 
@@ -814,6 +815,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     *
     * @param wrapper {@link Wrapper} for the keys and values.
     * @return an instance of {@link AdvancedCache} where all operations will use the supplied wrapper.
+    * @deprecated Since 11.0. To be removed in 14.0, with no replacement.
     */
    AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper);
 
