@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -37,7 +38,6 @@ import org.reactivestreams.Subscription;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableSubscriber;
-import io.reactivex.rxjava3.internal.subscriptions.SubscriptionHelper;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -242,11 +242,12 @@ public class PublisherHandler {
 
       @Override
       public void onSubscribe(Subscription s) {
-         if (SubscriptionHelper.validate(this.upstream, s)) {
-            this.upstream = s;
-            // We request 1 extra to guarantee we see the segment complete/lost message
-            requestMore(s, batchSize + 1);
+         if (upstream != null) {
+            throw new IllegalStateException("Subscription was already set!");
          }
+         this.upstream = Objects.requireNonNull(s);
+         // We request 1 extra to guarantee we see the segment complete/lost message
+         requestMore(s, batchSize + 1);
       }
 
       protected void requestMore(Subscription subscription, int requestAmount) {

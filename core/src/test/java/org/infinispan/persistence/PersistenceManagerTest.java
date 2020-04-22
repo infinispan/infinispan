@@ -25,6 +25,7 @@ import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -34,7 +35,6 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.internal.functions.Functions;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 
 /**
@@ -119,7 +119,7 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
          CountDownLatch latch = new CountDownLatch(1);
          AtomicReference<Throwable> errorCatcher = new AtomicReference<>();
          Flowable.fromPublisher(persistenceManager.publishEntries(true, true))
-               .subscribe(Functions.emptyConsumer(), t -> {
+               .subscribe(RxJavaInterop.emptyConsumer(), t -> {
                   errorCatcher.set(t);
                   latch.countDown();
                });

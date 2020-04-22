@@ -16,15 +16,14 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Scheduler;
-import io.reactivex.rxjava3.internal.functions.Functions;
 
 /**
  * Persistence Utility that is useful for internal classes. Normally methods that require non public classes, such as
@@ -165,12 +164,12 @@ public class PersistenceUtil {
 
    public static <R> Flowable<R> parallelizePublisher(IntSet segments, Scheduler scheduler,
          IntFunction<Publisher<R>> publisherFunction) {
-      Flowable<Publisher<R>> flowable = new FlowableFromIntSetFunction<>(segments, publisherFunction);
+      Flowable<Publisher<R>> flowable = Flowable.fromStream(segments.intStream().mapToObj(publisherFunction));
       // We internally support removing rxjava empty flowables - don't waste thread on them
       flowable = flowable.filter(f -> f != Flowable.empty());
       return flowable.parallel()
             .runOn(scheduler)
-            .flatMap(Functions.identity())
+            .flatMap(RxJavaInterop.identityFunction())
             .sequential();
    }
 }

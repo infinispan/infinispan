@@ -470,7 +470,6 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
 
       private void onCompletion() {
-         log.fatal("onCompletion called!");
          if (keysToRetry.isEmpty()) {
             flowableProcessor.onComplete();
          } else {
@@ -912,19 +911,19 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
                   int targetBatchSize = publisher.batchSize / concurrentPublishers + 3;
 
-                  InnerPublisherSubscription<K, I, R>[] publisherArray = new InnerPublisherSubscription[concurrentPublishers];
+                  Publisher<R>[] publisherArray = new Publisher[concurrentPublishers];
                   for (int i = 0; i < concurrentPublishers - 1; ++i) {
-                     publisherArray[i] = new InnerPublisherSubscription<>(this, targetBatchSize, targetSupplier,
+                     publisherArray[i] = InnerPublisherSubscription.createPublisher(this, targetBatchSize, targetSupplier,
                            excludedKeys, currentTopology);
                   }
                   // Submit the local target last if necessary (otherwise is a normal submission)
                   // This is done last as we want to send all the remote requests first and only process the local
                   // container concurrently with the remote requests
                   if (localSegments != null) {
-                     publisherArray[concurrentPublishers - 1] = new InnerPublisherSubscription<>(this, targetBatchSize,
+                     publisherArray[concurrentPublishers - 1] = InnerPublisherSubscription.createPublisher(this, targetBatchSize,
                            targetSupplier, excludedKeys, currentTopology, new AbstractMap.SimpleEntry<>(localAddress, localSegments));
                   } else {
-                     publisherArray[concurrentPublishers - 1] = new InnerPublisherSubscription<>(this, targetBatchSize,
+                     publisherArray[concurrentPublishers - 1] = InnerPublisherSubscription.createPublisher(this, targetBatchSize,
                            targetSupplier, excludedKeys, currentTopology);
                   }
 
@@ -1053,8 +1052,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       /**
        * Handles logging the throwable and cancelling if necessary. Returns if publisher should continue processing or not.
-       * This method must be guaranteed to not be invoked concurrently with another that may signal the subscriber since
-       * it can invoke onError.
+       * If <b>false</b> is returned, it is expected that the caller propagates the {@link Throwable} instance, normally
+       * via {@link Subscriber#onError(Throwable)}.
        */
       boolean handleThrowable(Throwable t, Address target, IntSet segments) {
          // Most likely SuspectException will be wrapped in CompletionException
@@ -1069,7 +1068,6 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             log.tracef(t, "Received exception for id %s from node %s when requesting segments %s", requestId, target,
                   segments);
          }
-         subscriber.onError(t);
          // Cancel out the command for the provided publisher - other should be cancelled
          sendCancelCommand(target);
          return false;

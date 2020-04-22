@@ -27,7 +27,6 @@ import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.internal.functions.Functions;
 
 /**
  * Static factory method class to provide various reducers and finalizers for use with distributed Publisher. Note
@@ -174,7 +173,7 @@ public class PublisherReducers {
       @Override
       public CompletionStage<Boolean> apply(Publisher<Boolean> booleanPublisher) {
          return Flowable.fromPublisher(booleanPublisher)
-               .all(Functions.equalsWith(Boolean.TRUE))
+               .all(bool -> bool == Boolean.TRUE)
                .toCompletionStage();
       }
    }
@@ -322,7 +321,7 @@ public class PublisherReducers {
       @Override
       public CompletionStage<Boolean> apply(Publisher<Boolean> booleanPublisher) {
          return Flowable.fromPublisher(booleanPublisher)
-               .any(Functions.equalsWith(Boolean.TRUE))
+               .any(bool -> bool == Boolean.TRUE)
                .toCompletionStage();
       }
    }

@@ -20,7 +20,6 @@ import org.jgroups.JChannel;
 import org.jgroups.fork.ForkChannel;
 import org.kohsuke.MetaInfServices;
 
-import io.reactivex.rxjava3.internal.operators.flowable.BlockingFlowableIterable;
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
@@ -62,8 +61,8 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       // If shutting down a cache manager - don't worry if blocking
       builder.allowBlockingCallsInside(DefaultCacheManager.class.getName(), "stop");
 
-      // The blocking iterator locks to signal at the end - ignore
-      builder.allowBlockingCallsInside(BlockingFlowableIterable.class.getName() + "$BlockingFlowableIterator", "signalConsumer");
+      // The blocking iterator locks to signal at the end - ignore (we can't reference class object as it is internal)
+      builder.allowBlockingCallsInside("io.reactivex.rxjava3.internal.operators.flowable.BlockingFlowableIterable" + "$BlockingFlowableIterator", "signalConsumer");
 
       methodsToBeRemoved(builder);
 
