@@ -2623,8 +2623,9 @@ public class Parser implements ConfigurationParser {
       }
    }
 
-   private void parseIndexing(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseIndexing(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
+      boolean selfEnable = reader.getSchema().since(11, 0);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -2633,6 +2634,7 @@ public class Parser implements ConfigurationParser {
             case ENABLED:
                if (reader.getSchema().since(11, 0)) {
                   builder.indexing().enabled(Boolean.parseBoolean(value));
+                  selfEnable = false;
                } else {
                   throw ParseUtils.unexpectedAttribute(reader, i);
                }
@@ -2646,6 +2648,7 @@ public class Parser implements ConfigurationParser {
                }
                Index index = Index.valueOf(value);
                builder.indexing().index(index);
+               selfEnable = false;
                break;
             case AUTO_CONFIG:
                builder.indexing().autoConfig(Boolean.parseBoolean(value));
@@ -2653,6 +2656,11 @@ public class Parser implements ConfigurationParser {
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
+      }
+
+      if (selfEnable) {
+         // The presence of the <indexing> element without any explicit enabling or disabling results in auto-enabling indexing since 11.0
+         builder.indexing().enable();
       }
 
       Properties indexingProperties = new Properties();

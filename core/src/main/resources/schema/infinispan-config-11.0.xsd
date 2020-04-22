@@ -924,9 +924,12 @@
               </xs:annotation>
             </xs:element>
           </xs:sequence>
-          <xs:attribute name="enabled" type="xs:boolean" default="false">
+          <xs:attribute name="enabled" type="xs:boolean" default="${Indexing.enabled}">
             <xs:annotation>
-              <xs:documentation>Specify whether indexing is enabled or not. Defaults to false.</xs:documentation>
+              <xs:documentation>
+                Specify whether indexing is enabled or not. Defaults to false, but it auto-activates if the
+                indexing element is present and indexing is not explicitly disabled. It also auto-activates if 'auto-config' is set to 'true'.
+              </xs:documentation>
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="auto-config" type="xs:boolean" default="${Indexing.autoConfig}">

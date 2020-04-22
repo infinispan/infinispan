@@ -38,7 +38,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
             "      <indexing enabled=\"false\" />\n" +
             "   </local-cache>\n" +
             "   <local-cache name=\"indexingenabled\">\n" +
-            "      <indexing enabled=\"true\" >\n" +
+            "      <indexing>\n" +
             "         <indexed-entities>\n" +
             "            <indexed-entity>org.infinispan.query.test.Person</indexed-entity>\n" +
             "         </indexed-entities>\n" +

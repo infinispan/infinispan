@@ -23,10 +23,14 @@ OSGi support has been deprecated and will be removed in a future release.
 
 * The AffinityIndexManager is removed. Indexes should be configured with the ```near-real-time``` index manager instead.
 
-* The ```index()``` (index mode) configuration is deprecated. Infinispan will automatically figure out how to index the entries. The following substitutions should be made in the configuration:
-    ** `.indexing().index(Index.PRIMARY_OWNER)` => `index.enabled(true)`
-    ** `.indexing().index(Index.ALL)` => `index.enabled(true)`
-    ** `.indexing().index(Index.NONE)` => `index.enabled(false)`
+* Starting with version 11 the system will automatically choose the best way to manage indexing once it is enabled.
+The ```index()``` (index mode) configuration is no longer necessary, is deprecated and several previously supported values are no longer supported, specifically `Index.PRIMARY_OWNER` and `Index.LOCAL`, which will result in a fatal configuration error when used.
+`Index.ALL` and `Index.NONE` are considered legacy and should be substituted as following:
+  ** `.indexing().index(Index.ALL)` => `indexing().enabled(true)`
+  ** `.indexing().index(Index.NONE)` => `indexing().enabled(false)`
+
+It is forbidden to use both the `.indexing().enabled( )` and the deprecated `.indexing().index( )` configuration.
+
 
 * Many `SearchManager` changes:
 ** `.getQuery()` methods that take a Lucene Query have been removed. The alternative methods that take an Ickle query string should be used instead.

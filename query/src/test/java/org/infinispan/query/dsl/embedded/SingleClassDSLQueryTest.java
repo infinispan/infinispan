@@ -45,7 +45,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
    }
 
    @BeforeClass(alwaysRun = true)
-   protected void populateCache() throws Exception {
+   protected void populateCache() {
       cache.put("person1", new Person("William", "Shakespeare", 50, "ZZ3141592", "M"));
    }
 
@@ -57,7 +57,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
    /**
     * Test querying for entities defined as inner classes.
     */
-   public void testQueryInnerClass() throws Exception {
+   public void testQueryInnerClass() {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       Query query = queryFactory.from(Person.class).build();
 
@@ -68,7 +68,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
    /**
     * Test querying for a field - direct access to field.
     */
-   public void testField() throws Exception {
+   public void testField() {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       Query query = queryFactory.from(Person.class)
             .having("driverLicenseId").eq("ZZ3141592")
@@ -94,7 +94,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
    /**
     * Test querying for an inherited indexed field - interface method with inherited implementation.
     */
-   public void testInheritedField2() throws Exception {
+   public void testInheritedField2() {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       Query query = queryFactory.from(Person.class)
             .having("name").eq("William")
@@ -107,7 +107,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
    /**
     * Test querying for an inherited indexed field - interface method implemented in class.
     */
-   public void testInheritedField3() throws Exception {
+   public void testInheritedField3() {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       Query query = queryFactory.from(Person.class)
             .having("gender").eq("M")
@@ -120,7 +120,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
    /**
     * Test querying for an inherited indexed field - method inherited from superclass.
     */
-   public void testInheritedField4() throws Exception {
+   public void testInheritedField4() {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       Query query = queryFactory.from(Person.class)
             .having("surname").eq("Shakespeare")
