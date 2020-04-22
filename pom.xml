@@ -4831,7 +4831,7 @@
               java.text, java.awt.font: XStream, server/rest
               java.security: Wildfly, server/integration/*
             -->
-            <testjvm.jigsawargs>
+            <testjvm.jigsawArgs>
                -Dsun.reflect.debugModuleAccessChecks=true
                --add-opens=java.base/java.lang=ALL-UNNAMED
                --add-opens=java.base/java.util=ALL-UNNAMED
@@ -4859,7 +4859,7 @@
                --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED
                --add-exports=jdk.unsupported/sun.reflect=ALL-UNNAMED
                --add-modules=java.se
-            </testjvm.jigsawargs>
+            </testjvm.jigsawArgs>
          </properties>
       </profile>
       <profile>
