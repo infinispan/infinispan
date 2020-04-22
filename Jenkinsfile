@@ -50,7 +50,7 @@ pipeline {
         stage('Tests') {
             steps {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -Dansi.strip=true"
+                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -Dansi.strip=true -pl server/integration/testsuite/"
                 }
                 // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
                 // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,
@@ -70,6 +70,7 @@ pipeline {
                 // Dump any dump files to the console
                 sh 'find . -name "*.dump*" -exec echo {} \\; -exec cat {} \\;'
                 sh 'find . -name "hs_err_*" -exec echo {} \\; -exec grep "^# " {} \\;'
+                sh 'find . -name "server.log" -exec echo {} \\; -exec cat {} \\;'
             }
         }
     }
