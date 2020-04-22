@@ -2367,7 +2367,9 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case RELATIVE_TO: {
-               relativeTo = ParseUtils.requireAttributeProperty(reader, i);
+               if (reader.getSchema().since(11, 0))
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+               ignoreAttribute(reader, attribute);
                break;
             }
             case PATH: {
