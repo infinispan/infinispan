@@ -39,6 +39,12 @@ The ThreadGroup configuration setting has been removed and only thread group nam
 This configuration was inconsistent between programmatic and declarative configuration and is now
 consistent.
 
+== Persistence
+
+=== Single File Store
+The `<file-store relative-to=""">` attribute has been removed. This attribute will be ignored in pre 11.0 schemas with
+only the `path` attribute being taking into account when configuring the stores location.
+
 = Upgrading from 10.0 to 10.1 and 10.0 to 11.0
 
 == Maximum Idle Timeouts with Clustered Cache Modes
