@@ -2,7 +2,6 @@ package org.infinispan.commons.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,6 +20,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
@@ -30,6 +30,7 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
@@ -1203,17 +1204,8 @@ public final class Util {
 
    public static void renameTempFile(File tempFile, File lockFile, File dstFile)
          throws IOException {
-      FileLock lock = null;
-      try (FileOutputStream lockFileOS = new FileOutputStream(lockFile)) {
-         lock = lockFileOS.getChannel().lock();
+      try (FileChannel channel = FileChannel.open(lockFile.toPath(), StandardOpenOption.DELETE_ON_CLOSE); FileLock lock = channel.lock()) {
          Files.move(tempFile.toPath(), dstFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-      } finally {
-         if (lock != null && lock.isValid()) {
-            lock.release();
-         }
-         if (!lockFile.delete()) {
-            log.debugf("Unable to delete lock file %s", lockFile);
-         }
       }
    }
 
