@@ -403,16 +403,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public CreateCacheCommand buildCreateCacheCommand(String cacheNameToCreate, String cacheConfigurationName) {
-      return new CreateCacheCommand(cacheName, cacheNameToCreate, cacheConfigurationName);
-   }
-
-   @Override
-   public CreateCacheCommand buildCreateCacheCommand(String cacheNameToCreate, String cacheConfigurationName, int size) {
-      return new CreateCacheCommand(cacheName, cacheNameToCreate, cacheConfigurationName, size);
-   }
-
-   @Override
    public XSiteStateTransferCancelSendCommand buildXSiteStateTransferCancelSendCommand(String siteName) {
       return new XSiteStateTransferCancelSendCommand(cacheName, siteName);
    }

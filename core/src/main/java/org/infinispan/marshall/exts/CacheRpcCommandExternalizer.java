@@ -5,7 +5,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
@@ -21,6 +20,7 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
 import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
 import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
@@ -46,7 +46,6 @@ import org.infinispan.reactive.publisher.impl.commands.batch.CancelPublisherComm
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
@@ -89,7 +88,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             PrepareCommand.class, RollbackCommand.class,
             TxCompletionNotificationCommand.class, GetInDoubtTransactionsCommand.class,
             GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class,
-            VersionedPrepareCommand.class, CreateCacheCommand.class,
+            VersionedPrepareCommand.class,
             VersionedCommitCommand.class,
             XSiteStatePushCommand.class, SingleXSiteRpcCommand.class,
             ClusteredGetAllCommand.class, TouchCommand.class,

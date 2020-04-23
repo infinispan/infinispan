@@ -18,7 +18,6 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -55,6 +54,7 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
 import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
 import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
@@ -101,7 +101,6 @@ import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherComman
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.ReclosableLatch;
@@ -402,16 +401,6 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public TxCompletionNotificationCommand buildTxCompletionNotificationCommand(long internalId) {
       return actual.buildTxCompletionNotificationCommand(internalId);
-   }
-
-   @Override
-   public CreateCacheCommand buildCreateCacheCommand(String cacheName, String cacheConfigurationName) {
-      return actual.buildCreateCacheCommand(cacheName, cacheConfigurationName);
-   }
-
-   @Override
-   public CreateCacheCommand buildCreateCacheCommand(String tmpCacheName, String defaultTmpCacheConfigurationName, int size) {
-      return actual.buildCreateCacheCommand(tmpCacheName, defaultTmpCacheConfigurationName, size);
    }
 
    @Override
