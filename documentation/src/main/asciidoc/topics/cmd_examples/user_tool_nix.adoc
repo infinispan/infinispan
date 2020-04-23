@@ -1,1 +1,1 @@
-$ bin/user-tools.sh -a -u myuser -p "qwer1234!" -g supervisor,reader,writer
+$ bin/user-tool.sh -u myuser -p "qwer1234!" -g supervisor,reader,writer
