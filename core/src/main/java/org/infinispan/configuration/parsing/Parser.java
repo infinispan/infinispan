@@ -107,13 +107,6 @@ public class Parser implements ConfigurationParser {
 
    @Override
    public void readElement(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
-      // Preload some default JGroups stacks
-      holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.TCP(reader.getProperties()));
-      holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.UDP(reader.getProperties()));
-      holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.KUBERNETES(reader.getProperties()));
-      holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.EC2(reader.getProperties()));
-      holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.GOOGLE(reader.getProperties()));
-      holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.AZURE(reader.getProperties()));
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -122,6 +115,8 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case JGROUPS: {
+               // Preload some default JGroups stacks
+               addJGroupsDefaultStacksIfNeeded(reader, holder);
                parseJGroups(reader, holder);
                break;
             }
@@ -976,6 +971,8 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case STACK: {
+               // Make sure we have the default stacks added
+               addJGroupsDefaultStacksIfNeeded(reader, holder);
                JGroupsChannelConfigurator jGroupsStack = holder.getJGroupsStack(value);
                if (jGroupsStack == null) {
                   throw CONFIG.missingJGroupsStack(value);
@@ -2775,6 +2772,17 @@ public class Parser implements ConfigurationParser {
          }
       }
       return properties;
+   }
+
+   private void addJGroupsDefaultStacksIfNeeded(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) {
+      if (holder.getJGroupsStack(BuiltinJGroupsChannelConfigurator.TCP_STACK_NAME) == null) {
+         holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.TCP(reader.getProperties()));
+         holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.UDP(reader.getProperties()));
+         holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.KUBERNETES(reader.getProperties()));
+         holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.EC2(reader.getProperties()));
+         holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.GOOGLE(reader.getProperties()));
+         holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.AZURE(reader.getProperties()));
+      }
    }
 
    public enum TransactionMode {
