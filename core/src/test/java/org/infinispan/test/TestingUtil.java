@@ -423,6 +423,12 @@ public class TestingUtil {
                         "current topology is %s. rebalanceInProgress=%s, currentChIsBalanced=%s", c.getName(),
                         c.getCacheManager().getAddress(), cacheTopology, rebalanceInProgress, currentChIsBalanced);
                }
+               Thread.getAllStackTraces().forEach((t, stack) -> {
+                  log.errorf("Trace information for the thread %s", t);
+                  for(StackTraceElement stackTraceElement : stack) {
+                     log.error(stackTraceElement);
+                  }
+               });
                log.error(message);
                throw new RuntimeException(message);
             }
