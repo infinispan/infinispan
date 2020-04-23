@@ -45,6 +45,16 @@
          <testResource>
             <directory>${project.basedir}/src/test/resources</directory>
             <filtering>true</filtering>
+            <excludes>
+               <exclude>10_1_x_jpa_data/*</exclude>
+            </excludes>
+         </testResource>
+         <testResource>
+            <directory>${project.basedir}/src/test/resources</directory>
+            <filtering>false</filtering>
+            <includes>
+               <include>10_1_x_jpa_data/*</include>
+            </includes>
          </testResource>
       </testResources>
       <plugins>

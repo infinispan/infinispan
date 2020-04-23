@@ -106,7 +106,7 @@ public class CustomLoaderNonNullWithExpirationTest extends SingleCacheManagerTes
                .lifespan(1, TimeUnit.SECONDS).build();
 
          long now = timeService.wallClockTime();
-         return factory.create(key, VALUE, metadata, now, now);
+         return factory.create(key, VALUE, metadata, null, now, now);
       }
 
       @Override

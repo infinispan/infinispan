@@ -8,6 +8,6 @@ public class ByteBufferFactoryImpl implements ByteBufferFactory {
 
    @Override
    public ByteBuffer newByteBuffer(byte[] b, int offset, int length) {
-      return new ByteBufferImpl(b, offset, length);
+      return ByteBufferImpl.create(b, offset, length);
    }
 }

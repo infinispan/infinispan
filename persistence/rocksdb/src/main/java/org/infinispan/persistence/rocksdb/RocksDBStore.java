@@ -307,25 +307,21 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
 
     private void putExpireDbData(ExpiryEntry entry) throws InterruptedException, RocksDBException, IOException,
        ClassNotFoundException {
-        try {
-            final byte[] expiryBytes = marshall(entry.expiry);
-            final byte[] existingBytes = expiredDb.get(expiryBytes);
+        final byte[] expiryBytes = marshall(entry.expiry);
+        final byte[] existingBytes = expiredDb.get(expiryBytes);
 
-            if (existingBytes != null) {
-                // in the case of collision make the value a List ...
-                final Object existing = unmarshall(existingBytes);
-                if (existing instanceof ExpiryBucket) {
-                    ((ExpiryBucket) existing).entries.add(entry.keyBytes);
-                    expiredDb.put(expiryBytes, marshall(existing));
-                } else {
-                    ExpiryBucket bucket = new ExpiryBucket(existingBytes, entry.keyBytes);
-                    expiredDb.put(expiryBytes, marshall(bucket));
-                }
+        if (existingBytes != null) {
+            // in the case of collision make the value a List ...
+            final Object existing = unmarshall(existingBytes);
+            if (existing instanceof ExpiryBucket) {
+                ((ExpiryBucket) existing).entries.add(entry.keyBytes);
+                expiredDb.put(expiryBytes, marshall(existing));
             } else {
-                expiredDb.put(expiryBytes, entry.keyBytes);
+                ExpiryBucket bucket = new ExpiryBucket(existingBytes, entry.keyBytes);
+                expiredDb.put(expiryBytes, marshall(bucket));
             }
-        } catch (IOException | InterruptedException | RocksDBException | ClassNotFoundException e) {
-            throw e;
+        } else {
+            expiredDb.put(expiryBytes, entry.keyBytes);
         }
     }
 
@@ -439,7 +435,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         if (value == null) return null;
 
         ByteBuffer metadataBytes = fetchMeta ? value.getMetadataBytes() : null;
-        return entryFactory.create(key, value.getValueBytes(), metadataBytes, value.getCreated(), value.getLastUsed());
+        return entryFactory.create(key, value.getValueBytes(), metadataBytes, value.getInternalMetadataBytes(), value.getCreated(), value.getLastUsed());
     }
 
     private void addNewExpiry(MarshallableEntry entry) throws RocksDBException, IOException, ClassNotFoundException {
@@ -474,8 +470,8 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
 
     private static final class ExpiryEntry {
 
-        long expiry;
-        byte[] keyBytes;
+        final long expiry;
+        final byte[] keyBytes;
 
         ExpiryEntry(long expiry, byte[] keyBytes) {
             this.expiry = expiry;

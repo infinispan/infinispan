@@ -1956,4 +1956,15 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Converting from unwrapped protostream payload requires the 'type' parameter to be supplied in the destination MediaType", id = 577)
    MarshallingException missingTypeForUnwrappedPayload();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Migrating persisted data to new format...", id = 578)
+   void startMigratingPersistenceData();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Persisted data successfully migrated.", id = 579)
+   void persistedDataSuccessfulMigrated();
+
+   @Message(value = "Failed to migrate persisted data.", id = 580)
+   PersistenceException persistedDataMigrationFailed(@Cause Throwable cause);
 }

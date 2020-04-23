@@ -90,7 +90,7 @@ public class RocksDBReader implements StoreIterator {
             InternalMetadata meta = me.getMetadata();
             long created = meta != null ? meta.created() : -1;
             long lifespan = meta != null ? meta.lifespan() : -1;
-            entry = entryFactory.create(me.getKeyBytes(), me.getValueBytes(), me.getMetadataBytes(), created, lifespan);
+            entry = entryFactory.create(me.getKeyBytes(), me.getValueBytes(), me.getMetadataBytes(), null, created, lifespan);
          }
          it.next();
          return (MarshallableEntry) entry;

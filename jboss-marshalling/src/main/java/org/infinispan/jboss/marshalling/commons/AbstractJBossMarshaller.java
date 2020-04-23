@@ -83,7 +83,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       } finally {
          finishObjectOutput(marshaller);
       }
-      return new ByteBufferImpl(baos.getRawBuffer(), 0, baos.size());
+      return ByteBufferImpl.create(baos.getRawBuffer(), 0, baos.size());
    }
 
    @Override
@@ -109,7 +109,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
          ClassNotFoundException {
       ByteArrayInputStream is = new ByteArrayInputStream(buf, offset, length);
       ObjectInput unmarshaller = startObjectInput(is, false);
-      Object o = null;
+      Object o;
       try {
          o = objectFromObjectStream(unmarshaller);
       } finally {
@@ -169,7 +169,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
             } finally {
                marshallableTypeHints.markMarshallable(clazz, isMarshallable);
             }
-            return isMarshallable;
+            return true;
          }
          return false;
       }
@@ -245,11 +245,9 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
          URL[] urls = EMPTY_URLS;
          try {
             Class<?> returnType = urls.getClass();
-            Class<?>[] parameterTypes = EMPTY_CLASS_ARRAY;
-            Method getURLs = cl.getClass().getMethod("getURLs", parameterTypes);
+            Method getURLs = cl.getClass().getMethod("getURLs", EMPTY_CLASS_ARRAY);
             if (returnType.isAssignableFrom(getURLs.getReturnType())) {
-               Object[] args = EMPTY_OBJECT_ARRAY;
-               urls = (URL[]) getURLs.invoke(cl, args);
+               urls = (URL[]) getURLs.invoke(cl, EMPTY_OBJECT_ARRAY);
             }
          } catch (Exception ignore) {
          }

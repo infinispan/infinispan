@@ -39,6 +39,9 @@ public class MetadataEntity {
    private long lastUsed;
    @Version
    private int version;
+   @Lob
+   @Column(length = 65535)
+   private byte[] internalMetadata;
 
    public MetadataEntity() {
    }
@@ -53,6 +56,9 @@ public class MetadataEntity {
       this.expiration = (meta == null || me.expiryTime() < 0) ? Long.MAX_VALUE : me.expiryTime();
       this.created = me.created();
       this.lastUsed = me.lastUsed();
+      if (me.getInternalMetadata() != null) {
+         this.internalMetadata = MarshallUtil.toByteArray(me.getInternalMetadataBytes());
+      }
    }
 
    public MetadataEntityKey getKey() {
@@ -111,8 +117,12 @@ public class MetadataEntity {
       this.version = version;
    }
 
+   public byte[] getInternalMetadata() {
+      return internalMetadata;
+   }
+
    public boolean hasBytes() {
-      return metadata != null;
+      return metadata != null || internalMetadata != null;
    }
 
 }

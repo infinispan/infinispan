@@ -12,7 +12,6 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.impl.ImmutableContext;
@@ -72,11 +71,10 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
       return distributionManager != null && !distributionManager.getCacheTopology().isWriteOwner(key);
    }
 
-   private CompletionStage<Boolean> doPassivate(Object key, CacheEntry<?, ?> entry) {
+   private CompletionStage<Boolean> doPassivate(Object key, InternalCacheEntry<?, ?> entry) {
       if (trace) log.tracef("Passivating entry %s", toStr(key));
-         MarshallableEntry<?, ?> marshalledEntry = marshalledEntryFactory.create(key, entry.getValue(), entry.getMetadata(),
-               entry.getCreated(), entry.getLastUsed());
-         CompletionStage<Void> stage = passivationPersistenceManager.passivate(marshalledEntry, keyPartitioner.getSegment(key));
+      MarshallableEntry<?, ?> marshalledEntry = marshalledEntryFactory.create((InternalCacheEntry) entry);
+      CompletionStage<Void> stage = passivationPersistenceManager.passivate(marshalledEntry, keyPartitioner.getSegment(key));
          return stage.handle((v, t) -> {
             if (t != null) {
                CONTAINER.unableToPassivateEntry(key, t);
@@ -120,10 +118,7 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
       }
 
       int count = container.sizeIncludingExpired();
-      Iterable<MarshallableEntry> iterable = () -> new IteratorMapper<>(container.iterator(), e -> {
-         return marshalledEntryFactory.create(e.getKey(), e.getValue(), e.getMetadata(), e.getExpiryTime(),
-                                              e.getLastUsed());
-      });
+      Iterable<MarshallableEntry> iterable = () -> new IteratorMapper<>(container.iterator(), e -> marshalledEntryFactory.create((InternalCacheEntry) e));
       return persistenceManager.writeBatchToAllNonTxStores(iterable, BOTH, 0)
                                .thenRun(() -> {
                                   long durationMillis = timeService.timeDuration(start, TimeUnit.MILLISECONDS);

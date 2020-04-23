@@ -274,7 +274,7 @@ final class BytesObjectOutput implements ObjectOutput {
 
    ByteBuffer toByteBuffer() {
       // No triming, just take position as length
-      return new ByteBufferImpl(bytes, 0, pos);
+      return ByteBufferImpl.create(bytes, 0, pos);
    }
 
 }

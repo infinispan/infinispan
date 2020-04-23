@@ -43,7 +43,7 @@ public abstract class AbstractMarshaller implements Marshaller {
          // If the prediction is way off, then trim it
          if (estimatedSize > (length * 4)) {
             byte[] buffer = trimBuffer(byteBuffer);
-            byteBuffer = new ByteBufferImpl(buffer, 0, buffer.length);
+            byteBuffer = ByteBufferImpl.create(buffer);
          }
          sizePredictor.recordSize(length);
          return byteBuffer;

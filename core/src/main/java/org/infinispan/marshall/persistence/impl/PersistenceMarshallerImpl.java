@@ -92,7 +92,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
       SerializationConfiguration serializationConfig = globalConfig.serialization();
       Marshaller marshaller = serializationConfig.marshaller();
       if (marshaller != null) {
-         Class clazz = marshaller.getClass();
+         Class<?> clazz = marshaller.getClass();
          if (clazz.getName().equals(Util.JBOSS_USER_MARSHALLER_CLASS)) {
             // If the user has specified to use jboss-marshalling, we must initialize the instance with the GlobalComponentRegistry
             // So that any user Externalizer implementations can be loaded.
@@ -129,36 +129,23 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
 
    @Override
    public ByteBuffer objectToBuffer(Object o) {
-      return objectToBuffer(o, -1);
+      return ByteBufferImpl.create(objectToByteBuffer(o, -1));
    }
 
    @Override
-   public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
-      ByteBuffer b = objectToBuffer(obj, estimatedSize);
-      byte[] bytes = new byte[b.getLength()];
-      System.arraycopy(b.getBuf(), b.getOffset(), bytes, 0, b.getLength());
-      return bytes;
-   }
-
-   @Override
-   public byte[] objectToByteBuffer(Object obj) throws IOException, InterruptedException {
-      return objectToByteBuffer(obj, sizeEstimate(obj));
-   }
-
-   private ByteBuffer objectToBuffer(Object o, int estimatedSize) {
-      if (o == null)
+   public byte[] objectToByteBuffer(Object obj, int estimatedSize) {
+      if (obj == null)
          return null;
 
       try {
-         if (requiresWrapping(o))
-            o = new MarshallableUserObject(o);
+         if (requiresWrapping(obj))
+            obj = new MarshallableUserObject<>(obj);
          int size = estimatedSize < 0 ? PROTOSTREAM_DEFAULT_BUFFER_SIZE : estimatedSize;
          ByteArrayOutputStream baos = new ByteArrayOutputStream(size);
-         ProtobufUtil.toWrappedStream(getSerializationContext(), baos, o, size);
-         byte[] bytes = baos.toByteArray();
-         return new ByteBufferImpl(bytes, 0, bytes.length);
+         ProtobufUtil.toWrappedStream(getSerializationContext(), baos, obj, size);
+         return baos.toByteArray();
       } catch (Throwable t) {
-         PERSISTENCE.cannotMarshall(o.getClass(), t);
+         PERSISTENCE.cannotMarshall(obj.getClass(), t);
          if (t instanceof MarshallingException)
             throw (MarshallingException) t;
          throw new MarshallingException(t.getMessage(), t.getCause());
@@ -166,7 +153,12 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    }
 
    @Override
-   public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
+   public byte[] objectToByteBuffer(Object obj) {
+      return objectToByteBuffer(obj, sizeEstimate(obj));
+   }
+
+   @Override
+   public Object objectFromByteBuffer(byte[] buf) throws IOException {
       return objectFromByteBuffer(buf, 0, buf.length);
    }
 
@@ -184,7 +176,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    @Override
    public void writeObject(Object o, OutputStream out) throws IOException {
       if (requiresWrapping(o))
-         o = new MarshallableUserObject(o);
+         o = new MarshallableUserObject<>(o);
       ProtobufUtil.toWrappedStream(getSerializationContext(), out, o, PROTOSTREAM_DEFAULT_BUFFER_SIZE);
    }
 
@@ -195,7 +187,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
 
    private Object unwrapAndInit(Object o) {
       if (o instanceof MarshallableUserObject) {
-         MarshallableUserObject wrapper = (MarshallableUserObject) o;
+         MarshallableUserObject<?> wrapper = (MarshallableUserObject<?>) o;
          return wrapper.get();
       }
       return o;

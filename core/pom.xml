@@ -213,7 +213,18 @@
       <testResources>
          <testResource>
             <directory>${project.basedir}/src/test/resources</directory>
-             <filtering>true</filtering>
+            <filtering>true</filtering>
+            <excludes>
+               <exclude>10_1_x_sfs_data/*</exclude>
+            </excludes>
+         </testResource>
+         <!-- Make sure the filtering is disabled for 10.1.x SFS data, otherwise the file gets "corrupted" -->
+         <testResource>
+            <directory>${project.basedir}/src/test/resources</directory>
+            <filtering>false</filtering>
+            <includes>
+               <include>10_1_x_sfs_data/*</include>
+            </includes>
          </testResource>
       </testResources>
       <plugins>

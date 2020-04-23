@@ -97,6 +97,7 @@ public class LogAppender extends Thread {
                }
                long seqId = nextSeqId();
                EntryRecord.writeEntry(logFile.fileChannel, request.getSerializedKey(), request.getSerializedMetadata(),
+                     request.getSerializedInternalMetadata(),
                      request.getSerializedValue(), seqId, request.getExpiration(), request.getCreated(), request.getLastUsed());
                int offset = request.getSerializedValue() == null ? ~currentOffset : currentOffset;
                temporaryTable.set(request.getKey(), logFile.fileId, offset);
@@ -128,7 +129,7 @@ public class LogAppender extends Thread {
       }
    }
 
-   private final long nextSeqId() {
+   private long nextSeqId() {
       return seqId++;
    }
 

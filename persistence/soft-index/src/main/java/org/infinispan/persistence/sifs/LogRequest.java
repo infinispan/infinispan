@@ -24,17 +24,19 @@ class LogRequest {
    private final ByteBuffer serializedKey;
    private final ByteBuffer serializedMetadata;
    private final ByteBuffer serializedValue;
+   private final ByteBuffer serializedInternalMetadata;
    private final long created;
    private final long lastUsed;
    private boolean canContinue = false;
    private volatile IndexRequest indexRequest;
 
    private LogRequest(Type type, Object key, long expirationTime, ByteBuffer serializedKey, ByteBuffer serializedMetadata,
-                      ByteBuffer serializedValue, long created, long lastUsed) {
+                      ByteBuffer serializedInternalMetadata, ByteBuffer serializedValue, long created, long lastUsed) {
       this.key = key;
       this.expirationTime = expirationTime;
       this.serializedKey = serializedKey;
       this.serializedMetadata = serializedMetadata;
+      this.serializedInternalMetadata = serializedInternalMetadata;
       this.serializedValue = serializedValue;
       this.created = created;
       this.lastUsed = lastUsed;
@@ -42,16 +44,16 @@ class LogRequest {
    }
 
    private LogRequest(Type type) {
-      this(type, null, 0, null, null, null, -1, -1);
+      this(type, null, 0, null, null, null, null, -1, -1);
    }
 
    public static LogRequest storeRequest(MarshallableEntry entry) {
       return new LogRequest(Type.STORE, entry.getKey(), entry.expiryTime(), entry.getKeyBytes(), entry.getMetadataBytes(),
-            entry.getValueBytes(), entry.created(), entry.lastUsed());
+            entry.getInternalMetadataBytes(), entry.getValueBytes(), entry.created(), entry.lastUsed());
    }
 
    public static LogRequest deleteRequest(Object key, ByteBuffer serializedKey) {
-      return new LogRequest(Type.DELETE, key, -1, serializedKey, null, null, -1, -1);
+      return new LogRequest(Type.DELETE, key, -1, serializedKey, null, null, null, -1, -1);
    }
 
    public static LogRequest clearRequest() {
@@ -67,9 +69,10 @@ class LogRequest {
    }
 
    public int length() {
-      return EntryHeader.HEADER_SIZE + serializedKey.getLength()
+      return EntryHeader.HEADER_SIZE_11_0 + serializedKey.getLength()
             + (serializedValue != null ? serializedValue.getLength() : 0)
-            + EntryMetadata.size(serializedMetadata);
+            + EntryMetadata.size(serializedMetadata)
+            + (serializedInternalMetadata != null ? serializedInternalMetadata.getLength() : 0);
    }
 
    public Object getKey() {
@@ -82,6 +85,10 @@ class LogRequest {
 
    public ByteBuffer getSerializedMetadata() {
       return serializedMetadata;
+   }
+
+   public ByteBuffer getSerializedInternalMetadata() {
+      return serializedInternalMetadata;
    }
 
    public ByteBuffer getSerializedValue() {

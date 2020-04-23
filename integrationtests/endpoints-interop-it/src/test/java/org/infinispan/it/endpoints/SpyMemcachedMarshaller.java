@@ -17,7 +17,7 @@ public class SpyMemcachedMarshaller extends AbstractMarshaller {
    @Override
    protected ByteBuffer objectToBuffer(Object o, int estimatedSize) {
       CachedData encoded = transcoder.encode(o);
-      return new ByteBufferImpl(encoded.getData(), 0, encoded.getData().length);
+      return ByteBufferImpl.create(encoded.getData());
    }
 
    @Override
@@ -26,7 +26,7 @@ public class SpyMemcachedMarshaller extends AbstractMarshaller {
    }
 
    @Override
-   public boolean isMarshallable(Object o) throws Exception {
+   public boolean isMarshallable(Object o) {
       try {
          transcoder.encode(o);
          return true;

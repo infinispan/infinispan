@@ -19,20 +19,27 @@ import org.infinispan.commons.util.Util;
  * @since 4.0
  */
 public class ByteBufferImpl implements ByteBuffer {
+
+   public static final ByteBufferImpl EMPTY_INSTANCE = new ByteBufferImpl(Util.EMPTY_BYTE_ARRAY, 0, 0);
+
    private final byte[] buf;
    private final int offset;
    private final int length;
 
-   public ByteBufferImpl(byte[] buf) {
-      this(buf, 0, buf.length);
+   public static ByteBufferImpl create(byte[] array) {
+      return array == null || array.length == 0 ? EMPTY_INSTANCE : new ByteBufferImpl(array, 0, array.length);
    }
 
-   public ByteBufferImpl(byte[] buf, int offset, int length) {
-      if (buf == null)
-         throw new IllegalArgumentException("Null buff not allowed!");
-      if (buf.length < offset + length)
-         throw new IllegalArgumentException("Incorrect arguments: buff.length"
-                                                  + buf.length + ", offset=" + offset +", length="+ length);
+   public static ByteBufferImpl create(byte[] array, int offset, int length) {
+      if (array == null || length == 0 || array.length == 0) {
+         return EMPTY_INSTANCE;
+      }
+      if (array.length < offset + length)
+         throw new IllegalArgumentException("Incorrect arguments: array.length" + array.length + ", offset=" + offset +", length="+ length);
+      return new ByteBufferImpl(array, offset, length);
+   }
+
+   private ByteBufferImpl(byte[] buf, int offset, int length) {
       this.buf = buf;
       this.offset = offset;
       this.length = length;
@@ -55,16 +62,16 @@ public class ByteBufferImpl implements ByteBuffer {
 
    @Override
    public ByteBufferImpl copy() {
-      byte[] new_buf = buf != null ? new byte[length] : null;
-      int new_length = new_buf != null ? new_buf.length : 0;
-      if (new_buf != null)
-         System.arraycopy(buf, offset, new_buf, 0, length);
-      return new ByteBufferImpl(new_buf, 0, new_length);
+      if (this == EMPTY_INSTANCE)
+         return this;
+      byte[] new_buf = new byte[length];
+      System.arraycopy(buf, offset, new_buf, 0, length);
+      return new ByteBufferImpl(new_buf, 0, length);
    }
 
    @Override
    public String toString() {
-      return String.format("ByteBufferImpl{length=%d, offset=%d, bytes=%s}", length, offset, buf == null ? null : Util.hexDump(buf));
+      return String.format("ByteBufferImpl{length=%d, offset=%d, bytes=%s}", length, offset, Util.hexDump(buf));
    }
 
    @Override
@@ -86,9 +93,6 @@ public class ByteBufferImpl implements ByteBuffer {
 
    @Override
    public int hashCode() {
-      if (buf == null)
-         return 0;
-
       int result = 1;
       for (int i = 0; i < length; i++) {
          result = 31 * result + buf[offset + i];
@@ -114,12 +118,17 @@ public class ByteBufferImpl implements ByteBuffer {
       @Override
       public void writeObject(ObjectOutput output, ByteBufferImpl b) throws IOException {
          UnsignedNumeric.writeUnsignedInt(output, b.length);
-         output.write(b.buf, b.offset, b.length);
+         if (b.length > 0) {
+            output.write(b.buf, b.offset, b.length);
+         }
       }
 
       @Override
       public ByteBufferImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          int length = UnsignedNumeric.readUnsignedInt(input);
+         if (length == 0) { //no need to allocate new objects
+            return EMPTY_INSTANCE;
+         }
          byte[] data = new byte[length];
          input.readFully(data, 0, length);
          return new ByteBufferImpl(data, 0, length);

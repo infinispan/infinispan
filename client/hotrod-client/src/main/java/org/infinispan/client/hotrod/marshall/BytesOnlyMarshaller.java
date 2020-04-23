@@ -56,8 +56,7 @@ public class BytesOnlyMarshaller implements Marshaller {
    @Override
    public ByteBuffer objectToBuffer(Object o) {
       checkByteArray(o);
-      byte[] b = (byte[]) o;
-      return new ByteBufferImpl(b, 0, b.length);
+      return ByteBufferImpl.create((byte[]) o);
    }
 
    @Override

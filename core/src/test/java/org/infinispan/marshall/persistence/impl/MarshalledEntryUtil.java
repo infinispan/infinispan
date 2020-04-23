@@ -19,7 +19,7 @@ public class MarshalledEntryUtil {
 
    public static <K,V> MarshallableEntry<K,V> create(K key, V value, Metadata metadata, long created, long lastUsed, Cache cache) {
       MarshallableEntryFactory entryFactory = cache.getAdvancedCache().getComponentRegistry().getComponent(MarshallableEntryFactory.class);
-      return entryFactory.create(key, value, metadata, created, lastUsed);
+      return entryFactory.create(key, value, metadata, null, created, lastUsed);
    }
 
    public static <K,V> MarshallableEntry<K,V> create(K key, Marshaller m) {
@@ -31,10 +31,10 @@ public class MarshalledEntryUtil {
    }
 
    public static <K,V> MarshallableEntry<K,V> create(K key, V value, Metadata metadata, long created, long lastUsed, Marshaller m) {
-      return new MarshallableEntryImpl<>(key, value, metadata, created, lastUsed, m);
+      return new MarshallableEntryImpl<>(key, value, metadata, null, created, lastUsed, m);
    }
 
    public static <K, V> MarshallableEntry<K, V> create(InternalCacheEntry<K, V> ice, Marshaller m) {
-      return new MarshallableEntryImpl<>(ice.getKey(), ice.getValue(), ice.getMetadata(), ice.getCreated(), ice.getLastUsed(), m);
+      return new MarshallableEntryImpl<>(ice.getKey(), ice.getValue(), ice.getMetadata(), ice.getInternalMetadata(), ice.getCreated(), ice.getLastUsed(), m);
    }
 }

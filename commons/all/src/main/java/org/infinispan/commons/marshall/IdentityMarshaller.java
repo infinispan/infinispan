@@ -17,8 +17,7 @@ public class IdentityMarshaller extends AbstractMarshaller {
 
    @Override
    protected ByteBuffer objectToBuffer(Object o, int estimatedSize) {
-      byte[] payload = (byte[]) o;
-      return new ByteBufferImpl(payload, 0, payload.length);
+      return ByteBufferImpl.create((byte[]) o);
    }
 
    @Override

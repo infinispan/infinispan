@@ -65,9 +65,8 @@ public class ProtoStreamMarshaller extends AbstractMarshaller {
    }
 
    @Override
-   protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException, InterruptedException {
-      byte[] bytes = ProtobufUtil.toWrappedByteArray(getSerializationContext(), o);
-      return new ByteBufferImpl(bytes, 0, bytes.length);
+   protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
+      return ByteBufferImpl.create(ProtobufUtil.toWrappedByteArray(getSerializationContext(), o));
    }
 
    @Override

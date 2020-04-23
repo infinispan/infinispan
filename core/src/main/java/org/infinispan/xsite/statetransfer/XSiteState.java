@@ -10,8 +10,8 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.persistence.spi.MarshallableEntry;
 
 /**
  * Represents the state of a single key to be sent to a backup site. It contains the only needed information, i.e., the
@@ -50,13 +50,13 @@ public class XSiteState {
       return internalMetadata;
    }
 
-   public static XSiteState fromDataContainer(InternalCacheEntry entry) {
+   public static XSiteState fromDataContainer(InternalCacheEntry<?, ?> entry) {
       return new XSiteState(entry.getKey(), entry.getValue(), entry.getMetadata(), entry.getInternalMetadata());
    }
 
-   public static XSiteState fromCacheLoader(MarshallableEntry marshalledEntry) {
+   public static XSiteState fromCacheLoader(MarshallableEntry<?, ?> marshalledEntry) {
       return new XSiteState(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata(),
-            null);
+            marshalledEntry.getInternalMetadata());
    }
 
    @Override

@@ -244,7 +244,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                value = null;
             }
 
-            return entryFactory.create(key, value, metadata, created, lastUsed);
+            return entryFactory.create(key, value, metadata, null, created, lastUsed);
 
          } else if (response.getStatus() == 404) {
             return null;
@@ -354,6 +354,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          K key = null;
          try {
             while (key == null && !JsonToken.END_ARRAY.equals(jp.nextToken())) {
+               //noinspection unchecked
                K tmpKey = (K) key2StringMapper.getKeyMapping(jp.getText());
                if (filter == null || filter.test(tmpKey)) {
                   key = tmpKey;
