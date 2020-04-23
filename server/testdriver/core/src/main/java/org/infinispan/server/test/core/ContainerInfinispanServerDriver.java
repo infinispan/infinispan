@@ -1,12 +1,12 @@
 package org.infinispan.server.test.core;
 
-import static org.infinispan.server.test.core.ContainerUtil.getIpAddressFromContainer;
+import static org.infinispan.commons.test.Eventually.eventually;
 
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
+import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -14,10 +14,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.Scanner;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -30,10 +31,8 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.test.CommonsTestingUtil;
-import org.infinispan.commons.test.Eventually;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.ThreadLeakChecker;
-import org.infinispan.commons.test.skip.OS;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.Server;
@@ -43,14 +42,14 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 import org.testcontainers.DockerClientFactory;
-import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.utility.Base58;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.ContainerNetwork;
+import com.github.dockerjava.api.model.Mount;
+import com.github.dockerjava.api.model.MountType;
 import com.github.dockerjava.api.model.Network;
 
 /**
@@ -65,19 +64,21 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    public static final int JMX_PORT = 9999;
    public static final String JDK_BASE_IMAGE_NAME = "jboss/base-jdk:11";
-   private final List<GenericContainer> containers;
+   public static final String IMAGE_USER = "200";
+   private final InfinispanGenericContainer[] containers;
+   private final String[] volumes;
    private final boolean preferContainerExposedPorts;
    private String name;
    CountdownLatchLoggingConsumer latch;
    ImageFromDockerfile image;
-   private File rootDir;
 
    protected ContainerInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(
             configuration,
             getDockerBridgeAddress()
       );
-      this.containers = new ArrayList<>(configuration.numServers());
+      this.containers = new InfinispanGenericContainer[configuration.numServers()];
+      this.volumes = new String[configuration.numServers()];
       this.preferContainerExposedPorts = Boolean.getBoolean(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_PREFER_CONTAINER_EXPOSED_PORTS);
    }
 
@@ -91,7 +92,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    @Override
    protected void start(String name, File rootDir, String configurationFile) {
       this.name = name;
-      this.rootDir = rootDir;
       // Build a skeleton server layout
       createServerHierarchy(rootDir);
       // Build the command-line that launches the server
@@ -117,10 +117,14 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       boolean preserveImageAfterTest = Boolean.parseBoolean(configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_PRESERVE_IMAGE, "false"));
       Path tmp = Paths.get(CommonsTestingUtil.tmpDirectory(this.getClass()));
 
+      File libDir = new File(rootDir, "lib");
+      libDir.mkdirs();
+      copyArtifactsToUserLibDir(libDir);
+
       image = new ImageFromDockerfile("testcontainers/" + Base58.randomString(16).toLowerCase(), !preserveImageAfterTest)
             .withFileFromPath("test", rootDir.toPath())
-            .withFileFromPath("tmp", tmp);
-
+            .withFileFromPath("tmp", tmp)
+            .withFileFromPath("lib", libDir.toPath());
       final boolean prebuiltImage;
       final String imageName;
       String baseImageName = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME);
@@ -156,39 +160,28 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                .label("name", "Infinispan Server")
                .label("version", Version.getVersion())
                .label("release", Version.getVersion())
-               .label("architecture", "x86_64")
-               .user("root");
+               .label("architecture", "x86_64");
 
          if (!prebuiltImage) {
-            if (OS.getCurrentOs() != OS.WINDOWS) {
-               // We need to remap the UID/GID of the jboss user inside the container to the ones of the user outside so that files created on volume mounts have the correct ownership/permissions
-               String uid = runProcess("id", "-u");
-               String gid = runProcess("id", "-g");
-
-               builder
-                     .run("/bin/sh", "-c", "if [ -x \"$(command -v usermod)\" ]; then usermod -u " + uid +" jboss; fi")
-                     .run("/bin/sh", "-c", "if [ -x \"$(command -v groupmod)\" ]; then groupmod -g " + gid + " jboss; fi");
-            }
-            builder
-                  .copy("build", INFINISPAN_SERVER_HOME)
-                  .run("chown", "-R", "jboss:jboss", INFINISPAN_SERVER_HOME)
-                  .user("jboss");
+            builder.copy("build", INFINISPAN_SERVER_HOME);
          }
          // Copy the resources to a location from where they can be added to the image
          try {
-            URI overlayUri = ContainerInfinispanServerDriver.class.getResource("/overlay").toURI();
-            if ("jar".equals(overlayUri.getScheme())) {
-               try (FileSystem fileSystem = FileSystems.newFileSystem(overlayUri, Collections.emptyMap())) {
-                  Files.walkFileTree(fileSystem.getPath("/overlay"), new CommonsTestingUtil.CopyFileVisitor(tmp, true, f -> {
+            URL resource = ContainerInfinispanServerDriver.class.getResource("/overlay");
+            if (resource != null) {
+               URI overlayUri = resource.toURI();
+               if ("jar".equals(overlayUri.getScheme())) {
+                  try (FileSystem fileSystem = FileSystems.newFileSystem(overlayUri, Collections.emptyMap())) {
+                     Files.walkFileTree(fileSystem.getPath("/overlay"), new CommonsTestingUtil.CopyFileVisitor(tmp, true, f -> {
+                        f.setExecutable(true, false);
+                     }));
+                  }
+               } else {
+                  Files.walkFileTree(Paths.get(overlayUri), new CommonsTestingUtil.CopyFileVisitor(tmp, true, f -> {
                      f.setExecutable(true, false);
                   }));
                }
-            } else {
-               Files.walkFileTree(Paths.get(overlayUri), new CommonsTestingUtil.CopyFileVisitor(tmp, true, f -> {
-                  f.setExecutable(true, false);
-               }));
             }
-
          } catch (Exception e) {
             throw new RuntimeException(e);
          }
@@ -203,56 +196,49 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                      7800,  // JGroups TCP
                      46655, // JGroups UDP
                      9999   // JMX Remoting
-               )
-               .build();
+               );
+
+         builder
+               .copy("lib", serverPathFrom("lib"))
+               .user("root")
+               .run("chown", "-R", IMAGE_USER, INFINISPAN_SERVER_HOME)
+               .run("chmod", "-R", "g+rw", INFINISPAN_SERVER_HOME)
+               .user(IMAGE_USER);
       });
 
       if (configuration.isParallelStartup()) {
          latch = new CountdownLatchLoggingConsumer(configuration.numServers(), STARTUP_MESSAGE_REGEX);
-         IntStream.range(0, configuration.numServers()).forEach(i -> createContainer(i, name, rootDir));
+         IntStream.range(0, configuration.numServers()).forEach(i -> createContainer(i));
          Exceptions.unchecked(() -> latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
       } else {
          for (int i = 0; i < configuration.numServers(); i++) {
             latch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
-            createContainer(i, name, rootDir);
+            createContainer(i);
             Exceptions.unchecked(() -> latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
          }
       }
    }
 
-   private void createContainer(int i, String name, File rootDir) {
-      GenericContainer container = createContainer(i, rootDir);
-      containers.add(i, container);
-      log.infof("Starting container %s-%d", name, i);
-      container.start();
-   }
+   private GenericContainer createContainer(int i) {
 
-   private String runProcess(String... commands) {
-      ProcessBuilder pb = new ProcessBuilder(commands).redirectErrorStream(true);
-      Process p = Exceptions.unchecked(() -> pb.start());
-      try (Scanner scanner = new Scanner(p.getInputStream(), StandardCharsets.UTF_8.name())) {
-         return scanner.useDelimiter("\\n").next();
-      } finally {
-         Exceptions.unchecked(() -> p.waitFor());
+      if (this.volumes[i] == null) {
+         String volumeName = UUID.randomUUID().toString();
+         DockerClientFactory.instance().client().createVolumeCmd().withName(volumeName).exec();
+         this.volumes[i] = volumeName;
       }
-   }
 
-   private GenericContainer createContainer(int i, File rootDir) {
-      GenericContainer container = new GenericContainer(image);
-      // Create directories which we will bind the container to
-      createServerHierarchy(rootDir, Integer.toString(i),
-            (hostDir, dir) -> {
-               String containerDir = String.format("%s/server/%s", INFINISPAN_SERVER_HOME, dir);
-               if ("lib".equals(dir)) {
-                  copyArtifactsToUserLibDir(hostDir);
-               }
-               container.withFileSystemBind(hostDir.getAbsolutePath(), containerDir);
-            });
+      GenericContainer container = new GenericContainer<>(image)
+         .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig().withMounts(
+            Arrays.asList(new Mount().withSource(this.volumes[i]).withTarget(serverPath()).withType(MountType.VOLUME))
+         ));
       // Process any enhancers
       container
             .withLogConsumer(new JBossLoggingConsumer(LogFactory.getLogger(name)).withPrefix(Integer.toString(i)))
-            .withLogConsumer(latch)
-            .waitingFor(Wait.forListeningPort());
+            .withLogConsumer(latch);
+      log.infof("Starting container %d", i);
+      container.start();
+      containers[i] = new InfinispanGenericContainer(container);
+      log.infof("Started container %d", i);
       return container;
    }
 
@@ -281,12 +267,11 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    @Override
    protected void stop() {
-      for (int i = 0; i < containers.size(); i++) {
-         log.infof("Stopping container %s-%d", name, i);
-         containers.get(i).stop();
-         log.infof("Stopped container %s-%d", name, i);
+      for (int i = 0; i < containers.length; i++) {
+         log.infof("Stopping container %d", i);
+         stop(i);
+         log.infof("Stopped container %d", i);
       }
-      containers.clear();
 
       // See https://github.com/testcontainers/testcontainers-java/issues/2276
       ThreadLeakChecker.ignoreThreadsContaining("tc-okhttp-stream-");
@@ -294,7 +279,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    @Override
    public boolean isRunning(int server) {
-      return containers.get(server).isRunning();
+      return containers[server].isRunning();
    }
 
    @Override
@@ -304,42 +289,48 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    @Override
    public InetAddress getServerAddress(int server) {
-      GenericContainer container = containers.get(server);
-      // We talk directly to the container, and not through forwarded addresses on localhost because of
-      // https://github.com/testcontainers/testcontainers-java/issues/452
-      return Exceptions.unchecked(() -> InetAddress.getByName(getIpAddressFromContainer(container)));
+      InfinispanGenericContainer container = containers[server];
+      return container.getIpAddress();
    }
 
    @Override
    public void pause(int server) {
-      Container.ExecResult result = Exceptions.unchecked(() -> containers.get(server).execInContainer(INFINISPAN_SERVER_HOME + "/bin/pause.sh"));
-      System.out.printf("[%d] PAUSE %s\n", server, result);
+      InfinispanGenericContainer container = containers[server];
+      container.pause();
+      eventually("Container wasn't paused.", () -> container.isPaused());
+      System.out.printf("[%d] PAUSE \n", server);
    }
 
    @Override
    public void resume(int server) {
-      Container.ExecResult result = Exceptions.unchecked(() -> containers.get(server).execInContainer(INFINISPAN_SERVER_HOME + "/bin/resume.sh"));
-      System.out.printf("[%d] RESUME %s\n", server, result);
+      InfinispanGenericContainer container = containers[server];
+      container.resume();
+      eventually("Container didn't resume.", () -> isRunning(server));
+      System.out.printf("[%d] RESUME \n", server);
    }
 
    @Override
    public void stop(int server) {
-      containers.get(server).stop();
+      InfinispanGenericContainer container = containers[server];
+      // can fail during the startup
+      if (container != null) {
+         CountdownLatchLoggingConsumer latch = new CountdownLatchLoggingConsumer(1, SHUTDOWN_MESSAGE_REGEX);
+         container.withLogConsumer(latch);
+         container.stop();
+         eventually("Container wasn't stopped.", () -> !isRunning(server));
+         System.out.printf("[%d] STOP \n", server);
+      }
    }
 
    @Override
    public void kill(int server) {
-      Exceptions.unchecked(() -> containers.get(server).execInContainer(INFINISPAN_SERVER_HOME + "/bin/kill.sh"));
-   }
-
-   // TODO should this just replace stop?
-   public void sigterm(int server) {
-      GenericContainer container = containers.get(server);
-      CountdownLatchLoggingConsumer latch = new CountdownLatchLoggingConsumer(1, SHUTDOWN_MESSAGE_REGEX);
-      container.withLogConsumer(latch);
-      Container.ExecResult result = Exceptions.unchecked(() -> container.execInContainer(INFINISPAN_SERVER_HOME + "/bin/term.sh"));
-      System.out.printf("[%d] TERM %s\n", server, result);
-      Eventually.eventually(() -> !container.isRunning());
+      InfinispanGenericContainer container = containers[server];
+      // can fail during the startup
+      if (container != null) {
+         container.kill();
+         eventually("Container wasn't killed.", () -> !isRunning(server));
+         System.out.printf("[%d] KILL \n", server);
+      }
    }
 
    @Override
@@ -348,30 +339,26 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          throw new IllegalStateException("Server " + server + " is still running");
       }
       latch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
-      GenericContainer container = createContainer(server, rootDir);
-      containers.set(server, container);
-      log.infof("Restarting container %s-%d", name, server);
-      container.start();
+      // We can stop the server by doing a rest call. TestContainers has a state about each container. We clean that state
+      stop(server);
+
+      log.infof("Restarting container %d", server);
+      createContainer(server);
       Exceptions.unchecked(() -> latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
    @Override
    public void restartCluster() {
-      latch = new CountdownLatchLoggingConsumer(configuration.numServers(), STARTUP_MESSAGE_REGEX);
       for (int i = 0; i < configuration.numServers(); i++) {
-         GenericContainer container = createContainer(i, rootDir);
-         containers.set(i, container);
-         log.infof("Restarting container %s-%d", name, i);
-         container.start();
+         restart(i);
       }
-      Exceptions.unchecked(() -> latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
    @Override
    public MBeanServerConnection getJmxConnection(int server) {
       return Exceptions.unchecked(() -> {
-         GenericContainer container = containers.get(server);
-         ContainerNetwork network = container.getContainerInfo().getNetworkSettings().getNetworks().values().iterator().next();
+         InfinispanGenericContainer container = containers[server];
+         ContainerNetwork network = container.getContainerNetwork();
          JMXServiceURL url = new JMXServiceURL(String.format("service:jmx:rmi:///jndi/rmi://%s:%d/jmxrmi", network.getIpAddress(), JMX_PORT));
          JMXConnector jmxConnector = JMXConnectorFactory.connect(url);
          return jmxConnector.getMBeanServerConnection();
@@ -380,7 +367,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    @Override
    public String getLog(int server) {
-      GenericContainer container = containers.get(server);
+      InfinispanGenericContainer container = containers[server];
       return container.getLogs();
    }
 
@@ -396,5 +383,13 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    @Override
    public int getTimeout() {
       return TIMEOUT_SECONDS;
+   }
+
+   private String serverPath() {
+      return String.format("%s/server", INFINISPAN_SERVER_HOME);
+   }
+
+   private String serverPathFrom(String path) {
+      return String.format("%s/%s", serverPath(), path);
    }
 }
