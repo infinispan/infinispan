@@ -6,7 +6,7 @@
 
    <cache-container default-cache="default">
       <local-cache-configuration name="template">
-         <indexing enabled="true">
+         <indexing>
             <indexed-entities>
                <indexed-entity>org.infinispan.query.indexedembedded.Book</indexed-entity>
             </indexed-entities>

@@ -14,7 +14,7 @@
       <transport cluster="MyCluster"/>
       <local-cache name="queryCache_lucenestore_async_filestore">
          <transaction mode="NON_XA"/>
-         <indexing enabled="true">
+         <indexing>
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>

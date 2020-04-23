@@ -11,7 +11,7 @@
       </local-cache>
       <local-cache name="simple" />
       <local-cache name="memory-searchable">
-         <indexing enabled="true">
+         <indexing>
             <key-transformers>
                <key-transformer key="org.infinispan.query.test.CustomKey" transformer="org.infinispan.query.test.CustomTransformer"/>
             </key-transformers>
@@ -23,7 +23,7 @@
          </indexing>
       </local-cache>
       <local-cache name="disk-searchable">
-         <indexing enabled="true">
+         <indexing>
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
@@ -34,10 +34,10 @@
          </indexing>
       </local-cache>
       <replicated-cache name="repl-with-default">
-         <indexing enabled="true" auto-config="true"/>
+         <indexing auto-config="true"/>
       </replicated-cache>
       <distributed-cache name="dist-with-default">
-          <indexing enabled="true" auto-config="true"/>
+         <indexing auto-config="true"/>
       </distributed-cache>
    </cache-container>
 

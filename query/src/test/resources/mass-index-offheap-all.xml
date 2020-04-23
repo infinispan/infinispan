@@ -13,7 +13,7 @@
             <memory>
                 <off-heap/>
             </memory>
-            <indexing enabled="true">
+            <indexing>
                 <indexed-entities>
                     <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                     <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
