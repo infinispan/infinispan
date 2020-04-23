@@ -78,7 +78,6 @@ import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.logging.Log;
@@ -200,7 +199,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          // the recovery info here
          if (recoveryManager != null) {
             GlobalTransaction gtx = rCommand.getGlobalTransaction();
-            recoveryManager.removeRecoveryInformation(((RecoverableTransactionIdentifier) gtx).getXid());
+            recoveryManager.removeRecoveryInformation(gtx.getXid());
          }
       });
    }

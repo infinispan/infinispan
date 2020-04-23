@@ -80,13 +80,13 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
       if (remoteTransaction != null) return remoteTransaction;
       //also look in the recovery manager, as this transaction might be prepared
       return (RemoteTransaction) recoveryManager
-            .getPreparedTransaction(((RecoverableTransactionIdentifier) txId).getXid());
+            .getPreparedTransaction(txId.getXid());
    }
 
    @Override
    public void remoteTransactionRollback(GlobalTransaction gtx) {
       super.remoteTransactionRollback(gtx);
-      recoveryManager.removeRecoveryInformation(((RecoverableTransactionIdentifier) gtx).getXid());
+      recoveryManager.removeRecoveryInformation(gtx.getXid());
    }
 
    @Override
@@ -139,7 +139,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
     */
    public Xid getRemoteTransactionXid(Long internalId) {
       for (RemoteTransaction rTx : getRemoteTransactions()) {
-         RecoverableTransactionIdentifier gtx = (RecoverableTransactionIdentifier) rTx.getGlobalTransaction();
+         GlobalTransaction gtx = rTx.getGlobalTransaction();
          if (gtx.getInternalId() == internalId) {
             if (trace) log.tracef("Found xid %s matching internal id %s", gtx.getXid(), internalId);
             return gtx.getXid();
@@ -154,7 +154,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
          Iterator<RemoteTransaction> it = getRemoteTransactions().iterator();
          while (it.hasNext()) {
             RemoteTransaction next = it.next();
-            RecoverableTransactionIdentifier gtx = (RecoverableTransactionIdentifier) next.getGlobalTransaction();
+            GlobalTransaction gtx = next.getGlobalTransaction();
             if (xid.equals(gtx.getXid())) {
                it.remove();
                recalculateMinTopologyIdIfNeeded(next);

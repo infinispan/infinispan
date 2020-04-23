@@ -33,7 +33,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -142,8 +141,7 @@ public class NoLockLostOnLongTxTest extends MultipleCacheManagersTest {
 
       tm.commit();
 
-      GlobalTransaction nonExistingGtx = TransactionFactory.TxFactoryEnum.NODLD_NORECOVERY_NOXA.newGlobalTransaction();
-      nonExistingGtx.setAddress(remoteAddress);
+      GlobalTransaction nonExistingGtx = new GlobalTransaction(remoteAddress, false);
       nonExistingGtx.setId(-1);
 
       Collection<GlobalTransaction> list = Collections.singletonList(nonExistingGtx);

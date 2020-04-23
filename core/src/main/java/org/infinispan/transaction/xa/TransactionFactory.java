@@ -17,7 +17,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.synchronization.SyncLocalTransaction;
-import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareLocalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.util.logging.Log;
@@ -52,15 +51,10 @@ public class TransactionFactory {
 
          @Override
          public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
-            RecoveryAwareGlobalTransaction recoveryAwareGlobalTransaction = new RecoveryAwareGlobalTransaction(addr, remote);
+            GlobalTransaction recoveryAwareGlobalTransaction = new GlobalTransaction(addr, remote);
             // TODO: Not ideal... but causes no issues so far. Could the internal id be an Object instead of a long?
             recoveryAwareGlobalTransaction.setInternalId(((NumericVersion) clusterIdGenerator.generateNew()).getVersion());
             return recoveryAwareGlobalTransaction;
-         }
-
-         @Override
-         public GlobalTransaction newGlobalTransaction() {
-            return new RecoveryAwareGlobalTransaction();
          }
 
          @Override
@@ -90,11 +84,6 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction() {
-            return new GlobalTransaction();
-         }
-
-         @Override
          public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx,
                                                        int topologyId,
                                                        long txCreationTime) {
@@ -121,11 +110,6 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction() {
-            return new GlobalTransaction();
-         }
-
-         @Override
          public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx,
                                                        int topologyId,
                                                        long txCreationTime) {
@@ -144,16 +128,11 @@ public class TransactionFactory {
                                                            long txCreationTime);
 
       public abstract GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered);
-      public abstract GlobalTransaction newGlobalTransaction();
 
       public abstract RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx,
                                                              int topologyId, long txCreationTime);
 
       public abstract RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId, long txCreationTime);
-   }
-
-   public GlobalTransaction newGlobalTransaction() {
-      return txFactoryEnum.newGlobalTransaction();
    }
 
    public GlobalTransaction newGlobalTransaction(Address addr, boolean remote) {

@@ -187,7 +187,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
          return removeRecoveryInformation(remoteTransactionXid);
       } else {
          for (RecoveryAwareRemoteTransaction raRemoteTx : inDoubtTransactions.values()) {
-            RecoverableTransactionIdentifier globalTransaction = (RecoverableTransactionIdentifier) raRemoteTx.getGlobalTransaction();
+            GlobalTransaction globalTransaction = raRemoteTx.getGlobalTransaction();
             if (internalId.equals(globalTransaction.getInternalId())) {
                Xid xid = globalTransaction.getXid();
                log.tracef("Found transaction xid %s that maps internal id %s", xid, internalId);
@@ -217,15 +217,15 @@ public class RecoveryManagerImpl implements RecoveryManager {
       List<Xid> txs = getInDoubtTransactions();
       Set<RecoveryAwareLocalTransaction> localTxs = recoveryAwareTxTable().getLocalTxThatFailedToComplete();
       log.tracef("Local transactions that failed to complete is %s", localTxs);
-      Set<InDoubtTxInfo> result = new HashSet<InDoubtTxInfo>();
+      Set<InDoubtTxInfo> result = new HashSet<>();
       for (RecoveryAwareLocalTransaction r : localTxs) {
-         long internalId = ((RecoverableTransactionIdentifier) r.getGlobalTransaction()).getInternalId();
+         long internalId = r.getGlobalTransaction().getInternalId();
          result.add(new InDoubtTxInfoImpl(r.getXid(), internalId));
       }
       for (Xid xid : txs) {
          RecoveryAwareRemoteTransaction pTx = getPreparedTransaction(xid);
          if (pTx == null) continue; //might be removed concurrently, 2check for null
-         RecoverableTransactionIdentifier gtx = (RecoverableTransactionIdentifier) pTx.getGlobalTransaction();
+         GlobalTransaction gtx = pTx.getGlobalTransaction();
          InDoubtTxInfoImpl infoInDoubt = new InDoubtTxInfoImpl(xid, gtx.getInternalId(), pTx.getStatus());
          result.add(infoInDoubt);
       }
@@ -277,7 +277,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    }
 
    public void registerInDoubtTransaction(RecoveryAwareRemoteTransaction remoteTransaction) {
-      Xid xid = ((RecoverableTransactionIdentifier)remoteTransaction.getGlobalTransaction()).getXid();
+      Xid xid = remoteTransaction.getGlobalTransaction().getXid();
       RecoveryAwareTransaction previous = inDoubtTransactions.put(new RecoveryInfoKey(xid, cacheName), remoteTransaction);
       if (previous != null) {
          log.preparedTxAlreadyExists(previous, remoteTransaction);
@@ -350,7 +350,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
 
    @Override
    public boolean isTransactionPrepared(GlobalTransaction globalTx) {
-      Xid xid = ((RecoverableTransactionIdentifier) globalTx).getXid();
+      Xid xid = globalTx.getXid();
       RecoveryAwareRemoteTransaction remoteTransaction = (RecoveryAwareRemoteTransaction) recoveryAwareTxTable().getRemoteTransaction(globalTx);
       boolean remotePrepared = remoteTransaction != null && remoteTransaction.isPrepared();
       boolean result = inDoubtTransactions.get(new RecoveryInfoKey(xid, cacheName)) != null//if it is in doubt must be prepared

@@ -7,7 +7,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import javax.transaction.xa.Xid;
+
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -28,22 +31,24 @@ public class GlobalTransaction implements Cloneable {
 
    private static final AtomicLong sid = new AtomicLong(0);
 
-   protected long id = -1;
-
-   protected Address addr = null;
+   private long id;
+   private Address addr;
    private int hash_code = -1;  // in the worst case, hashCode() returns 0, then increases, so we're safe here
    private boolean remote = false;
+   private volatile Xid xid = null;
+   private volatile long internalId = -1;
 
-   /**
-    * empty ctor used by externalization.
-    */
-   protected GlobalTransaction() {
-   }
-
-   protected GlobalTransaction(Address addr, boolean remote) {
+   public GlobalTransaction(Address addr, boolean remote) {
       this.id = sid.incrementAndGet();
       this.addr = addr;
       this.remote = remote;
+   }
+
+   private GlobalTransaction(long id, Address addr, Xid xid, long internalId) {
+      this.id = id;
+      this.addr = addr;
+      this.xid = xid;
+      this.internalId = internalId;
    }
 
    public Address getAddress() {
@@ -82,11 +87,6 @@ public class GlobalTransaction implements Cloneable {
       return aeq && (id == otherGtx.id);
    }
 
-   @Override
-   public String toString() {
-      return "GlobalTx:" + Objects.toString(addr, "local") + ":" + id;
-   }
-
    /**
     * Returns a simplified representation of the transaction.
     */
@@ -102,6 +102,22 @@ public class GlobalTransaction implements Cloneable {
       this.addr = address;
    }
 
+   public Xid getXid() {
+      return xid;
+   }
+
+   public void setXid(Xid xid) {
+      this.xid = XidImpl.copy(xid);
+   }
+
+   public long getInternalId() {
+      return internalId;
+   }
+
+   public void setInternalId(long internalId) {
+      this.internalId = internalId;
+   }
+
    @Override
    public Object clone() {
       try {
@@ -111,33 +127,21 @@ public class GlobalTransaction implements Cloneable {
       }
    }
 
-   protected abstract static class AbstractGlobalTxExternalizer<T extends GlobalTransaction> extends AbstractExternalizer<T> {
-      @Override
-      public void writeObject(ObjectOutput output, T gtx) throws IOException {
-         output.writeLong(gtx.id);
-         output.writeObject(gtx.addr);
-      }
-
-      /**
-       * Factory method for GlobalTransactions
-       * @return a newly constructed instance of GlobalTransaction or one of its subclasses
-       **/
-      protected abstract T createGlobalTransaction();
-
-      @Override
-      public T readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         T gtx = createGlobalTransaction();
-         gtx.id = input.readLong();
-         gtx.addr = (Address) input.readObject();
-         return gtx;
-      }
+   @Override
+   public String toString() {
+      return "GlobalTransaction{" +
+            "id=" + id +
+            ", addr=" + Objects.toString(addr, "local") +
+            ", remote=" + remote +
+            ", xid=" + xid +
+            ", internalId=" + internalId +
+            '}';
    }
 
-   public static class Externalizer extends AbstractGlobalTxExternalizer<GlobalTransaction> {
+   public static class Externalizer implements AdvancedExternalizer<GlobalTransaction> {
       @Override
-      @SuppressWarnings("unchecked")
       public Set<Class<? extends GlobalTransaction>> getTypeClasses() {
-         return Util.<Class<? extends GlobalTransaction>>asSet(GlobalTransaction.class);
+         return Util.asSet(GlobalTransaction.class);
       }
 
       @Override
@@ -146,8 +150,20 @@ public class GlobalTransaction implements Cloneable {
       }
 
       @Override
-      protected GlobalTransaction createGlobalTransaction() {
-         return TransactionFactory.TxFactoryEnum.NODLD_NORECOVERY_XA.newGlobalTransaction();
+      public void writeObject(ObjectOutput output, GlobalTransaction gtx) throws IOException {
+         output.writeLong(gtx.id);
+         output.writeObject(gtx.addr);
+         output.writeObject(gtx.xid);
+         output.writeLong(gtx.internalId);
+      }
+
+      @Override
+      public GlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         long id = input.readLong();
+         Address addr = (Address) input.readObject();
+         XidImpl xid = (XidImpl) input.readObject();
+         long internalId = input.readLong();
+         return new GlobalTransaction(id, addr, xid, internalId);
       }
    }
 }
