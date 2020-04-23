@@ -70,7 +70,7 @@ public class StatefulSetRollingUpgradeIT {
 
       for (int i = 0; i < NUM_ROLLING_UPGRADES; i++) {
          for (int j = numServers - 1; j > -1; j--) {
-            serverDriver.sigterm(j);
+            serverDriver.stop(j);
             serverDriver.restart(j);
             assertLiveness(j);
          }

@@ -1,7 +1,5 @@
 package org.infinispan.server.test.core;
 
-import static org.infinispan.server.test.core.ContainerUtil.getIpAddressFromContainer;
-
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
@@ -11,13 +9,12 @@ import java.util.List;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.testcontainers.containers.GenericContainer;
 
 public class ContainerRemoteCacheManager {
 
-   private final List<GenericContainer> containers;
+   private final InfinispanGenericContainer[] containers;
 
-   public ContainerRemoteCacheManager(List<GenericContainer> containers) {
+   public ContainerRemoteCacheManager(InfinispanGenericContainer[] containers) {
       this.containers = containers;
    }
 
@@ -30,7 +27,7 @@ public class ContainerRemoteCacheManager {
                   List<SocketAddress> localHostServers = new ArrayList<>();
                   for (SocketAddress address : newServers) {
                      InetSocketAddress inetSocketAddress = (InetSocketAddress) address;
-                     GenericContainer container = getGeneriContainerBy(inetSocketAddress);
+                     InfinispanGenericContainer container = getGeneriContainerBy(inetSocketAddress);
                      localHostServers.add(new InetSocketAddress("localhost", container.getMappedPort(inetSocketAddress.getPort())));
                   }
                   return super.updateTopologyInfo(cacheName, localHostServers, quiet);
@@ -40,9 +37,9 @@ public class ContainerRemoteCacheManager {
       };
    }
 
-   private GenericContainer getGeneriContainerBy(InetSocketAddress inetSocketAddress) {
-      for (GenericContainer container : containers) {
-         String hostName = getIpAddressFromContainer(container);
+   private InfinispanGenericContainer getGeneriContainerBy(InetSocketAddress inetSocketAddress) {
+      for (InfinispanGenericContainer container : containers) {
+         String hostName = container.getNetworkIpAddress();
          if (inetSocketAddress.getHostName().equals(hostName)) {
             return container;
          }
