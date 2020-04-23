@@ -6,7 +6,7 @@
 
    <cache-container default-cache="default" statistics="false">
       <local-cache-configuration name="base">
-         <indexing enabled="true">
+         <indexing>
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
@@ -20,7 +20,7 @@
          <indexing enabled="false"/>
       </local-cache>
       <local-cache name="memory-searchable" configuration="base">
-         <indexing enabled="true">
+         <indexing>
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
@@ -29,7 +29,7 @@
          </indexing>
       </local-cache>
       <local-cache name="disk-searchable" configuration="base">
-         <indexing enabled="true">
+         <indexing>
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>

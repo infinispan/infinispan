@@ -20,7 +20,7 @@
          <memory>
             <object size="-1"/>
          </memory>
-         <indexing enabled="true">
+         <indexing>
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>

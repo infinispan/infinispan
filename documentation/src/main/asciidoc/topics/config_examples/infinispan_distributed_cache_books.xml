@@ -2,7 +2,7 @@
     <cache-container>
         <transport cluster="infinispan-cluster"/>
         <distributed-cache name="books">
-            <indexing enabled="true" auto-config="true"/>
+            <indexing auto-config="true"/>
         </distributed-cache>
     </cache-container>
 </infinispan>

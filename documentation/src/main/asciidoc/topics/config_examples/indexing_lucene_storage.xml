@@ -1,5 +1,5 @@
 <replicated-cache name="default">
-    <indexing enabled="true">
+    <indexing>
         <property name="default.locking_cachename">LuceneIndexesLocking_custom</property>
         <property name="default.data_cachename">LuceneIndexesData_custom</property>
         <property name="default.metadata_cachename">LuceneIndexesMetadata_custom</property>
