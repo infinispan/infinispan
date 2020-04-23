@@ -560,7 +560,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       }, FlowableConnection::close);
    }
 
-   class FlowableConnection {
+   static class FlowableConnection {
       final boolean autoCommit;
       final ConnectionFactory factory;
       final Connection connection;
@@ -788,10 +788,9 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       }
    }
 
-   @SuppressWarnings("unchecked")
-   private <T> T unmarshall(InputStream inputStream) throws PersistenceException {
+   private MarshalledValue unmarshall(InputStream inputStream) throws PersistenceException {
       try {
-         return (T) marshaller.readObject(inputStream);
+         return (MarshalledValue) marshaller.readObject(inputStream);
       } catch (IOException e) {
          PERSISTENCE.ioErrorUnmarshalling(e);
          throw new PersistenceException("I/O error while unmarshalling from stream", e);
@@ -819,6 +818,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          try {
             while (rs.next()) {
                String keyStr = rs.getString(2);
+               //noinspection unchecked
                K key = (K) ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
 
                if (filter == null || filter.test(key)) {
@@ -828,6 +828,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
                      return marshalledEntryFactory.create(key,
                            fetchValue ? value.getValueBytes() : null,
                            fetchMetadata ? value.getMetadataBytes() : null,
+                           value.getInternalMetadataBytes(),
                            value.getCreated(),
                            value.getLastUsed());
                   } else {
@@ -857,6 +858,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          try {
             while (key == null && rs.next()) {
                String keyStr = rs.getString(2);
+               //noinspection unchecked
                K testKey = (K) ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
                if (filter == null || filter.test(testKey)) {
                   key = testKey;

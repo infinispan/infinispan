@@ -33,7 +33,7 @@ import io.reactivex.rxjava3.core.Scheduler;
  */
 public class PersistenceUtil {
 
-   private static Log log = LogFactory.getLog(PersistenceUtil.class);
+   private static final Log log = LogFactory.getLog(PersistenceUtil.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private static final int SEGMENT_NOT_PROVIDED = -1;
@@ -146,12 +146,15 @@ public class PersistenceUtil {
 
    public static <K, V> InternalCacheEntry<K, V> convert(MarshallableEntry<K, V> loaded, InternalEntryFactory factory) {
       Metadata metadata = loaded.getMetadata();
+      InternalCacheEntry<K, V> ice;
       if (metadata != null) {
-         return factory.create(loaded.getKey(), loaded.getValue(), metadata, loaded.created(), metadata.lifespan(),
+         ice = factory.create(loaded.getKey(), loaded.getValue(), metadata, loaded.created(), metadata.lifespan(),
                loaded.lastUsed(), metadata.maxIdle());
       } else {
-         return factory.create(loaded.getKey(), loaded.getValue(), (Metadata) null, loaded.created(), -1, loaded.lastUsed(), -1);
+         ice = factory.create(loaded.getKey(), loaded.getValue(), (Metadata) null, loaded.created(), -1, loaded.lastUsed(), -1);
       }
+      ice.setInternalMetadata(loaded.getInternalMetadata());
+      return ice;
    }
 
    public static <K> Predicate<? super K> combinePredicate(IntSet segments, KeyPartitioner keyPartitioner, Predicate<? super K> filter) {

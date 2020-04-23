@@ -3,6 +3,7 @@ package org.infinispan.tools.store.migrator.file;
 import static org.infinispan.tools.store.migrator.Element.LOCATION;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
@@ -13,6 +14,7 @@ import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.persistence.sifs.EntryHeader;
 import org.infinispan.persistence.sifs.EntryRecord;
 import org.infinispan.persistence.sifs.FileProvider;
+import org.infinispan.persistence.sifs.SoftIndexFileStore;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.tools.store.migrator.Element;
@@ -22,8 +24,9 @@ import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 
 public class SoftIndexFileStoreIterator implements StoreIterator {
 
-   private final MarshallableEntryFactory entryFactory;
+   private final MarshallableEntryFactory<?,?> entryFactory;
    private final Path location;
+   private final int majorVersion;
 
    public SoftIndexFileStoreIterator(StoreProperties props) {
       props.required(Element.LOCATION);
@@ -34,6 +37,7 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
 
       this.location = Paths.get(location);
       this.entryFactory = SerializationConfigUtil.getEntryFactory(props);
+      this.majorVersion = props.getMajorVersion();
    }
 
    @Override
@@ -42,19 +46,26 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
 
    @Override
    public Iterator<MarshallableEntry> iterator() {
-      return new SoftIndexIterator(location);
+      return new SoftIndexIterator();
    }
 
    class SoftIndexIterator implements Iterator<MarshallableEntry> {
 
       final FileProvider fileProvider;
       final Iterator<Integer> iterator;
+      final HeaderReader reader;
       FileProvider.Handle handle;
       int file = -1;
       int offset = 0;
 
-      SoftIndexIterator(Path location) {
-         this.fileProvider = new FileProvider(location, 1000);
+      SoftIndexIterator() {
+         if (majorVersion < 11) {
+            this.fileProvider = new FileProvider(location, 1000, SoftIndexFileStore.PREFIX_10_1);
+            this.reader = EntryRecord::readOldEntryHeader;
+         } else {
+            this.fileProvider = new FileProvider(location, 1000, SoftIndexFileStore.PREFIX_11_0);
+            this.reader = EntryRecord::readEntryHeader;
+         }
          this.iterator = fileProvider.getFileIterator();
       }
 
@@ -73,7 +84,7 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
                }
 
                for (; ; ) {
-                  EntryHeader header = EntryRecord.readEntryHeader(handle, offset);
+                  EntryHeader header = reader.read(handle, offset);
                   if (header == null) {
                      handle.close();
                      file = -1;
@@ -85,12 +96,12 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
                      byte[] serializedValue = EntryRecord.readValue(handle, header, offset);
 
                      offset += header.totalLength();
-                     if (EntryRecord.readEntryHeader(handle, offset) == null) {
+                     if (reader.read(handle, offset) == null) {
                         // We have reached the end of the file, so we must reset fileIndex in case !iterator.hasNext()
                         handle.close();
                         file = -1;
                      }
-                     return entryFactory.create(new ByteBufferImpl(serializedKey), new ByteBufferImpl(serializedValue));
+                     return entryFactory.create(ByteBufferImpl.create(serializedKey), ByteBufferImpl.create(serializedValue));
                   }
                   offset += header.totalLength();
                }
@@ -100,5 +111,9 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
             throw new CacheException(e);
          }
       }
+   }
+
+   private interface HeaderReader {
+      EntryHeader read(FileProvider.Handle handle, int offset) throws IOException;
    }
 }

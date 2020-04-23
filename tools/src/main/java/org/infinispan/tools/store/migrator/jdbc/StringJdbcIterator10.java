@@ -7,6 +7,7 @@ import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshalledValue;
 
 /**
  * @author Ryan Emerson
@@ -21,6 +22,6 @@ class StringJdbcIterator10 extends AbstractStringJdbcIterator {
 
    @Override
    MarshallableEntry readMarshalledEntry(Object key, InputStream is) {
-      return entryFactory.create(key, unmarshall(is));
+      return entryFactory.create(key, (MarshalledValue) unmarshall(is));
    }
 }

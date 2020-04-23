@@ -42,6 +42,7 @@ import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.executors.ExecutorAllCompletionService;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration;
@@ -247,7 +248,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             if (results != null) {
                results.close();
             }
-            if (txStream != null && txStream.isActive()) {
+            if (txStream.isActive()) {
                txStream.rollback();
             }
          }
@@ -322,7 +323,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             stats.addRemoveTxFailed(timeService.time() - txnBegin);
             throw new JpaStoreException("Exception caught in delete()", e);
          } finally {
-            if (txn != null && txn.isActive())
+            if (txn.isActive())
                txn.rollback();
          }
       } finally {
@@ -530,7 +531,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             stats.addReadTxFailed(timeService.time() - txnBegin);
             throw e;
          } finally {
-            if (txn != null && txn.isActive())
+            if (txn.isActive())
                txn.rollback();
          }
       } finally {
@@ -567,10 +568,10 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                      return null;
                   }
                   if (trace) log.trace("Loaded " + entity + " (" + metadata + ")");
-                  return marshallerEntryFactory.create(key, entity, metadata, metaEntity.getCreated(), metaEntity.getLastUsed());
+                  return marshallerEntryFactory.create(key, entity, metadata, getInternalMetadata(metaEntity), metaEntity.getCreated(), metaEntity.getLastUsed());
                }
                if (trace) log.trace("Loaded " + entity);
-               return marshallerEntryFactory.create(key, entity);
+               return marshallerEntryFactory.create(key, entity, null, getInternalMetadata(metaEntity), -1, -1);
             } finally {
                try {
                   txn.commit();
@@ -581,7 +582,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                }
             }
          } finally {
-            if (txn != null && txn.isActive())
+            if (txn.isActive())
                txn.rollback();
          }
       } finally {
@@ -656,13 +657,24 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    private Metadata getMetadata(MetadataEntity entity) {
-      if (entity == null)
+      if (entity == null || entity.getMetadata() == null)
          return null;
 
       try {
          return (Metadata) marshaller.objectFromByteBuffer(entity.getMetadata());
       } catch (Exception e) {
          throw new JpaStoreException("Failed to unmarshall metadata", e);
+      }
+   }
+
+   private MetaParamsInternalMetadata getInternalMetadata(MetadataEntity entity) {
+      if (entity == null || entity.getInternalMetadata() == null)
+         return null;
+
+      try {
+         return (MetaParamsInternalMetadata) marshaller.objectFromByteBuffer(entity.getInternalMetadata());
+      } catch (Exception e) {
+         throw new JpaStoreException("Failed to unmarshall internal metadata", e);
       }
    }
 
@@ -680,7 +692,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          try {
             txn.commit();
          } finally {
-            if (txn != null && txn.isActive()) {
+            if (txn.isActive()) {
                txn.rollback();
             }
          }
@@ -723,7 +735,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             txStream.commit();
          } finally {
             if (metadataKeys != null) metadataKeys.close();
-            if (txStream != null && txStream.isActive()) {
+            if (txStream.isActive()) {
                txStream.rollback();
             }
          }
@@ -766,17 +778,12 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
                if (trace) log.trace("Expired " + key + " -> " + entity + "(" + toString(metadata) + ")");
                if (listener != null) {
-                  eacs.submit(new Runnable() {
-                     @Override
-                     public void run() {
-                        listener.entryPurged(key);
-                     }
-                  }, null);
+                  eacs.submit(() -> listener.entryPurged(key), null);
                }
             }
             txn.commit();
          } finally {
-            if (txn != null && txn.isActive()) {
+            if (txn.isActive()) {
                txn.rollback();
             }
          }
@@ -829,7 +836,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       try {
          return metaEntity == null ?
                marshallerEntryFactory.create(key, entity) :
-               marshallerEntryFactory.create(key, entity, metadata, metaEntity.getCreated(), metaEntity.getLastUsed());
+               marshallerEntryFactory.create(key, entity, metadata, getInternalMetadata(metaEntity), metaEntity.getCreated(), metaEntity.getLastUsed());
       } catch (Exception e) {
          PERSISTENCE.errorExecutingParallelStoreTask(e);
          throw e;

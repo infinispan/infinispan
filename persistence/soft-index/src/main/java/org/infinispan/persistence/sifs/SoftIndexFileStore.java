@@ -1,6 +1,7 @@
 package org.infinispan.persistence.sifs;
 
 import static org.infinispan.persistence.PersistenceUtil.getQualifiedLocation;
+import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +21,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -108,10 +110,13 @@ import io.reactivex.rxjava3.core.Flowable;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 @Store
-public class SoftIndexFileStore implements AdvancedLoadWriteStore {
+public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object> {
 
    private static final Log log = LogFactory.getLog(SoftIndexFileStore.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
+
+   public static final String PREFIX_10_1 = "";
+   public static final String PREFIX_11_0 = "ispn.";
 
    private SoftIndexFileStoreConfiguration configuration;
    private boolean started = false;
@@ -124,7 +129,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    private Compactor compactor;
    private Marshaller marshaller;
    private ByteBufferFactory byteBufferFactory;
-   private MarshallableEntryFactory marshallableEntryFactory;
+   private MarshallableEntryFactory<Object, Object> marshallableEntryFactory;
    private TimeService timeService;
    private int maxKeyLength;
    private InitializationContext ctx;
@@ -149,7 +154,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
       temporaryTable = new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments());
       storeQueue = new SyncProcessingQueue<>();
       indexQueue = new IndexQueue(configuration.indexSegments(), configuration.indexQueueLength());
-      fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit());
+      fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_11_0);
       compactor = new Compactor(fileProvider, temporaryTable, indexQueue, marshaller, timeService, configuration.maxFileSize(), configuration.compactionThreshold());
       logAppender = new LogAppender(storeQueue, indexQueue, temporaryTable, compactor, fileProvider, configuration.syncWrites(), configuration.maxFileSize());
       try {
@@ -162,41 +167,96 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
       compactor.setIndex(index);
       startIndex();
       final AtomicLong maxSeqId = new AtomicLong(0);
-      if (index.isLoaded()) {
-         log.debug("Not building the index - loaded from persisted state");
-      } else if (configuration.purgeOnStartup()) {
-         log.debug("Not building the index - purge will be executed");
-      } else {
-         log.debug("Building the index");
+      boolean migrateData = false;
 
-         Flowable<Integer> filePublisher = filePublisher();
-         CompletionStage<Void> stage = handleFilePublisher(filePublisher.doAfterNext(compactor::completeFile), false, false,
-               (file, offset, size, serializedKey, entryMetadata, serializedValue, seqId, expiration) -> {
-                  long prevSeqId;
-                  while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId)) {
+      if (!configuration.purgeOnStartup()) {
+         // we don't destroy the data on startup
+         // get the old files
+         FileProvider oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_10_1);
+         if (oldFileProvider.hasFiles()) {
+            PERSISTENCE.startMigratingPersistenceData();
+            migrateFromOldFormat(oldFileProvider);
+            migrateData = true;
+         } else if (index.isLoaded()) {
+            log.debug("Not building the index - loaded from persisted state");
+         } else {
+            log.debug("Building the index");
+            buildIndex(maxSeqId);
+         }
+      } else {
+         log.debug("Not building the index - purge will be executed");
+      }
+      if (!migrateData) {
+         logAppender.setSeqId(maxSeqId.get() + 1);
+      }
+   }
+
+   private void migrateFromOldFormat(FileProvider oldFileProvider) {
+      try {
+         index.clear();
+      } catch (IOException e) {
+         throw PERSISTENCE.persistedDataMigrationFailed(e);
+      }
+      try(CloseableIterator<Integer> it = oldFileProvider.getFileIterator()) {
+         while (it.hasNext()) {
+            int fileId = it.next();
+            try (FileProvider.Handle handle = oldFileProvider.getFile(fileId)) {
+               int offset = 0;
+               while (true) {
+                  EntryHeader header = EntryRecord.readOldEntryHeader(handle, offset);
+                  if (header == null) {
+                     //end of file. go to next one
+                     break;
                   }
-                  Object key = marshaller.objectFromByteBuffer(serializedKey);
-                  if (trace) {
-                     log.tracef("Loaded %d:%d (seqId %d, expiration %d)", file, offset, seqId, expiration);
+                  MarshallableEntry<Object, Object> entry = readEntry(handle, header, offset, null, true);
+                  // entry is null if expired or removed (tombstone), in both case, we can ignore it.
+                  //noinspection ConstantConditions (entry is not null!)
+                  if (entry.getValueBytes() != null) {
+                     // using the storeQueue (instead of binary copy) to avoid building the index later
+                     storeQueue.pushAndWait(LogRequest.storeRequest(entry));
+                  } else {
+                     // delete the entry. The file is append only so we can have a put() and later a remove() for the same key
+                     storeQueue.pushAndWait(LogRequest.deleteRequest(entry.getKey(), entry.getKeyBytes()));
                   }
-                  try {
-                     // We may check the seqId safely as we are the only thread writing to index
-                     if (isSeqIdOld(seqId, key, serializedKey)) {
-                        indexQueue.put(IndexRequest.foundOld(key, serializedKey, file, offset));
-                        return null;
-                     }
-                     temporaryTable.set(key, file, offset);
-                     indexQueue.put(IndexRequest.update(key, serializedKey, file, offset, size));
-                  } catch (InterruptedException e) {
-                     log.error("Interrupted building of index, the index won't be built properly!", e);
+                  offset += header.totalLength();
+               }
+            }
+            // file is read. can be removed.
+            oldFileProvider.deleteFile(fileId);
+         }
+         PERSISTENCE.persistedDataSuccessfulMigrated();
+      } catch (InterruptedException | IOException e) {
+         throw PERSISTENCE.persistedDataMigrationFailed(e);
+      }
+   }
+
+   private void buildIndex(final AtomicLong maxSeqId) {
+      Flowable<Integer> filePublisher = filePublisher();
+      CompletionStage<Void> stage = handleFilePublisher(filePublisher.doAfterNext(compactor::completeFile), false, false,
+            (file, offset, size, serializedKey, entryMetadata, serializedValue, serializedInternalMetadata, seqId, expiration) -> {
+               long prevSeqId;
+               while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId)) {
+               }
+               Object key = marshaller.objectFromByteBuffer(serializedKey);
+               if (trace) {
+                  log.tracef("Loaded %d:%d (seqId %d, expiration %d)", file, offset, seqId, expiration);
+               }
+               try {
+                  // We may check the seqId safely as we are the only thread writing to index
+                  if (isSeqIdOld(seqId, key, serializedKey)) {
+                     indexQueue.put(IndexRequest.foundOld(key, serializedKey, file, offset));
                      return null;
                   }
+                  temporaryTable.set(key, file, offset);
+                  indexQueue.put(IndexRequest.update(key, serializedKey, file, offset, size));
+               } catch (InterruptedException e) {
+                  log.error("Interrupted building of index, the index won't be built properly!", e);
                   return null;
-               }).ignoreElements()
-               .toCompletionStage(null);
-         CompletionStages.join(stage);
-      }
-      logAppender.setSeqId(maxSeqId.get() + 1);
+               }
+               return null;
+            }).ignoreElements()
+            .toCompletionStage(null);
+      CompletionStages.join(stage);
    }
 
    private Path getDataLocation() {
@@ -347,13 +407,13 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void purge(Executor threadPool, PurgeListener listener) {
+   public void purge(Executor threadPool, PurgeListener<? super Object> listener) {
       log.trace("Purge method not supported, ignoring.");
       // TODO: in future we may support to force compactor run on all files
    }
 
    @Override
-   public void write(MarshallableEntry entry) {
+   public void write(MarshallableEntry<?, ?> entry) {
       int keyLength = entry.getKeyBytes().getLength();
       if (keyLength > maxKeyLength) {
          throw log.keyIsTooLong(entry.getKey(), keyLength, configuration.maxNodeSize(), maxKeyLength);
@@ -409,11 +469,8 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public MarshallableEntry loadEntry(Object key) {
+   public MarshallableEntry<Object, Object> loadEntry(Object key) {
       try {
-         byte[] serializedValue;
-         byte[] serializedKey;
-         EntryMetadata entryMetadata;
          for (;;) {
             EntryPosition entry = temporaryTable.get(key);
             if (entry != null) {
@@ -428,37 +485,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                      if (header == null) {
                         throw new IllegalStateException("Error reading from " + entry.file + ":" + entry.offset + " | " + handle.getFileSize());
                      }
-                     if (header.expiryTime() > 0 && header.expiryTime() <= timeService.wallClockTime()) {
-                        if (trace) {
-                           log.tracef("Entry for key=%s found in temporary table on %d:%d but it is expired", key, entry.file, entry.offset);
-                        }
-                        return null;
-                     }
-                     serializedKey = EntryRecord.readKey(handle, header, entry.offset);
-                     if (serializedKey == null) {
-                        throw new IllegalStateException("Error reading key from "  + entry.file + ":" + entry.offset);
-                     }
-                     if (header.metadataLength() > 0) {
-                        entryMetadata = EntryRecord.readMetadata(handle, header, entry.offset);
-                     } else {
-                        entryMetadata = null;
-                     }
-                     if (header.valueLength() > 0) {
-                        serializedValue = EntryRecord.readValue(handle, header, entry.offset);
-                        if (trace) {
-                           log.tracef("Entry for key=%s found in temporary table on %d:%d and loaded", key, entry.file, entry.offset);
-                        }
-                     } else {
-                        if (trace) {
-                           log.tracef("Entry for key=%s found in temporary table on %d:%d but it is a tombstone in log", key, entry.file, entry.offset);
-                        }
-                        return null;
-                     }
-                     if (entryMetadata == null)
-                        return marshallableEntryFactory.create(toBuffer(serializedKey), toBuffer(serializedValue));
-
-                     return marshallableEntryFactory.create(toBuffer(serializedKey), toBuffer(serializedValue),
-                           toBuffer(entryMetadata.getBytes()), entryMetadata.getCreated(), entryMetadata.getLastUsed());
+                     return readEntry(handle, header, entry.offset, key, false);
                   } finally {
                      handle.close();
                   }
@@ -467,7 +494,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                EntryRecord record = index.getRecord(key, marshaller.objectToByteBuffer(key));
                if (record == null) return null;
                return marshallableEntryFactory.create(toBuffer(record.getKey()), toBuffer(record.getValue()),
-                     toBuffer(record.getMetadata()), record.getCreated(), record.getLastUsed());
+                     toBuffer(record.getMetadata()), toBuffer(record.getInternalMetadata()), record.getCreated(), record.getLastUsed());
             }
          }
       } catch (Exception e) {
@@ -475,24 +502,56 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
       }
    }
 
-   /**
-    * This method should be called by reflection to get more info about the missing/invalid key (from test tools)
-    * @param key
-    * @return
-    */
-   public String debugInfo(Object key) {
-      EntryPosition entry = temporaryTable.get(key);
-      if (entry != null) {
-         return "temporaryTable: " + entry;
-      } else {
-         try {
-            entry = index.getPosition(key, marshaller.objectToByteBuffer(key));
-            return "index: " + entry;
-         } catch (Exception e) {
-            log.debugf(e, "Cannot debug key %s", key);
-            return "exception: " + e;
+   private MarshallableEntry<Object, Object> readEntry(FileProvider.Handle handle, EntryHeader header, int offset, Object key, boolean nonNull)
+         throws IOException {
+      if (header.expiryTime() > 0 && header.expiryTime() <= timeService.wallClockTime()) {
+         if (trace) {
+            log.tracef("Entry for key=%s found in temporary table on %d:%d but it is expired", key, handle.getFileId(), offset);
          }
+         return nonNull ?
+               marshallableEntryFactory.create(readAndCheckKey(handle, header, offset), (ByteBuffer) null) :
+               null;
       }
+      ByteBuffer serializedKey = readAndCheckKey(handle, header, offset);
+      if (header.valueLength() <= 0) {
+         if (trace) {
+            log.tracef("Entry for key=%s found in temporary table on %d:%d but it is a tombstone in log", key, handle.getFileId(), offset);
+         }
+         return nonNull ? marshallableEntryFactory.create(serializedKey, (ByteBuffer) null) : null;
+      }
+
+      if (trace) {
+         log.tracef("Entry for key=%s found in temporary table on %d:%d and loaded", key, handle.getFileId(), offset);
+      }
+
+      ByteBuffer value = toBuffer(EntryRecord.readValue(handle, header, offset));
+      ByteBuffer serializedMetadata;
+      long created;
+      long lastUsed;
+      if (header.metadataLength() > 0) {
+         EntryMetadata metadata = EntryRecord.readMetadata(handle, header, offset);
+         serializedMetadata = toBuffer(metadata.getBytes());
+         created = metadata.getCreated();
+         lastUsed = metadata.getLastUsed();
+      } else {
+         serializedMetadata = null;
+         created = -1;
+         lastUsed = -1;
+      }
+
+      ByteBuffer internalMetadata = header.internalMetadataLength() > 0 ?
+            toBuffer(EntryRecord.readInternalMetadata(handle, header, offset)) :
+            null;
+
+      return marshallableEntryFactory.create(serializedKey, value, serializedMetadata, internalMetadata, created, lastUsed);
+   }
+
+   private ByteBuffer readAndCheckKey(FileProvider.Handle handle, EntryHeader header, int offset) throws IOException {
+      ByteBuffer serializedKey = toBuffer(EntryRecord.readKey(handle, header, offset));
+      if (serializedKey == null) {
+         throw new IllegalStateException("Error reading key from "  + handle.getFileId() + ":" + offset);
+      }
+      return serializedKey;
    }
 
    private ByteBuffer toBuffer(byte[] array) {
@@ -500,7 +559,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    }
 
    private interface EntryFunctor<R> {
-      R apply(int file, int offset, int size, byte[] serializedKey, EntryMetadata metadata, byte[] serializedValue, long seqId, long expiration) throws Exception;
+      R apply(int file, int offset, int size, byte[] serializedKey, EntryMetadata metadata, byte[] serializedValue, byte[] serializedInternalMetadata, long seqId, long expiration) throws Exception;
    }
 
    private Flowable<Integer> filePublisher() {
@@ -540,9 +599,9 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public Publisher publishKeys(Predicate filter) {
+   public Publisher<Object> publishKeys(Predicate<? super Object> filter) {
       return handleFilePublisher(filePublisher(), false, true,
-            (file, offset, size, serializedKey, entryMetadata, serializedValue, seqId, expiration) -> {
+            (file, offset, size, serializedKey, entryMetadata, serializedValue, serializedInternalMetadata, seqId, expiration) -> {
 
                final Object key = marshaller.objectFromByteBuffer(serializedKey);
 
@@ -554,9 +613,9 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public Publisher<MarshallableEntry> entryPublisher(Predicate filter, boolean fetchValue, boolean fetchMetadata) {
+   public Publisher<MarshallableEntry<Object, Object>> entryPublisher(Predicate<? super Object> filter, boolean fetchValue, boolean fetchMetadata) {
       return handleFilePublisher(filePublisher(), fetchValue, fetchMetadata,
-            (file, offset, size, serializedKey, entryMetadata, serializedValue, seqId, expiration) -> {
+            (file, offset, size, serializedKey, entryMetadata, serializedValue, serializedInternalMetadata, seqId, expiration) -> {
 
                final Object key = marshaller.objectFromByteBuffer(serializedKey);
 
@@ -564,11 +623,14 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                if (serializedValue != null && (filter == null || filter.test(key)) && !isSeqIdOld(seqId, key, serializedKey)) {
                   // EMPTY_BYTES is used to symbolize when fetchValue is false but there was an entry
                   final Object value = serializedValue == Util.EMPTY_BYTE_ARRAY ? null : marshaller.objectFromByteBuffer(serializedValue);
+                  MetaParamsInternalMetadata internalMetadata = serializedInternalMetadata == null ?
+                        null :
+                        (MetaParamsInternalMetadata) marshaller.objectFromByteBuffer(serializedInternalMetadata);
                   if (entryMetadata == null)
-                     return marshallableEntryFactory.create(key, value);
+                     return marshallableEntryFactory.create(key, value, null, internalMetadata, -1, -1);
 
                   final Metadata metadata = (Metadata) marshaller.objectFromByteBuffer(entryMetadata.getBytes());
-                  return marshallableEntryFactory.create(key, value, metadata, entryMetadata.getCreated(), entryMetadata.getLastUsed());
+                  return marshallableEntryFactory.create(key, value, metadata, internalMetadata, entryMetadata.getCreated(), entryMetadata.getLastUsed());
                }
                return null;
             });
@@ -624,9 +686,13 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                   } else {
                      offsetOrNegation = ~innerOffset;
                   }
+                  byte[] serializedInternalMetadata = null;
+                  if (fetchMetadata && header.internalMetadataLength() > 0) {
+                     serializedInternalMetadata = EntryRecord.readInternalMetadata(handle, header, innerOffset);
+                  }
 
                   next = functor.apply(file, offsetOrNegation, header.totalLength(), serializedKey, meta,
-                        serializedValue, header.seqId(), header.expiryTime());
+                        serializedValue, serializedInternalMetadata, header.seqId(), header.expiryTime());
                } finally {
                   innerOffset = offset.addAndGet(header.totalLength());
                }

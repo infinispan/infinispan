@@ -160,7 +160,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
             if (realValue instanceof byte[]) {
                realValue = new WrappedByteArray((byte[]) realValue);
             }
-            return entryFactory.create(key, realValue, metadata, created, lastUsed);
+            return entryFactory.create(key, realValue, metadata, null, created, lastUsed);
          } else {
             return null;
          }
@@ -241,7 +241,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
                long created = value.getCreated();
                long lastUsed = value.getLastUsed();
                Object realValue = value.getValue();
-               return entryFactory.create(wrap(e.getKey()), wrap(realValue), metadata, created, lastUsed);
+               return entryFactory.create(wrap(e.getKey()), wrap(realValue), metadata, null, created, lastUsed);
             });
          }
       } else {

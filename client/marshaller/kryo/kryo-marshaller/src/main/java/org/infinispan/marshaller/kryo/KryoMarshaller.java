@@ -54,14 +54,13 @@ public class KryoMarshaller extends AbstractMarshaller {
       return pool.run((kryo) -> {
          try (Output output = new Output(new ExposedByteArrayOutputStream(estimatedSize), estimatedSize)) {
             kryo.writeClassAndObject(output, obj);
-            byte[] bytes = output.toBytes();
-            return new ByteBufferImpl(bytes, 0, bytes.length);
+            return ByteBufferImpl.create(output.toBytes());
          }
       });
    }
 
    @Override
-   public boolean isMarshallable(Object obj) throws Exception {
+   public boolean isMarshallable(Object obj) {
       try {
          objectToBuffer(obj);
          return true;

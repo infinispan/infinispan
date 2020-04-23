@@ -343,7 +343,7 @@ class JacksonMarshaller extends AbstractMarshaller {
    @Override
    protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
       byte[] bytes = MAPPER.writeValueAsBytes(o);
-      return new ByteBufferImpl(bytes, 0, bytes.length);
+      return ByteBufferImpl.create(bytes);
    }
 
    @Override

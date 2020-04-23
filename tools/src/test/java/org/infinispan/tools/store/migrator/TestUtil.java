@@ -60,7 +60,7 @@ public class TestUtil {
       TEST_MAP_UNSUPPORTED.put("KeyValuePair", new KeyValuePair<>("Key", "Value"));
 
       byte[] bytes = "Test".getBytes();
-      TEST_MAP_UNSUPPORTED.put("ByteBufferImpl", new ByteBufferImpl(bytes, 0, bytes.length));
+      TEST_MAP_UNSUPPORTED.put("ByteBufferImpl", ByteBufferImpl.create(bytes));
 
       InternalMetadataImpl internalMetadata = new InternalMetadataImpl(metadata, 1, 1);
       TEST_MAP_UNSUPPORTED.put("InternalMetadataImpl", internalMetadata);

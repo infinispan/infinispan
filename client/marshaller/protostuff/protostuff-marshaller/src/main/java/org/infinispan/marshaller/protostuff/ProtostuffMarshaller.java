@@ -39,7 +39,7 @@ public class ProtostuffMarshaller extends AbstractMarshaller {
    protected ByteBuffer objectToBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
       LinkedBuffer buffer = estimatedSize < MIN_BUFFER_SIZE ? LinkedBuffer.allocate(MIN_BUFFER_SIZE) : LinkedBuffer.allocate(estimatedSize);
       byte[] bytes = ProtostuffIOUtil.toByteArray(new Wrapper(obj), WRAPPER_SCHEMA, buffer);
-      return new ByteBufferImpl(bytes, 0, bytes.length);
+      return ByteBufferImpl.create(bytes);
    }
 
    @Override

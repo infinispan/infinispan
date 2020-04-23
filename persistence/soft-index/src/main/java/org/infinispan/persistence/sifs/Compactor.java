@@ -239,6 +239,7 @@ class Compactor extends Thread {
 
                      byte[] serializedValue = null;
                      EntryMetadata metadata = null;
+                     byte[] serializedInternalMetadata = null;
                      int entryOffset;
                      int writtenLength;
                      if (header.valueLength() > 0 && !truncate) {
@@ -246,13 +247,16 @@ class Compactor extends Thread {
                            metadata = EntryRecord.readMetadata(handle, header, scheduledOffset);
                         }
                         serializedValue = EntryRecord.readValue(handle, header, scheduledOffset);
+                        if (header.internalMetadataLength() > 0) {
+                           serializedInternalMetadata = EntryRecord.readInternalMetadata(handle, header, scheduledOffset);
+                        }
                         entryOffset = currentOffset;
                         writtenLength = header.totalLength();
                      } else {
                         entryOffset = ~currentOffset;
-                        writtenLength = EntryHeader.HEADER_SIZE + header.keyLength();
+                        writtenLength = header.getHeaderLength() + header.keyLength();
                      }
-                     EntryRecord.writeEntry(logFile.fileChannel, serializedKey, metadata, serializedValue, header.seqId(), header.expiryTime());
+                     EntryRecord.writeEntry(logFile.fileChannel, serializedKey, metadata, serializedValue, serializedInternalMetadata, header.seqId(), header.expiryTime());
                      TemporaryTable.LockedEntry lockedEntry = temporaryTable.replaceOrLock(key, logFile.fileId, entryOffset, scheduledFile, indexedOffset);
                      if (lockedEntry == null) {
                         if (trace) {

@@ -2,8 +2,11 @@ package org.infinispan.marshall.persistence.impl;
 
 import static java.lang.Math.min;
 
+import java.util.Objects;
+
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshalledValue;
@@ -19,37 +22,42 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
    long lastUsed;
    ByteBuffer valueBytes;
    ByteBuffer metadataBytes;
+   ByteBuffer internalMetadataBytes;
    volatile ByteBuffer keyBytes;
    volatile transient K key;
    volatile transient V value;
    volatile transient Metadata metadata;
+   volatile transient MetaParamsInternalMetadata internalMetadata;
    transient org.infinispan.commons.marshall.Marshaller marshaller;
 
    MarshallableEntryImpl() {}
 
-   MarshallableEntryImpl(K key, V value, Metadata metadata, long created, long lastUsed, Marshaller marshaller) {
+   MarshallableEntryImpl(K key, V value, Metadata metadata, MetaParamsInternalMetadata internalMetadata, long created, long lastUsed, Marshaller marshaller) {
       this.key = key;
       this.value = value;
       this.metadata = metadata;
+      this.internalMetadata = internalMetadata;
       this.keyBytes = marshall(key, marshaller);
       this.valueBytes = marshall(value, marshaller);
       this.metadataBytes = marshall(metadata, marshaller);
+      this.internalMetadataBytes = marshall(internalMetadata, marshaller);
       this.created = created;
       this.lastUsed = lastUsed;
       this.marshaller = marshaller;
    }
 
-   MarshallableEntryImpl(ByteBuffer key, ByteBuffer valueBytes, ByteBuffer metadataBytes, long created, long lastUsed, Marshaller marshaller) {
+   MarshallableEntryImpl(ByteBuffer key, ByteBuffer valueBytes, ByteBuffer metadataBytes, ByteBuffer internalMetadataBytes, long created, long lastUsed, Marshaller marshaller) {
       this.keyBytes = key;
       this.valueBytes = valueBytes;
       this.metadataBytes = metadataBytes;
+      this.internalMetadataBytes = internalMetadataBytes;
       this.created = created;
       this.lastUsed = lastUsed;
       this.marshaller = marshaller;
    }
 
-   MarshallableEntryImpl(K key, ByteBuffer valueBytes, ByteBuffer metadataBytes, long created, long lastUsed, Marshaller marshaller) {
-      this(marshall(key, marshaller), valueBytes, metadataBytes, created, lastUsed, marshaller);
+   MarshallableEntryImpl(K key, ByteBuffer valueBytes, ByteBuffer metadataBytes, ByteBuffer internalMetadataBytes, long created, long lastUsed, Marshaller marshaller) {
+      this(marshall(key, marshaller), valueBytes, metadataBytes, internalMetadataBytes, created, lastUsed, marshaller);
       this.key = key;
    }
 
@@ -87,6 +95,17 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
    }
 
    @Override
+   public MetaParamsInternalMetadata getInternalMetadata() {
+      if (internalMetadata == null) {
+         if (internalMetadataBytes == null)
+            return null;
+         else
+            internalMetadata = unmarshall(internalMetadataBytes);
+      }
+      return internalMetadata;
+   }
+
+   @Override
    public ByteBuffer getKeyBytes() {
       if (keyBytes == null)
          keyBytes = marshall(key, marshaller);
@@ -101,6 +120,11 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
    @Override
    public ByteBuffer getMetadataBytes() {
       return metadataBytes;
+   }
+
+   @Override
+   public ByteBuffer getInternalMetadataBytes() {
+      return internalMetadataBytes;
    }
 
    @Override
@@ -141,7 +165,7 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
 
    @Override
    public MarshalledValue getMarshalledValue() {
-      return new MarshalledValueImpl(valueBytes, metadataBytes, created, lastUsed);
+      return new MarshalledValueImpl(valueBytes, metadataBytes, internalMetadataBytes, created, lastUsed);
    }
 
    @Override
@@ -153,6 +177,7 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
 
       if (getKeyBytes() != null ? !getKeyBytes().equals(that.getKeyBytes()) : that.getKeyBytes() != null) return false;
       if (getMetadataBytes() != null ? !getMetadataBytes().equals(that.getMetadataBytes()) : that.getMetadataBytes() != null) return false;
+      if (!Objects.equals(getInternalMetadata(), that.getInternalMetadata())) return false;
       if (getValueBytes() != null ? !getValueBytes().equals(that.getValueBytes()) : that.getValueBytes() != null) return false;
       if (expiryTime() != that.expiryTime()) return false;
       return true;
@@ -164,6 +189,7 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
       int result = getKeyBytes() != null ? getKeyBytes().hashCode() : 0;
       result = 31 * result + (getValueBytes() != null ? getValueBytes().hashCode() : 0);
       result = 31 * result + (getMetadataBytes() != null ? getMetadataBytes().hashCode() : 0);
+      result = 31 * result + (getInternalMetadataBytes() != null ? getInternalMetadataBytes().hashCode() : 0);
       result = 31 * result + (int) (expiryTime ^ (expiryTime >>> 32));
       return result;
    }
@@ -174,6 +200,7 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
             .append("{keyBytes=").append(keyBytes)
             .append(", valueBytes=").append(valueBytes)
             .append(", metadataBytes=").append(metadataBytes)
+            .append(", internalMetadataBytes=").append(internalMetadataBytes)
             .append(", key=").append(key);
       if (key == null && keyBytes != null && marshaller != null) {
          sb.append('/').append(this.<Object>unmarshall(keyBytes));
@@ -185,6 +212,10 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
       sb.append(", metadata=").append(metadata);
       if (metadata == null && metadataBytes != null && marshaller != null) {
          sb.append('/').append(this.<Object>unmarshall(metadataBytes));
+      }
+      sb.append(", internalMetadata=").append(internalMetadata);
+      if (internalMetadata == null && internalMetadataBytes != null && marshaller != null) {
+         sb.append('/').append(this.<Object>unmarshall(internalMetadataBytes));
       }
       sb.append(", created=").append(created);
       sb.append(", lastUsed=").append(lastUsed);

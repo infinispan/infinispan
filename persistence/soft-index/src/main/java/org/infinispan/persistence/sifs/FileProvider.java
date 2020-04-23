@@ -34,21 +34,26 @@ public class FileProvider {
    private static final org.infinispan.persistence.sifs.Log log =
          LogFactory.getLog(FileProvider.class, org.infinispan.persistence.sifs.Log.class);
 
+   private static final String REGEX_FORMAT = "^%s[0-9]+$";
+
    private final File dataDir;
    private final int openFileLimit;
    private final ArrayBlockingQueue<Record> recordQueue;
    private final ConcurrentMap<Integer, Record> openFiles = new ConcurrentHashMap<>();
    private final AtomicInteger currentOpenFiles = new AtomicInteger(0);
    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-   private final Set<Integer> logFiles = new HashSet<Integer>();
+   private final Set<Integer> logFiles = new HashSet<>();
    private final Set<FileIterator> iterators = ConcurrentHashMap.newKeySet();
+   private final String prefix;
 
    private int nextFileId = 0;
 
-   public FileProvider(Path dataDir, int openFileLimit) {
+   public FileProvider(Path dataDir, int openFileLimit, String prefix) {
       this.openFileLimit = openFileLimit;
       this.recordQueue = new ArrayBlockingQueue<>(openFileLimit);
       this.dataDir = dataDir.toFile();
+      this.prefix = prefix;
+      //noinspection ResultOfMethodCallIgnored
       this.dataDir.mkdirs();
    }
 
@@ -125,10 +130,18 @@ public class FileProvider {
          if (logFiles.contains(file)) {
             return -1;
          }
-         return new File(dataDir, String.valueOf(file)).length();
+         return newFile(file).length();
       } finally {
          lock.readLock().unlock();
       }
+   }
+
+   private String fileIdToString(int fileId) {
+      return prefix + fileId;
+   }
+
+   private File newFile(int fileId) {
+      return new File(dataDir, fileIdToString(fileId));
    }
 
    private boolean tryCloseFile() throws IOException {
@@ -159,14 +172,14 @@ public class FileProvider {
    }
 
    protected FileChannel openChannel(int fileId) throws FileNotFoundException {
-      return new RandomAccessFile(new File(dataDir, String.valueOf(fileId)), "r").getChannel();
+      return new RandomAccessFile(newFile(fileId), "r").getChannel();
    }
 
    public Log getFileForLog() throws IOException {
       lock.writeLock().lock();
       try {
          for (;;) {
-            File f = new File(dataDir, String.valueOf(nextFileId));
+            File f = newFile(nextFileId);
             if (f.exists()) {
                if (nextFileId == Integer.MAX_VALUE) {
                   nextFileId = 0;
@@ -178,7 +191,7 @@ public class FileProvider {
                for (FileIterator it : iterators) {
                   it.add(nextFileId);
                }
-               return new Log(nextFileId, new FileOutputStream(new File(dataDir, String.valueOf(nextFileId))).getChannel());
+               return new Log(nextFileId, new FileOutputStream(newFile(nextFileId)).getChannel());
             }
          }
       } finally {
@@ -187,17 +200,33 @@ public class FileProvider {
    }
 
    public CloseableIterator<Integer> getFileIterator() {
+      String regex = String.format(REGEX_FORMAT, prefix);
       lock.readLock().lock();
       try {
          Set<Integer> set = new HashSet<>();
          for (String file : dataDir.list()) {
-            if (file.matches("[0-9]*")) {
-               set.add(Integer.parseInt(file));
+            if (file.matches(regex)) {
+               set.add(Integer.parseInt(file.substring(prefix.length())));
             }
          }
          FileIterator iterator = new FileIterator(set.iterator());
          iterators.add(iterator);
          return iterator;
+      } finally {
+         lock.readLock().unlock();
+      }
+   }
+
+   public boolean hasFiles() {
+      String regex = String.format(REGEX_FORMAT, prefix);
+      lock.readLock().lock();
+      try {
+         for (String file : dataDir.list()) {
+            if (file.matches(regex)) {
+               return true;
+            }
+         }
+         return false;
       } finally {
          lock.readLock().unlock();
       }
@@ -297,7 +326,7 @@ public class FileProvider {
 
    public static final class Handle implements Closeable {
       private boolean usable = true;
-      private Record record;
+      private final Record record;
 
       private Handle(Record record) {
          this.record = record;
@@ -378,8 +407,9 @@ public class FileProvider {
       }
 
       public void delete() {
-         log.debug("Deleting file " + fileId);
-         new File(dataDir, String.valueOf(fileId)).delete();
+         log.debugf("Deleting file %s", fileIdToString(fileId));
+         //noinspection ResultOfMethodCallIgnored
+         newFile(fileId).delete();
       }
 
       public void deleteOnClose() throws IOException {
@@ -397,7 +427,7 @@ public class FileProvider {
       }
    }
 
-   private class FileIterator implements CloseableIterator {
+   private class FileIterator implements CloseableIterator<Integer> {
       private final Iterator<Integer> diskFiles;
       private final ConcurrentLinkedQueue<Integer> addedFiles = new ConcurrentLinkedQueue<>();
 
@@ -420,7 +450,7 @@ public class FileProvider {
       }
 
       @Override
-      public Object next() {
+      public Integer next() {
          return diskFiles.hasNext() ? diskFiles.next() : addedFiles.poll();
       }
    }

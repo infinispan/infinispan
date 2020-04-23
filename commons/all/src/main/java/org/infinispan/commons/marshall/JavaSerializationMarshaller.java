@@ -44,8 +44,7 @@ public class JavaSerializationMarshaller extends AbstractMarshaller {
       out.writeObject(o);
       out.close();
       baos.close();
-      byte[] bytes = baos.toByteArray();
-      return new ByteBufferImpl(bytes, 0, bytes.length);
+      return ByteBufferImpl.create(baos.toByteArray());
    }
 
    @Override
@@ -56,7 +55,7 @@ public class JavaSerializationMarshaller extends AbstractMarshaller {
    }
 
    @Override
-   public boolean isMarshallable(Object o) throws Exception {
+   public boolean isMarshallable(Object o) {
       return o instanceof Serializable;
    }
 

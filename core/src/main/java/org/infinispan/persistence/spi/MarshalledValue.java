@@ -15,6 +15,8 @@ public interface MarshalledValue {
 
    ByteBuffer getMetadataBytes();
 
+   ByteBuffer getInternalMetadataBytes();
+
    long getCreated();
 
    long getLastUsed();
