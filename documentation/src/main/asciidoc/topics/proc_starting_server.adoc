@@ -34,12 +34,14 @@ ISPN080001: {brandname} Server <$version> started in <mm>ms
 . Add credentials with the `user-tool`.
 +
 Linux::
++
 [source,options="nowrap",subs=attributes+]
 ----
 include::cmd_examples/user_tool_nix.adoc[]
 ----
 +
 Microsoft Windows::
++
 [source,options="nowrap",subs=attributes+]
 ----
 include::cmd_examples/user_tool_win.adoc[]
