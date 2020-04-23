@@ -12,8 +12,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.XaTransactionTable;
-import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.tx.recovery.PostCommitRecoveryStateTest;
 import org.testng.annotations.BeforeMethod;
@@ -80,7 +80,7 @@ public class ForgetTest extends AbstractRecoveryTest {
    protected void forgetWithInternalId(int cacheIndex) {
       long internalId = -1;
       for (RemoteTransaction rt : tt(1).getRemoteTransactions()) {
-         RecoverableTransactionIdentifier a = (RecoverableTransactionIdentifier) rt.getGlobalTransaction();
+         GlobalTransaction a = rt.getGlobalTransaction();
          if (a.getXid().equals(tx.getXid())) {
             internalId = a.getInternalId();
          }

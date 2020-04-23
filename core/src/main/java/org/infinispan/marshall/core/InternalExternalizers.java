@@ -115,7 +115,6 @@ import org.infinispan.topology.ManagerStatusResponse;
 import org.infinispan.topology.PersistentUUID;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.InDoubtTxInfoImpl;
-import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
 import org.infinispan.util.IntSetExternalizer;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.xsite.statetransfer.XSiteState;
@@ -203,7 +202,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new NumericVersion.Externalizer(), exts);
       addInternalExternalizer(new OptionalExternalizer(), exts);
       addInternalExternalizer(new PersistentUUID.Externalizer(), exts);
-      addInternalExternalizer(new RecoveryAwareGlobalTransaction.Externalizer(), exts);
       addInternalExternalizer(new RemoteMetadata.Externalizer(), exts);
       addInternalExternalizer(new ReplicatedConsistentHash.Externalizer(), exts);
       addInternalExternalizer(new ReplicatedConsistentHashFactory.Externalizer(), exts); // TODO: Untested in core
