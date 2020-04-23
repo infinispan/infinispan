@@ -424,9 +424,9 @@ public class TestingUtil {
                         c.getCacheManager().getAddress(), cacheTopology, rebalanceInProgress, currentChIsBalanced);
                }
                Thread.getAllStackTraces().forEach((t, stack) -> {
-                  log.errorf("Trace information for the thread %s", t);
+                  log.fatalf("Trace information for the thread %s", t);
                   for(StackTraceElement stackTraceElement : stack) {
-                     log.error(stackTraceElement);
+                     log.fatal(stackTraceElement);
                   }
                });
                log.error(message);
