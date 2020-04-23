@@ -47,6 +47,7 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
 import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
 import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
@@ -98,7 +99,6 @@ import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherComman
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
@@ -481,19 +481,6 @@ public interface CommandsFactory {
     * @see org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand
     */
    TxCompletionNotificationCommand buildTxCompletionNotificationCommand(long internalId);
-
-
-   /**
-    * Same as {@code buildCreateCacheCommand(cacheName, cacheConfigurationName, false, 0)}.
-    */
-   CreateCacheCommand buildCreateCacheCommand(String cacheName, String cacheConfigurationName);
-
-   /**
-    * Builds a CreateCacheCommand used to create/start cache around Infinispan cluster
-    *
-    * @param size If {@code size > 0}, the command will wait until the cache runs on at least {@code size} nodes.
-    */
-   CreateCacheCommand buildCreateCacheCommand(String tmpCacheName, String defaultTmpCacheConfigurationName, int size);
 
    XSiteStateTransferCancelSendCommand buildXSiteStateTransferCancelSendCommand(String siteName);
 

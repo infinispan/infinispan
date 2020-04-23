@@ -33,6 +33,7 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
 import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
 import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
@@ -86,7 +87,6 @@ import org.infinispan.reactive.publisher.impl.commands.batch.CancelPublisherComm
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
@@ -337,9 +337,6 @@ public class RemoteCommandsFactory {
                break;
             case CompleteTransactionCommand.COMMAND_ID:
                command = new CompleteTransactionCommand(cacheName);
-               break;
-            case CreateCacheCommand.COMMAND_ID:
-               command = new CreateCacheCommand(cacheName);
                break;
             case XSiteAmendOfflineStatusCommand.COMMAND_ID:
                command = new XSiteAmendOfflineStatusCommand(cacheName);
