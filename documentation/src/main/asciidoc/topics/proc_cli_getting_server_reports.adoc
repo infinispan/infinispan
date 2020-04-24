@@ -1,0 +1,23 @@
+[id='server_reports-{context}']
+= Getting Diagnostic Reports for {brandname} Servers
+{brandname} servers provide aggregated reports in `tar.gz` archives that
+contain diagnostic information about both the {brandname} server and the host.
+The report provides details about CPU, memory, open files, network sockets and
+routing, threads, in addition to configuration and log files.
+
+.Prerequisites
+
+* Open a CLI connection to {brandname}.
+
+.Procedure
+
+. Use the `server report` command to download a `tar.gz` archive:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> server report
+Downloaded report 'infinispan-<hostname>-<timestamp>-report.tar.gz'
+----
++
+. Move the `tar.gz` file to a suitable location on your filesystem.
+. Extract the `tar.gz` file with any archiving tool.

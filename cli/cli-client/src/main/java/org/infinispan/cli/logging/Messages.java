@@ -159,4 +159,7 @@ public interface Messages {
 
    @Message("The patch archive appears to have a corrupt entry for: %s")
    String patchCorruptArchive(PatchOperation operation);
+
+   @Message("Downloaded report '%s'")
+   String downloadedReport(String filename);
 }

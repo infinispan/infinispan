@@ -5,8 +5,10 @@ import static org.infinispan.cli.logging.Messages.MSG;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,6 +51,7 @@ import org.infinispan.cli.commands.Reset;
 import org.infinispan.cli.commands.Revoke;
 import org.infinispan.cli.commands.Rollback;
 import org.infinispan.cli.commands.Schema;
+import org.infinispan.cli.commands.Server;
 import org.infinispan.cli.commands.Shutdown;
 import org.infinispan.cli.commands.Site;
 import org.infinispan.cli.commands.Start;
@@ -552,6 +555,16 @@ public class RestConnection implements Connection, Closeable {
                }
                break;
             }
+            case Server.CMD: {
+               switch (command.arg(Logging.TYPE)) {
+                  case Server.Report.CMD: {
+                     responseMode = ResponseMode.FILE;
+                     response = client.server().report();
+                  }
+                  break;
+               }
+               break;
+            }
             case Abort.CMD:
             case Begin.CMD:
             case End.CMD:
@@ -573,6 +586,18 @@ public class RestConnection implements Connection, Closeable {
                      sb.append(body);
                   }
                   break;
+               case FILE:
+                  String contentDisposition = r.headers().get("Content-Disposition").get(0);
+                  String filename = contentDisposition.substring(contentDisposition.indexOf('"') + 1, contentDisposition.lastIndexOf('"'));
+
+                  try (OutputStream os = new FileOutputStream(filename); InputStream is = parseBody(r, InputStream.class)) {
+                     byte[] buffer = new byte[8 * 1024];
+                     int bytesRead;
+                     while ((bytesRead = is.read(buffer)) != -1) {
+                        os.write(buffer, 0, bytesRead);
+                     }
+                     sb.append(MSG.downloadedReport(filename));
+                  }
                case QUIET:
                   break;
                case HEADERS:
@@ -766,5 +791,5 @@ public class RestConnection implements Connection, Closeable {
       return serverInfo;
    }
 
-   enum ResponseMode {QUIET, BODY, HEADERS}
+   enum ResponseMode {QUIET, BODY, FILE, HEADERS}
 }

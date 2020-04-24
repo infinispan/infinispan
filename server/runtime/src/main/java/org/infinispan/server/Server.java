@@ -1,10 +1,14 @@
 package org.infinispan.server;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.PrivilegedActionException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -13,6 +17,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -28,9 +33,11 @@ import org.apache.logging.log4j.LogManager;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.ConfigurationInfo;
+import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.time.DefaultTimeService;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
@@ -68,6 +75,8 @@ import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
 import org.infinispan.server.tasks.admin.ServerAdminOperationsHandler;
 import org.infinispan.tasks.TaskManager;
+import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
 import org.wildfly.security.http.basic.WildFlyElytronHttpBasicProvider;
@@ -143,6 +152,7 @@ public class Server implements ServerManagement, AutoCloseable {
    private static final int SHUTDOWN_DELAY_SECONDS = 3;
 
    private final TimeService timeService;
+   private final File serverHome;
    private final File serverRoot;
    private final File serverConf;
    private final long startTime;
@@ -159,6 +169,7 @@ public class Server implements ServerManagement, AutoCloseable {
    private ScheduledExecutorService scheduler;
    private TaskManager taskManager;
    private ServerInitialContextFactoryBuilder initialContextFactoryBuilder;
+   private BlockingManager blockingManager;
 
    /**
     * Initializes a server with the default server root, the default configuration file and system properties
@@ -193,11 +204,13 @@ public class Server implements ServerManagement, AutoCloseable {
    private Server(File serverRoot, Properties properties) {
       this.timeService = DefaultTimeService.INSTANCE;
       this.startTime = timeService.time();
+      this.serverHome = new File(properties.getProperty(INFINISPAN_SERVER_HOME_PATH, ""));
       this.serverRoot = serverRoot;
       this.properties = properties;
       this.status = ComponentStatus.INSTANTIATED;
 
       // Populate system properties unless they have already been set externally
+      properties.putIfAbsent(INFINISPAN_SERVER_HOME_PATH, serverHome);
       properties.putIfAbsent(INFINISPAN_SERVER_ROOT_PATH, serverRoot);
       properties.putIfAbsent(INFINISPAN_SERVER_CONFIG_PATH, new File(serverRoot, DEFAULT_SERVER_CONFIG).getAbsolutePath());
       properties.putIfAbsent(INFINISPAN_SERVER_DATA_PATH, new File(serverRoot, DEFAULT_SERVER_DATA).getAbsolutePath());
@@ -319,6 +332,7 @@ public class Server implements ServerManagement, AutoCloseable {
          SecurityActions.startCacheManager(cm);
 
          BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cm).getComponent(BasicComponentRegistry.class.getName());
+         blockingManager = bcr.getComponent(BlockingManager.class).running();
          cacheIgnoreManager = bcr.getComponent(CacheIgnoreManager.class).running();
 
          // Register the task manager
@@ -535,5 +549,32 @@ public class Server implements ServerManagement, AutoCloseable {
    @Override
    public TaskManager getTaskManager() {
       return taskManager;
+   }
+
+   @Override
+   public CompletionStage<Path> getServerReport() {
+      OS os = OS.getCurrentOs();
+      if (os != OS.LINUX) {
+         return CompletableFutures.completedExceptionFuture(log.serverReportUnavailable(os));
+      }
+      long pid = ProcessInfo.getInstance().getPid();
+      Path home = serverHome.toPath();
+      Path root = serverRoot.toPath();
+      ProcessBuilder builder = new ProcessBuilder();
+      builder.command("sh", "-c", home.resolve("bin/report.sh").toString(), Long.toString(pid), root.toString());
+      return blockingManager.supplyBlocking(() -> {
+         try {
+            Process process = builder.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            Path path = Paths.get(reader.readLine());
+            process.waitFor(1, TimeUnit.MINUTES);
+            return path;
+         } catch (IOException e) {
+            throw new RuntimeException(e);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+         }
+      }, "report");
    }
 }

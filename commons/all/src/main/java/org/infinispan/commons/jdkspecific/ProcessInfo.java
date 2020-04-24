@@ -8,13 +8,13 @@ import java.util.List;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
  **/
-public class Process {
+public class ProcessInfo {
 
    private final String name;
    private final long pid;
    private final List<String> arguments;
 
-   private Process() {
+   private ProcessInfo() {
       RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
       String[] nameParts = runtimeMxBean.getName().split("@");
       name = runtimeMxBean.getName();
@@ -22,8 +22,8 @@ public class Process {
       arguments = runtimeMxBean.getInputArguments();
    }
 
-   public static Process getInstance() {
-      return new Process();
+   public static ProcessInfo getInstance() {
+      return new ProcessInfo();
    }
 
    public String getName() {
@@ -38,7 +38,7 @@ public class Process {
       return arguments;
    }
 
-   public Process getParent() {
+   public ProcessInfo getParent() {
       return null; // Java 8 cannot retrieve this
    }
 

@@ -1,5 +1,5 @@
-[id='adding_scripts_cli-{context}']
-= Changing the runtime logging configuration of {brandname} Servers
+[id='configuring_server_logs_cli-{context}']
+= Changing {brandname} Server Logging Configuration at Runtime
 
 Use the command line interface to change the logging configuration of {brandname} servers at runtime.
 Use this functionality to temporarily make modifications to the logging configuration, for example while investigating a problem.
@@ -88,6 +88,3 @@ For example, the following command will remove the `org.infinispan` logger confi
 ----
 [//containers/default]> logging remove org.infinispan
 ----
-
-
-

@@ -123,6 +123,19 @@ GET /rest/v2/server/threads
 
 {brandname} responds with the current thread dump in `text/plain` format.
 
+[id='rest_v2_server_report']
+= Getting Diagnostic Reports for {brandname} Servers
+Retrieve aggregated reports for {brandname} servers with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/server/report
+----
+
+{brandname} responds with a `tar.gz` archive that contains an aggregated report
+with diagnostic information about both the {brandname} server and the host. The
+report provides details about CPU, memory, open files, network sockets and
+routing, threads, in addition to configuration and log files.
 
 [id='rest_v2_server_stop']
 = Stopping {brandname} Servers

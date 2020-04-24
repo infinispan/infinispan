@@ -1,8 +1,10 @@
 package org.infinispan.server.core;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.manager.DefaultCacheManager;
@@ -28,4 +30,6 @@ public interface ServerManagement {
    Map<String, String> getLoginConfiguration();
 
    TaskManager getTaskManager();
+
+   CompletionStage<Path> getServerReport();
 }
