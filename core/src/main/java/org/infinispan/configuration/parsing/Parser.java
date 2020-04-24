@@ -1599,7 +1599,29 @@ public class Parser implements ConfigurationParser {
 
    private void parseMemory(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
       MemoryConfigurationBuilder memoryBuilder = holder.getCurrentConfigurationBuilder().memory();
-      ParseUtils.requireNoAttributes(reader);
+      if (reader.getSchema().since(11, 0)) {
+         for (int i = 0; i < reader.getAttributeCount(); i++) {
+            ParseUtils.requireNoNamespaceAttribute(reader, i);
+            String value = reader.getAttributeValue(i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+               case STORAGE:
+                  memoryBuilder.storage(StorageType.valueOf(value));
+                  break;
+               case MAX_SIZE:
+                  memoryBuilder.maxSize(value);
+                  break;
+               case MAX_COUNT:
+                  memoryBuilder.maxCount(Long.parseLong(value));
+                  break;
+               case WHEN_FULL:
+                  memoryBuilder.whenFull(EvictionStrategy.valueOf(value));
+                  break;
+               default:
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -1915,8 +1937,18 @@ public class Parser implements ConfigurationParser {
    }
 
    protected void parseDataType(XMLExtendedStreamReader reader, ConfigurationBuilder builder, ConfigurationBuilderHolder holder) throws XMLStreamException {
-      ParseUtils.requireNoAttributes(reader);
       EncodingConfigurationBuilder encodingBuilder = builder.encoding();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         if (attribute == Attribute.MEDIA_TYPE && reader.getSchema().since(11, 0)) {
+            encodingBuilder.mediaType(value);
+         } else {
+            throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+
+      }
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {

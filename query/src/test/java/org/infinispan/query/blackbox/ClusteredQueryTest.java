@@ -52,6 +52,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    protected String queryString = String.format("FROM %s where blurb:'blurb1?'", Person.class.getName());
    private final String allPersonsQuery = "FROM " + Person.class.getName();
 
+   @Override
    public Object[] factory() {
       return new Object[]{
             new ClusteredQueryTest().storageType(StorageType.OFF_HEAP),

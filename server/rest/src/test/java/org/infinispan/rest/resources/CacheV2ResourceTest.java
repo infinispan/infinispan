@@ -387,9 +387,8 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       JsonNode distCache = jsonNode.get("distributed-cache");
       JsonNode memory = distCache.get("memory");
-      JsonNode object = memory.get("object");
       assertEquals("SYNC", distCache.get("mode").asText());
-      assertEquals(20, object.get("size").asInt());
+      assertEquals(20, memory.get("max-count").asInt());
    }
 
    @Test

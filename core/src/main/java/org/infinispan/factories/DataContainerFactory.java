@@ -6,7 +6,6 @@ import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.MemoryStorageConfiguration;
-import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.BoundedSegmentedDataContainer;
 import org.infinispan.container.impl.DefaultDataContainer;
@@ -44,11 +43,12 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
       int level = configuration.locking().concurrencyLevel();
 
       MemoryConfiguration memoryConfiguration = configuration.memory();
+      boolean offHeap = memoryConfiguration.isOffHeap();
 
       EvictionStrategy strategy = memoryConfiguration.evictionStrategy();
       //handle case when < 0 value signifies unbounded container or when we are not removal based
       if (strategy.isExceptionBased() || !strategy.isEnabled()) {
-         if (configuration.memory().storageType() == StorageType.OFF_HEAP) {
+         if (offHeap) {
             if (shouldSegment) {
                int segments = clusteringConfiguration.hash().numSegments();
                Supplier<PeekableTouchableMap<WrappedBytes, WrappedBytes>> mapSupplier =
@@ -75,8 +75,8 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
 
       long thresholdSize = memoryConfiguration.size();
 
-      DataContainer dataContainer;
-      if (memoryConfiguration.storageType() == StorageType.OFF_HEAP) {
+      DataContainer<?, ?> dataContainer;
+      if (offHeap) {
          if (shouldSegment) {
             int segments = clusteringConfiguration.hash().numSegments();
             dataContainer = new SegmentedBoundedOffHeapDataContainer(segments, thresholdSize,

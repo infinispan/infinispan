@@ -301,8 +301,9 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       Properties props1 = (Properties) server.getAttribute(getCacheObjectName(jmxDomain, "local_cache1(local)", "Cache"), "configurationAsProperties");
       Properties props2 = (Properties) server.getAttribute(getCacheObjectName(jmxDomain, "local_cache2(local)", "Cache"), "configurationAsProperties");
       Properties propsGlobal = (Properties) server.getAttribute(getCacheManagerObjectName(jmxDomain), "globalConfigurationAsProperties");
-      assert "BINARY".equals(props1.getProperty("memory.storageType"));
-      assert "OBJECT".equals(props2.getProperty("memory.storageType"));
+      // configurationAsProperties excludes deprecated methods from the reflection, so 'storageType' is not available anymore.
+      assert "BINARY".equals(props1.getProperty("memory.storage"));
+      assert "HEAP".equals(props2.getProperty("memory.storage"));
       log.tracef("propsGlobal=%s", propsGlobal);
       assert "TESTVALUE1".equals(propsGlobal.getProperty("transport.siteId"));
       assert "TESTVALUE2".equals(propsGlobal.getProperty("transport.rackId"));

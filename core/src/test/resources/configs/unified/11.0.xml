@@ -322,6 +322,34 @@
             <object/>
          </memory>
       </local-cache>
+      <local-cache name="media_type_cascade">
+         <encoding media-type="application/json"/>
+      </local-cache>
+      <local-cache name="media_type_cascade_2">
+         <encoding media-type="application/json">
+            <value media-type="text/plain"/>
+         </encoding>
+      </local-cache>
+      <local-cache name="heap_object">
+         <memory max-count="1000"/>
+      </local-cache>
+      <local-cache name="heap_binary">
+         <encoding media-type="application/x-protostream"/>
+         <memory storage="HEAP" max-size="1.5GB" when-full="REMOVE"/>
+      </local-cache>
+      <local-cache name="heap_binary_2">
+         <encoding>
+             <key media-type="text/plain"/>
+             <value media-type="text/plain"/>
+         </encoding>
+         <memory max-count="2000" when-full="REMOVE"/>
+      </local-cache>
+      <local-cache name="off_heap_no_eviction">
+         <memory storage="OFF_HEAP"/>
+      </local-cache>
+      <local-cache name="off_heap_eviction">
+         <memory storage="OFF_HEAP" when-full="REMOVE" max-count="1000"/>
+      </local-cache>
 
       <!-- template configurations -->
       <local-cache-configuration name="local-template" statistics="true">

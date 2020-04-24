@@ -236,5 +236,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot load %s", id = 29523)
    void cannotLoadMimeTypes(String mimeTypes);
 
+   @Message(value = "Cannot parse %s", id = 29524)
+   IllegalArgumentException cannotParseQuantity(String str);
+
    //----- counters exceptions // don't use the same id range  ------
 }

@@ -1108,9 +1108,17 @@
       </xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="key" type="tns:keyEncodingType" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="value" type="tns:valueEncodingType" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="key" type="tns:keyEncodingType" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="value" type="tns:valueEncodingType" minOccurs="0" maxOccurs="1"/>
     </xs:sequence>
+    <xs:attribute name="media-type" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          The media type for both keys and values. When present, takes precedence over the
+          individual configurations for keys and values.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="expiration">
@@ -1295,6 +1303,8 @@
         <xs:element name="object" type="tns:memory-object">
           <xs:annotation>
             <xs:documentation>
+              Deprecated since 11.0. Use instead the 'encoding' element to specify the media type of keys
+              and values, plus the storage attribute as 'heap'.
               Store keys and values as instance variables in the Java heap.
               Instances of byte[] are wrapped to ensure equality. This is the
               default storage format.
@@ -1304,6 +1314,8 @@
         <xs:element name="binary" type="tns:memory-binary">
           <xs:annotation>
             <xs:documentation>
+              Deprecated since 11.0. Use instead the 'encoding' element to specify the media type of keys
+              and values, plus the storage attribute as 'heap'.
               Store keys and values as bytes in the Java heap. Cache
               entries are serialized to binary representations. Note that
               binary storage violates object equality. This occurs because
@@ -1315,6 +1327,8 @@
         <xs:element name="off-heap" type="tns:memory-off-heap">
           <xs:annotation>
             <xs:documentation>
+              Deprecated since 11.0. Use instead the 'encoding' element to specify the media type of keys
+              and values, plus the storage attribute as 'off-heap'.
               Store keys and values as bytes in native memory. Cache
               entries are serialized to binary representations. Temporary
               objects are stored in the Java heap space until processing
@@ -1326,7 +1340,62 @@
         </xs:element>
       </xs:choice>
     </xs:sequence>
+    <xs:attribute name="max-size" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          Defines the size of the data container in a byte quantity plus an optional unit.
+          Supported units are B (bytes) KB (kilobytes), MB (megabytes), GB (gigabytes), TB (terabytes),
+          KiB (kibibytes), MiB (mebibytes), GiB (gibibytes) and TiB (tebibytes).
+          Eviction occurs after the approximate memory usage exceeds the maximum size.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="max-count" type="xs:long" default="-1">
+      <xs:annotation>
+        <xs:documentation>
+          Defines the size of the data container by a count of entries. Eviction occurs after the container size exceeds
+          the maximum count.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="when-full" type="tns:eviction-strategy">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies a strategy for evicting cache entries. Eviction always
+          takes place when you define either the max-size or the max-count
+          (but not both) for the data container. If no strategy is defined,
+          but max-count or max-size is configured, REMOVE is used.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+
+    <xs:attribute name="storage" type="tns:memory-storage" default="HEAP">
+      <xs:annotation>
+        <xs:documentation>
+          Defines the type of memory used as a storage by the data container.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
+
+  <xs:simpleType name="memory-storage">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="HEAP">
+        <xs:annotation>
+          <xs:documentation>
+            Entries are stored on the JVM's heap memory.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="OFF_HEAP">
+        <xs:annotation>
+          <xs:documentation>
+            Entries are stored in internal memory off the normal Java heap.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
 
   <xs:complexType name="memory-object">
     <xs:attribute name="size" type="xs:long" default="-1">

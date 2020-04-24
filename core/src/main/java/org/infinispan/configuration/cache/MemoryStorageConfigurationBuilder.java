@@ -3,35 +3,49 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.MemoryStorageConfiguration.EVICTION_STRATEGY;
 import static org.infinispan.configuration.cache.MemoryStorageConfiguration.EVICTION_TYPE;
 import static org.infinispan.configuration.cache.MemoryStorageConfiguration.SIZE;
+import static org.infinispan.configuration.cache.MemoryStorageConfiguration.STORAGE_TYPE;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.util.ByteQuantity;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 
 /**
  * @since 10.0
+ * @deprecated since 11.0, use {@link MemoryConfigurationBuilder} instead.
  */
+@Deprecated
 public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<MemoryStorageConfiguration>, ConfigurationBuilderInfo {
    private AttributeSet attributes;
-   private StorageType storageType = StorageType.OBJECT;
+   private final AttributeChangeTracker attributeChangeTracker;
+   private boolean enabled;
 
    MemoryStorageConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = MemoryStorageConfiguration.attributeDefinitionSet();
+      attributeChangeTracker = new AttributeChangeTracker(attributes);
+   }
+
+   AttributeChangeTracker getAttributeTracker() {
+      return attributeChangeTracker;
+   }
+
+   void enable() {
+      enabled = true;
    }
 
    public MemoryStorageConfigurationBuilder storageType(StorageType storageType) {
-      this.storageType = storageType;
+      attributes.attribute(STORAGE_TYPE).set(storageType);
       return this;
    }
 
    public StorageType storageType() {
-      return storageType;
+      return attributes.attribute(STORAGE_TYPE).get();
    }
 
    public MemoryStorageConfigurationBuilder size(long size) {
@@ -45,7 +59,7 @@ public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChil
    }
 
    @Override
-   public ElementDefinition getElementDefinition() {
+   public ElementDefinition<?> getElementDefinition() {
       return MemoryConfiguration.ELEMENT_DEFINITION;
    }
 
@@ -73,16 +87,16 @@ public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChil
 
    @Override
    public void validate() {
-      if (storageType != StorageType.OBJECT) {
+      if (storageType() != StorageType.OBJECT) {
          if (getBuilder().clustering().hash().groups().isEnabled()) {
-            throw CONFIG.groupingOnlyCompatibleWithObjectStorage(storageType);
+            throw CONFIG.groupingOnlyCompatibleWithObjectStorage(storageType());
          }
       }
 
       long size = attributes.attribute(SIZE).get();
       EvictionType evictionType = attributes.attribute(EVICTION_TYPE).get();
       if (evictionType == EvictionType.MEMORY) {
-         if (storageType == StorageType.OBJECT) {
+         if (storageType() == StorageType.OBJECT) {
             throw CONFIG.offHeapMemoryEvictionNotSupportedWithObject();
          }
       }
@@ -119,18 +133,43 @@ public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChil
 
    @Override
    public MemoryStorageConfiguration create() {
-      return new MemoryStorageConfiguration(attributes.protect(), storageType);
+      MemoryStorageConfiguration memoryStorageConfiguration = new MemoryStorageConfiguration(attributes.protect(), enabled);
+      attributeChangeTracker.reset();
+      return memoryStorageConfiguration;
    }
 
    @Override
    public MemoryStorageConfigurationBuilder read(MemoryStorageConfiguration template) {
       attributes.read(template.attributes());
-      this.storageType = template.storageType();
+      enabled = template.isEnabled();
       return this;
+   }
+
+   void read(MemoryConfigurationBuilder builder) {
+      if (builder.isCountBounded()) {
+         size(builder.maxCount());
+         evictionType(EvictionType.COUNT);
+      } else if (builder.isSizeBounded()) {
+         size(ByteQuantity.parse(builder.maxSize()));
+         evictionType(EvictionType.MEMORY);
+      }
+      StorageType newStorage = builder.storage();
+      if (newStorage == StorageType.OFF_HEAP) {
+         storageType(StorageType.OFF_HEAP);
+      } else if (encoding().isStorageBinary() || newStorage == StorageType.BINARY) {
+         storageType(StorageType.BINARY);
+      } else {
+         storageType(StorageType.OBJECT);
+      }
+      evictionStrategy(builder.whenFull());
    }
 
    @Override
    public String toString() {
       return "MemoryStorageConfigurationBuilder [attributes=" + attributes + "]";
+   }
+
+   public boolean isEnabled() {
+      return enabled;
    }
 }

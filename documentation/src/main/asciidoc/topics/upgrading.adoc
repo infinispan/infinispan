@@ -49,6 +49,70 @@ consistent.
 The `<file-store relative-to=""">` attribute has been removed. This attribute will be ignored in pre 11.0 schemas with
 only the `path` attribute being taking into account when configuring the stores location.
 
+== Memory configuration changes
+
+* The `BINARY` storage has been deprecated, and will no longer store primitives and String mixed with `byte[]`, but only `byte[]`.
+* The child elements `<object>`, `<binary>` and `<off-heap>` are also deprecated. The following config changes should be done:
+
+** On heap storage:
+
+ 10.1
+[source,xml]
+----
+<memory>
+   <object size="1000000" strategy="REMOVE"/>
+</memory>
+----
+
+ 11.0
+[source,xml]
+----
+<memory max-count="1000000" when-full="REMOVE"/>
+----
+
+** Binary, on heap storage:
+
+ 10.1
+[source,xml]
+----
+<cache>
+   <memory>
+      <binary size="500000000" strategy="EXCEPTION" eviction="MEMORY"/>
+   </memory>
+</cache>
+----
+
+ 11.0
+[source,xml]
+----
+<cache>
+   <!-- Or any other binary format -->
+   <encoding media-type="application/x-protostream"/>
+   <!-- Sizes are human-readable, e.g.: "1 GB", "0.5TB" -->
+   <memory max-size="500 MB" when-full="EXCEPTION"/>
+</cache>
+----
+
+** Off-heap:
+
+ 10.1
+[source,xml]
+----
+<cache>
+   <memory>
+      <off-heap size="10000000" eviction="COUNT"/>
+   </memory>
+</cache>
+----
+
+ 11.0
+[source,xml]
+----
+<memory storage="OFF_HEAP" max-count="10000000"/>
+----
+
+* Due to the changes above, cache configurations serialized to XML or JSON (for example, when using REST) will always be in the new format.
+
 = Upgrading from 10.0 to 10.1 and 10.0 to 11.0
 
 == Maximum Idle Timeouts with Clustered Cache Modes

@@ -1,5 +1,9 @@
 package org.infinispan.commons.util;
 
+/**
+ * @deprecated since 11.0, use {@link ByteQuantity} instead.
+ */
+@Deprecated
 public enum MemoryUnit {
    BYTES("B") {
 

@@ -38,14 +38,12 @@ import org.infinispan.configuration.cache.GroupsConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
-import org.infinispan.configuration.cache.MemoryStorageConfiguration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.RecoveryConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.SitesConfiguration;
 import org.infinispan.configuration.cache.StatisticsConfiguration;
-import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
@@ -613,21 +611,16 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
 
    private void writeMemory(XMLExtendedStreamWriter writer, Configuration configuration) throws XMLStreamException {
       MemoryConfiguration memory = configuration.memory();
-      MemoryStorageConfiguration memoryStorageConfiguration = memory.heapConfiguration();
-      AttributeSet attributes = memoryStorageConfiguration.attributes();
-      if (attributes.isModified() || memoryStorageConfiguration.storageType() != StorageType.OBJECT) {
+      AttributeSet attributes = memory.attributes();
+      if (attributes.isModified()) {
          writer.writeStartElement(Element.MEMORY);
-         writer.writeStartElement(memory.storageType().getElement());
-         switch (memory.storageType()) {
-            case OFF_HEAP:
-            case BINARY:
-               attributes.write(writer, MemoryStorageConfiguration.EVICTION_TYPE, Attribute.EVICTION);
-               // fall through
-            case OBJECT:
-               attributes.write(writer, MemoryStorageConfiguration.EVICTION_STRATEGY, Attribute.STRATEGY);
-               attributes.write(writer, MemoryStorageConfiguration.SIZE, Attribute.SIZE);
+         attributes.write(writer, MemoryConfiguration.STORAGE, Attribute.STORAGE);
+         if (attributes.attribute(MemoryConfiguration.MAX_COUNT).get() > 0) {
+            attributes.write(writer, MemoryConfiguration.MAX_COUNT, Attribute.MAX_COUNT);
+         } else if (attributes.attribute(MemoryConfiguration.MAX_SIZE).get() != null) {
+            attributes.write(writer, MemoryConfiguration.MAX_SIZE, Attribute.MAX_SIZE);
          }
-         writer.writeEndElement();
+         attributes.write(writer, MemoryConfiguration.WHEN_FULL, Attribute.WHEN_FULL);
          writer.writeEndElement();
       }
    }

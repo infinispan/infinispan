@@ -47,6 +47,7 @@ public enum Element {
     GLOBAL,
     GLOBAL_STATE,
     HASH,
+    HEAP,
     JGROUPS,
     IDENTITY_ROLE_MAPPER,
     IMMUTABLE_CONFIGURATION_STORAGE,
