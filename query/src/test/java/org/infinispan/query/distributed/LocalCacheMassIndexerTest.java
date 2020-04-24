@@ -1,5 +1,6 @@
 package org.infinispan.query.distributed;
 
+import static org.junit.Assert.assertFalse;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -11,12 +12,14 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
+import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -29,7 +32,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.distributed.LocalCacheMassIndexerTest")
 public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
 
-   private static final int NUM_ENTITIES = 2000;
+   private static final int NUM_ENTITIES = 50;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -46,22 +49,37 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
       return searchManager.getQuery(new MatchAllDocsQuery(), Person.class).getResultSize();
    }
 
-   @Test
-   public void testMassIndexer() {
+   private void fillData() {
       for (int i = 0; i < NUM_ENTITIES; i++) {
          cache.put(i, new Person("name" + i, "blurb" + i, i));
       }
+   }
+
+   @BeforeMethod
+   public void clean() {
+      cache.clear();
+   }
+
+   @Test
+   public void testMassIndexer() {
+      fillData();
       SearchManager searchManager = Search.getSearchManager(cache);
+      MassIndexer massIndexer = searchManager.getMassIndexer();
 
       assertEquals(NUM_ENTITIES, indexSize(cache));
 
-      searchManager.getMassIndexer().start();
+      massIndexer.start();
       assertEquals(NUM_ENTITIES, indexSize(cache));
 
       cache.clear();
-      searchManager.getMassIndexer().start();
+      massIndexer.start();
 
       assertEquals(0, indexSize(cache));
+
+      fillData();
+      massIndexer.startAsync().join();
+      assertFalse(massIndexer.isRunning());
+      assertEquals(NUM_ENTITIES, indexSize(cache));
    }
 
    public void testPartiallyReindex() throws Exception {
