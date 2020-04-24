@@ -29,7 +29,15 @@ public interface RestServerClient {
     */
    CompletionStage<RestResponse> memory();
 
+   /**
+    * Returns the server environment
+    */
    CompletionStage<RestResponse> env();
+
+   /**
+    * Returns a report from the server
+    */
+   CompletionStage<RestResponse> report();
 
    CompletionStage<RestResponse> ignoreCache(String cacheManagerName, String cacheName);
 

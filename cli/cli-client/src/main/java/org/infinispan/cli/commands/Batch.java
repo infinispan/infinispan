@@ -37,6 +37,7 @@ import org.aesh.command.invocation.CommandInvocation;
             Reset.class,
             Run.class,
             Schema.class,
+            Server.class,
             Shutdown.class,
             Site.class,
             Version.class

@@ -7,6 +7,7 @@ import java.util.NoSuchElementException;
 import javax.naming.NamingException;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.OS;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -165,4 +166,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Duplicate JNDI name '%s'", id = 80042)
    CacheConfigurationException duplicateJndiName(String jndiName);
+
+   @Message(value = "Cannot generate the server report on %s", id = 80043)
+   IllegalStateException serverReportUnavailable(OS os);
 }

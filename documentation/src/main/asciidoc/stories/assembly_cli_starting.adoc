@@ -11,9 +11,7 @@ include::{topics}/proc_cli_starting.adoc[leveloffset=+1]
 include::{topics}/proc_cli_connecting.adoc[leveloffset=+1]
 include::{topics}/proc_cli_navigating.adoc[leveloffset=+1]
 include::{topics}/ref_cli_resource_tree.adoc[leveloffset=+2]
-include::{topics}/proc_cli_statistics.adoc[leveloffset=+1]
 include::{topics}/proc_cli_shutdown.adoc[leveloffset=+1]
-include::{topics}/proc_cli_logging.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

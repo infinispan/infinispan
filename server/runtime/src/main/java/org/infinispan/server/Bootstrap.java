@@ -12,7 +12,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.infinispan.commons.jdkspecific.Process;
+import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.tool.Main;
 
@@ -171,7 +171,7 @@ public class Bootstrap extends Main {
    private void logJVMInformation() {
       Logger logger = Logger.getLogger("BOOT");
       logger.info("JVM " + System.getProperty("java.vm.name") + " " + System.getProperty("java.vm.vendor") + " " + System.getProperty("java.vm.version"));
-      Process process = Process.getInstance();
+      ProcessInfo process = ProcessInfo.getInstance();
       logger.info("JVM arguments = " + process.getArguments());
       logger.info("PID = " + process.getPid());
       if (logger.isLoggable(Level.FINE)) {

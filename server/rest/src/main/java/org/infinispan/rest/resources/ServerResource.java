@@ -12,11 +12,13 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 
 import java.lang.management.ManagementFactory;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.JVMMemoryInfoInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
@@ -54,6 +56,7 @@ public class ServerResource implements ResourceHandler {
             .invocation().methods(GET).path("/v2/server/memory").handleWith(this::memory)
             .invocation().methods(GET).path("/v2/server/").withAction("stop").handleWith(this::stop)
             .invocation().methods(GET).path("/v2/server/threads").handleWith(this::threads)
+            .invocation().methods(GET).path("/v2/server/report").handleWith(this::report)
             .invocation().methods(GET).path("/v2/server/cache-managers").handleWith(this::cacheManagers)
             .invocation().methods(GET).path("/v2/server/ignored-caches/{cache-manager}").handleWith(this::listIgnored)
             .invocation().methods(POST, DELETE).path("/v2/server/ignored-caches/{cache-manager}/{cache}").handleWith(this::doIgnoreOp)
@@ -120,6 +123,26 @@ public class ServerResource implements ResourceHandler {
       return completedFuture(new NettyRestResponse.Builder()
             .contentType(TEXT_PLAIN).entity(Util.threadDump())
             .build());
+   }
+
+   private CompletionStage<RestResponse> report(RestRequest restRequest) {
+      ServerManagement server = invocationHelper.getServer();
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      return server.getServerReport().handle((path, t) -> {
+         if (t != null) {
+            return responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).build();
+         } else {
+            return responseBuilder
+                  .contentType(MediaType.fromString("application/gzip"))
+                  .header("Content-Disposition",
+                        String.format("attachment; filename=\"%s-%s-%3$tY%3$tm%3$td%3$tH%3$tM%3$tS-report.tar.gz\"",
+                              Version.getBrandName().toLowerCase().replaceAll("\\s", "-"),
+                              invocationHelper.getRestCacheManager().getNodeName(),
+                              Calendar.getInstance())
+                  )
+                  .entity(path.toFile()).build();
+         }
+      });
    }
 
    private CompletionStage<RestResponse> serializeObject(Object object) {
