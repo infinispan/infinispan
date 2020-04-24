@@ -130,8 +130,8 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
             .notifications(true)
             .recovery().enable().recoveryInfoCacheName("VTNC")
 
-            .encoding().key().mediaType("application/json")
-            .encoding().value().mediaType("text/plain")
+            .encoding().key().mediaType("application/x-java-object")
+            .encoding().value().mediaType("application/x-java-object")
 
             .sites().addInUseBackupSite("CY").backupFor().remoteSite("QWERTY").remoteCache("cache")
             .sites().addBackup().site("NY").strategy(BackupConfiguration.BackupStrategy.ASYNC).backupFailurePolicy(BackupFailurePolicy.IGNORE)

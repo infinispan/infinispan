@@ -31,6 +31,11 @@ public class MediaTypeTest {
    }
 
    @Test(expected = EncodingException.class)
+   public void testParsingMultipleSubType() {
+      MediaType.fromString("application/json/on");
+   }
+
+   @Test(expected = EncodingException.class)
    public void testParsingEmpty() {
       MediaType.fromString("");
    }

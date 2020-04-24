@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.parsing.Element;
 
 /**
@@ -16,13 +17,25 @@ public enum StorageType {
    /**
     * Objects are stored on heap as objects as provided. These are serialized across to other nodes and stored as
     * deserialized instances of the object. Equality is defined by the equals method of the implementation class.
+    * @deprecated since 11.0, use {@link StorageType#HEAP} instead.
     */
+   @Deprecated
    OBJECT(Element.OBJECT),
+
+   /**
+    * Objects are stored on heap. By default, storage uses the {@link MediaType#APPLICATION_OBJECT_TYPE}
+    * format, and equality is defined by the equals of the implementation class. If the configured {@link MediaType}
+    * causes the storage to be byte[], then equality is defined by these byte[] instances.
+    */
+   HEAP(Element.HEAP),
 
    /**
     * Entries are stored in Java heap but as byte[] instances. This mode has equality defined by the byte[] created from
     * the serialized from of the provided object.
+    * @deprecated since 11.0, with no replacement. Use {@link #HEAP} and the cache's {@link EncodingConfiguration} to
+    * define a {@link MediaType} that is byte[] or primitive based.
     */
+   @Deprecated
    BINARY(Element.BINARY),
 
    /**

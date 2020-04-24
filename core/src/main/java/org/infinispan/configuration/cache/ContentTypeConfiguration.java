@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.commons.configuration.ConfigurationInfo;
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
@@ -21,21 +20,21 @@ public class ContentTypeConfiguration implements ConfigurationInfo {
 
    public static final String DEFAULT_MEDIA_TYPE = MediaType.APPLICATION_OBJECT_TYPE;
 
-   public static final ElementDefinition KEY_ELEMENT_DEFINITION = new DefaultElementDefinition(KEY_DATA_TYPE.getLocalName());
+   public static final ElementDefinition<?> KEY_ELEMENT_DEFINITION = new DefaultElementDefinition<>(KEY_DATA_TYPE.getLocalName());
 
-   public static final ElementDefinition VALUE_ELEMENT_DEFINITION = new DefaultElementDefinition(VALUE_DATA_TYPE.getLocalName());
+   public static final ElementDefinition<?> VALUE_ELEMENT_DEFINITION = new DefaultElementDefinition<>(VALUE_DATA_TYPE.getLocalName());
 
    public static final AttributeDefinition<String> MEDIA_TYPE =
          AttributeDefinition.builder("media-type", null, String.class).build();
 
-   private final Attribute<String> mediaType;
+   private final MediaType parsed;
    private final boolean key;
    private final AttributeSet attributes;
 
-   ContentTypeConfiguration(boolean key, AttributeSet attributes) {
+   ContentTypeConfiguration(boolean key, AttributeSet attributes, MediaType parsed) {
       this.key = key;
       this.attributes = attributes.checkProtection();
-      mediaType = attributes.attribute(MEDIA_TYPE);
+      this.parsed = parsed;
    }
 
    public static AttributeSet attributeDefinitionSet() {
@@ -43,8 +42,7 @@ public class ContentTypeConfiguration implements ConfigurationInfo {
    }
 
    public MediaType mediaType() {
-      if(mediaType.isNull()) return null;
-      return MediaType.fromString(mediaType.get());
+      return parsed;
    }
 
    public void mediaType(MediaType mediaType) {
@@ -56,7 +54,7 @@ public class ContentTypeConfiguration implements ConfigurationInfo {
    }
 
    @Override
-   public ElementDefinition getElementDefinition() {
+   public ElementDefinition<?> getElementDefinition() {
       return key ? KEY_ELEMENT_DEFINITION : VALUE_ELEMENT_DEFINITION;
    }
 

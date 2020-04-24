@@ -54,6 +54,8 @@ public enum Attribute {
     EVICTION,
     @Deprecated
     EVICTION_EXECUTOR,
+    @Deprecated
+    EVICTION_STRATEGY,
     EXPIRATION_EXECUTOR,
     EXTENDS,
     FAIL_SILENTLY,
@@ -88,9 +90,11 @@ public enum Attribute {
     MAPPER,
     MARSHALLER_CLASS("marshaller"),
     MAX_BATCH_SIZE,
+    MAX_COUNT,
     MAX_ENTRIES,
     MAX_IDLE,
     MAX_RETRIES,
+    MAX_SIZE,
     MAX_THREADS,
     MBEAN_SERVER_LOOKUP,
     MERGE_POLICY,
@@ -151,6 +155,7 @@ public enum Attribute {
     START,
     @Deprecated
     STATE_TRANSFER_EXECUTOR,
+    STORAGE,
     STORE_KEYS_AS_BINARY("keys"),
     STORE_VALUES_AS_BINARY("values"),
     STRATEGY,
@@ -179,6 +184,7 @@ public enum Attribute {
     VERSIONING_SCHEME("scheme"),
     WAIT_TIME,
     WHEN_SPLIT,
+    WHEN_FULL,
     WRITE_SKEW_CHECK("write-skew"),
     ZERO_CAPACITY_NODE("zero-capacity-node")
     ;

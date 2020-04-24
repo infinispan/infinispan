@@ -8,25 +8,39 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 
+/**
+ * @deprecated Since 11.0, {@link MemoryConfiguration} is used to defined the data container memory
+ * eviction and sizing.
+ */
+@Deprecated
 public class MemoryStorageConfiguration implements ConfigurationInfo {
 
    public static final AttributeDefinition<Long> SIZE = AttributeDefinition.builder("size", -1L).build();
    public static final AttributeDefinition<EvictionType> EVICTION_TYPE = AttributeDefinition.builder("type", EvictionType.COUNT).xmlName(org.infinispan.configuration.parsing.Attribute.EVICTION.getLocalName()).build();
    public static final AttributeDefinition<EvictionStrategy> EVICTION_STRATEGY = AttributeDefinition.builder("strategy", EvictionStrategy.NONE).build();
+   public static final AttributeDefinition<StorageType> STORAGE_TYPE = AttributeDefinition.builder("storage-type", StorageType.OBJECT).build();
 
    private final AttributeSet attributes;
-   private final StorageType storageType;
+   private final boolean enabled;
    private final ElementDefinition<MemoryStorageConfiguration> elementDefinition;
 
    static public AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(MemoryStorageConfiguration.class, SIZE, EVICTION_TYPE, EVICTION_STRATEGY);
+      return new AttributeSet(MemoryStorageConfiguration.class, SIZE, EVICTION_TYPE, EVICTION_STRATEGY, STORAGE_TYPE);
    }
 
-   public MemoryStorageConfiguration(AttributeSet attributes, StorageType storageType) {
+   public MemoryStorageConfiguration(AttributeSet attributes, boolean enabled) {
       this.attributes = attributes;
-      this.storageType = storageType;
+      this.enabled = enabled;
+      StorageType storageType = attributes.attribute(STORAGE_TYPE).get();
       String storage = storageType == null ? StorageType.OBJECT.getElement().getLocalName() : storageType.getElement().getLocalName();
-      this.elementDefinition = new DefaultElementDefinition<>(storage,true, false);
+      this.elementDefinition = new DefaultElementDefinition<>(storage, true, false);
+   }
+
+   /**
+    * @return true if the {@link MemoryStorageConfigurationBuilder} was non-empty when building this configuration.
+    */
+   boolean isEnabled() {
+      return enabled;
    }
 
    @Override
@@ -40,7 +54,7 @@ public class MemoryStorageConfiguration implements ConfigurationInfo {
    }
 
    public StorageType storageType() {
-      return storageType;
+      return attributes.attribute(STORAGE_TYPE).get();
    }
 
    public long size() {
@@ -66,22 +80,18 @@ public class MemoryStorageConfiguration implements ConfigurationInfo {
 
       MemoryStorageConfiguration that = (MemoryStorageConfiguration) o;
 
-      if (!attributes.equals(that.attributes)) return false;
-      return storageType == that.storageType;
+      return attributes.equals(that.attributes);
    }
 
    @Override
    public int hashCode() {
-      int result = attributes.hashCode();
-      result = 31 * result + storageType.hashCode();
-      return result;
+      return attributes.hashCode();
    }
 
    @Override
    public String toString() {
       return "MemoryStorageConfiguration{" +
             "attributes=" + attributes +
-            ", storageType=" + storageType +
             '}';
    }
 }

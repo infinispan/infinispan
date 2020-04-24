@@ -91,6 +91,7 @@ public final class MediaType {
    public static final MediaType APPLICATION_UNKNOWN = fromString(APPLICATION_UNKNOWN_TYPE);
    public static final MediaType MATCH_ALL = fromString(MATCH_ALL_TYPE);
 
+   public static final String BYTE_ARRAY_TYPE = "ByteArray";
    private static final String INVALID_TOKENS = "()<>@,;:/[]?=\\\"";
    private static final String WEIGHT_PARAM_NAME = "q";
    private static final String CHARSET_PARAM_NAME = "charset";
@@ -154,6 +155,7 @@ public final class MediaType {
       }
 
       String[] typeSubtype = types.split("/");
+      if(typeSubtype.length > 2) throw CONTAINER.invalidMediaTypeSubtype();
       return new MediaType(typeSubtype[0].trim(), typeSubtype[1].trim(), paramMap);
    }
 
@@ -316,6 +318,15 @@ public final class MediaType {
 
       if (strParams.isEmpty()) return builder.toString();
       return builder.append("; ").append(strParams).toString();
+   }
+
+   /**
+    * @return true if the MediaType's java type is a byte array.
+    */
+   public boolean isBinary() {
+      String customType = getClassType();
+      if (customType == null) return !this.match(MediaType.APPLICATION_OBJECT);
+      return BYTE_ARRAY_TYPE.equals(customType);
    }
 
    @Override

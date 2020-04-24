@@ -141,6 +141,18 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
             Configuration minimalOffHeap = getConfiguration(holder, "minimal-offheap");
             assertEquals(StorageType.OFF_HEAP, minimalOffHeap.memory().storageType());
+
+            Configuration mediaTypeCascade = getConfiguration(holder, "media_type_cascade");
+            assertEquals(MediaType.APPLICATION_JSON, mediaTypeCascade.encoding().keyDataType().mediaType());
+            assertEquals(MediaType.APPLICATION_JSON, mediaTypeCascade.encoding().valueDataType().mediaType());
+
+            Configuration heapBinary = getConfiguration(holder, "heap_binary");
+            assertEquals(MediaType.APPLICATION_PROTOSTREAM, heapBinary.encoding().keyDataType().mediaType());
+            assertEquals(StorageType.BINARY, heapBinary.memory().storageType());
+            assertEquals(EvictionStrategy.REMOVE, heapBinary.memory().evictionStrategy());
+            assertEquals(1_500_000_000, heapBinary.memory().maxSizeBytes());
+            assertEquals(MediaType.APPLICATION_PROTOSTREAM, heapBinary.encoding().keyDataType().mediaType());
+            assertEquals(MediaType.APPLICATION_PROTOSTREAM, heapBinary.encoding().valueDataType().mediaType());
          }
       },
       INFINISPAN_100(10, 0) {

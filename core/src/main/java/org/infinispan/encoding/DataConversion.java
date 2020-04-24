@@ -244,7 +244,7 @@ public final class DataConversion {
       if (stored == null) return null;
 
       // Keys are indexed as stored, without the wrapper
-      if(isKey) return wrapper.unwrap(stored);
+      if (isKey) return wrapper.unwrap(stored);
 
       // If the value wrapper is indexable, just use it
       if (wrapper.isFilterable()) return stored;

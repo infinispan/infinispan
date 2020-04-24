@@ -1461,7 +1461,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Duplicate id found! AdvancedExternalizer id=%d is shared by another externalizer (%s)", id = 423)
    CacheConfigurationException duplicateExternalizerIdFound(int externalizerId, String otherExternalizer);
 
-   @Message(value = "Eviction size value cannot be less than or equal to zero if eviction is enabled", id = 424)
+   @Message(value = "Memory eviction is enabled, please specify a maximum size or count greater than zero", id = 424)
    CacheConfigurationException invalidEvictionSize();
 
 //   @Message(value = "Eviction cannot use memory-based approximation with LIRS", id = 425)
@@ -1716,7 +1716,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Error while persisting global configuration state", id = 502)
    CacheConfigurationException errorPersistingGlobalConfiguration(@Cause Throwable cause);
 
-   @Message(value = "MEMORY based eviction is not supported with OBJECT storage", id = 504)
+   @Message(value = "Size (bytes) based eviction needs either off-heap or a binary compatible storage configured in the cache encoding", id = 504)
    CacheConfigurationException offHeapMemoryEvictionNotSupportedWithObject();
 
 //   @Message(value = "MEMORY based OFF_HEAP eviction configured size %d must be larger than %d to store configured " +
@@ -1817,6 +1817,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Grouping requires OBJECT storage type but was: %s", id = 534)
    CacheConfigurationException groupingOnlyCompatibleWithObjectStorage(StorageType storageType);
+
+   @Message(value = "Grouping requires application/x-java-object storage type but was: {key=%s, value=%s}", id = 535)
+   CacheConfigurationException groupingOnlyCompatibleWithObjectStorage(String keyMediaType, String valueMediaType);
 
    @Message(value = "Factory doesn't know how to construct component %s", id = 537)
    CacheConfigurationException factoryCannotConstructComponent(String componentName);
@@ -1972,4 +1975,24 @@ public interface Log extends BasicLogger {
 
    @Message(value = "A single indexing directory provider is allowed per cache configuration. Setting multiple individual providers for the indexes belonging to a cache is not allowed.", id = 582)
    CacheConfigurationException foundMultipleDirectoryProviders();
+
+   @Message(value = "Cannot configure both maxCount and maxSize in memory configuration", id = 583)
+   CacheConfigurationException cannotProvideBothSizeAndCount();
+
+   @Message(value = "The memory configuration(s) %s have been deprecated and cannot be used in conjunction to the new configuration. Please update your code ", id = 584)
+   CacheConfigurationException cannotUseDeprecatedAndReplacement(String legacyName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Single media-type was specified for keys and values, ignoring individual configurations", id = 585)
+   void ignoringSpecificMediaTypes();
+
+   @LogMessage(level = WARN)
+   @Message(value = "The memory configuration attribute(s) '%s' have been deprecated. Please update your configuration", id = 586)
+   void warnUsingDeprecatedMemoryConfigs(String config);
+
+   @Message(value = "Cannot change max-size since max-count is already defined", id = 587)
+   CacheException cannotIncreaseMaxSize();
+
+   @Message(value = "Cannot change max-count since max-size is already defined", id = 588)
+   CacheException cannotIncreaseMaxCount();
 }
