@@ -22,6 +22,6 @@ final class LocalMassIndexerLock implements MassIndexLock {
 
    @Override
    public boolean isAcquired() {
-      return lock.availablePermits() == 1;
+      return lock.availablePermits() == 0;
    }
 }
