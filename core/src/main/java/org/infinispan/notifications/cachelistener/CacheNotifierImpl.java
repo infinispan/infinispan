@@ -48,6 +48,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.CacheMode;
@@ -71,6 +72,7 @@ import org.infinispan.filter.CacheFilters;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.ClusterExecutor;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
@@ -219,6 +221,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Inject BasicComponentRegistry componentRegistry;
    @Inject KeyPartitioner keyPartitioner;
    @Inject RpcManager rpcManager;
+   @Inject EncoderRegistry encoderRegistry;
 
    @Inject ComponentRef<AdvancedCache<K, V>> cache;
    @Inject ComponentRef<ClusteringDependentLogic> clusteringDependentLogic;
@@ -324,7 +327,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       }
 
       // Filter has a specific format to run, convert to that format
-      return (K) keyDataConversion.convert(unwrappedKey, keyDataConversion.getStorageMediaType(), convertFormat);
+      return (K) encoderRegistry.convert(unwrappedKey, keyDataConversion.getStorageMediaType(), convertFormat);
    }
 
    private V convertValue(CacheEntryListenerInvocation listenerInvocation, V value) {
@@ -347,7 +350,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          return (V) unwrappedValue;
       }
       // Filter has a specific format to run, convert to that format
-      return (V) valueDataConversion.convert(unwrappedValue, valueDataConversion.getStorageMediaType(), convertFormat);
+      return (V) encoderRegistry.convert(unwrappedValue, valueDataConversion.getStorageMediaType(), convertFormat);
    }
 
    @Override
@@ -1438,14 +1441,14 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             if (finalFilterMediaType == null || useStorageFormat || keyReq == null) {
                return keyDataConversion.fromStorage(k);
             }
-            return keyDataConversion.convert(k, finalFilterMediaType, keyDataConversion.getRequestMediaType());
+            return encoderRegistry.convert(k, finalFilterMediaType, keyDataConversion.getRequestMediaType());
          };
          Function<Object, Object> kv = v -> {
             if (!finalHasFilter) return v;
             if (finalFilterMediaType == null || useStorageFormat || valueReq == null) {
                return valueConversion.fromStorage(v);
             }
-            return valueConversion.convert(v, finalFilterMediaType, valueConversion.getRequestMediaType());
+            return encoderRegistry.convert(v, finalFilterMediaType, valueConversion.getRequestMediaType());
          };
 
          stage = handlePublisher(stage, intermediateOperations, handler, generatedId, l, kc, kv);
@@ -1601,7 +1604,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                      handler = currentQueue;
                   }
                }
-               returnValue = new ClusteredListenerInvocation<>(invocation, handler, filter, converter, annotation,
+               returnValue = new ClusteredListenerInvocation<>(encoderRegistry, invocation, handler, filter, converter, annotation,
                      onlyPrimary, identifier, sync, observation, filterAnnotations, keyDataConversion, valueDataConversion, storageFormat);
             } else {
 //               TODO: this is removed until non cluster listeners are supported
@@ -1615,13 +1618,13 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 //               }
 //               returnValue = new NonClusteredListenerInvocation(invocation, handler, filter, converter, annotation,
 //                                                                onlyPrimary, identifier, sync);
-               returnValue = new BaseCacheEntryListenerInvocation(invocation, filter, converter, annotation,
+               returnValue = new BaseCacheEntryListenerInvocation(encoderRegistry, invocation, filter, converter, annotation,
                      onlyPrimary, clustered, identifier, sync, observation, filterAnnotations, keyDataConversion, valueDataConversion, storageFormat);
             }
          } else {
             // If no includeCurrentState just use the base listener invocation which immediately passes all notifications
             // off
-            returnValue = new BaseCacheEntryListenerInvocation(invocation, filter, converter, annotation, onlyPrimary,
+            returnValue = new BaseCacheEntryListenerInvocation(encoderRegistry, invocation, filter, converter, annotation, onlyPrimary,
                   clustered, identifier, sync, observation, filterAnnotations, keyDataConversion, valueDataConversion, storageFormat);
          }
          return returnValue;
@@ -1682,13 +1685,14 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
       private final QueueingSegmentListener<K, V, CacheEntryEvent<K, V>> handler;
 
-      public ClusteredListenerInvocation(ListenerInvocation<Event<K, V>> invocation, QueueingSegmentListener<K, V, CacheEntryEvent<K, V>> handler,
+      public ClusteredListenerInvocation(EncoderRegistry encoderRegistry, ListenerInvocation<Event<K, V>> invocation,
+                                         QueueingSegmentListener<K, V, CacheEntryEvent<K, V>> handler,
                                          CacheEventFilter<? super K, ? super V> filter,
                                          CacheEventConverter<? super K, ? super V, ?> converter,
                                          Class<? extends Annotation> annotation, boolean onlyPrimary,
                                          UUID identifier, boolean sync, Listener.Observation observation,
                                          Set<Class<? extends Annotation>> filterAnnotations, DataConversion keyDataConversion, DataConversion valueDataConversion, boolean useStorageFormat) {
-         super(invocation, filter, converter, annotation, onlyPrimary, true, identifier, sync, observation, filterAnnotations, keyDataConversion, valueDataConversion, useStorageFormat);
+         super(encoderRegistry, invocation, filter, converter, annotation, onlyPrimary, true, identifier, sync, observation, filterAnnotations, keyDataConversion, valueDataConversion, useStorageFormat);
          this.handler = handler;
       }
 
@@ -1714,6 +1718,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
    protected static class BaseCacheEntryListenerInvocation<K, V> implements CacheEntryListenerInvocation<K, V> {
 
+      private final EncoderRegistry encoderRegistry;
       protected final ListenerInvocation<Event<K, V>> invocation;
       protected final CacheEventFilter<? super K, ? super V> filter;
       protected final CacheEventConverter<? super K, ? super V, ?> converter;
@@ -1731,7 +1736,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       protected final Set<Class<? extends Annotation>> filterAnnotations;
 
 
-      protected BaseCacheEntryListenerInvocation(ListenerInvocation<Event<K, V>> invocation,
+      protected BaseCacheEntryListenerInvocation(EncoderRegistry encoderRegistry, ListenerInvocation<Event<K, V>> invocation,
                                                  CacheEventFilter<? super K, ? super V> filter,
                                                  CacheEventConverter<? super K, ? super V, ?> converter,
                                                  Class<? extends Annotation> annotation, boolean onlyPrimary,
@@ -1739,6 +1744,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                                                  Listener.Observation observation,
                                                  Set<Class<? extends Annotation>> filterAnnotations, DataConversion keyDataConversion,
                                                  DataConversion valueDataConversion, boolean useStorageFormat) {
+         this.encoderRegistry = encoderRegistry;
          this.invocation = invocation;
          this.filter = filter;
          this.converter = converter;
@@ -1979,14 +1985,22 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                }
             }
          }
-         Object convertedKey = keyDataConversion.convertToRequestFormat(eventImpl.getKey(), keyFromFormat);
-         Object convertedValue = valueDataConversion.convertToRequestFormat(newValue, valueFromFormat);
-         Object convertedOlfValue = valueDataConversion.convertToRequestFormat(eventImpl.getOldValue(), valueFromFormat);
+         Object convertedKey = convertToRequestFormat(eventImpl.getKey(), keyFromFormat, keyDataConversion);
+         Object convertedValue = convertToRequestFormat(newValue, valueFromFormat, valueDataConversion);
+         Object convertedOlfValue = convertToRequestFormat(eventImpl.getOldValue(), valueFromFormat, valueDataConversion);
          EventImpl<K, V> clone = eventImpl.clone();
          clone.setKey((K) convertedKey);
          clone.setValue((V) convertedValue);
          clone.setOldValue((V) convertedOlfValue);
          return clone;
+      }
+
+      private Object convertToRequestFormat(Object object, MediaType objectFormat, DataConversion dataConversion) {
+         if (object == null) return null;
+         MediaType requestMediaType = dataConversion.getRequestMediaType();
+         if (requestMediaType == null) return dataConversion.fromStorage(object);
+         Transcoder transcoder = encoderRegistry.getTranscoder(objectFormat, requestMediaType);
+         return transcoder.transcode(object, objectFormat, requestMediaType);
       }
 
       @Override

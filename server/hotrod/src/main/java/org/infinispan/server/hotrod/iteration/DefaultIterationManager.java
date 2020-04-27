@@ -35,6 +35,8 @@ import org.infinispan.encoding.DataConversion;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.server.hotrod.OperationStatus;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
@@ -147,8 +149,10 @@ public class DefaultIterationManager implements IterationManager {
       String iterationId = Util.threadLocalRandomUUID().toString();
       AdvancedCache<Object, Object> advancedCache = cache.getAdvancedCache();
 
+      EmbeddedCacheManager cacheManager = cache.getAdvancedCache().getCacheManager();
+      EncoderRegistry encoderRegistry = cacheManager.getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
       DataConversion valueDataConversion = advancedCache.getValueDataConversion();
-      Function<Object, Object> unmarshaller = p -> valueDataConversion.convert(p, requestValueType, APPLICATION_OBJECT);
+      Function<Object, Object> unmarshaller = p -> encoderRegistry.convert(p, requestValueType, APPLICATION_OBJECT);
 
       MediaType storageMediaType = advancedCache.getValueDataConversion().getStorageMediaType();
 

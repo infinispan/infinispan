@@ -146,4 +146,10 @@ public class EncoderRegistryImpl implements EncoderRegistry {
       return wrapper;
    }
 
+   @Override
+   public Object convert(Object o, MediaType from, MediaType to) {
+      if (o == null) return null;
+      Transcoder transcoder = getTranscoder(from, to);
+      return transcoder.transcode(o, from, to);
+   }
 }

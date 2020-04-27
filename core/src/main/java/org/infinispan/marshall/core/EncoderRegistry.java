@@ -39,4 +39,16 @@ public interface EncoderRegistry {
    <T extends Transcoder> T getTranscoder(Class<T> clazz);
 
    boolean isConversionSupported(MediaType from, MediaType to);
+
+   /**
+    * Performs a data conversion.
+    *
+    * @param o object to convert
+    * @param from the object MediaType
+    * @param to the format to convert to
+    * @return the object converted.
+    * @since 11.0
+    */
+   Object convert(Object o, MediaType from, MediaType to);
+
 }

@@ -9,7 +9,7 @@ import java.util.Optional;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.encoding.DataConversion;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.operations.exceptions.UnacceptableDataFormatException;
@@ -50,11 +50,10 @@ final class MediaTypeUtils {
    static MediaType negotiateMediaType(AdvancedCache<?, ?> cache, RestRequest restRequest) throws UnacceptableDataFormatException {
       try {
          String accept = restRequest.getAcceptHeader();
-
-         DataConversion valueDataConversion = cache.getValueDataConversion();
-
+         EncoderRegistry registry = SecurityActions.getEncoderRegistry(cache);
+         MediaType storageMedia = cache.getValueDataConversion().getStorageMediaType();
          Optional<MediaType> negotiated = MediaType.parseList(accept)
-               .filter(valueDataConversion::isConversionSupported)
+               .filter(media -> registry.isConversionSupported(storageMedia, media))
                .findFirst();
 
          return negotiated.map(m -> {

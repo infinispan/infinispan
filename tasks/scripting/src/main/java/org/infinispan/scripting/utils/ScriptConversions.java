@@ -38,7 +38,7 @@ public final class ScriptConversions {
          DataConversion valueDataConversion = context.getCache().get().getAdvancedCache().getValueDataConversion();
          MediaType requestMediaType = valueDataConversion.getRequestMediaType();
          contextParams.forEach((s, o) -> {
-            Object c = requestMediaType == null ? o : valueDataConversion.convert(o, valueDataConversion.getRequestMediaType(), APPLICATION_OBJECT);
+            Object c = requestMediaType == null ? o : encoderRegistry.convert(o, valueDataConversion.getRequestMediaType(), APPLICATION_OBJECT);
             converted.put(s, c);
          });
          return converted;
