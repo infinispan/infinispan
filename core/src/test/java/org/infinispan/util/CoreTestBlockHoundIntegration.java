@@ -83,6 +83,9 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
 
       builder.allowBlockingCallsInside(CacheListenerVisibilityTest.EntryModifiedWithAssertListener.class.getName(), "entryCreated");
       builder.allowBlockingCallsInside(CacheListenerVisibilityTest.EntryCreatedWithAssertListener.class.getName(), "entryCreated");
+
+      CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, BlockingLocalTopologyManager.class);
+      CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, AbstractControlledLocalTopologyManager.class);
    }
 
    private static void writeJUnitReport(String testName, Throwable throwable, String type) {
