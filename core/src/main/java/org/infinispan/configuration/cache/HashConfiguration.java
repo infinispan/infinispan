@@ -66,7 +66,9 @@ public class HashConfiguration implements Matchable<HashConfiguration>, Configur
 
    /**
     * The consistent hash factory in use.
+    * @deprecated Since 11.0. Will be removed in 14.0, the segment allocation will no longer be customizable.
     */
+   @Deprecated
    public ConsistentHashFactory<?> consistentHashFactory() {
        return consistentHashFactory.get();
    }
@@ -140,11 +142,8 @@ public class HashConfiguration implements Matchable<HashConfiguration>, Configur
          return false;
       HashConfiguration other = (HashConfiguration) obj;
       if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      return true;
+         return other.attributes == null;
+      } else return attributes.equals(other.attributes);
    }
 
    @Override
