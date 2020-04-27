@@ -324,6 +324,7 @@
                      <useStandardDocletOptions>true</useStandardDocletOptions>
                      <additionalOptions>
                         <additionalOption>--allow-script-in-comments</additionalOption>
+                        <additionalOption>--excludeGeneratedBy org.jboss.logging.processor.generator.model.MessageLoggerImplementor</additionalOption>
                      </additionalOptions>
                      <release>8</release>
                      <additionalJOptions>
