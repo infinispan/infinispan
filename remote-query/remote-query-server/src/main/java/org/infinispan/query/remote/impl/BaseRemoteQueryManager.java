@@ -6,6 +6,10 @@ import java.util.Map;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.remote.client.impl.QueryRequest;
@@ -13,12 +17,15 @@ import org.infinispan.query.remote.client.impl.QueryRequest;
 /**
  * @since 9.4
  */
+@Scope(Scopes.NAMED_CACHE)
 abstract class BaseRemoteQueryManager implements RemoteQueryManager {
 
    final AdvancedCache<?, ?> cache;
    private final QuerySerializers querySerializers;
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;
+
+   @Inject protected EncoderRegistry encoderRegistry;
 
    BaseRemoteQueryManager(AdvancedCache<?, ?> cache, QuerySerializers querySerializers) {
       this.cache = cache;
@@ -40,15 +47,11 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
    }
 
    public Object convertKey(Object key, MediaType destinationFormat) {
-      DataConversion keyDataConversion = getKeyDataConversion();
-      MediaType storageMediaType = keyDataConversion.getStorageMediaType();
-      return keyDataConversion.convert(key, storageMediaType, destinationFormat);
+      return encoderRegistry.convert(key, keyDataConversion.getStorageMediaType(), destinationFormat);
    }
 
    public Object convertValue(Object value, MediaType destinationFormat) {
-      DataConversion valueDataConversion = getValueDataConversion();
-      MediaType storageMediaType = valueDataConversion.getStorageMediaType();
-      return valueDataConversion.convert(value, storageMediaType, destinationFormat);
+      return encoderRegistry.convert(value, valueDataConversion.getStorageMediaType(), destinationFormat);
    }
 
    @Override

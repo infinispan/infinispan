@@ -7,13 +7,14 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.health.Health;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
-import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheManagerHealthAction;
+import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 
 /**
  * SecurityActions for the org.infinispan.rest.cachemanager package.
@@ -47,5 +48,9 @@ final class SecurityActions {
 
    static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
       return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
+   }
+
+   public static EncoderRegistry getEncoderRegistry(AdvancedCache<?, ?> cache) {
+      return doPrivileged(() -> cache.getCacheManager().getGlobalComponentRegistry().getComponent(EncoderRegistry.class));
    }
 }

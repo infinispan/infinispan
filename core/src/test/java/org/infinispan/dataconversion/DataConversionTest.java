@@ -65,10 +65,10 @@ public class DataConversionTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(
             createCacheManager(TestDataSCI.INSTANCE, cfg)) {
 
-         private final DataConversion conversion = cm.getCache().getAdvancedCache().getValueDataConversion();
+         private final EncoderRegistry registry = cm.getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
 
          public Object asStored(Object object) {
-            return conversion.convert(object, APPLICATION_OBJECT, APPLICATION_PROTOSTREAM);
+            return registry.convert(object, APPLICATION_OBJECT, APPLICATION_PROTOSTREAM);
          }
 
          @Override

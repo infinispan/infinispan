@@ -78,7 +78,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       ClusterEventManager cem = mock(ClusterEventManager.class);
       when(cem.sendEvents()).thenReturn(CompletableFutures.completedNull());
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
-                         mock(InternalEntryFactory.class), cem, mock(KeyPartitioner.class),
+                         mock(InternalEntryFactory.class), cem, mock(KeyPartitioner.class), new FakeEncoderRegistry(),
                          TestingUtil.named(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR, new WithinThreadExecutor()),
                          TestingUtil.named(KnownComponentNames.NON_BLOCKING_EXECUTOR, new WithinThreadExecutor()));
       cl = new CacheListener();

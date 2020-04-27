@@ -27,7 +27,6 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.encoding.DataConversion;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
@@ -130,21 +129,21 @@ class ClientListenerRegistry {
          if (hasConverter) {
             if (filterFactory.equals(converterFactory)) {
                List<byte[]> binaryParams = binaryFilterParams.isEmpty() ? binaryConverterParams : binaryFilterParams;
-               CacheEventFilterConverter<byte[], byte[], byte[]> filterConverter = getFilterConverter(cache.getValueDataConversion(), h.getValueMediaType(),
+               CacheEventFilterConverter<byte[], byte[], byte[]> filterConverter = getFilterConverter(h.getValueMediaType(),
                      filterFactory, useRawData, binaryParams);
                filter = filterConverter;
                converter = filterConverter;
             } else {
-               filter = getFilter(cache.getValueDataConversion(), h.getValueMediaType(), filterFactory, useRawData, binaryFilterParams);
-               converter = getConverter(cache.getValueDataConversion(), h.getValueMediaType(), converterFactory, useRawData, binaryConverterParams);
+               filter = getFilter(h.getValueMediaType(), filterFactory, useRawData, binaryFilterParams);
+               converter = getConverter(h.getValueMediaType(), converterFactory, useRawData, binaryConverterParams);
             }
          } else {
-            filter = getFilter(cache.getValueDataConversion(), h.getValueMediaType(), filterFactory, useRawData, binaryFilterParams);
+            filter = getFilter(h.getValueMediaType(), filterFactory, useRawData, binaryFilterParams);
             converter = null;
          }
       } else if (hasConverter) {
          filter = null;
-         converter = getConverter(cache.getValueDataConversion(), h.getValueMediaType(), converterFactory, useRawData, binaryConverterParams);
+         converter = getConverter(h.getValueMediaType(), converterFactory, useRawData, binaryConverterParams);
       } else {
          filter = null;
          converter = null;
@@ -189,21 +188,21 @@ class ClientListenerRegistry {
       }
    }
 
-   private CacheEventFilter<byte[], byte[]> getFilter(DataConversion valueDataConversion, MediaType requestMedia, String name, Boolean useRawData, List<byte[]> binaryParams) {
+   private CacheEventFilter<byte[], byte[]> getFilter(MediaType requestMedia, String name, Boolean useRawData, List<byte[]> binaryParams) {
       CacheEventFilterFactory factory = findFactory(name, cacheEventFilterFactories, "key/value filter");
-      List<?> params = unmarshallParams(valueDataConversion, requestMedia, binaryParams, useRawData);
+      List<?> params = unmarshallParams(requestMedia, binaryParams, useRawData);
       return factory.getFilter(params.toArray());
    }
 
-   private CacheEventConverter<byte[], byte[], byte[]> getConverter(DataConversion valueDataConversion, MediaType requestMedia, String name, Boolean useRawData, List<byte[]> binaryParams) {
+   private CacheEventConverter<byte[], byte[], byte[]> getConverter(MediaType requestMedia, String name, Boolean useRawData, List<byte[]> binaryParams) {
       CacheEventConverterFactory factory = findFactory(name, cacheEventConverterFactories, "converter");
-      List<?> params = unmarshallParams(valueDataConversion, requestMedia, binaryParams, useRawData);
+      List<?> params = unmarshallParams(requestMedia, binaryParams, useRawData);
       return factory.getConverter(params.toArray());
    }
 
-   private CacheEventFilterConverter<byte[], byte[], byte[]> getFilterConverter(DataConversion valueDataConversion, MediaType requestMedia, String name, boolean useRawData, List<byte[]> binaryParams) {
+   private CacheEventFilterConverter<byte[], byte[], byte[]> getFilterConverter(MediaType requestMedia, String name, boolean useRawData, List<byte[]> binaryParams) {
       CacheEventFilterConverterFactory factory = findFactory(name, cacheEventFilterConverterFactories, "converter");
-      List<?> params = unmarshallParams(valueDataConversion, requestMedia, binaryParams, useRawData);
+      List<?> params = unmarshallParams(requestMedia, binaryParams, useRawData);
       return factory.getFilterConverter(params.toArray());
    }
 
@@ -215,9 +214,9 @@ class ClientListenerRegistry {
       return factory;
    }
 
-   private List<?> unmarshallParams(DataConversion valueDataConversion, MediaType requestMedia, List<byte[]> binaryParams, boolean useRawData) {
+   private List<?> unmarshallParams(MediaType requestMedia, List<byte[]> binaryParams, boolean useRawData) {
       if (useRawData) return binaryParams;
-      return binaryParams.stream().map(bp -> valueDataConversion.convert(bp, requestMedia, APPLICATION_OBJECT)).collect(Collectors.toList());
+      return binaryParams.stream().map(bp -> encoderRegistry.convert(bp, requestMedia, APPLICATION_OBJECT)).collect(Collectors.toList());
    }
 
    CompletionStage<Boolean> removeClientListener(byte[] listenerId, Cache cache) {

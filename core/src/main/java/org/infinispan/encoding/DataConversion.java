@@ -143,10 +143,18 @@ public final class DataConversion {
       return MediaType.APPLICATION_UNKNOWN;
    }
 
+   /**
+    * @deprecated Since 11.0, with no replacement.
+    */
+   @Deprecated
    public boolean isConversionSupported(MediaType mediaType) {
       return storageMediaType == null || encoderRegistry.isConversionSupported(storageMediaType, mediaType);
    }
 
+   /**
+    * @deprecated Since 11.0, with no replacement.
+    */
+   @Deprecated
    public Object convert(Object o, MediaType from, MediaType to) {
       if (o == null) return null;
       if (encoderRegistry == null) return o;
@@ -154,6 +162,10 @@ public final class DataConversion {
       return transcoder.transcode(o, from, to);
    }
 
+   /**
+    * @deprecated Since 11.0, with no replacement.
+    */
+   @Deprecated
    public Object convertToRequestFormat(Object o, MediaType contentType) {
       if (o == null) return null;
       if (requestMediaType == null) return fromStorage(o);
