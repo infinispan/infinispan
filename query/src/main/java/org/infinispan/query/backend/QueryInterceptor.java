@@ -3,6 +3,7 @@ package org.infinispan.query.backend;
 import static org.infinispan.query.impl.SegmentFieldBridge.SEGMENT_FIELD;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -56,7 +57,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationSuccessAction;
-import org.infinispan.query.impl.IndexInspector;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -91,7 +91,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    ExecutorService nonBlockingExecutor;
    @Inject protected KeyPartitioner keyPartitioner;
-   @Inject IndexInspector indexInspector;
 
    private final SearchIntegrator searchFactory;
    private final KeyTransformationHandler keyTransformationHandler;
@@ -105,6 +104,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private final InvocationSuccessAction<ClearCommand> processClearCommand = this::processClearCommand;
    private final boolean isManualIndexing;
    private final AdvancedCache<?, ?> cache;
+   private final Map<String, Class<?>> indexedEntities;
    private SegmentListener segmentListener;
 
    public QueryInterceptor(SearchIntegrator searchFactory, KeyTransformationHandler keyTransformationHandler,
@@ -118,6 +118,18 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       this.keyDataConversion = cache.getKeyDataConversion();
       this.isPersistenceEnabled = cache.getCacheConfiguration().persistence().usingStores();
       this.cache = cache;
+
+      Map<String, Class<?>> entities = new HashMap<>(2);
+      for (Class<?> c : cache.getCacheConfiguration().indexing().indexedEntities()) {
+         // include classes declared in indexing config
+         entities.put(c.getName(), c);
+      }
+      for (IndexedTypeIdentifier typeIdentifier : searchFactory.getIndexBindings().keySet()) {
+         // include possible programmatically declared classes via SearchMapping
+         Class<?> c = typeIdentifier.getPojoType();
+         entities.put(c.getName(), c);
+      }
+      indexedEntities = Collections.unmodifiableMap(entities);
    }
 
    @Start
@@ -384,7 +396,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * The indexed classes.
     */
    public Map<String, Class<?>> indexedEntities() {
-      return indexInspector.getIndexedEntities();
+      return indexedEntities;
+   }
+
+   private boolean isIndexedType(Object value) {
+      return value != null && indexedEntities.containsValue(value.getClass());
    }
 
    private Object extractValue(Object storedValue) {
@@ -430,7 +446,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
             if (shouldModifyIndexes(command, ctx, storedKey)) {
                removeFromIndexes(transactionContext, key, segment);
             }
-         } else if (indexInspector.isIndexedType(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
+         } else if (isIndexedType(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
                && shouldModifyIndexes(command, ctx, storedKey)) {
             removeFromIndexes(oldValue, key, transactionContext, segment);
          } else if (trace) {
@@ -439,7 +455,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       } else if (trace) {
          log.tracef("Skipped index cleanup for command %s", command);
       }
-      if (indexInspector.isIndexedType(newValue)) {
+      if (isIndexedType(newValue)) {
          if (shouldModifyIndexes(command, ctx, storedKey)) {
             // This means that the entry is just modified so we need to update the indexes and not add to them.
             updateIndexes(skipIndexCleanup, newValue, key, transactionContext, segment);
