@@ -1,11 +1,13 @@
 package org.infinispan.context.impl;
 
 import java.util.Collection;
+import java.util.concurrent.CompletionStage;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 
+import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 
@@ -63,5 +65,29 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext<LocalT
    @Override
    public final Transaction getTransaction() {
       return getCacheTransaction().getTransaction();
+   }
+
+   /**
+    * @return {@code true} if there is an {@link IracMetadata} stored for {@code key}.
+    */
+   public boolean hasIracMetadata(Object key) {
+      return getCacheTransaction().hasIracMetadata(key);
+   }
+
+   /**
+    * Stores the {@link IracMetadata} associated with {@code key}.
+    *
+    * @param key      The key.
+    * @param metadata The {@link CompletionStage} that will be completed with {@link IracMetadata} to associate.
+    */
+   public void storeIracMetadata(Object key, CompletionStage<IracMetadata> metadata) {
+      getCacheTransaction().storeIracMetadata(key, metadata);
+   }
+
+   /**
+    * @return The {@link IracMetadata} associated with {@code key}.
+    */
+   public CompletionStage<IracMetadata> getIracMetadata(Object key) {
+      return getCacheTransaction().getIracMetadata(key);
    }
 }

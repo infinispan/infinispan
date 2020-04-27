@@ -1,5 +1,7 @@
 package org.infinispan.xsite;
 
+import org.infinispan.Cache;
+
 /**
  * {@link org.infinispan.xsite.BackupReceiverRepository} delegator. Mean to be overridden. For test purpose only!
  *
@@ -17,5 +19,10 @@ public abstract class BackupReceiverRepositoryDelegator implements BackupReceive
    @Override
    public BackupReceiver getBackupReceiver(String originSiteName, String cacheName) {
       return delegate.getBackupReceiver(originSiteName, cacheName);
+   }
+
+   @Override
+   public BackupReceiver getBackupReceiver(Cache<Object, Object> cache) {
+      return delegate.getBackupReceiver(cache);
    }
 }

@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -44,7 +45,6 @@ import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.CustomFailurePolicy;
-import org.infinispan.configuration.cache.SitesConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -80,7 +80,7 @@ import net.jcip.annotations.GuardedBy;
 @Scope(Scopes.NAMED_CACHE)
 public class BackupSenderImpl implements BackupSender {
 
-   private static Log log = LogFactory.getLog(BackupSenderImpl.class);
+   private static final Log log = LogFactory.getLog(BackupSenderImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
    @Inject ComponentRef<Cache<Object,Object>> cache;
@@ -109,17 +109,17 @@ public class BackupSenderImpl implements BackupSender {
       transport.checkCrossSiteAvailable();
       this.cacheName = cache.wired().getName();
       this.localSiteName = transport.localSiteName();
-      for (BackupConfiguration bc : config.sites().enabledBackups()) {
-         if (bc.backupFailurePolicy() == BackupFailurePolicy.CUSTOM) {
-            String backupPolicy = bc.failurePolicyClass();
-            if (backupPolicy == null) {
-               throw new IllegalStateException("Backup policy class missing for custom failure policy!");
-            }
-            CustomFailurePolicy<Object, Object> instance = Util.getInstance(backupPolicy, globalConfig.classLoader());
-            instance.init(cache.wired());
-            siteFailurePolicy.put(bc.site(), instance);
-         }
-      }
+      config.sites().syncBackupsStream()
+            .filter(bc ->  bc.backupFailurePolicy() == BackupFailurePolicy.CUSTOM)
+            .forEach(bc -> {
+               String backupPolicy = bc.failurePolicyClass();
+               if (backupPolicy == null) {
+                  throw new IllegalStateException("Backup policy class missing for custom failure policy!");
+               }
+               CustomFailurePolicy<Object, Object> instance = Util.getInstance(backupPolicy, globalConfig.classLoader());
+               instance.init(cache.wired());
+               siteFailurePolicy.put(bc.site(), instance);
+            });
    }
 
    @Override
@@ -145,6 +145,12 @@ public class BackupSenderImpl implements BackupSender {
    public InvocationStage backupWrite(WriteCommand command, WriteCommand originalCommand) {
       List<XSiteBackup> xSiteBackups = calculateBackupInfo(BackupFilter.KEEP_ALL);
       return backupCommand(command, originalCommand, xSiteBackups, null);
+   }
+
+   @Override
+   public InvocationStage backupClear(ClearCommand command) {
+      List<XSiteBackup> xSiteBackups = calculateBackupInfo(BackupFilter.KEEP_ALL);
+      return backupCommand(command, command, xSiteBackups, null);
    }
 
    @Override
@@ -207,28 +213,26 @@ public class BackupSenderImpl implements BackupSender {
 
    private List<XSiteBackup> calculateBackupInfo(BackupFilter backupFilter) {
       List<XSiteBackup> backupInfo = new ArrayList<>(2);
-      SitesConfiguration sites = config.sites();
-      for (BackupConfiguration bc : sites.enabledBackups()) {
+      Iterator<BackupConfiguration> iterator = config.sites().syncBackupsStream().iterator();
+      while (iterator.hasNext()){
+         BackupConfiguration bc = iterator.next();
          if (bc.site().equals(localSiteName)) {
             log.cacheBackupsDataToSameSite(localSiteName);
             continue;
          }
-         boolean isSync = bc.strategy() == BackupConfiguration.BackupStrategy.SYNC;
-         if (backupFilter == BackupFilter.KEEP_1PC_ONLY) {
-            if (isSync && bc.isTwoPhaseCommit())
-               continue;
+         boolean is2PC = bc.isTwoPhaseCommit();
+         if (backupFilter == BackupFilter.KEEP_1PC_ONLY && is2PC) {
+            continue;
          }
 
-         if (backupFilter == BackupFilter.KEEP_2PC_ONLY) {
-            if (!isSync || (!bc.isTwoPhaseCommit()))
-               continue;
+         if (backupFilter == BackupFilter.KEEP_2PC_ONLY && !is2PC) {
+            continue;
          }
-
          if (takeOfflineManager.getSiteState(bc.site()) == SiteState.OFFLINE) {
             log.tracef("The site '%s' is offline, not backing up information to it", bc.site());
             continue;
          }
-         XSiteBackup bi = new XSiteBackup(bc.site(), isSync, bc.replicationTimeout());
+         XSiteBackup bi = new XSiteBackup(bc.site(), true, bc.replicationTimeout());
          backupInfo.add(bi);
       }
       return backupInfo;
@@ -381,109 +385,109 @@ public class BackupSenderImpl implements BackupSender {
       }
 
       @Override
-      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
          failurePolicy.handlePutFailure(site, command.getKey(), command.getValue(), command.isPutIfAbsent());
          return null;
       }
 
       @Override
-      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
          failurePolicy.handleRemoveFailure(site, command.getKey(), command.getValue());
          return null;
       }
 
       @Override
-      public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
          failurePolicy.handleReplaceFailure(site, command.getKey(), command.getOldValue(), command.getNewValue());
          return null;
       }
 
       @Override
-      public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
+      public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) {
          failurePolicy.handleComputeFailure(site, command.getKey(), command.getRemappingBiFunction(), command.isComputeIfPresent());
          return null;
       }
 
       @Override
-      public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+      public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) {
          failurePolicy.handleComputeIfAbsentFailure(site, command.getKey(), command.getMappingFunction());
          return null;
       }
 
       @Override
-      public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+      public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) {
          failurePolicy.handleWriteOnlyKeyFailure(site, command.getKey());
          return null;
       }
 
       @Override
-      public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+      public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) {
          failurePolicy.handleReadWriteKeyValueFailure(site, command.getKey());
          return null;
       }
 
       @Override
-      public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+      public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) {
          failurePolicy.handleReadWriteKeyFailure(site, command.getKey());
          return null;
       }
 
       @Override
-      public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+      public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) {
          failurePolicy.handleWriteOnlyManyEntriesFailure(site, command.getArguments());
          return null;
       }
 
       @Override
-      public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+      public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) {
          failurePolicy.handleWriteOnlyKeyValueFailure(site, command.getKey());
          return null;
       }
 
       @Override
-      public Object visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+      public Object visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) {
          failurePolicy.handleWriteOnlyManyFailure(site, command.getAffectedKeys());
          return null;
       }
 
       @Override
-      public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+      public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) {
          failurePolicy.handleReadWriteManyFailure(site, command.getAffectedKeys());
          return null;
       }
 
       @Override
-      public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+      public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) {
          failurePolicy.handleReadWriteManyEntriesFailure(site, command.getArguments());
          return null;
       }
 
       @Override
-      public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      public Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
          failurePolicy.handleClearFailure(site);
          return null;
       }
 
       @Override
-      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
          failurePolicy.handlePutAllFailure(site, command.getMap());
          return null;
       }
 
       @Override
-      public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
          failurePolicy.handlePrepareFailure(site, tx);
          return null;
       }
 
       @Override
-      public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+      public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) {
          failurePolicy.handleRollbackFailure(site, tx);
          return null;
       }
 
       @Override
-      public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) {
          failurePolicy.handleCommitFailure(site, tx);
          return null;
       }

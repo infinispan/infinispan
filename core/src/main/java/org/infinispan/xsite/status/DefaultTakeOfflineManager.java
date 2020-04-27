@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.factories.annotations.Inject;
@@ -71,11 +70,11 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
 
    @Start
    public void start() {
-      for (BackupConfiguration bc : config.sites().enabledBackups()) {
+      config.sites().enabledBackupStream().forEach(bc -> {
          final String siteName = bc.site();
          OfflineStatus offline = new OfflineStatus(bc.takeOffline(), timeService, new Listener(siteName));
          offlineStatus.put(siteName, offline);
-      }
+      });
    }
 
    @Override

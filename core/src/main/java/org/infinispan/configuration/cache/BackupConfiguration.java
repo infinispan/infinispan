@@ -98,6 +98,10 @@ public class BackupConfiguration implements ConfigurationInfo {
       return strategy() == BackupStrategy.ASYNC;
    }
 
+   public boolean isSyncBackup() {
+      return strategy() == BackupStrategy.SYNC;
+   }
+
    public long replicationTimeout() {
       return replicationTimeout.get();
    }

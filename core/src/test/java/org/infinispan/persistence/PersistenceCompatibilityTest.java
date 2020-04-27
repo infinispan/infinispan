@@ -135,11 +135,4 @@ public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManager
       return builder;
    }
 
-   public interface KeyValueWrapper<K, V, T> {
-
-      T wrap(K key, V value);
-
-      V unwrap(T object);
-
-   }
 }

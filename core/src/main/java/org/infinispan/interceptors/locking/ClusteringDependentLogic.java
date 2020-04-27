@@ -178,6 +178,8 @@ public interface ClusteringDependentLogic {
 
    Address getAddress();
 
+   <K, V> EntryLoader<K, V> getEntryLoader();
+
    @Scope(Scopes.NAMED_CACHE)
    abstract class AbstractClusteringDependentLogic implements ClusteringDependentLogic {
       @Inject protected ComponentRegistry componentRegistry;
@@ -313,6 +315,12 @@ public interface ClusteringDependentLogic {
       @Override
       public Address getAddress() {
          return getCacheTopology().getLocalAddress();
+      }
+
+      @Override
+      public final <K, V> EntryLoader<K, V> getEntryLoader() {
+         //noinspection unchecked
+         return (EntryLoader<K, V>) entryLoader;
       }
    }
 

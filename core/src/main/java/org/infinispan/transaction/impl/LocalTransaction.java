@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 import javax.transaction.Transaction;
 
@@ -17,11 +18,14 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Object that holds transaction's state on the node where it originated; as opposed to {@link RemoteTransaction}.
@@ -45,6 +49,9 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    private boolean prepareSent;
    private boolean commitOrRollbackSent;
+
+   @GuardedBy("this")
+   private Map<Object, CompletionStage<IracMetadata>> iracMetadata;
 
    public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int topologyId,
                            long txCreationTime) {
@@ -229,6 +236,34 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
     */
    public final boolean isCommitOrRollbackSent() {
       return commitOrRollbackSent;
+   }
+
+   /**
+    * @return {@code true} if there is an {@link IracMetadata} stored for {@code key}.
+    */
+   public synchronized boolean hasIracMetadata(Object key) {
+      return iracMetadata != null && iracMetadata.containsKey(key);
+   }
+
+   /**
+    * Stores the {@link IracMetadata} associated with {@code key}.
+    *
+    * @param key      The key.
+    * @param metadata The {@link CompletionStage} that will be completed with {@link IracMetadata} to associate.
+    */
+   public synchronized void storeIracMetadata(Object key, CompletionStage<IracMetadata> metadata) {
+      if (iracMetadata == null) {
+         iracMetadata = new HashMap<>();
+      }
+      CompletionStage<IracMetadata> old = iracMetadata.put(key, metadata);
+      assert old == null : "[IRAC] irac metadata replaced!";
+   }
+
+   /**
+    * @return The {@link IracMetadata} associated with {@code key}.
+    */
+   public synchronized CompletionStage<IracMetadata> getIracMetadata(Object key) {
+      return iracMetadata == null ? null : iracMetadata.get(key);
    }
 
 }

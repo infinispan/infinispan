@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Paths;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.IdentityKeyValueWrapper;
 import org.infinispan.persistence.PersistenceCompatibilityTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
@@ -22,17 +23,7 @@ public class JdbcStoreCompatibilityTest extends PersistenceCompatibilityTest<Str
    private static final String DATA_10_1_FOLDER = "10_1_x_jdbc_data";
 
    public JdbcStoreCompatibilityTest() {
-      super(new KeyValueWrapper<String, String, String>() {
-         @Override
-         public String wrap(String key, String value) {
-            return value;
-         }
-
-         @Override
-         public String unwrap(String value) {
-            return value;
-         }
-      });
+      super(IdentityKeyValueWrapper.instance());
    }
 
    @Override

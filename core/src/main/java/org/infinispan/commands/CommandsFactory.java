@@ -25,6 +25,13 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracClearKeysCommand;
+import org.infinispan.commands.irac.IracMetadataRequestCommand;
+import org.infinispan.commands.irac.IracPutKeyCommand;
+import org.infinispan.commands.irac.IracRemoveKeyCommand;
+import org.infinispan.commands.irac.IracRequestStateCommand;
+import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -78,6 +85,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.ComponentRegistry;
@@ -89,6 +97,7 @@ import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
@@ -614,4 +623,18 @@ public interface CommandsFactory {
    CheckTransactionRpcCommand buildCheckTransactionRpcCommand(Collection<GlobalTransaction> globalTransactions);
 
    TouchCommand buildTouchCommand(Object key, int segment);
+
+   <K,V> IracPutKeyCommand buildIracPutKeyCommand(InternalCacheEntry<K, V> entry);
+
+   IracRemoveKeyCommand buildIracRemoveKeyCommand(Object key, IracMetadata iracMetadata);
+
+   IracClearKeysCommand buildIracClearKeysCommand();
+
+   IracCleanupKeyCommand buildIracCleanupKeyCommand(Object key, Object lockOwner, IracMetadata tombstone);
+
+   IracMetadataRequestCommand buildIracMetadataRequestCommand(int segment);
+
+   IracRequestStateCommand buildIracRequestStateCommand(IntSet segments);
+
+   IracStateResponseCommand buildIracStateResponseCommand(Object key, Object lockOwner, IracMetadata tombstone);
 }

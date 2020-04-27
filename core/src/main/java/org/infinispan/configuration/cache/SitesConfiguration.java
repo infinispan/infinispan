@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -76,11 +79,11 @@ public class SitesConfiguration implements Matchable<SitesConfiguration>, Config
     * Returns the list of {@link BackupConfiguration} that have {@link org.infinispan.configuration.cache.BackupConfiguration#enabled()} == true.
     */
    public List<BackupConfiguration> enabledBackups() {
-      List<BackupConfiguration> result = new ArrayList<>();
-      for (BackupConfiguration bc : allBackups) {
-         if (bc.enabled()) result.add(bc);
-      }
-      return result;
+      return enabledBackupStream().collect(Collectors.toList());
+   }
+
+   public Stream<BackupConfiguration> enabledBackupStream() {
+      return allBackups.stream().filter(BackupConfiguration::enabled);
    }
 
    /**
@@ -109,10 +112,23 @@ public class SitesConfiguration implements Matchable<SitesConfiguration>, Config
    }
 
    public boolean hasEnabledBackups() {
-      for (BackupConfiguration bc : allBackups) {
-         if (bc.enabled()) return true;
-      }
-      return false;
+      return allBackups.stream().anyMatch(BackupConfiguration::enabled);
+   }
+
+   public boolean hasSyncEnabledBackups() {
+      return enabledBackupStream().anyMatch(BackupConfiguration::isSyncBackup);
+   }
+
+   public Stream<BackupConfiguration> syncBackupsStream() {
+      return enabledBackupStream().filter(BackupConfiguration::isSyncBackup);
+   }
+
+   public boolean hasAsyncEnabledBackups() {
+      return enabledBackupStream().anyMatch(BackupConfiguration::isAsyncBackup);
+   }
+
+   public Stream<BackupConfiguration> asyncBackupsStream() {
+      return enabledBackupStream().filter(BackupConfiguration::isAsyncBackup);
    }
 
    public Set<String> inUseBackupSites() {
@@ -141,17 +157,8 @@ public class SitesConfiguration implements Matchable<SitesConfiguration>, Config
       if (getClass() != obj.getClass())
          return false;
       SitesConfiguration other = (SitesConfiguration) obj;
-      if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      if (backupFor == null) {
-         if (other.backupFor != null)
-            return false;
-      } else if (!backupFor.equals(other.backupFor))
-         return false;
-      return true;
+      return Objects.equals(attributes, other.attributes) &&
+            Objects.equals(backupFor, other.backupFor);
    }
 
    @Override

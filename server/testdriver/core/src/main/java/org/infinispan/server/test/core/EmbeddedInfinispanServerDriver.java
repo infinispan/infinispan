@@ -38,7 +38,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    }
 
    protected int clusterPortOffset() {
-      return 0;
+      return configuration.site() == null ? 0 : configuration.sitePortOffset();
    }
 
    @Override
@@ -53,6 +53,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
          properties.setProperty(Server.INFINISPAN_PORT_OFFSET, Integer.toString(clusterPortOffset() + i * OFFSET_FACTOR));
          properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, name);
          properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
+         configureSite(properties);
          configuration.properties().forEach((k, v) -> properties.put(k, StringPropertyReplacer.replaceProperties((String) v, properties)));
          Server server = new Server(serverRoot, new File(configurationFile), properties);
          server.setExitHandler(new DefaultExitHandler());
@@ -142,5 +143,16 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    @Override
    public int getTimeout() {
       return TIMEOUT_SECONDS;
+   }
+
+   private void configureSite(Properties properties) {
+      if (configuration.site() == null) {
+         return; //nothing to configure
+      }
+      //we need to replace the properties in xsite-stacks.xml
+      properties.setProperty("relay.site_name", configuration.site());
+      properties.setProperty("jgroups.cluster.mcast_port", Integer.toString(configuration.siteDiscoveryPort()));
+      properties.setProperty("jgroups.tcp.port", Integer.toString(7800 + clusterPortOffset()));
+
    }
 }
