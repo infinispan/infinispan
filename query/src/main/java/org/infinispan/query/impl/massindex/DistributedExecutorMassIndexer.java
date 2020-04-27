@@ -13,7 +13,6 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
@@ -21,7 +20,6 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
-import org.infinispan.query.impl.IndexInspector;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -47,9 +45,6 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    private final ClusterExecutor executor;
    private final BlockingManager blockingManager;
    private final MassIndexLock lock;
-
-   @Inject
-   IndexInspector indexInspector;
 
    private static final TriConsumer<Address, Void, Throwable> TRI_CONSUMER = (a, v, t) -> {
       if (t != null) {

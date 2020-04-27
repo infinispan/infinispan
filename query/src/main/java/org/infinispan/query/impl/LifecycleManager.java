@@ -108,9 +108,6 @@ public class LifecycleManager implements ModuleLifecycle {
             KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler(aggregatedClassLoader);
             cr.registerComponent(keyTransformationHandler, KeyTransformationHandler.class);
 
-            IndexInspector indexInspector = new IndexInspector(cfg, searchFactory);
-            cr.registerComponent(indexInspector, IndexInspector.class);
-
             createQueryInterceptorIfNeeded(cr, cfg, cache, searchFactory, keyTransformationHandler);
 
             cr.registerComponent(new QueryBox(), QueryBox.class);

@@ -34,9 +34,10 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
       this.valueDataConversion = cache.getValueDataConversion();
    }
 
+   @Override
    public byte[] executeQuery(String queryString, Map<String, Object> namedParametersMap, Integer offset, Integer maxResults,
-                              IndexedQueryMode queryMode, AdvancedCache cache, MediaType outputFormat) {
-      QuerySerializer querySerializer = querySerializers.getSerializer(outputFormat);
+                              IndexedQueryMode queryMode, AdvancedCache<?, ?> cache, MediaType outputFormat) {
+      QuerySerializer<?> querySerializer = querySerializers.getSerializer(outputFormat);
       Query query = getQueryEngine(cache).makeQuery(queryString, namedParametersMap, offset, maxResults, queryMode);
       List<Object> results = query.list();
       int totalResults = query.getResultSize();
