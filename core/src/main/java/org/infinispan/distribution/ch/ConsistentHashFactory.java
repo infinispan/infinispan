@@ -20,7 +20,9 @@ import org.infinispan.remoting.transport.Address;
  *
  * @author Dan Berindei
  * @since 5.2
+ * @deprecated Since 11.0. Will be removed in 14.0, the segment allocation will no longer be customizable.
  */
+@Deprecated
 public interface ConsistentHashFactory<CH extends ConsistentHash> {
 
    /**
