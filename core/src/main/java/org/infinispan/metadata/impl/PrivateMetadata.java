@@ -2,6 +2,7 @@ package org.infinispan.metadata.impl;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 
 import net.jcip.annotations.Immutable;
@@ -21,11 +22,14 @@ public final class PrivateMetadata {
    /**
     * A cached empty {@link PrivateMetadata}.
     */
-   private static final PrivateMetadata EMPTY = new PrivateMetadata();
+   private static final PrivateMetadata EMPTY = new PrivateMetadata(null);
 
-   //The following fields will be added in later PRs:
-   //IracVersion => used by IRAC (async xsite new algorithm)
-   //SimpleClusteredVersion => used by Optimistic Transactions
+   @ProtoField(number = 1)
+   final IracMetadata iracMetadata;
+
+   private PrivateMetadata(IracMetadata iracMetadata) {
+      this.iracMetadata = iracMetadata;
+   }
 
    /**
     * @return An empty instance of {@link PrivateMetadata}, i.e., without any metadata stored.
@@ -52,34 +56,58 @@ public final class PrivateMetadata {
     * It allows to do some logic before instantiate a new instance.
     */
    @ProtoFactory
-   static PrivateMetadata protostreamFactory(/*add fields later*/) {
-      return EMPTY;
+   static PrivateMetadata protoFactory(IracMetadata iracMetadata) {
+      return iracMetadata == null ? EMPTY : new PrivateMetadata(iracMetadata);
    }
 
    /**
     * @return A {@link Builder} pre-filled with the data stored in this instance.
     */
    public Builder builder() {
-      return new Builder();
+      return new Builder(this);
+   }
+
+   /**
+    * @return The {@link IracMetadata} stored. It can be {@code null}.
+    */
+   public IracMetadata iracMetadata() {
+      return iracMetadata;
    }
 
    /**
     * @return {@code true} if not metadata is stored in this instance.
     */
    public boolean isEmpty() {
-      return true;
+      return iracMetadata == null;
    }
 
    public static class Builder {
 
+      private IracMetadata iracMetadata;
+
       public Builder() {
+      }
+
+      private Builder(PrivateMetadata metadata) {
+         this.iracMetadata = metadata.iracMetadata;
       }
 
       /**
        * @return A new instance of {@link PrivateMetadata}.
        */
       public PrivateMetadata build() {
-         return EMPTY;
+         return protoFactory(iracMetadata);
+      }
+
+      /**
+       * Sets the {@link IracMetadata} to store.
+       *
+       * @param metadata The {@link IracMetadata} to store.
+       * @return This instance.
+       */
+      public Builder iracMetadata(IracMetadata metadata) {
+         this.iracMetadata = metadata;
+         return this;
       }
 
    }

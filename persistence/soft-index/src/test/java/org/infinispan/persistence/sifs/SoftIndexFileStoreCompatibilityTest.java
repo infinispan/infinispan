@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.persistence.IdentityKeyValueWrapper;
 import org.infinispan.persistence.PersistenceCompatibilityTest;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -26,17 +27,7 @@ public class SoftIndexFileStoreCompatibilityTest extends PersistenceCompatibilit
    };
 
    public SoftIndexFileStoreCompatibilityTest() {
-      super(new KeyValueWrapper<String, String, String>() {
-         @Override
-         public String wrap(String key, String value) {
-            return value;
-         }
-
-         @Override
-         public String unwrap(String value) {
-            return value;
-         }
-      });
+      super(IdentityKeyValueWrapper.instance());
    }
 
    @Override

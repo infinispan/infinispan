@@ -5,6 +5,7 @@ import javax.transaction.Transaction;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.remoting.transport.BackupResponse;
@@ -23,12 +24,14 @@ public interface BackupSender {
    /**
     * Prepares a transaction on the remote site.
     */
-   InvocationStage backupPrepare(PrepareCommand command, AbstractCacheTransaction cacheTransaction, Transaction transaction) throws Exception;
+   InvocationStage backupPrepare(PrepareCommand command, AbstractCacheTransaction cacheTransaction, Transaction transaction);
 
-   InvocationStage backupCommit(CommitCommand command, Transaction transaction) throws Exception;
+   InvocationStage backupCommit(CommitCommand command, Transaction transaction);
 
-   InvocationStage backupRollback(RollbackCommand command, Transaction transaction) throws Exception;
+   InvocationStage backupRollback(RollbackCommand command, Transaction transaction);
 
-   InvocationStage backupWrite(WriteCommand command, WriteCommand originalCommand) throws Exception;
+   InvocationStage backupWrite(WriteCommand command, WriteCommand originalCommand);
+
+   InvocationStage backupClear(ClearCommand command);
 
 }

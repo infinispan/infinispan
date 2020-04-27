@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.ImmutableContext;
 
 /**
  * Interface that describes methods used for loading entries from the underlying
@@ -28,4 +29,17 @@ public interface EntryLoader<K, V> {
     */
    CompletionStage<InternalCacheEntry<K, V>> loadAndStoreInDataContainer(InvocationContext ctx, Object key,
          int segment, FlagAffectedCommand cmd);
+
+   /**
+    * Load and store the entry if present in the data container, returning the entry in the CompletionStage.
+    *
+    * @param key     key to load from the store
+    * @param segment segment of the key to load
+    * @return stage that when complete contains the loaded entry. If the entry is non null the entry is also written
+    * into the underlying data container
+    * @since 10.0
+    */
+   default CompletionStage<InternalCacheEntry<K, V>> loadAndStoreInDataContainer(K key, int segment) {
+      return loadAndStoreInDataContainer(ImmutableContext.INSTANCE, key, segment, null);
+   }
 }

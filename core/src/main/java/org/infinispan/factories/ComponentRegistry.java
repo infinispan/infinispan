@@ -14,6 +14,7 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersionGenerator;
 import org.infinispan.container.versioning.VersionGenerator;
+import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
@@ -51,6 +52,7 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupSender;
+import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.infinispan.xsite.status.TakeOfflineManager;
 
@@ -90,6 +92,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<InternalDataContainer> internalDataContainer;
    private ComponentRef<InternalEntryFactory> internalEntryFactory;
    private ComponentRef<InvocationContextFactory> invocationContextFactory;
+   private ComponentRef<IracManager> iracManager;
+   private ComponentRef<IracVersionGenerator> iracVersionGenerator;
    private ComponentRef<LocalPublisherManager> localPublisherManager;
    private ComponentRef<LockManager> lockManager;
    private ComponentRef<OrderedUpdatesManager> orderedUpdatesManager;
@@ -366,6 +370,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       internalEntryFactory = basicComponentRegistry.getComponent(InternalEntryFactory.class);
       internalMarshaller = basicComponentRegistry.getComponent(KnownComponentNames.INTERNAL_MARSHALLER, StreamingMarshaller.class);
       invocationContextFactory = basicComponentRegistry.getComponent(InvocationContextFactory.class);
+      iracManager = basicComponentRegistry.getComponent(IracManager.class);
+      iracVersionGenerator = basicComponentRegistry.getComponent(IracVersionGenerator.class);
       localPublisherManager = basicComponentRegistry.getComponent(LocalPublisherManager.class);
       lockManager = basicComponentRegistry.getComponent(LockManager.class);
       orderedUpdatesManager = basicComponentRegistry.getComponent(OrderedUpdatesManager.class);
@@ -416,6 +422,14 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public ComponentRef<TakeOfflineManager> getTakeOfflineManager() {
       return takeOfflineManager;
+   }
+
+   public ComponentRef<IracManager> getIracManager() {
+      return iracManager;
+   }
+
+   public ComponentRef<IracVersionGenerator> getIracVersionGenerator() {
+      return iracVersionGenerator;
    }
 
    public ComponentRef<BiasManager> getBiasManager() {

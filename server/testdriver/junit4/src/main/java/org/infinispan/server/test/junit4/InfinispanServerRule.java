@@ -1,5 +1,10 @@
 package org.infinispan.server.test.junit4;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
@@ -9,11 +14,6 @@ import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.model.Statement;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Creates a cluster of servers to be used for running multiple tests It performs the following tasks:
@@ -56,7 +56,8 @@ public class InfinispanServerRule implements TestRule {
             String testName = description.getTestClass().getName();
             RunWith runWith = description.getTestClass().getAnnotation(RunWith.class);
             boolean inSuite = runWith != null && runWith.value() == Suite.class;
-            if (!inSuite) {
+            boolean hasXsite = testServer.hasCrossSiteEnabled();
+            if (!inSuite && !hasXsite) {
                TestResourceTracker.testStarted(testName);
             }
             // Don't manage the server when a test is using the same InfinispanServerRule instance as the parent suite
@@ -80,7 +81,7 @@ public class InfinispanServerRule implements TestRule {
                   testServer.afterListeners();
                   testServer.getDriver().stop(testName);
                }
-               if (!inSuite) {
+               if (!inSuite && !hasXsite) {
                   TestResourceTracker.testFinished(testName);
                }
             }

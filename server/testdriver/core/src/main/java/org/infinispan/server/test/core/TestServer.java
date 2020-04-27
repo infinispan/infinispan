@@ -142,4 +142,8 @@ public class TestServer {
    public void enhanceConfiguration() {
       configurationEnhancers.forEach(c -> c.accept(serverDriver.getConfDir()));
    }
+
+   public boolean hasCrossSiteEnabled() {
+      return configuration.site() != null;
+   }
 }

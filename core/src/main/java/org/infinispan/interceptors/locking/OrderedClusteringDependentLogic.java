@@ -24,6 +24,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.persistence.util.EntryLoader;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.concurrent.DataOperationOrderer.Operation;
@@ -167,5 +168,10 @@ public class OrderedClusteringDependentLogic implements ClusteringDependentLogic
    @Override
    public Address getAddress() {
       return cdl.getAddress();
+   }
+
+   @Override
+   public <K, V> EntryLoader<K, V> getEntryLoader() {
+      return cdl.getEntryLoader();
    }
 }

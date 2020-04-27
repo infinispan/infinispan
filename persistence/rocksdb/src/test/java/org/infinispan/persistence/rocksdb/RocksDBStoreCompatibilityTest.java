@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.IdentityKeyValueWrapper;
 import org.infinispan.persistence.PersistenceCompatibilityTest;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -30,17 +31,7 @@ public class RocksDBStoreCompatibilityTest extends PersistenceCompatibilityTest<
    };
 
    public RocksDBStoreCompatibilityTest() {
-      super(new KeyValueWrapper<String, String, String>() {
-         @Override
-         public String wrap(String key, String value) {
-            return value;
-         }
-
-         @Override
-         public String unwrap(String value) {
-            return value;
-         }
-      });
+      super(IdentityKeyValueWrapper.instance());
    }
 
    @Override

@@ -13,6 +13,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.persistence.util.EntryLoader;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -52,6 +53,11 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    @Override
    public Address getAddress() {
       return clusteringDependentLogic.getAddress();
+   }
+
+   @Override
+   public <K, V> EntryLoader<K, V> getEntryLoader() {
+      return clusteringDependentLogic.getEntryLoader();
    }
 
    @Override

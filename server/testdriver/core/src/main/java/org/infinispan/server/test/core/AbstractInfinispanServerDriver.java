@@ -80,7 +80,8 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
     */
    @Override
    public void prepare(String name) {
-      String testDir = CommonsTestingUtil.tmpDirectory(name);
+      String siteName = configuration.site() == null ? "" : configuration.site();
+      String testDir = CommonsTestingUtil.tmpDirectory(siteName + name);
       Util.recursiveFileRemove(testDir);
       rootDir = new File(testDir);
       confDir = new File(rootDir, Server.DEFAULT_SERVER_CONFIG);

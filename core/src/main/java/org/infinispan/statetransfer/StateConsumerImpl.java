@@ -2,6 +2,7 @@ package org.infinispan.statetransfer;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
+import static org.infinispan.context.Flag.IRAC_STATE;
 import static org.infinispan.context.Flag.PUT_FOR_STATE_TRANSFER;
 import static org.infinispan.context.Flag.SKIP_LOCKING;
 import static org.infinispan.context.Flag.SKIP_OWNERSHIP_CHECK;
@@ -124,7 +125,7 @@ public class StateConsumerImpl implements StateConsumer {
    protected static final long STATE_TRANSFER_FLAGS = EnumUtil.bitSetOf(PUT_FOR_STATE_TRANSFER, CACHE_MODE_LOCAL,
                                                                         IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
                                                                         SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK,
-                                                                        SKIP_XSITE_BACKUP, SKIP_LOCKING);
+                                                                        SKIP_XSITE_BACKUP, SKIP_LOCKING, IRAC_STATE);
    public static final String NO_KEY = "N/A";
 
    @Inject protected ComponentRef<Cache<Object, Object>> cache;

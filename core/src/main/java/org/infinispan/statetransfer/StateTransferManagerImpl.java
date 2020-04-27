@@ -19,6 +19,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -54,6 +55,7 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.irac.IracManager;
 
 /**
  * {@link StateTransferManager} implementation.
@@ -85,6 +87,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Inject PreloadManager preloadManager;
    // Make sure we can handle incoming requests before joining
    @Inject PerCacheInboundInvocationHandler inboundInvocationHandler;
+   @Inject IracManager iracManager;
+   @Inject IracVersionGenerator iracVersionGenerator;
 
    private final CountDownLatch initialStateTransferComplete = new CountDownLatch(1);
 
@@ -182,6 +186,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
       int newRebalanceId = newCacheTopology.getRebalanceId();
       CacheTopology.Phase phase = newCacheTopology.getPhase();
+      iracManager.onTopologyUpdate(oldCacheTopology, newCacheTopology);
 
       return cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newTopologyId, true)
             .thenCompose(
@@ -191,6 +196,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             ).thenRun(() -> {
                completeInitialTransferIfNeeded(newCacheTopology, phase);
                partitionHandlingManager.onTopologyUpdate(newCacheTopology);
+               iracVersionGenerator.onTopologyChange(newCacheTopology);
             });
    }
 

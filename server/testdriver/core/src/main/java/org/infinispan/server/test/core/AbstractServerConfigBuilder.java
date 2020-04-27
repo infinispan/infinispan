@@ -24,6 +24,7 @@ public abstract class AbstractServerConfigBuilder<T> {
    private boolean jmx;
    private boolean parallelStartup = true;
    private final List<InfinispanServerListener> listeners = new ArrayList<>();
+   private String siteName;
 
 
    protected AbstractServerConfigBuilder(String configurationFile, boolean defaultFile) {
@@ -36,7 +37,7 @@ public abstract class AbstractServerConfigBuilder<T> {
 
    protected InfinispanServerTestConfiguration createServerTestConfiguration() {
       return new InfinispanServerTestConfiguration(configurationFile, numServers, runMode, this.properties, mavenArtifacts,
-                  archives, jmx, parallelStartup, defaultFile, listeners);
+                  archives, jmx, parallelStartup, defaultFile, listeners, siteName);
    }
 
    public T mavenArtifacts(String... mavenArtifacts) {
@@ -85,6 +86,14 @@ public abstract class AbstractServerConfigBuilder<T> {
     */
    public T parallelStartup(boolean parallel) {
       this.parallelStartup = parallel;
+      return (T) this;
+   }
+
+   /**
+    * Sets the current site name
+    */
+   public T site(String site) {
+      this.siteName = site;
       return (T) this;
    }
 

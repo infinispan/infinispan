@@ -29,9 +29,10 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.GLOBAL)
 public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
 
-   private static Log log = LogFactory.getLog(BackupReceiverRepositoryImpl.class);
+   private static final Log log = LogFactory.getLog(BackupReceiverRepositoryImpl.class);
 
    private final ConcurrentMap<SiteCachePair, BackupReceiver> backupReceivers = new ConcurrentHashMap<>();
+   private final ConcurrentMap<String, BackupReceiver> cacheBackupReceivers = new ConcurrentHashMap<>();
    private final Set<String> localCacheName = ConcurrentHashMap.newKeySet();
 
    @Inject EmbeddedCacheManager cacheManager;
@@ -58,6 +59,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
             backupReceivers.remove(scp);
          }
       }
+      cacheBackupReceivers.remove(cse.getCacheName());
    }
 
    /**
@@ -80,17 +82,25 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
             checkNotLocalCache(name);
             Cache<Object, Object> cache = cacheManager.getCache(name);
             toLookFor.setLocalCacheName(name);
-            backupReceivers.putIfAbsent(toLookFor, createBackupReceiver(cache));
-            return backupReceivers.get(toLookFor);
+            BackupReceiver receiver = getBackupReceiver(cache);
+            backupReceivers.putIfAbsent(toLookFor, receiver);
+            return receiver;
          }
       }
       log.debugf("Did not find any backup explicitly configured backup cache for remote cache/site: %s/%s. Using %s",
                  remoteSite, remoteCache, remoteCache);
 
       Cache<Object, Object> cache = cacheManager.getCache(remoteCache);
-      backupReceivers.putIfAbsent(toLookFor, createBackupReceiver(cache));
+      checkNotLocalCache(cache.getName());
+      BackupReceiver receiver = getBackupReceiver(cache);
+      backupReceivers.putIfAbsent(toLookFor, receiver);
       toLookFor.setLocalCacheName(cache.getName());
-      return backupReceivers.get(toLookFor);
+      return receiver;
+   }
+
+   @Override
+   public BackupReceiver getBackupReceiver(Cache<Object, Object> cache) {
+      return cacheBackupReceivers.computeIfAbsent(cache.getName(), (ignored) -> createBackupReceiver(cache));
    }
 
    private boolean isBackupForRemoteCache(String remoteSite, String remoteCache, Configuration cacheConfiguration, String name) {

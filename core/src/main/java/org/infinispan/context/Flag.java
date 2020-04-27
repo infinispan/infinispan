@@ -232,6 +232,20 @@ public enum Flag {
     * an end user would not need to do this.
     */
    IGNORE_TRANSACTION,
+
+   /**
+    * Signals a {@link org.infinispan.commands.write.WriteCommand} as an update from a remote site (async).
+    * <p>
+    * Internal use
+    */
+   IRAC_UPDATE,
+
+   /**
+    * Signals a {@link org.infinispan.commands.write.WriteCommand} as state transfer from remote site.
+    * <p>
+    * Internal use
+    */
+   IRAC_STATE,
    ;
 
    private static final Flag[] CACHED_VALUES = values();

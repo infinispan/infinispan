@@ -1259,7 +1259,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
             FlagBitSets.IGNORE_RETURN_VALUES |
             FlagBitSets.SKIP_CACHE_STORE |
             FlagBitSets.SKIP_LOCKING |
-            FlagBitSets.SKIP_XSITE_BACKUP;
+            FlagBitSets.SKIP_XSITE_BACKUP |
+            FlagBitSets.IRAC_STATE;
 
       boolean hasSharedStore = false;
       acquireReadLock();

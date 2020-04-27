@@ -15,6 +15,13 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracClearKeysCommand;
+import org.infinispan.commands.irac.IracMetadataRequestCommand;
+import org.infinispan.commands.irac.IracRemoveKeyCommand;
+import org.infinispan.commands.irac.IracRequestStateCommand;
+import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracPutKeyCommand;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -430,6 +437,27 @@ public class RemoteCommandsFactory {
                break;
             case TouchCommand.COMMAND_ID:
                command = new TouchCommand(cacheName);
+               break;
+            case IracPutKeyCommand.COMMAND_ID:
+               command = new IracPutKeyCommand(cacheName);
+               break;
+            case IracCleanupKeyCommand.COMMAND_ID:
+               command = new IracCleanupKeyCommand(cacheName);
+               break;
+            case IracMetadataRequestCommand.COMMAND_ID:
+               command = new IracMetadataRequestCommand(cacheName);
+               break;
+            case IracRequestStateCommand.COMMAND_ID:
+               command = new IracRequestStateCommand(cacheName);
+               break;
+            case IracStateResponseCommand.COMMAND_ID:
+               command = new IracStateResponseCommand(cacheName);
+               break;
+            case IracRemoveKeyCommand.COMMAND_ID:
+               command = new IracRemoveKeyCommand(cacheName);
+               break;
+            case IracClearKeysCommand.COMMAND_ID:
+               command = new IracClearKeysCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

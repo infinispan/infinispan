@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.xsite;
 
 import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -15,16 +16,37 @@ import org.infinispan.interceptors.InvocationStage;
 public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      if (!shouldInvokeRemoteTxCommand(ctx))
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      //if this is a read-only tx or state transfer tx, no point replicating it to other sites
+      if (!shouldInvokeRemoteTxCommand(ctx) || isTxFromRemoteSite(command.getGlobalTransaction())) {
          return invokeNext(ctx, command);
+      }
 
+      InvocationStage stage = backupSender.backupPrepare(command, ctx.getCacheTransaction(), ctx.getTransaction());
+      return invokeNextAndWaitForCrossSite(ctx, command, stage);
+   }
+
+   @Override
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (isTxFromRemoteSite(command.getGlobalTransaction())) {
          return invokeNext(ctx, command);
       }
 
-      InvocationStage stage = backupSender.backupCommit(command, ctx.getTransaction());
-      return invokeNextAndWaitForCrossSite(ctx, command, stage);
+      InvocationStage stage;
+      if (shouldInvokeRemoteTxCommand(ctx)) { // this assumes sync.
+         // for sync, the originator is the one who backups the transaction to the remote site.
+         // we can send the update to the remote site in parallel with the local cluster update.
+         stage = backupSender.backupCommit(command, ctx.getTransaction());
+      } else {
+         //for async, all nodes need to keep track of the updates keys.
+         stage = InvocationStage.completedNullStage();
+      }
+
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         //we need to track the keys only after it is applied in the local node!
+         iracManager.trackKeysFromTransaction(getModificationsFrom(rCommand), rCommand.getGlobalTransaction());
+         return stage.thenReturn(rCtx, rCommand, rv);
+      });
    }
 
    @Override
@@ -40,7 +62,7 @@ public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
       return invokeNextAndWaitForCrossSite(ctx, command, stage);
    }
 
-   private boolean shouldRollbackRemoteTxCommand(TxInvocationContext ctx) {
+   private boolean shouldRollbackRemoteTxCommand(TxInvocationContext<?> ctx) {
       return shouldInvokeRemoteTxCommand(ctx) && hasBeenPrepared((LocalTxInvocationContext) ctx);
    }
 

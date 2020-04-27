@@ -110,6 +110,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, name);
       properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
       configuration.properties().forEach((k, v) -> args.add("-D" + k + "=" + StringPropertyReplacer.replaceProperties((String) v, properties)));
+      configureSite(args);
       boolean preserveImageAfterTest = Boolean.parseBoolean(configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_PRESERVE_IMAGE, "false"));
       Path tmp = Paths.get(CommonsTestingUtil.tmpDirectory(this.getClass()));
 
@@ -203,7 +204,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
       if (configuration.isParallelStartup()) {
          latch = new CountdownLatchLoggingConsumer(configuration.numServers(), STARTUP_MESSAGE_REGEX);
-         IntStream.range(0, configuration.numServers()).forEach(i -> createContainer(i));
+         IntStream.range(0, configuration.numServers()).forEach(this::createContainer);
          Exceptions.unchecked(() -> latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
       } else {
          for (int i = 0; i < configuration.numServers(); i++) {
@@ -219,6 +220,14 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          throw new IllegalStateException("Container " + i + " has not been initialized");
       }
       return containers[i];
+   }
+
+   private void configureSite(List<String> args) {
+      if (configuration.site() == null) {
+         return;
+      }
+      args.add("-Drelay.site_name=" + configuration.site());
+      args.add("-Djgroups.cluster.mcast_port=" + configuration.siteDiscoveryPort());
    }
 
    private GenericContainer createContainer(int i) {

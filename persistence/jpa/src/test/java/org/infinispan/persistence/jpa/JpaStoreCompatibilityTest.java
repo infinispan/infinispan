@@ -23,17 +23,7 @@ public class JpaStoreCompatibilityTest extends PersistenceCompatibilityTest<KeyV
    private static final String DATA_10_1_FOLDER = "10_1_x_jpa_data";
 
    protected JpaStoreCompatibilityTest() {
-      super(new KeyValueWrapper<String, String, KeyValueEntity>() {
-         @Override
-         public KeyValueEntity wrap(String key, String value) {
-            return new KeyValueEntity(key, value);
-         }
-
-         @Override
-         public String unwrap(KeyValueEntity entity) {
-            return entity == null ? null : entity.getValue();
-         }
-      });
+      super(JpaKeyValueWrapper.INSTANCE);
    }
 
    @Override

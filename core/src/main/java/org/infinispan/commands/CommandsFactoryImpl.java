@@ -26,6 +26,13 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracClearKeysCommand;
+import org.infinispan.commands.irac.IracMetadataRequestCommand;
+import org.infinispan.commands.irac.IracPutKeyCommand;
+import org.infinispan.commands.irac.IracRemoveKeyCommand;
+import org.infinispan.commands.irac.IracRequestStateCommand;
+import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -87,6 +94,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.impl.TouchCommand;
@@ -106,6 +114,8 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.IracMetadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
@@ -685,5 +695,43 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public TouchCommand buildTouchCommand(Object key, int segment) {
       return new TouchCommand(cacheName, key, segment);
+   }
+
+   @Override
+   public <K, V> IracPutKeyCommand buildIracPutKeyCommand(InternalCacheEntry<K, V> entry) {
+      PrivateMetadata internalMetadata = entry.getInternalMetadata();
+      assert internalMetadata != null : "[IRAC] Metadata to send to remote site is null! key=" + entry.getKey();
+      IracMetadata iracMetadata = internalMetadata.iracMetadata();
+      return new IracPutKeyCommand(cacheName, entry.getKey(), entry.getValue(), entry.getMetadata(), iracMetadata);
+   }
+
+   @Override
+   public IracRemoveKeyCommand buildIracRemoveKeyCommand(Object key, IracMetadata iracMetadata) {
+      return new IracRemoveKeyCommand(cacheName, key, iracMetadata);
+   }
+
+   @Override
+   public IracClearKeysCommand buildIracClearKeysCommand() {
+      return new IracClearKeysCommand(cacheName);
+   }
+
+   @Override
+   public IracCleanupKeyCommand buildIracCleanupKeyCommand(Object key, Object lockOwner, IracMetadata tombstone) {
+      return new IracCleanupKeyCommand(cacheName, key, lockOwner, tombstone);
+   }
+
+   @Override
+   public IracMetadataRequestCommand buildIracMetadataRequestCommand(int segment) {
+      return new IracMetadataRequestCommand(cacheName, segment);
+   }
+
+   @Override
+   public IracRequestStateCommand buildIracRequestStateCommand(IntSet segments) {
+      return new IracRequestStateCommand(cacheName, segments);
+   }
+
+   @Override
+   public IracStateResponseCommand buildIracStateResponseCommand(Object key, Object lockOwner, IracMetadata tombstone) {
+      return new IracStateResponseCommand(cacheName, key, lockOwner, tombstone);
    }
 }

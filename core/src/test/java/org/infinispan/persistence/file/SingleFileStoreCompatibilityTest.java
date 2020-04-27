@@ -7,6 +7,7 @@ import java.nio.file.StandardCopyOption;
 
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.IdentityKeyValueWrapper;
 import org.infinispan.persistence.PersistenceCompatibilityTest;
 import org.testng.annotations.Test;
 
@@ -22,17 +23,7 @@ public class SingleFileStoreCompatibilityTest extends PersistenceCompatibilityTe
    private static final String DATA_10_1 = "10_1_x_sfs_data/sfs-store-cache.dat";
 
    public SingleFileStoreCompatibilityTest() {
-      super(new KeyValueWrapper<String, String, String>() {
-         @Override
-         public String wrap(String key, String value) {
-            return value;
-         }
-
-         @Override
-         public String unwrap(String value) {
-            return value;
-         }
-      });
+      super(IdentityKeyValueWrapper.instance());
    }
 
    @Override

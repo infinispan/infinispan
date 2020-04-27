@@ -43,6 +43,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.persistence.util.EntryLoader;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
@@ -121,6 +122,11 @@ public class OnlyPrimaryOwnerTest {
 
       @Override
       public Address getAddress() {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public <K, V> EntryLoader<K, V> getEntryLoader() {
          throw new UnsupportedOperationException();
       }
 
