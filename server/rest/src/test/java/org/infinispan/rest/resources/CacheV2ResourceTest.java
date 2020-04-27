@@ -37,6 +37,7 @@ import org.infinispan.globalstate.ScopedState;
 import org.infinispan.globalstate.impl.CacheState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.testng.annotations.Test;
 
@@ -336,8 +337,11 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testGetAllKeysTextPlainCache() throws Exception {
-      String cache = "___protobuf_metadata";
+   public void testProtobufMetadataManipulation() throws Exception {
+      /**
+       * Special role {@link ProtobufMetadataManager#SCHEMA_MANAGER_ROLE} is needed for authz. Subject USER has it
+       */
+      String cache = ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME;
       String url = String.format("http://localhost:%d/rest/v2/caches/%s?action=%s", restServer().getPort(), cache, "keys");
 
       putStringValueInCache(cache, "file1.proto", "message A{}");
