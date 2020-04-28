@@ -14,7 +14,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Getting Started with {brandname} {infinispanversion}
+= Getting Started with {brandname}
 
 //User stories
 include::stories.adoc[]

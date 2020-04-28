@@ -1,4 +1,4 @@
-[[integrations_jpa_hibernate]]
+[id='integrating_jpa_hibernate']
 = JPA/Hibernate 2L Cache
 
 Hibernate manages a second-level cache where it moves data into and out as a result of operations performed by `Session` or `EntityManager` (JPA).
@@ -21,7 +21,6 @@ Use the following Maven coordinates:
 include::dependencies_maven/hibernate_v5.3.xml[]
 ----
 
-ifndef::productized[]
 Hibernate 5.2::
 +
 [NOTE]
@@ -35,7 +34,6 @@ Use the following Maven coordinates:
 ----
 include::dependencies_maven/hibernate_v5.2.xml[]
 ----
-endif::productized[]
 
 Hibernate 5.1::
 Use the following Maven coordinates:

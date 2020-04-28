@@ -16,5 +16,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 //Title
 = Integrating {brandname} {infinispanversion}
 
+Find out how to integrate {brandname} with other projects.
+
 //User stories
 include::stories.adoc[]
