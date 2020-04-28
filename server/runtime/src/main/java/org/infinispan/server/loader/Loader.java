@@ -41,7 +41,20 @@ public class Loader {
       String home = System.getProperty(INFINISPAN_SERVER_HOME_PATH, System.getProperty("user.dir"));
       ClassLoader bootClassLoader = Loader.class.getClassLoader();
       ClassLoader serverClassLoader = classLoaderFromPath(Paths.get(home, "lib"), bootClassLoader);
-      String root = System.getProperty(INFINISPAN_SERVER_ROOT_PATH, Paths.get(home, DEFAULT_SERVER_ROOT_DIR).toString());
+      // Scan the arguments looking for -s or --server-root=
+      String root = null;
+      for (int i = 0; i < args.length; i++) {
+         if ("-s".equals(args[i]) && i < args.length - 1) {
+            root = args[i + 1];
+            break;
+         } else if (args[i].startsWith("--server-root=")) {
+            root = args[i].substring(args[i].indexOf('=') + 1);
+            break;
+         }
+      }
+      if (root == null) {
+         root = System.getProperty(INFINISPAN_SERVER_ROOT_PATH, Paths.get(home, DEFAULT_SERVER_ROOT_DIR).toString());
+      }
       ClassLoader rootClassLoader = classLoaderFromPath(Paths.get(root, "lib"), serverClassLoader);
       Thread.currentThread().setContextClassLoader(rootClassLoader);
       try {
