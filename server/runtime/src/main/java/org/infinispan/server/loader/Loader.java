@@ -55,7 +55,13 @@ public class Loader {
       if (root == null) {
          root = System.getProperty(INFINISPAN_SERVER_ROOT_PATH, Paths.get(home, DEFAULT_SERVER_ROOT_DIR).toString());
       }
-      ClassLoader rootClassLoader = classLoaderFromPath(Paths.get(root, "lib"), serverClassLoader);
+      Path rootLib = Paths.get(root, "lib");
+      ClassLoader rootClassLoader;
+      if (rootLib.toFile().exists()) {
+         rootClassLoader = classLoaderFromPath(rootLib, serverClassLoader);
+      } else {
+         rootClassLoader = serverClassLoader;
+      }
       Thread.currentThread().setContextClassLoader(rootClassLoader);
       try {
          Class<?> mainClass = rootClassLoader.loadClass(args[0]);
