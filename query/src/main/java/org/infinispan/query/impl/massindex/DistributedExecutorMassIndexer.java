@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import org.hibernate.search.spi.IndexedTypeIdentifier;
@@ -128,7 +129,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
          }
          try {
             IndexWorker indexWork = new IndexWorker(cache.getName(), indexedTypes, skipIndex, null);
-            CompletableFuture<Void> future = executor.submitConsumer(indexWork, TRI_CONSUMER);
+            CompletableFuture<Void> future = executor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS).submitConsumer(indexWork, TRI_CONSUMER);
             return blockingManager.whenCompleteBlocking(future, flushIfNeeded, this).toCompletableFuture();
          } catch (Throwable t) {
             lock.unlock();
