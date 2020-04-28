@@ -14,7 +14,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Technical Overview: {brandname} {infinispanversion}
+= {brandname} Technical Overview
 
 //User stories
 include::stories.adoc[]

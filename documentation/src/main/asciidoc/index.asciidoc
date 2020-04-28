@@ -2,58 +2,59 @@
 Written and maintained by the {brandname} community
 :icons: font
 
-Get answers and find help in the {brandname} {infinispanversion} titles.
+Get answers and find help in the {brandname} {infinispanversion} doc set.
 
-Getting Started::
+Embedding {brandname}::
 
-* link:titles/overview/overview.html[Technical Overview]
-* link:titles/getting_started/getting_started.html[Getting Started Guide]
+* link:titles/embedding/embedding.html[Using {brandname} as an Embedded Library]
+
+{brandname} Servers::
+
+* link:titles/server/server.html[{brandname} Server Guide]
+* link:titles/cli/cli.html[Using the Command Line Interface]
+* link:titles/rest/rest.html[{brandname} REST API Guide]
 
 Operator for Kubernetes and OpenShift::
 
-* link:https://infinispan.org/infinispan-operator/master/operator.html[Infinispan Operator Guide]
+* link:https://infinispan.org/infinispan-operator/master/operator.html[{brandname} Operator Guide]
 
-Configuring Infinispan::
-
-* link:titles/configuring/configuring.html[Configuration Guide]
-* link:titles/xsite/xsite.html[Setting Up Cross Site Replication]
-
-Infinispan Embedded Library::
-
-* link:titles/embedding/embedding.html[Embedding Infinispan]
-
-Infinispan Server::
-
-* link:titles/server/server.html[Infinispan Server Guide]
-* link:titles/cli/cli.html[Using the Command Line Interface]
-
-Hot Rod, REST, and Memcached::
+Hot Rod Clients::
 
 * link:titles/hotrod_java/hotrod_java.html[Hot Rod Java Client Guide]
 * link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference]
-* link:titles/rest/rest.html[Infinispan REST API]
-* link:titles/memcached/memcached.html[Memcached Client Guide]
 
-APIs, Marshalling, Locks, Counters, Indexing and Querying, and more::
+Configuring {brandname}::
 
-* link:titles/developing/developing.html[Developer Guide]
+* link:titles/configuring/configuring.html[{brandname} Configuration Guide]
 
-Hibernate and Spring Framework Integration::
+Configuring and Using Cross-Site Replication Capabilities::
 
-* link:titles/integrating/integrating.html[Integration Guide]
+* link:titles/xsite/xsite.html[{brandname} Guide to Cross-Site Replication]
+
+Developer Content::
+
+* link:titles/developing/developing.html[Programmer's Guide to {brandname}]
+* link:titles/integrating/integrating.html[Apache Lucene, Hibernate, and Spring Framework Integration]
 * link:https://infinispan.org/infinispan-spring-boot/master/spring_boot_starter.html[Spring Boot Starter]
+
+Upgrading {brandname}::
+
+* link:titles/upgrading/upgrading.html[{brandname} Upgrade Guide]
 
 Security and Performance Tuning::
 
 * link:titles/security/security.html[Security Guide]
-* link:titles/tuning/tuning.html[Tuning Infinispan Performance]
+* link:titles/tuning/tuning.html[Tuning {brandname} Performance]
 
-Upgrading Between Versions and Rolling Upgrades on Kubernetes::
+If you're new to {brandname}, feel free to try our link:titles/getting_started/getting_started.html[Getting Started Guide] or check out the link:titles/overview/overview.html[{brandname} Technical Overview] that explains different
+deployment scenarios and provides an FAQ.
 
-* link:titles/upgrading/upgrading.html[Upgrading Infinispan]
+We also have a link:titles/memcached/memcached.html[Memcached Client Guide].
+However, {brandname} does not recommend using Memcached for security reasons and
+the server endpoint is planned for removal. See the link:titles/server/server.html[Server Guide] for details.
 
-See link:http://www.infinispan.org/documentation[Infinispan Documentation] home for other versions.
+Come and join the link:http://www.infinispan.org/community[{brandname} community] to submit feedback or ask questions.
 
-Come and join the link:http://www.infinispan.org/community[Infinispan community] to submit feedback or ask questions.
+Interested in getting involved with {brandname}? See the link:titles/contributing/contributing.html[Contributor's Guide].
 
-Interested in getting involved with Infinispan? See the link:titles/contributing/contributing.html[Contributor's Guide].
+Also see our link:http://www.infinispan.org/documentation[{brandname} Documentation] home to find more resources and details for other versions.

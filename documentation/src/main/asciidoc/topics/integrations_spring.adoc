@@ -1,4 +1,4 @@
-[[spring_integration]]
+[id='spring_integration']
 = Using {brandname} with Spring
 {brandname} integrates with the Spring Framework to make it easy to add caching capabilities to your applications.
 
