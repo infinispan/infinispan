@@ -282,7 +282,7 @@ public class ClusteredLockImpl implements ClusteredLock {
                log.tracef("LOCK[%s] About to retry lock for %s", getName(), nextRequestor);
             }
             final RequestHolder requestor = nextRequestor;
-            clusteredLockManager.execute(() -> lock(requestor));
+            lock(requestor);
          }
       }
    }
@@ -348,36 +348,33 @@ public class ClusteredLockImpl implements ClusteredLock {
        * @param possibleOwners
        */
       private void forceUnlockForLeavingMembers(Set<Object> possibleOwners) {
-         clusteredLockManager.execute(() -> {
+         if (trace) {
+            log.tracef("LOCK[%s] Call force unlock for %s from %s ", getName(), possibleOwners, originator);
+         }
+         int viewChangeUnlockValue = viewChangeUnlockHappening.incrementAndGet();
+         if (trace) {
+            log.tracef("LOCK[%s] viewChangeUnlockHappening value in %s ", getName(), viewChangeUnlockValue, originator);
+         }
+         unlock(null, possibleOwners)
+               .whenComplete((unlockResult, ex) -> {
                   if (trace) {
-                     log.tracef("LOCK[%s] Call force unlock for %s from %s ", getName(), possibleOwners, originator);
+                     log.tracef("LOCK[%s] Force unlock call completed for %s from %s ", getName(), possibleOwners, originator);
                   }
-                  int viewChangeUnlockValue = viewChangeUnlockHappening.incrementAndGet();
+                  int viewChangeUnlockValueAfterUnlock = viewChangeUnlockHappening.decrementAndGet();
                   if (trace) {
-                     log.tracef("LOCK[%s] viewChangeUnlockHappening value in %s ", getName(), viewChangeUnlockValue, originator);
+                     log.tracef("LOCK[%s] viewChangeUnlockHappening value in %s ", getName(), viewChangeUnlockValueAfterUnlock, originator);
                   }
-                  unlock(null, possibleOwners)
-                        .whenComplete((unlockResult, ex) -> {
-                           if (trace) {
-                              log.tracef("LOCK[%s] Force unlock call completed for %s from %s ", getName(), possibleOwners, originator);
-                           }
-                           int viewChangeUnlockValueAfterUnlock = viewChangeUnlockHappening.decrementAndGet();
-                           if (trace) {
-                              log.tracef("LOCK[%s] viewChangeUnlockHappening value in %s ", getName(), viewChangeUnlockValueAfterUnlock, originator);
-                           }
-                           if (ex == null) {
-                              if (trace) {
-                                 log.tracef("LOCK[%s] Force unlock result %b for %s from %s ", getName(), unlockResult, possibleOwners, originator);
-                              }
-                           } else {
-                              log.error(ex, log.unlockFailed(getName(), getOriginator()));
-                              // TODO: handle the exception. Retry ? End all the pending requests in this lock ?
-                           }
+                  if (ex == null) {
+                     if (trace) {
+                        log.tracef("LOCK[%s] Force unlock result %b for %s from %s ", getName(), unlockResult, possibleOwners, originator);
+                     }
+                  } else {
+                     log.error(ex, log.unlockFailed(getName(), getOriginator()));
+                     // TODO: handle the exception. Retry ? End all the pending requests in this lock ?
+                  }
 
-                           retryPendingRequests();
-                        });
-               }
-         );
+                  retryPendingRequests();
+               });
       }
    }
 
