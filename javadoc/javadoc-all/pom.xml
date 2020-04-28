@@ -312,8 +312,10 @@
                      <excludedocfilessubdir>org/infinispan/commons/jdkspecific</excludedocfilessubdir>
                      <doclint>none</doclint>
                      <useStandardDocletOptions>true</useStandardDocletOptions>
-                     <additionalOptions>--allow-script-in-comments</additionalOptions>
-                     <source>8</source>
+                     <additionalOptions>
+                        <additionalOption>--allow-script-in-comments</additionalOption>
+                     </additionalOptions>
+                     <release>8</release>
                      <additionalJOptions>
                         <!-- Custom doclet needs access to javadoc module internals -->
                         <additionalJOption>-J--add-opens</additionalJOption>

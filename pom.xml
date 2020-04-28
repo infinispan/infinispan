@@ -4914,7 +4914,7 @@
                                  <pluginExecutionFilter>
                                     <groupId>org.apache.maven.plugins</groupId>
                                     <artifactId>maven-javadoc-plugin</artifactId>
-                                    <versionRange>[2.8,)</versionRange>
+                                    <versionRange>[3.2,)</versionRange>
                                     <goals>
                                        <goal>javadoc</goal>
                                     </goals>
