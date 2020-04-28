@@ -70,10 +70,10 @@
       </profile>
 
       <profile>
-      <id>distribution</id>
-      <properties>
-         <skipTests>true</skipTests>
-      </properties>
+         <id>distribution</id>
+         <properties>
+            <skipTests>true</skipTests>
+         </properties>
       </profile>
       <profile>
          <id>extras</id>
