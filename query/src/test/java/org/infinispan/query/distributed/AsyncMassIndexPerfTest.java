@@ -1,5 +1,7 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
+
 import java.util.Collections;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
@@ -16,14 +18,18 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.context.Flag;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.massindex.IndexUpdater;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.query.test.Transaction;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 /**
  * Long running test for the async MassIndexer, specially regarding cancellation. Supposed to be run as a main class.
@@ -35,7 +41,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    /**
     * Number of entries to write
     */
-   private static final int OBJECT_COUNT = 1000000;
+   private static final int OBJECT_COUNT = 1_000_000;
    /**
     * Number of threads to do the initial load
     */
@@ -47,9 +53,9 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    private static final boolean TX_ENABLED = false;
    private static final String MERGE_FACTOR = "30";
-   private static final CacheMode CACHE_MODE = CacheMode.DIST_SYNC;
-   private static final IndexManager INDEX_MANAGER = IndexManager.INFINISPAN;
-   private static final Provider DIRECTORY_PROVIDER = Provider.INFINISPAN;
+   private static final CacheMode CACHE_MODE = CacheMode.LOCAL;
+   private static final IndexManager INDEX_MANAGER = IndexManager.DIRECTORY;
+   private static final Provider DIRECTORY_PROVIDER = Provider.RAM;
    /**
     * Hibernate search backend used. Either sync or async (commit every 1s by default)
     */
@@ -64,20 +70,32 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CACHE_MODE, TX_ENABLED);
-      cacheCfg.clustering().remoteTimeout(120000)
-            .indexing().index(Index.PRIMARY_OWNER)
+      ConfigurationBuilder cacheCfg;
+      boolean local = CACHE_MODE == CacheMode.LOCAL;
+      if (local) {
+         cacheCfg = getDefaultCacheConfiguration(TX_ENABLED);
+      } else {
+         cacheCfg = getDefaultClusteredCacheConfig(CACHE_MODE, TX_ENABLED);
+         cacheCfg.clustering().remoteTimeout(120000);
+      }
+      cacheCfg.indexing().index(Index.PRIMARY_OWNER)
             .addIndexedEntity(Transaction.class)
             .addProperty("default.directory_provider", DIRECTORY_PROVIDER.toString())
             .addProperty("default.indexmanager", INDEX_MANAGER.toString())
             .addProperty("default.indexwriter.merge_factor", MERGE_FACTOR)
             .addProperty("hibernate.search.default.worker.execution", WORKER_MODE.toString())
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      createClusteredCaches(2, cacheCfg);
-      cache1 = cache(0);
-      cache2 = cache(1);
+      if (!local) {
+         createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
+         cache2 = cache(1);
+         cache1 = cache(0);
+      } else {
+         EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(cacheCfg);
+         cache1 = cacheManager.getCache();
+         cache2 = cacheManager.getCache();
+      }
       massIndexer = Search.getSearchManager(cache1).getMassIndexer();
    }
 

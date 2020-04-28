@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import org.hibernate.search.engine.spi.EntityIndexBinding;
@@ -204,7 +205,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
                }
                IndexWorker indexWork = new IndexWorker(cache.getName(), indexedTypes, workerFlush, workerClean,
                      skipIndex, strategy.getIndexingStrategy() == IndexingExecutionMode.PRIMARY_OWNER, null);
-               futures.add(executor.submitConsumer(indexWork, TRI_CONSUMER));
+               futures.add(executor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS).submitConsumer(indexWork, TRI_CONSUMER));
             });
             CompletableFuture<Void> compositeFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
             return compositeFuture.whenCompleteAsync(flushIfNeeded, localExecutor);
