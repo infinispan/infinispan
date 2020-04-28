@@ -2257,11 +2257,6 @@
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-jcache-commons</artifactId>
             <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-jcache-commons</artifactId>
-            <version>${version.infinispan}</version>
             <type>test-jar</type>
             <scope>test</scope>
          </dependency>
