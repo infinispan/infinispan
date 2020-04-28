@@ -143,15 +143,4 @@ abstract class AbstractClusterExecutor<T extends ClusterExecutor> extends LocalC
       return sameClusterExecutor(null, time, unit);
    }
 
-   @Override
-   public T timeout(long time, TimeUnit unit) {
-      if (time <= 0) {
-         throw new IllegalArgumentException("Time must be greater than 0!");
-      }
-      Objects.requireNonNull(unit, "TimeUnit must be non null!");
-      if (this.time == time && this.unit == unit) {
-         return (T) this;
-      }
-      return sameClusterExecutor(predicate, time, unit);
-   }
 }
