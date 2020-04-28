@@ -107,7 +107,14 @@ class LocalClusterExecutor implements ClusterExecutor {
 
    @Override
    public ClusterExecutor timeout(long time, TimeUnit unit) {
-      return this;
+      if (time <= 0) {
+         throw new IllegalArgumentException("Time must be greater than 0!");
+      }
+      Objects.requireNonNull(unit, "TimeUnit must be non null!");
+      if (this.time == time && this.unit == unit) {
+         return this;
+      }
+      return sameClusterExecutor(predicate, time, unit);
    }
 
    @Override
