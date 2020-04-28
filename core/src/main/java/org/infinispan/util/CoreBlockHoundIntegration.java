@@ -114,9 +114,9 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
          throw new CacheException(e);
       }
 
-      // This method calls initCacheStatusIfAbsent which can invoke readScopedState which reads scope from a file that
+      // This method calls readScopedState which reads scope from a file that
       // can block the current thread while doing I/O
-      builder.allowBlockingCallsInside(ClusterTopologyManagerImpl.class.getName(), "prepareJoin");
+      builder.allowBlockingCallsInside(ClusterTopologyManagerImpl.class.getName(), "initCacheStatusIfAbsent");
       builder.allowBlockingCallsInside(ClusterTopologyManagerImpl.class.getName(), "updateClusterState");
 
       // This can block if there is a store otherwise it won't block
