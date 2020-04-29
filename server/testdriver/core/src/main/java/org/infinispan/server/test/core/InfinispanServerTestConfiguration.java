@@ -1,5 +1,7 @@
 package org.infinispan.server.test.core;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
@@ -18,10 +20,12 @@ public class InfinispanServerTestConfiguration {
    private final JavaArchive[] archives;
    private final boolean jmx;
    private final boolean parallelStartup;
+   private final List<InfinispanServerListener> listeners;
 
    public InfinispanServerTestConfiguration(String configurationFile, int numServers, ServerRunMode runMode,
                                             Properties properties, String[] mavenArtifacts, JavaArchive[] archives,
-                                            boolean jmx, boolean parallelStartup) {
+                                            boolean jmx, boolean parallelStartup,
+                                            List<InfinispanServerListener> listeners) {
       this.configurationFile = configurationFile;
       this.numServers = numServers;
       this.runMode = runMode;
@@ -30,6 +34,7 @@ public class InfinispanServerTestConfiguration {
       this.archives = archives;
       this.jmx = jmx;
       this.parallelStartup = parallelStartup;
+      this.listeners = Collections.unmodifiableList(listeners);
    }
 
    public String configurationFile() {
@@ -62,5 +67,9 @@ public class InfinispanServerTestConfiguration {
 
    public boolean isParallelStartup() {
       return parallelStartup;
+   }
+
+   public List<InfinispanServerListener> listeners() {
+      return listeners;
    }
 }

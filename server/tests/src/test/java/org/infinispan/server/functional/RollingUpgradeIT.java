@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNotSame;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -169,7 +170,7 @@ public class RollingUpgradeIT {
    private static class ClusterConfiguration extends InfinispanServerTestConfiguration {
       public ClusterConfiguration(String configurationFile, int numServers) {
          super(configurationFile, numServers, ServerRunMode.EMBEDDED, new Properties(), null, null,
-               false, false);
+               false, false, Collections.emptyList());
       }
    }
 
