@@ -1,5 +1,6 @@
 package org.infinispan.hibernate.search;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -146,7 +147,9 @@ public class StoredIndexTest {
     */
    @BeforeClass
    public static void prepareConnectionPool() throws IOException {
-      System.setProperty("tempTestDataDir", temporaryFolderFolder.newFolder().getAbsolutePath());
+      File tmpFolder = temporaryFolderFolder.newFolder();
+      System.setProperty("tempTestDataDir", new File(tmpFolder, "data").getAbsolutePath());
+      System.setProperty("tempTestGlobalStateDir", tmpFolder.getAbsolutePath());
       ClusterSharedConnectionProvider.realStart();
    }
 
