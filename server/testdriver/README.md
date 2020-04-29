@@ -113,13 +113,12 @@ The following is a list of properties which affect the build:
 * `org.infinispan.test.server.embedded.timeoutSeconds` the amount of time in seconds to wait for a server start/stop operation when using the `EMBEDDED` driver.
 * `org.infinispan.test.server.driver`  the driver to use, `EMBEDDED` or `CONTAINER`. Defaults to the `EMBEDDED` driver.
 * `org.infinispan.test.server.extension.libs` locates artifact defined by G:A:V, you can pass a list of libraries (comma separeted) to be copied to the server. Only needed for container mode.
-* `org.infinispan.test.server.jdbc.databases` database name to be used during persistence tests.
-* `org.infinispan.test.server.jdbc.database.url` JDBC URL. If it's a external database
-* `org.infinispan.test.server.jdbc.database.username` database username. If it's a external database
-* `org.infinispan.test.server.jdbc.database.password` database password. If it's a external database
-* `org.infinispan.test.server.jdbc.database.driverClass` database jdbc driver name. If it's a external database
-* `org.infinispan.test.server.jdbc.image.tag` Docker image version to be used during persistence tests.
-
+* `org.infinispan.test.server.database.types` comma-separated list of database types to be used during persistence tests.
+* `org.infinispan.test.server.database.properties.path` a path to a directory containing property files with connection details for each database to be tested.
+* `org.infinispan.server.test.database.<type>.username` username to use for a specific database type 
+* `org.infinispan.server.test.database.<type>.password` password to use for a specific database type
+* `org.infinispan.server.test.database.<type>.address` address to use for a specific database type
+* `org.infinispan.server.test.database.<type>.port` port to use for a specific database type
 
 ## JMX
 

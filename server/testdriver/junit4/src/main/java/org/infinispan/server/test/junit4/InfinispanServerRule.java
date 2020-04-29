@@ -46,7 +46,7 @@ public class InfinispanServerRule implements TestRule {
 
    /**
     * Registers a {@link Consumer} function which populates a server filesystem with additional files.
-    *
+    * <p>
     * The consumer will be invoked with the server's configuration directory
     */
    public void registerConfigurationEnhancer(Consumer<File> enhancer) {
@@ -76,6 +76,7 @@ public class InfinispanServerRule implements TestRule {
             try {
                if (manageServer) {
                   serverDriver = configuration.runMode().newDriver(configuration);
+                  configuration.listeners().forEach(l -> l.before(serverDriver));
                   serverDriver.prepare(testName);
 
                   configurationEnhancers.forEach(c -> c.accept(serverDriver.getConfDir()));
@@ -88,6 +89,7 @@ public class InfinispanServerRule implements TestRule {
             } finally {
                InfinispanServerRule.this.after(testName);
                if (manageServer && serverDriver != null) {
+                  configuration.listeners().forEach(l -> l.after(serverDriver));
                   serverDriver.stop(testName);
                }
                if (!inSuite) {
@@ -138,7 +140,7 @@ public class InfinispanServerRule implements TestRule {
 
    /**
     * @param builder client configuration
-    * @param n the server number
+    * @param n       the server number
     * @return a client configured against the nth server
     */
    public RestClient newRestClient(RestClientConfigurationBuilder builder, int n) {

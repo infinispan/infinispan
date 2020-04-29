@@ -18,7 +18,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 public class ContainerDatabase extends Database {
    private final static Log log = LogFactory.getLog(ContainerDatabase.class);
    private final static String ENV_PREFIX = "database.container.env.";
-   final GenericContainer container;
+   private final GenericContainer container;
 
    ContainerDatabase(String type, Properties properties) {
       super(type, properties);
