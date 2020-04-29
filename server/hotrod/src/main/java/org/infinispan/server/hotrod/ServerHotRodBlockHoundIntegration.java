@@ -29,9 +29,6 @@ public class ServerHotRodBlockHoundIntegration implements BlockHoundIntegration 
       builder.allowBlockingCallsInside(HotRodServer.class.getName(), "obtainAnonymizedCache");
       builder.allowBlockingCallsInside(Encoder2x.class.getName(), "getCounterCacheTopology");
 
-      // Size method is blocking when a store is installed
-      builder.allowBlockingCallsInside(CacheRequestProcessor.class.getName(), "stats");
-
       // Stream method is blocking
       builder.allowBlockingCallsInside(Encoder2x.class.getName(), "generateTopologyResponse");
 

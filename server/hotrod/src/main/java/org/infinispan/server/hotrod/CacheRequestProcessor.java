@@ -53,7 +53,8 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void stats(HotRodHeader header, Subject subject) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      writeResponse(header, header.encoder().statsResponse(header, server, channel, cache.getStats(), server.getTransport(), SecurityActions.getCacheComponentRegistry(cache)));
+      executor.execute(() -> writeResponse(header, header.encoder().statsResponse(header, server, channel,
+            cache.getStats(), server.getTransport(), SecurityActions.getCacheComponentRegistry(cache))));
    }
 
    void get(HotRodHeader header, Subject subject, byte[] key) {
