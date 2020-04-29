@@ -18,7 +18,7 @@
 
       <xi:include href="security/none.xml"/>
 
-      <xi:include href="datasources/default-h2.xml"/>
+      <xi:include href="datasources/default.xml"/>
 
       <xi:include href="endpoints/default.xml"/>
    </server>

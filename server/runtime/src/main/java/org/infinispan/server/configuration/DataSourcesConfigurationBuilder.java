@@ -1,19 +1,23 @@
 package org.infinispan.server.configuration;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.server.Server;
 
 public class DataSourcesConfigurationBuilder implements Builder<DataSourcesConfiguration> {
 
    private final AttributeSet attributes;
    private final ServerConfigurationBuilder server;
 
-   private Map<String, DataSourceConfigurationBuilder> dataSources = new LinkedHashMap<>(2);
+   private final Map<String, DataSourceConfigurationBuilder> dataSources = new LinkedHashMap<>(2);
+   private final Set<String> jndiNames = new HashSet<>(2);
 
    DataSourcesConfigurationBuilder(ServerConfigurationBuilder server) {
       this.server = server;
@@ -21,8 +25,15 @@ public class DataSourcesConfigurationBuilder implements Builder<DataSourcesConfi
    }
 
    DataSourceConfigurationBuilder dataSource(String name, String jndiName) {
+      if (dataSources.containsKey(name)) {
+         throw Server.log.duplicateDataSource(name);
+      }
+      if (jndiNames.contains(jndiName)) {
+         throw Server.log.duplicateJndiName(jndiName);
+      }
       DataSourceConfigurationBuilder builder = new DataSourceConfigurationBuilder(server, name, jndiName);
       dataSources.put(name, builder);
+      jndiNames.add(jndiName);
       return builder;
    }
 
