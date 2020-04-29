@@ -201,7 +201,6 @@
          --add-modules=java.se
       </testjvm.jigsawArgs>
       <testjvm.extraArgs/>
-      <testjvm.extraArgs/>
       <forkJvmArgs>-Xmx1G ${testjvm.commonArgs} ${testjvm.extraArgs}</forkJvmArgs>
       <server.jvm>${env.JAVA_HOME}</server.jvm>
       <server.jvm.args>${testjvm.commonArgs} ${testjvm.jigsawArgs} ${testjvm.extraArgs}</server.jvm.args>
@@ -3790,7 +3789,9 @@
                   <failsOnError>true</failsOnError>
                   <violationSeverity>error</violationSeverity>
                   <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                  <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+                  <sourceDirectories>
+                     <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+                  </sourceDirectories>
                   <linkXRef>false</linkXRef>
                </configuration>
             </plugin>
@@ -4459,7 +4460,15 @@
             </plugins>
          </build>
       </profile>
-
+      <profile>
+         <id>java13-test</id>
+         <activation>
+            <jdk>[13,</jdk>
+         </activation>
+         <properties>
+            <testjvm.extraArgs>-XX:+AllowRedefinitionToAddDeleteMethods</testjvm.extraArgs>
+         </properties>
+      </profile>
       <profile>
          <id>extras</id>
          <activation>
@@ -4928,3 +4937,4 @@
       </profile>
    </profiles>
 </project>
+
