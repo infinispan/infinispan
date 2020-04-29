@@ -1,26 +1,30 @@
 package org.infinispan.distribution.ch.impl;
 
+import static java.lang.Math.min;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
 
 import org.infinispan.commands.topology.CacheJoinCommand;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.topology.PersistentUUID;
+import org.jgroups.util.UUID;
 
 /**
  * One of the assumptions people made on consistent hashing involves thinking
@@ -62,9 +66,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       checkCapacityFactors(members, capacityFactors);
 
       Builder builder = createBuilder(numOwners, numSegments, members, capacityFactors);
-      builder.populateOwners(numSegments);
-      builder.populateExtraOwners(numSegments);
-      builder.copyOwners();
+      builder.populateOwners();
 
       return new DefaultConsistentHash(numOwners, numSegments, members, capacityFactors, builder.segmentOwners);
    }
@@ -77,11 +79,11 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       return new DefaultConsistentHash(state);
    }
 
-   protected Builder createBuilder(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
+   Builder createBuilder(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
       return new Builder(numOwners, numSegments, members, capacityFactors);
    }
 
-   protected void checkCapacityFactors(List<Address> members, Map<Address, Float> capacityFactors) {
+   void checkCapacityFactors(List<Address> members, Map<Address, Float> capacityFactors) {
       if (capacityFactors != null) {
          float totalCapacity = 0;
          for (Address node : members) {
@@ -110,7 +112,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       int numOwners = baseCH.getNumOwners();
 
       // We assume leavers are far fewer than members, so it makes sense to check for leavers
-      HashSet<Address> leavers = new HashSet<Address>(baseCH.getMembers());
+      HashSet<Address> leavers = new HashSet<>(baseCH.getMembers());
       leavers.removeAll(newMembers);
 
       // Create a new "balanced" CH in case we need to allocate new owners for segments with 0 owners
@@ -118,17 +120,17 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
 
       // Remove leavers
       List<Address>[] newSegmentOwners = new List[numSegments];
-      for (int i = 0; i < numSegments; i++) {
-         List<Address> owners = new ArrayList<Address>(baseCH.locateOwnersForSegment(i));
+      for (int s = 0; s < numSegments; s++) {
+         List<Address> owners = new ArrayList<>(baseCH.locateOwnersForSegment(s));
          owners.removeAll(leavers);
          if (!owners.isEmpty()) {
-            newSegmentOwners[i] = owners;
+            newSegmentOwners[s] = owners;
          } else {
             // this segment has 0 owners, fix it
             if (rebalancedCH == null) {
                rebalancedCH = create(numOwners, numSegments, newMembers, actualCapacityFactors);
             }
-            newSegmentOwners[i] = rebalancedCH.locateOwnersForSegment(i);
+            newSegmentOwners[s] = rebalancedCH.locateOwnersForSegment(s);
          }
       }
 
@@ -153,262 +155,6 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       return ch1.union(ch2);
    }
 
-   protected static class Builder {
-      protected final int numOwners;
-      protected final Map<Address, Float> capacityFactors;
-      protected final int actualNumOwners;
-      protected final int numSegments;
-      protected final List<Address> sortedMembers;
-      protected final int segmentSize;
-      protected final List<Address>[] segmentOwners;
-      protected final OwnershipStatistics stats;
-
-      protected boolean ignoreMaxSegments;
-
-      protected Builder(int numOwners, int numSegments, List<Address> members,
-                        Map<Address, Float> capacityFactors) {
-         this.numSegments = numSegments;
-         this.numOwners = numOwners;
-         this.actualNumOwners = Math.min(numOwners, members.size());
-         this.sortedMembers = sort(members, capacityFactors);
-         this.capacityFactors = populateCapacityFactors(capacityFactors, sortedMembers);
-         this.segmentSize = Util.getSegmentSize(numSegments);
-         this.segmentOwners = new List[numSegments];
-         for (int i = 0; i < numSegments; i++) {
-            segmentOwners[i] = new ArrayList<Address>(actualNumOwners);
-         }
-         stats = new OwnershipStatistics(members);
-      }
-
-      private Map<Address, Float> populateCapacityFactors(Map<Address, Float> capacityFactors, List<Address> sortedMembers) {
-         if (capacityFactors != null)
-            return capacityFactors;
-
-         Map<Address, Float> realCapacityFactors = new HashMap<>();
-         for (Address member : sortedMembers) {
-            realCapacityFactors.put(member, 1.0f);
-         }
-         return realCapacityFactors;
-      }
-
-      protected void addOwnerNoCheck(int segment, Address owner) {
-         segmentOwners[segment].add(owner);
-         stats.incOwned(owner);
-         if (segmentOwners[segment].size() == 1) {
-            stats.incPrimaryOwned(owner);
-         }
-      }
-
-      protected float computeTotalCapacity() {
-         if (capacityFactors == null)
-            return sortedMembers.size();
-
-         float totalCapacity = 0;
-         for (Address member : sortedMembers) {
-            Float capacityFactor = capacityFactors.get(member);
-            totalCapacity += capacityFactor;
-         }
-         return totalCapacity;
-      }
-
-      protected List<Address> sort(List<Address> members, final Map<Address, Float> capacityFactors) {
-         ArrayList<Address> result = new ArrayList<>(members);
-         result.sort((o1, o2) -> {
-            // Sort descending by capacity factor and ascending by address (UUID)
-            int capacityComparison = capacityFactors != null ? capacityFactors.get(o1).compareTo(capacityFactors.get(o2)) : 0;
-            return capacityComparison != 0 ? -capacityComparison : o1.compareTo(o2);
-         });
-         return result;
-      }
-
-      protected void copyOwners() {
-         ignoreMaxSegments = false;
-         doCopyOwners();
-         ignoreMaxSegments = true;
-         doCopyOwners();
-      }
-
-      protected void doCopyOwners() {
-         // The primary owners have been already assigned (and sometimes backup owners as well).
-         // For each segment with not enough owners, add the owners from the previous segments.
-         for (int segment = 0; segment < numSegments; segment++) {
-            List<Address> owners = segmentOwners[segment];
-            int additionalOwnersSegment = nextSegment(segment);
-            while (canAddOwners(owners) && additionalOwnersSegment != segment) {
-               List<Address> additionalOwners = segmentOwners[additionalOwnersSegment];
-               for (Address additionalOwner : additionalOwners) {
-                  addBackupOwner(segment, additionalOwner);
-                  if (!canAddOwners(owners))
-                     break;
-               }
-               additionalOwnersSegment = nextSegment(additionalOwnersSegment);
-            }
-         }
-      }
-
-      protected boolean canAddOwners(List<Address> owners) {
-         return owners.size() < actualNumOwners;
-      }
-
-      protected int nextSegment(int segment) {
-         if (segment == numSegments - 1)
-            return 0;
-
-         return segment + 1;
-
-      }
-
-      protected void populateOwners(int numSegments) {
-         int virtualNode = 0;
-         // Loop until we have already assigned a primary owner to each segment
-         do {
-            for (Address member : sortedMembers) {
-               int segment = computeSegment(member, virtualNode);
-               addPrimaryOwner(segment, member);
-            }
-            virtualNode++;
-         } while (stats.sumPrimaryOwned() < numSegments);
-      }
-
-      protected void populateExtraOwners(int numSegments) {
-         // If there are too few segments, some members may not have any segments at this point
-         // Assign each of them one segment, if possible (topology awareness may prevent it)
-         List<Address> additionalOwners = new ArrayList<>();
-         for (Address node : sortedMembers) {
-            if (stats.getOwned(node) == 0 && capacityFactors.get(node) != 0f) {
-               additionalOwners.add(node);
-            }
-         }
-         for (int segment = 0; segment < numSegments; segment++) {
-            List<Address> owners = segmentOwners[segment];
-            while (canAddOwners(owners) && !additionalOwners.isEmpty()) {
-               for (Iterator<Address> itOwner = additionalOwners.iterator(); itOwner.hasNext(); ) {
-                  Address additionalOwner = itOwner.next();
-                  if (addBackupOwner(segment, additionalOwner)) {
-                     itOwner.remove();
-                  }
-                  if (!canAddOwners(owners))
-                     break;
-               }
-            }
-         }
-
-         // If there are too few segments, some members may not have any segments at this point
-         // Assign each of them one segment, if possible (topology awareness may prevent it)
-         int virtualNode = 0;
-         boolean membersWithZeroSegments;
-         // Stop looping after a while in case there's a bug
-         while (virtualNode < 1000) {
-            boolean ownerSlotsAvailable = false;
-            for (int segment = 0; segment < numSegments; segment++) {
-               if (canAddOwners(segmentOwners[segment])) {
-                  ownerSlotsAvailable = true;
-                  break;
-               }
-            }
-            if (!ownerSlotsAvailable)
-               break;
-
-            membersWithZeroSegments = false;
-            for (Address member : sortedMembers) {
-               if (stats.getOwned(member) == 0) {
-                  membersWithZeroSegments = true;
-                  int segment = computeSegment(member, virtualNode);
-                  addBackupOwner(segment, member);
-               }
-            }
-            if (!membersWithZeroSegments)
-               break;
-
-            virtualNode++;
-         }
-      }
-
-      private int computeSegment(Address member, int virtualNode) {
-         // Add the virtual node count after applying MurmurHash on the node's hashCode
-         // to make up for badly spread test addresses.
-         int virtualNodeHash = normalizedHash(member.hashCode());
-         if (virtualNode != 0) {
-            virtualNodeHash = normalizedHash(virtualNodeHash + virtualNode);
-         }
-         return virtualNodeHash / segmentSize;
-      }
-
-      protected double getExpectedPrimarySegments(Address node) {
-         Float nodeCapacityFactor = capacityFactors.get(node);
-         if (nodeCapacityFactor == 0)
-            return 0;
-
-         double totalCapacity = computeTotalCapacity();
-         return numSegments * nodeCapacityFactor / totalCapacity;
-      }
-
-      protected double getExpectedOwnedSegments(Address node) {
-         Float nodeCapacityFactor = capacityFactors.get(node);
-         if (nodeCapacityFactor == 0)
-            return 0;
-
-         double remainingCapacity = computeTotalCapacity();
-         double remainingCopies = actualNumOwners * numSegments;
-         for (Address a : sortedMembers) {
-            float capacityFactor = capacityFactors.get(a);
-            double nodeSegments = capacityFactor / remainingCapacity * remainingCopies;
-            if (nodeSegments > numSegments) {
-               nodeSegments = numSegments;
-               remainingCapacity -= capacityFactor;
-               remainingCopies -= nodeSegments;
-               if (node.equals(a))
-                  return nodeSegments;
-            } else {
-               // All the nodes from now on will have less than numSegments segments, so we can stop the iteration
-               if (!node.equals(a)) {
-                  nodeSegments = nodeCapacityFactor / remainingCapacity * remainingCopies;
-               }
-               return Math.max(nodeSegments, 1);
-            }
-         }
-         throw new IllegalStateException("The nodes collection does not include " + node);
-      }
-
-      protected boolean addPrimaryOwner(int segment, Address candidate) {
-         List<Address> owners = segmentOwners[segment];
-         if (owners.isEmpty()) {
-            double expectedSegments = getExpectedPrimarySegments(candidate);
-            int maxSegments = (int) (Math.ceil(expectedSegments) * PRIMARY_SEGMENTS_ALLOWED_VARIATION);
-            if (stats.getPrimaryOwned(candidate) < maxSegments) {
-               addOwnerNoCheck(segment, candidate);
-               return true;
-            }
-         }
-         return false;
-      }
-
-      protected boolean addBackupOwner(int segment, Address candidate) {
-         List<Address> owners = segmentOwners[segment];
-         if (owners.size() < actualNumOwners && !owners.contains(candidate)) {
-            if (!ignoreMaxSegments) {
-               double expectedSegments = getExpectedOwnedSegments(candidate);
-               long maxSegments = (int) Math.ceil(expectedSegments * OWNED_SEGMENTS_ALLOWED_VARIATION);
-
-               if (stats.getOwned(candidate) + 1 <= maxSegments) {
-                  addOwnerNoCheck(segment, candidate);
-                  return true;
-               }
-            } else {
-               if (!capacityFactors.get(candidate).equals(0f)) {
-                  addOwnerNoCheck(segment, candidate);
-                  return true;
-               }
-            }
-         }
-         return false;
-      }
-
-      protected int normalizedHash(int hashcode) {
-         return MurmurHash3.getInstance().hash(hashcode) & Integer.MAX_VALUE;
-      }
-   }
-
    @Override
    public boolean equals(Object other) {
       return other != null && other.getClass() == getClass();
@@ -419,6 +165,445 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       return -10007;
    }
 
+   static class Builder {
+      static final int NO_NODE = -1;
+
+      // Input
+      final int numOwners;
+      final int numSegments;
+
+      // Output
+      final List<Address>[] segmentOwners;
+      final int[][] ownerIndices;
+
+      // Constant data
+      final List<Address> sortedMembers;
+      final int numNodes;
+      final float[] sortedCapacityFactors;
+      final float[] distanceFactors;
+      final float totalCapacity;
+      final int actualNumOwners;
+      final int numNodeHashes;
+      // Hashes use only 63 bits, or the interval 0..2^63-1
+      final long segmentSize;
+      final long[] segmentHashes;
+      final long[][] nodeHashes;
+
+      int nodeDistanceUpdates;
+      final OwnershipStatistics stats;
+
+      Builder(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
+         this.numSegments = numSegments;
+         this.numOwners = numOwners;
+         this.sortedMembers = sortMembersByCapacity(members, capacityFactors);
+         this.sortedCapacityFactors = capacityFactorsToArray(sortedMembers, capacityFactors);
+         this.totalCapacity = computeTotalCapacity();
+
+         numNodes = sortedMembers.size();
+         actualNumOwners = min(numOwners, numNodes);
+         distanceFactors = capacityFactorsToDistanceFactors();
+         segmentOwners = new List[numSegments];
+         ownerIndices = new int[numSegments][];
+         for (int s = 0; s < numSegments; s++) {
+            segmentOwners[s] = new ArrayList<>(actualNumOwners);
+            ownerIndices[s] = new int[actualNumOwners];
+         }
+
+         segmentSize = Long.MAX_VALUE / numSegments;
+         segmentHashes = computeSegmentHashes(numSegments);
+         // If we ever make the number of segments dynamic, the number of hashes should be fixed.
+         // Otherwise the extra hashes would cause extra segment to move on segment number changes.
+         numNodeHashes = 32 - Integer.numberOfLeadingZeros(numSegments);
+         nodeHashes = computeNodeHashes();
+
+         stats = new OwnershipStatistics(sortedMembers);
+      }
+
+      private float[] capacityFactorsToDistanceFactors() {
+         // Nodes with capacity factor 0 have been removed
+         float minCapacity = sortedCapacityFactors[numNodes - 1];
+         float[] distanceFactors = new float[numNodes];
+         for (int n = 0; n < numNodes; n++) {
+            distanceFactors[n] = minCapacity / sortedCapacityFactors[n];
+         }
+         return distanceFactors;
+      }
+
+      private float[] capacityFactorsToArray(List<Address> sortedMembers, Map<Address, Float> capacityFactors) {
+         float[] capacityFactorsArray = new float[sortedMembers.size()];
+         for (int n = 0; n < sortedMembers.size(); n++) {
+            capacityFactorsArray[n] = capacityFactors != null ? capacityFactors.get(sortedMembers.get(n)) : 1f;
+         }
+         return capacityFactorsArray;
+      }
+
+      private List<Address> sortMembersByCapacity(List<Address> members, Map<Address, Float> capacityFactors) {
+         if (capacityFactors == null)
+            return members;
+
+         // Only add members with non-zero capacity
+         List<Address> sortedMembers = new ArrayList<>();
+         for (Address member : members) {
+            if (!capacityFactors.get(member).equals(0f)) {
+               sortedMembers.add(member);
+            }
+         }
+         // Sort in descending order
+         sortedMembers.sort((a1, a2) -> Float.compare(capacityFactors.get(a2), capacityFactors.get(a1)));
+         return sortedMembers;
+      }
+
+      int[] computeExpectedSegments(int expectedOwners, float totalCapacity, int iteration) {
+         int[] expected = new int[numNodes];
+         float remainingCapacity = totalCapacity;
+         int remainingCopies = expectedOwners * numSegments;
+         float averageSegments = (float) remainingCopies / numNodes;
+         for (int n = 0; n < numNodes; n++) {
+            float capacityFactor = sortedCapacityFactors[n];
+            if (capacityFactor == 0f) {
+               expected[n] = 0;
+            }
+
+            float idealOwnedSegments = remainingCopies * capacityFactor / remainingCapacity;
+            if (idealOwnedSegments > numSegments) {
+               remainingCapacity -= capacityFactor;
+               remainingCopies -= numSegments;
+               expected[n] = numSegments;
+            } else {
+               // All the nodes from now on will have less than numSegments segments,
+               // so we can stop updating remainingCapacity/remainingCopies
+               expected[n] = fudgeExpectedSegments(idealOwnedSegments, averageSegments, iteration);
+            }
+         }
+         return expected;
+      }
+
+      static int fudgeExpectedSegments(float idealOwnedSegments, float averageSegments, int iteration) {
+         // In the first rounds reduce the number of expected segments so every node has a chance
+         // In the later rounds increase the number of expected segments so every segment eventually finds an owner
+         // It's harder to allocate the last segments to the nodes with large capacity,
+         // so the step by which we reduce/increase is not linear with the number of ideal expected segments
+         // But assign at least one extra segment per node every 5 iterations, in case there are too few segments
+         float step = Math.max(Math.min(averageSegments * 0.05f, idealOwnedSegments * 0.15f), 1f);
+         return Math.max((int) (idealOwnedSegments + (iteration - 2.5f ) * step), 0);
+      }
+
+      private long[] computeSegmentHashes(int numSegments) {
+         assert segmentSize != 0;
+         long[] segmentHashes = new long[numSegments];
+         long currentSegmentHash = segmentSize >> 1;
+         for (int s = 0; s < numSegments; s++) {
+            segmentHashes[s] = currentSegmentHash;
+            currentSegmentHash += segmentSize;
+         }
+         return segmentHashes;
+      }
+
+      private long[][] computeNodeHashes() {
+         long[][] nodeHashes = new long[numNodes][];
+         for (int n = 0; n < numNodes; n++) {
+            nodeHashes[n] = new long[this.numNodeHashes];
+            for (int h = 0; h < this.numNodeHashes; h++) {
+               nodeHashes[n][h] = nodeHash(sortedMembers.get(n), h);
+            }
+            Arrays.sort(nodeHashes[n]);
+         }
+         return nodeHashes;
+      }
+
+      float computeTotalCapacity() {
+         if (sortedCapacityFactors == null)
+            return sortedMembers.size();
+
+         float totalCapacity = 0;
+         for (float sortedCapacityFactor : sortedCapacityFactors) {
+            totalCapacity += sortedCapacityFactor;
+         }
+         return totalCapacity;
+      }
+
+      long nodeHash(Address address, int virtualNode) {
+         // 64-bit hashes from 32-bit hashes have a non-negligible chance of collision,
+         // so we try to get all 128 bits from UUID addresses
+         long[] key = new long[2];
+         if (address instanceof JGroupsAddress) {
+            org.jgroups.Address jGroupsAddress = ((JGroupsAddress) address).getJGroupsAddress();
+            if (jGroupsAddress instanceof UUID) {
+               key[0] = ((UUID) jGroupsAddress).getLeastSignificantBits();
+               key[1] = ((UUID) jGroupsAddress).getMostSignificantBits();
+            } else {
+               key[0] = address.hashCode();
+            }
+         } else if (address instanceof PersistentUUID) {
+            key[0] = ((PersistentUUID) address).getLeastSignificantBits();
+            key[1] = ((PersistentUUID) address).getMostSignificantBits();
+         } else {
+            key[0] = address.hashCode();
+         }
+         return MurmurHash3.MurmurHash3_x64_64(key, virtualNode) & Long.MAX_VALUE;
+      }
+
+      /**
+       * @return distance between 2 points in the 0..2^63-1 range, max 2^62-1
+       */
+      long distance(long a, long b) {
+         long distance = a < b ? b - a : a - b;
+         if ((distance & (1L << 62)) != 0) {
+            distance = -distance - Long.MIN_VALUE;
+         }
+         // For the -2^63..2^63-1 range, the code would be
+         // if (distance < 0) {
+         //    distance = -distance;
+         // }
+         return distance;
+      }
+
+      void populateOwners() {
+         // List k contains each segment's kth closest available node
+         PriorityQueue<SegmentInfo>[] segmentQueues = new PriorityQueue[Math.max(1, actualNumOwners)];
+         for (int i = 0; i < segmentQueues.length; i++) {
+            segmentQueues[i] = new PriorityQueue<>(numSegments);
+         }
+         // Temporary priority queue for one segment's potential owners
+         PriorityQueue<SegmentInfo> temporaryQueue = new PriorityQueue<>(numNodes);
+
+         assignSegments(1, totalCapacity, 1, segmentQueues, temporaryQueue);
+         assert stats.sumPrimaryOwned() == numSegments;
+
+         // The minimum queue count we can use is actualNumOwners - 1
+         // A bigger queue count improves stability, i.e. a rebalance after a join/leave moves less segments around
+         // However, the queueCount==1 case is optimized, so actualNumOwners-1 has better performance for numOwners=2
+         assignSegments(actualNumOwners, totalCapacity, actualNumOwners - 1, segmentQueues, temporaryQueue);
+         assert stats.sumOwned() == actualNumOwners * numSegments;
+      }
+
+      private void assignSegments(int currentNumOwners, float totalCapacity, int queuesCount,
+                                  PriorityQueue<SegmentInfo>[] segmentQueues,
+                                  PriorityQueue<SegmentInfo> temporaryQueue) {
+         int totalCopies = currentNumOwners * numSegments;
+
+         // We try to assign the closest node as the first owner, then the 2nd closest node etc.
+         // But we also try to keep the number of owned segments per node close to the "ideal" number,
+         // so we start by allocating a smaller number of segments to each node and slowly allow more segments.
+         for (int loadIteration = 0; stats.sumOwned() < totalCopies; loadIteration++) {
+            int[] nodeSegmentsToAdd = computeExpectedSegments(currentNumOwners, totalCapacity, loadIteration);
+            int iterationCopies = 0;
+            for (int n = 0; n < numNodes; n++) {
+               iterationCopies += nodeSegmentsToAdd[n];
+               nodeSegmentsToAdd[n] -= stats.getOwned(n);
+            }
+
+            iterationCopies = Math.max(iterationCopies, totalCopies);
+            for (int distanceIteration = 0; distanceIteration < numNodes; distanceIteration++) {
+               if (stats.sumOwned() >= iterationCopies)
+                  break;
+
+               populateQueues(currentNumOwners, nodeSegmentsToAdd, queuesCount, segmentQueues, temporaryQueue);
+
+               if (!assignQueuedOwners(currentNumOwners, nodeSegmentsToAdd, queuesCount, iterationCopies, segmentQueues))
+                  break;
+            }
+         }
+      }
+
+      // Useful for debugging
+      private BitSet[] computeAvailableSegmentsPerNode(int currentNumOwners) {
+         BitSet[] nodeSegmentsAvailable = new BitSet[numNodes];
+         for (int s = 0; s < numSegments; s++) {
+            if (!segmentIsAvailable(s, currentNumOwners))
+               continue;
+
+            for (int n = 0; n < numNodes; n++) {
+               if (nodeCanOwnSegment(s, segmentOwners[s].size(), n)) {
+                  if (nodeSegmentsAvailable[n] == null) {
+                     nodeSegmentsAvailable[n] = new BitSet();
+                  }
+                  nodeSegmentsAvailable[n].set(s);
+               }
+            }
+         }
+         return nodeSegmentsAvailable;
+      }
+
+      private boolean assignQueuedOwners(int currentNumOwners, int[] nodeSegmentsToAdd, int queuesCount,
+                                         int iterationCopies, PriorityQueue<SegmentInfo>[] segmentQueues) {
+         boolean assigned = false;
+         for (int i = 0; i < queuesCount; i++) {
+            SegmentInfo si;
+            while ((si = segmentQueues[i].poll()) != null) {
+               int ownerPosition = segmentOwners[si.segment].size();
+               if (nodeSegmentsToAdd[si.nodeIndex] <= 0)
+                  continue;
+               if (i == 0 ||
+                   segmentIsAvailable(si.segment, currentNumOwners) &&
+                   nodeCanOwnSegment(si.segment, ownerPosition, si.nodeIndex)) {
+                  assignOwner(si.segment, ownerPosition, si.nodeIndex, nodeSegmentsToAdd);
+                  assigned = true;
+               }
+               if (stats.sumOwned() >= iterationCopies) {
+                  return assigned;
+               }
+            }
+            segmentQueues[i].clear();
+         }
+         return assigned;
+      }
+
+      private void populateQueues(int currentNumOwners, int[] nodeSegmentsToAdd, int queueSize,
+                                  PriorityQueue<SegmentInfo>[] segmentQueues,
+                                  PriorityQueue<SegmentInfo> priorityQueue) {
+         // Optimization for queue size 1
+         SegmentInfo best = null;
+         for (int s = 0; s < numSegments; s++) {
+            if (!segmentIsAvailable(s, currentNumOwners))
+               continue;
+
+            for (int n = 0; n < numNodes; n++) {
+               if (nodeSegmentsToAdd[n] > 0 && nodeCanOwnSegment(s, segmentOwners[s].size(), n)) {
+                  long scaledDistance = nodeSegmentDistance(n, segmentHashes[s]);
+                  if (queueSize > 1) {
+                     SegmentInfo si = new SegmentInfo(s, n, scaledDistance);
+                     priorityQueue.add(si);
+                  } else {
+                     if (best == null) {
+                        best = new SegmentInfo(s, n, scaledDistance);
+                     } else if (scaledDistance < best.distance) {
+                        best.update(n, scaledDistance);
+                     }
+                  }
+               }
+            }
+
+            if (queueSize > 1) {
+               for (int i = 0; i < queueSize && !priorityQueue.isEmpty(); i++) {
+                  segmentQueues[i].add(priorityQueue.remove());
+               }
+               priorityQueue.clear();
+            } else {
+               if (best != null) {
+                  segmentQueues[0].add(best);
+               }
+               best = null;
+            }
+         }
+      }
+
+      private boolean segmentIsAvailable(int segment, int currentNumOwners) {
+         return segmentOwners[segment].size() < currentNumOwners;
+      }
+
+      private long nodeSegmentDistance(int nodeIndex, long segmentHash) {
+         nodeDistanceUpdates++;
+         long[] currentNodeHashes = nodeHashes[nodeIndex];
+         int hashIndex = Arrays.binarySearch(currentNodeHashes, segmentHash);
+         long scaledDistance;
+         if (hashIndex > 0) {
+            // Found an exact match
+            scaledDistance = 0L;
+         } else {
+            // Flip to get the insertion point
+            hashIndex = -(hashIndex + 1);
+
+            long hashBefore = hashIndex > 0 ? currentNodeHashes[hashIndex - 1] : currentNodeHashes[numNodeHashes - 1];
+            long hashAfter = hashIndex < numNodeHashes ? currentNodeHashes[hashIndex] : currentNodeHashes[0];
+
+            long distance = min(distance(hashBefore, segmentHash), distance(hashAfter, segmentHash));
+            scaledDistance = (long) (distance * distanceFactors[nodeIndex]);
+         }
+         return scaledDistance;
+      }
+
+      protected void assignOwner(int segment, int ownerPosition, int nodeIndex, int[] nodeSegmentsWanted) {
+         assert nodeSegmentsWanted[nodeIndex] > 0;
+         // One less segment needed for the assigned node
+         --nodeSegmentsWanted[nodeIndex];
+
+         assert segmentOwners[segment].size() == ownerPosition;
+         segmentOwners[segment].add(sortedMembers.get(nodeIndex));
+         ownerIndices[segment][ownerPosition] = nodeIndex;
+         stats.incOwned(nodeIndex, ownerPosition == 0);
+//         System.out.printf("owners[%d][%d] = %s (%d)\n", segment, ownerPosition, sortedMembers.get(nodeIndex), nodeIndex);
+      }
+
+      boolean nodeCanOwnSegment(int segment, int ownerPosition, int nodeIndex) {
+         // Return false the node exists in the owners list
+         return !intArrayContains(ownerIndices[segment], ownerPosition, nodeIndex);
+      }
+
+      boolean intArrayContains(int[] array, int end, int value) {
+         for (int i = 0; i < end; i++) {
+            if (array[i] == value)
+               return true;
+         }
+         return false;
+      }
+
+      static class SegmentInfo implements Comparable<SegmentInfo> {
+         static final int NO_AVAILABLE_OWNERS = -2;
+
+         final int segment;
+         int nodeIndex;
+         long distance;
+
+         SegmentInfo(int segment) {
+            this.segment = segment;
+            reset();
+         }
+
+         public SegmentInfo(int segment, int nodeIndex, long distance) {
+            this.segment = segment;
+            this.nodeIndex = nodeIndex;
+            this.distance = distance;
+         }
+
+         void update(int closestNode, long minDistance) {
+            this.nodeIndex = closestNode;
+            this.distance = minDistance;
+         }
+
+         boolean isValid() {
+            return nodeIndex >= 0;
+         }
+
+         void reset() {
+            update(NO_NODE, Long.MAX_VALUE);
+         }
+
+         boolean hasNoAvailableOwners() {
+            return nodeIndex == NO_AVAILABLE_OWNERS;
+         }
+
+         void markNoPotentialOwners() {
+            update(NO_AVAILABLE_OWNERS, Long.MAX_VALUE);
+         }
+
+         @Override
+         public int compareTo(SegmentInfo o) {
+            // Sort ascending by distance
+            return Long.compare(distance, o.distance);
+         }
+
+         @Override
+         public String toString() {
+            if (nodeIndex >= 0) {
+               return String.format("SegmentInfo#%d{n=%d, distance=%016x}", segment, nodeIndex, distance);
+            }
+            return String.format("SegmentInfo#%d{%s}", segment, segmentDescription());
+         }
+
+         private String segmentDescription() {
+            switch (nodeIndex) {
+               case NO_NODE:
+                  return "NO_NODE";
+               case NO_AVAILABLE_OWNERS:
+                  return "NO_AVAILABLE_OWNERS";
+               default:
+                  return String.valueOf(segment);
+            }
+         }
+      }
+   }
+
    public static class Externalizer extends AbstractExternalizer<SyncConsistentHashFactory> {
 
       @Override
@@ -426,7 +611,6 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public SyncConsistentHashFactory readObject(ObjectInput unmarshaller) {
          return new SyncConsistentHashFactory();
       }
@@ -438,7 +622,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
 
       @Override
       public Set<Class<? extends SyncConsistentHashFactory>> getTypeClasses() {
-         return Collections.<Class<? extends SyncConsistentHashFactory>>singleton(SyncConsistentHashFactory.class);
+         return Collections.singleton(SyncConsistentHashFactory.class);
       }
    }
 }

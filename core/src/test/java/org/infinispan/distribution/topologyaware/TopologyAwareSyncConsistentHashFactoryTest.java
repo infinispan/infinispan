@@ -20,13 +20,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "distribution.topologyaware.TopologyAwareSyncConsistentHashFactoryTest")
 public class TopologyAwareSyncConsistentHashFactoryTest extends TopologyAwareConsistentHashFactoryTest {
 
-   private Log log = LogFactory.getLog(TopologyAwareSyncConsistentHashFactoryTest.class);
-
-   public TopologyAwareSyncConsistentHashFactoryTest() {
-      // Increase the number of segments to eliminate collisions (which would cause extra segment movements,
-      // causing testConsistencyAfterLeave to fail.)
-      numSegments = 1000;
-   }
+   private final Log log = LogFactory.getLog(TopologyAwareSyncConsistentHashFactoryTest.class);
 
    @Override
    protected ConsistentHashFactory<DefaultConsistentHash> createConsistentHashFactory() {

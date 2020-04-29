@@ -1,4 +1,4 @@
-package org.infinispan.distribution.ch;
+package org.infinispan.distribution.ch.impl;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertSame;
@@ -7,20 +7,18 @@ import static org.testng.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.TestAddress;
-import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
-import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.OwnershipStatistics;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
@@ -36,7 +34,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
 
    private int iterationCount = 0;
 
-   protected ConsistentHashFactory createConsistentHashFactory() {
+   protected ConsistentHashFactory<DefaultConsistentHash> createConsistentHashFactory() {
       return new DefaultConsistentHashFactory();
    }
 
@@ -48,7 +46,6 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       float[][] capacityFactors = {null, {1}, {2}, {1, 100}, {2, 0, 1}};
 
       ConsistentHashFactory<DefaultConsistentHash> chf = createConsistentHashFactory();
-      Hash hashFunction = MurmurHash3.getInstance();
 
       for (int nn : numNodes) {
          List<Address> nodes = new ArrayList<>(nn);
@@ -67,7 +64,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
                            lfMap.put(nodes.get(i), lf[i % lf.length]);
                         }
                      }
-                     testConsistentHashModifications(chf, hashFunction, nodes, ns, no, lfMap);
+                     testConsistentHashModifications(chf, nodes, ns, no, lfMap);
                   }
                }
             }
@@ -75,10 +72,13 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       }
    }
 
-   private void testConsistentHashModifications(ConsistentHashFactory<DefaultConsistentHash> chf, Hash hashFunction, List<Address> nodes, int ns, int no, Map<Address, Float> lfMap) {
+   private void testConsistentHashModifications(ConsistentHashFactory<DefaultConsistentHash> chf,
+                                                List<Address> nodes, int ns, int no, Map<Address, Float> lfMap) {
+      log.tracef("Creating consistent hash with ns=%d, no=%d, members=(%d)%s",
+                 ns, no, nodes.size(), membersString(nodes, lfMap));
       DefaultConsistentHash baseCH = chf.create(no, ns, nodes, lfMap);
       assertEquals(lfMap, baseCH.getCapacityFactors());
-      checkDistribution(baseCH, lfMap, false);
+      checkDistribution(baseCH, lfMap);
 
       // each element in the array is a pair of numbers: the first is the number of nodes to add
       // the second is the number of nodes to remove (the index of the removed nodes are pseudo-random)
@@ -117,12 +117,22 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
             }
          }
 
-         log.tracef("Testing consistent hash modifications iteration %d. Initial CH is %s. New members are %s",
-               iterationCount, baseCH, newMembers);
+         log.tracef("Testing consistent hash modifications iteration %d, members=(%d)%s",
+                    iterationCount, newMembers.size(), membersString(newMembers, newCapacityFactors));
          baseCH = checkModificationsIteration(chf, baseCH, nodesToAdd, nodesToRemove, newMembers, newCapacityFactors);
 
          iterationCount++;
       }
+   }
+
+   private String membersString(List<Address> newMembers, Map<Address, Float> newCapacityFactors) {
+      return newMembers.stream()
+                       .map(a -> String.format("%s * %.1f", a, getCapacityFactor(newCapacityFactors, a)))
+                       .collect(Collectors.joining(", ", "[", "]"));
+   }
+
+   private float getCapacityFactor(Map<Address, Float> capacityFactors, Address a) {
+      return capacityFactors != null ? capacityFactors.get(a) : 1f;
    }
 
    private DefaultConsistentHash checkModificationsIteration(ConsistentHashFactory<DefaultConsistentHash> chf,
@@ -143,14 +153,19 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       }
 
       // second phase: rebalance with the new members list
+      long startNanos = System.nanoTime();
       DefaultConsistentHash rebalancedCH = chf.rebalance(updatedMembersCH);
-      checkDistribution(rebalancedCH, lfMap, false);
+      long durationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+      if (durationMillis > 1) {
+         log.tracef("Rebalance took %dms", durationMillis);
+      }
+      checkDistribution(rebalancedCH, lfMap);
 
       for (int l = 0; l < rebalancedCH.getNumSegments(); l++) {
          assertTrue(rebalancedCH.locateOwnersForSegment(l).size() >= actualNumOwners);
       }
 
-      checkMovedSegments(baseCH, rebalancedCH);
+      checkMovedSegments(baseCH, rebalancedCH, nodesToAdd, nodesToRemove);
 
       // union doesn't have to keep the CH balanced, but it does have to include owners from both CHs
       DefaultConsistentHash unionCH = chf.union(updatedMembersCH, rebalancedCH);
@@ -167,58 +182,52 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       return baseCH;
    }
 
-   private void checkDistribution(DefaultConsistentHash ch, Map<Address, Float> lfMap, boolean allowExtraOwners) {
+   protected void checkDistribution(DefaultConsistentHash ch, Map<Address, Float> lfMap) {
       int numSegments = ch.getNumSegments();
       List<Address> nodes = ch.getMembers();
-      int numNodes = nodes.size();
+      int numNodesWithLoad = nodesWithLoad(nodes, lfMap);
       int actualNumOwners = computeActualNumOwners(ch.getNumOwners(), nodes, lfMap);
 
-      OwnershipStatistics stats = new OwnershipStatistics(nodes);
-      for (int i = 0; i < numSegments; i++) {
-         List<Address> owners = ch.locateOwnersForSegment(i);
-         if (!allowExtraOwners) {
-            assertEquals(owners.size(), actualNumOwners);
-         } else {
-            assertTrue(owners.size() >= actualNumOwners);
-         }
-         stats.incPrimaryOwned(owners.get(0));
-         for (int j = 0; j < owners.size(); j++) {
-            Address owner = owners.get(j);
-            stats.incOwned(owner);
-            assertEquals(owners.indexOf(owner), j, "Found the same owner twice in the owners list");
+      OwnershipStatistics stats = new OwnershipStatistics(ch, nodes);
+      for (int s = 0; s < numSegments; s++) {
+         List<Address> owners = ch.locateOwnersForSegment(s);
+         assertEquals(owners.size(), actualNumOwners);
+         for (int i = 1; i < owners.size(); i++) {
+            Address owner = owners.get(i);
+            assertEquals(owners.indexOf(owner), i, "Found the same owner twice in the owners list");
          }
       }
 
       float totalCapacity = computeTotalCapacity(nodes, lfMap);
-      float maxCapacityFactor = computeMaxCapacityFactor(nodes, lfMap);
-      Map<Address, Float> expectedOwnedMap = computeExpectedOwned(numSegments, numNodes, actualNumOwners, nodes, lfMap);
+      Map<Address, Float> expectedOwnedMap =
+            computeExpectedOwned(numSegments, numNodesWithLoad, actualNumOwners, nodes, lfMap);
       for (Address node : nodes) {
-         float capacityFactor = lfMap != null ? lfMap.get(node) : 1;
-         float expectedPrimaryOwned = expectedPrimaryOwned(numSegments, numNodes, totalCapacity, capacityFactor);
-         float deviationPrimaryOwned = allowedDeviationPrimaryOwned(numSegments, numNodes, totalCapacity, maxCapacityFactor);
-         int minPrimaryOwned = (int) Math.floor(expectedPrimaryOwned - deviationPrimaryOwned);
-         int maxPrimaryOwned = (int) Math.ceil(expectedPrimaryOwned + deviationPrimaryOwned);
-         if (!allowExtraOwners) {
-            int primaryOwned = stats.getPrimaryOwned(node);
-            assertTrue(minPrimaryOwned <= primaryOwned);
-            assertTrue(primaryOwned <= maxPrimaryOwned);
-         }
+         float capacityFactor = getCapacityFactor(lfMap, node);
+         float expectedPrimaryOwned = expectedPrimaryOwned(numSegments, numNodesWithLoad, totalCapacity, capacityFactor);
+         int minPrimaryOwned = (int) Math.floor(minOwned(numSegments, 1, numNodesWithLoad, expectedPrimaryOwned));
+         int maxPrimaryOwned = (int) Math.ceil(maxOwned(numSegments, 1, numNodesWithLoad, expectedPrimaryOwned));
+         int primaryOwned = stats.getPrimaryOwned(node);
+         assertTrue(minPrimaryOwned <= primaryOwned && primaryOwned <= maxPrimaryOwned,
+                    String.format("Primary owned (%d) should have been between %d and %d",
+                                  primaryOwned, minPrimaryOwned, maxPrimaryOwned));
 
          float expectedOwned = expectedOwnedMap.get(node);
-         float deviationOwned = allowedDeviationOwned(numSegments, actualNumOwners, numNodes, totalCapacity, maxCapacityFactor);
-         int minOwned = (int) Math.floor(expectedOwned - deviationOwned);
-         int maxOwned = (int) Math.ceil(expectedOwned + deviationOwned);
+         int minOwned = (int) Math.floor(minOwned(numSegments, actualNumOwners, numNodesWithLoad, expectedOwned));
+         int maxOwned = (int) Math.ceil(maxOwned(numSegments, actualNumOwners, numNodesWithLoad, expectedOwned));
          int owned = stats.getOwned(node);
-         assertTrue(Math.floor(minOwned) <= owned);
-         if (!allowExtraOwners) {
-            assertTrue(owned <= Math.ceil(maxOwned));
-         }
+         assertTrue(minOwned <= owned && owned <= maxOwned,
+                    String.format("Owned (%d) should have been between %d and %d", owned, minOwned, maxOwned));
       }
    }
 
    public int computeActualNumOwners(int numOwners, List<Address> members, Map<Address, Float> capacityFactors) {
+      int nodesWithLoad = nodesWithLoad(members, capacityFactors);
+      return Math.min(numOwners, nodesWithLoad);
+   }
+
+   int nodesWithLoad(List<Address> members, Map<Address, Float> capacityFactors) {
       if (capacityFactors == null)
-         return Math.min(numOwners, members.size());
+         return members.size();
 
       int nodesWithLoad = 0;
       for (Address node : members) {
@@ -226,36 +235,28 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
             nodesWithLoad++;
          }
       }
-      return Math.min(numOwners, nodesWithLoad);
+      return nodesWithLoad;
    }
 
    protected float expectedPrimaryOwned(int numSegments, int numNodes, float totalCapacity, float nodeLoad) {
-      return Math.min(numSegments * nodeLoad / totalCapacity, numSegments);
-   }
-
-   protected float allowedDeviationPrimaryOwned(int numSegments, int numNodes, float totalCapacity, float maxCapacityFactor) {
-      return numNodes * maxCapacityFactor / totalCapacity;
+      return numSegments * nodeLoad / totalCapacity;
    }
 
    protected Map<Address, Float> computeExpectedOwned(int numSegments, int numNodes, int actualNumOwners,
-                                                       Collection<Address> nodes,
-                                                       final Map<Address, Float> capacityFactors) {
-      Map<Address, Float> expectedOwned = new HashMap<>();
-      if (capacityFactors == null) {
-         float expected = Math.min(numSegments, (float) numSegments * actualNumOwners / numNodes);
-         for (Address node : nodes) {
-            expectedOwned.put(node, expected);
-         }
-         return expectedOwned;
+                                                      Collection<Address> nodes, Map<Address, Float> capacityFactors) {
+      // Insert all nodes in the initial order, even if we're going to replace the values later
+      Map<Address, Float> expectedOwned = new LinkedHashMap<>(numNodes * 2);
+      float expected = Math.min(numSegments, (float) numSegments * actualNumOwners / numNodes);
+      for (Address node : nodes) {
+         expectedOwned.put(node, expected);
       }
+      if (capacityFactors == null)
+         return expectedOwned;
 
       List<Address> sortedNodes = new ArrayList<>(nodes);
-      Collections.sort(sortedNodes, new Comparator<Address>() {
-         @Override
-         public int compare(Address o1, Address o2) {
-            // Reverse order
-            return (int) Math.signum(capacityFactors.get(o2) - capacityFactors.get(o1));
-         }
+      sortedNodes.sort((o1, o2) -> {
+         // Reverse order
+         return Float.compare(capacityFactors.get(o2), capacityFactors.get(o1));
       });
 
       float totalCapacity = computeTotalCapacity(nodes, capacityFactors);
@@ -276,9 +277,12 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       return expectedOwned;
    }
 
-   protected float allowedDeviationOwned(int numSegments, int actualNumOwners, int numNodes, float totalCapacity,
-                                         float maxCapacityFactor) {
-      return numNodes * maxCapacityFactor / totalCapacity;
+   protected float maxOwned(int numSegments, int actualNumOwners, int numNodes, float expectedOwned) {
+      return expectedOwned + Math.min(.10f * expectedOwned, numNodes - 1);
+   }
+
+   protected float minOwned(int numSegments, int actualNumOwners, int numNodes, float expectedOwned) {
+      return expectedOwned - Math.max(1, (numSegments * actualNumOwners) / expectedOwned * numNodes);
    }
 
    private float computeTotalCapacity(Collection<Address> nodes, Map<Address, Float> capacityFactors) {
@@ -292,26 +296,13 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       return totalCapacity;
    }
 
-   private float computeMaxCapacityFactor(Collection<Address> nodes, Map<Address, Float> capacityFactors) {
-      if (capacityFactors == null)
-         return 1;
-
-      float maxCapacityFactor = 0;
-      for (Address node : nodes) {
-         Float capacityFactor = capacityFactors.get(node);
-         if (capacityFactor > maxCapacityFactor) {
-            maxCapacityFactor = capacityFactor;
-         }
-      }
-      return maxCapacityFactor;
+   protected float allowedExtraMoves(DefaultConsistentHash oldCH, DefaultConsistentHash newCH,
+                                     int joinerSegments, int leaverSegments) {
+      return Math.max(1, 0.05f * oldCH.getNumOwners() * oldCH.getNumSegments());
    }
 
-   protected int allowedExtraMoves(DefaultConsistentHash oldCH, DefaultConsistentHash newCH,
-                                   int leaverSegments) {
-      return (int) Math.ceil(0.25 * oldCH.getNumSegments());
-   }
-
-   private void checkMovedSegments(DefaultConsistentHash oldCH, DefaultConsistentHash newCH) {
+   private void checkMovedSegments(DefaultConsistentHash oldCH, DefaultConsistentHash newCH,
+                                   int nodesAdded, int nodesRemoved) {
       int numSegments = oldCH.getNumSegments();
       int numOwners = oldCH.getNumOwners();
       Set<Address> oldMembers = new HashSet<>(oldCH.getMembers());
@@ -322,6 +313,12 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       for (Address node : oldMembers) {
          if (!newMembers.contains(node)) {
             leaverSegments += oldCH.getSegmentsForOwner(node).size();
+         }
+      }
+      int joinerSegments = 0;
+      for (Address node : newMembers) {
+         if (!oldMembers.contains(node)) {
+            joinerSegments += newCH.getSegmentsForOwner(node).size();
          }
       }
 
@@ -335,41 +332,42 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       }
 
       int movedSegments = oldMembersAddedSegments - leaverSegments;
-      int expectedExtraMoves = allowedExtraMoves(oldCH, newCH, leaverSegments);
-      if (movedSegments > expectedExtraMoves) {
-         log.debugf("%d of %d segments moved, %d (%fx) more than expected (%d)", movedSegments, numSegments,
-               movedSegments - expectedExtraMoves, (float) movedSegments / expectedExtraMoves, expectedExtraMoves);
+      int expectedExtraMoves = (int) Math.ceil(allowedExtraMoves(oldCH, newCH, joinerSegments, leaverSegments));
+      if (movedSegments > expectedExtraMoves / 2) {
+         log.tracef("%d of %d*%d extra segments moved, %fx of allowed (%d), %d leavers had %d, %d joiners have %d",
+                    movedSegments, numOwners, numSegments, (float) movedSegments / expectedExtraMoves,
+                    expectedExtraMoves, nodesRemoved, leaverSegments, nodesAdded, joinerSegments);
       }
       assert movedSegments <= expectedExtraMoves
-               : String.format("Two many moved segments between %s and %s: expected %d, got %d",
-            oldCH, newCH, expectedExtraMoves, oldMembersAddedSegments);
-   }
-
-   protected <T> Set<T> symmetricalDiff(Collection<T> set1, Collection<T> set2) {
-      HashSet<T> commonMembers = new HashSet<>(set1);
-      commonMembers.retainAll(set2);
-      HashSet<T> symDiffMembers = new HashSet<>(set1);
-      symDiffMembers.addAll(set2);
-      symDiffMembers.removeAll(commonMembers);
-      return symDiffMembers;
+            : String.format("Two many moved segments between %s and %s: expected %d, got %d",
+                            oldCH, newCH, expectedExtraMoves, oldMembersAddedSegments);
    }
 
    public void test1() {
-      DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
+      ConsistentHashFactory<DefaultConsistentHash> chf = createConsistentHashFactory();
       TestAddress A = new TestAddress(0, "A");
       TestAddress B = new TestAddress(1, "B");
       TestAddress C = new TestAddress(2, "C");
       TestAddress D = new TestAddress(3, "D");
+      Map<Address, Float> cf = new HashMap<>();
+      cf.put(A, 1f);
+      cf.put(B, 1f);
+      cf.put(C, 1f);
+      cf.put(D, 100f);
 
-      DefaultConsistentHash ch1 = chf.create(2, 60, Arrays.asList(A), null);
+      DefaultConsistentHash ch1 = chf.create(2, 60, Arrays.asList(A), cf);
+      checkDistribution(ch1, cf);
 
-      DefaultConsistentHash ch2 = chf.updateMembers(ch1, Arrays.asList(A, B), null);
+      DefaultConsistentHash ch2 = chf.updateMembers(ch1, Arrays.asList(A, B), cf);
       ch2 = chf.rebalance(ch2);
+      checkDistribution(ch2, cf);
 
-      DefaultConsistentHash ch3 = chf.updateMembers(ch2, Arrays.asList(A, B, C), null);
+      DefaultConsistentHash ch3 = chf.updateMembers(ch2, Arrays.asList(A, B, C), cf);
       ch3 = chf.rebalance(ch3);
+      checkDistribution(ch3, cf);
 
-      DefaultConsistentHash ch4 = chf.updateMembers(ch3, Arrays.asList(A, B, C, D), null);
+      DefaultConsistentHash ch4 = chf.updateMembers(ch3, Arrays.asList(A, B, C, D), cf);
       ch4 = chf.rebalance(ch4);
+      checkDistribution(ch4, cf);
    }
 }

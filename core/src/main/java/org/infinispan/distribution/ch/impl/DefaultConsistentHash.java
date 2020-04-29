@@ -56,11 +56,11 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
 
       this.numOwners = numOwners;
       this.segmentOwners = new List[numSegments];
-      for (int i = 0; i < numSegments; i++) {
-         if (segmentOwners[i] == null || segmentOwners[i].isEmpty()) {
+      for (int s = 0; s < numSegments; s++) {
+         if (segmentOwners[s] == null || segmentOwners[s].isEmpty()) {
             throw new IllegalArgumentException("Segment owner list cannot be null or empty");
          }
-         this.segmentOwners[i] = Immutables.immutableListCopy(segmentOwners[i]);
+         this.segmentOwners[s] = Immutables.immutableListCopy(segmentOwners[s]);
       }
    }
 

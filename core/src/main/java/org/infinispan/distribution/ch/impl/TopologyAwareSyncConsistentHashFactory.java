@@ -35,91 +35,88 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
    }
 
    protected static class Builder extends SyncConsistentHashFactory.Builder {
+      final Map<Address, Float> capacityFactorsMap;
       protected final TopologyInfo topologyInfo;
-
-      protected TopologyLevel currentLevel;
+      // Speed up the site/rack/machine checks by mapping each to an integer
+      // and comparing only integers in nodeCanOwnSegment()
+      final int numSites;
+      final int numRacks;
+      final int numMachines;
+      final int[] siteLookup;
+      final int[] rackLookup;
+      final int[] machineLookup;
+      final int[][] ownerSiteIndices;
+      final int[][] ownerRackIndices;
+      final int[][] ownerMachineIndices;
 
       protected Builder(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
          super(numOwners, numSegments, members, capacityFactors);
-         // Use the processed capacity factors and numOwners
-         topologyInfo = new TopologyInfo(numSegments, this.actualNumOwners, members, this.capacityFactors);
-         currentLevel = TopologyLevel.SITE;
-      }
 
-      @Override
-      protected void copyOwners() {
-         copyOwnersForLevel(TopologyLevel.SITE);
-         copyOwnersForLevel(TopologyLevel.RACK);
-         copyOwnersForLevel(TopologyLevel.MACHINE);
-         copyOwnersForLevel(TopologyLevel.NODE);
-      }
+         capacityFactorsMap = capacityFactors;
+         topologyInfo = new TopologyInfo(numSegments, this.actualNumOwners, members, capacityFactors);
 
-      private void copyOwnersForLevel(TopologyLevel topologyLevel) {
-         currentLevel = topologyLevel;
-         ignoreMaxSegments = false;
-         super.doCopyOwners();
-         ignoreMaxSegments = true;
-         super.doCopyOwners();
-      }
-
-      @Override
-      protected boolean addBackupOwner(int segment, Address candidate) {
-         if (capacityFactors.get(candidate).equals(0f))
-            return false;
-
-         List<Address> owners = segmentOwners[segment];
-         if (owners.size() < actualNumOwners && !topologyInfo.duplicateLocation(currentLevel, owners, candidate, false)) {
-            if (!ignoreMaxSegments) {
-               if (owners.isEmpty()) {
-                  long maxSegments = Math.round(getExpectedPrimarySegments(candidate) * PRIMARY_SEGMENTS_ALLOWED_VARIATION);
-                  if (stats.getPrimaryOwned(candidate) < maxSegments) {
-                     addOwnerNoCheck(segment, candidate);
-                     return true;
-                  }
-               } else {
-                  long maxSegments = Math.round(getExpectedOwnedSegments(candidate) * OWNED_SEGMENTS_ALLOWED_VARIATION);
-                  if (stats.getOwned(candidate) < maxSegments) {
-                     addOwnerNoCheck(segment, candidate);
-                     return true;
-                  }
-               }
-            } else {
-               addOwnerNoCheck(segment, candidate);
-               return true;
-            }
+         numSites = topologyInfo.getDistinctLocationsCount(TopologyLevel.SITE);
+         numRacks = topologyInfo.getDistinctLocationsCount(TopologyLevel.RACK);
+         numMachines = topologyInfo.getDistinctLocationsCount(TopologyLevel.MACHINE);
+         siteLookup = new int[numNodes];
+         rackLookup = new int[numNodes];
+         machineLookup = new int[numNodes];
+         for (int n = 0; n < numNodes; n++) {
+            Address address = sortedMembers.get(n);
+            siteLookup[n] = topologyInfo.getSiteIndex(address);
+            rackLookup[n] = topologyInfo.getRackIndex(address);
+            machineLookup[n] = topologyInfo.getMachineIndex(address);
          }
-         return false;
+         ownerSiteIndices = new int[numSegments][];
+         ownerRackIndices = new int[numSegments][];
+         ownerMachineIndices = new int[numSegments][];
+         for (int s = 0; s < numSegments; s++) {
+            ownerSiteIndices[s] = new int[actualNumOwners];
+            ownerRackIndices[s] = new int[actualNumOwners];
+            ownerMachineIndices[s] = new int[actualNumOwners];
+         }
       }
 
       @Override
-      protected boolean canAddOwners(List<Address> owners) {
-         return owners.size() < actualNumOwners &&
-                owners.size() < topologyInfo.getDistinctLocationsCount(currentLevel);
+      int[] computeExpectedSegments(int expectedOwners, float totalCapacity, int iteration) {
+         TopologyInfo topologyInfo = new TopologyInfo(numSegments, expectedOwners, sortedMembers, capacityFactorsMap);
+         int[] expectedSegments = new int[numNodes];
+         float averageSegments = (float) numSegments * expectedOwners / numNodes;
+         for (int n = 0; n < numNodes; n++) {
+            float idealOwnedSegments = topologyInfo.getExpectedOwnedSegments(sortedMembers.get(n));
+            expectedSegments[n] = fudgeExpectedSegments(idealOwnedSegments, averageSegments, iteration);
+         }
+         return expectedSegments;
       }
 
       @Override
-      protected void populateExtraOwners(int numSegments) {
-         currentLevel = TopologyLevel.SITE;
-         super.populateExtraOwners(numSegments);
-         currentLevel = TopologyLevel.RACK;
-         super.populateExtraOwners(numSegments);
-         currentLevel = TopologyLevel.MACHINE;
-         super.populateExtraOwners(numSegments);
-         currentLevel = TopologyLevel.NODE;
-         super.populateExtraOwners(numSegments);
-
+      boolean nodeCanOwnSegment(int segment, int ownerPosition, int nodeIndex) {
+         if (ownerPosition == 0) {
+            return true;
+         } else if (ownerPosition < numSites) {
+            // Must be different site
+            return !intArrayContains(ownerSiteIndices[segment], ownerPosition, siteLookup[nodeIndex]);
+         } else if (ownerPosition < numRacks) {
+            // Must be different rack
+            return !intArrayContains(ownerRackIndices[segment], ownerPosition, rackLookup[nodeIndex]);
+         } else if (ownerPosition < numMachines) {
+            // Must be different machine
+            return !intArrayContains(ownerMachineIndices[segment], ownerPosition, machineLookup[nodeIndex]);
+         } else {
+            // Must be different nodes
+            return !intArrayContains(ownerIndices[segment], ownerPosition, nodeIndex);
+         }
       }
 
       @Override
-      protected double getExpectedPrimarySegments(Address node) {
-         return topologyInfo.getExpectedPrimarySegments(node);
-      }
+      protected void assignOwner(int segment, int ownerPosition, int nodeIndex,
+                                 int[] nodeSegmentsWanted) {
+         super.assignOwner(segment, ownerPosition, nodeIndex, nodeSegmentsWanted);
 
-      @Override
-      protected double getExpectedOwnedSegments(Address node) {
-         return topologyInfo.getExpectedOwnedSegments(node);
+         ownerSiteIndices[segment][ownerPosition] = siteLookup[nodeIndex];
+         ownerRackIndices[segment][ownerPosition] = rackLookup[nodeIndex];
+         ownerMachineIndices[segment][ownerPosition] = machineLookup[nodeIndex];
       }
-
    }
 
    public static class Externalizer extends AbstractExternalizer<TopologyAwareSyncConsistentHashFactory> {
@@ -129,7 +126,6 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public TopologyAwareSyncConsistentHashFactory readObject(ObjectInput unmarshaller) {
          return new TopologyAwareSyncConsistentHashFactory();
       }
@@ -141,7 +137,7 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
 
       @Override
       public Set<Class<? extends TopologyAwareSyncConsistentHashFactory>> getTypeClasses() {
-         return Collections.<Class<? extends TopologyAwareSyncConsistentHashFactory>>singleton(TopologyAwareSyncConsistentHashFactory.class);
+         return Collections.singleton(TopologyAwareSyncConsistentHashFactory.class);
       }
    }
 }
