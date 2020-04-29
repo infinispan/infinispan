@@ -4,45 +4,60 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.server.test.core.category.Persistence;
-import org.infinispan.server.test.junit4.DatabaseServerRule;
+import org.infinispan.server.test.core.persistence.Database;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 @Category(Persistence.class)
+@RunWith(Parameterized.class)
 public class ManagedConnectionOperations {
 
    @ClassRule
    public static InfinispanServerRule SERVERS = PersistenceIT.SERVERS;
 
-   @ClassRule
-   public static DatabaseServerRule DATABASE = new DatabaseServerRule(SERVERS);
-
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
-   public ManagedConnectionOperations() {
-      DATABASE.setDatabaseType("h2");
+   private final Database database;
+
+   @Parameterized.Parameters(name = "{0}")
+   public static Collection<Object[]> data() {
+      String[] databaseTypes = PersistenceIT.DATABASE.getDatabaseTypes();
+      List<Object[]> params = new ArrayList<>(databaseTypes.length);
+      for (String databaseType : databaseTypes) {
+         params.add(new Object[]{databaseType});
+      }
+      return params;
+   }
+
+   public ManagedConnectionOperations(String databaseType) {
+      this.database = PersistenceIT.DATABASE.getDatabase(databaseType);
    }
 
    private org.infinispan.configuration.cache.ConfigurationBuilder createConfigurationBuilder() {
-
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
             .table()
             .dropOnExit(true)
             .tableNamePrefix("TBL")
-            .idColumnName("ID").idColumnType(DATABASE.getDatabase().getIdColumType())
-            .dataColumnName("DATA").dataColumnType(DATABASE.getDatabase().getDataColumnType())
-            .timestampColumnName("TS").timestampColumnType(DATABASE.getDatabase().getTimeStampColumnType())
-            .segmentColumnName("S").segmentColumnType(DATABASE.getDatabase().getSegmentColumnType())
-            .dataSource().jndiUrl("jdbc/database");
+            .idColumnName("ID").idColumnType(database.getIdColumType())
+            .dataColumnName("DATA").dataColumnType(database.getDataColumnType())
+            .timestampColumnName("TS").timestampColumnType(database.getTimeStampColumnType())
+            .segmentColumnName("S").segmentColumnType(database.getSegmentColumnType())
+            .dataSource().jndiUrl("jdbc/" + database.getType());
       return builder;
    }
 
@@ -86,5 +101,4 @@ public class ManagedConnectionOperations {
       cache.clear();
       assertEquals(0, cache.size());
    }
-
 }

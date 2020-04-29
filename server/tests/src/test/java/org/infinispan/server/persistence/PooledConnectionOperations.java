@@ -11,7 +11,7 @@ import java.util.List;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.server.test.core.category.Persistence;
-import org.infinispan.server.test.junit4.DatabaseServerRule;
+import org.infinispan.server.test.core.persistence.Database;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
@@ -32,15 +32,14 @@ public class PooledConnectionOperations {
    @ClassRule
    public static InfinispanServerRule SERVERS = PersistenceIT.SERVERS;
 
-   @ClassRule
-   public static DatabaseServerRule DATABASE = new DatabaseServerRule(SERVERS);
-
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
+   private final Database database;
+
    @Parameterized.Parameters(name = "{0}")
    public static Collection<Object[]> data() {
-      String[] databaseTypes = DatabaseServerRule.getDatabaseTypes("h2", "mysql", "postgres");
+      String[] databaseTypes = PersistenceIT.DATABASE.getDatabaseTypes();
       List<Object[]> params = new ArrayList<>(databaseTypes.length);
       for (String databaseType : databaseTypes) {
          params.add(new Object[]{databaseType});
@@ -49,7 +48,7 @@ public class PooledConnectionOperations {
    }
 
    public PooledConnectionOperations(String databaseType) {
-      DATABASE.setDatabaseType(databaseType);
+      this.database = PersistenceIT.DATABASE.getDatabase(databaseType);
    }
 
    private org.infinispan.configuration.cache.ConfigurationBuilder createConfigurationBuilder() {
@@ -64,15 +63,15 @@ public class PooledConnectionOperations {
             .dropOnExit(true)
             .createOnStart(true)
             .tableNamePrefix("TBL")
-            .idColumnName("ID").idColumnType(DATABASE.getDatabase().getIdColumType())
-            .dataColumnName("DATA").dataColumnType(DATABASE.getDatabase().getDataColumnType())
-            .timestampColumnName("TS").timestampColumnType(DATABASE.getDatabase().getTimeStampColumnType())
-            .segmentColumnName("S").segmentColumnType(DATABASE.getDatabase().getSegmentColumnType())
+            .idColumnName("ID").idColumnType(database.getIdColumType())
+            .dataColumnName("DATA").dataColumnType(database.getDataColumnType())
+            .timestampColumnName("TS").timestampColumnType(database.getTimeStampColumnType())
+            .segmentColumnName("S").segmentColumnType(database.getSegmentColumnType())
             .connectionPool()
-            .connectionUrl(DATABASE.getDatabase().jdbcUrl())
-            .username(DATABASE.getDatabase().username())
-            .password(DATABASE.getDatabase().password())
-            .driverClass(DATABASE.getDatabase().driverClassName());
+            .connectionUrl(database.jdbcUrl())
+            .username(database.username())
+            .password(database.password())
+            .driverClass(database.driverClassName());
       return builder;
    }
 

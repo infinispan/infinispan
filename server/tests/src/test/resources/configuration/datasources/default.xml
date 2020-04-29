@@ -1,0 +1,28 @@
+<data-sources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="urn:infinispan:server:11.0 https://infinispan.org/schemas/infinispan-server-11.0.xsd"
+           xmlns="urn:infinispan:server:11.0">
+   <data-source name="h2" jndi-name="jdbc/h2" statistics="true">
+      <connection-factory driver="org.h2.Driver"
+                          username="${org.infinispan.server.test.database.h2.username:test}"
+                          password="${org.infinispan.server.test.database.h2.password:test}"
+                          url="${org.infinispan.server.test.h2.jdbcUrl}"
+                          new-connection-sql="SELECT 1" />
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+   </data-source>
+   <data-source name="mysql" jndi-name="jdbc/mysql" statistics="true">
+      <connection-factory driver="com.mysql.cj.jdbc.Driver"
+                          username="${org.infinispan.server.test.database.mysql.username:test}"
+                          password="${org.infinispan.server.test.database.mysql.password:test}"
+                          url="${org.infinispan.server.test.mysql.jdbcUrl}"
+                          new-connection-sql="SELECT 1" />
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+   </data-source>
+   <data-source name="postgres" jndi-name="jdbc/postgres" statistics="true">
+      <connection-factory driver="org.postgresql.Driver"
+                          username="${org.infinispan.server.test.database.postgres.username:test}"
+                          password="${org.infinispan.server.test.database.postgres.username:test}"
+                          url="${org.infinispan.server.test.postgres.jdbcUrl}"
+                          new-connection-sql="SELECT 1" />
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+   </data-source>
+</data-sources>

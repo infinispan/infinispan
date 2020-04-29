@@ -1,7 +1,10 @@
 package org.infinispan.server.test.junit4;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
+import org.infinispan.server.test.core.InfinispanServerListener;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
@@ -22,6 +25,7 @@ public class InfinispanServerRuleBuilder {
    private JavaArchive[] archives;
    private boolean jmx;
    private boolean parallelStartup = true;
+   private final List<InfinispanServerListener> listeners = new ArrayList<>();
 
    public static InfinispanServerRuleBuilder config(String configurationFile) {
       return new InfinispanServerRuleBuilder(configurationFile);
@@ -70,6 +74,11 @@ public class InfinispanServerRuleBuilder {
       return this;
    }
 
+   public InfinispanServerRuleBuilder addListener(InfinispanServerListener listener) {
+      listeners.add(listener);
+      return this;
+   }
+
    /**
     * If false servers are started individually, waiting until they become available, before subsequent servers are started.
     */
@@ -81,7 +90,7 @@ public class InfinispanServerRuleBuilder {
    public InfinispanServerRule build() {
       InfinispanServerTestConfiguration configuration =
             new InfinispanServerTestConfiguration(configurationFile, numServers, runMode, this.properties, mavenArtifacts,
-                                                  archives, jmx, parallelStartup);
+                                                  archives, jmx, parallelStartup, listeners);
       return new InfinispanServerRule(configuration);
    }
 }

@@ -159,4 +159,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "No realm name found in users property file - non-plain-text users file must contain \"#$REALM_NAME=RealmName$\" line", id = 80040)
    RealmUnavailableException noRealmFoundInProperties();
+
+   @Message(value = "Duplicate data source '%s'", id = 80041)
+   CacheConfigurationException duplicateDataSource(String name);
+
+   @Message(value = "Duplicate JNDI name '%s'", id = 80042)
+   CacheConfigurationException duplicateJndiName(String jndiName);
 }
