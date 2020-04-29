@@ -185,7 +185,7 @@
       <version.mockito_dep.objenesis>2.6</version.mockito_dep.objenesis>
       <version.net.bytebuddy>1.9.12</version.net.bytebuddy>
       <version.netty>4.1.49.Final</version.netty>
-      <version.okhttp>3.14.6</version.okhttp>
+      <version.okhttp>3.14.8</version.okhttp>
       <version.openjdk.jmh>1.12</version.openjdk.jmh>
       <version.org.wildfly.arquillian>2.2.0.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.core>10.0.0.Final</version.org.wildfly.core>
