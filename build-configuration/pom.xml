@@ -149,7 +149,7 @@
       <version.infinispan.arquillian>1.2.0.Beta3</version.infinispan.arquillian>
       <version.infinispan.doclets>1.3.0</version.infinispan.doclets>
       <version.infinispan.maven-plugins>1.0.2.Final</version.infinispan.maven-plugins>
-      <version.io.agroal>1.7</version.io.agroal>
+      <version.io.agroal>1.8</version.io.agroal>
       <version.jackson>2.11.0</version.jackson>
       <version.jackson.dataformat>${version.jackson}</version.jackson.dataformat>
       <version.jackson.databind>2.11.0</version.jackson.databind>
