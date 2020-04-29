@@ -40,7 +40,8 @@ import org.junit.runners.Suite;
       HotRodCacheContinuousQueries.class,
       HotRodListenerWithDslFilter.class,
       IgnoreCaches.class,
-      JCacheOperations.class
+      JCacheOperations.class,
+      RestLoggingResource.class
 })
 public class ClusteredIT {
 
