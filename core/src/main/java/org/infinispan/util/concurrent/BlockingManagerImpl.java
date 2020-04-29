@@ -30,6 +30,11 @@ public class BlockingManagerImpl implements BlockingManager {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();
 
+   private static final BiConsumer<Object, CompletionStage<Void>> stageConsumer = trace ? (traceId, stage) ->
+      stage.whenComplete((ignore, t) ->
+            log.tracef(t, "There was an exception during processing of a command with id %s", traceId)
+      ) : null;
+
    @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    Executor nonBlockingExecutor;
    // This should eventually be the only reference to blocking executor
@@ -47,10 +52,19 @@ public class BlockingManagerImpl implements BlockingManager {
 
    @Override
    public CompletionStage<Void> runBlocking(Runnable runnable, Object traceId) {
-      return runBlockingOperation(runnable, traceId, blockingExecutor);
+      return runBlockingOperation(runnable, traceId, blockingExecutor, true);
    }
 
-   private CompletionStage<Void> runBlockingOperation(Runnable runnable, Object traceId, Executor executor) {
+   @Override
+   public void runBlockingAsync(Runnable runnable, Object traceId) {
+      CompletionStage<Void> stage = runBlockingOperation(runnable, traceId, blockingExecutor, false);
+      if (stageConsumer != null) {
+         stageConsumer.accept(traceId, stage);
+      }
+   }
+
+   private CompletionStage<Void> runBlockingOperation(Runnable runnable, Object traceId, Executor executor,
+         boolean continueOnCPUThread) {
       if (isCurrentThreadBlocking()) {
          if (trace) {
             log.tracef("Invoked run on a blocking thread, running %s in same blocking thread", traceId);
@@ -72,7 +86,13 @@ public class BlockingManagerImpl implements BlockingManager {
       } else {
          stage = CompletableFuture.runAsync(runnable, executor);
       }
-      return continueOnNonBlockingThread(stage, traceId);
+      if (continueOnCPUThread) {
+         return continueOnNonBlockingThread(stage, traceId);
+      }
+      if (trace) {
+         log.tracef("Blocking operation stage is continuing on invoking thread", traceId);
+      }
+      return stage;
    }
 
    @Override
@@ -214,7 +234,7 @@ public class BlockingManagerImpl implements BlockingManager {
 
       @Override
       public CompletionStage<Void> execute(Runnable runnable, Object traceId) {
-         return runBlockingOperation(runnable, traceId, limitedExecutor);
+         return runBlockingOperation(runnable, traceId, limitedExecutor, true);
       }
 
       @Override

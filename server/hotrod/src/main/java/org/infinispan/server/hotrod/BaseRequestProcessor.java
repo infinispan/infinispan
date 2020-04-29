@@ -6,13 +6,13 @@ import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.hotrod.logging.HotRodAccessLogging;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.TimeoutException;
 
 import io.netty.buffer.ByteBuf;
@@ -23,13 +23,13 @@ public class BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(BaseRequestProcessor.class, Log.class);
 
    protected final Channel channel;
-   protected final Executor executor;
+   protected final BlockingManager blockingManager;
    protected final HotRodServer server;
    private final HotRodAccessLogging accessLogging;
 
-   BaseRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
+   BaseRequestProcessor(Channel channel, BlockingManager blockingManager, HotRodServer server) {
       this.channel = channel;
-      this.executor = executor;
+      this.blockingManager = blockingManager;
       this.server = server;
       this.accessLogging = server.accessLogging();
    }

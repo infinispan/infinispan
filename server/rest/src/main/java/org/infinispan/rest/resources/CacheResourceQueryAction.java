@@ -67,7 +67,7 @@ class CacheResourceQueryAction {
 
       RemoteQueryManager remoteQueryManager = cache.getComponentRegistry().getComponent(RemoteQueryManager.class);
       JsonQueryRequest finalQuery = query;
-      return CompletableFuture.supplyAsync(() -> {
+      return invocationHelper.getManager().supplyBlocking(() -> {
          try {
             byte[] queryResultBytes = remoteQueryManager.executeQuery(queryString, emptyMap(), finalQuery.getStartOffset(),
                   finalQuery.getMaxResults(), finalQuery.getQueryMode(), cache, MediaType.APPLICATION_JSON);
@@ -76,7 +76,7 @@ class CacheResourceQueryAction {
          } catch (IllegalArgumentException | ParsingException | IllegalStateException e) {
             return queryError("Invalid search request", e.getMessage());
          }
-      }, invocationHelper.getExecutor());
+      }, restRequest);
    }
 
    private JsonQueryRequest getQueryFromString(RestRequest restRequest) {

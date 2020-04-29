@@ -3,7 +3,6 @@ package org.infinispan.server.hotrod;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -12,6 +11,7 @@ import javax.security.auth.Subject;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.channel.Channel;
@@ -20,8 +20,8 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(MultimapRequestProcessor.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   MultimapRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
-      super(channel, executor, server);
+   MultimapRequestProcessor(Channel channel, BlockingManager blockingManager, HotRodServer server) {
+      super(channel, blockingManager, server);
    }
 
    void get(HotRodHeader header, Subject subject, byte[] key) {

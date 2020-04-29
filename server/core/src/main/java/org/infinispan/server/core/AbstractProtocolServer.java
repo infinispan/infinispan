@@ -21,6 +21,7 @@ import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.core.utils.ManageableThreadPoolExecutorService;
 import org.infinispan.tasks.TaskManager;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
 
 /**
@@ -42,7 +43,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    private CacheIgnoreManager cacheIgnore;
    private ObjectName transportObjName;
    private CacheManagerJmxRegistration jmxRegistration;
-   private ExecutorService executor;
+   private BlockingManager blockingManager;
    private ManageableThreadPoolExecutorService manageableThreadPoolExecutorService;
    private ObjectName executorObjName;
    private CacheManagerMetricsRegistration metricsRegistration;
@@ -55,6 +56,10 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    @Override
    public String getName() {
       return protocolName;
+   }
+
+   public BlockingManager getBlockingManager() {
+      return blockingManager;
    }
 
    protected void startInternal() {
@@ -101,8 +106,9 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
          throw new IllegalStateException("CacheIgnoreManager is a required component");
       }
 
-      executor = bcr.getComponent(KnownComponentNames.BLOCKING_EXECUTOR, ExecutorService.class).running();
+      blockingManager = bcr.getComponent(BlockingManager.class).running();
 
+      ExecutorService executor = bcr.getComponent(KnownComponentNames.BLOCKING_EXECUTOR, ExecutorService.class).running();
       if (executor instanceof BlockingTaskAwareExecutorServiceImpl) {
          manageableThreadPoolExecutorService = new ManageableThreadPoolExecutorService(
                ((BlockingTaskAwareExecutorServiceImpl) executor).getExecutorService());
@@ -141,10 +147,6 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       }
 
       registerMetrics();
-   }
-
-   public ExecutorService getExecutor() {
-      return executor;
    }
 
    protected void registerServerMBeans() {
@@ -198,9 +200,6 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       boolean isDebug = log.isDebugEnabled();
       if (isDebug && configuration != null)
          log.debugf("Stopping server %s listening at %s:%d", getQualifiedName(), configuration.host(), configuration.port());
-
-      if (executor != null)
-         executor.shutdownNow();
 
       if (transport != null)
          transport.stop();

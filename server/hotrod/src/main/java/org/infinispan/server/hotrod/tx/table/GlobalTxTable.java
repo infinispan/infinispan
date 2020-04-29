@@ -254,7 +254,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
             //local transaction doesn't exists.
             onTransactionCompleted(cacheXid);
          } else {
-            blockingManager.runBlocking(
+            blockingManager.runBlockingAsync(
                   () -> rollbackOldTransaction(cacheXid, state, () -> completeLocal(txTable, cacheXid, tx, false)),
                   cacheXid);
          }
@@ -298,7 +298,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
             //transaction completed
             onTransactionCompleted(cacheXid);
          } else {
-            blockingManager.runBlocking(() -> completeLocal(txTable, cacheXid, tx, commit), cacheXid);
+            blockingManager.runBlockingAsync(() -> completeLocal(txTable, cacheXid, tx, commit), cacheXid);
          }
       } else {
          if (commit) {

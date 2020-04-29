@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executor;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
@@ -15,6 +14,7 @@ import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.ServerConstants;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -26,7 +26,7 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
    protected final static boolean trace = log.isTraceEnabled();
 
    protected final EmbeddedCacheManager cacheManager;
-   protected final Executor executor;
+   protected final BlockingManager blockingManager;
    protected final HotRodServer server;
 
    protected Authentication auth;
@@ -35,23 +35,23 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
    protected MultimapRequestProcessor multimapProcessor;
    protected TaskRequestProcessor taskProcessor;
 
-   protected BaseDecoder(EmbeddedCacheManager cacheManager, Executor executor, HotRodServer server) {
+   protected BaseDecoder(EmbeddedCacheManager cacheManager, BlockingManager blockingManager, HotRodServer server) {
       this.cacheManager = cacheManager;
-      this.executor = executor;
+      this.blockingManager = blockingManager;
       this.server = server;
    }
 
-   public Executor getExecutor() {
-      return executor;
+   public BlockingManager getBlockingManager() {
+      return blockingManager;
    }
 
    @Override
    public void handlerAdded(ChannelHandlerContext ctx) {
-      auth = new Authentication(ctx.channel(), executor, server);
-      cacheProcessor = new TransactionRequestProcessor(ctx.channel(), executor, server);
-      counterProcessor = new CounterRequestProcessor(ctx.channel(), (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager), executor, server);
-      multimapProcessor = new MultimapRequestProcessor(ctx.channel(), executor, server);
-      taskProcessor = new TaskRequestProcessor(ctx.channel(), executor, server);
+      auth = new Authentication(ctx.channel(), blockingManager, server);
+      cacheProcessor = new TransactionRequestProcessor(ctx.channel(), blockingManager, server);
+      counterProcessor = new CounterRequestProcessor(ctx.channel(), (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager), blockingManager, server);
+      multimapProcessor = new MultimapRequestProcessor(ctx.channel(), blockingManager, server);
+      taskProcessor = new TaskRequestProcessor(ctx.channel(), blockingManager, server);
    }
 
    @Override

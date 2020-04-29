@@ -297,7 +297,7 @@ public class CounterResource implements ResourceHandler {
    }
 
    private CompletionStage<WeakCounter> getWeakCounter(String name) {
-      return CompletableFuture.supplyAsync(() -> counterManager.getWeakCounter(name), invocationHelper.getExecutor());
+      return invocationHelper.getManager().supplyBlocking(() -> counterManager.getWeakCounter(name), name);
    }
 
    private StrongCounter checkForStrongCounter(String name, NettyRestResponse.Builder builder) {

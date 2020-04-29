@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 
 import javax.security.auth.Subject;
 
@@ -22,6 +21,7 @@ import org.infinispan.server.hotrod.HotRodServer.CacheInfo;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.iteration.IterationState;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -32,8 +32,8 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private final ClientListenerRegistry listenerRegistry;
 
-   CacheRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
-      super(channel, executor, server);
+   CacheRequestProcessor(Channel channel, BlockingManager blockingManager, HotRodServer server) {
+      super(channel, blockingManager, server);
       listenerRegistry = server.getClientListenerRegistry();
    }
 
@@ -53,8 +53,8 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void stats(HotRodHeader header, Subject subject) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      executor.execute(() -> writeResponse(header, header.encoder().statsResponse(header, server, channel,
-            cache.getStats(), server.getTransport(), SecurityActions.getCacheComponentRegistry(cache))));
+      blockingManager.runBlockingAsync(() -> writeResponse(header, header.encoder().statsResponse(header, server, channel,
+            cache.getStats(), server.getTransport(), SecurityActions.getCacheComponentRegistry(cache))), header);
    }
 
    void get(HotRodHeader header, Subject subject, byte[] key) {
@@ -168,7 +168,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
       if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> putInternal(header, cache, key, value, metadata.build()));
+         blockingManager.runBlockingAsync(() -> putInternal(header, cache, key, value, metadata.build()), header);
       } else {
          putInternal(header, cache, key, value, metadata.build());
       }
@@ -192,7 +192,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
       if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build()));
+         blockingManager.runBlockingAsync(() -> replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build()), header);
       } else {
          replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build());
       }
@@ -233,7 +233,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
       if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> replaceInternal(header, cache, key, value, metadata.build()));
+         blockingManager.runBlockingAsync(() -> replaceInternal(header, cache, key, value, metadata.build()), header);
       } else {
          replaceInternal(header, cache, key, value, metadata.build());
       }
@@ -273,7 +273,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
       if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> putIfAbsentInternal(header, cache, key, value, metadata.build()));
+         blockingManager.runBlockingAsync(() -> putIfAbsentInternal(header, cache, key, value, metadata.build()), header);
       } else {
          putIfAbsentInternal(header, cache, key, value, metadata.build());
       }
@@ -309,7 +309,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> removeInternal(header, cache, key));
+         blockingManager.runBlockingAsync(() -> removeInternal(header, cache, key), header);
       } else {
          removeInternal(header, cache, key);
       }
@@ -333,7 +333,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> removeIfUnmodifiedInternal(header, cache, key, version));
+         blockingManager.runBlockingAsync(() -> removeIfUnmodifiedInternal(header, cache, key, version), header);
       } else {
          removeIfUnmodifiedInternal(header, cache, key, version);
       }
@@ -372,7 +372,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> clearInternal(header, cache));
+         blockingManager.runBlockingAsync(() -> clearInternal(header, cache), header);
       } else {
          clearInternal(header, cache);
       }
@@ -392,7 +392,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> putAllInternal(header, cache, entries, metadata.build()));
+         blockingManager.runBlockingAsync(() -> putAllInternal(header, cache, entries, metadata.build()), header);
       } else {
          putAllInternal(header, cache, entries, metadata.build());
       }
@@ -449,7 +449,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void bulkGet(HotRodHeader header, Subject subject, int size) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      executor.execute(() -> bulkGetInternal(header, cache, size));
+      blockingManager.runBlockingAsync(() -> bulkGetInternal(header, cache, size), header);
    }
 
    private void bulkGetInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, int size) {
@@ -465,7 +465,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void bulkGetKeys(HotRodHeader header, Subject subject, int scope) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      executor.execute(() -> bulkGetKeysInternal(header, cache, scope));
+      blockingManager.runBlockingAsync(() -> bulkGetKeysInternal(header, cache, scope), header);
    }
 
    private void bulkGetKeysInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, int scope) {
@@ -481,7 +481,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void query(HotRodHeader header, Subject subject, byte[] queryBytes) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      executor.execute(() -> queryInternal(header, cache, queryBytes));
+      blockingManager.runBlockingAsync(() -> queryInternal(header, cache, queryBytes), header);
    }
 
    private void queryInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] queryBytes) {
@@ -535,7 +535,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void iterationStart(HotRodHeader header, Subject subject, byte[] segmentMask, String filterConverterFactory,
                        List<byte[]> filterConverterParams, int batch, boolean includeMetadata) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      executor.execute(() -> {
+      blockingManager.runBlockingAsync(() -> {
          try {
             IterationState iterationState = server.getIterationManager().start(cache, segmentMask != null ? BitSet.valueOf(segmentMask) : null,
                   filterConverterFactory, filterConverterParams, header.getValueMediaType(), batch, includeMetadata);
@@ -544,29 +544,29 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          } catch (Throwable t) {
             writeException(header, t);
          }
-      });
+      }, header);
    }
 
    void iterationNext(HotRodHeader header, Subject subject, String iterationId) {
-      executor.execute(() -> {
+      blockingManager.runBlockingAsync(() -> {
          try {
             IterableIterationResult iterationResult = server.getIterationManager().next(iterationId);
             writeResponse(header, header.encoder().iterationNextResponse(header, server, channel, iterationResult));
          } catch (Throwable t) {
             writeException(header, t);
          }
-      });
+      }, header);
    }
 
    void iterationEnd(HotRodHeader header, Subject subject, String iterationId) {
-      executor.execute(() -> {
+      blockingManager.runBlockingAsync(() -> {
          try {
             IterationState removed = server.getIterationManager().close(iterationId);
             writeResponse(header, header.encoder().emptyResponse(header, server, channel, removed != null ? OperationStatus.Success : OperationStatus.InvalidIteration));
          } catch (Throwable t) {
             writeException(header, t);
          }
-      });
+      }, header);
    }
 
    void putStream(HotRodHeader header, Subject subject, byte[] key, ByteBuf buf, long version, Metadata.Builder metadata) {

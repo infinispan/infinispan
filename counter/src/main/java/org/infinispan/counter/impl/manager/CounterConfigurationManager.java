@@ -239,7 +239,7 @@ public class CounterConfigurationManager {
       if (counterCacheStarted.compareAndSet(false, true)) {
          BlockingManager blockingManager = SecurityActions.getGlobalComponentRegistry(cacheManager)
                .getComponent(BlockingManager.class);
-         blockingManager.runBlocking(() -> {
+         blockingManager.runBlockingAsync(() -> {
                String oldName = Thread.currentThread().getName();
                try {
                   GlobalConfiguration configuration = SecurityActions.getCacheManagerConfiguration(cacheManager);

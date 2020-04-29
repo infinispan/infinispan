@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod;
 
 import java.util.Map;
-import java.util.concurrent.Executor;
 
 import javax.security.auth.Subject;
 
@@ -11,6 +10,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
+import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.channel.Channel;
 
@@ -20,8 +20,8 @@ public class TaskRequestProcessor extends BaseRequestProcessor {
    private final HotRodServer server;
    private final TaskManager taskManager;
 
-   TaskRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
-      super(channel, executor, server);
+   TaskRequestProcessor(Channel channel, BlockingManager blockingManager, HotRodServer server) {
+      super(channel, blockingManager, server);
       this.server = server;
       this.taskManager = SecurityActions.getGlobalComponentRegistry(server.getCacheManager()).getComponent(TaskManager.class);
    }

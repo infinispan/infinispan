@@ -6,7 +6,6 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.security.auth.Subject;
@@ -22,6 +21,7 @@ import org.infinispan.server.core.transport.SaslQopHandler;
 import org.infinispan.server.hotrod.configuration.AuthenticationConfiguration;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -48,8 +48,8 @@ public class Authentication extends BaseRequestProcessor {
    private SaslServer saslServer;
    private Subject subject = ANONYMOUS;
 
-   public Authentication(Channel channel, Executor executor, HotRodServer server) {
-      super(channel, executor, server);
+   public Authentication(Channel channel, BlockingManager blockingManager, HotRodServer server) {
+      super(channel, blockingManager, server);
 
       serverConfig = server.getConfiguration();
       authenticationConfig = serverConfig.authentication();
@@ -72,14 +72,14 @@ public class Authentication extends BaseRequestProcessor {
             server.accessLogging().logException(future, (AccessLoggingHeader) header, cause.toString(), responseBytes);
          }
       } else {
-         executor.execute(() -> {
+         blockingManager.runBlockingAsync(() -> {
             try {
                authInternal(header, mech, response);
             } catch (Throwable t) {
                disposeSaslServer();
                writeException(header, t);
             }
-         });
+         }, header);
       }
    }
 

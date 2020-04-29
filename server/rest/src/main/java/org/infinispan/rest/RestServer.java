@@ -116,7 +116,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
 
       invocationHelper = new InvocationHelper(restCacheManager,
             (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager),
-            configuration, server, getExecutor());
+            configuration, server, getBlockingManager());
 
       String restContext = configuration.contextPath();
       String rootContext = "/";

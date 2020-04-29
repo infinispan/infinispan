@@ -2,9 +2,7 @@ package org.infinispan.server.security;
 
 import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 
 import javax.security.auth.Subject;
 
@@ -15,6 +13,7 @@ import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.MechanismRealmConfiguration;
@@ -37,7 +36,7 @@ public class ElytronHTTPAuthenticator implements Authenticator {
 
    private final HttpAuthenticationFactory factory;
    private final ServerSecurityRealm serverSecurityRealm;
-   private Executor executor;
+   private BlockingManager blockingManager;
    private RestServerConfiguration configuration;
 
    public ElytronHTTPAuthenticator(String name, ServerSecurityRealm realm, String serverPrincipal) {
@@ -62,7 +61,7 @@ public class ElytronHTTPAuthenticator implements Authenticator {
    @Override
    public CompletionStage<RestResponse> challenge(RestRequest request, ChannelHandlerContext ctx) {
       HttpServerRequestAdapter requestAdapter = new HttpServerRequestAdapter(request, ctx);
-      return CompletableFuture.supplyAsync(() -> {
+      return blockingManager.supplyBlocking(() -> {
          try {
             String authorizationHeader = request.getAuthorizationHeader();
             if (authorizationHeader == null) {
@@ -92,12 +91,12 @@ public class ElytronHTTPAuthenticator implements Authenticator {
          } catch (HttpAuthenticationException e) {
             return new NettyRestResponse.Builder().status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
          }
-      }, executor);
+      }, request);
    }
 
    public void init(RestServer restServer) {
       this.configuration = restServer.getConfiguration();
-      this.executor = restServer.getExecutor();
+      this.blockingManager = restServer.getBlockingManager();
       for (String name : configuration.authentication().mechanisms()) {
          try {
             factory.createMechanism(name);

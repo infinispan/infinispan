@@ -2,7 +2,6 @@ package org.infinispan.server.hotrod;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAException;
@@ -22,6 +21,7 @@ import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.LogFactory;
 
@@ -32,8 +32,8 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
    private static final Log log = LogFactory.getLog(TransactionRequestProcessor.class, Log.class);
    private static final boolean isTrace = log.isTraceEnabled();
 
-   TransactionRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
-      super(channel, executor, server);
+   TransactionRequestProcessor(Channel channel, BlockingManager blockingManager, HotRodServer server) {
+      super(channel, blockingManager, server);
    }
 
    private void writeTransactionResponse(HotRodHeader header, int value) {
@@ -46,7 +46,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
    void rollbackTransaction(HotRodHeader header, Subject subject, XidImpl xid) {
       RollbackTransactionOperation operation = new RollbackTransactionOperation(header, server, subject, xid,
             this::writeTransactionResponse);
-      executor.execute(operation);
+      blockingManager.runBlockingAsync(operation, header);
    }
 
    /**
@@ -55,7 +55,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
    void commitTransaction(HotRodHeader header, Subject subject, XidImpl xid) {
       CommitTransactionOperation operation = new CommitTransactionOperation(header, server, subject, xid,
             this::writeTransactionResponse);
-      executor.execute(operation);
+      blockingManager.runBlockingAsync(operation, header);
    }
 
    /**
@@ -66,21 +66,21 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
       HotRodServer.CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       validateConfiguration(cache);
-      executor.execute(() -> prepareTransactionInternal(header, cache, cacheInfo.versionGenerator, xid, onePhaseCommit,
-                                                        writes, recoverable, timeout));
+      blockingManager.runBlockingAsync(() -> prepareTransactionInternal(header, cache, cacheInfo.versionGenerator, xid, onePhaseCommit,
+                                                        writes, recoverable, timeout), header);
    }
 
    void forgetTransaction(HotRodHeader header, Subject subject, XidImpl xid) {
       //TODO authentication?
       GlobalTxTable txTable = SecurityActions.getGlobalComponentRegistry(server.getCacheManager()).getComponent(GlobalTxTable.class);
-      executor.execute(() -> {
+      blockingManager.runBlockingAsync(() -> {
          try {
             txTable.forgetTransaction(xid);
             writeSuccess(header);
          } catch (Throwable t) {
             writeException(header, t);
          }
-      });
+      }, header);
    }
 
    void getPreparedTransactions(HotRodHeader header, Subject subject) {
@@ -88,7 +88,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
       if (isTrace) {
          log.trace("Fetching transactions for recovery");
       }
-      executor.execute(() -> {
+      blockingManager.runBlockingAsync(() -> {
          try {
             GlobalTxTable txTable = SecurityActions.getGlobalComponentRegistry(server.getCacheManager())
                   .getComponent(GlobalTxTable.class);
@@ -97,7 +97,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
          } catch (Throwable t) {
             writeException(header, t);
          }
-      });
+      }, header);
    }
 
    private void prepareTransactionInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache,

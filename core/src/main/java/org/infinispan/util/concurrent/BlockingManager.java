@@ -30,6 +30,18 @@ public interface BlockingManager {
    CompletionStage<Void> runBlocking(Runnable runnable, Object traceId);
 
    /**
+    * Similar to {@link #runBlocking(Runnable, Object)} except that this method is designed for tasks that do not need
+    * to be waited upon by the caller. Instead this method will not "continue" on a non blocking thread after completion
+    * of the task on a blocking thread. This is useful for cases to avoid this additional context switch which provides
+    * no benefit.
+    * <p>
+    * Note that if the current thread is blocking, the task is invoked in the current thread.
+    * @param runnable blocking operation that runs something
+    * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads
+    */
+   void runBlockingAsync(Runnable runnable, Object traceId);
+
+   /**
     * Replacement for {@code CompletionStage.supplyAsync()} that invokes the {@code Supplier} in a blocking thread
     * (if the current thread is non-blocking) or in the current thread (if the current thread is blocking).
     * The returned stage if not complete will resume any chained stage on the non blocking executor.

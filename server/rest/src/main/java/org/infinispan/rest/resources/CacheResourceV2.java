@@ -132,7 +132,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
 
-      return CompletableFuture.supplyAsync(() -> {
+      return invocationHelper.getManager().supplyBlocking(() -> {
          try {
             long hotrod = upgradeManager.synchronizeData("hotrod", readBatch, threads);
             builder.entity(String.valueOf(hotrod));
@@ -141,7 +141,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(rootCause.getMessage());
          }
          return builder.build();
-      }, invocationHelper.getExecutor());
+      }, request);
    }
 
    private CompletionStage<RestResponse> convertToJson(RestRequest restRequest) {
@@ -187,11 +187,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
          return CompletableFuture.completedFuture(responseBuilder.build());
       }
-      return CompletableFuture.supplyAsync(() -> {
+      return invocationHelper.getManager().supplyBlocking(() -> {
          restCacheManager.getCacheManagerAdmin(request).removeCache(cacheName);
          responseBuilder.status(OK);
          return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+      }, request);
    }
 
    private CompletionStage<RestResponse> cacheExists(RestRequest restRequest) {
@@ -204,7 +204,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return CompletableFuture.completedFuture(responseBuilder.build());
    }
 
-   private CompletableFuture<RestResponse> createCache(RestRequest request) {
+   private CompletionStage<RestResponse> createCache(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder().status(NO_CONTENT);
       List<String> template = request.parameters().get("template");
       String cacheName = request.variables().get("cacheName");
@@ -215,21 +215,21 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       if (template != null && !template.isEmpty()) {
          String templateName = template.iterator().next();
-         return CompletableFuture.supplyAsync(() -> {
+         return invocationHelper.getManager().supplyBlocking(() -> {
             administration.createCache(cacheName, templateName);
             responseBuilder.status(OK);
             return responseBuilder.build();
-         }, invocationHelper.getExecutor());
+         }, request);
       }
 
       ContentSource contents = request.contents();
       byte[] bytes = contents.rawContent();
       if (bytes == null || bytes.length == 0) {
-         return CompletableFuture.supplyAsync(() -> {
+         return invocationHelper.getManager().supplyBlocking(() -> {
             administration.createCache(cacheName, (String) null);
             responseBuilder.status(OK);
             return responseBuilder.build();
-         }, invocationHelper.getExecutor());
+         }, request);
       }
       ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();
 
@@ -246,11 +246,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
 
       ConfigurationBuilder finalCfgBuilder = cfgBuilder;
-      return CompletableFuture.supplyAsync(() -> {
+      return invocationHelper.getManager().supplyBlocking(() -> {
          administration.createCache(cacheName, finalCfgBuilder.build());
          responseBuilder.status(OK);
          return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+      }, request);
    }
 
    private CompletionStage<RestResponse> getCacheStats(RestRequest request) {
@@ -278,7 +278,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
          return CompletableFuture.completedFuture(responseBuilder.build());
       }
-      return CompletableFuture.supplyAsync(() -> getDetailResponse(responseBuilder, cache), invocationHelper.getExecutor());
+      return invocationHelper.getManager().supplyBlocking(() -> getDetailResponse(responseBuilder, cache), request);
    }
 
    private RestResponse getDetailResponse(NettyRestResponse.Builder responseBuilder, Cache<?, ?> cache) {

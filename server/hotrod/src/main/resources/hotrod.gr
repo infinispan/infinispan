@@ -16,7 +16,6 @@ import java.time.temporal.Temporal;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executor;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.MediaTypeIds;
@@ -25,14 +24,15 @@ import org.infinispan.counter.util.EncodeUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.server.hotrod.tx.ControlByte;
+import org.infinispan.util.concurrent.BlockingManager;
 
 init {
    private final boolean accessLogging;
    private Temporal requestStart;
    private boolean deadEnd = false;
 
-   public HotRodDecoder(EmbeddedCacheManager cacheManager, Executor executor, HotRodServer server) {
-      super(cacheManager, executor, server);
+   public HotRodDecoder(EmbeddedCacheManager cacheManager, BlockingManager blockingManager, HotRodServer server) {
+      super(cacheManager, blockingManager, server);
       accessLogging = server.accessLogging().isEnabled();
    }
 

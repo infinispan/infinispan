@@ -117,7 +117,7 @@ public class XSiteResource implements ResourceHandler {
 
       if (globalXSiteAdmin == null) return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
 
-      return CompletableFuture.supplyAsync(() -> {
+      return invocationHelper.getManager().supplyBlocking(() -> {
          Map<String, GlobalStatus> collect = globalXSiteAdmin.globalStatus().entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> {
             SiteStatus status = e.getValue();
             if (status instanceof OnlineSiteStatus) return GlobalStatus.ONLINE;
@@ -130,7 +130,7 @@ public class XSiteResource implements ResourceHandler {
          }));
          addPayload(responseBuilder, collect);
          return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+      }, request);
    }
 
    private CompletionStage<RestResponse> pushStateStatus(RestRequest request) {
@@ -189,13 +189,13 @@ public class XSiteResource implements ResourceHandler {
       if (takeOffline.afterFailures == current.afterFailures() && takeOffline.minWait == current.minTimeToWait()) {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_MODIFIED.code()).build());
       }
-      return CompletableFuture.supplyAsync(() -> {
+      return invocationHelper.getManager().supplyBlocking(() -> {
          String status = xsiteAdmin.amendTakeOffline(site, takeOffline.afterFailures, takeOffline.minWait);
          if (!status.equals(XSiteAdminOperations.SUCCESS)) {
             responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).entity(site);
          }
          return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+      }, request);
    }
 
    private CompletionStage<RestResponse> getXSiteTakeOffline(RestRequest request) {
@@ -223,22 +223,22 @@ public class XSiteResource implements ResourceHandler {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build());
       }
 
-      return CompletableFuture.supplyAsync(() -> {
+      return invocationHelper.getManager().supplyBlocking(() -> {
          Map<Address, String> payload = xsiteAdmin.nodeStatus(site);
          addPayload(responseBuilder, payload);
          return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+      }, request);
    }
 
    private <T> CompletionStage<RestResponse> statusOperation(RestRequest request, Function<XSiteAdminOperations, T> op) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       XSiteAdminOperations xsiteAdmin = getxsiteAdmin(request);
 
-      return CompletableFuture.supplyAsync(() -> {
+      return invocationHelper.getManager().supplyBlocking(() -> {
          T payload = op.apply(xsiteAdmin);
          addPayload(responseBuilder, payload);
          return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+      }, request);
    }
 
    private XSiteAdminOperations getxsiteAdmin(RestRequest request) {
@@ -265,11 +265,11 @@ public class XSiteResource implements ResourceHandler {
 
       if (globalXSiteAdmin == null) return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
 
-      return CompletableFuture.supplyAsync(() -> {
+      return invocationHelper.getManager().supplyBlocking(() -> {
          Map<String, String> payload = operation.apply(globalXSiteAdmin, site);
          addPayload(responseBuilder, payload);
          return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+      }, request);
    }
 
    private void addPayload(NettyRestResponse.Builder responseBuilder, Object o) {
@@ -292,13 +292,13 @@ public class XSiteResource implements ResourceHandler {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build());
       }
 
-      return CompletableFuture.supplyAsync(() -> {
+      return invocationHelper.getManager().supplyBlocking(() -> {
          String result = xsiteOp.apply(xsiteAdmin, site);
          if (!result.equals(XSiteAdminOperations.SUCCESS)) {
             responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).entity(result);
          }
          return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+      }, request);
    }
 
    @SuppressWarnings("unused")

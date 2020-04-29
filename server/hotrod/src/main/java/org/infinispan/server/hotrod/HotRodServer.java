@@ -157,7 +157,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    @Override
    public HotRodDecoder getDecoder() {
-      return new HotRodDecoder(cacheManager, getExecutor(), this);
+      return new HotRodDecoder(cacheManager, getBlockingManager(), this);
    }
 
    /**

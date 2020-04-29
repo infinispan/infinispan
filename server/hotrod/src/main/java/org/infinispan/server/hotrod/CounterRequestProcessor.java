@@ -3,7 +3,6 @@ package org.infinispan.server.hotrod;
 import static org.infinispan.util.concurrent.CompletableFutures.extractException;
 
 import java.util.Collection;
-import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 
 import javax.security.auth.Subject;
@@ -17,6 +16,7 @@ import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.server.hotrod.counter.listener.ClientCounterManagerNotificationManager;
 import org.infinispan.server.hotrod.counter.listener.ListenerOperationStatus;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
@@ -33,8 +33,8 @@ class CounterRequestProcessor extends BaseRequestProcessor {
    private final BiConsumer<HotRodHeader, StrongCounter> handleStrongReset = this::handleResetStrong;
    private final BiConsumer<HotRodHeader, WeakCounter> handleWeakReset = this::handleResetWeak;
 
-   CounterRequestProcessor(Channel channel, EmbeddedCounterManager counterManager, Executor executor, HotRodServer server) {
-      super(channel, executor, server);
+   CounterRequestProcessor(Channel channel, EmbeddedCounterManager counterManager, BlockingManager blockingManager, HotRodServer server) {
+      super(channel, blockingManager, server);
       this.counterManager = counterManager;
       notificationManager = server.getClientCounterNotificationManager();
    }
@@ -45,7 +45,7 @@ class CounterRequestProcessor extends BaseRequestProcessor {
    }
 
    void removeCounterListener(HotRodHeader header, Subject subject, String counterName, byte[] listenerId) {
-      executor.execute(() -> removeCounterListenerInternal(header, counterName, listenerId));
+      blockingManager.runBlockingAsync(() -> removeCounterListenerInternal(header, counterName, listenerId), header);
    }
 
    private void removeCounterListenerInternal(HotRodHeader header, String counterName, byte[] listenerId) {
@@ -58,7 +58,7 @@ class CounterRequestProcessor extends BaseRequestProcessor {
    }
 
    void addCounterListener(HotRodHeader header, Subject subject, String counterName, byte[] listenerId) {
-      executor.execute(() -> addCounterListenerInternal(header, counterName, listenerId));
+      blockingManager.runBlockingAsync(() -> addCounterListenerInternal(header, counterName, listenerId), header);
    }
 
    private void addCounterListenerInternal(HotRodHeader header, String counterName, byte[] listenerId) {
@@ -76,7 +76,7 @@ class CounterRequestProcessor extends BaseRequestProcessor {
    }
 
    void counterRemove(HotRodHeader header, Subject subject, String counterName) {
-      executor.execute(() -> counterRemoveInternal(header, counterName));
+      blockingManager.runBlockingAsync(() -> counterRemoveInternal(header, counterName), header);
    }
 
    private void counterRemoveInternal(HotRodHeader header, String counterName) {
