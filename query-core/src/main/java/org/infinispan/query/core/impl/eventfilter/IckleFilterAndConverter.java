@@ -34,6 +34,8 @@ import org.infinispan.query.core.impl.QueryCache;
 @Scope(Scopes.NONE)
 public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, ObjectFilter.FilterResult> implements Function<Map.Entry<K, V>, ObjectFilter.FilterResult> {
 
+   private String cacheName;
+
    /**
     * Optional cache for query objects.
     */
@@ -76,6 +78,7 @@ public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConvert
    @Inject
    protected void injectDependencies(ComponentRegistry componentRegistry, QueryCache queryCache) {
       this.queryCache = queryCache;
+      cacheName = componentRegistry.getCache().getName();
       matcher = componentRegistry.getComponent(matcherImplClass);
       if (matcher == null) {
          throw new CacheException("Expected component not found in registry: " + matcherImplClass.getName());
@@ -85,7 +88,7 @@ public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConvert
    public ObjectFilter getObjectFilter() {
       if (objectFilter == null) {
          objectFilter = queryCache != null
-               ? queryCache.get(queryString, null, matcherImplClass, (qs, accumulators) -> matcher.getObjectFilter(qs))
+               ? queryCache.get(cacheName, queryString, null, matcherImplClass, (qs, accumulators) -> matcher.getObjectFilter(qs))
                : matcher.getObjectFilter(queryString);
       }
       return namedParameters != null ? objectFilter.withParameters(namedParameters) : objectFilter;

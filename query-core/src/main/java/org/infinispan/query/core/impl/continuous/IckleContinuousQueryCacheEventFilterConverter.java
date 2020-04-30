@@ -45,6 +45,8 @@ public class IckleContinuousQueryCacheEventFilterConverter<K, V, C> extends Abst
     */
    protected Class<? extends Matcher> matcherImplClass;
 
+   protected String cacheName;
+
    /**
     * Optional cache for query objects.
     */
@@ -85,7 +87,8 @@ public class IckleContinuousQueryCacheEventFilterConverter<K, V, C> extends Abst
     * Acquires a Matcher instance from the ComponentRegistry of the given Cache object.
     */
    @Inject
-   protected void injectDependencies(Cache cache) {
+   protected void injectDependencies(Cache<?, ?> cache) {
+      cacheName = cache.getName();
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       queryCache = componentRegistry.getComponent(QueryCache.class);
       matcher = componentRegistry.getComponent(matcherImplClass);
@@ -97,7 +100,7 @@ public class IckleContinuousQueryCacheEventFilterConverter<K, V, C> extends Abst
    protected ObjectFilter getObjectFilter() {
       if (objectFilter == null) {
          objectFilter = queryCache != null
-               ? queryCache.get(queryString, null, matcherImplClass, (qs, accumulators) -> matcher.getObjectFilter(qs))
+               ? queryCache.get(cacheName, queryString, null, matcherImplClass, (qs, accumulators) -> matcher.getObjectFilter(qs))
                : matcher.getObjectFilter(queryString);
       }
       return namedParameters != null ? objectFilter.withParameters(namedParameters) : objectFilter;

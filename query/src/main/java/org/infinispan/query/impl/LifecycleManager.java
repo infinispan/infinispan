@@ -52,6 +52,7 @@ import org.infinispan.query.clustered.ClusteredQueryOperation;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.clustered.commandworkers.QueryBox;
+import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
@@ -94,6 +95,8 @@ public class LifecycleManager implements ModuleLifecycle {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, Flag.QUERYABLE)) {
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
+         SecurityActions.addCacheDependency(cache.getCacheManager(), cacheName, QueryCache.QUERY_CACHE_NAME);
+
          ClassLoader aggregatedClassLoader = makeAggregatedClassLoader(cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader());
          SearchIntegrator searchFactory = null;
          boolean isIndexed = cfg.indexing().enabled();
@@ -325,6 +328,17 @@ public class LifecycleManager implements ModuleLifecycle {
       SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
       if (searchIntegrator != null) {
          searchIntegrator.close();
+      }
+   }
+
+   @Override
+   public void cacheStopped(ComponentRegistry cr, String cacheName) {
+      QueryCache queryCache = cr.getComponent(QueryCache.class);
+      if (queryCache != null) {
+         InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+         if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, Flag.QUERYABLE)) {
+            queryCache.clear(cacheName);
+         }
       }
    }
 
