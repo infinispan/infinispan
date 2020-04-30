@@ -40,6 +40,7 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
 
          // LimitedExecutor just submits a task to another thread pool
          builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "execute");
+         builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "addPermit");
          builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "removePermit");
          builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "runTasks");
          // This invokes the actual runnable - we have to make sure it doesn't block as normal
