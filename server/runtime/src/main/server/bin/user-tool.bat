@@ -1,18 +1,9 @@
 @echo off
 
-set LOADER_CLASS=org.infinispan.server.loader.Loader
-set MAIN_CLASS=org.infinispan.server.security.UserTool
-set ARGUMENTS=
-set PROCESS_NAME=${infinispan.brand.short-name}-user-tool
+echo "This tool is deprecated and will be removed in the future. Please use \"cli.bat user create\" instead"
 
 set "DIRNAME=%~dp0%"
 
 setlocal EnableDelayedExpansion
-call "!DIRNAME!common.bat" %*
+call "!DIRNAME!cli.bat" user create %*
 setlocal DisableDelayedExpansion
-
-"%JAVA%" %JAVA_OPTS% ^
-   -Dvisualvm.display.name=%PROCESS_NAME% ^
-   -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager ^
-   "-Dinfinispan.server.home.path=%ISPN_HOME%" ^
-   -classpath %CLASSPATH% %LOADER_CLASS% %MAIN_CLASS% %ARGUMENTS%

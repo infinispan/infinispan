@@ -1,17 +1,11 @@
 #!/bin/sh
 
-LOADER_CLASS=org.infinispan.server.loader.Loader
-MAIN_CLASS=org.infinispan.server.security.UserTool
-ARGUMENTS=
-PROCESS_NAME=${infinispan.brand.short-name}-user-tool
-
-PROGNAME=`basename "$0"`
 DIRNAME=`dirname "$0"`
 
-. "$DIRNAME/common.sh"
+>&2 echo "This tool is deprecated and will be removed in the future. Please use \"cli.sh user create\" instead"
 
-eval \"$JAVA\" $JAVA_OPTS \
-   -Dvisualvm.display.name=$PROCESS_NAME \
-   -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager \
-   -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
-   -classpath \""$CLASSPATH"\" "$LOADER_CLASS" "$MAIN_CLASS" "$ARGUMENTS"
+if [ "$#" -eq 0 ]; then
+  . "$DIRNAME/cli.sh" user create --help
+else
+  . "$DIRNAME/cli.sh" user create "$@"
+fi

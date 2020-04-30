@@ -66,4 +66,5 @@ public interface Context extends AeshContext {
    void setConsole(ReadlineConsole console);
 
    CommandRegistry<? extends CommandInvocation> getRegistry();
+
 }

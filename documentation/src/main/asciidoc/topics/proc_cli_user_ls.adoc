@@ -1,0 +1,30 @@
+[id='user_ls-{context}']
+= List and describe users and groups from property security realms
+List and describe users and groups stored in the property security realms.
+
+.Procedure
+
+* List the users with the `user ls` command:
++
+----
+[disconnected]> user ls
+[ "admin", "reader", "writer" ]
+----
+
+* Describe a user with the `user describe` command:
++
+----
+[disconnected]> user describe admin
+{ username: "admin", realm: "default", groups = ["administrators", "supervisors"] }
+----
+
+* List the groups with the `user ls` command:
++
+----
+[disconnected]> user ls --groups
+[ "administrators", "readers", "writers" ]
+----
++
+
+
+For more information, run the `help user` command.

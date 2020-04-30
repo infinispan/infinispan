@@ -4,7 +4,8 @@ import java.net.URL;
 import java.util.Arrays;
 
 import org.aesh.terminal.utils.Config;
-import org.infinispan.cli.CLI;
+import org.infinispan.cli.commands.CLI;
+import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.AeshTestShell;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
@@ -23,18 +24,15 @@ public class CliIT {
    @ClassRule
    public static InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
-                                    .build();
+               .build();
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
-
    @Test
    public void testCliInteractive() {
-      CLI cli = new CLI();
       AeshTestConnection terminal = new AeshTestConnection();
-      cli.setTerminalConnection(terminal);
-      cli.run(new String[]{});
+      CLI.main(new AeshDelegatingShell(terminal), new String[]{});
 
       terminal.readln("echo Hi");
       terminal.assertEquals("[disconnected]> echo Hi" + Config.getLineSeparator() + "Hi" + Config.getLineSeparator() + "[disconnected]> ");
@@ -92,39 +90,28 @@ public class CliIT {
       terminal.clear();
       terminal.readln("add --delta=100");
       terminal.assertContains("100");
-
-      cli.stop();
    }
 
    @Test
    public void testCliBatch() {
-      CLI cli = new CLI();
       AeshTestShell shell = new AeshTestShell();
-      cli.setShell(shell);
-      cli.run(new String[]{"-f", this.getClass().getResource("/cli/batch.cli").getPath()});
+      CLI.main(shell, new String[]{"-f", this.getClass().getResource("/cli/batch.cli").getPath()});
       shell.assertContains("Hi CLI");
       shell.assertContains("batch1");
-      cli.stop();
    }
 
    @Test
    public void testCliBatchPreconnect() {
-      CLI cli = new CLI();
       AeshTestShell shell = new AeshTestShell();
-      cli.setShell(shell);
-      cli.run(new String[]{"--connect=http://localhost:11222", "-f", this.getClass().getResource("/cli/batch-preconnect.cli").getPath()});
+      CLI.main(shell, new String[]{"--connect=http://localhost:11222", "-f", this.getClass().getResource("/cli/batch-preconnect.cli").getPath()});
       shell.assertContains("Hi CLI");
       shell.assertContains("batch2");
-      cli.stop();
    }
 
    @Test
    public void testCliTasks() {
-      CLI cli = new CLI();
       AeshTestConnection terminal = new AeshTestConnection();
-      cli.setTerminalConnection(terminal);
-      cli.run(new String[]{"--connect=http://localhost:11222"});
-
+      CLI.main(new AeshDelegatingShell(terminal), new String[]{"--connect=http://localhost:11222"});
       terminal.readln("cd tasks");
       terminal.readln("ls");
       terminal.assertContains("@@cache@names");
@@ -136,6 +123,5 @@ public class CliIT {
       terminal.readln("task upload --file=" + resource.getPath() + " hello");
       terminal.readln("task exec hello -Pgreetee=world");
       terminal.assertContains("\"Hello world\"");
-      cli.stop();
    }
 }

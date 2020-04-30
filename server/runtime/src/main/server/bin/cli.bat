@@ -1,7 +1,7 @@
 @echo off
 
 set LOADER_CLASS=org.infinispan.server.loader.Loader
-set MAIN_CLASS=org.infinispan.cli.CLI
+set MAIN_CLASS=org.infinispan.cli.commands.CLI
 set ARGUMENTS=
 set PROCESS_NAME=${infinispan.brand.short-name}-cli
 

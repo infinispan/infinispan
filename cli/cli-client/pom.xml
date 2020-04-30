@@ -14,6 +14,10 @@
    <name>Infinispan CLI Client</name>
    <description>Infinispan CLI Client module</description>
 
+   <properties>
+      <cli.main.class>org.infinispan.cli.commands.CLI</cli.main.class>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>org.aesh</groupId>
@@ -97,6 +101,7 @@
             <artifactId>maven-bundle-plugin</artifactId>
             <configuration>
                <instructions>
+                  <Main-Class>${cli.main.class}</Main-Class>
                   <Export-Package>
                      ${project.groupId}.cli.*;version=${project.version};-split-package:=error
                   </Export-Package>
@@ -118,7 +123,7 @@
                      <goal>java</goal>
                   </goals>
                   <configuration>
-                     <mainClass>org.infinispan.cli.CLI</mainClass>
+                     <mainClass>${cli.main.class}</mainClass>
                      <cleanupDaemonThreads>false</cleanupDaemonThreads>
                   </configuration>
                </execution>
@@ -126,4 +131,126 @@
          </plugin>
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>shade</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-shade-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                           <transformers>
+                              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                 <mainClass>${cli.main.class}</mainClass>
+                              </transformer>
+                           </transformers>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+      <profile>
+         <id>native</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-enforcer-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>graalvm-check</id>
+                        <goals>
+                           <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                           <rules>
+                              <requireEnvironmentVariable>
+                                 <variableName>GRAALVM_HOME</variableName>
+                              </requireEnvironmentVariable>
+                           </rules>
+                           <fail>true</fail>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-dependency-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>classpath</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>build-classpath</goal>
+                        </goals>
+                        <configuration>
+                           <outputProperty>maven.compile.classpath</outputProperty>
+                           <pathSeparator>:</pathSeparator>
+                           <includeScope>compile</includeScope>
+                        </configuration>
+                     </execution>
+                  </executions>
+                  <configuration>
+                     <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                     <silent>true</silent>
+                  </configuration>
+               </plugin>
+               <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>exec-maven-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>generate-native-reflection</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                           <executable>java</executable>
+                           <workingDirectory>target</workingDirectory>
+                           <arguments>
+                              <argument>-cp</argument>
+                              <classpath/>
+                              <argument>org.aesh.util.GraalReflectionGenerator</argument>
+                              <argument>${cli.main.class}</argument>
+                           </arguments>
+                        </configuration>
+                     </execution>
+                     <execution>
+                        <id>native</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                           <executable>${env.GRAALVM_HOME}/bin/native-image</executable>
+                           <workingDirectory>${project.build.directory}</workingDirectory>
+                           <arguments>
+                              <argument>--verbose</argument>
+                              <argument>-H:+ReportUnsupportedElementsAtRuntime</argument>
+                              <argument>-H:ReflectionConfigurationFiles=cli_reflection.json</argument>
+                              <argument>-cp</argument>
+                              <argument>${maven.compile.classpath}</argument>
+                              <argument>-jar</argument>
+                              <argument>${project.build.finalName}.jar</argument>
+                              <argument>infinispan</argument>
+                           </arguments>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 </project>

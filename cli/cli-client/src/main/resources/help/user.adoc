@@ -1,0 +1,121 @@
+USER(1)
+=======
+:doctype: manpage
+
+
+NAME
+----
+user - manages ${infinispan.brand.name} users in property security realms.
+
+
+SYNOPSIS
+--------
+*user ls*
+
+*user create* 'username'
+
+*user describe* 'username'
+
+*user remove* 'username'
+
+*user password* 'username'
+
+*user groups* 'username'
+
+*user encrypt-all*
+
+
+DESCRIPTION
+-----------
+Manage (list, create, describe, remove, modify) users stored in a property security realm.
+Note: this command cannot interact with other security realms.
+
+
+COMMAND SYNOPSIS
+----------------
+
+List users in the property security realm
+
+*user ls*::
+Lists the users or groups which are present in the property files.
+
+Create a user
+
+*user create* 'username'::
+Creates a user. The command will prompt for a password and confirmation.
+
+Describes a user
+
+*user describe* 'username'::
+Describes a user, including its username, realm and any groups it belongs to.
+
+Remove a user
+
+*user remove* 'username'::
+Removes the specified user frp,the property files.
+
+Sets a user's password
+
+*user password* 'username'::
+Changes a user's password.
+
+Set the groups a user belongs to.
+
+*user groups* 'username'::
+Sets a user's groups.
+
+Encrypt all of the passwords in a plain-text user property file.
+
+*user encrypt-all*::
+Encrypt all passwords.
+
+
+COMMON OPTIONS
+--------------
+
+These options apply to all commands:
+
+*-h, --help*::
+Displays a help page for the command or sub-command.
+
+*-s, --server-root*='path-to-server-root'::
+The path to the server root. Defaults to `server`.
+
+*-f, --users-file*='users.properties'::
+The name of the property file which contains the user passwords. Defaults to `users.properties`.
+
+*-w, --groups-file*='groups.properties'::
+The name of the property file which contains the user to groups mapping. Defaults to `groups.properties`.
+
+
+USER CREATE/MODIFY OPTIONS
+--------------------------
+
+*-a, --algorithms*::
+Specifies the algorithms used to hash the password.
+
+*-g, --groups*='group1,group2,...'::
+Specifies the groups to which the user belongs.
+
+*-p, --password*='password'::
+Specifies the user's password.
+
+*-r, --realm*='realm'::
+Specifies the realm name.
+
+*--plain-text*::
+Whether passwords should be stored in plain-text (not recommended).
+
+
+USER LS OPTIONS
+---------------
+
+*--groups*::
+Shows a list of groups instead of the users.
+
+
+USER ENCRYPT-ALL OPTIONS
+------------------------
+
+*-a, --algorithms*::
+Specifies the algorithms used to hash the password.

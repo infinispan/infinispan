@@ -1,0 +1,14 @@
+[id='user_remove-{context}']
+= Removing users from property security realms
+Remove users.
+
+.Procedure
+
+* Remove a user with the `user remove` command:
++
+----
+[disconnected]> user remove admin
+----
++
+
+For more information, run the `help user` command.

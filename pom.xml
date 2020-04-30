@@ -285,7 +285,7 @@
       <versionx.log4j.log4j>1.2.17</versionx.log4j.log4j>
       <versionx.mysql.mysql-connector-java>5.1.19</versionx.mysql.mysql-connector-java>
       <versionx.net.spy.spymemcached>2.12.1</versionx.net.spy.spymemcached>
-      <versionx.org.aesh.aesh>2.4</versionx.org.aesh.aesh>
+      <versionx.org.aesh.aesh>2.6</versionx.org.aesh.aesh>
       <versionx.org.antlr.antlr-runtime>3.5.2</versionx.org.antlr.antlr-runtime>
       <versionx.org.apache.ant.ant>${version.ant}</versionx.org.apache.ant.ant>
       <versionx.org.apache.commons.commons-lang3>3.9</versionx.org.apache.commons.commons-lang3>

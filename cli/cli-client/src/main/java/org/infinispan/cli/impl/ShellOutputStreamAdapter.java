@@ -17,6 +17,6 @@ public class ShellOutputStreamAdapter extends OutputStream {
 
    @Override
    public void write(int b) {
-      shell.write((char)b);
+      shell.write(Character.toString((char)b));
    }
 }

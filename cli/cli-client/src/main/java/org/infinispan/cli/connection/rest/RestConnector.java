@@ -24,7 +24,7 @@ public class RestConnector implements Connector {
    public Connection getConnection(String connectionString, SSLContextSettings sslContextSettings) {
       try {
          RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
-         if (connectionString == null || connectionString.isEmpty()) {
+         if (connectionString == null || connectionString.isEmpty() || "-".equals(connectionString)) {
             builder.addServer().host("localhost").port(11222);
          } else {
             Matcher matcher = HOST_PORT.matcher(connectionString);
