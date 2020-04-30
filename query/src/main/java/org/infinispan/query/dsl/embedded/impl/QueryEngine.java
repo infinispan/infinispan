@@ -807,7 +807,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
 
    private LuceneQueryParsingResult<TypeMetadata> transformParsingResult(IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
       return queryCache != null && parsingResult.getParameterNames().isEmpty()
-            ? queryCache.get(parsingResult.getQueryString(), null, LuceneQueryParsingResult.class, (queryString, accumulators) -> transformToLuceneQueryParsingResult(parsingResult, namedParameters))
+            ? queryCache.get(cache.getName(), parsingResult.getQueryString(), null, LuceneQueryParsingResult.class, (queryString, accumulators) -> transformToLuceneQueryParsingResult(parsingResult, namedParameters))
             : transformToLuceneQueryParsingResult(parsingResult, namedParameters);
    }
 

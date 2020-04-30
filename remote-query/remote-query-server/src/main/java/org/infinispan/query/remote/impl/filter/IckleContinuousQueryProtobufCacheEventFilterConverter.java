@@ -36,7 +36,7 @@ public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends
    }
 
    @Override
-   protected void injectDependencies(Cache cache) {
+   protected void injectDependencies(Cache<?, ?> cache) {
       remoteQueryManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RemoteQueryManager.class);
       matcherImplClass = remoteQueryManager.getMatcherClass(APPLICATION_PROTOSTREAM);
       super.injectDependencies(cache);

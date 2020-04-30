@@ -71,13 +71,19 @@ public final class QueryCache {
     * discriminator value which is usually the Class of the cached query object and an optional {@link List} of {@link
     * FieldAccumulator}s.
     */
-   public <T> T get(String queryString, List<FieldAccumulator> accumulators, Object queryTypeDiscriminator, QueryCreator<T> queryCreator) {
-      QueryCacheKey key = new QueryCacheKey(queryString, accumulators, queryTypeDiscriminator);
+   public <T> T get(String cacheName, String queryString, List<FieldAccumulator> accumulators, Object queryTypeDiscriminator, QueryCreator<T> queryCreator) {
+      QueryCacheKey key = new QueryCacheKey(cacheName, queryString, accumulators, queryTypeDiscriminator);
       return (T) getCache().computeIfAbsent(key, (k) -> queryCreator.create(k.queryString, k.accumulators));
    }
 
    public void clear() {
+      log.debug("Clearing all");
       getCache().clear();
+   }
+
+   public void clear(String cacheName) {
+      log.debugf("Clearing %s", cacheName);
+      getCache().keySet().removeIf(k -> k.cacheName.equals(cacheName));
    }
 
    /**
@@ -119,13 +125,16 @@ public final class QueryCache {
     */
    private static final class QueryCacheKey {
 
+      final String cacheName;
+
       final String queryString;
 
       final List<FieldAccumulator> accumulators;
 
       final Object queryTypeDiscriminator;
 
-      QueryCacheKey(String queryString, List<FieldAccumulator> accumulators, Object queryTypeDiscriminator) {
+      QueryCacheKey(String cacheName, String queryString, List<FieldAccumulator> accumulators, Object queryTypeDiscriminator) {
+         this.cacheName = cacheName;
          this.queryString = queryString;
          this.accumulators = accumulators;
          this.queryTypeDiscriminator = queryTypeDiscriminator;
@@ -136,14 +145,16 @@ public final class QueryCache {
          if (this == obj) return true;
          if (!(obj instanceof QueryCacheKey)) return false;
          QueryCacheKey other = (QueryCacheKey) obj;
-         return queryString.equals(other.queryString)
+         return cacheName.equals(other.cacheName)
+               && queryString.equals(other.queryString)
                && (accumulators != null ? accumulators.equals(other.accumulators) : other.accumulators == null)
                && queryTypeDiscriminator.equals(other.queryTypeDiscriminator);
       }
 
       @Override
       public int hashCode() {
-         int result = queryString.hashCode();
+         int result = cacheName.hashCode();
+         result = 31 * result + queryString.hashCode();
          result = 31 * result + (accumulators != null ? accumulators.hashCode() : 0);
          result = 31 * result + queryTypeDiscriminator.hashCode();
          return result;
@@ -152,7 +163,8 @@ public final class QueryCache {
       @Override
       public String toString() {
          return "QueryCacheKey{" +
-               "queryString='" + queryString + '\'' +
+               "cacheName='" + cacheName + '\'' +
+               ", queryString='" + queryString + '\'' +
                ", accumulators=" + accumulators +
                ", queryTypeDiscriminator=" + queryTypeDiscriminator +
                '}';

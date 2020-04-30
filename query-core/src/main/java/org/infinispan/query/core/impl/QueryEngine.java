@@ -467,13 +467,13 @@ public class QueryEngine<TypeMetadata> {
 
    protected IckleParsingResult<TypeMetadata> parse(String queryString) {
       return queryCache != null
-            ? queryCache.get(queryString, null, IckleParsingResult.class, (qs, accumulators) -> IckleParser.parse(qs, propertyHelper))
+            ? queryCache.get(cache.getName(), queryString, null, IckleParsingResult.class, (qs, accumulators) -> IckleParser.parse(qs, propertyHelper))
             : IckleParser.parse(queryString, propertyHelper);
    }
 
    protected final ObjectFilter getObjectFilter(Matcher matcher, String queryString, Map<String, Object> namedParameters, List<FieldAccumulator> accumulators) {
       ObjectFilter objectFilter = queryCache != null
-            ? queryCache.get(queryString, accumulators, matcher.getClass(), matcher::getObjectFilter)
+            ? queryCache.get(cache.getName(), queryString, accumulators, matcher.getClass(), matcher::getObjectFilter)
             : matcher.getObjectFilter(queryString, accumulators);
       return namedParameters != null ? objectFilter.withParameters(namedParameters) : objectFilter;
    }
