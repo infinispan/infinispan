@@ -133,28 +133,14 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    }
 
    /**
-    * Check if the indexes can be shared. Currently only "ram" based indexes don't allow any sort of
-    * sharing.
+    * Check if the indexes can be shared. Currently no index can be shared, so it always returns false. sharing.
     *
-    * @return false if the index is ram only and thus not shared
+    * @return always false, starting with version 11
+    * @deprecated Since 11 with no replacement; to be removed in next major version.
     */
-   public boolean indexShareable() {
-      TypedProperties properties = properties();
-      boolean hasRamDirectoryProvider = false;
-      for (Object objKey : properties.keySet()) {
-         String key = (String) objKey;
-         if (key.endsWith(DIRECTORY_PROVIDER_KEY)) {
-            String directoryImplementationName = String.valueOf(properties.get(key)).trim();
-            if (LOCAL_HEAP_DIRECTORY_PROVIDER.equalsIgnoreCase(directoryImplementationName)
-                  || RAM_DIRECTORY_PROVIDER.equalsIgnoreCase(directoryImplementationName)
-                  || LOCAL_HEAP_DIRECTORY_PROVIDER_FQN.equals(directoryImplementationName)) {
-               hasRamDirectoryProvider = true;
-            } else {
-               return true;
-            }
-         }
-      }
-      return !hasRamDirectoryProvider;
+   @Deprecated
+   public final boolean indexShareable() {
+      return false;
    }
 
    @Override
