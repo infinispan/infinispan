@@ -1274,18 +1274,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
          releaseReadLock();
       }
 
-      if (hasShared) {
-         if (indexShareable())
-            flags = EnumUtil.mergeBitSets(flags, FlagBitSets.SKIP_INDEXING);
-      } else {
+      if (!hasShared) {
          flags = EnumUtil.mergeBitSets(flags, FlagBitSets.SKIP_INDEXING);
       }
 
       return flags;
-   }
-
-   private boolean indexShareable() {
-      return configuration.indexing().indexShareable();
    }
 
    private long getMaxEntries() {
