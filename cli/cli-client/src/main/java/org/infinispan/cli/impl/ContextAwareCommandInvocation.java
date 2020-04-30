@@ -103,6 +103,10 @@ public class ContextAwareCommandInvocation<CI extends CommandInvocation> impleme
       invocation.println(msg);
    }
 
+   public void printf(String format, Object... args) {
+      invocation.print(String.format(format, args));
+   }
+
    @Override
    public void print(String msg, boolean paging) {
       invocation.print(msg, paging);

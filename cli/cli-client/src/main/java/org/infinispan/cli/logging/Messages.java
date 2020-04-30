@@ -5,9 +5,11 @@ import java.net.ConnectException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
+import java.util.NoSuchElementException;
 
 import org.infinispan.cli.patching.PatchInfo;
 import org.infinispan.cli.patching.PatchOperation;
+import org.infinispan.cli.user.UserTool;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageBundle;
@@ -162,4 +164,40 @@ public interface Messages {
 
    @Message("Downloaded report '%s'")
    String downloadedReport(String filename);
+
+   @Message(value = "Specify a username: ")
+   String userToolUsername();
+
+   @Message(value = "Set a password for the user: ")
+   String userToolPassword();
+
+   @Message(value = "Confirm the password for the user: ")
+   String userToolPasswordConfirm();
+
+   @Message(value = "User `%s` already exists")
+   IllegalStateException userToolUserExists(String username);
+
+   @Message(value = "Cannot add user `%s` without a password.")
+   String userToolNoPassword(String username);
+
+   @Message("Error accessing file '%s'")
+   RuntimeException userToolIOError(Path path, @Cause IOException e);
+
+   @Message("Unkown password encryption algorithm: '%s'")
+   IllegalArgumentException userToolUnknownAlgorithm(String algorithm);
+
+   @Message(value = "User `%s` does not exist")
+   IllegalArgumentException userToolNoSuchUser(String username);
+
+   @Message(value = "{ username: \"%s\", realm: \"%s\", groups = %s }")
+   String userDescribe(String username, String realm, String[] userGroups);
+
+   @Message(value = "Invalid Unicode sequence '%s'")
+   IOException invalidUnicodeSequence(String sequence, @Cause NoSuchElementException e);
+
+   @Message(value = "Attempt to use %s passwords, but only %s passwords are allowed")
+   IllegalArgumentException userToolIncompatibleEncrypyion(UserTool.Encryption encryption1, UserTool.Encryption encryption2);
+
+   @Message(value = "Attempted to use a different realm '%s' than the already existing one '%s'")
+   IllegalArgumentException userToolWrongRealm(String realm1, String realm2);
 }

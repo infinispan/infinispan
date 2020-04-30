@@ -1,12 +1,12 @@
 [id='user_tool-{context}']
 = Adding Users to Property Realms
-{brandname} server provides a `user-tool` script that lets you easily add new
+{brandname} server's CLI provides a `user` group of commands that lets you easily add new
 user/role mappings to properties files.
 
 .Procedure
 
 . Navigate to your `$ISPN_HOME` directory.
-. Run the `user-tool` script in the `bin` folder.
+. Run the `cli` script in the `bin` folder.
 
 For example, create a new user named "myuser" with a password of "qwer1234!" that belongs to the "supervisor", "reader", and "writer" groups:
 

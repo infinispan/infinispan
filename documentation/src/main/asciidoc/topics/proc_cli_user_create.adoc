@@ -1,0 +1,37 @@
+[id='user_create-{context}']
+= Creating users in property security realms
+Create/modify users, setting their passwords and the groups they belong to.
+
+.Procedure
+
+* Create a user with the `user create` command:
++
+----
+[disconnected]> user create admin --groups=admin
+Set a password for the user: ********
+Confirm the password for the user: ********
+----
++
+
+* Create a user with the `user create` command specifying a password directly:
++
+----
+[disconnected]> user create admin --groups=administrators --password=adminpassword
+----
++
+
+* Modify a user with the `user modify` command to change its password:
++
+----
+[disconnected]> user modify admin --password=newpassword
+----
++
+
+* Modify a user with the `user modify` command to change its groups:
++
+----
+[disconnected]> user modify admin --groups=administrators,supervisors
+----
++
+
+For more information, run the `help user` command.
