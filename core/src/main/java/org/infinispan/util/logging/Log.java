@@ -1969,4 +1969,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The indexing 'enabled' and the legacy 'index' configs attributes are mutually exclusive", id = 581)
    CacheConfigurationException indexEnabledAndIndexModeAreExclusive();
+
+   @Message(value = "A single indexing directory provider is allowed per cache configuration. Setting multiple individual providers for the indexes belonging to a cache is not allowed.", id = 582)
+   CacheConfigurationException foundMultipleDirectoryProviders();
 }

@@ -49,6 +49,9 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    private static final String LOCAL_HEAP_DIRECTORY_PROVIDER = "local-heap";
    private static final String LOCAL_HEAP_DIRECTORY_PROVIDER_FQN = "org.hibernate.search.store.impl.RAMDirectoryProvider";
 
+   /**
+    * @deprecated since 11.
+    */
    @Deprecated
    private final Attribute<Index> index;
    private final Attribute<Boolean> autoConfig;
@@ -98,6 +101,9 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       return index.get();
    }
 
+   /**
+    * Determines if indexing is enabled for this cache configuration.
+    */
    public boolean enabled() {
       return enabled.get();
    }
