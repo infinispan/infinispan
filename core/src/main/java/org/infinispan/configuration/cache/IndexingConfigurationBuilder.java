@@ -9,6 +9,7 @@ import static org.infinispan.configuration.cache.IndexingConfiguration.KEY_TRANS
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -26,11 +27,21 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  */
 public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<IndexingConfiguration>, ConfigurationBuilderInfo {
 
-   private final AttributeSet attributes;
-   private static final String DIRECTORY_PROVIDER = "hibernate.search.default.directory_provider";
+   private static final String DIRECTORY_PROVIDER_SUFFIX = ".directory_provider";
+
+   private static final String DIRECTORY_PROVIDER_KEY1 = "hibernate.search.default.directory_provider";
+
+   private static final String DIRECTORY_PROVIDER_KEY2 = "default.directory_provider";
+
    private static final String EXCLUSIVE_INDEX_USE = "hibernate.search.default.exclusive_index_use";
+
    private static final String INDEX_MANAGER = "hibernate.search.default.indexmanager";
+
    private static final String READER_STRATEGY = "hibernate.search.default.reader.strategy";
+
+   private static final String FS_PROVIDER = "filesystem";
+
+   private final AttributeSet attributes;
 
    IndexingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -204,8 +215,27 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          }
       }
 
+      ensureSingleIndexingProvider();
+
       if (attributes.attribute(INDEX).get() == Index.PRIMARY_OWNER) {
          throw CONFIG.indexModeNotSupported(Index.PRIMARY_OWNER.name());
+      }
+   }
+
+   private void ensureSingleIndexingProvider() {
+      TypedProperties typedProperties = attributes.attribute(PROPERTIES).get();
+      String defaultProvider = typedProperties.getProperty(DIRECTORY_PROVIDER_KEY1);
+      if (defaultProvider == null) {
+         defaultProvider = typedProperties.getProperty(DIRECTORY_PROVIDER_KEY2, FS_PROVIDER);
+      }
+      Set<String> providers = new HashSet<>();
+      providers.add(defaultProvider.trim().toLowerCase());
+      typedProperties.entrySet().stream()
+                     .filter(e -> ((String) e.getKey()).endsWith(DIRECTORY_PROVIDER_SUFFIX))
+                     .forEach(e -> providers.add(((String) e.getValue()).trim().toLowerCase()));
+
+      if (providers.size() > 1) {
+         throw CONFIG.foundMultipleDirectoryProviders();
       }
    }
 
@@ -223,7 +253,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    private void applyAutoConfig(TypedProperties properties) {
-      properties.putIfAbsent(DIRECTORY_PROVIDER, "filesystem");
+      properties.putIfAbsent(DIRECTORY_PROVIDER_KEY1, FS_PROVIDER);
       properties.putIfAbsent(EXCLUSIVE_INDEX_USE, "true");
       properties.putIfAbsent(INDEX_MANAGER, "near-real-time");
       properties.putIfAbsent(READER_STRATEGY, "shared");
@@ -235,6 +265,9 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       if (autoConfig()) {
          applyAutoConfig(typedProperties);
          attributes.attribute(PROPERTIES).set(typedProperties);
+
+         // check that after autoconfig we still do not have multiple configured providers
+         ensureSingleIndexingProvider();
       }
       return new IndexingConfiguration(attributes.protect());
    }
