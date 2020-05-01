@@ -39,16 +39,6 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
 
    static final ElementDefinition<IndexingConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(INDEXING.getLocalName());
 
-   private static final String DIRECTORY_PROVIDER_KEY = "directory_provider";
-
-   /**
-    * Legacy name "ram" was replaced by "local-heap"
-    */
-   @Deprecated
-   private static final String RAM_DIRECTORY_PROVIDER = "ram";
-   private static final String LOCAL_HEAP_DIRECTORY_PROVIDER = "local-heap";
-   private static final String LOCAL_HEAP_DIRECTORY_PROVIDER_FQN = "org.hibernate.search.store.impl.RAMDirectoryProvider";
-
    /**
     * @deprecated since 11.
     */
@@ -58,9 +48,11 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    private final Attribute<Map<Class<?>, Class<?>>> keyTransformers;
    private final Attribute<Set<Class<?>>> indexedEntities;
    private final Attribute<Boolean> enabled;
+   private final boolean isVolatile;
 
-   IndexingConfiguration(AttributeSet attributes) {
+   IndexingConfiguration(AttributeSet attributes, boolean isVolatile) {
       super(attributes);
+      this.isVolatile = isVolatile;
       index = attributes.attribute(INDEX);
       autoConfig = attributes.attribute(AUTO_CONFIG);
       keyTransformers = attributes.attribute(KEY_TRANSFORMERS);
@@ -141,6 +133,13 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    @Deprecated
    public final boolean indexShareable() {
       return false;
+   }
+
+   /**
+    * Does the index use a provider that does not persist upon restart?
+    */
+   public boolean isVolatile() {
+      return isVolatile;
    }
 
    @Override

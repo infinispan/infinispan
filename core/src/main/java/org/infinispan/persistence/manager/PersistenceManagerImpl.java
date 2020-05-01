@@ -608,7 +608,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             "Deleting from all stores for id %d");
    }
 
-   <K, V> AdvancedCacheLoader<K, V> getFirstAdvancedCacheLoader(Predicate<? super StoreConfiguration> predicate) {
+   private <K, V> AdvancedCacheLoader<K, V> getFirstAdvancedCacheLoader(Predicate<? super StoreConfiguration> predicate) {
       acquireReadLock();
       try {
          for (CacheLoader loader : loaders) {
@@ -1261,12 +1261,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
             FlagBitSets.SKIP_LOCKING |
             FlagBitSets.SKIP_XSITE_BACKUP;
 
-      boolean hasShared = false;
+      boolean hasSharedStore = false;
       acquireReadLock();
       try {
          for (CacheWriter w : nonTxWriters) {
             if (getStoreConfig(w).shared()) {
-               hasShared = true;
+               hasSharedStore = true;
                break;
             }
          }
@@ -1274,7 +1274,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          releaseReadLock();
       }
 
-      if (!hasShared) {
+      if (!hasSharedStore || !configuration.indexing().isVolatile()) {
          flags = EnumUtil.mergeBitSets(flags, FlagBitSets.SKIP_INDEXING);
       }
 
