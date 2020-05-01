@@ -1,5 +1,8 @@
 package org.infinispan.query.persistence;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -29,17 +32,18 @@ public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
             storeName(getClass().getName());
    }
 
-   public void testPreloadIndexingAfterAddingNewNode() throws Exception {
+   public void testPreloadIndexingAfterAddingNewNode() {
       loadCacheEntries(this.<String, Person>caches().get(0));
 
-      for (CacheLoader cs: TestingUtil.cachestores(this.<String, Person>caches())) {
-         assert cs.contains(persons[0].getName()) :
-               "Cache misconfigured, maybe cache store not pointing to same place, maybe passivation on...etc";
+      for (CacheLoader<?, ?> cs : TestingUtil.cachestores(caches())) {
          DummyInMemoryStore dimcs = (DummyInMemoryStore) cs;
-         assert dimcs.stats().get("clear") == 0:
-               "Cache store should not be cleared, purgeOnStartup is false";
-         assert dimcs.stats().get("write") == 4:
-               "Cache store should have been written to 4 times, but was written to " + dimcs.stats().get("write") + " times";
+         assertTrue("Cache misconfigured, maybe cache store not pointing to same place, maybe passivation on...etc", dimcs.contains(persons[0].getName()));
+
+         int clear = dimcs.stats().get("clear");
+         assertEquals("Cache store should not be cleared, purgeOnStartup is false", clear, 0);
+
+         int write = dimcs.stats().get("write");
+         assertEquals("Cache store should have been written to 4 times, but was written to " + write + " times", write, 4);
       }
 
       // Before adding a node, verify that the query resolves properly
@@ -47,5 +51,4 @@ public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
 
       addNodeCheckingContentsAndQuery();
    }
-
 }

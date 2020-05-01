@@ -41,6 +41,16 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    private static final String FS_PROVIDER = "filesystem";
 
+   /**
+    * Legacy name "ram" was replaced by "local-heap"
+    */
+   @Deprecated
+   private static final String RAM_DIRECTORY_PROVIDER = "ram";
+
+   private static final String LOCAL_HEAP_DIRECTORY_PROVIDER = "local-heap";
+
+   private static final String LOCAL_HEAP_DIRECTORY_PROVIDER_FQN = "org.hibernate.search.store.impl.RAMDirectoryProvider";
+
    private final AttributeSet attributes;
 
    IndexingConfigurationBuilder(ConfigurationBuilder builder) {
@@ -215,11 +225,11 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          }
       }
 
-      ensureSingleIndexingProvider();
-
       if (attributes.attribute(INDEX).get() == Index.PRIMARY_OWNER) {
          throw CONFIG.indexModeNotSupported(Index.PRIMARY_OWNER.name());
       }
+
+      ensureSingleIndexingProvider();
    }
 
    private void ensureSingleIndexingProvider() {
@@ -269,7 +279,20 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          // check that after autoconfig we still do not have multiple configured providers
          ensureSingleIndexingProvider();
       }
-      return new IndexingConfiguration(attributes.protect());
+
+      // check for presence of index providers that are not persistent upon restart
+      boolean isVolatile = typedProperties.entrySet().stream()
+                                     .anyMatch(e -> {
+                                        if (((String) e.getKey()).endsWith(DIRECTORY_PROVIDER_SUFFIX)) {
+                                           String directoryImplementationName = String.valueOf(e.getValue()).trim();
+                                           return LOCAL_HEAP_DIRECTORY_PROVIDER.equalsIgnoreCase(directoryImplementationName)
+                                                 || LOCAL_HEAP_DIRECTORY_PROVIDER_FQN.equalsIgnoreCase(directoryImplementationName)
+                                                 || RAM_DIRECTORY_PROVIDER.equals(directoryImplementationName);
+                                        }
+                                        return false;
+                                     });
+
+      return new IndexingConfiguration(attributes.protect(), isVolatile);
    }
 
    @Override
