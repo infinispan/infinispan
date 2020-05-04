@@ -145,7 +145,7 @@ public class AuthorizationHelper {
       int subjectMask = 0;
       Map<String, Role> globalRoles = globalConfiguration.authorization().roles();
       for (String role : allRoles) {
-         if (configuration == null || configuration.roles().contains(role)) {
+         if (configuration == null || configuration.roles().isEmpty() || configuration.roles().contains(role)) {
             Role globalRole = globalRoles.get(role);
             if (globalRole != null) {
                subjectMask |= globalRole.getMask();

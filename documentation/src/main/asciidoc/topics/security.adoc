@@ -91,7 +91,7 @@ which will automatically retrieve the Subject either from the {brandname}'s cont
 
 [[security_embedded_config]]
 === Embedded Configuration
-There are two levels of configuration: global and per-cache. The global configuration defines the set of roles/permissions mappings while each cache can decide whether to enable authorization checks and the required roles.
+There are two levels of configuration: global and per-cache. The global configuration defines the set of roles/permissions mappings while each cache can decide whether to enable authorization checks.
 
 .Programmatic
 [source,java]
@@ -113,10 +113,7 @@ There are two levels of configuration: global and per-cache. The global configur
   config
      .security()
         .authorization()
-           .enable()
-           .role("admin")
-           .role("supervisor")
-           .role("reader");
+           .enable();
 ----
 
 .Declarative
@@ -124,6 +121,29 @@ There are two levels of configuration: global and per-cache. The global configur
 ----
 include::config_examples/cache_authorization.xml[]
 ----
+
+By default, all roles defined at the global configuration level apply to caches. It is possible to specify a subset of roles:
+
+.Programmatic explicit cache authorization roles
+[source,java]
+----
+  ConfigurationBuilder config = new ConfigurationBuilder();
+  config
+     .security()
+        .authorization()
+           .enable()
+           .role("admin")
+           .role("supervisor")
+           .role("reader");
+----
+
+.Declarative explicit cache authorization roles
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/cache_authorization_explicit_roles.xml[]
+----
+
+With the above configuration, a user who maps to the `writer` role but not to any of the other roles will be denied access.
 
 [[security_role_mappers]]
 ==== Role Mappers

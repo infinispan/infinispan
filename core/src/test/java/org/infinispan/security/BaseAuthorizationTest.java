@@ -39,21 +39,21 @@ public abstract class BaseAuthorizationTest extends SingleCacheManagerTest {
       final GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable()
             .principalRoleMapper(new IdentityRoleMapper());
-      final ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      config.transaction().lockingMode(LockingMode.PESSIMISTIC);
-      config.invocationBatching().enable();
-      AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();
-
       for (AuthorizationPermission perm : AuthorizationPermission.values()) {
          globalRoles.role(perm.toString()).permission(perm);
+      }
+      ConfigurationBuilder config = createCacheConfiguration(global);
+      return Security.doAs(ADMIN, (PrivilegedAction<EmbeddedCacheManager>) () -> TestCacheManagerFactory.createCacheManager(global, config));
+   }
+
+   protected ConfigurationBuilder createCacheConfiguration(GlobalConfigurationBuilder global) {
+      final ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      config.transaction().lockingMode(LockingMode.PESSIMISTIC).invocationBatching().enable();
+      AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();
+      for (AuthorizationPermission perm : AuthorizationPermission.values()) {
          authConfig.role(perm.toString());
       }
-      return Security.doAs(ADMIN, new PrivilegedAction<EmbeddedCacheManager>() {
-         @Override
-         public EmbeddedCacheManager run() {
-            return TestCacheManagerFactory.createCacheManager(global, config);
-         }
-      });
+      return config;
    }
 
    @Override

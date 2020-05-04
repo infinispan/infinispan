@@ -14,6 +14,7 @@ import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.Test;
@@ -95,8 +96,17 @@ public abstract class AbstractAuthorization {
    }
 
    @Test
-   public void testHotRodWriterCannotRead() {
-      hotRodCreateAuthzCache();
+   public void testHotRodWriterCannotReadImplicit() {
+      testHotRodWriterCannotRead(false);
+   }
+
+   @Test
+   public void testHotRodWriterCannotReadExplicit() {
+      testHotRodWriterCannotRead(true);
+   }
+
+   private void testHotRodWriterCannotRead(boolean explicitRoles) {
+      hotRodCreateAuthzCache(explicitRoles);
       RemoteCache<String, String> writerCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get("writer")).get();
       writerCache.put("k1", "v1");
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
@@ -109,8 +119,17 @@ public abstract class AbstractAuthorization {
    }
 
    @Test
-   public void testRestWriterCannotRead() {
-      restCreateAuthzCache();
+   public void testRestWriterCannotReadImplicit() {
+      testRestWriterCannotRead(false);
+   }
+
+   @Test
+   public void testRestWriterCannotReadExplicit() {
+      testRestWriterCannotRead(true);
+   }
+
+   private void testRestWriterCannotRead(boolean explicitRoles) {
+      restCreateAuthzCache(explicitRoles);
       RestCacheClient writerCache = getServerTest().rest().withClientConfiguration(restBuilders.get("writer")).get().cache(getServerTest().getMethodName());
       sync(writerCache.put("k1", "v1"));
       assertEquals(403, sync(writerCache.get("k1")).getStatus());
@@ -121,8 +140,17 @@ public abstract class AbstractAuthorization {
    }
 
    @Test
-   public void testHotRodReaderCannotWrite() {
-      hotRodCreateAuthzCache();
+   public void testHotRodReaderCannotWriteImplicit() {
+      testHotRodReaderCannotWrite(false);
+   }
+
+   @Test
+   public void testHotRodReaderCannotWriteExplicit() {
+      testHotRodReaderCannotWrite(true);
+   }
+
+   private void testHotRodReaderCannotWrite(boolean explicitRoles) {
+      hotRodCreateAuthzCache(explicitRoles);
       RemoteCache<String, String> readerCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get("reader")).get();
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
             () -> readerCache.put("k1", "v1")
@@ -134,8 +162,17 @@ public abstract class AbstractAuthorization {
    }
 
    @Test
-   public void testRestReaderCannotWrite() {
-      restCreateAuthzCache();
+   public void testRestReaderCannotWriteImplicit() {
+      testRestReaderCannotWrite(false);
+   }
+
+   @Test
+   public void testRestReaderCannotWriteExplicit() {
+      testRestReaderCannotWrite(true);
+   }
+
+   private void testRestReaderCannotWrite(boolean explicitRoles) {
+      restCreateAuthzCache(explicitRoles);
       RestCacheClient readerCache = getServerTest().rest().withClientConfiguration(restBuilders.get("reader")).get().cache(getServerTest().getMethodName());
       assertEquals(403, sync(readerCache.put("k1", "v1")).getStatus());
       for (String user : Arrays.asList("writer", "supervisor")) {
@@ -145,8 +182,17 @@ public abstract class AbstractAuthorization {
    }
 
    @Test
-   public void testHotRodBulkOperations() {
-      hotRodCreateAuthzCache().putAll(bulkData);
+   public void testHotRodBulkOperationsImplicit() {
+      testHotRodBulkOperations(false);
+   }
+
+   @Test
+   public void testHotRodBulkOperationsExplicit() {
+      testHotRodBulkOperations(true);
+   }
+
+   private void testHotRodBulkOperations(boolean explicitRoles) {
+      hotRodCreateAuthzCache(explicitRoles).putAll(bulkData);
       RemoteCache<String, String> readerCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get("reader")).get();
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
             () -> readerCache.getAll(bulkData.keySet())
@@ -161,15 +207,21 @@ public abstract class AbstractAuthorization {
       assertEquals("HEALTHY", sync(client.cacheManager("default").healthStatus()).getBody());
    }
 
-   private RemoteCache<Object, Object> hotRodCreateAuthzCache() {
+   private RemoteCache<Object, Object> hotRodCreateAuthzCache(boolean explicitRoles) {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC).security().authorization().enable().role("AdminRole").role("ReaderRole").role("WriterRole").role("SupervisorRole");
+      AuthorizationConfigurationBuilder authorizationConfigurationBuilder = builder.clustering().cacheMode(CacheMode.DIST_SYNC).security().authorization().enable();
+      if (explicitRoles) {
+         authorizationConfigurationBuilder.role("AdminRole").role("ReaderRole").role("WriterRole").role("SupervisorRole");
+      }
       return getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get("admin")).withServerConfiguration(builder).create();
    }
 
-   private RestClient restCreateAuthzCache() {
+   private RestClient restCreateAuthzCache(boolean explicitRoles) {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC).security().authorization().enable().role("AdminRole").role("ReaderRole").role("WriterRole").role("SupervisorRole");
+      AuthorizationConfigurationBuilder authorizationConfigurationBuilder = builder.clustering().cacheMode(CacheMode.DIST_SYNC).security().authorization().enable();
+      if (explicitRoles) {
+         authorizationConfigurationBuilder.role("AdminRole").role("ReaderRole").role("WriterRole").role("SupervisorRole");
+      }
       return getServerTest().rest().withClientConfiguration(restBuilders.get("admin")).withServerConfiguration(builder).create();
    }
 }
