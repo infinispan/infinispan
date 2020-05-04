@@ -7,7 +7,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
-import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.tx.XidImpl;
@@ -37,7 +36,7 @@ public class XaTransactionTable extends TransactionTable {
    @ComponentName(KnownComponentNames.CACHE_NAME)
    @Inject protected String cacheName;
 
-   protected ConcurrentMap<Xid, LocalXaTransaction> xid2LocalTx;
+   protected ConcurrentMap<XidImpl, LocalXaTransaction> xid2LocalTx;
 
    @Start(priority = 9) // Start before cache loader manager
    @SuppressWarnings("unused")
@@ -57,13 +56,13 @@ public class XaTransactionTable extends TransactionTable {
    }
 
    private void removeXidTxMapping(LocalXaTransaction localTx) {
-      final Xid xid = localTx.getXid();
+      XidImpl xid = localTx.getXid();
       if (xid != null) {
          xid2LocalTx.remove(xid);
       }
    }
 
-   public LocalXaTransaction getLocalTransaction(Xid xid) {
+   public LocalXaTransaction getLocalTransaction(XidImpl xid) {
       LocalXaTransaction localTransaction = this.xid2LocalTx.get(xid);
       if (localTransaction == null) {
          if (trace)
@@ -84,7 +83,7 @@ public class XaTransactionTable extends TransactionTable {
          try {
             transaction.enlistResource(new TransactionXaAdapter(localTransaction, this));
          } catch (Exception e) {
-            Xid xid = localTransaction.getXid();
+            XidImpl xid = localTransaction.getXid();
             if (xid != null && !localTransaction.getLookedUpEntries().isEmpty()) {
                log.debug("Attempting a rollback to clear stale resources asynchronously!");
                txCoordinator.rollback(localTransaction).exceptionally(t -> {
@@ -108,8 +107,7 @@ public class XaTransactionTable extends TransactionTable {
       return xid2LocalTx.size();
    }
 
-   public CompletionStage<Integer> prepare(Xid externalXid) {
-      Xid xid = convertXid(externalXid);
+   public CompletionStage<Integer> prepare(XidImpl xid) {
       LocalXaTransaction localTransaction = getLocalTransaction(xid);
       if (localTransaction == null) {
          return CompletableFutures.completedExceptionFuture(new XAException(XAException.XAER_NOTA));
@@ -117,8 +115,7 @@ public class XaTransactionTable extends TransactionTable {
       return txCoordinator.prepare(localTransaction);
    }
 
-   public CompletionStage<Void> commit(Xid externalXid, boolean isOnePhase) {
-      Xid xid = convertXid(externalXid);
+   public CompletionStage<Void> commit(XidImpl xid, boolean isOnePhase) {
       LocalXaTransaction localTransaction = getLocalTransaction(xid);
       if (localTransaction == null) {
          return CompletableFutures.completedExceptionFuture(new XAException(XAException.XAER_NOTA));
@@ -130,27 +127,22 @@ public class XaTransactionTable extends TransactionTable {
       //1PC optimization. We run a 2PC though, as running only 1PC has a high chance of leaving the cluster in
       //inconsistent state.
       if (isOnePhase && !CompletionStages.isCompletedSuccessfully(prepareStage = txCoordinator.prepare(localTransaction))) {
-         commitStage = prepareStage
-            .thenCompose(ignore -> txCoordinator.commit(localTransaction, false));
+         commitStage = prepareStage.thenCompose(ignore -> txCoordinator.commit(localTransaction, false));
       } else {
          commitStage = txCoordinator.commit(localTransaction, false);
       }
       if (CompletionStages.isCompletedSuccessfully(commitStage)) {
          boolean committedInOnePhase = CompletionStages.join(commitStage);
-         forgetSuccessfullyCompletedTransaction(recoveryManager, localTransaction.getXid(), localTransaction,
-               committedInOnePhase);
+         forgetSuccessfullyCompletedTransaction(localTransaction, committedInOnePhase);
          return CompletableFutures.completedNull();
       }
-      return commitStage
-            .thenApply(committedInOnePhase -> {
-               forgetSuccessfullyCompletedTransaction(recoveryManager, localTransaction.getXid(), localTransaction,
-                     committedInOnePhase);
+      return commitStage.thenApply(committedInOnePhase -> {
+               forgetSuccessfullyCompletedTransaction(localTransaction, committedInOnePhase);
                return null;
             });
    }
 
-   CompletionStage<Void> rollback(Xid externalXid) {
-      Xid xid = convertXid(externalXid);
+   CompletionStage<Void> rollback(XidImpl xid) {
       LocalXaTransaction localTransaction = getLocalTransaction(xid);
       if (localTransaction == null) {
          return CompletableFutures.completedExceptionFuture(new XAException(XAException.XAER_NOTA));
@@ -159,19 +151,7 @@ public class XaTransactionTable extends TransactionTable {
       return txCoordinator.rollback(localTransaction);
    }
 
-   /**
-    * Only does the conversion if recovery is enabled.
-    */
-   private Xid convertXid(Xid externalXid) {
-      if (isRecoveryEnabled()) {
-         return XidImpl.copy(externalXid);
-      } else {
-         return externalXid;
-      }
-   }
-
-   void start(Xid externalXid, LocalXaTransaction localTransaction) {
-      Xid xid = convertXid(externalXid);
+   void start(XidImpl xid, LocalXaTransaction localTransaction) {
       //transform in our internal format in order to be able to serialize
       localTransaction.setXid(xid);
       addLocalTransactionMapping(localTransaction);
@@ -184,8 +164,7 @@ public class XaTransactionTable extends TransactionTable {
          log.tracef("end called on tx %s(%s)", localTransaction.getGlobalTransaction(), cacheName);
    }
 
-   CompletionStage<Void> forget(Xid externalXid) {
-      Xid xid = convertXid(externalXid);
+   CompletionStage<Void> forget(XidImpl xid) {
       if (trace)
          log.tracef("forget called for xid %s", xid);
       if (isRecoveryEnabled()) {
@@ -207,11 +186,10 @@ public class XaTransactionTable extends TransactionTable {
       return recoveryManager != null;
    }
 
-   private void forgetSuccessfullyCompletedTransaction(RecoveryManager recoveryManager, Xid xid,
-         LocalXaTransaction localTransaction, boolean committedInOnePhase) {
+   private void forgetSuccessfullyCompletedTransaction(LocalXaTransaction localTransaction, boolean committedInOnePhase) {
       final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
+      XidImpl xid = localTransaction.getXid();
       if (isRecoveryEnabled()) {
-         // TODO: this should call a different method that doesn't receive an ack
          recoveryManager.removeRecoveryInformation(localTransaction.getRemoteLocksAcquired(), xid, gtx,
                partitionHandlingManager.isTransactionPartiallyCommitted(gtx));
          removeLocalTransaction(localTransaction);

@@ -1,10 +1,10 @@
 package org.infinispan.server.hotrod.transport;
 
+import java.nio.ByteBuffer;
 import java.util.Optional;
 
-import javax.transaction.xa.Xid;
-
 import org.infinispan.commons.io.SignedNumeric;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.core.transport.VInt;
 import org.infinispan.server.core.transport.VLong;
@@ -282,6 +282,11 @@ public class ExtendedByteBuf {
          bf.writeBytes(src);
    }
 
+   public static void writeRangedBytes(ByteBuffer src, ByteBuf bf) {
+      writeUnsignedInt(src.remaining(), bf);
+      bf.writeBytes(src);
+   }
+
    public static void writeString(String msg, ByteBuf bf) {
       writeRangedBytes(msg.getBytes(CharsetUtil.UTF_8), bf);
    }
@@ -290,9 +295,10 @@ public class ExtendedByteBuf {
       writeRangedBytes(msg.map(m -> m.getBytes(CharsetUtil.UTF_8)).orElse(Util.EMPTY_BYTE_ARRAY), bf);
    }
 
-   public static void writeXid(Xid xid, ByteBuf buffer) {
+   public static void writeXid(XidImpl xid, ByteBuf buffer) {
       VInt.write(buffer, SignedNumeric.encode(xid.getFormatId()));
-      writeRangedBytes(xid.getGlobalTransactionId(), buffer);
-      writeRangedBytes(xid.getBranchQualifier(), buffer);
+      //avoid allocating/copying arrays
+      writeRangedBytes(xid.getGlobalTransactionIdAsByteBuffer(), buffer);
+      writeRangedBytes(xid.getBranchQualifierAsByteBuffer(), buffer);
    }
 }

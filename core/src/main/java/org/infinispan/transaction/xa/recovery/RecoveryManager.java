@@ -6,8 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import javax.transaction.xa.Xid;
-
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
@@ -54,15 +53,16 @@ public interface RecoveryManager {
     * Removes from the specified nodes (or all nodes if the value of 'where' is null) the recovery information
     * associated with these Xids.
     *
-    * @param where                   on which nodes should this be executed.
-    * @param xid                     the list of xids to be removed.
-    * @param gtx                     the global transaction
-    * @param fromCluster
+    * @param where       on which nodes should this be executed.
+    * @param xid         the list of xids to be removed.
+    * @param gtx         the global transaction
+    * @param fromCluster {@code true} to remove the recovery information from all cluster.
     */
-   CompletionStage<Void> removeRecoveryInformation(Collection<Address> where, Xid xid, GlobalTransaction gtx, boolean fromCluster);
+   CompletionStage<Void> removeRecoveryInformation(Collection<Address> where, XidImpl xid, GlobalTransaction gtx,
+         boolean fromCluster);
 
    /**
-    * Same as {@link #removeRecoveryInformation(Collection, Xid, GlobalTransaction, boolean)}
+    * Same as {@link #removeRecoveryInformation(Collection, XidImpl, GlobalTransaction, boolean)}
     * but the transaction is identified by its internal id, and not by its xid.
     */
    CompletionStage<Void> removeRecoveryInformationFromCluster(Collection<Address> where, long internalId);
@@ -78,12 +78,12 @@ public interface RecoveryManager {
     *
     * @see RecoveryAwareRemoteTransaction#isInDoubt()
     */
-   List<Xid> getInDoubtTransactions();
+   List<XidImpl> getInDoubtTransactions();
 
    /**
     * Local call returning the remote transaction identified by the supplied xid or null.
     */
-   RecoveryAwareTransaction getPreparedTransaction(Xid xid);
+   RecoveryAwareTransaction getPreparedTransaction(XidImpl xid);
 
    /**
     * Replays the given transaction by re-running the prepare and commit. This call expects the transaction to exist on
@@ -92,12 +92,12 @@ public interface RecoveryManager {
     * @param xid    tx to commit or rollback
     * @param commit if true tx is committed, if false it is rolled back
     */
-   CompletionStage<String> forceTransactionCompletion(Xid xid, boolean commit);
+   CompletionStage<String> forceTransactionCompletion(XidImpl xid, boolean commit);
 
    /**
-    * This method invokes {@link #forceTransactionCompletion(javax.transaction.xa.Xid, boolean)} on the specified node.
+    * This method invokes {@link #forceTransactionCompletion(XidImpl, boolean)} on the specified node.
     */
-   String forceTransactionCompletionFromCluster(Xid xid, Address where, boolean commit);
+   String forceTransactionCompletionFromCluster(XidImpl xid, Address where, boolean commit);
 
    /**
     * Checks both internal state and transaction table's state for the given tx. If it finds it, returns true if tx
@@ -106,16 +106,16 @@ public interface RecoveryManager {
    boolean isTransactionPrepared(GlobalTransaction globalTx);
 
    /**
-    * Same as {@link #removeRecoveryInformation(javax.transaction.xa.Xid)} but identifies the tx by its internal id.
+    * Same as {@link #removeRecoveryInformation(XidImpl)} but identifies the tx by its internal id.
     */
    RecoveryAwareTransaction removeRecoveryInformation(Long internalId);
 
    /**
     * Remove recovery information stored on this node (doesn't involve rpc).
     *
-    * @param xid@see #removeRecoveryInformation(java.util.Collection, javax.transaction.xa.Xid, boolean)
+    * @see #removeRecoveryInformation(Collection, XidImpl, GlobalTransaction, boolean)
     */
-   RecoveryAwareTransaction removeRecoveryInformation(Xid xid);
+   RecoveryAwareTransaction removeRecoveryInformation(XidImpl xid);
 
    void registerInDoubtTransaction(RecoveryAwareRemoteTransaction tx);
 
@@ -123,46 +123,13 @@ public interface RecoveryManager {
     * Stateful structure allowing prepared-tx retrieval in a batch-oriented manner, as required by {@link
     * javax.transaction.xa.XAResource#recover(int)}.
     */
-   interface RecoveryIterator extends Iterator<Xid[]> {
+   interface RecoveryIterator extends Iterator<XidImpl[]> {
 
-      Xid[] NOTHING = new Xid[]{};
+      XidImpl[] NOTHING = new XidImpl[]{};
 
       /**
        * Exhaust the iterator. After this call, {@link #hasNext()} returns false.
        */
-      Xid[] all();
-   }
-
-   /**
-    * An object describing in doubt transaction's state. Needed by the transaction recovery process, for displaying
-    * transactions to the user.
-    */
-   interface InDoubtTxInfo {
-
-      /**
-       * Transaction's id.
-       */
-      Xid getXid();
-
-      /**
-       * Each xid has a unique long object associated to it. It makes possible the invocation of recovery operations.
-       */
-      long getInternalId();
-
-      /**
-       * The value represent transaction's state as described by the {@code status} field.
-       * @return the {@link javax.transaction.Status} or -1 if not set.
-       */
-      int getStatus();
-
-      /**
-       * Returns the set of nodes where this transaction information is maintained.
-       */
-      Set<Address> getOwners();
-
-      /**
-       * Returns true if the transaction information is also present on this node.
-       */
-      boolean isLocal();
+      XidImpl[] all();
    }
 }

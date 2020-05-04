@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import javax.transaction.xa.Xid;
-
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
@@ -23,6 +22,7 @@ import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.XaTransactionTable;
+import org.infinispan.transaction.xa.recovery.InDoubtTxInfo;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
@@ -97,7 +97,7 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public CompletionStage<Void> removeRecoveryInformation(Collection<Address> where, Xid xid, GlobalTransaction gtx, boolean fromCluster) {
+      public CompletionStage<Void> removeRecoveryInformation(Collection<Address> where, XidImpl xid, GlobalTransaction gtx, boolean fromCluster) {
          if (swallowRemoveRecoveryInfoCalls){
             log.trace("PostCommitRecoveryStateTest$RecoveryManagerDelegate.removeRecoveryInformation");
             return CompletableFutures.completedNull();
@@ -112,7 +112,7 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public RecoveryAwareTransaction removeRecoveryInformation(Xid xid) {
+      public RecoveryAwareTransaction removeRecoveryInformation(XidImpl xid) {
          rm.removeRecoveryInformation(xid);
          return null;
       }
@@ -133,22 +133,22 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public List<Xid> getInDoubtTransactions() {
+      public List<XidImpl> getInDoubtTransactions() {
          return rm.getInDoubtTransactions();
       }
 
       @Override
-      public RecoveryAwareTransaction getPreparedTransaction(Xid xid) {
+      public RecoveryAwareTransaction getPreparedTransaction(XidImpl xid) {
          return rm.getPreparedTransaction(xid);
       }
 
       @Override
-      public CompletionStage<String> forceTransactionCompletion(Xid xid, boolean commit) {
+      public CompletionStage<String> forceTransactionCompletion(XidImpl xid, boolean commit) {
          return rm.forceTransactionCompletion(xid, commit);
       }
 
       @Override
-      public String forceTransactionCompletionFromCluster(Xid xid, Address where, boolean commit) {
+      public String forceTransactionCompletionFromCluster(XidImpl xid, Address where, boolean commit) {
          return rm.forceTransactionCompletionFromCluster(xid, where, commit);
       }
 

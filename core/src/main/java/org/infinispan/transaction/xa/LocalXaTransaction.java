@@ -1,8 +1,8 @@
 package org.infinispan.transaction.xa;
 
 import javax.transaction.Transaction;
-import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.transaction.impl.LocalTransaction;
 
 /**
@@ -13,19 +13,19 @@ import org.infinispan.transaction.impl.LocalTransaction;
  */
 public class LocalXaTransaction extends LocalTransaction {
 
-   private Xid xid;
+   private XidImpl xid;
 
    public LocalXaTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int topologyId,
                              long txCreationTime) {
       super(transaction, tx, implicitTransaction, topologyId, txCreationTime);
    }
 
-   public void setXid(Xid xid) {
+   public void setXid(XidImpl xid) {
       this.xid  = xid;
       tx.setXid(xid);
    }
 
-   public Xid getXid() {
+   public XidImpl getXid() {
       return xid;
    }
 

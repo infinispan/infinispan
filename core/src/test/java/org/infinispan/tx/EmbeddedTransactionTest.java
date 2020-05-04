@@ -31,7 +31,7 @@ import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
 
 /**
- * Set of tests for the DummyTransaction.
+ * Set of tests for the {@link org.infinispan.transaction.tm.EmbeddedTransaction}.
  *
  * @author Pedro Ruivo
  * @since 7.2

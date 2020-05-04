@@ -10,6 +10,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.transaction.xa.recovery.InDoubtTxInfo;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
@@ -38,7 +39,8 @@ import org.infinispan.util.logging.events.EventLogLevel;
             RemoteMetadata.class,
             SimpleClusteredVersion.class,
             MarshallableUserObject.class,
-            PrivateMetadata.class
+            PrivateMetadata.class,
+            InDoubtTxInfo.class
       },
       schemaFileName = "persistence.core.proto",
       schemaFilePath = "proto/generated",

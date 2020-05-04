@@ -166,12 +166,7 @@ public class PrepareCoordinator {
     * Marks the transaction as rollback-only.
     */
    public void setRollbackOnly() {
-      try {
-         tx.setRollbackOnly();
-      } catch (SystemException e) {
-         //our tx implementation doesn't throw SystemException
-         throw new IllegalStateException(e);
-      }
+      tx.setRollbackOnly();
    }
 
    /**
@@ -256,7 +251,7 @@ public class PrepareCoordinator {
 
    private <K, V> AdvancedCache<K, V> transform(AdvancedCache<K, V> cache) {
       if (cache instanceof CacheImpl) {
-         return withTransaction((CacheImpl) cache);
+         return withTransaction((CacheImpl<K, V>) cache);
       } else {
          return cache;
       }

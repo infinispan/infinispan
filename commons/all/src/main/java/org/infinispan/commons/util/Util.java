@@ -1240,4 +1240,13 @@ public final class Util {
    public static <T> T requireNonNullElse(T obj, T defaultObj) {
       return (obj != null) ? obj : Objects.requireNonNull(defaultObj, "defaultObj");
    }
+
+   public static void longToBytes(long val, byte[] array, int offset) {
+      for (int i = 7; i > 0; i--) {
+         array[offset + i] = (byte) val;
+         val >>>= 8;
+      }
+      array[offset] = (byte) val;
+   }
+
 }

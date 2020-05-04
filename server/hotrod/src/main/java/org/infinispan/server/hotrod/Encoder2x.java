@@ -20,8 +20,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import javax.transaction.xa.Xid;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
@@ -31,6 +29,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.MediaTypeIds;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -394,10 +393,10 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf recoveryResponse(HotRodHeader header, HotRodServer server, Channel channel, Collection<Xid> xids) {
+   public ByteBuf recoveryResponse(HotRodHeader header, HotRodServer server, Channel channel, Collection<XidImpl> xids) {
       ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       writeUnsignedInt(xids.size(), buf);
-      for (Xid xid : xids) {
+      for (XidImpl xid : xids) {
          writeXid(xid, buf);
       }
       return buf;

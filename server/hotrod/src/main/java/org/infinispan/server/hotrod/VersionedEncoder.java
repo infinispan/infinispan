@@ -4,10 +4,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import javax.transaction.xa.Xid;
-
 import org.infinispan.CacheSet;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.counter.api.CounterConfiguration;
@@ -95,5 +94,5 @@ public interface VersionedEncoder {
     */
    void writeCounterEvent(ClientCounterEvent event, ByteBuf buffer);
 
-   ByteBuf recoveryResponse(HotRodHeader header, HotRodServer server, Channel channel, Collection<Xid> xids);
+   ByteBuf recoveryResponse(HotRodHeader header, HotRodServer server, Channel channel, Collection<XidImpl> xids);
 }

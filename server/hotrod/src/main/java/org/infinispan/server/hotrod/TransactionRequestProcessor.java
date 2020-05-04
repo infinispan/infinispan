@@ -7,7 +7,6 @@ import java.util.concurrent.Executor;
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
-import javax.transaction.xa.Xid;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.tx.XidImpl;
@@ -92,7 +91,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
          try {
             GlobalTxTable txTable = SecurityActions.getGlobalComponentRegistry(server.getCacheManager())
                   .getComponent(GlobalTxTable.class);
-            Collection<Xid> preparedTx = txTable.getPreparedTransactions();
+            Collection<XidImpl> preparedTx = txTable.getPreparedTransactions();
             writeResponse(header, createRecoveryResponse(header, preparedTx));
          } catch (Throwable t) {
             writeException(header, t);
@@ -265,7 +264,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
       return header.encoder().transactionResponse(header, server, channel, xaReturnCode);
    }
 
-   private ByteBuf createRecoveryResponse(HotRodHeader header, Collection<Xid> xids) {
+   private ByteBuf createRecoveryResponse(HotRodHeader header, Collection<XidImpl> xids) {
       return header.encoder().recoveryResponse(header, server, channel, xids);
    }
 }

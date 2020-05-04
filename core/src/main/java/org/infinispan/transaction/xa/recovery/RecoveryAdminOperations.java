@@ -2,8 +2,6 @@ package org.infinispan.transaction.xa.recovery;
 
 import java.util.Set;
 
-import javax.transaction.xa.Xid;
-
 import org.infinispan.commons.tx.Util;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.factories.annotations.Inject;
@@ -39,12 +37,12 @@ public class RecoveryAdminOperations {
 
    @ManagedOperation(description = "Shows all the prepared transactions for which the originating node crashed", displayName="Show in doubt transactions")
    public String showInDoubtTransactions() {
-      Set<RecoveryManager.InDoubtTxInfo> info = getRecoveryInfoFromCluster();
+      Set<InDoubtTxInfo> info = getRecoveryInfoFromCluster();
       if (trace) {
          log.tracef("Found in doubt transactions: %s", info.size());
       }
       StringBuilder result = new StringBuilder();
-      for (RecoveryManager.InDoubtTxInfo i : info) {
+      for (InDoubtTxInfo i : info) {
          result.append("xid = [").append(i.getXid()).append("], ").append(SEPARATOR)
                .append("internalId = ").append(i.getInternalId()).append(SEPARATOR);
          result.append("status = [ ");
@@ -102,40 +100,40 @@ public class RecoveryAdminOperations {
 
 
    private String completeBasedOnXid(int formatId, byte[] globalTxId, byte[] branchQualifier, boolean commit) {
-      RecoveryManager.InDoubtTxInfo inDoubtTxInfo = lookupRecoveryInfo(formatId, globalTxId, branchQualifier);
+      InDoubtTxInfo inDoubtTxInfo = lookupRecoveryInfo(formatId, globalTxId, branchQualifier);
       if (inDoubtTxInfo != null) {
-         return completeTransaction(inDoubtTxInfo.getXid(), inDoubtTxInfo, commit);
+         return completeTransaction(inDoubtTxInfo, commit);
       } else {
          return transactionNotFound(formatId, globalTxId, branchQualifier);
       }
    }
 
    private String completeBasedOnInternalId(long internalId, boolean commit) {
-      RecoveryManager.InDoubtTxInfo inDoubtTxInfo = lookupRecoveryInfo(internalId);
+      InDoubtTxInfo inDoubtTxInfo = lookupRecoveryInfo(internalId);
       if (inDoubtTxInfo != null) {
-         return completeTransaction(inDoubtTxInfo.getXid(), inDoubtTxInfo, commit);
+         return completeTransaction(inDoubtTxInfo, commit);
       } else {
          return transactionNotFound(internalId);
       }
    }
 
-   private String completeTransaction(Xid xid, RecoveryManager.InDoubtTxInfo i, boolean commit) {
+   private String completeTransaction(InDoubtTxInfo i, boolean commit) {
       //try to run it locally at first
       if (i.isLocal()) {
          log.tracef("Forcing completion of local transaction: %s", i);
-         return CompletionStages.join(recoveryManager.forceTransactionCompletion(xid, commit));
+         return CompletionStages.join(recoveryManager.forceTransactionCompletion(i.getXid(), commit));
       } else {
          log.tracef("Forcing completion of remote transaction: %s", i);
          Set<Address> owners = i.getOwners();
          if (owners == null || owners.isEmpty()) throw new IllegalStateException("Owner list cannot be empty for " + i);
-         return recoveryManager.forceTransactionCompletionFromCluster(xid, owners.iterator().next(), commit);
+         return recoveryManager.forceTransactionCompletionFromCluster(i.getXid(), owners.iterator().next(), commit);
       }
    }
 
-   private  RecoveryManager.InDoubtTxInfo lookupRecoveryInfo(int formatId, byte[] globalTxId, byte[] branchQualifier) {
-      Set<RecoveryManager.InDoubtTxInfo> info = getRecoveryInfoFromCluster();
-      Xid xid = XidImpl.create(formatId, globalTxId, branchQualifier);
-      for (RecoveryManager.InDoubtTxInfo i : info) {
+   private InDoubtTxInfo lookupRecoveryInfo(int formatId, byte[] globalTxId, byte[] branchQualifier) {
+      Set<InDoubtTxInfo> info = getRecoveryInfoFromCluster();
+      XidImpl xid = XidImpl.create(formatId, globalTxId, branchQualifier);
+      for (InDoubtTxInfo i : info) {
          if (i.getXid().equals(xid)) {
             log.tracef("Found matching recovery info: %s", i);
             return i;
@@ -144,15 +142,15 @@ public class RecoveryAdminOperations {
       return null;
    }
 
-   private Set<RecoveryManager.InDoubtTxInfo> getRecoveryInfoFromCluster() {
-      Set<RecoveryManager.InDoubtTxInfo> info = recoveryManager.getInDoubtTransactionInfoFromCluster();
+   private Set<InDoubtTxInfo> getRecoveryInfoFromCluster() {
+      Set<InDoubtTxInfo> info = recoveryManager.getInDoubtTransactionInfoFromCluster();
       log.tracef("Recovery info from cluster is: %s", info);
       return info;
    }
 
-   private RecoveryManager.InDoubtTxInfo lookupRecoveryInfo(long internalId) {
-      Set<RecoveryManager.InDoubtTxInfo> info = getRecoveryInfoFromCluster();
-      for (RecoveryManager.InDoubtTxInfo i : info) {
+   private InDoubtTxInfo lookupRecoveryInfo(long internalId) {
+      Set<InDoubtTxInfo> info = getRecoveryInfoFromCluster();
+      for (InDoubtTxInfo i : info) {
          if (i.getInternalId() == internalId) {
             log.tracef("Found matching recovery info: %s", i);
             return i;

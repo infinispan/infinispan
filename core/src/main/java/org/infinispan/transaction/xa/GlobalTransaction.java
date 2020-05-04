@@ -7,8 +7,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-import javax.transaction.xa.Xid;
-
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Util;
@@ -35,7 +33,7 @@ public class GlobalTransaction implements Cloneable {
    private Address addr;
    private int hash_code = -1;  // in the worst case, hashCode() returns 0, then increases, so we're safe here
    private boolean remote = false;
-   private volatile Xid xid = null;
+   private volatile XidImpl xid = null;
    private volatile long internalId = -1;
 
    public GlobalTransaction(Address addr, boolean remote) {
@@ -44,7 +42,7 @@ public class GlobalTransaction implements Cloneable {
       this.remote = remote;
    }
 
-   private GlobalTransaction(long id, Address addr, Xid xid, long internalId) {
+   private GlobalTransaction(long id, Address addr, XidImpl xid, long internalId) {
       this.id = id;
       this.addr = addr;
       this.xid = xid;
@@ -83,8 +81,8 @@ public class GlobalTransaction implements Cloneable {
          return false;
 
       GlobalTransaction otherGtx = (GlobalTransaction) other;
-      boolean aeq = (addr == null) ? (otherGtx.addr == null) : addr.equals(otherGtx.addr);
-      return aeq && (id == otherGtx.id);
+      return id == otherGtx.id &&
+            Objects.equals(addr, otherGtx.addr);
    }
 
    /**
@@ -102,12 +100,12 @@ public class GlobalTransaction implements Cloneable {
       this.addr = address;
    }
 
-   public Xid getXid() {
+   public XidImpl getXid() {
       return xid;
    }
 
-   public void setXid(Xid xid) {
-      this.xid = XidImpl.copy(xid);
+   public void setXid(XidImpl xid) {
+      this.xid = xid;
    }
 
    public long getInternalId() {

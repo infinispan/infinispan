@@ -34,11 +34,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.net.ssl.SSLEngine;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
-import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.io.SignedNumeric;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.core.transport.NettyInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
@@ -58,7 +59,6 @@ import org.infinispan.server.hotrod.counter.response.RecoveryTestResponse;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.util.KeyValuePair;
 
 import io.netty.bootstrap.Bootstrap;
@@ -453,23 +453,23 @@ public class HotRodClient implements Closeable {
       return execute(op);
    }
 
-   public TestResponse prepareTx(Xid xid, boolean onePhaseCommit, Collection<TxWrite> modifications) {
+   public TestResponse prepareTx(XidImpl xid, boolean onePhaseCommit, Collection<TxWrite> modifications) {
       PrepareOp op = new PrepareOp(protocolVersion, defaultCacheName, 0, xid,
             onePhaseCommit, modifications);
       return execute(op);
    }
 
-   public TestResponse commitTx(Xid xid) {
+   public TestResponse commitTx(XidImpl xid) {
       CommitOrRollbackOp op = new CommitOrRollbackOp(protocolVersion, defaultCacheName, xid, true);
       return execute(op);
    }
 
-   public TestResponse rollbackTx(Xid xid) {
+   public TestResponse rollbackTx(XidImpl xid) {
       CommitOrRollbackOp op = new CommitOrRollbackOp(protocolVersion, defaultCacheName, xid, false);
       return execute(op);
    }
 
-   public TestResponse forgetTx(Xid xid) {
+   public TestResponse forgetTx(XidImpl xid) {
       TxOp op = new ForgetTxOp(protocolVersion, xid);
       return execute(op);
    }
@@ -1342,9 +1342,9 @@ class PutStreamOp extends Op {
 
 abstract class TxOp extends AbstractOp {
 
-   final Xid xid;
+   final XidImpl xid;
 
-   TxOp(int magic, byte version, byte code, String cacheName, byte clientIntel, int topologyId, Xid xid) {
+   TxOp(int magic, byte version, byte code, String cacheName, byte clientIntel, int topologyId, XidImpl xid) {
       super(magic, version, code, cacheName, clientIntel, topologyId);
       this.xid = xid;
    }
@@ -1355,7 +1355,7 @@ class PrepareOp extends TxOp {
    final boolean onePhaseCommit;
    final List<TxWrite> modifications;
 
-   PrepareOp(byte version, String cacheName, int topologyId, Xid xid, boolean onePhaseCommit,
+   PrepareOp(byte version, String cacheName, int topologyId, XidImpl xid, boolean onePhaseCommit,
          Collection<TxWrite> modifications) {
       super(0xA0, version, (byte) 0x3B, cacheName, (byte) 1, topologyId, xid);
       this.onePhaseCommit = onePhaseCommit;
@@ -1365,14 +1365,14 @@ class PrepareOp extends TxOp {
 
 class CommitOrRollbackOp extends TxOp {
 
-   CommitOrRollbackOp(byte version, String cacheName, Xid xid, boolean commit) {
+   CommitOrRollbackOp(byte version, String cacheName, XidImpl xid, boolean commit) {
       super(0xA0, version, (byte) (commit ? 0x3D : 0x3F), cacheName, (byte) 1, 0, xid);
    }
 }
 
 class ForgetTxOp extends TxOp {
 
-   ForgetTxOp(byte version, Xid xid) {
+   ForgetTxOp(byte version, XidImpl xid) {
       super(0xA0, version, HotRodConstants.FORGET_TX, "", (byte) 1, 0, xid);
    }
 }

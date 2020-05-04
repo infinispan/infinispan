@@ -33,8 +33,8 @@ import static org.mockito.Mockito.when;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class BatchModeTransactionCoordinator implements TransactionCoordinator {
-	private BatchModeTransactionManager tm = BatchModeTransactionManager.getInstance();;
-	private TransactionDriver transactionDriver = new TransactionDriver() {
+	private final BatchModeTransactionManager tm = BatchModeTransactionManager.getInstance();
+	private final TransactionDriver transactionDriver = new TransactionDriver() {
 		@Override
 		public void begin() {
 			try {
@@ -64,19 +64,15 @@ public class BatchModeTransactionCoordinator implements TransactionCoordinator {
 
 		@Override
 		public TransactionStatus getStatus() {
-			try {
-            EmbeddedTransaction transaction = tm.getTransaction();
-				return transaction == null ? TransactionStatus.NOT_ACTIVE : StatusTranslator.translate(transaction.getStatus());
-			} catch (SystemException e) {
-				throw new RuntimeException(e);
-			}
+			EmbeddedTransaction transaction = tm.getTransaction();
+			return transaction == null ? TransactionStatus.NOT_ACTIVE : StatusTranslator.translate(transaction.getStatus());
 		}
 
 		@Override
 		public void markRollbackOnly() {
 			throw new UnsupportedOperationException();
 		}
-	};;
+	};
 
 	@Override
 	public void explicitJoin() {
@@ -98,16 +94,11 @@ public class BatchModeTransactionCoordinator implements TransactionCoordinator {
 
 	@Override
 	public SynchronizationRegistry getLocalSynchronizations() {
-		return new SynchronizationRegistry() {
-			@Override
-			public void registerSynchronization(Synchronization synchronization) {
-				try {
-					BatchModeTransactionManager.getInstance().getTransaction().registerSynchronization(synchronization);
-				} catch (RollbackException e) {
-					throw new RuntimeException(e);
-				} catch (SystemException e) {
-					throw new RuntimeException(e);
-				}
+		return (SynchronizationRegistry) synchronization -> {
+			try {
+				BatchModeTransactionManager.getInstance().getTransaction().registerSynchronization(synchronization);
+			} catch (RollbackException e) {
+				throw new RuntimeException(e);
 			}
 		};
 	}

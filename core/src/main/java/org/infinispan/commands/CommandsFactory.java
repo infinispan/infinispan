@@ -11,8 +11,6 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import javax.transaction.xa.Xid;
-
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.Mutation;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
@@ -77,6 +75,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.encoding.DataConversion;
@@ -462,7 +461,7 @@ public interface CommandsFactory {
    /**
     * Builds a {@link org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand}.
     */
-   TxCompletionNotificationCommand buildTxCompletionNotificationCommand(Xid xid, GlobalTransaction globalTransaction);
+   TxCompletionNotificationCommand buildTxCompletionNotificationCommand(XidImpl xid, GlobalTransaction globalTransaction);
 
    /**
     * @see GetInDoubtTxInfoCommand
@@ -474,7 +473,7 @@ public interface CommandsFactory {
     * @param xid the xid identifying the transaction we want to complete.
     * @param commit commit(true) or rollback(false)?
     */
-   CompleteTransactionCommand buildCompleteTransactionCommand(Xid xid, boolean commit);
+   CompleteTransactionCommand buildCompleteTransactionCommand(XidImpl xid, boolean commit);
 
    /**
     * @param internalId the internal id identifying the transaction to be removed.

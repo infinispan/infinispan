@@ -6,8 +6,6 @@ import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readRangedB
 import java.util.ArrayList;
 import java.util.Collection;
 
-import javax.transaction.xa.Xid;
-
 import org.infinispan.commons.io.SignedNumeric;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.server.core.transport.VInt;
@@ -19,14 +17,14 @@ import org.infinispan.server.hotrod.test.TestResponse;
 import io.netty.buffer.ByteBuf;
 
 /**
- * A {@link TestResponse} extension that contains the list of {@link Xid} to recover.
+ * A {@link TestResponse} extension that contains the list of {@link XidImpl} to recover.
  *
  * @author Pedro Ruivo
  * @since 9.4
  */
 public class RecoveryTestResponse extends TestResponse {
 
-   private final Collection<Xid> xids;
+   private final Collection<XidImpl> xids;
 
    public RecoveryTestResponse(byte version, long messageId, String cacheName, short clientIntel,
          HotRodOperation operation, OperationStatus status, int topologyId,
@@ -35,12 +33,12 @@ public class RecoveryTestResponse extends TestResponse {
       this.xids = readXids(buffer);
    }
 
-   private static Collection<Xid> readXids(ByteBuf buffer) {
+   private static Collection<XidImpl> readXids(ByteBuf buffer) {
       int size = VInt.read(buffer);
       if (size == 0) {
          return emptyList();
       }
-      Collection<Xid> xids = new ArrayList<>(size);
+      Collection<XidImpl> xids = new ArrayList<>(size);
       for (int i = 0; i < size; ++i) {
          int formatId = SignedNumeric.decode(VInt.read(buffer));
          byte[] globalId = readRangedBytes(buffer);
@@ -50,7 +48,7 @@ public class RecoveryTestResponse extends TestResponse {
       return xids;
    }
 
-   public Collection<Xid> getXids() {
+   public Collection<XidImpl> getXids() {
       return xids;
    }
 }

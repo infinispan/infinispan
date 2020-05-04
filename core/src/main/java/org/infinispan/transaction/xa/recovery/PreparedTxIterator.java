@@ -3,7 +3,7 @@ package org.infinispan.transaction.xa.recovery;
 import java.util.HashSet;
 import java.util.List;
 
-import javax.transaction.xa.Xid;
+import org.infinispan.commons.tx.XidImpl;
 
 /**
 *  Default implementation for RecoveryIterator.
@@ -13,7 +13,7 @@ import javax.transaction.xa.Xid;
 */
 public class PreparedTxIterator implements RecoveryManager.RecoveryIterator {
 
-   private final HashSet<Xid> xids = new HashSet<Xid>(4);
+   private final HashSet<XidImpl> xids = new HashSet<>(4);
 
    @Override
    public boolean hasNext() {
@@ -21,18 +21,18 @@ public class PreparedTxIterator implements RecoveryManager.RecoveryIterator {
    }
 
    @Override
-   public Xid[] next() {
-      Xid[] result = xids.toArray(new Xid[xids.size()]);
+   public XidImpl[] next() {
+      XidImpl[] result = xids.toArray(new XidImpl[0]);
       xids.clear();
       return result;
    }
 
-   public void add(List<Xid> xids) {
+   public void add(List<XidImpl> xids) {
       this.xids.addAll(xids);
    }
 
    @Override
-   public Xid[] all() {
+   public XidImpl[] all() {
       return next();
    }
 
