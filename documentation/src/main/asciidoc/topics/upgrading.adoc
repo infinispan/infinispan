@@ -113,6 +113,14 @@ only the `path` attribute being taking into account when configuring the stores 
 
 * Due to the changes above, cache configurations serialized to XML or JSON (for example, when using REST) will always be in the new format.
 
+== Security
+
+=== Server security
+The server is now secure by default. Use the `user-tool` to add users or remove the security realm attribute from the endpoint to allow anonymous connections.
+
+=== Cache authorization roles
+If you do not explicitly specify roles when enabling cache authorization, all roles declared in the global configuration apply.
+
 = Upgrading from 10.0 to 10.1 and 10.0 to 11.0
 
 == Maximum Idle Timeouts with Clustered Cache Modes
