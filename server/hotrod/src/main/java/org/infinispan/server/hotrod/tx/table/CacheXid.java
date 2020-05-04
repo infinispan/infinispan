@@ -6,8 +6,6 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
-import javax.transaction.xa.Xid;
-
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.server.core.ExternalizerIds;
@@ -34,7 +32,7 @@ public class CacheXid {
       this.xid = xid;
    }
 
-   public boolean sameXid(Xid other) {
+   public boolean sameXid(XidImpl other) {
       return xid.equals(other);
    }
 

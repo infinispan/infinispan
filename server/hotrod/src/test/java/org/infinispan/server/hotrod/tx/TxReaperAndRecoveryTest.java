@@ -23,12 +23,11 @@ import java.util.function.Function;
 
 import javax.transaction.RollbackException;
 import javax.transaction.Synchronization;
-import javax.transaction.SystemException;
-import javax.transaction.xa.Xid;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -60,7 +59,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -76,8 +74,9 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
    private static final AtomicInteger XID_GENERATOR = new AtomicInteger(1);
    private final ControlledTimeService timeService = new ControlledTimeService();
 
-   private static DummyXid newXid() {
-      return new DummyXid(XID_GENERATOR.getAndIncrement());
+   private static XidImpl newXid() {
+      byte id = (byte) XID_GENERATOR.getAndIncrement();
+      return XidImpl.create(-123456, new byte[]{id}, new byte[]{id});
    }
 
    private static Address newAddress() {
@@ -100,10 +99,10 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
    }
 
    public void testCleanup() throws InterruptedException {
-      DummyXid xid1 = newXid();
-      DummyXid xid2 = newXid();
-      DummyXid xid3 = newXid();
-      DummyXid xid4 = newXid();
+      XidImpl xid1 = newXid();
+      XidImpl xid2 = newXid();
+      XidImpl xid3 = newXid();
+      XidImpl xid4 = newXid();
 
       //Xid1 will be committed, Xid2 will be rolled-back
       initGlobalTxTable(0, xid1, null, false, Status.COMMITTED);
@@ -145,10 +144,10 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
    }
 
 
-   public void testRollbackIdleTransactions() throws RollbackException, SystemException {
-      DummyXid xid1 = newXid();
-      DummyXid xid2 = newXid();
-      DummyXid xid3 = newXid();
+   public void testRollbackIdleTransactions() throws RollbackException {
+      XidImpl xid1 = newXid();
+      XidImpl xid2 = newXid();
+      XidImpl xid3 = newXid();
 
       //xid1 active status
       initGlobalTxTable(0, xid1, null, false, Status.ACTIVE);
@@ -200,11 +199,11 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
       eventually(() -> globalTxTable(0).isEmpty());
    }
 
-   public void testPartialCompletedTransactions() throws RollbackException, SystemException {
-      DummyXid xid1 = newXid();
-      DummyXid xid2 = newXid();
-      DummyXid xid3 = newXid();
-      DummyXid xid4 = newXid();
+   public void testPartialCompletedTransactions() throws RollbackException {
+      XidImpl xid1 = newXid();
+      XidImpl xid2 = newXid();
+      XidImpl xid3 = newXid();
+      XidImpl xid4 = newXid();
 
       //xid1 mark_to_commit and local
       initGlobalTxTable(0, xid1, null, false, Status.MARK_COMMIT);
@@ -266,10 +265,10 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
    }
 
    public void testRecovery() {
-      DummyXid xid1 = newXid();
-      DummyXid xid2 = newXid();
-      DummyXid xid3 = newXid();
-      DummyXid xid4 = newXid();
+      XidImpl xid1 = newXid();
+      XidImpl xid2 = newXid();
+      XidImpl xid3 = newXid();
+      XidImpl xid4 = newXid();
 
       //xid1 local and prepared
       initGlobalTxTable(0, xid1, null, true, Status.PREPARED);
@@ -293,8 +292,8 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
       assertEquals(Status.PREPARED, getState(xid2).getStatus());
       assertEquals(Status.PREPARED, getState(xid3).getStatus());
 
-      Set<Xid> actual = new HashSet<>(globalTxTable(0).getPreparedTransactions());
-      Set<Xid> expected = new HashSet<>(Arrays.asList(xid1, xid2, xid3));
+      Set<XidImpl> actual = new HashSet<>(globalTxTable(0).getPreparedTransactions());
+      Set<XidImpl> expected = new HashSet<>(Arrays.asList(xid1, xid2, xid3));
       assertEquals(expected, actual);
       assertStatus(true, true, xid1, xid2, xid3);
 
@@ -310,7 +309,7 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
       actual = new HashSet<>(((RecoveryTestResponse) response).getXids());
       assertEquals(expected, actual);
 
-      for (Xid xid : expected) {
+      for (XidImpl xid : expected) {
          clients().get(0).rollbackTx(xid);
          clients().get(0).forgetTx(xid);
       }
@@ -396,7 +395,7 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
       return extractComponent(cache(index, cacheName()), PerCacheTxTable.class);
    }
 
-   private EmbeddedTransaction newTx(Xid xid) {
+   private EmbeddedTransaction newTx(XidImpl xid) {
       EmbeddedTransaction tx = new EmbeddedTransaction(EmbeddedTransactionManager.getInstance());
       tx.setXid(xid);
       return tx;
@@ -410,8 +409,8 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
       return wrapComponent(cache(0, cacheName()), RpcManager.class, LoggingRpcManager::new);
    }
 
-   private boolean checkNotExists(DummyXid... xids) {
-      for (DummyXid xid : xids) {
+   private boolean checkNotExists(XidImpl... xids) {
+      for (XidImpl xid : xids) {
          CacheXid cacheXid = new CacheXid(fromString(cacheName()), xid);
          if (globalTxTable(0).getState(cacheXid) != null) {
             return false;
@@ -420,9 +419,9 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
       return true;
    }
 
-   private void assertStatus(boolean timeout, boolean recoverable, DummyXid... xids) {
+   private void assertStatus(boolean timeout, boolean recoverable, XidImpl... xids) {
       GlobalTxTable globalTxTable = globalTxTable(0);
-      for (DummyXid xid : xids) {
+      for (XidImpl xid : xids) {
          CacheXid cacheXid = new CacheXid(fromString(cacheName()), xid);
          TxState state = globalTxTable.getState(cacheXid);
          assertEquals(recoverable, state.isRecoverable());
@@ -442,13 +441,6 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
    private GlobalTransaction newGlobalTransaction(String cacheName, int index, Address address) {
       TransactionFactory factory = extractComponent(cache(index, cacheName), TransactionFactory.class);
       return factory.newGlobalTransaction(new ClientAddress(address), false);
-   }
-
-   private static class DummyXid extends XidImpl {
-
-      DummyXid(int id) {
-         super(-123456, new byte[]{(byte) id}, new byte[]{(byte) id});
-      }
    }
 
    private static class LoggingSynchronization implements Synchronization {

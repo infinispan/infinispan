@@ -8,10 +8,9 @@ import java.io.ObjectOutput;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import javax.transaction.xa.Xid;
-
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -36,7 +35,7 @@ public class TxCompletionNotificationCommand extends BaseRpcCommand implements T
 
    public static final int COMMAND_ID = 22;
 
-   private Xid xid;
+   private XidImpl xid;
    private long internalId;
    private GlobalTransaction gtx;
    private int topologyId = -1;
@@ -45,7 +44,7 @@ public class TxCompletionNotificationCommand extends BaseRpcCommand implements T
       super(null); // For command id uniqueness test
    }
 
-   public TxCompletionNotificationCommand(Xid xid, GlobalTransaction gtx, ByteString cacheName) {
+   public TxCompletionNotificationCommand(XidImpl xid, GlobalTransaction gtx, ByteString cacheName) {
       super(cacheName);
       this.xid = xid;
       this.gtx = gtx;
@@ -127,7 +126,7 @@ public class TxCompletionNotificationCommand extends BaseRpcCommand implements T
          output.writeLong(internalId);
       } else {
          output.writeBoolean(false);
-         output.writeObject(xid);
+         XidImpl.writeTo(output, xid);
       }
       output.writeObject(gtx);
    }
@@ -137,7 +136,7 @@ public class TxCompletionNotificationCommand extends BaseRpcCommand implements T
       if (input.readBoolean()) {
          internalId = input.readLong();
       } else {
-         xid = (Xid) input.readObject();
+         xid = XidImpl.readFrom(input);
       }
       gtx = (GlobalTransaction) input.readObject();
    }

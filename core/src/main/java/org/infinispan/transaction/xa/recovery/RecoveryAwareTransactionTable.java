@@ -8,9 +8,9 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.transaction.Transaction;
-import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -98,9 +98,9 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
       super.remoteTransactionCommitted(gtx, onePc);
    }
 
-   public List<Xid> getLocalPreparedXids() {
-      List<Xid> result = new LinkedList<Xid>();
-      for (Map.Entry<Xid, LocalXaTransaction> e : xid2LocalTx.entrySet()) {
+   public List<XidImpl> getLocalPreparedXids() {
+      List<XidImpl> result = new LinkedList<>();
+      for (Map.Entry<XidImpl, LocalXaTransaction> e : xid2LocalTx.entrySet()) {
          RecoveryAwareLocalTransaction value = (RecoveryAwareLocalTransaction) e.getValue();
          if (value.isPrepared()) {
             result.add(e.getKey());
@@ -122,7 +122,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    }
 
    public Set<RecoveryAwareLocalTransaction> getLocalTxThatFailedToComplete() {
-      Set<RecoveryAwareLocalTransaction> result = new HashSet<RecoveryAwareLocalTransaction>(4);
+      Set<RecoveryAwareLocalTransaction> result = new HashSet<>(4);
       for (LocalTransaction lTx : xid2LocalTx.values()) {
          RecoveryAwareLocalTransaction lTx1 = (RecoveryAwareLocalTransaction) lTx;
          if (lTx1.isCompletionFailed()) {
@@ -137,7 +137,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
     * Iterates over the remote transactions and returns the XID of the one that has an internal id equal with the
     * supplied internal Id.
     */
-   public Xid getRemoteTransactionXid(Long internalId) {
+   public XidImpl getRemoteTransactionXid(Long internalId) {
       for (RemoteTransaction rTx : getRemoteTransactions()) {
          GlobalTransaction gtx = rTx.getGlobalTransaction();
          if (gtx.getInternalId() == internalId) {
@@ -149,7 +149,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
       return null;
    }
 
-   public RemoteTransaction removeRemoteTransaction(Xid xid) {
+   public RemoteTransaction removeRemoteTransaction(XidImpl xid) {
       if (clustered) {
          Iterator<RemoteTransaction> it = getRemoteTransactions().iterator();
          while (it.hasNext()) {

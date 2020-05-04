@@ -14,8 +14,6 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import javax.transaction.xa.Xid;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
@@ -84,6 +82,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.encoding.DataConversion;
@@ -384,7 +383,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public TxCompletionNotificationCommand buildTxCompletionNotificationCommand(Xid xid, GlobalTransaction globalTransaction) {
+   public TxCompletionNotificationCommand buildTxCompletionNotificationCommand(XidImpl xid, GlobalTransaction globalTransaction) {
       return actual.buildTxCompletionNotificationCommand(xid, globalTransaction);
    }
 
@@ -394,7 +393,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public CompleteTransactionCommand buildCompleteTransactionCommand(Xid xid, boolean commit) {
+   public CompleteTransactionCommand buildCompleteTransactionCommand(XidImpl xid, boolean commit) {
       return actual.buildCompleteTransactionCommand(xid, commit);
    }
 

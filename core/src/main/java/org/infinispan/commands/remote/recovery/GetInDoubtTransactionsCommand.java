@@ -4,9 +4,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import javax.transaction.xa.Xid;
-
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
@@ -26,6 +25,7 @@ public class GetInDoubtTransactionsCommand extends BaseRpcCommand {
 
    public static final int COMMAND_ID = 21;
 
+   @SuppressWarnings("unused")
    private GetInDoubtTransactionsCommand() {
       super(null); // For command id uniqueness test
    }
@@ -37,7 +37,7 @@ public class GetInDoubtTransactionsCommand extends BaseRpcCommand {
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
       RecoveryManager recoveryManager = componentRegistry.getRecoveryManager().running();
-      List<Xid> localInDoubtTransactions = recoveryManager.getInDoubtTransactions();
+      List<XidImpl> localInDoubtTransactions = recoveryManager.getInDoubtTransactions();
       log.tracef("Returning result %s", localInDoubtTransactions);
       return CompletableFuture.completedFuture(localInDoubtTransactions);
    }

@@ -4,9 +4,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.transaction.Transaction;
-import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
@@ -14,7 +14,7 @@ import org.infinispan.transaction.tm.EmbeddedTransaction;
 /**
  * A Transaction Table for client transaction.
  * <p>
- * It stores the global state of a transaction and the map between the {@link Xid} and {@link Transaction}'s run
+ * It stores the global state of a transaction and the map between the {@link XidImpl} and {@link Transaction}'s run
  * locally.
  *
  * @author Pedro Ruivo
@@ -25,7 +25,7 @@ public class PerCacheTxTable {
 
    private static final Log log = LogFactory.getLog(PerCacheTxTable.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
-   private final Map<Xid, EmbeddedTransaction> localTxTable = new ConcurrentHashMap<>();
+   private final Map<XidImpl, EmbeddedTransaction> localTxTable = new ConcurrentHashMap<>();
    private final ClientAddress clientAddress;
 
 
@@ -40,14 +40,14 @@ public class PerCacheTxTable {
    /**
     * @return The local {@link EmbeddedTransaction} associated to the {@code xid}.
     */
-   public EmbeddedTransaction getLocalTx(Xid xid) {
+   public EmbeddedTransaction getLocalTx(XidImpl xid) {
       return localTxTable.get(xid);
    }
 
    /**
     * Removes the local {@link EmbeddedTransaction} associated to {@code xid}.
     */
-   public void removeLocalTx(Xid xid) {
+   public void removeLocalTx(XidImpl xid) {
       EmbeddedTransaction tx = localTxTable.remove(xid);
       if (trace) {
          log.tracef("[%s] Removed tx=%s", xid, tx);
@@ -57,7 +57,7 @@ public class PerCacheTxTable {
    /**
     * Adds the {@link EmbeddedTransaction} in the local transaction table.
     */
-   public void createLocalTx(Xid xid, EmbeddedTransaction tx) {
+   public void createLocalTx(XidImpl xid, EmbeddedTransaction tx) {
       localTxTable.put(xid, tx);
       if (trace) {
          log.tracef("[%s] New tx=%s", xid, tx);

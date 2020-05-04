@@ -1,6 +1,7 @@
 package org.infinispan.commons.marshall;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.api.CounterType;
@@ -23,6 +24,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
             CounterConfiguration.class,
             CounterType.class,
             Storage.class,
+            XidImpl.class
       },
       schemaFileName = "persistence.commons.proto",
       schemaFilePath = "proto/generated",

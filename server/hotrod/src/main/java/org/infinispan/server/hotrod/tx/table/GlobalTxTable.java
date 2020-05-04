@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.RollbackException;
-import javax.transaction.xa.Xid;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -208,11 +207,11 @@ public class GlobalTxTable implements Runnable, Lifecycle {
       }
    }
 
-   public Collection<Xid> getPreparedTransactions() {
+   public Collection<XidImpl> getPreparedTransactions() {
       long currentTimestamp = timeService.time();
-      Collection<Xid> preparedTx = new HashSet<>(); //remove duplicates!
+      Collection<XidImpl> preparedTx = new HashSet<>(); //remove duplicates!
       for (Map.Entry<CacheXid, TxState> entry : storage.entrySet()) {
-         Xid xid = entry.getKey().getXid();
+         XidImpl xid = entry.getKey().getXid();
          TxState state = entry.getValue();
          if (trace) {
             log.tracef("Checking transaction xid=%s for recovery. TimedOut?=%s, Recoverable?=%s, Status=%s",

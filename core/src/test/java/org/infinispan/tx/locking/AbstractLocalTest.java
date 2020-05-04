@@ -8,8 +8,8 @@ import java.util.Collections;
 import java.util.Map;
 
 import javax.transaction.SystemException;
-import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.context.Flag;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
@@ -43,7 +43,7 @@ public abstract class AbstractLocalTest extends SingleCacheManagerTest {
    }
 
    public void testPutAll() throws Exception {
-      Map m = Collections.singletonMap("k", "v");
+      Map<String, String> m = Collections.singletonMap("k", "v");
       tm().begin();
       cache.putAll(m);
       assertLocking();
@@ -87,11 +87,9 @@ public abstract class AbstractLocalTest extends SingleCacheManagerTest {
       }
    }
 
-   private Xid getXid() throws SystemException {
-      Xid xid;
-      EmbeddedTransaction dummyTransaction = (EmbeddedTransaction) tm().getTransaction();
-      xid = dummyTransaction.getXid();
-      return xid;
+   private XidImpl getXid() throws SystemException {
+      EmbeddedTransaction tx = (EmbeddedTransaction) tm().getTransaction();
+      return tx.getXid();
    }
 
    public void testSizeAfterLocalClear() throws Exception {

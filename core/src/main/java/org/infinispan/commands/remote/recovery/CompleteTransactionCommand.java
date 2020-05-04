@@ -5,9 +5,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
-import javax.transaction.xa.Xid;
-
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
@@ -25,7 +24,7 @@ public class CompleteTransactionCommand extends BaseRpcCommand {
    /**
     * The tx which we want to complete.
     */
-   private Xid xid;
+   private XidImpl xid;
 
    /**
     * if true the transaction is committed, otherwise it is rolled back.
@@ -40,7 +39,7 @@ public class CompleteTransactionCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public CompleteTransactionCommand(ByteString cacheName, Xid xid, boolean commit) {
+   public CompleteTransactionCommand(ByteString cacheName, XidImpl xid, boolean commit) {
       super(cacheName);
       this.xid = xid;
       this.commit = commit;
@@ -64,13 +63,13 @@ public class CompleteTransactionCommand extends BaseRpcCommand {
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(xid);
+      XidImpl.writeTo(output, xid);
       output.writeBoolean(commit);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      xid = (Xid) input.readObject();
+      xid = XidImpl.readFrom(input);
       commit = input.readBoolean();
    }
 

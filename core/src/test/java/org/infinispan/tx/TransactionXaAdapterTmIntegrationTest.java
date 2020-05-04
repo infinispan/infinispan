@@ -10,8 +10,8 @@ import java.util.UUID;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -23,7 +23,6 @@ import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 import org.infinispan.transaction.tm.EmbeddedBaseTransactionManager;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
-import org.infinispan.transaction.tm.EmbeddedXid;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
@@ -41,13 +40,12 @@ import org.testng.annotations.Test;
 public class TransactionXaAdapterTmIntegrationTest {
    private LocalXaTransaction localTx;
    private TransactionXaAdapter xaAdapter;
-   private EmbeddedXid xid;
-   private UUID uuid = UUID.randomUUID();
+   private XidImpl xid;
+   private final UUID uuid = UUID.randomUUID();
    private TransactionCoordinator txCoordinator;
 
    @BeforeMethod
    public void setUp() throws XAException {
-      Cache mockCache = mock(Cache.class);
       Configuration configuration = new ConfigurationBuilder().build();
       XaTransactionTable txTable = new XaTransactionTable();
       txCoordinator = new TransactionCoordinator();
@@ -61,7 +59,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       GlobalTransaction globalTransaction = gtf.newGlobalTransaction(null, false);
       EmbeddedBaseTransactionManager tm = new EmbeddedBaseTransactionManager();
       localTx = new LocalXaTransaction(new EmbeddedTransaction(tm), globalTransaction, false, 1, 0);
-      xid = new EmbeddedXid(uuid);
+      xid = EmbeddedTransaction.createXid(uuid);
 
       InvocationContextFactory icf = new TransactionalInvocationContextFactory();
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
@@ -76,7 +74,7 @@ public class TransactionXaAdapterTmIntegrationTest {
    }
 
    public void testPrepareOnNonexistentXid() {
-      EmbeddedXid xid = new EmbeddedXid(uuid);
+      XidImpl xid = EmbeddedTransaction.createXid(uuid);
       try {
          xaAdapter.prepare(xid);
          assert false;
@@ -86,7 +84,7 @@ public class TransactionXaAdapterTmIntegrationTest {
    }
 
    public void testCommitOnNonexistentXid() {
-      EmbeddedXid xid = new EmbeddedXid(uuid);
+      XidImpl xid = EmbeddedTransaction.createXid(uuid);
       try {
          xaAdapter.commit(xid, false);
          assert false;
@@ -96,7 +94,7 @@ public class TransactionXaAdapterTmIntegrationTest {
    }
 
    public void testRollabckOnNonexistentXid() {
-      EmbeddedXid xid = new EmbeddedXid(uuid);
+      XidImpl xid = EmbeddedTransaction.createXid(uuid);
       try {
          xaAdapter.rollback(xid);
          assert false;
@@ -126,7 +124,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       Configuration configuration = new ConfigurationBuilder().clustering().cacheMode(CacheMode.INVALIDATION_ASYNC).build();
       TestingUtil.inject(txCoordinator, configuration);
       try {
-         EmbeddedXid doesNotExists = new EmbeddedXid(uuid);
+         XidImpl doesNotExists = EmbeddedTransaction.createXid(uuid);
          xaAdapter.commit(doesNotExists, false);
          assert false;
       } catch (XAException e) {
@@ -138,7 +136,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       Configuration configuration = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build();
       TestingUtil.inject(txCoordinator, configuration);
       try {
-         EmbeddedXid doesNotExists = new EmbeddedXid(uuid);
+         XidImpl doesNotExists = EmbeddedTransaction.createXid(uuid);
          xaAdapter.commit(doesNotExists, true);
          assert false;
       } catch (XAException e) {

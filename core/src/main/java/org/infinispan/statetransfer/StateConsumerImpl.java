@@ -50,6 +50,7 @@ import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
@@ -1228,25 +1229,10 @@ public class StateConsumerImpl implements StateConsumer {
       AtomicLong id = new AtomicLong(0);
 
       ApplyStateTransaction() {
-         byte[] bytes = longToBytes(id.incrementAndGet());
-         setXid(new StateConsumerImpl.ApplyStateXid(bytes));
-      }
-
-      private static byte[] longToBytes(long val) {
-         byte[] array = new byte[8];
-         for (int i = 7; i > 0; i--) {
-            array[i] = (byte) val;
-            val >>>= 8;
-         }
-         array[0] = (byte) val;
-         return array;
-      }
-
-   }
-
-   private static class ApplyStateXid extends XidImpl {
-      ApplyStateXid(byte[] bytes) {
-         super(ApplyStateTransaction.FORMAT_ID, bytes, bytes);
+         byte[] bytes = new byte[8];
+         Util.longToBytes(id.incrementAndGet(), bytes, 0);
+         XidImpl xid = XidImpl.create(FORMAT_ID, bytes, bytes);
+         setXid(xid);
       }
    }
 }

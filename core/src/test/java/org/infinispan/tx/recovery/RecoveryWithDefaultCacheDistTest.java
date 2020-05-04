@@ -11,8 +11,7 @@ import static org.testng.Assert.assertNotNull;
 import java.util.List;
 import java.util.Set;
 
-import javax.transaction.xa.Xid;
-
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.RecoveryConfiguration;
@@ -22,7 +21,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
-import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.transaction.xa.recovery.InDoubtTxInfo;
 import org.testng.annotations.Test;
 
 /**
@@ -90,7 +89,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       });
 
       eventually(() -> {
-         final Set<RecoveryManager.InDoubtTxInfo> inDoubt = rm(cache(0)).getInDoubtTransactionInfo();
+         final Set<InDoubtTxInfo> inDoubt = rm(cache(0)).getInDoubtTransactionInfo();
          return inDoubt.size() == 0;
       });
    }
@@ -111,7 +110,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
          return size == 3;
       });
 
-      List<Xid> inDoubtTransactions = rm(cache(0)).getInDoubtTransactions();
+      List<XidImpl> inDoubtTransactions = rm(cache(0)).getInDoubtTransactions();
       assertEquals(3, inDoubtTransactions.size());
       assert inDoubtTransactions.contains(t1_1.getXid());
       assert inDoubtTransactions.contains(t1_2.getXid());

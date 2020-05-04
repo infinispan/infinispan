@@ -50,7 +50,7 @@ public interface Ids {
    int XID_DEADLOCK_DETECTING_GLOBAL_TRANSACTION = 33;
    int XID_GLOBAL_TRANSACTION = 34;
 
-   int IN_DOUBT_TX_INFO = 35;
+   //int IN_DOUBT_TX_INFO = 35;
 
    int CACHE_RPC_COMMAND = 36;
 
@@ -170,7 +170,7 @@ public interface Ids {
 
    int APPLY_DELTA = 117;
 
-   int XID_IMPL = 118;
+   //int XID_IMPL = 118;
 
    int ATOMIC_MAP_FUNCTIONS = 119;
    int ATOMIC_KEY_SET = 120;

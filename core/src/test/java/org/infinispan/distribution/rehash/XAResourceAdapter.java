@@ -4,6 +4,8 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
+
 /**
  * abstract class that needs to be overridden
  *
@@ -11,7 +13,6 @@ import javax.transaction.xa.Xid;
  * @since 4.0
  */
 public class XAResourceAdapter implements XAResource {
-   private static final Xid[] XIDS = new Xid[0];
 
    public void commit(Xid xid, boolean b) throws XAException {
       // no-op
@@ -38,7 +39,7 @@ public class XAResourceAdapter implements XAResource {
    }
 
    public Xid[] recover(int i) throws XAException {
-      return XIDS;
+      return RecoveryManager.RecoveryIterator.NOTHING;
    }
 
    public void rollback(Xid xid) throws XAException {

@@ -20,7 +20,6 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
-import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -53,8 +52,8 @@ public class TransactionImpl implements Transaction {
    private final List<Synchronization> syncs;
    private final List<Map.Entry<XAResource, Integer>> resources;
    private final Object xidLock = new Object();
-   private volatile Xid xid;
-   private volatile int status = Status.STATUS_UNKNOWN;
+   private volatile XidImpl xid;
+   private volatile int status;
    private RollbackException firstRollbackException;
 
    protected TransactionImpl() {
@@ -90,7 +89,6 @@ public class TransactionImpl implements Transaction {
     *
     * @throws RollbackException          If the transaction was marked for rollback only, the transaction is rolled back
     *                                    and this exception is thrown.
-    * @throws SystemException            If the transaction service fails in an unexpected way.
     * @throws HeuristicMixedException    If a heuristic decision was made and some some parts of the transaction have
     *                                    been committed while other parts have been rolled back.
     * @throws HeuristicRollbackException If a heuristic decision to roll back the transaction was made.
@@ -98,8 +96,7 @@ public class TransactionImpl implements Transaction {
     */
    @Override
    public void commit()
-         throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException,
-         SystemException {
+         throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException {
       if (trace) {
          log.tracef("Transaction.commit() invoked in transaction with Xid=%s", xid);
       }
@@ -147,10 +144,9 @@ public class TransactionImpl implements Transaction {
     * Mark the transaction so that the only possible outcome is a rollback.
     *
     * @throws IllegalStateException If the transaction is not in an active state.
-    * @throws SystemException       If the transaction service fails in an unexpected way.
     */
    @Override
-   public void setRollbackOnly() throws IllegalStateException, SystemException {
+   public void setRollbackOnly() throws IllegalStateException {
       if (trace) {
          log.tracef("Transaction.setRollbackOnly() invoked in transaction with Xid=%s", xid);
       }
@@ -164,10 +160,9 @@ public class TransactionImpl implements Transaction {
     * Get the status of the transaction.
     *
     * @return The status of the transaction. This is one of the {@link Status} constants.
-    * @throws SystemException If the transaction service fails in an unexpected way.
     */
    @Override
-   public int getStatus() throws SystemException {
+   public int getStatus() {
       return status;
    }
 
@@ -244,11 +239,9 @@ public class TransactionImpl implements Transaction {
     * @throws IllegalStateException If the transaction is in a state where {@link Synchronization} callbacks cannot be
     *                               registered. This could be because the transaction is no longer active, or because it
     *                               is in the {@link Status#STATUS_PREPARED prepared state}.
-    * @throws SystemException       If the transaction service fails in an unexpected way.
     */
    @Override
-   public void registerSynchronization(Synchronization sync)
-         throws RollbackException, IllegalStateException, SystemException {
+   public void registerSynchronization(Synchronization sync) throws RollbackException, IllegalStateException {
       if (trace) {
          log.tracef("Transaction.registerSynchronization(%s) invoked in transaction with Xid=%s", sync, xid);
       }
@@ -349,11 +342,11 @@ public class TransactionImpl implements Transaction {
             '}';
    }
 
-   public Xid getXid() {
+   public XidImpl getXid() {
       return xid;
    }
 
-   public void setXid(Xid xid) {
+   public void setXid(XidImpl xid) {
       synchronized (xidLock) {
          if (syncs.isEmpty() && resources.isEmpty()) {
             this.xid = xid;

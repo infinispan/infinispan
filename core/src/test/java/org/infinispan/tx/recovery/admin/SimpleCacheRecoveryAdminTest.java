@@ -10,10 +10,10 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.List;
 
 import javax.management.ObjectName;
-import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -164,7 +164,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
       }
    }
 
-   private String invokeForceWithXid(String methodName, int cacheIndex, Xid xid) {
+   private String invokeForceWithXid(String methodName, int cacheIndex, XidImpl xid) {
       try {
          ObjectName recoveryAdmin = getRecoveryAdminObjectName(cacheIndex);
          Object[] params = {xid.getFormatId(), xid.getGlobalTransactionId(), xid.getBranchQualifier()};

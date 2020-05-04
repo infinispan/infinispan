@@ -1,5 +1,6 @@
 package org.infinispan.transaction.xa;
 
+import java.util.Objects;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
@@ -7,6 +8,7 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -23,7 +25,7 @@ import org.infinispan.util.logging.LogFactory;
 public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements XAResource {
 
    private static final Log log = LogFactory.getLog(TransactionXaAdapter.class);
-   private static boolean trace = log.isTraceEnabled();
+   private static final boolean trace = log.isTraceEnabled();
 
    /**
     * It is really useful only if TM and client are in separate processes and TM fails. This is because a client might
@@ -61,7 +63,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     */
    @Override
    public int prepare(Xid externalXid) throws XAException {
-      return runRethrowingXAException(txTable.prepare(externalXid));
+      return runRethrowingXAException(txTable.prepare(XidImpl.copy(externalXid)));
    }
 
    /**
@@ -69,7 +71,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     */
    @Override
    public void commit(Xid externalXid, boolean isOnePhase) throws XAException {
-      runRethrowingXAException(txTable.commit(externalXid, isOnePhase));
+      runRethrowingXAException(txTable.commit(XidImpl.copy(externalXid), isOnePhase));
    }
 
    /**
@@ -77,26 +79,27 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     */
    @Override
    public void rollback(Xid externalXid) throws XAException {
-      runRethrowingXAException(txTable.rollback(externalXid));
+      runRethrowingXAException(txTable.rollback(XidImpl.copy(externalXid)));
    }
 
    @Override
    public void start(Xid externalXid, int i) throws XAException {
-      txTable.start(externalXid, localTransaction);
+      assert localTransaction != null;
+      txTable.start(XidImpl.copy(externalXid), localTransaction);
    }
 
    @Override
-   public void end(Xid externalXid, int i) throws XAException {
+   public void end(Xid externalXid, int i) {
       txTable.end(this.localTransaction);
    }
 
    @Override
    public void forget(Xid externalXid) throws XAException {
-      runRethrowingXAException(txTable.forget(externalXid));
+      runRethrowingXAException(txTable.forget(XidImpl.copy(externalXid)));
    }
 
    @Override
-   public int getTransactionTimeout() throws XAException {
+   public int getTransactionTimeout() {
       if (trace) log.trace("start called");
       return txTimeout;
    }
@@ -106,7 +109,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     * the same node.
     */
    @Override
-   public boolean isSameRM(XAResource xaResource) throws XAException {
+   public boolean isSameRM(XAResource xaResource) {
       return isIsSameRM(xaResource);
    }
 
@@ -120,7 +123,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
    }
 
    @Override
-   public Xid[] recover(int flag) throws XAException {
+   public Xid[] recover(int flag) {
       if (!txTable.isRecoveryEnabled()) {
          log.recoveryIgnored();
          return RecoveryManager.RecoveryIterator.NOTHING;
@@ -149,7 +152,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
    }
 
    @Override
-   public boolean setTransactionTimeout(int i) throws XAException {
+   public boolean setTransactionTimeout(int i) {
       this.txTimeout = i;
       return true;
    }
@@ -172,10 +175,9 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
 
       TransactionXaAdapter that = (TransactionXaAdapter) o;
 
-      if (localTransaction != null ? !localTransaction.equals(that.localTransaction) : that.localTransaction != null)
-         return false;
       //also include the enlistment manager in comparison - needed when same tx spans multiple caches.
-      return txTable == that.txTable;
+      return Objects.equals(localTransaction, that.localTransaction) &&
+            txTable == that.txTable;
    }
 
    private boolean isFlag(int value, int flag) {

@@ -1,6 +1,5 @@
 package org.infinispan.transaction.xa.recovery;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,8 +10,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
-
-import javax.transaction.xa.Xid;
+import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
@@ -20,11 +18,11 @@ import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -110,7 +108,8 @@ public class RecoveryManagerImpl implements RecoveryManager {
          for (Map.Entry<Address, Response> rEntry : responses.entrySet()) {
             Response thisResponse = rEntry.getValue();
             if (isSuccessful(thisResponse)) {
-               List<Xid> responseValue = (List<Xid>) ((SuccessfulResponse) thisResponse).getResponseValue();
+               //noinspection unchecked
+               List<XidImpl> responseValue = ((SuccessfulResponse<List<XidImpl>>) thisResponse).getResponseValue();
                if (trace) {
                   log.tracef("Received Xid lists %s from node %s", responseValue, rEntry.getKey());
                }
@@ -129,9 +128,10 @@ public class RecoveryManagerImpl implements RecoveryManager {
    }
 
    @Override
-   public CompletionStage<Void> removeRecoveryInformation(Collection<Address> lockOwners, Xid xid, GlobalTransaction gtx,
+   public CompletionStage<Void> removeRecoveryInformation(Collection<Address> lockOwners, XidImpl xid, GlobalTransaction gtx,
                                          boolean fromCluster) {
-      log.tracef("Forgetting tx information for %s", gtx);
+      if (trace)
+         log.tracef("Forgetting tx information for %s", gtx);
       //todo make sure this gets broad casted or at least flushed
       if (rpcManager != null && !fromCluster) {
          TxCompletionNotificationCommand ftc = commandFactory.buildTxCompletionNotificationCommand(xid, gtx);
@@ -159,19 +159,14 @@ public class RecoveryManagerImpl implements RecoveryManager {
 
    private CompletionStage<Void> sendTxCompletionNotification(Collection<Address> where, TxCompletionNotificationCommand ftc) {
       ftc.setTopologyId(rpcManager.getTopologyId());
-      CompletionStage<Void> completionStage;
       if (where == null)
          return rpcManager.invokeCommandOnAll(ftc, VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
       else
          return rpcManager.invokeCommand(where, ftc, VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
    }
 
-   private void sendTxCompletionNotificationAsync(Collection<Address> where, TxCompletionNotificationCommand ftc) {
-      rpcManager.sendToMany(where, ftc, DeliverOrder.NONE);
-   }
-
    @Override
-   public RecoveryAwareTransaction removeRecoveryInformation(Xid xid) {
+   public RecoveryAwareTransaction removeRecoveryInformation(XidImpl xid) {
       RecoveryAwareTransaction remove = inDoubtTransactions.remove(new RecoveryInfoKey(xid, cacheName));
       log.tracef("removed in doubt xid: %s", xid);
       if (remove == null) {
@@ -182,14 +177,14 @@ public class RecoveryManagerImpl implements RecoveryManager {
 
    @Override
    public RecoveryAwareTransaction removeRecoveryInformation(Long internalId) {
-      Xid remoteTransactionXid = recoveryAwareTxTable().getRemoteTransactionXid(internalId);
+      XidImpl remoteTransactionXid = recoveryAwareTxTable().getRemoteTransactionXid(internalId);
       if (remoteTransactionXid != null) {
          return removeRecoveryInformation(remoteTransactionXid);
       } else {
          for (RecoveryAwareRemoteTransaction raRemoteTx : inDoubtTransactions.values()) {
             GlobalTransaction globalTransaction = raRemoteTx.getGlobalTransaction();
             if (internalId.equals(globalTransaction.getInternalId())) {
-               Xid xid = globalTransaction.getXid();
+               XidImpl xid = globalTransaction.getXid();
                log.tracef("Found transaction xid %s that maps internal id %s", xid, internalId);
                removeRecoveryInformation(xid);
                return raRemoteTx;
@@ -201,32 +196,30 @@ public class RecoveryManagerImpl implements RecoveryManager {
    }
 
    @Override
-   public List<Xid> getInDoubtTransactions() {
-      List<Xid> result = new ArrayList<Xid>();
-      Set<RecoveryInfoKey> recoveryInfoKeys = inDoubtTransactions.keySet();
-      for (RecoveryInfoKey key : recoveryInfoKeys) {
-         if (key.cacheName.equals(cacheName))
-            result.add(key.xid);
-      }
+   public List<XidImpl> getInDoubtTransactions() {
+      List<XidImpl> result = inDoubtTransactions.keySet().stream()
+            .filter(recoveryInfoKey -> recoveryInfoKey.cacheName.equals(cacheName))
+            .map(recoveryInfoKey -> recoveryInfoKey.xid)
+            .collect(Collectors.toList());
       log.tracef("Returning %s ", result);
       return result;
    }
 
    @Override
    public Set<InDoubtTxInfo> getInDoubtTransactionInfo() {
-      List<Xid> txs = getInDoubtTransactions();
       Set<RecoveryAwareLocalTransaction> localTxs = recoveryAwareTxTable().getLocalTxThatFailedToComplete();
       log.tracef("Local transactions that failed to complete is %s", localTxs);
       Set<InDoubtTxInfo> result = new HashSet<>();
       for (RecoveryAwareLocalTransaction r : localTxs) {
          long internalId = r.getGlobalTransaction().getInternalId();
-         result.add(new InDoubtTxInfoImpl(r.getXid(), internalId));
+         result.add(new InDoubtTxInfo(r.getXid(), internalId));
       }
-      for (Xid xid : txs) {
+
+      for (XidImpl xid : getInDoubtTransactions()) {
          RecoveryAwareRemoteTransaction pTx = getPreparedTransaction(xid);
          if (pTx == null) continue; //might be removed concurrently, 2check for null
          GlobalTransaction gtx = pTx.getGlobalTransaction();
-         InDoubtTxInfoImpl infoInDoubt = new InDoubtTxInfoImpl(xid, gtx.getInternalId(), pTx.getStatus());
+         InDoubtTxInfo infoInDoubt = new InDoubtTxInfo(xid, gtx.getInternalId(), pTx.getStatus());
          result.add(infoInDoubt);
       }
       log.tracef("The set of in-doubt txs from this node is %s", result);
@@ -235,7 +228,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
 
    @Override
    public Set<InDoubtTxInfo> getInDoubtTransactionInfoFromCluster() {
-      Map<Xid, InDoubtTxInfoImpl> result = new HashMap<>();
+      Map<XidImpl, InDoubtTxInfo> result = new HashMap<>();
       if (rpcManager != null) {
          GetInDoubtTxInfoCommand inDoubtTxInfoCommand = commandFactory.buildGetInDoubtTxInfoCommand();
          CompletionStage<Map<Address, Response>> completionStage = rpcManager.invokeCommandOnAll(inDoubtTxInfoCommand, MapResponseCollector.ignoreLeavers(),
@@ -246,14 +239,15 @@ public class RecoveryManagerImpl implements RecoveryManager {
             if (!isSuccessful(r)) {
                throw new CacheException("Could not fetch in doubt transactions: " + r);
             }
-            Set<InDoubtTxInfoImpl> infoInDoubtSet = (Set<InDoubtTxInfoImpl>) ((SuccessfulResponse) r).getResponseValue();
-            for (InDoubtTxInfoImpl infoInDoubt : infoInDoubtSet) {
-               InDoubtTxInfoImpl inDoubtTxInfo = result.get(infoInDoubt.getXid());
+            // noinspection unchecked
+            Set<InDoubtTxInfo> infoInDoubtSet = ((SuccessfulResponse<Set<InDoubtTxInfo>>) r).getResponseValue();
+            for (InDoubtTxInfo infoInDoubt : infoInDoubtSet) {
+               InDoubtTxInfo inDoubtTxInfo = result.get(infoInDoubt.getXid());
                if (inDoubtTxInfo == null) {
                   inDoubtTxInfo = infoInDoubt;
                   result.put(infoInDoubt.getXid(), inDoubtTxInfo);
                } else {
-                  inDoubtTxInfo.addStatus(infoInDoubt.getStatus());
+                  inDoubtTxInfo.setStatus(infoInDoubt.getStatus());
                }
                inDoubtTxInfo.addOwner(re.getKey());
             }
@@ -263,21 +257,21 @@ public class RecoveryManagerImpl implements RecoveryManager {
       Iterator<InDoubtTxInfo> iterator = onThisNode.iterator();
       while (iterator.hasNext()) {
          InDoubtTxInfo info = iterator.next();
-         InDoubtTxInfoImpl inDoubtTxInfo = result.get(info.getXid());
+         InDoubtTxInfo inDoubtTxInfo = result.get(info.getXid());
          if (inDoubtTxInfo != null) {
             inDoubtTxInfo.setLocal(true);
             iterator.remove();
          } else {
-            ((InDoubtTxInfoImpl)info).setLocal(true);
+            info.setLocal(true);
          }
       }
-      HashSet<InDoubtTxInfo> value = new HashSet<InDoubtTxInfo>(result.values());
+      HashSet<InDoubtTxInfo> value = new HashSet<>(result.values());
       value.addAll(onThisNode);
       return value;
    }
 
    public void registerInDoubtTransaction(RecoveryAwareRemoteTransaction remoteTransaction) {
-      Xid xid = remoteTransaction.getGlobalTransaction().getXid();
+      XidImpl xid = remoteTransaction.getGlobalTransaction().getXid();
       RecoveryAwareTransaction previous = inDoubtTransactions.put(new RecoveryInfoKey(xid, cacheName), remoteTransaction);
       if (previous != null) {
          log.preparedTxAlreadyExists(previous, remoteTransaction);
@@ -287,12 +281,12 @@ public class RecoveryManagerImpl implements RecoveryManager {
 
 
    @Override
-   public RecoveryAwareRemoteTransaction getPreparedTransaction(Xid xid) {
+   public RecoveryAwareRemoteTransaction getPreparedTransaction(XidImpl xid) {
       return inDoubtTransactions.get(new RecoveryInfoKey(xid, cacheName));
    }
 
    @Override
-   public CompletionStage<String> forceTransactionCompletion(Xid xid, boolean commit) {
+   public CompletionStage<String> forceTransactionCompletion(XidImpl xid, boolean commit) {
       //this means that we have this as a local transaction that originated here
       LocalXaTransaction localTransaction = recoveryAwareTxTable().getLocalTransaction(xid);
       if (localTransaction != null) {
@@ -313,7 +307,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       }
    }
 
-   private CompletionStage<String> completeTransaction(LocalTransaction localTx, boolean commit, Xid xid) {
+   private CompletionStage<String> completeTransaction(LocalTransaction localTx, boolean commit, XidImpl xid) {
       GlobalTransaction gtx = localTx.getGlobalTransaction();
       if (commit) {
          localTx.clearLookedUpEntries();
@@ -337,7 +331,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    }
 
    @Override
-   public String forceTransactionCompletionFromCluster(Xid xid, Address where, boolean commit) {
+   public String forceTransactionCompletionFromCluster(XidImpl xid, Address where, boolean commit) {
       CompleteTransactionCommand ctc = commandFactory.buildCompleteTransactionCommand(xid, commit);
       CompletionStage<Map<Address, Response>> completionStage = rpcManager.invokeCommand(where, ctc, MapResponseCollector.validOnly(), rpcManager.getSyncRpcOptions());
       Map<Address, Response> responseMap = rpcManager.blocking(completionStage);
@@ -345,12 +339,13 @@ public class RecoveryManagerImpl implements RecoveryManager {
          log.expectedJustOneResponse(responseMap);
          throw new CacheException("Expected response size is 1, received " + responseMap);
       }
+      //noinspection rawtypes
       return (String) ((SuccessfulResponse) responseMap.get(where)).getResponseValue();
    }
 
    @Override
    public boolean isTransactionPrepared(GlobalTransaction globalTx) {
-      Xid xid = globalTx.getXid();
+      XidImpl xid = globalTx.getXid();
       RecoveryAwareRemoteTransaction remoteTransaction = (RecoveryAwareRemoteTransaction) recoveryAwareTxTable().getRemoteTransaction(globalTx);
       boolean remotePrepared = remoteTransaction != null && remoteTransaction.isPrepared();
       boolean result = inDoubtTransactions.get(new RecoveryInfoKey(xid, cacheName)) != null//if it is in doubt must be prepared

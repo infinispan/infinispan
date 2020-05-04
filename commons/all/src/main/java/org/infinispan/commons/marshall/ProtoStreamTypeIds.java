@@ -54,6 +54,8 @@ public interface ProtoStreamTypeIds {
    int META_PARAMS_INTERNAL_METADATA = CORE_LOWER_BOUND + 3;
    int REMOTE_METADATA = CORE_LOWER_BOUND + 4;
    int UUID = CORE_LOWER_BOUND + 5;
+   int XID_IMPL = UUID + 1;
+   int IN_DOUBT_TX_INFO = XID_IMPL + 1;
 
    // Counter range 4000 -> 4199
    int COUNTERS_LOWER_BOUND = CORE_LOWER_BOUND + 3000;

@@ -44,17 +44,17 @@ public class InDoubtXidReturnedOnceTest extends MultipleCacheManagersTest {
    }
 
    public void testXidReturnedOnlyOnce() throws Throwable {
-      EmbeddedTransaction dummyTransaction1 = beginAndSuspendTx(this.cache(3));
-      prepareTransaction(dummyTransaction1);
+      EmbeddedTransaction tx = beginAndSuspendTx(this.cache(3));
+      prepareTransaction(tx);
       manager(3).stop();
       TestingUtil.blockUntilViewsReceived(60000, false, cache(0), cache(1), cache(2));
       TestingUtil.waitForNoRebalance(cache(0), cache(1), cache(2));
 
 
-      EmbeddedTransaction dummyTransaction = beginAndSuspendTx(this.cache(0));
-      Xid[] recover = dummyTransaction.firstEnlistedResource().recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN);
+      EmbeddedTransaction tx2 = beginAndSuspendTx(this.cache(0));
+      Xid[] recover = tx2.firstEnlistedResource().recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN);
       assertEquals(recover.length,1);
-      assertEquals(dummyTransaction1.getXid(), recover[0]);
+      assertEquals(tx.getXid(), recover[0]);
 
    }
 }

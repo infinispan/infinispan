@@ -11,8 +11,6 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import javax.transaction.xa.Xid;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.Mutation;
@@ -84,6 +82,7 @@ import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.LambdaExternalizer;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.Configuration;
@@ -383,7 +382,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public TxCompletionNotificationCommand buildTxCompletionNotificationCommand(Xid xid, GlobalTransaction globalTransaction) {
+   public TxCompletionNotificationCommand buildTxCompletionNotificationCommand(XidImpl xid, GlobalTransaction globalTransaction) {
       return new TxCompletionNotificationCommand(xid, globalTransaction, cacheName);
    }
 
@@ -398,7 +397,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public CompleteTransactionCommand buildCompleteTransactionCommand(Xid xid, boolean commit) {
+   public CompleteTransactionCommand buildCompleteTransactionCommand(XidImpl xid, boolean commit) {
       return new CompleteTransactionCommand(cacheName, xid, commit);
    }
 
