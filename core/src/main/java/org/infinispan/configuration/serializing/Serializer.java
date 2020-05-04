@@ -632,6 +632,25 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          writer.writeStartElement(Element.INDEXING);
          attributes.write(writer, IndexingConfiguration.AUTO_CONFIG, Attribute.AUTO_CONFIG);
          attributes.write(writer, IndexingConfiguration.ENABLED, Attribute.ENABLED);
+         if (!indexing.indexedEntityTypes().isEmpty()) {
+            writer.writeStartElement(Element.INDEXED_ENTITIES);
+            for (String indexedEntity : indexing.indexedEntityTypes()) {
+               writer.writeStartElement(Element.INDEXED_ENTITY);
+               writer.writeCharacters(indexedEntity);
+               writer.writeEndElement();
+            }
+            writer.writeEndElement();
+         }
+         if (!indexing.keyTransformers().isEmpty()) {
+            writer.writeStartElement(Element.KEY_TRANSFORMERS);
+            for (Map.Entry<Class<?>, Class<?>> e : indexing.keyTransformers().entrySet()) {
+               writer.writeStartElement(Element.KEY_TRANSFORMER);
+               writer.writeAttribute(Attribute.KEY, e.getKey().getName());
+               writer.writeAttribute(Attribute.TRANSFORMER, e.getValue().getName());
+               writer.writeEndElement();
+            }
+            writer.writeEndElement();
+         }
          writeTypedProperties(writer, indexing.properties());
          writer.writeEndElement();
       }
