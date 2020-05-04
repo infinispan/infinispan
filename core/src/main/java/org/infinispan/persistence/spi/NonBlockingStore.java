@@ -114,10 +114,18 @@ public interface NonBlockingStore<K, V> {
    }
 
    /**
-    *
-    * @param storageMediaType
-    * @param supportedMediaTypes
-    * @return
+    * Provides a way for the store to communicate which media type it requires for its key arguments. Infinispan
+    * will invoke this method immediately after the store is started providing the media type that in memory objects are
+    * stored via {@code storageMediaType} as well as all the media types this running instance can support converting
+    * to. The store then must choose from any of the provided media types. Any methods that are invoked after that
+    * accept a key argument will be guaranteed to have this key be in the desired media type. Also any return values
+    * from this store should be in this media type
+    * <p>
+    * Note that choosing a media type other than the storage media type will incur the cost of converting the key
+    * to and from the storage media type for input and output parameters.
+    * @param storageMediaType how the key is stored in memory
+    * @param supportedMediaTypes what media types Infinispan can convert to automatically on behalf of the store
+    * @return the media type the store desires for keys to be in when invoked and will return in
     */
    default MediaType getKeyMediaType(MediaType storageMediaType, Set<MediaType> supportedMediaTypes) {
       return storageMediaType;
