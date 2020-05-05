@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
+   version="2.0">
+   <persistence-unit name="org.infinispan.persistence.jpa">
+     <!-- This class is required to allow store metadata -->
+     <class>org.infinispan.persistence.jpa.impl.MetadataEntity</class>
+     <class>org.infinispan.test.integration.as.KeyValueEntity</class>
+     <properties>
+       <property name="hibernate.connection.datasource" value="java:jboss/datasources/ExampleDS"/>
+       <!-- <property name="hibernate.dialect" value="${hibernate.dialect}" /> --> <!-- dialect is automatically determined by hibernate, uncomment to force the dialect -->
+       <property name="hibernate.jdbc.batch_size" value="20" />
+       <property name="hibernate.jdbc.fetch_size" value="20" />
+       <property name="hibernate.hbm2ddl.auto" value="update"/> <!--  use create-drop for testing -->
+       <property name="hibernate.show_sql" value="false" /> <!-- set to true if you'd like to see what's going on -->
+       <property name="hibernate.connection.autocommit" value="false" />  
+     </properties>
+   </persistence-unit>   
+</persistence>
+

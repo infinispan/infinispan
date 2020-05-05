@@ -6,13 +6,26 @@
    <property name="dollar" value="$"/>
    <filterset id="brandfilter" begintoken="${dollar}{" endtoken="}">
       <filter token="infinispan.brand.name" value="${infinispan.brand.name}" />
+      <filter token="wildfly.brand.name" value="${wildfly.brand.name}" />
       <filter token="current.year" value="${current.year}" />
    </filterset>
 
-   <target name="package" depends="clean" />
+   <target name="package" depends="clean, wf-modules" />
 
    <target name="clean">
       <delete dir="${dist.dir}" />
+   </target>
+
+   <target name="wf-modules">
+      <local name="output.dir"/>
+      <property name="output.dir" value="${project.build.directory}/${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}" />
+      <sequential>
+         <copy todir="${output.dir}">
+            <fileset dir="src/main/release/wildfly-modules" />
+            <filterset refid="brandfilter"/>
+         </copy>
+         <base-distribution-licenses dir="${output.dir}" inclusive="true" database="true"/>
+      </sequential>
    </target>
 
    <macrodef name="base-distribution-licenses">

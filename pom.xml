@@ -136,6 +136,7 @@
       <module>cdi/remote</module>
       <module>lock</module>
       <module>jcache</module>
+      <module>wildfly/feature-pack</module>
       <module>integrationtests</module>
       <module>integrationtests/endpoints-interop-it</module>
       <module>integrationtests/jboss-marshalling-it</module>
@@ -144,6 +145,7 @@
       <module>integrationtests/security-manager-it</module>
       <module>integrationtests/cdi-weld-se-it</module>
       <module>integrationtests/spring-boot-it</module>
+      <module>integrationtests/wildfly-modules</module>
       <module>client/marshaller</module>
       <module>hibernate</module>
       <module>api</module>
