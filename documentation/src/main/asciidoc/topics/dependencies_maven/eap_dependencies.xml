@@ -18,7 +18,7 @@
        <configuration>
          <archive>
            <manifestEntries>
-             <Dependencies>org.infinispan.core:{infinispanslot} services, org.infinispan.cachestore.jdbc:{infinispanslot} services</Dependencies>
+             <Dependencies>org.infinispan:{infinispanslot} services</Dependencies>
            </manifestEntries>
          </archive>
       </configuration>

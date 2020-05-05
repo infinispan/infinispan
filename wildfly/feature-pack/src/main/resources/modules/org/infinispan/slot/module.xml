@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.5" name="org.infinispan" slot="@infinispan.module.slot@">
+   <resources>
+      <artifact name="${javax.cache:cache-api}"/>
+
+      <artifact name="${org.infinispan:infinispan-cachestore-jdbc}"/>
+      <artifact name="${org.infinispan:infinispan-cachestore-jpa}"/>
+      <artifact name="${org.infinispan:infinispan-cachestore-remote}"/>
+      <artifact name="${org.infinispan:infinispan-cachestore-rocksdb}"/>
+      <artifact name="${org.infinispan:infinispan-cdi-common}"/>
+      <artifact name="${org.infinispan:infinispan-cdi-embedded}"/>
+      <artifact name="${org.infinispan:infinispan-cdi-remote}"/>
+      <artifact name="${org.infinispan:infinispan-client-hotrod}"/>
+      <artifact name="${org.infinispan:infinispan-clustered-counter}"/>
+      <artifact name="${org.infinispan:infinispan-clustered-lock}"/>
+      <artifact name="${org.infinispan:infinispan-commons}"/>
+      <artifact name="${org.infinispan:infinispan-core}"/>
+      <artifact name="${org.infinispan:infinispan-jcache}"/>
+      <artifact name="${org.infinispan:infinispan-jcache-commons}"/>
+      <artifact name="${org.infinispan:infinispan-multimap}"/>
+      <artifact name="${org.infinispan:infinispan-objectfilter}"/>
+      <artifact name="${org.infinispan:infinispan-persistence-soft-index}"/>
+      <artifact name="${org.infinispan:infinispan-query}"/>
+      <artifact name="${org.infinispan:infinispan-query-core}"/>
+      <artifact name="${org.infinispan:infinispan-query-dsl}"/>
+      <artifact name="${org.infinispan:infinispan-remote-query-client}"/>
+      <artifact name="${org.infinispan.protostream:protostream}"/>
+      <artifact name="${org.infinispan:infinispan-jboss-marshalling}"/>
+
+      <artifact name="${org.jgroups:jgroups}"/>
+      <artifact name="${org.jgroups.azure:jgroups-azure}"/>
+      <artifact name="${org.jgroups.aws.s3:native-s3-ping}"/>
+      <artifact name="${org.jgroups.kubernetes:jgroups-kubernetes}"/>
+      <artifact name="${org.jboss.marshalling:jboss-marshalling-osgi}"/>
+      <artifact name="${com.github.ben-manes.caffeine:caffeine}"/>
+
+      <artifact name="${io.netty:netty-buffer}"/>
+      <artifact name="${io.netty:netty-common}"/>
+      <artifact name="${io.netty:netty-codec}"/>
+      <artifact name="${io.netty:netty-handler}"/>
+      <artifact name="${io.netty:netty-resolver}"/>
+      <artifact name="${io.netty:netty-transport}"/>
+      <artifact name="${io.netty:netty-transport-native-epoll}"/>
+      <artifact name="${io.netty:netty-transport-native-epoll::linux-x86_64}"/>
+      <artifact name="${io.netty:netty-transport-native-unix-common}"/>
+
+      <artifact name="${org.rocksdb:rocksdbjni}"/>
+
+      <artifact name="${org.hibernate:hibernate-search-engine}"/>
+      <artifact name="${org.hibernate.common:hibernate-commons-annotations}"/>
+      <artifact name="${org.hibernate:hibernate-search-engine}"/>
+      <artifact name="${org.jboss.marshalling:jboss-marshalling-river}"/>
+      <artifact name="${commons-io:commons-io}"/>
+
+      <artifact name="${org.reactivestreams:reactive-streams}"/>
+      <artifact name="${io.reactivex.rxjava3:rxjava}"/>
+
+      <artifact name="${com.fasterxml.jackson.core:jackson-core}"/>
+      <artifact name="${com.fasterxml.jackson.core:jackson-annotations}"/>
+      <artifact name="${com.fasterxml.jackson.core:jackson-databind}"/>
+
+      <artifact name="${com.microsoft.azure:azure-storage}"/>
+
+      <artifact name="${com.amazonaws:aws-java-sdk-core}"/>
+      <artifact name="${com.amazonaws:aws-java-sdk-s3}"/>
+      <artifact name="${com.amazonaws:aws-java-sdk-kms}"/>
+      <artifact name="${com.amazonaws:jmespath-java}"/>
+      <artifact name="${software.amazon.ion:ion-java}"/>
+
+      <artifact name="${org.antlr:antlr-runtime}"/>
+   </resources>
+
+   <dependencies>
+      <module name="jdk.scripting.nashorn" optional="true"/>
+      <module name="jdk.unsupported" optional="true"/>
+      <module name="sun.jdk" optional="true"/>
+      <module name="sun.scripting" optional="true"/>
+
+      <module name="javax.api"/>
+      <module name="javax.enterprise.api"/>
+      <module name="javax.persistence.api"/>
+      <module name="javax.transaction.api"/>
+
+      <module name="org.apache.xerces" services="import"/>
+
+      <module name="org.eclipse.microprofile.config.api" export="true"/>
+      <module name="org.eclipse.microprofile.metrics.api" export="true"/>
+      <module name="io.smallrye.config" services="export" export="true"/>
+      <module name="io.smallrye.metrics" services="import" export="true"/>
+
+      <module name="org.jboss.jandex"/>
+      <module name="org.jboss.logging"/>
+      <module name="org.jboss.weld.core" />
+      <module name="org.jboss.weld.spi" />
+      <module name="org.wildfly.security.elytron" services="import"/>
+      <module name="org.hibernate"/>
+
+      <!-- Hibernate Search -->
+      <module name="org.apache.lucene" slot="@lucene.module.slot@"/>
+      <module name="org.hibernate.search.engine" slot="@hibernate.search.module.slot@" export="true"/>
+      <module name="com.google.code.gson" slot="@gson.module.slot@" optional="true"/>
+   </dependencies>
+</module>

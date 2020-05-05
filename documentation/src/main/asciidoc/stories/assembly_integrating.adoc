@@ -1,6 +1,7 @@
 [id='integrating']
 :context: integration
 
+include::{topics}/integrations_wildfly.adoc[leveloffset=+0]
 include::{topics}/integrations_apache_lucene.adoc[leveloffset=+0]
 include::{topics}/integrations_hibernate_search.adoc[leveloffset=+0]
 include::{topics}/integrations_hibernate_cache.adoc[leveloffset=+0]
