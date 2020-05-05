@@ -6,7 +6,10 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL3;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_SOCK;
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.LOCAL_PING;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.MERGE3;
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.MPING;
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.PING;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TCP;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TCP_NIO2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TEST_RELAY2;
@@ -37,9 +40,7 @@ import org.jgroups.conf.XmlConfigurator;
 public class JGroupsConfigBuilder {
 
    public static final String JGROUPS_STACK;
-   // Load the XML just once
-   private static final ProtocolStackConfigurator tcpConfigurator = loadTcp();
-   private static final ProtocolStackConfigurator udpConfigurator = loadUdp();
+   private static final Map<String, ProtocolStackConfigurator> protocolStackConfigurator = new HashMap<>();
 
    public static final int TCP_PORT_RANGE_PER_THREAD = 100;
    private static final ThreadLocal<Integer> threadTcpStartPort = new ThreadLocal<Integer>() {
@@ -66,8 +67,13 @@ public class JGroupsConfigBuilder {
    private static final ConcurrentMap<String, Integer> testUdpIndex = new ConcurrentHashMap<>();
 
    static {
-      JGROUPS_STACK = LegacyKeySupportSystemProperties.getProperty("infinispan.cluster.stack", "infinispan.test.jgroups.protocol", "udp");
+      JGROUPS_STACK = LegacyKeySupportSystemProperties.getProperty("infinispan.cluster.stack", "infinispan.test.jgroups.protocol", "test-udp");
       System.out.println("Transport protocol stack used = " + JGROUPS_STACK);
+      // Load the XML just once
+      protocolStackConfigurator.put("test-tcp", loadProtocolStack("stacks/tcp.xml"));
+      protocolStackConfigurator.put("test-udp", loadProtocolStack("stacks/udp.xml"));
+      protocolStackConfigurator.put("tcp", loadProtocolStack("default-configs/default-jgroups-tcp.xml"));
+      protocolStackConfigurator.put("udp", loadProtocolStack("default-configs/default-jgroups-udp.xml"));
    }
 
    public static String getJGroupsConfig(String fullTestName, TransportFlags flags) {
@@ -90,19 +96,36 @@ public class JGroupsConfigBuilder {
       if (!flags.withMerge())
          removeMerge(jgroupsCfg);
 
+      replacePing(jgroupsCfg);
       replaceTcpStartPort(jgroupsCfg, flags);
       replaceMCastAddressAndPort(jgroupsCfg, fullTestName);
       return jgroupsCfg.toString();
    }
 
    public static ProtocolStackConfigurator getConfigurator() {
-      if (JGROUPS_STACK.equalsIgnoreCase("tcp")) {
-         return tcpConfigurator;
+      ProtocolStackConfigurator stack = protocolStackConfigurator.get(JGROUPS_STACK);
+      if (stack == null) {
+         throw new IllegalStateException("Unknown protocol stack : " + JGROUPS_STACK);
       }
-      if (JGROUPS_STACK.equalsIgnoreCase("udp")) {
-         return udpConfigurator;
+      return stack;
+   }
+
+   private static void replacePing(JGroupsProtocolCfg jgroupsCfg) {
+      if (!jgroupsCfg.containsProtocol(LOCAL_PING)) {
+         ProtocolType[] pingProtocols = new ProtocolType[]{MPING, PING};
+         ProtocolType pingProtocolToBeReplaced = null;
+         for (ProtocolType protocol : pingProtocols) {
+            if (jgroupsCfg.containsProtocol(protocol)) {
+               pingProtocolToBeReplaced = protocol;
+               break;
+            }
+         }
+         if (pingProtocolToBeReplaced == null) {
+            throw new IllegalStateException("Can't replace the ping protocol with LOCAL_PING");
+         }
+         jgroupsCfg.replaceProtocol(pingProtocolToBeReplaced,
+               new ProtocolConfiguration(LOCAL_PING.name(), new HashMap<>()));
       }
-      throw new IllegalStateException("Unknown protocol stack : " + JGROUPS_STACK);
    }
 
    private static void removeMerge(JGroupsProtocolCfg jgroupsCfg) {
@@ -165,17 +188,9 @@ public class JGroupsConfigBuilder {
       cfg.replaceProtocol(type, newProtocol);
    }
 
-   private static ProtocolStackConfigurator loadTcp() {
+   private static ProtocolStackConfigurator loadProtocolStack(String relativePath) {
       try {
-         return ConfiguratorFactory.getStackConfigurator("stacks/tcp.xml");
-      } catch (Exception e) {
-         throw new RuntimeException(e);
-      }
-   }
-
-   private static ProtocolStackConfigurator loadUdp() {
-      try {
-         return ConfiguratorFactory.getStackConfigurator("stacks/udp.xml");
+         return ConfiguratorFactory.getStackConfigurator(relativePath);
       } catch (Exception e) {
          throw new RuntimeException(e);
       }

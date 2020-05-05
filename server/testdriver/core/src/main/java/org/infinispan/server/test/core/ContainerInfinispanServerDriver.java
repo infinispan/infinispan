@@ -103,7 +103,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       args.add("SITE_LOCAL");
       args.add("-Djgroups.bind.address=SITE_LOCAL");
       args.add("-j");
-      args.add(System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CLUSTER_STACK, "test-tcp"));
+      args.add(System.getProperty(Server.INFINISPAN_CLUSTER_STACK, "test-tcp"));
       args.add("-Dinfinispan.cluster.name=" + name);
       args.add("-D" + TEST_HOST_ADDRESS + "=" + testHostAddress.getHostAddress());
       if (configuration.isJMXEnabled()) {
