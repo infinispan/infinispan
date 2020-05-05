@@ -43,10 +43,6 @@ public class TestSystemPropertyNames {
     */
    public static final String INFINISPAN_TEST_SERVER_LOG_FILE = "org.infinispan.test.server.container.logFile";
    /**
-    * The name of the JGroups stack. Defaults to `test-tcp`
-    */
-   public static final String INFINISPAN_TEST_SERVER_CLUSTER_STACK = "org.infinispan.test.server.cluster.stack";
-   /**
     * Specifies a comma-separated list to server home path. Only for FORKED
     */
    public static final String INFINISPAN_SERVER_HOME = "org.infinispan.test.server.home";

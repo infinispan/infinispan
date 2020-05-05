@@ -209,7 +209,7 @@
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
       <infinispan.test.jvm.version.regex>^1\.8\.0.*</infinispan.test.jvm.version.regex>
       <ansi.strip/>
-      <infinispan.cluster.stack>udp</infinispan.cluster.stack>
+      <infinispan.cluster.stack>test-udp</infinispan.cluster.stack>
       <infinispan.test.parallel.threads>8</infinispan.test.parallel.threads>
       <server.test.provisioning>thin</server.test.provisioning>
       <skipArtifactUpload>false</skipArtifactUpload>

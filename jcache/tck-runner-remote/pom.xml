@@ -35,8 +35,14 @@
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
       <serverMemoryJvmArgs>-Xmx500m ${testjvm.commonArgs}</serverMemoryJvmArgs>
 
-      <!-- TODO Remove? -->
-      <transport.stack>-Dinfinispan.cluster.stack=${infinispan.cluster.stack}</transport.stack>
+      <!-- TODO https://issues.redhat.com/browse/ISPN-11772 -->
+      <!--
+      it will start the server with ANT, the server that we built ( the one used by customers ) don't have the:
+      test-udp or test-tcp
+      this is why we have the JIRA above.
+      By default we are using tcp to test the server. This is why we set tcp below
+      -->
+      <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
       <jvm.x64.args />
    </properties>
 
