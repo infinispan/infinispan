@@ -33,7 +33,6 @@ import org.infinispan.query.spi.SearchManagerImplementor;
  */
 public final class SearchManagerImpl implements SearchManagerImplementor {
 
-   private final AdvancedCache<?, ?> cache;
    private final SearchIntegrator searchFactory;
    private final QueryInterceptor queryInterceptor;
    private final KeyTransformationHandler keyTransformationHandler;
@@ -49,7 +48,6 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
       if (cache == null) {
          throw new IllegalArgumentException("cache parameter shall not be null");
       }
-      this.cache = cache;
       this.searchFactory = ComponentRegistryUtils.getSearchIntegrator(cache);
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       this.keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
