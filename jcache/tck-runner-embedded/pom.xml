@@ -11,7 +11,7 @@
 
    <artifactId>infinispan-jcache-tck-runner-embedded</artifactId>
    <packaging>jar</packaging>
-   <name>Infinispan JCACHE (JSR-107) TCK Runner</name>
+   <name>Infinispan JCACHE (JSR-107) TCK Runner Embedded</name>
    <description>JCACHE (JSR-107) TCK runner for Infinispan implementations</description>
 
    <properties>
