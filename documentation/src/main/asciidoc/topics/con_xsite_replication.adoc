@@ -3,9 +3,9 @@
 {brandname} clusters running in different locations can discover and
 communicate with each other.
 
-A site is a locally running {brandname} cluster. For demonstration purposes,
-this documentation illustrates sites as data centers in different geographic
-locations, as in the following diagram:
+Sites are typically data centers in various geographic locations. Cross-site
+replication bridges {brandname} clusters in sites to form global clusters, as
+in the following diagram:
 
 image::xsite.svg[]
 

@@ -14,7 +14,12 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Replicating Data Across Sites with {brandname} {infinispanversion}
+= {brandname} Guide to Cross-Site Replication
+
+Find out how {brandname} performs cross-site replication so you can get optimal
+performance and avoid issues. Learn how to configure {brandname} to back up
+data to remote clusters. Follow procedures to transfer state from one cluster
+to another, take sites offline, and so on.
 
 //User stories
 include::stories.adoc[]

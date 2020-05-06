@@ -1,59 +1,55 @@
-[id='conflicts-{context}']
-= Conflicting Entries with Cross-Site Replication
+[id='conflicting_entries-{context}']
+= Concurrent Writes and Conflicting Entries
 Conflicting entries can occur with Active/Active site configurations if clients
 write to the same entries at the same time but at different sites.
 
 For example, client A writes to "k1" in **LON** at the same time that client B
 writes to "k1" in **NYC**. In this case, "k1" has a different value in **LON**
-than in **NYC**.
+than in **NYC**. After replication occurs, there is no guarantee which value
+for "k1" exists at which site.
 
-With synchronous replication, concurrent writes result in deadlocks because
-both sites lock the same key in different orders. To resolve deadlocks, client
-applications must wait until the locks time out.
+To ensure data consistency, {brandname} uses a vector clock algorithm to detect
+conflicting entries during backup operations, as in the following illustration:
 
-With asynchronous replication, concurrent writes result in conflicting values
-because sites replicate after entries are modified locally.  After replication
-occurs, there is no guarantee which value for "k1" exists at which site.
+[source,options="nowrap"]
+----
+            LON       NYC
 
-* Keys have conflicting values.
+k1=(n/a)    0,0       0,0
 
-* One of the conflicting values is overwritten if sites do not replicate values
-at the same time. In this case, one of the values is lost and there is no
-guarantee which value is saved.
+k1=2        1,0  -->  1,0   k1=2
 
-In all cases, inconsistencies in key values are resolved after the next
-non-conflicting `put()` operation updates the value.
+k1=3        1,1  <--  1,1   k1=3
 
-[NOTE]
-====
-There currently is no conflict resolution policy that client applications can
-use to handle conflicts in asynchronous mode. However, conflict resolution
-techniques are planned for a future {brandname} version.
-====
+k1=5        2,1       1,2   k1=8
 
-//dnaro: notes for IRAC conflict resolution
+                 -->  2,1 (conflict)
+(conflict)  1,2  <--
+----
 
-//Conflict Resolution with Cross-Site Replication
-//Conflicting entries can occur with Active/Active site configurations if
-//clients write to the same entries at the same time but at different sites.
+Vector clocks are timestamp metadata that increment with each write to an
+entry. In the preceding example, `0,0` represents the initial value for the
+vector clock on "k1".
 
-//For example, client A writes to "k1" in **LON** at the same time that client B
-//writes to "k1" in **NYC**. In this case, "k1" has a different value in **LON**
-//than in **NYC**. After replication occurs, there is no guarantee which value
-//for "k1" exists at which site.
+A client puts "k1=2" in **LON** and the vector clock is `1,0`, which
+{brandname} replicates to **NYC**. A client then puts "k1=3" in **NYC** and the
+vector clock updates to `1,1`, which {brandname} replicates to **LON**.
 
-//{brandname} uses version information for keys to detect conflicts during a
-//backup. If {brandname} finds entries that conflict, it compares site names
-//based on alphabetical order. The site name with the highest alphabetical
-//ordering wins.
+However if a client puts "k1=5" in **LON** at the same time that a client puts
+"k1=8" in **NYC**, {brandname} detects a conflicting entry because the vector
+value for "k1" is not strictly greater or less between **LON** and **NYC**.
 
-//Following the same example, if "k1" conflicts between **LON** and **NYC**,
-//{brandname} always uses "k1" in **LON**.
+When it finds conflicting entries, {brandname} uses the Java `compareTo(String
+anotherString)` method to compare site names. To determine which key takes
+priority, {brandname} selects the site name that is lexicographically less
+than the other. Keys from a site named **AAA** take priority over keys from a
+site named **AAB** and so on.
 
-//In more specific detail, {brandname} uses the Java `compareTo(String
-//anotherString)` method to compare site names. To determine which key at which
-//site takes priority, {brandname} selects the site name that is
-//lexicographically greater than the other, using alphabetical order.
+Following the same example, to resolve the conflict for "k1", {brandname} uses
+the value for "k1" that originates from **LON**. This results in "k1=5" in both
+**LON** and **NYC** after {brandname} resolves the conflict and replicates the
+value.
 
-//Keys from a site named **AAA** take priority over keys from a site named
-//**AAB** and so on.
+.Reference
+
+* link:https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#compareTo-java.lang.String-[java.lang.String#compareTo()]
