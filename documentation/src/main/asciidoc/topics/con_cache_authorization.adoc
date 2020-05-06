@@ -1,17 +1,30 @@
-[id='cache_authorization']
-= Cache Authorization
-{brandname} can restrict access to data by authorizing requests to perform
-cache operations.
+[id='con_authz-{context}']
+= {brandname} Authorization
+{brandname} lets you configure authorization to secure Cache Managers and cache
+instances. When user applications or clients attempt to perform an operation on
+secured Cached Managers and caches, they must provide an identity with a role
+that has sufficient permissions to perform that operation.
 
-{brandname} maps identities, or Principals of type `java.security.Principal`,
-to security roles in your configuration. For example, a Principal named
-`reader` maps to a security role named `reader`.
+For example, you configure authorization on a specific cache instance so that
+invoking `Cache.get()` requires an identity to be assigned a role with read
+permission while `Cache.put()` requires a role with write permission.
 
-{brandname} lets you assign permissions to the various roles to authorize cache
-operations. For example, `Cache.get()` requires read permission while
-`Cache.put()` requires write permission.
+In this scenario, if a user application or client with the `reader` role
+attempts to write an entry, {brandname} denies the request and throws a
+security exception. If a user application or client with the `writer` role
+sends a write request, {brandname} validates authorization and issues a token
+for subsequent operations.
 
-In this case, iff a client with the `reader` role attempts to write an entry,
-{brandname} denies the request and throws a security exception. However, if a
-client with the `writer` role sends a write request, {brandname} validates
-authorization and issues the client with a token for subsequent operations.
+.Identity to Role Mapping
+
+Identities are security Principals of type `java.security.Principal`. Subjects,
+implemented with the `javax.security.auth.Subject` class, represent a group of
+security Principals. In other words, a Subject represents a user and all groups
+to which it belongs.
+
+{brandname} uses role mappers so that security principals correspond to roles,
+which represent one or more permissions.
+
+The following image illustrates how security principals map to roles:
+
+image::SecurityRolesPermissions.svg[Roles/Permissions mapping]

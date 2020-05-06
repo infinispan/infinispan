@@ -1,0 +1,96 @@
+[id='authz_permissions-{context}']
+= Permissions
+Permissions control access to Cache Managers and caches by restricting the
+actions that you can perform. Permissions can also apply to specific entities
+such as named caches.
+
+.Cache Manager Permissions
+[%header,cols=3*]
+|===
+|Permission
+|Function
+|Description
+
+|CONFIGURATION
+|`defineConfiguration`
+|Defines new cache configurations.
+
+|LISTEN
+|`addListener`
+|Registers listeners against a Cache Manager.
+
+|LIFECYCLE
+|`stop`
+|Stops the Cache Manager.
+
+|ALL
+|-
+|Includes all Cache Manager permissions.
+|===
+
+
+.Cache Permissions
+[%header,cols=3*]
+|===
+|Permission
+|Function
+|Description
+
+|`READ`
+|`get`, `contains`
+|Retrieves entries from a cache.
+
+|WRITE
+|`put`, `putIfAbsent`, `replace`, `remove`, `evict`
+|Writes, replaces, removes, evicts data in a cache.
+
+|EXEC
+|`distexec`, `streams`
+|Allows code execution against a cache.
+
+|LISTEN
+|`addListener`
+|Registers listeners against a cache.
+
+|BULK_READ
+|`keySet`, `values`, `entrySet`, `query`
+|Executes bulk retrieve operations.
+
+|BULK_WRITE
+|`clear`, `putAll`
+|Executes bulk write operations.
+
+|LIFECYCLE
+|`start`, `stop`
+|Starts and stops a cache.
+
+| ADMIN
+| `getVersion`, `addInterceptor*`, `removeInterceptor`, `getInterceptorChain`, `getEvictionManager`, `getComponentRegistry`, `getDistributionManager`, `getAuthorizationManager`, `evict`, `getRpcManager`, `getCacheConfiguration`, `getCacheManager`, `getInvocationContextContainer`, `setAvailability`, `getDataContainer`, `getStats`, `getXAResource`
+|Allows access to underlying components and internal structures.
+
+|ALL
+|-
+|Includes all cache permissions.
+
+|ALL_READ
+|-
+|Combines the READ and BULK_READ permissions.
+
+|ALL_WRITE
+|-
+|Combines the WRITE and BULK_WRITE permissions.
+|===
+
+.Combining permissions
+You might need to combine permissions so that they are useful. For example, to
+allow "supervisors" to run stream operations but restrict "standard" users to
+puts and gets only, you can define the following mappings:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/security_combined_permission.xml[]
+----
+
+.Reference
+
+* link:{javadocroot}/org/infinispan/security/package-summary.html[{brandname} Security API]
