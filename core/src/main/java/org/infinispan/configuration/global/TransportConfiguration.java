@@ -41,6 +41,7 @@ public class TransportConfiguration implements ConfigurationInfo {
    static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.TRANSPORT.getLocalName());
 
    private final Attribute<String> clusterName;
+   private final Attribute<String> stack;
    private final Attribute<String> machineId;
    private final Attribute<String> rackId;
    private final Attribute<String> siteId;
@@ -65,6 +66,7 @@ public class TransportConfiguration implements ConfigurationInfo {
       this.remoteCommandThreadPool = remoteCommandThreadPool;
       this.properties = properties;
       clusterName = attributes.attribute(CLUSTER_NAME);
+      stack = attributes.attribute(STACK);
       machineId = attributes.attribute(MACHINE_ID);
       rackId = attributes.attribute(RACK_ID);
       siteId = attributes.attribute(SITE_ID);
@@ -81,6 +83,10 @@ public class TransportConfiguration implements ConfigurationInfo {
 
    public String clusterName() {
       return clusterName.get();
+   }
+
+   public String stack() {
+      return stack.get();
    }
 
    public String machineId() {

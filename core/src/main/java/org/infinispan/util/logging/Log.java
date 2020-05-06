@@ -337,6 +337,10 @@ public interface Log extends BasicLogger {
    void startingJGroupsChannel(String cluster);
 
    @LogMessage(level = INFO)
+   @Message(value = "Starting JGroups channel %s with stack %s", id = 78)
+   void startingJGroupsChannel(String cluster, String stack);
+
+   @LogMessage(level = INFO)
    @Message(value = "Channel %s local address is %s, physical addresses are %s", id = 79)
    void localAndPhysicalAddress(String cluster, Address address, List<Address> physicalAddresses);
 

@@ -443,7 +443,12 @@ public class JGroupsTransport implements Transport {
       props = TypedProperties.toTypedProperties(configuration.transport().properties());
       requests = new RequestRepository();
 
-      CLUSTER.startingJGroupsChannel(configuration.transport().clusterName());
+      String stack = configuration.transport().stack();
+      if (stack != null) {
+         CLUSTER.startingJGroupsChannel(configuration.transport().clusterName(), configuration.transport().stack());
+      } else {
+         CLUSTER.startingJGroupsChannel(configuration.transport().clusterName());
+      }
 
       initChannel();
 
