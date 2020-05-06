@@ -1,4 +1,6 @@
 //Reference user stories or topics.
 //Please review authoring guidelines in the Contributors Guide.
 
-include::{stories}/assembly_security.adoc[leveloffset=+1]
+include::../{topics}/con_security.adoc[leveloffset=+1]
+include::{stories}/assembly_security_authorization.adoc[leveloffset=+1]
+include::{stories}/assembly_securing_jgroups.adoc[leveloffset=+1]
