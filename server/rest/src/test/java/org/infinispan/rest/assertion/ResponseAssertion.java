@@ -1,5 +1,7 @@
 package org.infinispan.rest.assertion;
 
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,6 +12,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.assertj.core.api.Assertions;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -120,8 +124,17 @@ public class ResponseAssertion {
       return this;
    }
 
+   public ResponseAssertion hasHeaderWithValues(String header, CharSequence... headers) {
+      Set<String> expected = Arrays.stream(headers).map(c -> c.toString().toLowerCase()).collect(Collectors.toSet());
+      for (String headerValue : response.getHeaders().get(header).split(",")) {
+         assertTrue(expected.contains(headerValue.toLowerCase()));
+      }
+      return this;
+   }
+
    public ResponseAssertion containsAllHeaders(String... headers) {
-      Assertions.assertThat(response.getHeaders().stream().map(HttpField::getName)).contains(headers);
+      String[] values = Arrays.stream(headers).map(String::toLowerCase).toArray(String[]::new);
+      Assertions.assertThat(response.getHeaders().stream().map(HttpField::getName)).contains(values);
       return this;
    }
 

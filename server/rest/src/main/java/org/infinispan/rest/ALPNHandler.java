@@ -1,5 +1,23 @@
 package org.infinispan.rest;
 
+import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
+import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
+import static io.netty.handler.codec.http.HttpHeaderNames.IF_MODIFIED_SINCE;
+import static io.netty.handler.codec.http.HttpHeaderNames.IF_NONE_MATCH;
+import static io.netty.handler.codec.http.HttpHeaderNames.IF_UNMODIFIED_SINCE;
+import static io.netty.handler.codec.http.HttpMethod.DELETE;
+import static io.netty.handler.codec.http.HttpMethod.GET;
+import static io.netty.handler.codec.http.HttpMethod.HEAD;
+import static io.netty.handler.codec.http.HttpMethod.OPTIONS;
+import static io.netty.handler.codec.http.HttpMethod.POST;
+import static io.netty.handler.codec.http.HttpMethod.PUT;
+import static org.infinispan.rest.NettyRestRequest.CREATED_HEADER;
+import static org.infinispan.rest.NettyRestRequest.EXTENDED_HEADER;
+import static org.infinispan.rest.NettyRestRequest.FLAGS_HEADER;
+import static org.infinispan.rest.NettyRestRequest.KEY_CONTENT_TYPE_HEADER;
+import static org.infinispan.rest.NettyRestRequest.LAST_USED_HEADER;
+import static org.infinispan.rest.NettyRestRequest.MAX_TIME_IDLE_HEADER;
+import static org.infinispan.rest.NettyRestRequest.TTL_SECONDS_HEADER;
 import static org.infinispan.rest.RestChannelInitializer.MAX_HEADER_SIZE;
 import static org.infinispan.rest.RestChannelInitializer.MAX_INITIAL_LINE_SIZE;
 
@@ -13,8 +31,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentCompressor;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler;
@@ -131,8 +147,13 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
             String localIpv6 = scheme + "://" + "[::1]" + ":" + port;
             CorsConfig config = CorsConfigBuilder.forOrigins(localIpv4, localDomain, localIpv6)
                   .allowCredentials()
-                  .allowedRequestMethods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.OPTIONS)
-                  .allowedRequestHeaders(HttpHeaderNames.CONTENT_TYPE.toString()).build();
+                  .allowedRequestMethods(GET, POST, PUT, DELETE, HEAD, OPTIONS)
+                  // Not all browsers support "*" (https://github.com/whatwg/fetch/issues/251) so we need to add each
+                  // header individually
+                  .allowedRequestHeaders(CACHE_CONTROL, CONTENT_TYPE, CREATED_HEADER, EXTENDED_HEADER, FLAGS_HEADER,
+                        IF_MODIFIED_SINCE, IF_UNMODIFIED_SINCE, IF_NONE_MATCH, KEY_CONTENT_TYPE_HEADER,
+                        MAX_TIME_IDLE_HEADER, LAST_USED_HEADER, TTL_SECONDS_HEADER)
+                  .build();
             configs.add(config);
          }
       }
