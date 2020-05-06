@@ -32,13 +32,13 @@ public class NettyRestRequest implements RestRequest {
 
    private static final MediaType DEFAULT_KEY_CONTENT_TYPE = MediaType.fromString("application/x-java-object;type=java.lang.String");
 
+   public static final String CREATED_HEADER = "created";
    public static final String EXTENDED_HEADER = "extended";
-   private static final String MAX_TIME_IDLE_HEADER = "maxIdleTimeSeconds";
-   private static final String CREATED_HEADER = "created";
-   private static final String LAST_USED_HEADER = "lastUsed";
-   private static final String TTL_SECONDS_HEADER = "timeToLiveSeconds";
-   private static final String KEY_CONTENT_TYPE_HEADER = "key-content-type";
-   private static final String FLAGS_HEADER = "flags";
+   public static final String FLAGS_HEADER = "flags";
+   public static final String KEY_CONTENT_TYPE_HEADER = "key-content-type";
+   public static final String MAX_TIME_IDLE_HEADER = "maxIdleTimeSeconds";
+   public static final String LAST_USED_HEADER = "lastUsed";
+   public static final String TTL_SECONDS_HEADER = "timeToLiveSeconds";
 
    private final FullHttpRequest request;
    private final Map<String, List<String>> parameters;

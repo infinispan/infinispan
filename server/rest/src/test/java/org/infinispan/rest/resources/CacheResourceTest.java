@@ -1,7 +1,14 @@
 package org.infinispan.rest.resources;
 
+import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
+import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
+import static io.netty.handler.codec.http.HttpHeaderNames.IF_MODIFIED_SINCE;
+import static io.netty.handler.codec.http.HttpHeaderNames.IF_NONE_MATCH;
+import static io.netty.handler.codec.http.HttpHeaderNames.IF_UNMODIFIED_SINCE;
+import static io.netty.handler.codec.http.HttpHeaders.Names.ACCESS_CONTROL_ALLOW_HEADERS;
+import static io.netty.handler.codec.http.HttpHeaders.Names.ACCESS_CONTROL_ALLOW_METHODS;
+import static io.netty.handler.codec.http.HttpHeaders.Names.ACCESS_CONTROL_ALLOW_ORIGIN;
 import static org.eclipse.jetty.http.HttpHeader.ACCEPT_ENCODING;
-import static org.eclipse.jetty.http.HttpHeader.CONTENT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
@@ -14,6 +21,13 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.util.Util.getResourceAsString;
 import static org.infinispan.dataconversion.Gzip.decompress;
 import static org.infinispan.rest.JSONConstants.TYPE;
+import static org.infinispan.rest.NettyRestRequest.CREATED_HEADER;
+import static org.infinispan.rest.NettyRestRequest.EXTENDED_HEADER;
+import static org.infinispan.rest.NettyRestRequest.FLAGS_HEADER;
+import static org.infinispan.rest.NettyRestRequest.KEY_CONTENT_TYPE_HEADER;
+import static org.infinispan.rest.NettyRestRequest.LAST_USED_HEADER;
+import static org.infinispan.rest.NettyRestRequest.MAX_TIME_IDLE_HEADER;
+import static org.infinispan.rest.NettyRestRequest.TTL_SECONDS_HEADER;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -312,7 +326,10 @@ public class CacheResourceTest extends BaseCacheResourceTest {
 
       assertThat(preFlight).isOk();
       assertThat(preFlight).hasNoContent();
-      assertThat(preFlight).containsAllHeaders("access-control-allow-origin", "access-control-allow-methods");
+      assertThat(preFlight).containsAllHeaders(ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_HEADERS);
+      assertThat(preFlight).hasHeaderWithValues(ACCESS_CONTROL_ALLOW_HEADERS, CACHE_CONTROL, CONTENT_TYPE, CREATED_HEADER, EXTENDED_HEADER, FLAGS_HEADER,
+            IF_MODIFIED_SINCE, IF_UNMODIFIED_SINCE, IF_NONE_MATCH, KEY_CONTENT_TYPE_HEADER,
+            MAX_TIME_IDLE_HEADER, LAST_USED_HEADER, TTL_SECONDS_HEADER);
    }
 
    @Test
@@ -434,7 +451,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    private ContentResponse writeJsonToCache(String key, String json, String cacheName) throws Exception {
       return client.newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), cacheName, key))
             .content(new StringContentProvider(json))
-            .header(CONTENT_TYPE, APPLICATION_JSON_TYPE)
+            .header(HttpHeader.CONTENT_TYPE, APPLICATION_JSON_TYPE)
             .method(HttpMethod.PUT).send();
    }
 
@@ -451,7 +468,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       ContentResponse jsonResponse = client
             .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "objectCache", "addr2"))
             .content(new BytesContentProvider(jsonMarshalled))
-            .header(CONTENT_TYPE, APPLICATION_JSON_TYPE)
+            .header(HttpHeader.CONTENT_TYPE, APPLICATION_JSON_TYPE)
             .method(HttpMethod.PUT)
             .send();
 
@@ -461,7 +478,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       ContentResponse xmlResponse = client
             .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "objectCache", "addr3"))
             .content(new BytesContentProvider(xmlMarshalled))
-            .header(CONTENT_TYPE, APPLICATION_XML_TYPE)
+            .header(HttpHeader.CONTENT_TYPE, APPLICATION_XML_TYPE)
             .method(HttpMethod.PUT)
             .send();
 
@@ -471,7 +488,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       ContentResponse serializationResponse = client
             .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "objectCache", "addr4"))
             .content(new BytesContentProvider(javaMarshalled))
-            .header(CONTENT_TYPE, APPLICATION_SERIALIZED_OBJECT_TYPE)
+            .header(HttpHeader.CONTENT_TYPE, APPLICATION_SERIALIZED_OBJECT_TYPE)
             .method(HttpMethod.PUT)
             .send();
 
