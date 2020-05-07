@@ -5,26 +5,28 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 
 import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A {@link Xid} implementation.
  * <p>
  * If need to be serialized, use the methods {@link #writeTo(ObjectOutput, XidImpl)} and {@link #readFrom(ObjectInput)}
+ * or the {@link AdvancedExternalizer} in {@link #EXTERNALIZER}.
  *
  * @author Pedro Ruivo
  * @since 9.1
  */
-@ProtoTypeId(ProtoStreamTypeIds.XID_IMPL)
 public class XidImpl implements Xid {
+
+   public static final AdvancedExternalizer<XidImpl> EXTERNALIZER = new Externalizer();
 
    private final int formatId;
    //first byte is the first byte of branch id.
@@ -40,8 +42,7 @@ public class XidImpl implements Xid {
       System.arraycopy(branchQualifier, 0, rawId, globalTransactionId.length + 1, branchQualifier.length);
    }
 
-   @ProtoFactory
-   XidImpl(int formatId, byte[] rawId) {
+   private XidImpl(int formatId, byte[] rawId) {
       this.formatId = formatId;
       this.rawId = rawId;
    }
@@ -81,7 +82,6 @@ public class XidImpl implements Xid {
             "}";
    }
 
-   @ProtoField(number = 1, defaultValue = "0")
    @Override
    public int getFormatId() {
       return formatId;
@@ -103,11 +103,6 @@ public class XidImpl implements Xid {
 
    public ByteBuffer getBranchQualifierAsByteBuffer() {
       return ByteBuffer.wrap(rawId, branchQualifierOffset(), branchQualifierLength());
-   }
-
-   @ProtoField(number = 2)
-   byte[] getRawId() {
-      return rawId;
    }
 
    @Override
@@ -187,5 +182,28 @@ public class XidImpl implements Xid {
          }
       }
       return true;
+   }
+
+   private static class Externalizer implements AdvancedExternalizer<XidImpl> {
+
+      @Override
+      public Set<Class<? extends XidImpl>> getTypeClasses() {
+         return Collections.singleton(XidImpl.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.XID_IMPL;
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, XidImpl object) throws IOException {
+         writeTo(output, object);
+      }
+
+      @Override
+      public XidImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return readFrom(input);
+      }
    }
 }
