@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 
 import javax.security.auth.x500.X500Principal;
 
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
@@ -295,6 +296,11 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
     */
    @Override
    public void pause(int server) {
+   }
+
+   @Override
+   public RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder) {
+      return new RemoteCacheManager(builder.build());
    }
 
 }

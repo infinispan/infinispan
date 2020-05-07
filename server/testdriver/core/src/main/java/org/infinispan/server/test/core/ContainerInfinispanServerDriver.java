@@ -27,8 +27,6 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
@@ -67,7 +65,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    public static final String IMAGE_USER = "200";
    private final InfinispanGenericContainer[] containers;
    private final String[] volumes;
-   private final boolean preferContainerExposedPorts;
    private String name;
    CountdownLatchLoggingConsumer latch;
    ImageFromDockerfile image;
@@ -79,7 +76,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       );
       this.containers = new InfinispanGenericContainer[configuration.numServers()];
       this.volumes = new String[configuration.numServers()];
-      this.preferContainerExposedPorts = Boolean.getBoolean(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_PREFER_CONTAINER_EXPOSED_PORTS);
    }
 
    static InetAddress getDockerBridgeAddress() {
@@ -369,15 +365,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    public String getLog(int server) {
       InfinispanGenericContainer container = containers[server];
       return container.getLogs();
-   }
-
-   @Override
-   public RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder) {
-      if (preferContainerExposedPorts) {
-         return new ContainerRemoteCacheManager(containers).wrap(builder);
-      } else {
-         return new RemoteCacheManager(builder.build());
-      }
    }
 
    @Override
