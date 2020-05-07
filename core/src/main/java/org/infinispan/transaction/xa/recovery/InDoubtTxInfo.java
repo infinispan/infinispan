@@ -1,14 +1,16 @@
 package org.infinispan.transaction.xa.recovery;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.tx.XidImpl;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -18,15 +20,15 @@ import org.infinispan.remoting.transport.Address;
  * @author Mircea Markus
  * @since 5.0
  */
-@ProtoTypeId(ProtoStreamTypeIds.IN_DOUBT_TX_INFO)
 public class InDoubtTxInfo {
+   public static final AbstractExternalizer<InDoubtTxInfo> EXTERNALIZER = new Externalizer();
+
    private final XidImpl xid;
    private final long internalId;
    private int status;
    private final transient Set<Address> owners = new HashSet<>();
    private transient boolean isLocal;
 
-   @ProtoFactory
    public InDoubtTxInfo(XidImpl xid, long internalId, int status) {
       this.xid = xid;
       this.internalId = internalId;
@@ -40,7 +42,6 @@ public class InDoubtTxInfo {
    /**
     * @return The transaction's {@link XidImpl}.
     */
-   @ProtoField(number = 1)
    public XidImpl getXid() {
       return xid;
    }
@@ -49,7 +50,6 @@ public class InDoubtTxInfo {
     * @return The unique long object associated to {@link XidImpl}. It makes possible the invocation of recovery
     * operations.
     */
-   @ProtoField(number = 2, defaultValue = "0")
    public long getInternalId() {
       return internalId;
    }
@@ -59,7 +59,6 @@ public class InDoubtTxInfo {
     *
     * @return The {@link javax.transaction.Status} or -1 if not set.
     */
-   @ProtoField(number = 3, defaultValue = "-1")
    public int getStatus() {
       return status;
    }
@@ -130,5 +129,30 @@ public class InDoubtTxInfo {
             ", owners=" + owners +
             ", isLocal=" + isLocal +
             '}';
+   }
+
+   private static class Externalizer extends AbstractExternalizer<InDoubtTxInfo> {
+
+      @Override
+      public void writeObject(ObjectOutput output, InDoubtTxInfo info) throws IOException {
+         XidImpl.writeTo(output, info.xid);
+         output.writeLong(info.internalId);
+         output.writeInt(info.status);
+      }
+
+      @Override
+      public InDoubtTxInfo readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new InDoubtTxInfo(XidImpl.readFrom(input), input.readLong(), input.readInt());
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.IN_DOUBT_TX_INFO;
+      }
+
+      @Override
+      public Set<Class<? extends InDoubtTxInfo>> getTypeClasses() {
+         return Collections.singleton(InDoubtTxInfo.class);
+      }
    }
 }
