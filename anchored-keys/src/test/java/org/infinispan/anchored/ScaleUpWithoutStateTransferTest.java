@@ -18,7 +18,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "stationary.ScalingUpWithoutStateTransferTest")
+@Test(groups = "functional", testName = "stationary.ScaleUpWithoutStateTransferTest")
 public class ScaleUpWithoutStateTransferTest extends MultipleCacheManagersTest {
    public static final String CACHE_NAME = "testCache";
    public static final String KEY_1 = "key1";
