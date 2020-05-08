@@ -39,10 +39,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.Server;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.shrinkwrap.api.exporter.ZipExporter;
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.jboss.shrinkwrap.resolver.api.maven.Maven;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
@@ -90,7 +86,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    }
 
    @Override
-   protected void start(String name, File rootDir, String configurationFile) {
+   protected void start(String name, File rootDir, File configurationFile) {
       this.name = name;
       // Build a skeleton server layout
       createServerHierarchy(rootDir);
@@ -98,7 +94,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       List<String> args = new ArrayList<>();
       args.add("bin/server.sh");
       args.add("-c");
-      args.add(configurationFile);
+      args.add(configurationFile.getName());
       args.add("-b");
       args.add("SITE_LOCAL");
       args.add("-Djgroups.bind.address=SITE_LOCAL");
@@ -284,29 +280,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       return container;
    }
 
-   private void copyArtifactsToUserLibDir(File libDir) {
-      // Maven artifacts
-      String propertyArtifacts = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_EXTRA_LIBS);
-      String[] artifacts = propertyArtifacts != null ? propertyArtifacts.replaceAll("\\s+", "").split(",") : configuration.mavenArtifacts();
-      if (artifacts != null && artifacts.length > 0) {
-         MavenResolvedArtifact[] archives = Maven.resolver().resolve(artifacts).withoutTransitivity().asResolvedArtifact();
-         for (MavenResolvedArtifact archive : archives) {
-            Exceptions.unchecked(() -> {
-               Path source = archive.asFile().toPath();
-               Files.copy(source, libDir.toPath().resolve(source.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-            });
-         }
-      }
-      // Supplied artifacts
-      if (configuration.archives() != null) {
-         for (JavaArchive artifact : configuration.archives()) {
-            File jar = libDir.toPath().resolve(artifact.getName()).toFile();
-            jar.setWritable(true, false);
-            artifact.as(ZipExporter.class).exportTo(jar, true);
-         }
-      }
-   }
-
    @Override
    protected void stop() {
       for (int i = 0; i < containers.length; i++) {
@@ -405,12 +378,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          JMXConnector jmxConnector = JMXConnectorFactory.connect(url);
          return jmxConnector.getMBeanServerConnection();
       });
-   }
-
-   @Override
-   public String getLog(int server) {
-      InfinispanGenericContainer container = containers[server];
-      return container.getLogs();
    }
 
    @Override

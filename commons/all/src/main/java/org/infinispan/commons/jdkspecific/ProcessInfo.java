@@ -26,6 +26,10 @@ public class ProcessInfo {
       return new ProcessInfo();
    }
 
+   public static ProcessInfo of(java.lang.Process process) {
+      throw new UnsupportedOperationException();
+   }
+
    public String getName() {
       return name;
    }

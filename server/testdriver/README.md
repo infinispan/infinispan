@@ -22,6 +22,7 @@ The test driver can run Infinispan Servers in different modes:
 
 * **EMBEDDED**: all servers are run in the same JVM as the test
 * **CONTAINER**: the servers are executed inside a container
+* **FORKED**: the servers are executed in a different JVM process
 
 The **CONTAINER** driver can either use a user-supplied image, a published one or a local server installation.
 
@@ -111,7 +112,7 @@ The following is a list of properties which affect the build:
 * `org.infinispan.test.server.container.preserveImage` whether to preserve the created image after the test has run.
 * `org.infinispan.test.server.container.timeoutSeconds` the amount of time in seconds to wait for a server start/stop operation when using the `CONTAINER` driver.
 * `org.infinispan.test.server.embedded.timeoutSeconds` the amount of time in seconds to wait for a server start/stop operation when using the `EMBEDDED` driver.
-* `org.infinispan.test.server.driver`  the driver to use, `EMBEDDED` or `CONTAINER`. Defaults to the `EMBEDDED` driver.
+* `org.infinispan.test.server.driver`  the driver to use, `EMBEDDED`, `CONTAINER` or `FORKED`. Defaults to the `EMBEDDED` driver.
 * `org.infinispan.test.server.extension.libs` locates artifact defined by G:A:V, you can pass a list of libraries (comma separeted) to be copied to the server. Only needed for container mode.
 * `org.infinispan.test.server.database.types` comma-separated list of database types to be used during persistence tests.
 * `org.infinispan.test.server.database.properties.path` a path to a directory containing property files with connection details for each database to be tested.
@@ -119,8 +120,9 @@ The following is a list of properties which affect the build:
 * `org.infinispan.server.test.database.<type>.password` password to use for a specific database type
 * `org.infinispan.server.test.database.<type>.address` address to use for a specific database type
 * `org.infinispan.server.test.database.<type>.port` port to use for a specific database type
+* `org.infinispan.test.server.container.timeoutSeconds` the amount of time in seconds to wait for a server start/stop operation when using the `FORKED` driver
+* `org.infinispan.test.server.home` Specifies a comma-separated list to server home path. Only for `FORKED` driver
 
 ## JMX
 
 Servers started by the testsuite drivers will have JMX enabled and tests can obtain MBeans by going through the driver API.
-

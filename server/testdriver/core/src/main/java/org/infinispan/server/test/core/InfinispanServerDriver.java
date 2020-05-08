@@ -124,14 +124,6 @@ public interface InfinispanServerDriver {
    RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder);
 
    /**
-    * Access to container log
-    *
-    * @param server the index of the server
-    * @return a String snapshot of a container's entire log output
-    */
-   String getLog(int server);
-
-   /**
     * Returns the amount of time in seconds that we should wait for a server start/stop operation. This may vary
     * depending on the type of driver (embedded, container)
     *

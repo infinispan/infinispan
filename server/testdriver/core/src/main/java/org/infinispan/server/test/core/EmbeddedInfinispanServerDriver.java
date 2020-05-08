@@ -42,7 +42,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    }
 
    @Override
-   protected void start(String name, File rootDir, String configurationFile) {
+   protected void start(String name, File rootDir, File configurationFile) {
       servers = new ArrayList<>();
       serverFutures = new ArrayList<>();
       for (int i = 0; i < configuration.numServers(); i++) {
@@ -55,7 +55,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
          properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
          configureSite(properties);
          configuration.properties().forEach((k, v) -> properties.put(k, StringPropertyReplacer.replaceProperties((String) v, properties)));
-         Server server = new Server(serverRoot, new File(configurationFile), properties);
+         Server server = new Server(serverRoot, new File(configurationFile.getName()), properties);
          server.setExitHandler(new DefaultExitHandler());
          serverFutures.add(server.run());
          servers.add(server);
@@ -130,9 +130,6 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    public boolean isRunning(int server) {
       return servers.get(server).getStatus().allowInvocations();
    }
-
-   @Override
-   public String getLog(int server) { throw new UnsupportedOperationException();  }
 
    @Override
    public MBeanServerConnection getJmxConnection(int server) {

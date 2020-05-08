@@ -17,6 +17,12 @@ public enum ServerRunMode {
          return new ContainerInfinispanServerDriver(configuration);
       }
    },
+   FORKED {
+      @Override
+      public AbstractInfinispanServerDriver newDriver(InfinispanServerTestConfiguration configuration) {
+         return new ForkedInfinispanServerDriver(configuration);
+      }
+   },
    DEFAULT {
       @Override
       public AbstractInfinispanServerDriver newDriver(InfinispanServerTestConfiguration configuration) {
