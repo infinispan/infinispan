@@ -507,7 +507,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
                log.tracef("Enabling near-caching for cache '%s'", cacheName);
             }
             return new InvalidatedNearRemoteCache<>(this, cacheName, timeService,
-                  createNearCacheService(cacheName, configuration.nearCache()));
+                  createNearCacheService(cacheName, nearCache));
          case DISABLED:
          default:
             return new RemoteCacheImpl<>(this, cacheName, timeService);
