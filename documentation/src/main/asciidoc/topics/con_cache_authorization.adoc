@@ -1,10 +1,10 @@
-[id='cache_authorization-{context}']
+[id='cache_authorization']
 = Cache Authorization
 {brandname} can restrict access to data by authorizing requests to perform
 cache operations.
 
 {brandname} maps identities, or Principals of type `java.security.Principal`,
-to security roles in your configuration. For example, a Principal named 
+to security roles in your configuration. For example, a Principal named
 `reader` maps to a security role named `reader`.
 
 {brandname} lets you assign permissions to the various roles to authorize cache

@@ -1,6 +1,6 @@
 [id='rolling_server_upgrades']
 :context: upgrade
-= Upgrading {brandname} Servers
+= Performing Rolling Upgrades for {brandname} Servers
 Perform rolling upgrades of your {brandname} clusters to change between
 versions without downtime or data loss. Rolling upgrades migrate both your
 {brandname} servers and your data to the target version over Hot Rod.
