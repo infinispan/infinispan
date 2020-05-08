@@ -1,0 +1,40 @@
+[id='patching_download-{context}']
+= Downloading Server Patches
+Download patches that you can apply to {brandname} servers.
+
+.Procedure
+
+. Access the {portal}.
+. Download the appropriate {brandname} server patch from the link:{download_url}[software downloads section].
+. Open a terminal window and navigate to `{server_home}`.
+. Start the CLI.
++
+[source,options="nowrap",subs=attributes+]
+----
+$ bin/cli.sh
+[disconnected]>
+----
++
+. Describe the patch file you downloaded.
++
+[source,options="nowrap",subs=attributes+]
+----
+[disconnected]> patch describe /path/to/redhat-datagrid-$version-server-patch.zip
+{fullbrandname} patch target=$target_version source=$source_version created=$timestamp
+----
++
+* `$target_version` is the {brandname} version that applies when you install the patch on a server.
+* `$source_version` is one or more {brandname} server versions where you can install the patch.
+
+.Verification
+Use the checksum to verify the integrity of your download.
+
+. Run the `md5sum` or `sha256sum` command with the downloaded patch as the
+argument, for example:
++
+[source,options="nowrap",subs=attributes+]
+----
+$ sha256sum redhat-datagrid-$version-server-patch.zip
+----
++
+. Compare with the `MD5` or `SHA-256` checksum value on the {ProductName} *Software Details* page.

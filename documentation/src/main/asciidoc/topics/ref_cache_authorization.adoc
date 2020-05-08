@@ -1,4 +1,4 @@
-[id='authorization_config-{context}']
+[id='authorization_config']
 = Cache Authorization Configuration
 
 {brandname} configuration for cache authorization is as follows:
