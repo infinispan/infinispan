@@ -1,5 +1,5 @@
 [id='server_quickstart']
-:context: server_quickstart
+:context: server
 = Running {brandname} Servers
 Spin up {brandname} server instances that automatically form clusters. Learn
 how to create cache definitions to store your data.

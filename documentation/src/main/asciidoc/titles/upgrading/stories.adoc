@@ -3,4 +3,5 @@
 
 include::{stories}/assembly_upgrading.adoc[leveloffset=+1]
 include::{stories}/assembly_server_rolling_upgrades.adoc[leveloffset=+1]
+include::{stories}/assembly_server_patching.adoc[leveloffset=+1]
 include::{stories}/assembly_migrating_data.adoc[leveloffset=+1]
