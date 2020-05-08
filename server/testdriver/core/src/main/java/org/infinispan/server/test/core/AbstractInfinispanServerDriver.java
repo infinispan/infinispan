@@ -5,8 +5,10 @@ import java.io.FileOutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -33,6 +35,10 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.Server;
 import org.infinispan.server.test.api.TestUser;
+import org.jboss.shrinkwrap.api.exporter.ZipExporter;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
@@ -90,7 +96,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
          throw new RuntimeException("Failed to create server configuration directory " + confDir);
       }
       // if the file is not a default file, we need to copy the file from the resources folder to the server conf dir
-      if(!configuration.isDefaultFile()) {
+      if (!configuration.isDefaultFile()) {
          copyProvidedServerConfigurationFile();
       }
       createUserFile("default");
@@ -107,10 +113,12 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
 
    @Override
    public final void stop(String name) {
-      status = ComponentStatus.STOPPING;
-      log.infof("Stopping server %s", name);
-      stop();
-      log.infof("Stopped server %s", name);
+      if (status == ComponentStatus.RUNNING) {
+         status = ComponentStatus.STOPPING;
+         log.infof("Stopping server %s", name);
+         stop();
+         log.infof("Stopped server %s", name);
+      }
       status = ComponentStatus.TERMINATED;
    }
 
@@ -172,6 +180,29 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       // Create users with composite roles
       for(TestUser user : TestUser.values()) {
          userTool.createUser(user.getUser(), user.getPassword(), realm, UserTool.Encryption.DEFAULT, user.getRoles(), null);
+      }
+   }
+
+   protected void copyArtifactsToUserLibDir(File libDir) {
+      // Maven artifacts
+      String propertyArtifacts = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_EXTRA_LIBS);
+      String[] artifacts = propertyArtifacts != null ? propertyArtifacts.replaceAll("\\s+", "").split(",") : configuration.mavenArtifacts();
+      if (artifacts != null && artifacts.length > 0) {
+         MavenResolvedArtifact[] archives = Maven.resolver().resolve(artifacts).withoutTransitivity().asResolvedArtifact();
+         for (MavenResolvedArtifact archive : archives) {
+            Exceptions.unchecked(() -> {
+               Path source = archive.asFile().toPath();
+               Files.copy(source, libDir.toPath().resolve(source.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+            });
+         }
+      }
+      // Supplied artifacts
+      if (configuration.archives() != null) {
+         for (JavaArchive artifact : configuration.archives()) {
+            File jar = libDir.toPath().resolve(artifact.getName()).toFile();
+            jar.setWritable(true, false);
+            artifact.as(ZipExporter.class).exportTo(jar, true);
+         }
       }
    }
 
@@ -319,4 +350,5 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    public RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder) {
       return new RemoteCacheManager(builder.build());
    }
+
 }

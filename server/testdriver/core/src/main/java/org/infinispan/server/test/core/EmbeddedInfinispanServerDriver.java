@@ -132,9 +132,6 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    }
 
    @Override
-   public String getLog(int server) { throw new UnsupportedOperationException();  }
-
-   @Override
    public MBeanServerConnection getJmxConnection(int server) {
       DefaultCacheManager cacheManager = servers.get(server).getCacheManagers().values().iterator().next();
       return cacheManager.getCacheManagerConfiguration().jmx().mbeanServerLookup().getMBeanServer();

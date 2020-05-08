@@ -30,6 +30,10 @@ public class TestSystemPropertyNames {
     */
    public static final String INFINISPAN_TEST_SERVER_CONTAINER_TIMEOUT_SECONDS = "org.infinispan.test.server.container.timeoutSeconds";
    /**
+    * The timeout in seconds to wait for the container driver servers to start
+    */
+   public static final String INFINISPAN_TEST_SERVER_FORKED_TIMEOUT_SECONDS = "org.infinispan.test.server.forked.timeoutSeconds";
+   /**
     * The path to a local installation of the server
     */
    public static final String INFINISPAN_TEST_SERVER_DIR = "org.infinispan.test.server.dir";
@@ -38,4 +42,8 @@ public class TestSystemPropertyNames {
     * It should be a file name located in the module server/tests/src/test/resources/configuration or a full path
     */
    public static final String INFINISPAN_TEST_SERVER_LOG_FILE = "org.infinispan.test.server.container.logFile";
+   /**
+    * Specifies a comma-separated list to server home path. Only for FORKED
+    */
+   public static final String INFINISPAN_SERVER_HOME = "org.infinispan.test.server.home";
 }
