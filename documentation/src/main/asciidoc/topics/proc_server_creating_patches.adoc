@@ -1,0 +1,89 @@
+[id='patching_create-{context}']
+= Creating Server Patches
+You can create patches for {brandname} servers from an existing server
+installation.
+
+ifndef::productized[]
+You can create patches for {brandname} servers starting from 10.1.7. You can
+patch any 10.1 or later server installation. However you cannot patch 9.4.x or
+earlier servers with 10.1.7 or later.
+
+You can also create patches that either upgrade or downgrade the {brandname}
+server version. For example, you can create a patch from version 10.1.7 and use
+it to upgrade version 10.1.5 or downgrade version 11.0.0.
+endif::productized[]
+ifdef::productized[]
+You can create patches for {brandname} servers starting from 8.0.1. You can
+patch 8.0 GA servers with 8.0.1. However you cannot patch 7.3.x or earlier
+servers with 8.0.1 or later.
+
+You can also create patches that either upgrade or downgrade the {brandname}
+server version. For example, you can create a patch from version 8.0.1 and use
+it to upgrade version 8.0 GA or downgrade a later version.
+
+[IMPORTANT]
+====
+{RedHat} supports patched server deployments only with patches that you
+download from the {portal}. {RedHat} does not support server patches that you
+create yourself.
+====
+endif::productized[]
+
+.Procedure
+
+. Navigate to `{server_home}` for a {brandname} server installation that has
+the target version for the patch you want to create.
+. Start the CLI.
++
+[source,options="nowrap",subs=attributes+]
+----
+$ bin/cli.sh
+[disconnected]>
+----
++
+. Use the `patch create` command to generate a patch archive and include the `-q` option with a meaningful qualifier to describe the patch.
++
+[source,options="nowrap",subs=attributes+]
+----
+[disconnected]> patch create -q "this is my test patch" path/to/mypatch.zip \
+path/to/target/server/home path/to/source/server/home
+----
++
+The preceding command generates a `.zip` archive in the specified directory.
+Paths are relative to `{server_home}` for the target server.
++
+[TIP]
+====
+Create single patches for multiple different {brandname} versions, for example:
+
+[source,options="nowrap",subs=attributes+]
+----
+[disconnected]> patch create -q "this is my test patch" path/to/mypatch.zip \
+path/to/target/server/home \
+path/to/source/server1/home path/to/source/server2/home
+----
+
+Where `server1` and `server2` are different {brandname} versions where you can
+install "mypatch.zip".
+====
++
+. Describe the generated patch archive.
++
+[source,options="nowrap",subs=attributes+]
+----
+[disconnected]> patch describe path/to/mypatch.zip
+
+{fullbrandname} patch target=$target_version(my test patch)  source=$source_version created=$timestamp
+----
++
+* `$target_version` is the {brandname} server version from which the patch was created.
+* `$source_version` is one or more {brandname} server versions to which you can apply the patch.
++
+You can apply patches to {brandname} servers that match the `$source_version`
+only. Attempting to apply patches to other versions results in the following
+exception:
++
+[source,options="nowrap",subs=attributes+]
+----
+java.lang.IllegalStateException: The supplied patch cannot be applied to `$source_version`
+----

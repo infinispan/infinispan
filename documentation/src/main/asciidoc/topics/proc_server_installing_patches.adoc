@@ -1,0 +1,70 @@
+[id='patching_install-{context}']
+= Installing Server Patches
+Apply patches to {brandname} servers to upgrade or downgrade an existing
+version.
+
+.Prerequisites
+
+ifndef::productized[]
+* Create a server patch for the target version.
+endif::productized[]
+ifdef::productized[]
+* Download a server patch for the target version.
+endif::productized[]
+
+
+.Procedure
+
+. Navigate to `{server_home}` for the {brandname} server you want to patch.
+. Stop the server if it is running.
++
+[NOTE]
+====
+If you patch a server while it is running, the version changes take effect
+after restart. If you do not want to stop the server, create a new cluster with
+the target version and perform a rolling upgrade to that version instead of
+patching.
+====
++
+. Start the CLI.
++
+[source,options="nowrap",subs=attributes+]
+----
+$ bin/cli.sh
+[disconnected]>
+----
++
+. Install the patch.
++
+[source,options="nowrap",subs=attributes+]
+----
+[disconnected]> patch install path/to/patch.zip
+
+{fullbrandname} patch target=$target_version source=$source_version \
+created=$timestamp installed=$timestamp
+----
++
+* `$target_version` displays the {brandname} version that the patch installed.
+* `$source_version` displays the {brandname} version before you installed the patch.
++
+. Start the server to verify the patch is installed.
++
+[source,options="nowrap",subs=attributes+]
+----
+$ bin/server.sh
+...
+ISPN080001: {fullbrandname} Server $version
+----
++
+If the patch is installed successfully `$version` matches `$target_version`.
+
+[TIP]
+====
+Use the `--server` option to install patches in a different `{server_home}`
+directory, for example:
+
+[source,options="nowrap",subs=attributes+]
+----
+[disconnected]> patch install path/to/patch.zip --server=path/to/server/home
+----
+====

@@ -1,4 +1,4 @@
-[id='disable_endpoint_auth-{context}']
+[id='disable_endpoint_auth']
 = Disabling {brandname} Server Authentication
 
 .Procedure

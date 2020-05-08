@@ -1,0 +1,75 @@
+[id='patching_rollback-{context}']
+= Rolling Back Server Patches
+Remove patches from {brandname} servers by rolling them back and restoring the
+previous {brandname} version.
+
+[IMPORTANT]
+====
+If a server has multiple patches installed, you can roll back the last
+installed patch only.
+
+Rolling back patches does not revert configuration changes you make to
+{brandname} server. Before you roll back patches, you should ensure that your
+configuration is compatible with the version to which you are rolling back.
+====
+
+.Procedure
+
+. Navigate to `{server_home}` for the {brandname} server installation you want to roll back.
+. Stop the server if it is running.
+. Start the CLI.
++
+[source,options="nowrap",subs=attributes+]
+----
+$ bin/cli.sh
+[disconnected]>
+----
++
+. List the installed patches.
++
+[source,options="nowrap",subs=attributes+]
+----
+[disconnected]> patch ls
+
+{fullbrandname} patch target=$target_version source=$source_version
+created=$timestamp installed=$timestamp
+----
++
+* `$target_version` is the {brandname} server version after the patch was applied.
+* `$source_version` is the version for {brandname} server before the patch was applied. Rolling back the patch restores the server to this version.
++
+. Roll back the last installed patch.
++
+[source,options="nowrap",subs=attributes+]
+----
+[disconnected]> patch rollback
+----
++
+. Quit the CLI.
++
+[source,options="nowrap",subs=attributes+]
+----
+[disconnected]> quit
+----
++
+. Start the server to verify the patch is rolled back to the previous version.
++
+[source,options="nowrap",subs=attributes+]
+----
+$ bin/server.sh
+...
+ISPN080001: {brandname} Server $version
+----
++
+If the patch is rolled back successfully `$version` matches `$source_version`.
+
+[TIP]
+====
+Use the `--server` option to rollback patches in a different `{server_home}`
+directory, for example:
+
+[source,options="nowrap",subs=attributes+]
+----
+[disconnected]> patch rollback --server=path/to/server/home
+----
+====
