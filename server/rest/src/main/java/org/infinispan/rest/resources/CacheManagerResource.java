@@ -50,6 +50,7 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.security.Security;
+import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.stats.CacheContainerStats;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
@@ -73,6 +74,7 @@ public class CacheManagerResource implements ResourceHandler {
    private final ParserRegistry parserRegistry = new ParserRegistry();
    private final String cacheManagerName;
    private final RestCacheManager<Object> restCacheManager;
+   private final CacheIgnoreManager cacheIgnoreManager;
 
    public CacheManagerResource(InvocationHelper invocationHelper) {
       this.objectMapper = invocationHelper.getMapper();
@@ -82,6 +84,7 @@ public class CacheManagerResource implements ResourceHandler {
       this.cacheManagerName = globalConfiguration.cacheManagerName();
       GlobalComponentRegistry globalComponentRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager);
       this.internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
+      this.cacheIgnoreManager = globalComponentRegistry.getComponent(CacheIgnoreManager.class);
    }
 
    @Override
@@ -214,6 +217,8 @@ public class CacheManagerResource implements ResourceHandler {
       Set<String> cacheNames = new HashSet<>(subjectCacheManager.getCacheNames());
       cacheNames.removeAll(internalCacheRegistry.getInternalCacheNames());
 
+
+      Set<String> ignoredCaches = cacheIgnoreManager.getIgnoredCaches();
       for(CacheHealth ch: SecurityActions.getHealth(subjectCacheManager).getCacheHealth(cacheNames)) {
          cachesHealth.put(ch.getCacheName(), ch.getStatus());
       }
@@ -221,14 +226,14 @@ public class CacheManagerResource implements ResourceHandler {
       // We rely on the fact that getCacheNames doesn't block for embedded - remote it does unfortunately
       return Flowable.fromIterable(cachesHealth.entrySet())
             .map(chHealth -> {
+               CacheInfo cacheInfo = new CacheInfo();
                String cacheName = chHealth.getKey();
+               cacheInfo.name = cacheName;
+               cacheInfo.health = cachesHealth.get(cacheName);
                Configuration cacheConfiguration = SecurityActions
                      .getCacheConfigurationFromManager(subjectCacheManager, cacheName);
-               CacheInfo cacheInfo = new CacheInfo();
-               cacheInfo.name = cacheName;
                cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
-               Cache cache =  restCacheManager.getCache(cacheName, request);
-               cacheInfo.status = cache.getStatus().toString();
+
                cacheInfo.simpleCache = cacheConfiguration.simpleCache();
                cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
                cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
@@ -237,7 +242,15 @@ public class CacheManagerResource implements ResourceHandler {
                cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
                cacheInfo.indexed = cacheConfiguration.indexing().index().isEnabled();
                cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
-               cacheInfo.health = cachesHealth.get(cacheName);
+
+               // If the cache is ignored, status is IGNORED
+               if(ignoredCaches.contains(cacheName)) {
+                  cacheInfo.status = "IGNORED";
+               } else {
+                  // This action will fail for ignored caches
+                  Cache cache =  restCacheManager.getCache(cacheName, request);
+                  cacheInfo.status = cache.getStatus().toString();
+               }
                return cacheInfo;
             })
             .collectInto(new HashSet<CacheInfo>(), Set::add)
