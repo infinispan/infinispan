@@ -179,6 +179,26 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       assertTrue(health.contains("HEALTHY"));
    }
 
+   @Test
+   public void testCachesWithIgnoreCache() throws Exception {
+      ignoreManager.ignoreCache("cache1");
+      String accept = "text/plain; q=0.9, application/json; q=0.6";
+      String url = String.format("http://localhost:%d/rest/v2/cache-managers/default/caches", restServer().getPort());
+      ContentResponse response = client.newRequest(url).header("Accept", accept).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      String json = response.getContentAsString();
+      JsonNode jsonNode = mapper.readTree(json);
+      List<String> names = asText(jsonNode.findValues("name"));
+      Set<String> expectedNames = Util.asSet("defaultcache", "cache1", "cache2");
+
+      assertEquals(expectedNames, new HashSet<>(names));
+
+      List<String> status = asText(jsonNode.findValues("status"));
+      assertTrue(status.contains("RUNNING"));
+      assertTrue(status.contains("IGNORED"));
+   }
+
    private List<String> asText(List<JsonNode> values) {
       return values.stream().map(JsonNode::asText).collect(Collectors.toList());
    }

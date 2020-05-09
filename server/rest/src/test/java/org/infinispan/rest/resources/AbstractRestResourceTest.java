@@ -37,6 +37,7 @@ import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.mappers.IdentityRoleMapper;
+import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -57,6 +58,8 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    private List<RestServerHelper> restServers = new ArrayList<>(NUM_SERVERS);
 
    protected boolean security;
+
+   protected CacheIgnoreManager ignoreManager;
 
    @Override
    protected String parameters() {
@@ -113,6 +116,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
             restServerHelper.start(TestResourceTracker.getCurrentTestShortName() + "-" + cm.getAddress());
             restServers.add(restServerHelper);
          }
+         ignoreManager = SecurityActions.getGlobalComponentRegistry(cacheManagers.get(0)).getComponent(CacheIgnoreManager.class);
          return null;
       });
       client = createNewClient();
