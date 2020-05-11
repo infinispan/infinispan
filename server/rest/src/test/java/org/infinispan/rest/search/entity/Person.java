@@ -4,40 +4,26 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.IndexedEmbedded;
-import org.hibernate.search.annotations.NumericField;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.descriptors.Type;
 
 /**
  * @since 9.2
  */
-@Indexed
-@SuppressWarnings("unused")
 public class Person implements Serializable {
 
-   @Field
    private Integer id;
 
-   @Field
    private String name;
 
-   @Field
    private String surname;
 
-   @Field
-   @NumericField
    private Integer age;
 
-   @Field
    private Address address;
 
-   @Field
    private Gender gender;
 
-   @IndexedEmbedded
    private Set<PhoneNumber> phoneNumbers;
 
    public Person() {
