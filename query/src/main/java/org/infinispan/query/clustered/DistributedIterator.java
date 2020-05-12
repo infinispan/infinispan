@@ -1,8 +1,5 @@
 package org.infinispan.query.clustered;
 
-import static org.infinispan.query.logging.Log.CONTAINER;
-
-import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
@@ -57,14 +54,10 @@ class DistributedIterator<E> implements ResultIterator<E> {
          partialTopDocs[i] = partialResults[i].topDocs;
          i++;
       }
-      try {
-         if (sort != null) {
-            mergedResults = TopDocs.merge(sort, firstResult, maxResults, (TopFieldDocs[]) partialTopDocs);
-         } else {
-            mergedResults = TopDocs.merge(firstResult, maxResults, partialTopDocs);
-         }
-      } catch (IOException e) {
-         throw CONTAINER.unexpectedIOException(e);
+      if (sort != null) {
+         mergedResults = TopDocs.merge(sort, firstResult, maxResults, (TopFieldDocs[]) partialTopDocs, true);
+      } else {
+         mergedResults = TopDocs.merge(firstResult, maxResults, partialTopDocs, true);
       }
    }
 

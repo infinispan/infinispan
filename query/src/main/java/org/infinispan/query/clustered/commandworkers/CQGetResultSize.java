@@ -2,9 +2,8 @@ package org.infinispan.query.clustered.commandworkers;
 
 import java.util.BitSet;
 
-import org.hibernate.search.query.engine.spi.DocumentExtractor;
-import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.query.clustered.QueryResponse;
+import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 
 /**
  * Get the result size of this query on current node
@@ -16,12 +15,10 @@ final class CQGetResultSize extends CQWorker {
 
    @Override
    QueryResponse perform(BitSet segments) {
-      HSQuery query = queryDefinition.getHsQuery();
-      query.afterDeserialise(getSearchFactory());
+      SearchQueryBuilder query = queryDefinition.getSearchQuery();
       setFilter(segments);
-      try (DocumentExtractor ignored = query.queryDocumentExtractor()) {
-         int resultSize = query.queryResultSize();
-         return new QueryResponse(resultSize);
-      }
+      long hitCount = query.build().fetchTotalHitCount();
+      // or maybe is it better to keep long?
+      return new QueryResponse(Math.toIntExact(hitCount));
    }
 }

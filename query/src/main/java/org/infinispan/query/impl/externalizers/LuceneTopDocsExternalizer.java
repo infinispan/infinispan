@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.TotalHits;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 
@@ -20,20 +21,18 @@ public class LuceneTopDocsExternalizer extends AbstractExternalizer<TopDocs> {
 
    @Override
    public TopDocs readObject(final ObjectInput input) throws IOException, ClassNotFoundException {
-      final int totalHits = UnsignedNumeric.readUnsignedInt(input);
-      final float maxScore = input.readFloat();
+      final long totalHits = UnsignedNumeric.readUnsignedLong(input);
       final int scoreCount = UnsignedNumeric.readUnsignedInt(input);
       final ScoreDoc[] scoreDocs = new ScoreDoc[scoreCount];
       for (int i = 0; i < scoreCount; i++) {
          scoreDocs[i] = (ScoreDoc) input.readObject();
       }
-      return new TopDocs(totalHits, scoreDocs, maxScore);
+      return new TopDocs(new TotalHits(totalHits, TotalHits.Relation.EQUAL_TO), scoreDocs);
    }
 
    @Override
    public void writeObject(final ObjectOutput output, final TopDocs topDocs) throws IOException {
-      UnsignedNumeric.writeUnsignedInt(output, topDocs.totalHits);
-      output.writeFloat(topDocs.getMaxScore());
+      UnsignedNumeric.writeUnsignedLong(output, topDocs.totalHits.value);
       final ScoreDoc[] scoreDocs = topDocs.scoreDocs;
       final int count = scoreDocs.length;
       UnsignedNumeric.writeUnsignedInt(output, count);

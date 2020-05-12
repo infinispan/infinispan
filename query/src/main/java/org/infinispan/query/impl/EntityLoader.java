@@ -5,47 +5,56 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.search.query.engine.spi.EntityInfo;
+import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.search.mapper.common.EntityReference;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.query.backend.KeyTransformationHandler;
 
 /**
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author Marko Luksa
  * @since 5.0
  */
-final class EntityLoader implements QueryResultLoader {
+public final class EntityLoader<E> implements QueryResultLoader<E> {
 
-   private final AdvancedCache<?, ?> cache;
+   private final AdvancedCache<?, E> cache;
    private final KeyTransformationHandler keyTransformationHandler;
    private final DataConversion keyDataConversion;
 
-   EntityLoader(AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
-      this.keyTransformationHandler = keyTransformationHandler;
+   public EntityLoader(AdvancedCache<?, E> cache, KeyTransformationHandler keyTransformationHandler) {
       this.cache = cache;
+      this.keyTransformationHandler = keyTransformationHandler;
       this.keyDataConversion = cache.getKeyDataConversion();
    }
 
-   private Object decodeKey(EntityInfo entityInfo) {
-      return keyDataConversion.fromStorage(keyTransformationHandler.stringToKey(entityInfo.getId().toString()));
+   private Object decodeKey(EntityReference entityReference) {
+      return keyDataConversion.fromStorage(keyTransformationHandler.stringToKey((String) entityReference.getId()));
    }
 
    @Override
-   public Object load(EntityInfo entityInfo) {
-      return cache.get(decodeKey(entityInfo));
+   public E loadBlocking(EntityReference entityReference) {
+      return cache.get(decodeKey(entityReference));
    }
 
    @Override
-   public List<Object> load(List<EntityInfo> entityInfos) {
-      int entitiesSize = entityInfos.size();
+   public List<E> loadBlocking(List<EntityReference> entityReferences) {
+      int entitiesSize = entityReferences.size();
       LinkedHashSet<Object> keys = new LinkedHashSet<>(entitiesSize);
-      for (EntityInfo e : entityInfos) {
-         keys.add(decodeKey(e));
+      for (EntityReference entityReference : entityReferences) {
+         keys.add(decodeKey(entityReference));
       }
-      // The entries will be in the same order as requested in keys LinkedHashSet because internally we preserve order by
-      // using a LinkedHashMap for the result of getAll
-      Map<?, ?> entries = cache.getAll(keys);
-      return new ArrayList<>(entries.values());
+
+      // getAll instead of multiple gets to get all the results in the same call
+      Map<?, E> values = cache.getAll(keys);
+      ArrayList<E> result = new ArrayList<>(entityReferences.size());
+      for (Object key : keys) {
+         // if the entity was present at indexing time and
+         // it is not present anymore now at searching time,
+         // we will add a null here
+         result.add(values.get(key));
+      }
+
+      return result;
    }
 }

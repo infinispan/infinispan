@@ -97,4 +97,8 @@ class WrappedMessageTagHandler implements TagHandler {
          valueWrapper.setMessageDescriptor((Descriptor) descriptor);
       }
    }
+
+   public byte[] getMessageBytes() {
+      return messageBytes;
+   }
 }

@@ -43,7 +43,7 @@ public final class QueryResponse {
 
    public QueryResponse(NodeTopDocs nodeTopDocs) {
       this.nodeTopDocs = nodeTopDocs;
-      this.resultSize = nodeTopDocs.topDocs == null ? 0 : nodeTopDocs.topDocs.totalHits;
+      this.resultSize = Math.toIntExact(nodeTopDocs.topDocs == null ? 0 : nodeTopDocs.topDocs.totalHits.value);
       fetchedValue = null;
    }
 

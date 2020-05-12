@@ -1,6 +1,7 @@
 package org.infinispan.query.impl.massindex;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -9,14 +10,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
-import org.hibernate.search.spi.IndexedTypeIdentifier;
-import org.hibernate.search.spi.SearchIntegrator;
-import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
@@ -27,6 +23,7 @@ import org.infinispan.query.MassIndexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -45,7 +42,6 @@ public class DistributedExecutorMassIndexer implements MassIndexer, Indexer {
    private static final Log LOG = LogFactory.getLog(DistributedExecutorMassIndexer.class, Log.class);
 
    private final AdvancedCache<?, ?> cache;
-   private final SearchIntegrator searchIntegrator;
    private final IndexUpdater indexUpdater;
    private final ClusterExecutor executor;
    private final BlockingManager blockingManager;
@@ -59,11 +55,10 @@ public class DistributedExecutorMassIndexer implements MassIndexer, Indexer {
       }
    };
 
-   public DistributedExecutorMassIndexer(AdvancedCache<?, ?> cache, SearchIntegrator searchIntegrator,
-                                         KeyTransformationHandler keyTransformationHandler, TimeService timeService) {
+   public DistributedExecutorMassIndexer(AdvancedCache<?, ?> cache, SearchMappingHolder searchMappingHolder,
+                                         KeyTransformationHandler keyTransformationHandler) {
       this.cache = cache;
-      this.searchIntegrator = searchIntegrator;
-      this.indexUpdater = new IndexUpdater(searchIntegrator, keyTransformationHandler, timeService);
+      this.indexUpdater = new IndexUpdater(searchMappingHolder, keyTransformationHandler);
       this.executor = cache.getCacheManager().executor();
       this.blockingManager = cache.getCacheManager().getGlobalComponentRegistry()
             .getComponent(BlockingManager.class);
@@ -141,29 +136,21 @@ public class DistributedExecutorMassIndexer implements MassIndexer, Indexer {
             return CompletableFutures.completedExceptionFuture(new MassIndexerAlreadyStartedException());
          }
          isRunning = true;
-         Deque<IndexedTypeIdentifier> toFlush = new LinkedList<>();
+         Collection<Class<?>> javaClasses = (entities.length == 0) ?
+               indexUpdater.allJavaClasses() : Arrays.asList(entities);
+         Deque<Class<?>> toFlush = new LinkedList<>(javaClasses);
 
          BiConsumer<Void, Throwable> flushIfNeeded = (v, t) -> {
             try {
                indexUpdater.flush(toFlush);
+               indexUpdater.refresh(toFlush);
             } finally {
                CompletionStages.join(lock.unlock());
                isRunning = false;
             }
          };
-         Set<IndexedTypeIdentifier> indexedTypes;
-         if (entities.length > 0) {
-            indexedTypes = Arrays.stream(entities)
-                  .map(PojoIndexedTypeIdentifier::convertFromLegacy)
-                  .collect(Collectors.toSet());
-         } else {
-            indexedTypes = new HashSet<>();
-            for (IndexedTypeIdentifier indexedType : searchIntegrator.getIndexBindings().keySet()) {
-               indexedTypes.add(indexedType);
-            }
-         }
          try {
-            IndexWorker indexWork = new IndexWorker(cache.getName(), indexedTypes, skipIndex, null);
+            IndexWorker indexWork = new IndexWorker(cache.getName(), javaClasses, skipIndex, null);
             CompletableFuture<Void> future = executor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS).submitConsumer(indexWork, TRI_CONSUMER);
             return blockingManager.whenCompleteBlocking(future, flushIfNeeded, this);
          } catch (Throwable t) {

@@ -6,7 +6,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOS
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.factories.ComponentRegistry;
@@ -18,6 +17,7 @@ import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResol
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 
 /**
  * Implementation of {@link RemoteQueryManager} for caches storing deserialized content (Java Objects).
@@ -30,21 +30,22 @@ final class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
 
    private final SerializationContext serCtx;
 
-   private final SearchIntegrator searchIntegrator;
+   private final SearchMappingHolder searchMapping;
 
    private final ComponentRegistry cr;
 
    ObjectRemoteQueryManager(AdvancedCache<?, ?> cache, ComponentRegistry cr, QuerySerializers querySerializers) {
       super(cache, querySerializers, cr);
       this.cr = cr;
-      this.searchIntegrator = cr.getComponent(SearchIntegrator.class);
+      this.searchMapping = cr.getComponent(SearchMappingHolder.class);
       this.serCtx = SecurityActions.getSerializationContext(cache.getCacheManager());
 
       BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
-      ObjectReflectionMatcher objectReflectionMatcher = ObjectReflectionMatcher.create(createEntityNamesResolver(APPLICATION_OBJECT), searchIntegrator);
+      ObjectReflectionMatcher objectReflectionMatcher = ObjectReflectionMatcher.create(
+            createEntityNamesResolver(APPLICATION_OBJECT), searchMapping);
       bcr.replaceComponent(ObjectReflectionMatcher.class.getName(), objectReflectionMatcher, true);
 
-      ProtobufObjectReflectionMatcher protobufObjectReflectionMatcher = ProtobufObjectReflectionMatcher.create(createEntityNamesResolver(APPLICATION_PROTOSTREAM), serCtx, searchIntegrator);
+      ProtobufObjectReflectionMatcher protobufObjectReflectionMatcher = ProtobufObjectReflectionMatcher.create(createEntityNamesResolver(APPLICATION_PROTOSTREAM), serCtx);
       bcr.registerComponent(ProtobufObjectReflectionMatcher.class, protobufObjectReflectionMatcher, true);
    }
 
@@ -69,7 +70,7 @@ final class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
          ReflectionMatcher matcher = mediaType.match(APPLICATION_PROTOSTREAM) ? cr.getComponent(ProtobufObjectReflectionMatcher.class) :
                cr.getComponent(ObjectReflectionMatcher.class);
 
-         queryEngine = new ObjectRemoteQueryEngine(cache, searchIntegrator != null, matcher.getClass());
+         queryEngine = new ObjectRemoteQueryEngine(cache, searchMapping != null, matcher.getClass());
          enginePerMediaType.put(mediaType.getTypeSubtype(), queryEngine);
       }
       return queryEngine;
@@ -81,7 +82,7 @@ final class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
       } else {
          ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
          ReflectionEntityNamesResolver reflectionEntityNamesResolver = new ReflectionEntityNamesResolver(classLoader);
-         if (searchIntegrator != null) {
+         if (searchMapping != null) {
             // If indexing is enabled then use the declared set of indexed classes for lookup but fallback to global classloader.
             QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
             Map<String, Class<?>> indexedEntities = queryInterceptor.indexedEntities();

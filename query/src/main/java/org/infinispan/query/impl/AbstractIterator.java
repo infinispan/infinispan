@@ -2,7 +2,6 @@ package org.infinispan.query.impl;
 
 import java.util.NoSuchElementException;
 
-import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.infinispan.query.ResultIterator;
 
 /**
@@ -12,7 +11,6 @@ import org.infinispan.query.ResultIterator;
  * @author Navin Surtani
  * @author Marko Luksa
  * @see org.infinispan.query.impl.EagerIterator
- * @see org.infinispan.query.impl.LazyIterator
  * @since 4.0
  */
 abstract class AbstractIterator<E> implements ResultIterator<E> {
@@ -34,13 +32,10 @@ abstract class AbstractIterator<E> implements ResultIterator<E> {
     */
    private final int lastIndex;
 
-   private final QueryResultLoader resultLoader;
-
-   protected AbstractIterator(QueryResultLoader resultLoader, int firstIndex, int lastIndex, int fetchSize) {
+   protected AbstractIterator(int firstIndex, int lastIndex, int fetchSize) {
       if (fetchSize < 1) {
          throw new IllegalArgumentException("fetchSize should be greater than 0");
       }
-      this.resultLoader = resultLoader;
       this.index = firstIndex;
       this.lastIndex = lastIndex;
 
@@ -78,10 +73,9 @@ abstract class AbstractIterator<E> implements ResultIterator<E> {
       bufferIndex = startIndex;
       int resultsToLoad = Math.min(buffer.length, lastIndex + 1 - bufferIndex);
       for (int i = 0; i < resultsToLoad; i++) {
-         EntityInfo entityInfo = loadEntityInfo(bufferIndex + i);
-         buffer[i] = resultLoader.load(entityInfo);
+         buffer[i] = loadHit(bufferIndex + i);
       }
    }
 
-   protected abstract EntityInfo loadEntityInfo(int index);
+   protected abstract E loadHit(int index);
 }

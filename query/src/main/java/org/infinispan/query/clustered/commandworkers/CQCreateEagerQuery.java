@@ -1,14 +1,13 @@
 package org.infinispan.query.clustered.commandworkers;
 
-import java.io.IOException;
 import java.util.BitSet;
+import java.util.List;
 
-import org.apache.lucene.search.TopDocs;
-import org.hibernate.search.exception.SearchException;
-import org.hibernate.search.query.engine.spi.DocumentExtractor;
-import org.hibernate.search.query.engine.spi.HSQuery;
+import org.hibernate.search.backend.lucene.search.query.LuceneSearchResult;
+import org.hibernate.search.engine.backend.common.DocumentReference;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
+import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 
 /**
  * Returns the results of a node to create an eager distributed iterator.
@@ -20,38 +19,37 @@ final class CQCreateEagerQuery extends CQWorker {
 
    @Override
    QueryResponse perform(BitSet segments) {
-      HSQuery query = queryDefinition.getHsQuery();
-      query.afterDeserialise(getSearchFactory());
+      SearchQueryBuilder query = queryDefinition.getSearchQuery();
       setFilter(segments);
-      try (DocumentExtractor extractor = query.queryDocumentExtractor()) {
-         int resultSize = query.queryResultSize();
-         return resultSize == 0 ? new QueryResponse(0) : new QueryResponse(collectKeys(extractor, query));
+
+      NodeTopDocs nodeTopDocs = (query.hasEntityProjection()) ? collectKeys(query) : collectProjections(query);
+      if (nodeTopDocs == null) {
+         return new QueryResponse(0);
       }
+      return new QueryResponse(nodeTopDocs);
    }
 
-   private NodeTopDocs collectKeys(DocumentExtractor extractor, HSQuery query) {
-      TopDocs topDocs = extractor.getTopDocs();
-      int topDocsLength = topDocs.scoreDocs.length;
-      Object[] keys = null;
-      Object[] projections = null;
-
-      if (query.getProjectedFields() == null) {
-         keys = new Object[topDocsLength];
-         // collecting keys (it's a eager query!)
-         for (int i = 0; i < topDocsLength; i++) {
-            keys[i] = extractKey(extractor, i);
-         }
-      } else {
-         projections = new Object[topDocsLength];
-         try {
-            for (int docIndex = 0; docIndex < topDocsLength; docIndex++) {
-               projections[docIndex] = extractor.extract(docIndex).getProjection();
-            }
-         } catch (IOException e) {
-            throw new SearchException("Error while extracting projection", e);
-         }
+   private NodeTopDocs collectKeys(SearchQueryBuilder query) {
+      LuceneSearchResult<DocumentReference> queryResult = query.documentReference().fetchAll();
+      if (queryResult.totalHitCount() == 0L) {
+         return null;
       }
 
-      return new NodeTopDocs(cache.getRpcManager().getAddress(), topDocs, keys, projections);
+      Object[] keys = queryResult.hits().stream()
+            .map(hit -> hit.id())
+            .map(id -> stringToKey(id))
+            .toArray(Object[]::new);
+      return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), keys, null);
+   }
+
+   private NodeTopDocs collectProjections(SearchQueryBuilder query) {
+      LuceneSearchResult<?> queryResult = query.build().fetchAll();
+      if (queryResult.totalHitCount() == 0L) {
+         return null;
+      }
+
+      List<?> hits = queryResult.hits();
+      Object[] projections = hits.toArray(new Object[hits.size()]);
+      return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), null, projections);
    }
 }

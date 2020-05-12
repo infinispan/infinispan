@@ -50,7 +50,7 @@ import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.logging.Log;
-
+import org.infinispan.query.remote.impl.mapping.SerializationContextSearchMapping;
 
 /**
  * Intercepts updates to the protobuf schema file caches and updates the SerializationContext accordingly.
@@ -193,6 +193,11 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
                      .withProgressCallback(callback)
                      .addProtoFile(name, content)
          );
+
+         // If the serialization context contains indexed entities,
+         // the SearchMapping instances will be created for all user caches,
+         // updating theirs SearchMapping holders.
+         SerializationContextSearchMapping.acquire(serializationContext).updateSearchMappingHolders(embeddedCacheManager);
 
          // Register schema with global context to allow transcoding to json
          registerWithContextRegistry(new FileDescriptorSource().addProtoFile(name, content));

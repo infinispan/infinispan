@@ -38,13 +38,6 @@ public final class ClusteredQueryOperation {
       return queryDefinition;
    }
 
-   static ClusteredQueryOperation createLazyIterator(QueryDefinition queryDefinition, UUID queryId) {
-      ClusteredQueryOperation cmd = new ClusteredQueryOperation(CQCommandType.CREATE_LAZY_ITERATOR);
-      cmd.queryDefinition = queryDefinition;
-      cmd.queryId = queryId;
-      return cmd;
-   }
-
    static ClusteredQueryOperation getResultSize(QueryDefinition queryDefinition) {
       ClusteredQueryOperation cmd = new ClusteredQueryOperation(CQCommandType.GET_RESULT_SIZE);
       cmd.queryDefinition = queryDefinition;
@@ -54,19 +47,6 @@ public final class ClusteredQueryOperation {
    static ClusteredQueryOperation createEagerIterator(QueryDefinition queryDefinition) {
       ClusteredQueryOperation cmd = new ClusteredQueryOperation(CQCommandType.CREATE_EAGER_ITERATOR);
       cmd.queryDefinition = queryDefinition;
-      return cmd;
-   }
-
-   static ClusteredQueryOperation destroyLazyQuery(UUID queryId) {
-      ClusteredQueryOperation cmd = new ClusteredQueryOperation(CQCommandType.DESTROY_LAZY_ITERATOR);
-      cmd.queryId = queryId;
-      return cmd;
-   }
-
-   static ClusteredQueryOperation retrieveKeyFromLazyQuery(UUID queryId, int docIndex) {
-      ClusteredQueryOperation cmd = new ClusteredQueryOperation(CQCommandType.GET_SOME_KEYS);
-      cmd.queryId = queryId;
-      cmd.docIndex = docIndex;
       return cmd;
    }
 

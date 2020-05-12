@@ -36,4 +36,8 @@ public interface ExternalizerIds {
    Integer FULL_TEXT_FILTER = 1623;
 
    Integer CLUSTERED_QUERY_OPERATION = 1624;
+
+   Integer POJO_TYPE_IDENTIFIER = 1625;
+
+   Integer LUCENE_TOTAL_HITS = 1626;
 }

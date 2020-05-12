@@ -2,25 +2,17 @@ package org.infinispan.query.impl;
 
 import java.util.concurrent.ExecutorService;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.search.Query;
-import org.hibernate.search.exception.SearchException;
-import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
-import org.hibernate.search.spi.CustomTypeMetadata;
-import org.hibernate.search.spi.IndexedTypeIdentifier;
-import org.hibernate.search.spi.IndexedTypeMap;
-import org.hibernate.search.spi.SearchIntegrator;
-import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
-import org.hibernate.search.stat.Statistics;
+import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.MassIndexer;
-import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
+import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 import org.infinispan.query.spi.SearchManagerImplementor;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 
 /**
  * Class that is used to build a {@link org.infinispan.query.CacheQuery} based on a Lucene or an Ickle query, only for
@@ -33,35 +25,33 @@ import org.infinispan.query.spi.SearchManagerImplementor;
  */
 public final class SearchManagerImpl implements SearchManagerImplementor {
 
-   private final SearchIntegrator searchFactory;
+   private final SearchMappingHolder searchMappingHolder;
    private final QueryInterceptor queryInterceptor;
    private final KeyTransformationHandler keyTransformationHandler;
    private final QueryEngine<?> queryEngine;
    private final MassIndexer massIndexer;
-   private TimeoutExceptionFactory timeoutExceptionFactory;
 
    public SearchManagerImpl(AdvancedCache<?, ?> cache, QueryEngine<?> queryEngine) {
       if (cache == null) {
          throw new IllegalArgumentException("cache parameter shall not be null");
       }
-      this.searchFactory = ComponentRegistryUtils.getSearchIntegrator(cache);
+      this.searchMappingHolder = ComponentRegistryUtils.getSearchMappingHolder(cache);
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       this.keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
       this.queryEngine = queryEngine;
       this.massIndexer = (MassIndexer) ComponentRegistryUtils.getIndexer(cache);
-      this.timeoutExceptionFactory = (msg, q) -> new SearchTimeoutException(msg + " \"" + q + '\"');
    }
 
    @Override
-   public <E> CacheQuery<E> getQuery(Query luceneQuery, IndexedQueryMode indexedQueryMode, Class<?> entity) {
-      return queryEngine.buildCacheQuery(luceneQuery, keyTransformationHandler, timeoutExceptionFactory, entity);
+   public <E> CacheQuery<E> getQuery(SearchQueryBuilder searchQuery) {
+      return queryEngine.buildCacheQuery(searchQuery);
    }
 
    @Override
    public <E> CacheQuery<E> getQuery(String queryString, IndexedQueryMode indexedQueryMode) {
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
       try {
-         return queryEngine.buildCacheQuery(queryString, indexedQueryMode, keyTransformationHandler, timeoutExceptionFactory, asyncExecutor);
+         return queryEngine.buildCacheQuery(queryString, indexedQueryMode, keyTransformationHandler, asyncExecutor);
       } catch (SearchException se) {
          throw new SearchException("'" + queryString + "' cannot be converted to an indexed query", se);
       }
@@ -73,35 +63,14 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
    }
 
    @Override
-   public <E> CacheQuery<E> getQuery(QueryDefinition queryDefinition, IndexedQueryMode indexedQueryMode, IndexedTypeMap<CustomTypeMetadata> indexedTypeMap) {
+   public <E> CacheQuery<E> getQuery(QueryDefinition queryDefinition, IndexedQueryMode indexedQueryMode) {
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
-      return queryEngine.buildCacheQuery(queryDefinition, indexedQueryMode, keyTransformationHandler, asyncExecutor, indexedTypeMap);
-   }
-
-   @Override
-   public void setTimeoutExceptionFactory(TimeoutExceptionFactory timeoutExceptionFactory) {
-      this.timeoutExceptionFactory = timeoutExceptionFactory;
+      return queryEngine.buildCacheQuery(queryDefinition, indexedQueryMode, asyncExecutor);
    }
 
    @Override
    public MassIndexer getMassIndexer() {
       return massIndexer;
-   }
-
-   @Override
-   public Analyzer getAnalyzer(String name) {
-      return searchFactory.getAnalyzer(name);
-   }
-
-   @Override
-   public Statistics getStatistics() {
-      return searchFactory.getStatistics();
-   }
-
-   @Override
-   public Analyzer getAnalyzer(Class<?> clazz) {
-      IndexedTypeIdentifier type = new PojoIndexedTypeIdentifier(clazz);
-      return searchFactory.getAnalyzer(type);
    }
 
    @Override
@@ -111,8 +80,8 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
 
    @Override
    public <T> T unwrap(Class<T> cls) {
-      if (SearchIntegrator.class.isAssignableFrom(cls)) {
-         return (T) this.searchFactory;
+      if (SearchMappingHolder.class.isAssignableFrom(cls)) {
+         return (T) this.searchMappingHolder;
       }
       if (SearchManagerImplementor.class.isAssignableFrom(cls)) {
          return (T) this;

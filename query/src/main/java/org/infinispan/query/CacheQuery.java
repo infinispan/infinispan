@@ -4,10 +4,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.Explanation;
-import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.Sort;
-import org.hibernate.search.filter.FullTextFilter;
-import org.hibernate.search.query.engine.spi.FacetManager;
 
 /**
  * A cache-query is what will be returned when the getQuery() method is run on {@link org.infinispan.query.impl.SearchManagerImpl}. This object can
@@ -68,11 +64,6 @@ public interface CacheQuery<E> extends Iterable<E> {
    CacheQuery<E> maxResults(int numResults);
 
    /**
-    * @return return the manager for all faceting related operations
-    */
-   FacetManager getFacetManager();
-
-   /**
     * Gets the total number of results matching the query, ignoring pagination (firstResult, maxResult).
     *
     * @return total number of results.
@@ -84,53 +75,10 @@ public interface CacheQuery<E> extends Iterable<E> {
     * object describing the score computation for the matching object/document
     * in the current query
     *
-    * @param documentId Lucene Document id to be explain. This is NOT the object key
+    * @param id The id of the document to test.
     * @return Lucene Explanation
     */
-   Explanation explain(int documentId);
-
-   /**
-    * Allows lucene to sort the results. Integers are sorted in descending order.
-    *
-    * @param s - lucene sort object
-    */
-   CacheQuery<E> sort(Sort s);
-
-   /**
-    * Defines the Lucene field names projected and returned in a query result
-    * Each field is converted back to it's object representation, an Object[] being returned for each "row"
-    * <p/>
-    * A projectable field must be stored in the Lucene index and use a {@link org.hibernate.search.bridge.TwoWayFieldBridge}
-    * Unless notified in their JavaDoc, all built-in bridges are two-way. All @DocumentId fields are projectable by design.
-    * <p/>
-    * If the projected field is not a projectable field, null is returned in the object[]
-    *
-    * @param fields the projected field names
-    * @return {@code this} to allow for method chaining, but the type parameter now becomes {@code Object[]}
-    */
-   CacheQuery<Object[]> projection(String... fields);
-
-   /**
-    * Enable a given filter by its name.
-    *
-    * @param name of filter.
-    * @return a FullTextFilter object.
-    */
-   FullTextFilter enableFullTextFilter(String name);
-
-   /**
-    * Disable a given filter by its name.
-    *
-    * @param name of filter.
-    */
-   CacheQuery<E> disableFullTextFilter(String name);
-
-   /**
-    * Allows lucene to filter the results.
-    *
-    * @param f - lucene filter
-    */
-   CacheQuery<E> filter(Filter f);
+   Explanation explain(String id);
 
    /**
     * Set the timeout for this query. If the query hasn't finished processing before the timeout,

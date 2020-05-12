@@ -325,11 +325,8 @@
       <versionx.org.hibernate.gson-jbossmodules.gson-jbossmodules>${version.gson.featurepack}</versionx.org.hibernate.gson-jbossmodules.gson-jbossmodules>
       <versionx.org.hibernate.hibernate-core>${version.hibernate.core}</versionx.org.hibernate.hibernate-core>
       <versionx.org.hibernate.hibernate-osgi>${version.hibernate.core}</versionx.org.hibernate.hibernate-osgi>
-      <versionx.org.hibernate.hibernate-search-backend-jms>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-backend-jms>
-      <versionx.org.hibernate.hibernate-search-engine>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-engine>
-      <versionx.org.hibernate.hibernate-search-jbossmodules-engine>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-jbossmodules-engine>
-      <versionx.org.hibernate.hibernate-search-orm>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-orm>
-      <versionx.org.hibernate.hibernate-search-serialization-avro>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-serialization-avro>
+      <versionx.org.hibernate.search.hibernate-search-backend-lucene>${version.hibernate.search}</versionx.org.hibernate.search.hibernate-search-backend-lucene>
+      <versionx.org.hibernate.search.hibernate-search-mapper-pojo-base>${version.hibernate.search}</versionx.org.hibernate.search.hibernate-search-mapper-pojo-base>
       <versionx.org.hibernate.hibernate-testing>${version.hibernate.core}</versionx.org.hibernate.hibernate-testing>
       <versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api>1.0.0.Final</versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api>
       <versionx.org.hibernate.lucene-jbossmodules.lucene-jbossmodules>${version.lucene.featurepack}</versionx.org.hibernate.lucene-jbossmodules.lucene-jbossmodules>
@@ -988,46 +985,14 @@
             <scope>runtime</scope>
          </dependency>
          <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-search-backend-jms</artifactId>
-            <version>${versionx.org.hibernate.hibernate-search-backend-jms}</version>
-            <scope>test</scope>
+            <groupId>org.hibernate.search</groupId>
+            <artifactId>hibernate-search-backend-lucene</artifactId>
+            <version>${versionx.org.hibernate.search.hibernate-search-backend-lucene}</version>
          </dependency>
          <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-search-engine</artifactId>
-            <version>${versionx.org.hibernate.hibernate-search-engine}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-search-engine</artifactId>
-            <version>${versionx.org.hibernate.hibernate-search-engine}</version>
-            <scope>test</scope>
-            <classifier>tests</classifier>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-search-jbossmodules-engine</artifactId>
-            <version>${versionx.org.hibernate.hibernate-search-jbossmodules-engine}</version>
-            <type>zip</type>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-search-orm</artifactId>
-            <version>${versionx.org.hibernate.hibernate-search-orm}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-search-orm</artifactId>
-            <version>${versionx.org.hibernate.hibernate-search-orm}</version>
-            <scope>test</scope>
-            <classifier>tests</classifier>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-search-serialization-avro</artifactId>
-            <version>${versionx.org.hibernate.hibernate-search-serialization-avro}</version>
+            <groupId>org.hibernate.search</groupId>
+            <artifactId>hibernate-search-mapper-pojo-base</artifactId>
+            <version>${versionx.org.hibernate.search.hibernate-search-mapper-pojo-base}</version>
          </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>
@@ -1129,6 +1094,11 @@
             <artifactId>infinispan-scripting</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-search-mapper</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
          <dependency>

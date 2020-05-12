@@ -9,6 +9,7 @@ import java.util.Set;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TopFieldDocs;
+import org.apache.lucene.search.TotalHits;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 
@@ -21,8 +22,7 @@ public class LuceneTopFieldDocsExternalizer extends AbstractExternalizer<TopFiel
 
    @Override
    public TopFieldDocs readObject(final ObjectInput input) throws IOException, ClassNotFoundException {
-      final int totalHits = UnsignedNumeric.readUnsignedInt(input);
-      final float maxScore = input.readFloat();
+      TotalHits totalHits = (TotalHits) input.readObject();
       final int sortFieldsCount = UnsignedNumeric.readUnsignedInt(input);
       final SortField[] sortFields = new SortField[sortFieldsCount];
       for (int i = 0; i < sortFieldsCount; i++) {
@@ -33,13 +33,12 @@ public class LuceneTopFieldDocsExternalizer extends AbstractExternalizer<TopFiel
       for (int i = 0; i < scoreDocsCount; i++) {
          scoreDocs[i] = (ScoreDoc) input.readObject();
       }
-      return new TopFieldDocs(totalHits, scoreDocs, sortFields, maxScore);
+      return new TopFieldDocs(totalHits, scoreDocs, sortFields);
    }
 
    @Override
    public void writeObject(final ObjectOutput output, final TopFieldDocs topFieldDocs) throws IOException {
-      UnsignedNumeric.writeUnsignedInt(output, topFieldDocs.totalHits);
-      output.writeFloat(topFieldDocs.getMaxScore());
+      output.writeObject(topFieldDocs.totalHits);
       final SortField[] sortFields = topFieldDocs.fields;
       UnsignedNumeric.writeUnsignedInt(output, sortFields.length);
       for (SortField sortField : sortFields) {

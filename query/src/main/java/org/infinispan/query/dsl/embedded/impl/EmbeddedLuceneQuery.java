@@ -83,21 +83,22 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
 
    @Override
    public QueryResult<T> execute() {
-      List<T> results = StreamSupport.stream(spliterator(), false).collect(Collectors.toList());
-      long hits = createCacheQuery().getResultSize();
-      return new QueryResultImpl<>(hits, results);
+      List<?> results = StreamSupport.stream(spliterator(), false)
+            .map(i -> (projection == null) ? i : convertProjectionItem(i))
+            .collect(Collectors.toList());
+
+      return new QueryResultImpl<>(createCacheQuery().getResultSize(), (List<T>) results);
    }
 
    @Override
    public CloseableIterator<T> iterator() {
-      CloseableIterator<T> iterator = createCacheQuery().iterator();
-      return rowProcessor == null ? iterator : new MappingIterator(iterator, t -> rowProcessor.apply((Object[]) t));
+      IndexedQuery<T> cacheQuery = createCacheQuery();
+      return new MappingIterator(cacheQuery.iterator(), i -> (projection == null) ? i : convertProjectionItem(i) );
    }
 
    @Override
    public int getResultSize() {
-      //todo [anistor] optimize this by running a slightly modified query that performs just COUNT only, ignoring projections or sorting
-      return createCacheQuery().getResultSize();
+      return Math.toIntExact(createCacheQuery().getResultSize());
    }
 
    @Override
@@ -108,5 +109,21 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
             ", maxResults=" + maxResults +
             ", timeout=" + timeout +
             +'}';
+   }
+
+   private Object[] convertProjectionItem(Object row) {
+      Object[] array;
+      if (row instanceof Object[]) {
+         array = (Object[]) row;
+      } else if (row instanceof List) {
+         // Hibernate Search 6 uses list to wrap multiple item projection
+         List<?> castedRow = (List<?>) row;
+         array = castedRow.toArray(new Object[castedRow.size()]);
+      } else {
+         // Hibernate Search 6 does not wrap single item projection
+         array = new Object[] {row};
+      }
+
+      return (rowProcessor == null) ? array : rowProcessor.apply(array);
    }
 }

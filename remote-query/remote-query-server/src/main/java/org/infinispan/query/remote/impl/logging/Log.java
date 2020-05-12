@@ -71,4 +71,7 @@ public interface Log extends BasicLogger {
    @Message(id = 28017, value = "Type '%s' was not declared as an indexed entity. " +
          "Please declare it in the indexing configuration of your cache and ensure the type is defined by a schema before this cache is started.")
    CacheConfigurationException indexingUndeclaredType(String typeName);
+
+   @Message(id = 28018, value = "It is not possible to create indexes for a field having type %s. Field: %s.")
+   CacheException typeNotIndexable(String typeName, String fieldName);
 }

@@ -3,7 +3,6 @@ package org.infinispan.query.impl;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.lucene.search.Sort;
 import org.infinispan.query.CacheQuery;
 
 /**
@@ -12,22 +11,6 @@ import org.infinispan.query.CacheQuery;
  * @since 11.0
  */
 public interface IndexedQuery<E> extends CacheQuery<E> {
-
-   IndexedQuery<E> sort(Sort s);
-
-   /**
-    * Defines the Lucene field names projected and returned in a query result
-    * Each field is converted back to it's object representation, an Object[] being returned for each "row"
-    * <p/>
-    * A projectable field must be stored in the Lucene index and use a {@link org.hibernate.search.bridge.TwoWayFieldBridge}
-    * Unless notified in their JavaDoc, all built-in bridges are two-way. All @DocumentId fields are projectable by design.
-    * <p/>
-    * If the projected field is not a projectable field, null is returned in the object[]
-    *
-    * @param fields the projected field names
-    * @return {@code this} to allow for method chaining, but the type parameter now becomes {@code Object[]}
-    */
-   IndexedQuery<Object[]> projection(String... fields);
 
    /***
     * @return the results of a search as a list.
