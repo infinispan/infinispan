@@ -35,6 +35,7 @@ import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.commons.util.StringPropertyReplacer;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.Server;
 import org.infinispan.util.logging.LogFactory;
@@ -159,7 +160,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             image
                   .withFileFromPath("target", serverOutputPath.getParent())
                   .withFileFromPath("src", serverOutputPath.getParent().getParent().resolve("src"))
-                  .withFileFromPath("build", serverOutputPath);
+                  .withFileFromPath("build", cleanServerDirectory(serverOutputPath));
             prebuiltImage = false;
             log.infof("Using local image from server built at '%s'", serverOutputPath);
          }
@@ -248,6 +249,16 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
       args.add("-Drelay.site_name=" + configuration.site());
       args.add("-Djgroups.cluster.mcast_port=" + configuration.siteDiscoveryPort());
+   }
+
+   /*
+    * Removing the `server/data` and `server/log` directories from the local server directory to prevent issues with
+    * the tests
+    */
+   private Path cleanServerDirectory(Path serverOutputPath) {
+      Util.recursiveFileRemove(serverOutputPath.resolve("server").resolve("data").toString());
+      Util.recursiveFileRemove(serverOutputPath.resolve("server").resolve("log").toString());
+      return serverOutputPath;
    }
 
    private GenericContainer createContainer(int i) {
