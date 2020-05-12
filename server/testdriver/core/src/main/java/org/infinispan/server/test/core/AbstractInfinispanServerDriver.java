@@ -114,7 +114,9 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
 
    private void copyProvidedServerConfigurationFile() {
       URL configurationFileURL;
-      if (new File(configuration.configurationFile()).isAbsolute()) {
+      if ("-".equals(configuration.configurationFile())) {
+         return;
+      } else if (new File(configuration.configurationFile()).isAbsolute()) {
          configurationFileURL = Exceptions.unchecked(() -> new File(configuration.configurationFile()).toURI().toURL());
       } else {
          configurationFileURL = getClass().getClassLoader().getResource(configuration.configurationFile());

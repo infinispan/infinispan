@@ -127,6 +127,7 @@ public class Server implements ServerManagement, AutoCloseable {
 
    // Defaults
    private static final String SERVER_DEFAULTS = "infinispan-defaults.xml";
+   private static final String SERVER_INTERNAL_CONFIGURATION = "infinispan-server-internal.xml";
 
    public static final String DEFAULT_SERVER_CONFIG = "conf";
    public static final String DEFAULT_SERVER_DATA = "data";
@@ -180,11 +181,18 @@ public class Server implements ServerManagement, AutoCloseable {
     */
    public Server(File serverRoot, File configuration, Properties properties) {
       this(serverRoot, properties);
-      if (!configuration.isAbsolute()) {
-         configuration = new File(serverConf, configuration.getPath());
-      }
       try {
-         parseConfiguration(configuration.toURI().toURL());
+         URL configURL;
+         if ("-".equals(configuration.getPath())) {
+            configURL = this.getClass().getClassLoader().getResource(SERVER_INTERNAL_CONFIGURATION);
+         } else{
+            if (!configuration.isAbsolute()) {
+               configURL = new File(serverConf, configuration.getPath()).toURI().toURL();
+            } else {
+               configURL = configuration.toURI().toURL();
+            }
+         }
+         parseConfiguration(configURL);
       } catch (IOException e) {
          throw new CacheConfigurationException(e);
       }
@@ -253,7 +261,7 @@ public class Server implements ServerManagement, AutoCloseable {
             configurationBuilderHolder.newConfigurationBuilder(entry.getKey()).read(entry.getValue().build());
          }
 
-         // then load the user configuration
+         // load the user configuration
          parser.parse(config, configurationBuilderHolder);
          log.tracef("Parsed cache configurations: %s", configurationBuilderHolder.getNamedConfigurationBuilders().keySet());
 

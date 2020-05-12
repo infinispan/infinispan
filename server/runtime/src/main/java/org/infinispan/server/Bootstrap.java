@@ -111,7 +111,7 @@ public class Bootstrap extends Main {
       File confDir = new File(serverRoot, Server.DEFAULT_SERVER_CONFIG);
       if (configurationFile == null) {
          configurationFile = new File(confDir, Server.DEFAULT_CONFIGURATION_FILE);
-      } else if (!configurationFile.isAbsolute()) {
+      } else if (!configurationFile.isAbsolute() && !"-".equals(configurationFile.getPath())) {
          configurationFile = Paths.get(confDir.getPath(), configurationFile.getPath()).toFile();
       }
       File logDir = new File(serverRoot, Server.DEFAULT_SERVER_LOG);
