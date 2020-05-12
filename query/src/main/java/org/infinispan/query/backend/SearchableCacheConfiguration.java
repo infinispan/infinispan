@@ -7,10 +7,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 
 import org.hibernate.annotations.common.reflection.ReflectionManager;
 import org.hibernate.search.analyzer.definition.LuceneAnalysisDefinitionProvider;
+import org.hibernate.search.analyzer.definition.spi.LuceneAnalysisDefinitionSourceService;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.cfg.spi.SearchConfigurationBase;
@@ -40,9 +40,10 @@ public final class SearchableCacheConfiguration extends SearchConfigurationBase 
    private final Map<String, Class<?>> classes = new HashMap<>();
    private final Properties properties;
    private final SearchMapping searchMapping;
+   private final Map<Class<? extends Service>, Object> providedServices;
    private final ClassLoaderServiceImpl classLoaderService;
 
-   public SearchableCacheConfiguration(Set<Class<?>> indexedEntities,
+   public SearchableCacheConfiguration(Collection<Class<?>> indexedEntities,
                                        Properties properties,
                                        Collection<ProgrammaticSearchMappingProvider> programmaticSearchMappingProviders,
                                        Collection<LuceneAnalysisDefinitionProvider> analyzerDefProviders,
@@ -62,6 +63,8 @@ public final class SearchableCacheConfiguration extends SearchConfigurationBase 
                   provider.register(builder);
                }
             } : null;
+
+      this.providedServices = Collections.singletonMap(LuceneAnalysisDefinitionSourceService.class, (LuceneAnalysisDefinitionSourceService) () -> analyzerDefProvider);
 
       //deal with programmatic mapping:
       SearchMapping searchMapping = SearchMappingHelper.extractSearchMapping(this);
@@ -134,7 +137,7 @@ public final class SearchableCacheConfiguration extends SearchConfigurationBase 
 
    @Override
    public Map<Class<? extends Service>, Object> getProvidedServices() {
-      return Collections.emptyMap();
+      return providedServices;
    }
 
    @Override
