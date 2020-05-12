@@ -74,7 +74,6 @@ import org.infinispan.commons.util.Version;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.wildfly.security.WildFlyElytronProvider;
 
 /**
  * <p>Factory for {@link RemoteCache}s.</p>
@@ -119,23 +118,17 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    static {
       // Register only the providers that matter to us
-      try {
-         // Elytron >= 1.8
-         for (String name : Arrays.asList(
-               "org.wildfly.security.sasl.plain.WildFlyElytronSaslPlainProvider",
-               "org.wildfly.security.sasl.digest.WildFlyElytronSaslDigestProvider",
-               "org.wildfly.security.sasl.external.WildFlyElytronSaslExternalProvider",
-               "org.wildfly.security.sasl.oauth2.WildFlyElytronSaslOAuth2Provider",
-               "org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider",
-               "org.wildfly.security.sasl.gssapi.WildFlyElytronSaslGssapiProvider",
-               "org.wildfly.security.sasl.gs2.WildFlyElytronSaslGs2Provider"
-         )) {
-            Provider provider = (Provider) Class.forName(name).getConstructor(new Class[]{}).newInstance(new Object[]{});
-            SecurityActions.addSecurityProvider(provider);
-         }
-      } catch (Exception e) {
-         // Elytron < 1.8
-         SecurityActions.addSecurityProvider(new WildFlyElytronProvider());
+      for (String name : Arrays.asList(
+            "org.wildfly.security.sasl.plain.WildFlyElytronSaslPlainProvider",
+            "org.wildfly.security.sasl.digest.WildFlyElytronSaslDigestProvider",
+            "org.wildfly.security.sasl.external.WildFlyElytronSaslExternalProvider",
+            "org.wildfly.security.sasl.oauth2.WildFlyElytronSaslOAuth2Provider",
+            "org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider",
+            "org.wildfly.security.sasl.gssapi.WildFlyElytronSaslGssapiProvider",
+            "org.wildfly.security.sasl.gs2.WildFlyElytronSaslGs2Provider"
+      )) {
+         Provider provider = Util.getInstance(name, RemoteCacheManager.class.getClassLoader());
+         SecurityActions.addSecurityProvider(provider);
       }
    }
 
@@ -519,7 +512,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    /**
-    * @deprecated since 10.0. To be removed in 12.0. Replaced by {@code #createNearCacheService(String, NearCacheConfiguration)}.
+    * @deprecated since 10.0. To be removed in 12.0. Replaced by {@code #createNearCacheService(String,
+    * NearCacheConfiguration)}.
     */
    @Deprecated
    protected <K, V> NearCacheService<K, V> createNearCacheService(NearCacheConfiguration cfg) {
@@ -560,6 +554,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    /**
     * Access to administration operations (cache creation, removal, etc)
+    *
     * @return an instance of {@link RemoteCacheManagerAdmin} which can perform administrative operations on the server.
     */
    public RemoteCacheManagerAdmin administration() {
@@ -584,6 +579,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    /**
     * Access to counter operations
+    *
     * @return an instance of {@link CounterManager} which can perform counter operations on the server.
     */
    CounterManager getCounterManager() {
