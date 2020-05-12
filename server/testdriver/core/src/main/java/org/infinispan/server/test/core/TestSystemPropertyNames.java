@@ -33,4 +33,9 @@ public class TestSystemPropertyNames {
     * The path to a local installation of the server
     */
    public static final String INFINISPAN_TEST_SERVER_DIR = "org.infinispan.test.server.dir";
+   /**
+    * The log file for the container server driver
+    * It should be a file name located in the module server/tests/src/test/resources/configuration or a full path
+    */
+   public static final String INFINISPAN_TEST_SERVER_LOG_FILE = "org.infinispan.test.server.container.logFile";
 }
