@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.hibernate.search.annotations.Field;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
@@ -127,9 +126,9 @@ public final class IndexingMetadata {
    public static final String DEFAULT_NULL_TOKEN = "_null_";
 
    /**
-    * A marker value that indicates nulls should not be indexed. Same string as in Hibernate Search.
+    * A marker value that indicates nulls should not be indexed.
     */
-   public static final String DO_NOT_INDEX_NULL = Field.DO_NOT_INDEX_NULL;
+   public static final String DO_NOT_INDEX_NULL = "__DO_NOT_INDEX_NULL__";
 
    /**
     * Similar to org.hibernate.search.annotations.Analyzer. Can be placed at both message and field level.

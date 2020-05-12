@@ -2,8 +2,6 @@ package org.infinispan.query.remote.impl.indexing;
 
 import java.util.Arrays;
 
-import org.hibernate.search.spi.IndexedTypeIdentifier;
-import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -20,14 +18,6 @@ import org.infinispan.protostream.descriptors.Descriptor;
  */
 @ProtoTypeId(ProtoStreamTypeIds.PROTOBUF_VALUE_WRAPPER)
 public final class ProtobufValueWrapper implements WrappedBytes {
-
-   /**
-    * A special hidden Lucene document field that holds the actual protobuf fully qualified type name.
-    * This should no longer be needed after migration to Hibernate Search 6.
-    */
-   public static final String TYPE_FIELD_NAME = "$type$";
-
-   public static final IndexedTypeIdentifier INDEXING_TYPE = PojoIndexedTypeIdentifier.convertFromLegacy(ProtobufValueWrapper.class);
 
    /**
     * Max number of bytes to include in {@link #toString()}.
@@ -78,8 +68,6 @@ public final class ProtobufValueWrapper implements WrappedBytes {
 
    /**
     * Sets the Protobuf descriptor of the message type of the payload.
-    *
-    * @see ProtobufValueWrapperSearchWorkCreator#discoverMessageType
     */
    void setMessageDescriptor(Descriptor messageDescriptor) {
       this.messageDescriptor = messageDescriptor;

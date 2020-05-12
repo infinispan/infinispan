@@ -1,16 +1,16 @@
 package org.infinispan.query.impl;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import org.hibernate.search.jmx.StatisticsInfoMBean;
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.query.Indexer;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 
 /**
  * This MBean exposes the query statistics from the Hibernate Search's SearchIntegrator Statistics object via
@@ -21,123 +21,139 @@ import org.infinispan.query.Indexer;
  * @since 6.1
  */
 @MBean(objectName = "Statistics", description = "Statistics for index based query")
-public final class InfinispanQueryStatisticsInfo implements StatisticsInfoMBean, JsonSerialization {
+public final class InfinispanQueryStatisticsInfo implements JsonSerialization {
 
-   private final SearchIntegrator searchIntegrator;
+   private final SearchMappingHolder searchMapping;
    private final Indexer massIndexer;
    private final QueryStatistics queryStatistics = new QueryStatistics();
    private final IndexStatistics indexStatistics = new IndexStatistics();
 
-   InfinispanQueryStatisticsInfo(SearchIntegrator searchIntegrator, Indexer massIndexer) {
-      this.searchIntegrator = searchIntegrator;
+   InfinispanQueryStatisticsInfo(SearchMappingHolder searchMapping, Indexer massIndexer) {
+      this.searchMapping = searchMapping;
       this.massIndexer = massIndexer;
    }
 
    @ManagedOperation
-   @Override
    public void clear() {
-      searchIntegrator.getStatistics().clear();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // searchIntegrator.getStatistics().clear();
    }
 
    @ManagedAttribute
-   @Override
    public long getSearchQueryExecutionCount() {
-      return searchIntegrator.getStatistics().getSearchQueryExecutionCount();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().getSearchQueryExecutionCount();
+      return 0L;
    }
 
    @ManagedAttribute
-   @Override
    public long getSearchQueryTotalTime() {
-      return searchIntegrator.getStatistics().getSearchQueryTotalTime();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().getSearchQueryTotalTime();
+      return 0L;
    }
 
    @ManagedAttribute
-   @Override
    public long getSearchQueryExecutionMaxTime() {
-      return searchIntegrator.getStatistics().getSearchQueryExecutionMaxTime();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().getSearchQueryExecutionMaxTime();
+      return 0L;
    }
 
    @ManagedAttribute
-   @Override
    public long getSearchQueryExecutionAvgTime() {
-      return searchIntegrator.getStatistics().getSearchQueryExecutionAvgTime();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().getSearchQueryExecutionAvgTime();
+      return 0L;
    }
 
    @ManagedAttribute
-   @Override
    public String getSearchQueryExecutionMaxTimeQueryString() {
-      return searchIntegrator.getStatistics().getSearchQueryExecutionMaxTimeQueryString();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().getSearchQueryExecutionMaxTimeQueryString();
+      return "";
    }
 
    @ManagedAttribute
-   @Override
    public long getObjectLoadingTotalTime() {
-      return searchIntegrator.getStatistics().getObjectLoadingTotalTime();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().getObjectLoadingTotalTime();
+      return 0L;
    }
 
    @ManagedAttribute
-   @Override
    public long getObjectLoadingExecutionMaxTime() {
-      return searchIntegrator.getStatistics().getObjectLoadingExecutionMaxTime();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().getObjectLoadingExecutionMaxTime();
+      return 0L;
    }
 
    @ManagedAttribute
-   @Override
    public long getObjectLoadingExecutionAvgTime() {
-      return searchIntegrator.getStatistics().getObjectLoadingExecutionAvgTime();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().getObjectLoadingExecutionAvgTime();
+      return 0L;
    }
 
    @ManagedAttribute
-   @Override
    public long getObjectsLoadedCount() {
-      return searchIntegrator.getStatistics().getObjectsLoadedCount();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().getObjectsLoadedCount();
+      return 0L;
    }
 
    @ManagedAttribute(writable = true)
-   @Override
    public boolean isStatisticsEnabled() {
-      return searchIntegrator.getStatistics().isStatisticsEnabled();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().isStatisticsEnabled();
+      return false;
    }
 
-   @Override
    public void setStatisticsEnabled(boolean isStatisticsEnabled) {
-      searchIntegrator.getStatistics().setStatisticsEnabled(isStatisticsEnabled);
+      // TODO HSEARCH-3129 Restore support for statistics
+      // searchIntegrator.getStatistics().setStatisticsEnabled(isStatisticsEnabled);
    }
 
    @ManagedAttribute
-   @Override
    public String getSearchVersion() {
-      return searchIntegrator.getStatistics().getSearchVersion();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().getSearchVersion();
+      return "";
    }
 
    @ManagedAttribute
-   @Override
    public Set<String> getIndexedClassNames() {
-      return searchIntegrator.getStatistics().getIndexedClassNames();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().getIndexedClassNames();
+      return Collections.emptySet();
    }
 
    @ManagedOperation
-   @Override
    public int getNumberOfIndexedEntities(String entity) {
-      return searchIntegrator.getStatistics().getNumberOfIndexedEntities(entity);
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().getNumberOfIndexedEntities(entity);
+      return 0;
    }
 
    @ManagedOperation
-   @Override
    public Map<String, Integer> indexedEntitiesCount() {
-      return searchIntegrator.getStatistics().indexedEntitiesCount();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().indexedEntitiesCount();
+      return Collections.emptyMap();
    }
 
    @ManagedOperation
-   @Override
    public long getIndexSize(String indexName) {
-      return searchIntegrator.getStatistics().getIndexSize(indexName);
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().getIndexSize(indexName);
+      return 0L;
    }
 
    @ManagedOperation
-   @Override
    public Map<String, Long> indexSizes() {
-      return searchIntegrator.getStatistics().indexSizes();
+      // TODO HSEARCH-3129 Restore support for statistics
+      // return searchIntegrator.getStatistics().indexSizes();
+      return Collections.emptyMap();
    }
 
    public QueryStatistics getQueryStatistics() {

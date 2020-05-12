@@ -1,15 +1,15 @@
 package org.infinispan.query.impl;
 
-import java.util.List;
+import org.hibernate.search.engine.search.loading.spi.EntityLoader;
 
-import org.hibernate.search.query.engine.spi.EntityInfo;
+import org.infinispan.search.mapper.common.EntityReference;
 
 /**
+ * @param <E> The entity type mapped to the index.
+ *
  * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>
  */
-public interface QueryResultLoader {
+public interface QueryResultLoader<E> extends EntityLoader<EntityReference, E> {
 
-   Object load(EntityInfo entityInfo);
-
-   List<Object> load(List<EntityInfo> entityInfos);
+   E loadBlocking(EntityReference entityInfo);
 }

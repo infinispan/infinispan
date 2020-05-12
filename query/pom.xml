@@ -43,32 +43,25 @@
          <artifactId>protostream-processor</artifactId>
       </dependency>
 
-      <dependency>
-         <groupId>org.hibernate</groupId>
-         <artifactId>hibernate-search-engine</artifactId>
-      </dependency>
+       <dependency>
+           <groupId>org.infinispan</groupId>
+           <artifactId>infinispan-clustered-lock</artifactId>
+       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-clustered-lock</artifactId>
+         <artifactId>infinispan-search-mapper</artifactId>
+         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-         <groupId>org.hibernate</groupId>
-         <artifactId>hibernate-search-engine</artifactId>
-         <classifier>tests</classifier>
-         <scope>test</scope>
+         <groupId>org.hibernate.search</groupId>
+         <artifactId>hibernate-search-mapper-pojo-base</artifactId>
       </dependency>
 
       <dependency>
-         <groupId>org.hibernate</groupId>
-         <artifactId>hibernate-search-serialization-avro</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.apache.lucene</groupId>
-         <artifactId>lucene-queryparser</artifactId>
-         <scope>test</scope>
+         <groupId>org.hibernate.search</groupId>
+         <artifactId>hibernate-search-backend-lucene</artifactId>
       </dependency>
 
       <dependency>

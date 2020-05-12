@@ -63,7 +63,7 @@ public final class TxQueryInterceptor extends DDAsyncInterceptor {
          CacheEntry entry = txCtx.lookupEntry(key);
          if (entry != null) {
             Object oldValue = oldValues.getOrDefault(key, QueryInterceptor.UNKNOWN);
-            queryInterceptor.processChange(ctx, null, key, oldValue, entry.getValue(), NoTransactionContext.INSTANCE);
+            queryInterceptor.processChange(ctx, null, key, oldValue, entry.getValue());
          }
       }
    }

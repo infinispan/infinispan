@@ -3,16 +3,13 @@ package org.infinispan.query.impl.massindex;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.hibernate.search.spi.IndexedTypeIdentifier;
-import org.hibernate.search.spi.SearchIntegrator;
-import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AbstractExternalizer;
@@ -25,6 +22,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 
 /**
  * Mass indexer task.
@@ -35,11 +33,11 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
 public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
 
    private final String cacheName;
-   private final Set<IndexedTypeIdentifier> indexedTypes;
+   private final Collection<Class<?>> indexedTypes;
    private final boolean skipIndex;
    private final Set<Object> keys;
 
-   IndexWorker(String cacheName, Set<IndexedTypeIdentifier> indexedTypes, boolean skipIndex, Set<Object> keys) {
+   IndexWorker(String cacheName, Collection<Class<?>> indexedTypes, boolean skipIndex, Set<Object> keys) {
       this.cacheName = cacheName;
       this.indexedTypes = indexedTypes;
       this.skipIndex = skipIndex;
@@ -55,16 +53,18 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
 
       AdvancedCache<Object, Object> reindexCache = valueFilterable ? cache.withStorageMediaType() : cache;
 
-      SearchIntegrator searchIntegrator = ComponentRegistryUtils.getSearchIntegrator(cache);
+      SearchMappingHolder searchMappingHolder = ComponentRegistryUtils.getSearchMappingHolder(cache);
       KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
       TimeService timeService = ComponentRegistryUtils.getTimeService(cache);
 
-      IndexUpdater indexUpdater = new IndexUpdater(searchIntegrator, keyTransformationHandler, timeService);
+      MassIndexerProgressNotifier notifier = new MassIndexerProgressNotifier(searchMappingHolder, timeService);
+      IndexUpdater indexUpdater = new IndexUpdater(searchMappingHolder, keyTransformationHandler);
       KeyPartitioner keyPartitioner = ComponentRegistryUtils.getKeyPartitioner(cache);
 
       DataConversion keyDataConversion = reindexCache.getKeyDataConversion();
       if (keys == null || keys.size() == 0) {
          preIndex(indexUpdater);
+         MassIndexerProgressState progressState = new MassIndexerProgressState(notifier);
          if (!skipIndex) {
             try (Stream<CacheEntry<Object, Object>> stream = reindexCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
                   .cacheEntrySet().stream()) {
@@ -76,13 +76,15 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
                      value = valueWrapper.wrap(value);
                   }
                   int segment = keyPartitioner.getSegment(storedKey);
-                  if (value != null && indexedTypes.contains(PojoIndexedTypeIdentifier.convertFromLegacy(value.getClass()))) {
-                     indexUpdater.updateIndex(entry.getKey(), value, segment);
+
+                  if (value != null && indexedTypes.contains(value.getClass())) {
+                     progressState.addItem(entry.getKey(), value,
+                           indexUpdater.updateIndex(entry.getKey(), value, segment));
                   }
                });
             }
          }
-         postIndex(indexUpdater);
+         postIndex(indexUpdater, progressState, notifier);
       } else {
          Set<Class<?>> classSet = new HashSet<>();
          for (Object key : keys) {
@@ -94,8 +96,8 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
                classSet.add(value.getClass());
             }
          }
-         Set<IndexedTypeIdentifier> toFlush = classSet.stream().map(PojoIndexedTypeIdentifier::convertFromLegacy).collect(Collectors.toSet());
-         indexUpdater.flush(toFlush);
+         indexUpdater.flush(classSet);
+         indexUpdater.refresh(classSet);
       }
       return null;
    }
@@ -104,9 +106,11 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       indexUpdater.purge(indexedTypes);
    }
 
-   private void postIndex(IndexUpdater indexUpdater) {
-      indexUpdater.waitForAsyncCompletion();
+   private void postIndex(IndexUpdater indexUpdater, MassIndexerProgressState progressState, MassIndexerProgressNotifier notifier) {
+      progressState.waitForAsyncCompletion();
       indexUpdater.flush(indexedTypes);
+      indexUpdater.refresh(indexedTypes);
+      notifier.notifyIndexingCompletedSuccessfully();
    }
 
    public static final class Externalizer extends AbstractExternalizer<IndexWorker> {
@@ -123,8 +127,8 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
             output.writeInt(0);
          } else {
             output.writeInt(worker.indexedTypes.size());
-            for (IndexedTypeIdentifier indexedTypeIdentifier : worker.indexedTypes)
-               output.writeObject(PojoIndexedTypeIdentifier.convertToLegacy(indexedTypeIdentifier));
+            for (Class<?> entityType : worker.indexedTypes)
+               output.writeObject(entityType);
          }
          output.writeBoolean(worker.skipIndex);
          output.writeObject(worker.keys);
@@ -134,9 +138,9 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       public IndexWorker readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          String cacheName = (String) input.readObject();
          int typesSize = input.readInt();
-         Set<IndexedTypeIdentifier> types = new HashSet<>(typesSize);
+         Set<Class<?>> types = new HashSet<>(typesSize);
          for (int i = 0; i < typesSize; i++) {
-            types.add(PojoIndexedTypeIdentifier.convertFromLegacy((Class<?>) input.readObject()));
+            types.add((Class<?>) input.readObject());
          }
          boolean skipIndex = input.readBoolean();
          Set<Object> keys = (Set<Object>) input.readObject();

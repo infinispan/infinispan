@@ -29,11 +29,11 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  */
 public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<IndexingConfiguration>, ConfigurationBuilderInfo {
 
-   private static final String DIRECTORY_PROVIDER_SUFFIX = ".directory_provider";
+   private static final String DIRECTORY_PROVIDER_SUFFIX = "directory.type";
 
-   private static final String DIRECTORY_PROVIDER_KEY1 = "hibernate.search.default.directory_provider";
+   private static final String DIRECTORY_PROVIDER_KEY1 = "hibernate.search.backends.infinispan_backend.directory.type";
 
-   private static final String DIRECTORY_PROVIDER_KEY2 = "default.directory_provider";
+   private static final String DIRECTORY_PROVIDER_KEY2 = "directory.type";
 
    private static final String EXCLUSIVE_INDEX_USE = "hibernate.search.default.exclusive_index_use";
 

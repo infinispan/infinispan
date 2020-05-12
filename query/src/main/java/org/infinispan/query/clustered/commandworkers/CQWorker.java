@@ -1,19 +1,12 @@
 package org.infinispan.query.clustered.commandworkers;
 
-import static org.infinispan.query.impl.SegmentFilterFactory.SEGMENT_FILTER_NAME;
-import static org.infinispan.query.impl.SegmentFilterFactory.SEGMENT_PARAMETERS_NAME;
-
-import java.io.IOException;
 import java.util.BitSet;
 import java.util.UUID;
 
-import org.hibernate.search.exception.SearchException;
-import org.hibernate.search.query.engine.spi.DocumentExtractor;
-import org.hibernate.search.query.engine.spi.HSQuery;
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.clustered.QueryResponse;
+import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.QueryDefinition;
 
@@ -28,10 +21,6 @@ abstract class CQWorker {
    protected AdvancedCache<?, ?> cache;
 
    private KeyTransformationHandler keyTransformationHandler;
-
-   private QueryBox queryBox;
-
-   private SearchIntegrator searchFactory;
 
    // the query
    protected QueryDefinition queryDefinition;
@@ -52,44 +41,22 @@ abstract class CQWorker {
    abstract QueryResponse perform(BitSet segments);
 
    void setFilter(BitSet segments) {
-      HSQuery query = queryDefinition.getHsQuery();
+      SearchQueryBuilder searchQuery = queryDefinition.getSearchQuery();
       if (segments.cardinality() != cache.getCacheConfiguration().clustering().hash().numSegments()) {
-         query.enableFullTextFilter(SEGMENT_FILTER_NAME).setParameter(SEGMENT_PARAMETERS_NAME, segments);
+         searchQuery.routeOnSegments(segments);
       } else {
-         query.disableFullTextFilter(SEGMENT_FILTER_NAME);
+         searchQuery.noRouting();
       }
-   }
-
-   QueryBox getQueryBox() {
-      if (queryBox == null) {
-         queryBox = cache.getComponentRegistry().getComponent(QueryBox.class);
-      }
-      return queryBox;
-   }
-
-   SearchIntegrator getSearchFactory() {
-      if (searchFactory == null) {
-         searchFactory = cache.getComponentRegistry().getComponent(SearchIntegrator.class);
-      }
-      return searchFactory;
    }
 
    /**
     * Utility to extract the cache key of a DocumentExtractor and use the KeyTransformationHandler to turn the string
     * into the actual key object.
     *
-    * @param extractor
-    * @param docIndex
+    * @param documentId
     * @return
     */
-   Object extractKey(DocumentExtractor extractor, int docIndex) {
-      String strKey;
-      try {
-         strKey = (String) extractor.extract(docIndex).getId();
-      } catch (IOException e) {
-         throw new SearchException("Error while extracting key", e);
-      }
-
-      return keyTransformationHandler.stringToKey(strKey);
+   Object stringToKey(String documentId) {
+      return keyTransformationHandler.stringToKey(documentId);
    }
 }

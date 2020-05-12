@@ -8,7 +8,6 @@ import org.infinispan.objectfilter.Matcher;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.core.impl.EmbeddedQueryFactory;
 import org.infinispan.query.dsl.IndexedQueryMode;
-import org.infinispan.query.dsl.embedded.impl.LuceneQueryMaker;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.dsl.impl.BaseQuery;
 
@@ -22,13 +21,8 @@ class ObjectRemoteQueryEngine extends QueryEngine<Descriptor> {
 
    private final EmbeddedQueryFactory queryFactory = new EmbeddedQueryFactory(this);
 
-   ObjectRemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass,
-                           LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<Descriptor> fieldBridgeAndAnalyzerProvider) {
-      super(cache, isIndexed, matcherImplClass, fieldBridgeAndAnalyzerProvider);
-   }
-
    ObjectRemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass) {
-      super(cache.getAdvancedCache().withEncoding(IdentityEncoder.class), isIndexed, matcherImplClass, null);
+      super(cache.getAdvancedCache().withEncoding(IdentityEncoder.class), isIndexed, matcherImplClass);
    }
 
    BaseQuery<Object> makeQuery(String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, IndexedQueryMode queryMode) {

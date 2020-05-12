@@ -2,7 +2,10 @@ package org.infinispan.query.impl;
 
 import static org.infinispan.query.logging.Log.CONTAINER;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -13,13 +16,8 @@ import java.util.concurrent.ConcurrentMap;
 import javax.management.ObjectName;
 
 import org.apache.lucene.search.BooleanQuery;
-import org.hibernate.search.analyzer.definition.LuceneAnalysisDefinitionProvider;
-import org.hibernate.search.cfg.spi.SearchConfiguration;
-import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
-import org.hibernate.search.spi.IndexedTypeIdentifier;
-import org.hibernate.search.spi.SearchIntegrator;
-import org.hibernate.search.spi.SearchIntegratorBuilder;
-import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
+import org.hibernate.search.backend.lucene.analysis.LuceneAnalysisConfigurer;
+import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.ProgrammaticMappingConfigurationContext;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
@@ -51,17 +49,14 @@ import org.infinispan.query.Indexer;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.backend.TxQueryInterceptor;
 import org.infinispan.query.clustered.ClusteredQueryOperation;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
-import org.infinispan.query.clustered.commandworkers.QueryBox;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
-import org.infinispan.query.impl.externalizers.FullTextFilterExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneBytesRefExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneFieldDocExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneScoreDocExternalizer;
@@ -69,12 +64,20 @@ import org.infinispan.query.impl.externalizers.LuceneSortExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneSortFieldExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneTopDocsExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneTopFieldDocsExternalizer;
+import org.infinispan.query.impl.externalizers.PojoRawTypeIdentifierExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneTotalHitsExternalizer;
 import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 import org.infinispan.query.impl.massindex.IndexWorker;
-import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
+import org.infinispan.query.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
+import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
+import org.infinispan.search.mapper.mapping.ProgrammaticSearchMappingProvider;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
+import org.infinispan.search.mapper.mapping.impl.CompositeAnalysisConfigurer;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down at cache stop. Each cache
@@ -84,6 +87,12 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  */
 @InfinispanModule(name = "query", requiredModules = {"core", "query-core", "clustered-lock"}, optionalModules = "lucene-directory")
 public class LifecycleManager implements ModuleLifecycle {
+
+   private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
+
+   private static final String ANALYSIS_CONFIGURER_PROPERTY_NAME = "analysis.configurer";
+   private static final String HS5_CONF_STRATEGY_PROPERTY = "hibernate.search.indexing_strategy";
+   private static final String HS5_CONF_STRATEGY_MANUAL = "manual";
 
    /**
     * Optional integer system property that sets value of {@link BooleanQuery#setMaxClauseCount}.
@@ -103,27 +112,30 @@ public class LifecycleManager implements ModuleLifecycle {
          SecurityActions.addCacheDependency(cache.getCacheManager(), cacheName, QueryCache.QUERY_CACHE_NAME);
 
          ClassLoader aggregatedClassLoader = makeAggregatedClassLoader(cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader());
-         SearchIntegrator searchFactory = null;
          boolean isIndexed = cfg.indexing().enabled();
+
+         SearchMappingHolder searchMapping = null;
          if (isIndexed) {
             setBooleanQueryMaxClauseCount(cfg.indexing().properties());
 
             Map<String, Class<?>> indexedClasses = makeIndexedClassesMap(cache);
 
-            searchFactory = createSearchIntegrator(cfg.indexing(), indexedClasses, cr, aggregatedClassLoader);
-
             KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler(aggregatedClassLoader);
             cr.registerComponent(keyTransformationHandler, KeyTransformationHandler.class);
 
-            createQueryInterceptorIfNeeded(cr, cfg, cache, indexedClasses, searchFactory, keyTransformationHandler);
+            searchMapping = createSearchMapping(cfg.indexing(), indexedClasses, cr, cache, keyTransformationHandler,
+                  aggregatedClassLoader);
 
-            cr.registerComponent(new QueryBox(), QueryBox.class);
-            DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache, searchFactory,
-                  keyTransformationHandler, ComponentRegistryUtils.getTimeService(cache));
+            createQueryInterceptorIfNeeded(cr, cfg, cache, indexedClasses, searchMapping, keyTransformationHandler);
+
+            DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache, searchMapping,
+                  keyTransformationHandler);
             cr.registerComponent(massIndexer, Indexer.class);
          }
 
-         cr.registerComponent(ObjectReflectionMatcher.create(new ReflectionEntityNamesResolver(aggregatedClassLoader), searchFactory), ObjectReflectionMatcher.class);
+         cr.registerComponent(ObjectReflectionMatcher.create(
+               new ReflectionEntityNamesResolver(aggregatedClassLoader), searchMapping),
+               ObjectReflectionMatcher.class);
          cr.registerComponent(new QueryEngine<>(cache, isIndexed), QueryEngine.class);
       }
    }
@@ -154,7 +166,7 @@ public class LifecycleManager implements ModuleLifecycle {
    }
 
    private void createQueryInterceptorIfNeeded(ComponentRegistry cr, Configuration cfg, AdvancedCache<?, ?> cache, Map<String, Class<?>> indexedClasses,
-                                               SearchIntegrator searchIntegrator, KeyTransformationHandler keyTransformationHandler) {
+                                               SearchMappingHolder searchMapping, KeyTransformationHandler keyTransformationHandler) {
       CONTAINER.registeringQueryInterceptor(cache.getName());
 
       BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
@@ -165,7 +177,11 @@ public class LifecycleManager implements ModuleLifecycle {
       }
 
       ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues = new ConcurrentHashMap<>();
-      QueryInterceptor queryInterceptor = new QueryInterceptor(searchIntegrator, keyTransformationHandler, txOldValues, cache, indexedClasses);
+      boolean manualIndexing = HS5_CONF_STRATEGY_MANUAL.equals(
+            cfg.indexing().properties().get(HS5_CONF_STRATEGY_PROPERTY));
+
+      QueryInterceptor queryInterceptor = new QueryInterceptor(searchMapping, keyTransformationHandler, manualIndexing,
+            txOldValues, cache, indexedClasses);
 
       for (Map.Entry<Class<?>, Class<?>> kt : cfg.indexing().keyTransformers().entrySet()) {
          keyTransformationHandler.registerTransformer(kt.getKey(), (Class<? extends Transformer>) kt.getValue());
@@ -205,12 +221,15 @@ public class LifecycleManager implements ModuleLifecycle {
          throw new IllegalStateException("It was expected to find the Query interceptor registered in the InterceptorChain but it wasn't found");
       }
 
-      SearchIntegrator searchFactory = cr.getComponent(SearchIntegrator.class);
-      checkIndexableClasses(searchFactory, indexingConfiguration.indexedEntities());
+      SearchMappingHolder searchMapping = cr.getComponent(SearchMappingHolder.class);
+      SearchMapping mapping = searchMapping.getSearchMapping();
+      if (mapping != null) {
+         checkIndexableClasses(mapping, indexingConfiguration.indexedEntities());
+      }
 
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
       Indexer massIndexer = ComponentRegistryUtils.getIndexer(cache);
-      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchFactory, massIndexer);
+      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchMapping, massIndexer);
       stats.setStatisticsEnabled(configuration.statistics().enabled());
       cr.registerComponent(stats, InfinispanQueryStatisticsInfo.class);
 
@@ -230,9 +249,14 @@ public class LifecycleManager implements ModuleLifecycle {
     * Check that the indexable classes declared by the user are really indexable by looking at the presence of Hibernate
     * Search index bindings.
     */
-   private void checkIndexableClasses(SearchIntegrator searchFactory, Set<Class<?>> indexedEntities) {
+   private void checkIndexableClasses(SearchMapping searchMapping, Set<Class<?>> indexedEntities) {
+      if (indexedEntities.isEmpty()) {
+         return;
+      }
+
+      Collection<Class<?>> indexedTypes = searchMapping.allIndexedTypes().values();
       for (Class<?> c : indexedEntities) {
-         if (searchFactory.getIndexBinding(new PojoIndexedTypeIdentifier(c)) == null) {
+         if (!indexedTypes.contains(c)) {
             throw CONTAINER.classNotIndexable(c.getName());
          }
       }
@@ -269,42 +293,59 @@ public class LifecycleManager implements ModuleLifecycle {
       return interceptorChain != null && interceptorChain.containsInterceptorType(QueryInterceptor.class, true);
    }
 
-   private SearchIntegrator createSearchIntegrator(IndexingConfiguration indexingConfiguration, Map<String, Class<?>> indexedClasses,
-                                                   ComponentRegistry cr, ClassLoader aggregatedClassLoader) {
-      SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
-      if (searchIntegrator != null && !searchIntegrator.isStopped()) {
+   private SearchMappingHolder createSearchMapping(IndexingConfiguration indexingConfiguration,
+                                                   Map<String, Class<?>> indexedClasses, ComponentRegistry cr,
+                                                   AdvancedCache<?, ?> cache,
+                                                   KeyTransformationHandler keyTransformationHandler,
+                                                   ClassLoader aggregatedClassLoader) {
+      SearchMappingHolder searchMappingHolder = cr.getComponent(SearchMappingHolder.class);
+      if (searchMappingHolder != null && searchMappingHolder.getSearchMapping() != null && !searchMappingHolder.getSearchMapping().isClose()) {
          // a paranoid check against an unlikely failure
          throw new IllegalStateException("SearchIntegrator already initialized!");
       }
 
       // load ProgrammaticSearchMappingProviders from classpath
-      Collection<ProgrammaticSearchMappingProvider> programmaticSearchMappingProviders = new LinkedHashSet<>();
-      programmaticSearchMappingProviders.add(new DefaultSearchMappingProvider());  // make sure our DefaultSearchMappingProvider is first
-      programmaticSearchMappingProviders.addAll(ServiceFinder.load(ProgrammaticSearchMappingProvider.class, aggregatedClassLoader));
+      Collection<ProgrammaticSearchMappingProvider> mappingProviders =
+            ServiceFinder.load(ProgrammaticSearchMappingProvider.class, aggregatedClassLoader);
 
-      programmaticSearchMappingProviders.add((cache, mapping) -> {
-         for (Class<?> indexedEntity : indexedClasses.values()) {
-            mapping.entity(indexedEntity).classBridge(SegmentFieldBridge.class).name(SegmentFieldBridge.SEGMENT_FIELD);
-         }
-      });
+      Map<String, Object> properties = new LinkedHashMap<>();
 
       // load LuceneAnalysisDefinitionProvider from classpath
-      Collection<LuceneAnalysisDefinitionProvider> analyzerDefProviders = ServiceFinder.load(LuceneAnalysisDefinitionProvider.class, aggregatedClassLoader);
-
-      // Set up the search factory for Hibernate Search first.
-      SearchConfiguration searchConfiguration = new SearchableCacheConfiguration(indexedClasses.values(),
-            indexingConfiguration.properties(), programmaticSearchMappingProviders, analyzerDefProviders, cr, aggregatedClassLoader);
-
-      searchIntegrator = new SearchIntegratorBuilder().configuration(searchConfiguration).buildSearchIntegrator();
-      cr.registerComponent(searchIntegrator, SearchIntegrator.class);
-
-      for (IndexedTypeIdentifier typeIdentifier : searchIntegrator.getIndexBindings().keySet()) {
-         // include possible programmatically declared classes via SearchMapping
-         Class<?> c = typeIdentifier.getPojoType();
-         indexedClasses.put(c.getName(), c);
+      Collection<LuceneAnalysisConfigurer> analyzerDefProviders = ServiceFinder.load(LuceneAnalysisConfigurer.class, aggregatedClassLoader);
+      if (analyzerDefProviders.size() == 1) {
+         properties.put(ANALYSIS_CONFIGURER_PROPERTY_NAME, analyzerDefProviders.iterator().next());
+      } else if (!analyzerDefProviders.isEmpty()) {
+         properties.put(ANALYSIS_CONFIGURER_PROPERTY_NAME, new CompositeAnalysisConfigurer(analyzerDefProviders));
       }
 
-      return searchIntegrator;
+      // provide user defined properties
+      for (Map.Entry<Object, Object> entry : indexingConfiguration.properties().entrySet()) {
+         if (entry.getKey() instanceof String) {
+            if (!(entry.getKey() instanceof String)) {
+               throw log.invalidPropertyKey(entry.getKey());
+            }
+            properties.put((String) entry.getKey(), entry.getValue());
+         }
+      }
+
+      searchMappingHolder = new SearchMappingHolder(CacheIdentifierBridge.getReference(), properties,
+            aggregatedClassLoader, mappingProviders);
+      Set<Class<?>> types = new HashSet<>( indexedClasses.values() );
+
+      // TODO: look for protobuf entity type marked as indexed.
+      if (!types.isEmpty()) {
+         searchMappingHolder.setEntityLoader(new EntityLoader(cache, keyTransformationHandler));
+         SearchMappingBuilder builder = searchMappingHolder.builder(SearchMappingBuilder.introspector(MethodHandles.lookup()));
+         builder.addEntityTypes(types);
+         ProgrammaticMappingConfigurationContext programmaticMapping = builder.programmaticMapping();
+         for (Class<?> type : types) {
+            programmaticMapping.type(type).routingKeyBinder(new CacheRoutingKeyBridge.Binder());
+         }
+         searchMappingHolder.build();
+      }
+
+      cr.registerComponent(searchMappingHolder, SearchMappingHolder.class);
+      return searchMappingHolder;
    }
 
    /**
@@ -324,9 +365,6 @@ public class LifecycleManager implements ModuleLifecycle {
 
       // add Infinispan's CL
       classLoaders.add(AggregatedClassLoader.class.getClassLoader());
-
-      // add Hibernate Search's CL
-      classLoaders.add(ClassLoaderService.class.getClassLoader());
 
       // add this module's CL
       classLoaders.add(getClass().getClassLoader());
@@ -362,9 +400,9 @@ public class LifecycleManager implements ModuleLifecycle {
          queryInterceptor.prepareForStopping();
       }
 
-      SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
-      if (searchIntegrator != null) {
-         searchIntegrator.close();
+      SearchMappingHolder searchMappingHolder = cr.getComponent(SearchMappingHolder.class);
+      if (searchMappingHolder != null && searchMappingHolder.getSearchMapping() != null) {
+         searchMappingHolder.getSearchMapping().close();
       }
    }
 
@@ -396,8 +434,9 @@ public class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.LUCENE_BYTES_REF, new LuceneBytesRefExternalizer());
       externalizerMap.put(ExternalizerIds.QUERY_DEFINITION, new QueryDefinition.Externalizer());
       externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_COMMAND_RESPONSE, new QueryResponse.Externalizer());
-      externalizerMap.put(ExternalizerIds.FULL_TEXT_FILTER, new FullTextFilterExternalizer());
       externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_OPERATION, new ClusteredQueryOperation.Externalizer());
+      externalizerMap.put(ExternalizerIds.POJO_TYPE_IDENTIFIER, new PojoRawTypeIdentifierExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_TOTAL_HITS, new LuceneTotalHitsExternalizer());
    }
 
    /**

@@ -1,24 +1,7 @@
 package org.infinispan.query.remote.impl.indexing;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.search.Query;
-import org.hibernate.search.bridge.FieldBridge;
-import org.hibernate.search.bridge.LuceneOptions;
-import org.hibernate.search.bridge.builtin.BooleanBridge;
-import org.hibernate.search.bridge.builtin.NumericFieldBridge;
-import org.hibernate.search.bridge.builtin.StringBridge;
-import org.hibernate.search.bridge.builtin.impl.NullEncodingTwoWayFieldBridge;
-import org.hibernate.search.bridge.spi.NullMarker;
-import org.hibernate.search.bridge.util.impl.ToStringNullMarker;
-import org.hibernate.search.bridge.util.impl.TwoWayString2FieldBridgeAdaptor;
-import org.hibernate.search.engine.nulls.codec.impl.LuceneIntegerNullMarkerCodec;
-import org.hibernate.search.engine.nulls.codec.impl.LuceneLongNullMarkerCodec;
-import org.hibernate.search.engine.nulls.codec.impl.LuceneStringNullMarkerCodec;
-import org.hibernate.search.engine.nulls.codec.impl.NullMarkerCodec;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-import org.infinispan.protostream.descriptors.Type;
 
 /**
  * A mapping from an object field to an index field and the flags that enable indexing, storage and analysis.
@@ -27,42 +10,6 @@ import org.infinispan.protostream.descriptors.Type;
  * @since 9.0
  */
 public final class FieldMapping {
-
-   private static final NullMarkerCodec NOT_ENCODING_NULL = new NullMarkerCodec() {
-
-      @Override
-      public NullMarker getNullMarker() {
-         return null;
-      }
-
-      @Override
-      public void encodeNullValue(String fieldName, Document document, LuceneOptions luceneOptions) {
-      }
-
-      @Override
-      public Query createNullMatchingQuery(String fieldName) {
-         throw new IllegalStateException("Cannot build IS NULL query for field '" + fieldName + "' which does not have indexNullAs configured for indexing null values.");
-      }
-
-      @Override
-      public boolean representsNullValue(IndexableField field) {
-         return field == null;
-      }
-   };
-
-   private static final LuceneStringNullMarkerCodec STRING_NULL_MARKER_CODEC = new LuceneStringNullMarkerCodec(new ToStringNullMarker(IndexingMetadata.DEFAULT_NULL_TOKEN));
-
-   private static final FieldBridge DOUBLE_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.DOUBLE_FIELD_BRIDGE, STRING_NULL_MARKER_CODEC);
-
-   private static final FieldBridge FLOAT_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.FLOAT_FIELD_BRIDGE, STRING_NULL_MARKER_CODEC);
-
-   private static final FieldBridge LONG_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.LONG_FIELD_BRIDGE, STRING_NULL_MARKER_CODEC);
-
-   private static final FieldBridge INT_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.INT_FIELD_BRIDGE, STRING_NULL_MARKER_CODEC);
-
-   private static final FieldBridge STRING_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(StringBridge.INSTANCE), STRING_NULL_MARKER_CODEC);
-
-   private static final FieldBridge BOOL_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(new BooleanBridge()), STRING_NULL_MARKER_CODEC);
 
    /**
     * The name of the field in the index.
@@ -95,28 +42,20 @@ public final class FieldMapping {
 
    private final String indexNullAs;
 
-   private final LuceneOptions luceneOptions;
-
    private final FieldDescriptor fieldDescriptor;
 
    /**
-    * Indicates if lazy initialization of {@link #indexNullAsObj} and {@link #fieldBridge} fields was performed or not.
+    * Indicates if lazy initialization of {@link #indexNullAsObj}.
     */
    private volatile boolean isInitialized = false;
 
    private Object indexNullAsObj;
 
-   private FieldBridge fieldBridge;
-
    FieldMapping(String name, boolean index, float boost, boolean analyze, boolean store, boolean sortable, String analyzer,
                 String indexNullAs,
-                LuceneOptions luceneOptions,
                 FieldDescriptor fieldDescriptor) {
       if (name == null) {
          throw new IllegalArgumentException("name argument cannot be null");
-      }
-      if (luceneOptions == null) {
-         throw new IllegalArgumentException("luceneOptions argument cannot be null");
       }
       if (fieldDescriptor == null) {
          throw new IllegalArgumentException("fieldDescriptor argument cannot be null");
@@ -130,7 +69,6 @@ public final class FieldMapping {
       this.analyzer = analyzer;
       this.indexNullAs = indexNullAs;
       this.fieldDescriptor = fieldDescriptor;
-      this.luceneOptions = luceneOptions;
    }
 
    public String name() {
@@ -161,18 +99,13 @@ public final class FieldMapping {
       return analyzer;
    }
 
-   public LuceneOptions luceneOptions() {
-      return luceneOptions;
-   }
-
    public Object indexNullAs() {
       init();
       return indexNullAsObj;
    }
 
-   public FieldBridge fieldBridge() {
-      init();
-      return fieldBridge;
+   public String notParsedIndexNull() {
+      return indexNullAs;
    }
 
    private void init() {
@@ -182,12 +115,11 @@ public final class FieldMapping {
             throw new IllegalStateException("FieldDescriptors are not fully initialised!");
          }
          indexNullAsObj = parseIndexNullAs();
-         fieldBridge = makeFieldBridge();
          isInitialized = true;
       }
    }
 
-   private Object parseIndexNullAs() {
+   public Object parseIndexNullAs() {
       if (indexNullAs != null) {
          switch (fieldDescriptor.getType()) {
             case DOUBLE:
@@ -219,74 +151,6 @@ public final class FieldMapping {
       return indexNullAs;
    }
 
-   private FieldBridge makeFieldBridge() {
-      switch (fieldDescriptor.getType()) {
-         case DOUBLE:
-            return indexNullAsObj == null ?
-                  new NullEncodingTwoWayFieldBridge(NumericFieldBridge.DOUBLE_FIELD_BRIDGE, NOT_ENCODING_NULL) :
-                  new NullEncodingTwoWayFieldBridge(NumericFieldBridge.DOUBLE_FIELD_BRIDGE, new LuceneLongNullMarkerCodec(new ToStringNullMarker(indexNullAsObj)));
-         case FLOAT:
-            return indexNullAsObj == null ?
-                  new NullEncodingTwoWayFieldBridge(NumericFieldBridge.FLOAT_FIELD_BRIDGE, NOT_ENCODING_NULL) :
-                  new NullEncodingTwoWayFieldBridge(NumericFieldBridge.FLOAT_FIELD_BRIDGE, new LuceneLongNullMarkerCodec(new ToStringNullMarker(indexNullAsObj)));
-         case INT64:
-         case UINT64:
-         case FIXED64:
-         case SFIXED64:
-         case SINT64:
-            return indexNullAsObj == null ?
-                  new NullEncodingTwoWayFieldBridge(NumericFieldBridge.LONG_FIELD_BRIDGE, NOT_ENCODING_NULL) :
-                  new NullEncodingTwoWayFieldBridge(NumericFieldBridge.LONG_FIELD_BRIDGE, new LuceneLongNullMarkerCodec(new ToStringNullMarker(indexNullAsObj)));
-         case INT32:
-         case FIXED32:
-         case UINT32:
-         case SFIXED32:
-         case SINT32:
-         case ENUM:
-            return indexNullAsObj == null ?
-                  new NullEncodingTwoWayFieldBridge(NumericFieldBridge.INT_FIELD_BRIDGE, NOT_ENCODING_NULL) :
-                  new NullEncodingTwoWayFieldBridge(NumericFieldBridge.INT_FIELD_BRIDGE, new LuceneIntegerNullMarkerCodec(new ToStringNullMarker(indexNullAsObj)));
-         case BOOL:
-            return indexNullAsObj == null ?
-                  new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(new BooleanBridge()), NOT_ENCODING_NULL) :
-                  new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(new BooleanBridge()), new LuceneStringNullMarkerCodec(new ToStringNullMarker(indexNullAsObj)));
-         default:
-            return indexNullAsObj == null ?
-                  new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(StringBridge.INSTANCE), NOT_ENCODING_NULL) :
-                  new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(StringBridge.INSTANCE), new LuceneStringNullMarkerCodec(new ToStringNullMarker(indexNullAsObj)));
-      }
-   }
-
-   public static FieldBridge getDefaultFieldBridge(Type type) {
-      switch (type) {
-         case DOUBLE:
-            return DOUBLE_FIELD_BRIDGE;
-         case FLOAT:
-            return FLOAT_FIELD_BRIDGE;
-         case INT64:
-         case UINT64:
-         case FIXED64:
-         case SFIXED64:
-         case SINT64:
-            return LONG_FIELD_BRIDGE;
-         case INT32:
-         case FIXED32:
-         case UINT32:
-         case SFIXED32:
-         case SINT32:
-         case ENUM:
-            return INT_FIELD_BRIDGE;
-         case BOOL:
-            return BOOL_FIELD_BRIDGE;
-         case STRING:
-         case BYTES:
-         case GROUP:
-         case MESSAGE:
-            return STRING_FIELD_BRIDGE;
-      }
-      return null;
-   }
-
    @Override
    public String toString() {
       return "FieldMapping{" +
@@ -298,7 +162,6 @@ public final class FieldMapping {
             ", sortable=" + sortable +
             ", analyzer='" + analyzer + '\'' +
             ", indexNullAs=" + indexNullAs +
-            ", luceneOptions=" + luceneOptions +
             '}';
    }
 }

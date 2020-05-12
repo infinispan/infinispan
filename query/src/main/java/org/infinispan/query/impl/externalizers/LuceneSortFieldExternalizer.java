@@ -43,14 +43,20 @@ public class LuceneSortFieldExternalizer extends AbstractExternalizer<SortField>
    }
 
    static void writeObjectStatic(ObjectOutput output, SortField sortField) throws IOException {
-      output.writeUTF(sortField.getField());
-      MarshallUtil.marshallEnum(sortField.getType(), output);
+      Type sortType = sortField.getType();
+      MarshallUtil.marshallEnum(sortType, output);
+      if (!Type.SCORE.equals(sortType)) {
+         output.writeUTF(sortField.getField());
+      }
       output.writeBoolean(sortField.getReverse());
    }
 
    static SortField readObjectStatic(ObjectInput input) throws IOException {
-      String fieldName = input.readUTF();
       Type sortType = MarshallUtil.unmarshallEnum(input, (ordinal) -> SORTFIELD_TYPE_VALUES[ordinal]);
+      String fieldName = null;
+      if (!Type.SCORE.equals(sortType)) {
+         fieldName = input.readUTF();
+      }
       boolean reverseSort = input.readBoolean();
       return new SortField(fieldName, sortType, reverseSort);
    }

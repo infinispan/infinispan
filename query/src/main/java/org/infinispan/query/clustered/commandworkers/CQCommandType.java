@@ -18,10 +18,11 @@ import org.infinispan.query.impl.QueryDefinition;
  */
 public enum CQCommandType {
 
-   CREATE_LAZY_ITERATOR(CQCreateLazyQuery::new),
+//   TODO HSEARCH-3323 Restore support for scrolling
+//   CREATE_LAZY_ITERATOR(CQCreateLazyQuery::new),
    CREATE_EAGER_ITERATOR(CQCreateEagerQuery::new),
-   DESTROY_LAZY_ITERATOR(CQKillLazyIterator::new),
-   GET_SOME_KEYS(CQLazyFetcher::new),
+//   DESTROY_LAZY_ITERATOR(CQKillLazyIterator::new),
+//   GET_SOME_KEYS(CQLazyFetcher::new),
    GET_RESULT_SIZE(CQGetResultSize::new);
 
    private static final CQCommandType[] CACHED_VALUES = values();
