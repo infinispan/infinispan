@@ -1,7 +1,5 @@
 package org.infinispan.query.impl;
 
-import static org.infinispan.query.logging.Log.CONTAINER;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -11,24 +9,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.Sort;
-import org.hibernate.search.filter.FullTextFilter;
-import org.hibernate.search.query.engine.spi.HSQuery;
-import org.hibernate.search.spi.CustomTypeMetadata;
-import org.hibernate.search.spi.IndexedTypeMap;
-import org.hibernate.search.spi.impl.IndexedTypeMaps;
-import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
+import org.hibernate.search.engine.search.query.SearchQuery;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.query.SearchTimeoutException;
-import org.infinispan.query.dsl.embedded.impl.HsQueryRequest;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
+import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.util.function.SerializableFunction;
 
 /**
- * Wraps the query to be executed in a cache represented either as a String or as a {@link HSQuery} form together with
+ * Wraps the query to be executed in a cache represented either as a String or as a {@link SearchQuery} form together with
  * pagination and sort information.
  *
  * @since 9.2
@@ -37,13 +28,12 @@ public final class QueryDefinition {
 
    private final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider;
    private final String queryString;
-   private HSQuery hsQuery;
+   private SearchQueryBuilder searchQuery;
    private int maxResults = 100;
    private int firstResult;
    private long timeout = -1;
    private Set<String> sortableFields;
    private Class<?> indexedType;
-   private Sort sort;
 
    private final Map<String, Object> namedParameters = new HashMap<>();
 
@@ -58,21 +48,17 @@ public final class QueryDefinition {
       this.queryEngineProvider = queryEngineProvider;
    }
 
-   public QueryDefinition(HSQuery hsQuery) {
-      if (hsQuery == null) {
-         throw new IllegalArgumentException("hsQuery cannot be null");
+   public QueryDefinition(SearchQueryBuilder searchQuery) {
+      if (searchQuery == null) {
+         throw new IllegalArgumentException("query cannot be null");
       }
-      this.hsQuery = hsQuery;
+      this.searchQuery = searchQuery;
       this.queryString = null;
       this.queryEngineProvider = null;
    }
 
    public String getQueryString() {
       return queryString;
-   }
-
-   private IndexedTypeMap<CustomTypeMetadata> createMetadata() {
-      return IndexedTypeMaps.singletonMapping(PojoIndexedTypeIdentifier.convertFromLegacy(indexedType), () -> sortableFields);
    }
 
    private QueryEngine getQueryEngine(AdvancedCache<?, ?> cache) {
@@ -87,32 +73,20 @@ public final class QueryDefinition {
    }
 
    public void initialize(AdvancedCache<?, ?> cache) {
-      if (hsQuery == null) {
+      if (searchQuery == null) {
          QueryEngine<?> queryEngine = getQueryEngine(cache);
-         HsQueryRequest hsQueryRequest;
-         if (indexedType != null && sortableFields != null) {
-            IndexedTypeMap<CustomTypeMetadata> metadata = createMetadata();
-            hsQueryRequest = queryEngine.createHsQuery(queryString, metadata, namedParameters);
-         } else {
-            hsQueryRequest = queryEngine.createHsQuery(queryString, null, namedParameters);
-         }
-         hsQuery = hsQueryRequest.getHsQuery();
-         sort = hsQueryRequest.getSort();
-         hsQuery.projection(hsQueryRequest.getProjections());
-         hsQuery.firstResult(firstResult);
-         hsQuery.maxResults(maxResults);
-         hsQuery.timeoutExceptionFactory((msg, q) -> new SearchTimeoutException(msg + " \"" + q + '\"'));
+         searchQuery = queryEngine.buildSearchQuery(queryString, namedParameters);
          if (timeout > 0) {
-            hsQuery.getTimeoutManager().setTimeout(timeout, TimeUnit.NANOSECONDS);
+            searchQuery.failAfter(timeout, TimeUnit.NANOSECONDS);
          }
       }
    }
 
-   public HSQuery getHsQuery() {
-      if (hsQuery == null) {
+   public SearchQueryBuilder getSearchQuery() {
+      if (searchQuery == null) {
          throw new IllegalStateException("The QueryDefinition has not been initialized, make sure to call initialize(...) first");
       }
-      return hsQuery;
+      return searchQuery;
    }
 
    public int getMaxResults() {
@@ -121,9 +95,6 @@ public final class QueryDefinition {
 
    public void setMaxResults(int maxResults) {
       this.maxResults = maxResults;
-      if (hsQuery != null) {
-         hsQuery.maxResults(maxResults);
-      }
    }
 
    public void setNamedParameters(Map<String, Object> params) {
@@ -147,37 +118,7 @@ public final class QueryDefinition {
    }
 
    public void setFirstResult(int firstResult) {
-      if (hsQuery != null) {
-         hsQuery.firstResult(firstResult);
-      }
       this.firstResult = firstResult;
-   }
-
-   public Sort getSort() {
-      return sort;
-   }
-
-   public void setSort(Sort sort) {
-      if (queryString != null) {
-         throw CONTAINER.sortNotSupportedWithQueryString();
-      }
-      hsQuery.sort(sort);
-      this.sort = sort;
-   }
-
-   public void filter(Filter filter) {
-      if (queryString != null) throw CONTAINER.filterNotSupportedWithQueryString();
-      hsQuery.filter(filter);
-   }
-
-   public FullTextFilter enableFullTextFilter(String name) {
-      if (queryString != null) throw CONTAINER.filterNotSupportedWithQueryString();
-      return hsQuery.enableFullTextFilter(name);
-   }
-
-   public void disableFullTextFilter(String name) {
-      if (queryString != null) throw CONTAINER.filterNotSupportedWithQueryString();
-      hsQuery.disableFullTextFilter(name);
    }
 
    public Set<String> getSortableFields() {
@@ -194,6 +135,10 @@ public final class QueryDefinition {
 
    public void setIndexedType(Class<?> indexedType) {
       this.indexedType = indexedType;
+   }
+
+   public void failAfter(long timeout, TimeUnit timeUnit) {
+      getSearchQuery().failAfter(timeout, timeUnit);
    }
 
    public static final class Externalizer implements AdvancedExternalizer<QueryDefinition> {

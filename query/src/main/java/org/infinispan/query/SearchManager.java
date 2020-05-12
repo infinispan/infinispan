@@ -1,8 +1,5 @@
 package org.infinispan.query;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.hibernate.search.stat.Statistics;
-import org.infinispan.Cache;
 import org.infinispan.query.dsl.IndexedQueryMode;
 
 /**
@@ -18,7 +15,7 @@ public interface SearchManager {
    /**
     * Builds a {@link CacheQuery} from an Ickle query string.
     *
-    * @throws org.hibernate.search.exception.SearchException if the queryString cannot be converted to an indexed query,
+    * @throws org.hibernate.search.util.common.SearchException if the queryString cannot be converted to an indexed query,
     *                                                        due to lack of indexes to resolve it fully or if contains
     *                                                        aggregations and grouping.
     */
@@ -41,40 +38,8 @@ public interface SearchManager {
    @Deprecated
    MassIndexer getMassIndexer();
 
-   /**
-    * Get access to the Query specific statistics for this SearchManager instance
-    *
-    * @return The statistics.
-    * @since 7.0
-    * @deprecated Since 11.0, with no replacement.
-    */
-   @Deprecated
-   Statistics getStatistics();
-
-   /**
-    * Retrieve an analyzer instance by its definition name
-    *
-    * @param name the name of the analyzer
-    * @return analyzer with the specified name
-    * @throws org.hibernate.search.exception.SearchException if the definition name is unknown
-    * @since 7.0
-    * @deprecated Since 11.0, with no replacement.
-    */
-   @Deprecated
-   Analyzer getAnalyzer(String name);
-
-   /**
-    * Retrieves the scoped analyzer for a given class type.
-    *
-    * @param clazz The class for which to retrieve the analyzer.
-    * @return The scoped analyzer for the specified class.
-    * @throws java.lang.IllegalArgumentException in case {@code clazz == null} or the specified
-    * class is not an indexed entity.
-    * @since 7.0
-    * @deprecated Since 11.0, with no replacement.
-    */
-   @Deprecated
-   Analyzer getAnalyzer(Class<?> clazz);
+   // TODO HSEARCH-3129 Restore support for statistics
+   // Statistics getStatistics();
 
    /**
     * Remove all entities of particular class from the index.
@@ -84,6 +49,8 @@ public interface SearchManager {
     */
    @Deprecated
    void purge(Class<?> entityType);
+
+   void refresh(Class<?> entityType);
 
    /**
     * This method gives access to internal Infinispan implementation details, and should not be normally needed. The

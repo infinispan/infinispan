@@ -15,16 +15,10 @@
     <name>Infinispan Search Mapper</name>
     <description>Infinispan Hibernate Search mapper module</description>
 
-    <properties>
-        <version.hibernate.search>6.0.0.Beta6</version.hibernate.search>
-        <version.lucene>8.4.1</version.lucene>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.hibernate.search</groupId>
             <artifactId>hibernate-search-mapper-pojo-base</artifactId>
-            <version>${version.hibernate.search}</version>
         </dependency>
 
         <dependency>

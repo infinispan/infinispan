@@ -2,8 +2,6 @@ package org.infinispan.query.impl;
 
 import java.util.List;
 
-import org.hibernate.search.query.engine.spi.EntityInfo;
-
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -20,11 +18,11 @@ import net.jcip.annotations.NotThreadSafe;
 @Deprecated
 final class EagerIterator<E> extends AbstractIterator<E> {
 
-   private final List<EntityInfo> entityInfos;
+   private final List<E> hits;
 
-   EagerIterator(List<EntityInfo> entityInfos, QueryResultLoader resultLoader, int fetchSize) {
-      super(resultLoader, 0, entityInfos.size() - 1, fetchSize);
-      this.entityInfos = entityInfos;
+   EagerIterator(List<E> hits, int fetchSize) {
+      super(0, hits.size() - 1, fetchSize);
+      this.hits = hits;
    }
 
    @Override
@@ -34,7 +32,7 @@ final class EagerIterator<E> extends AbstractIterator<E> {
    }
 
    @Override
-   protected EntityInfo loadEntityInfo(int index) {
-      return entityInfos.get(index);
+   protected E loadHit(int index) {
+      return hits.get(index);
    }
 }

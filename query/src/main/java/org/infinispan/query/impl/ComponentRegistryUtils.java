@@ -1,6 +1,5 @@
 package org.infinispan.query.impl;
 
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.time.TimeService;
@@ -10,8 +9,9 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
+import org.infinispan.query.core.impl.QueryCache;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 
 /**
  * Lookup methods for various internal components of search module.
@@ -40,9 +40,9 @@ public final class ComponentRegistryUtils {
       }
    }
 
-   public static SearchIntegrator getSearchIntegrator(Cache<?, ?> cache) {
-      ensureIndexed(cache);
-      return getRequiredComponent(cache, SearchIntegrator.class);
+   public static SearchMappingHolder getSearchMappingHolder(Cache<?, ?> cache) {
+      ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
+      return componentRegistry.getComponent(SearchMappingHolder.class, SearchMappingHolder.class.getName());
    }
 
    public static KeyPartitioner getKeyPartitioner(Cache<?, ?> cache) {

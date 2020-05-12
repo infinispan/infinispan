@@ -103,6 +103,13 @@ public class LuceneTransformationTest {
    }
 
    @Test
+   public void testFullTextRegexp_boosted() {
+      assertGeneratedLuceneQuery(
+            "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : /te?t/^3",
+            "+(text:/te?t/)^3.0 #__HSEARCH_type:main");
+   }
+
+   @Test
    public void testFullTextRange() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : ['AAA' 'ZZZ']",

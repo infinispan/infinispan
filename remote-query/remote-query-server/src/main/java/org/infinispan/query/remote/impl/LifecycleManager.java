@@ -11,6 +11,7 @@ import javax.management.ObjectName;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.logging.LogFactory;
@@ -28,7 +29,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.query.impl.EntityLoader;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.impl.Externalizers.QueryRequestExternalizer;
 import org.infinispan.query.remote.client.impl.MarshallerRegistration;
@@ -39,10 +42,11 @@ import org.infinispan.query.remote.impl.filter.IckleBinaryProtobufFilterAndConve
 import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCacheEventFilterConverter;
 import org.infinispan.query.remote.impl.filter.IckleProtobufCacheEventFilterConverter;
 import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
-import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapperSearchWorkCreator;
 import org.infinispan.query.remote.impl.logging.Log;
+import org.infinispan.query.remote.impl.mapping.SerializationContextSearchMapping;
 import org.infinispan.query.remote.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 
 /**
  * Initializes components for remote query. Each cache manager has its own instance of this class during its lifetime.
@@ -139,14 +143,21 @@ public final class LifecycleManager implements ModuleLifecycle {
 
          // a remote query manager must be added for each non-internal cache
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
+
+         // If the serialization context contains indexed entities,
+         // the SearchMapping instances will be created for all user caches,
+         // updating theirs SearchMapping holders.
+         SearchMappingHolder searchMappingHolder = cr.getComponent(SearchMappingHolder.class);
+         if (searchMappingHolder != null) {
+            AdvancedCache cache = cr.getComponent(Cache.class).getAdvancedCache().withStorageMediaType()
+                  .withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class);
+            KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
+            searchMappingHolder.setEntityLoader(new EntityLoader(cache, keyTransformationHandler));
+            SerializationContextSearchMapping.acquire(serCtx).buildMapping(searchMappingHolder);
+         }
+
          RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr);
          cr.registerComponent(remoteQueryManager, RemoteQueryManager.class);
-
-         if (cfg.indexing().enabled()) {
-            log.debugf("Wrapping the SearchWorkCreator for indexed cache %s", cacheName);
-            QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
-            queryInterceptor.setSearchWorkCreator(new ProtobufValueWrapperSearchWorkCreator(queryInterceptor.getSearchWorkCreator(), serCtx));
-         }
       }
    }
 

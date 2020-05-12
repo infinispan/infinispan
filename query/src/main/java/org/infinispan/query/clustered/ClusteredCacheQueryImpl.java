@@ -4,17 +4,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.search.exception.SearchException;
-import org.hibernate.search.spi.CustomTypeMetadata;
-import org.hibernate.search.spi.IndexedTypeMap;
+import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.CacheQueryImpl;
 import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.QueryDefinition;
@@ -38,13 +34,8 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
 
    private int firstResult = 0;
 
-   public ClusteredCacheQueryImpl(QueryDefinition queryDefinition, ExecutorService asyncExecutor, AdvancedCache<?, ?> cache,
-                                  KeyTransformationHandler keyTransformationHandler, IndexedTypeMap<CustomTypeMetadata> metadata) {
-      super(queryDefinition, cache, keyTransformationHandler);
-      if (metadata != null) {
-         this.queryDefinition.setIndexedType(metadata.keySet().iterator().next().getPojoType());
-         this.queryDefinition.setSortableField(metadata.values().iterator().next().getSortableFields());
-      }
+   public ClusteredCacheQueryImpl(QueryDefinition queryDefinition, ExecutorService asyncExecutor, AdvancedCache<?, ?> cache) {
+      super(queryDefinition, cache);
       this.invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
    }
 
@@ -61,7 +52,7 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
    }
 
    @Override
-   public int getResultSize() {
+   public long getResultSize() {
       partitionHandlingSupport.checkCacheAvailable();
       if (resultSize == null) {
          List<QueryResponse> responses = invoker.broadcast(ClusteredQueryOperation.getResultSize(queryDefinition));
@@ -83,19 +74,20 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
             ClusteredQueryOperation command = ClusteredQueryOperation.createEagerIterator(queryDefinition);
             Map<Address, NodeTopDocs> topDocsResponses = broadcastQuery(command);
 
-            return new DistributedIterator<>(queryDefinition.getSort(),
+            return new DistributedIterator<>(queryDefinition.getSearchQuery().getLuceneSort(),
                   fetchOptions.getFetchSize(), resultSize, maxResults,
                   firstResult, topDocsResponses, cache);
          }
          case LAZY: {
-            UUID queryId = UUID.randomUUID();
-            ClusteredQueryOperation command = ClusteredQueryOperation.createLazyIterator(queryDefinition, queryId);
-            Map<Address, NodeTopDocs> topDocsResponses = broadcastQuery(command);
+//            UUID queryId = UUID.randomUUID();
+//            ClusteredQueryOperation command = ClusteredQueryOperation.createLazyIterator(queryDefinition, queryId);
+//            Map<Address, NodeTopDocs> topDocsResponses = broadcastQuery(command);
 
-            // Make a sort copy to avoid reversed results
-            return new DistributedLazyIterator<>(queryDefinition.getSort(),
-                  fetchOptions.getFetchSize(), resultSize, maxResults,
-                  firstResult, queryId, topDocsResponses, invoker, cache);
+            // TODO HSEARCH-3323 Restore support for scrolling
+//            // Make a sort copy to avoid reversed results
+//            return new DistributedLazyIterator<>(queryDefinition.getSort(),
+//                  fetchOptions.getFetchSize(), resultSize, maxResults,
+//                  firstResult, queryId, topDocsResponses, invoker, cache);
          }
          default:
             throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());

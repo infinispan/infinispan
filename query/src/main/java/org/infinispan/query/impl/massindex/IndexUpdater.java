@@ -1,20 +1,11 @@
 package org.infinispan.query.impl.massindex;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
-import org.hibernate.search.backend.UpdateLuceneWork;
-import org.hibernate.search.bridge.spi.ConversionContext;
-import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
-import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
-import org.hibernate.search.engine.spi.EntityIndexBinding;
-import org.hibernate.search.spi.DefaultInstanceInitializer;
-import org.hibernate.search.spi.IndexedTypeIdentifier;
-import org.hibernate.search.spi.SearchIntegrator;
-import org.hibernate.search.spi.impl.IndexedTypeSets;
-import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.logging.Log;
+import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -27,56 +18,51 @@ public class IndexUpdater {
 
    private static final Log LOG = LogFactory.getLog(IndexUpdater.class, Log.class);
 
-   private final SearchIntegrator searchIntegrator;
+   private final SearchMappingHolder searchMappingHolder;
    private final KeyTransformationHandler keyTransformationHandler;
-   private final ExtendedBatchBackend defaultBatchBackend;
 
-   public IndexUpdater(SearchIntegrator searchIntegrator, KeyTransformationHandler keyTransformationHandler, TimeService timeService) {
-      this.searchIntegrator = searchIntegrator;
+   public IndexUpdater(SearchMappingHolder searchMappingHolder, KeyTransformationHandler keyTransformationHandler) {
+      this.searchMappingHolder = searchMappingHolder;
       this.keyTransformationHandler = keyTransformationHandler;
-      this.defaultBatchBackend = new ExtendedBatchBackend(searchIntegrator, new DefaultMassIndexerProgressMonitor(timeService));
    }
 
-   public void flush(Collection<IndexedTypeIdentifier> entities) {
-      LOG.flushingIndex(entities.toString());
-      defaultBatchBackend.flush(IndexedTypeSets.fromIdentifiers(entities));
-   }
-
-   public void purge(Collection<IndexedTypeIdentifier> entities) {
-      LOG.purgingIndex(entities.toString());
-      defaultBatchBackend.purge(IndexedTypeSets.fromIdentifiers(entities));
-   }
-
-   public void waitForAsyncCompletion() {
-      defaultBatchBackend.awaitAsyncProcessingCompletion();
-   }
-
-   public void updateIndex(Object key, Object value, int segment) {
-      if (value != null) {
-         if (!Thread.currentThread().isInterrupted()) {
-            EntityIndexBinding entityIndexBinding = searchIntegrator.getIndexBindings().get(new PojoIndexedTypeIdentifier(value.getClass()));
-            if (entityIndexBinding == null) {
-               // it might be possible to receive not-indexes types
-               return;
-            }
-            ConversionContext conversionContext = new ContextualExceptionBridgeHelper();
-            DocumentBuilderIndexedEntity docBuilder = entityIndexBinding.getDocumentBuilder();
-            final String idInString = keyTransformationHandler.keyToString(key, segment);
-            UpdateLuceneWork updateTask = docBuilder.createUpdateWork(
-                  null,
-                  docBuilder.getTypeIdentifier(),
-                  value,
-                  idInString,
-                  idInString,
-                  DefaultInstanceInitializer.DEFAULT_INITIALIZER,
-                  conversionContext
-            );
-            try {
-               defaultBatchBackend.enqueueAsyncWork(updateTask);
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-            }
-         }
+   public void flush(Collection<Class<?>> javaClasses) {
+      if (javaClasses.isEmpty()) {
+         return;
       }
+
+      LOG.flushingIndex(javaClasses.toString());
+      searchMappingHolder.getSearchMapping().scopeFromJavaClasses(javaClasses).workspace().flush();
+   }
+
+   public void refresh(Collection<Class<?>> javaClasses) {
+      if (javaClasses.isEmpty()) {
+         return;
+      }
+
+      LOG.flushingIndex(javaClasses.toString());
+      searchMappingHolder.getSearchMapping().scopeFromJavaClasses(javaClasses).workspace().refresh();
+   }
+
+   public void purge(Collection<Class<?>> javaClasses) {
+      if (javaClasses.isEmpty()) {
+         return;
+      }
+
+      LOG.purgingIndex(javaClasses.toString());
+      searchMappingHolder.getSearchMapping().scopeFromJavaClasses(javaClasses).workspace().purge();
+   }
+
+   public Collection<Class<?>> allJavaClasses() {
+      return searchMappingHolder.getSearchMapping().allIndexedTypes().values();
+   }
+
+   public CompletableFuture<?> updateIndex(Object key, Object value, int segment) {
+      if (value == null || Thread.currentThread().isInterrupted()) {
+         return CompletableFuture.completedFuture(null);
+      }
+
+      final String idInString = keyTransformationHandler.keyToString(key, segment);
+      return searchMappingHolder.getSearchMapping().getSearchIndexer().addOrUpdate(idInString, value);
    }
 }

@@ -289,9 +289,9 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       // check for presence of index providers that are not persistent upon restart
       boolean isVolatile = typedProperties.entrySet().stream()
                                      .anyMatch(e -> {
-                                        if (((String) e.getKey()).endsWith(DIRECTORY_PROVIDER_SUFFIX)) {
+                                        if (((String) e.getKey()).endsWith("directory.type")) {
                                            String directoryImplementationName = String.valueOf(e.getValue()).trim();
-                                           return LOCAL_HEAP_DIRECTORY_PROVIDER.equalsIgnoreCase(directoryImplementationName)
+                                           return "local-heap".equalsIgnoreCase(directoryImplementationName)
                                                  || LOCAL_HEAP_DIRECTORY_PROVIDER_FQN.equalsIgnoreCase(directoryImplementationName)
                                                  || RAM_DIRECTORY_PROVIDER.equals(directoryImplementationName);
                                         }

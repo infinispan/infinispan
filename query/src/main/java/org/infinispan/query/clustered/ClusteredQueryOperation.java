@@ -38,12 +38,12 @@ public final class ClusteredQueryOperation {
       return queryDefinition;
    }
 
-   static ClusteredQueryOperation createLazyIterator(QueryDefinition queryDefinition, UUID queryId) {
+   /*static ClusteredQueryOperation createLazyIterator(QueryDefinition queryDefinition, UUID queryId) {
       ClusteredQueryOperation cmd = new ClusteredQueryOperation(CQCommandType.CREATE_LAZY_ITERATOR);
       cmd.queryDefinition = queryDefinition;
       cmd.queryId = queryId;
       return cmd;
-   }
+   }*/
 
    static ClusteredQueryOperation getResultSize(QueryDefinition queryDefinition) {
       ClusteredQueryOperation cmd = new ClusteredQueryOperation(CQCommandType.GET_RESULT_SIZE);
@@ -57,7 +57,7 @@ public final class ClusteredQueryOperation {
       return cmd;
    }
 
-   static ClusteredQueryOperation destroyLazyQuery(UUID queryId) {
+   /*static ClusteredQueryOperation destroyLazyQuery(UUID queryId) {
       ClusteredQueryOperation cmd = new ClusteredQueryOperation(CQCommandType.DESTROY_LAZY_ITERATOR);
       cmd.queryId = queryId;
       return cmd;
@@ -68,7 +68,7 @@ public final class ClusteredQueryOperation {
       cmd.queryId = queryId;
       cmd.docIndex = docIndex;
       return cmd;
-   }
+   }*/
 
    public QueryResponse perform(Cache<?, ?> cache, BitSet segments) {
       return commandType.perform(cache.getAdvancedCache(), queryDefinition, queryId, docIndex, segments);

@@ -2,11 +2,6 @@ package org.infinispan.query.remote.impl.indexing;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.lucene.document.Field;
-import org.hibernate.search.annotations.Store;
-import org.hibernate.search.bridge.LuceneOptions;
-import org.hibernate.search.engine.impl.LuceneOptionsImpl;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.AnnotationMetadataCreator;
 import org.infinispan.protostream.descriptors.AnnotationElement;
@@ -106,14 +101,7 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
                throw new IllegalStateException("Cannot specify an analyzer for field " + fd.getFullName() + " unless the field is analyzed.");
             }
 
-            //TODO [anistor] what is the 'inherited boost'?
-            LuceneOptions luceneOptions = new LuceneOptionsImpl(Field.Index.toIndex(isIndexed, isAnalyzed),
-                  Field.TermVector.NO,
-                  isStored ? Store.YES : Store.NO,
-                  indexNullAs,
-                  fieldLevelBoost, 1.0f);
-
-            FieldMapping fieldMapping = new FieldMapping(fieldName, isIndexed, fieldLevelBoost, isAnalyzed, isStored, isSortable, fieldLevelAnalyzer, indexNullAs, luceneOptions, fd);
+            FieldMapping fieldMapping = new FieldMapping(fieldName, isIndexed, fieldLevelBoost, isAnalyzed, isStored, isSortable, fieldLevelAnalyzer, indexNullAs, fd);
             fields.put(fieldName, fieldMapping);
             if (log.isEnabled(Logger.Level.DEBUG)) {
                log.debugf("fieldName=%s fieldMapping=%s", fieldName, fieldMapping);

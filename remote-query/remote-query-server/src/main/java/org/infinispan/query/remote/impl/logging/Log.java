@@ -66,4 +66,7 @@ public interface Log extends BasicLogger {
    @Message(id = 28016, value = "Query performed in a cache ('%s') that has an unknown format configuration. " +
          "Please configure the cache encoding as 'application/x-protostream' or 'application/x-java-object'")
    void warnNoMediaType(String cacheName);
+
+   @Message(value = "It is not possible to create indexes for a field having type %s. Field: %s.", id = 28017)
+   CacheException typeNotIndexable(String typeName, String fieldName);
 }

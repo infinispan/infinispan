@@ -15,10 +15,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.hibernate.search.exception.SearchException;
+import org.hibernate.search.util.common.SearchException;
+import org.hibernate.search.util.common.SearchTimeoutException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
-import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;

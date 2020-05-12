@@ -7,14 +7,15 @@ import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
-import java.util.List;
 
 import javax.transaction.Transaction;
 
-import org.hibernate.search.backend.LuceneWork;
+import org.hibernate.search.util.common.SearchException;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.objectfilter.ParsingException;
+import org.infinispan.search.mapper.common.EntityReference;
 import org.infinispan.remoting.transport.Address;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -58,14 +59,6 @@ public interface Log extends org.infinispan.query.core.impl.Log {
    @LogMessage(level = TRACE)
    @Message(value = "Sent list of LuceneWork %s to node %s", id = 14005)
    void workListRemotedTo(Object workList, Address primaryNodeAddress);
-
-   @LogMessage(level = TRACE)
-   @Message(value = "Apply list of LuceneWork %s delegating to local indexing engine", id = 14006)
-   void applyingChangeListLocally(List<LuceneWork> workList);
-
-   @LogMessage(level = DEBUG)
-   @Message(value = "Going to ship list of LuceneWork %s to a remote master indexer", id = 14007)
-   void applyingChangeListRemotely(List<LuceneWork> workList);
 
    @LogMessage(level = WARN)
    @Message(value = "Index named '%1$s' is ignoring configuration option 'directory_provider' set '%2$s':" +
@@ -174,4 +167,19 @@ public interface Log extends org.infinispan.query.core.impl.Log {
 
    @Message(value = "Error releasing MassIndexer Lock", id = 14049)
    CacheException errorReleasingMassIndexerLock(@Cause Throwable e);
+
+   @Message(value = "Interrupted while waiting for completions of some batch indexing operations.", id = 14050)
+   CacheException interruptedWhileWaitingForRequestCompletion(@Cause Exception cause);
+
+   @Message(value = "%1$s entities could not be indexed. See the logs for details. First failure on entity '%2$s': %3$s", id = 14051)
+   SearchException massIndexingEntityFailures(long finalFailureCount, EntityReference firstFailureEntity, String firstFailureMessage, @Cause Throwable firstFailure);
+
+   @Message(value = "Indexing instance of entity '%s' during mass indexing", id = 14052)
+   String massIndexerIndexingInstance(String entityName);
+
+   @Message(value = "Invalid property key '%1$s`, it's not a string.", id = 14053)
+   CacheException invalidPropertyKey(Object propertyKey);
+
+   @Message(value = "Trying to execute query `%1$s`, but no type is indexed on cache.", id = 14054)
+   CacheException noTypeIsIndexed(String ickle);
 }
