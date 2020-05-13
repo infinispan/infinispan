@@ -11,8 +11,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 @Test(groups = "xsite", testName = "xsite.RollbackNoPrepareOptimisticTest")
@@ -26,36 +25,31 @@ public class RollbackNoPrepareOptimisticTest extends AbstractTwoSitesTest {
       String key = key(LON);
       String val = val(LON);
 
-      ComponentRegistry cr = backup(LON).getAdvancedCache().getComponentRegistry();
-      GlobalComponentRegistry gcr = cr.getGlobalComponentRegistry();
-      BackupReceiverRepositoryImpl brr = (BackupReceiverRepositoryImpl) gcr.getComponent(BackupReceiverRepository.class);
-      BackupReceiver backupCacheManager = brr.getBackupReceiver(LON, getDefaultCacheName());
-      BackupReceiverWrapper brWrapper = new BackupReceiverWrapper(backupCacheManager);
-      brr.replace(LON, getDefaultCacheName(), brWrapper);
+      LogBackupReceiver receiver = TestingUtil.wrapComponent(backup(LON), BackupReceiver.class, LogBackupReceiver::new);
 
-      assertNull(brWrapper.received);
+      assertNull(receiver.received);
       cache(LON, 0).put(key, val);
-      assertNotNull(brWrapper.received);
+      assertNotNull(receiver.received);
       assertEquals(backup(LON).get(key), val);
 
-      brWrapper.received = null;
+      receiver.received = null;
 
       TransactionManager tmLon0 = cache(LON, 0).getAdvancedCache().getTransactionManager();
 
-      assertNull(brWrapper.received);
+      assertNull(receiver.received);
       tmLon0.begin();
       cache(LON, 0).put(key, val);
       log.trace("Before rollback!");
       tmLon0.rollback();
-      assertNull(brWrapper.received);
+      assertNull(receiver.received);
    }
 
-   public static class BackupReceiverWrapper extends BackupReceiverDelegator {
+   public static class LogBackupReceiver extends BackupReceiverDelegator {
 
       volatile VisitableCommand received;
 
-      BackupReceiverWrapper(BackupReceiver br) {
-         super(br);
+      protected LogBackupReceiver(BackupReceiver delegate) {
+         super(delegate);
       }
 
       @Override

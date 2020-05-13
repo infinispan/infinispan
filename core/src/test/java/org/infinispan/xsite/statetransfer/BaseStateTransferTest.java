@@ -1,9 +1,9 @@
 package org.infinispan.xsite.statetransfer;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.replaceComponent;
+import static org.infinispan.test.TestingUtil.wrapComponent;
 import static org.infinispan.xsite.XSiteAdminOperations.SUCCESS;
 import static org.infinispan.xsite.statetransfer.XSiteStateTransferManager.STATUS_CANCELED;
 import static org.infinispan.xsite.statetransfer.XSiteStateTransferManager.STATUS_SENDING;
@@ -33,20 +33,17 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ControlledTransport;
-import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverDelegator;
-import org.infinispan.xsite.BackupReceiverRepository;
-import org.infinispan.xsite.BackupReceiverRepositoryDelegator;
 import org.infinispan.xsite.XSiteAdminOperations;
 import org.testng.annotations.Test;
 
@@ -328,8 +325,8 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          }
       };
 
-      for (CacheContainer cacheContainer : site(NYC).cacheManagers()) {
-         BackupReceiverRepositoryWrapper.replaceInCache(cacheContainer, listener);
+      for (Cache<?, ?> cache : caches(NYC)) {
+         wrapComponent(cache, BackupReceiver.class, current -> new ListenableBackupReceiver(current, listener));
       }
 
       //safe (i.e. not blocking main thread), the state transfer is async
@@ -425,8 +422,8 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          }
       };
 
-      for (CacheContainer cacheContainer : site(NYC).cacheManagers()) {
-         BackupReceiverRepositoryWrapper.replaceInCache(cacheContainer, listener);
+      for (Cache<?, ?> cache : caches(NYC)) {
+         wrapComponent(cache, BackupReceiver.class, current -> new ListenableBackupReceiver(current, listener));
       }
 
       //safe (i.e. not blocking main thread), the state transfer is async
@@ -461,7 +458,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       } else if (command instanceof ClearCommand) {
          return true;
       } else if (command instanceof WriteOnlyManyEntriesCommand) {
-         InternalCacheValue icv = (InternalCacheValue) ((WriteOnlyManyEntriesCommand) command).getArguments().get(key);
+         InternalCacheValue<?> icv = (InternalCacheValue<?>) ((WriteOnlyManyEntriesCommand<?, ?, ?>) command).getArguments().get(key);
          return Objects.equals(icv.getValue(), value);
       } else if (command instanceof PrepareCommand) {
          for (WriteCommand writeCommand : ((PrepareCommand) command).getModifications()) {
@@ -764,49 +761,6 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       }
    }
 
-   private static class BackupReceiverRepositoryWrapper extends BackupReceiverRepositoryDelegator {
-
-      private final BackupListener listener;
-
-      BackupReceiverRepositoryWrapper(BackupReceiverRepository delegate, BackupListener listener) {
-         super(delegate);
-         this.listener = Objects.requireNonNull(listener, "Listener must not be null.");
-      }
-
-      @Override
-      public BackupReceiver getBackupReceiver(String originSiteName, String cacheName) {
-         return new BackupReceiverDelegator(super.getBackupReceiver(originSiteName, cacheName)) {
-            @Override
-            public CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
-               try {
-                  listener.beforeCommand(command);
-                  return super.handleRemoteCommand(command, preserveOrder);
-               } catch (Exception e) {
-                  return CompletableFutures.completedExceptionFuture(e);
-               } finally {
-                  listener.afterCommand(command);
-               }
-            }
-
-            @Override
-            public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
-               try {
-                  listener.beforeState(cmd);
-               } catch (Exception e) {
-                  return CompletableFutures.completedExceptionFuture(e);
-               }
-               return super.handleStateTransferState(cmd).whenComplete((v, t) -> listener.afterState(cmd));
-            }
-         };
-      }
-
-      static void replaceInCache(CacheContainer cacheContainer, BackupListener listener) {
-         BackupReceiverRepository delegate = extractGlobalComponent(cacheContainer, BackupReceiverRepository.class);
-         BackupReceiverRepositoryWrapper wrapper = new BackupReceiverRepositoryWrapper(delegate, listener);
-         replaceComponent(cacheContainer, BackupReceiverRepository.class, wrapper, true);
-      }
-   }
-
    private static abstract class BackupListener {
 
       void beforeCommand(VisitableCommand command) throws Exception {
@@ -824,6 +778,35 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       void afterState(XSiteStatePushCommand command) {
          //no-op by default
       }
+   }
 
+   private static class ListenableBackupReceiver extends BackupReceiverDelegator {
+
+      private final BackupListener listener;
+
+      ListenableBackupReceiver(BackupReceiver delegate, BackupListener listener) {
+         super(delegate);
+         this.listener = Objects.requireNonNull(listener, "Listener must not be null.");
+      }
+
+      @Override
+      public CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
+         try {
+            listener.beforeCommand(command);
+         } catch (Exception e) {
+            return CompletableFutures.completedExceptionFuture(e);
+         }
+         return super.handleRemoteCommand(command, preserveOrder).whenComplete((v, t) -> listener.afterCommand(command));
+      }
+
+      @Override
+      public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
+         try {
+            listener.beforeState(cmd);
+         } catch (Exception e) {
+            return CompletableFutures.completedExceptionFuture(e);
+         }
+         return super.handleStateTransferState(cmd).whenComplete((v, t) -> listener.afterState(cmd));
+      }
    }
 }

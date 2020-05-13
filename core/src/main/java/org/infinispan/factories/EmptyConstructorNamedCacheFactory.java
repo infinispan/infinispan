@@ -62,8 +62,10 @@ import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.util.concurrent.CommandAckCollector;
+import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.BackupSenderImpl;
+import org.infinispan.xsite.ClusteredCacheBackupReceiver;
 import org.infinispan.xsite.NoOpBackupSender;
 import org.infinispan.xsite.irac.DefaultIracManager;
 import org.infinispan.xsite.irac.IracManager;
@@ -99,6 +101,7 @@ import org.infinispan.xsite.status.TakeOfflineManager;
                               OrderedUpdatesManager.class, ScatteredVersionManager.class, TransactionOriginatorChecker.class,
                               BiasManager.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class, PublisherHandler.class,
                               InvocationHelper.class, TakeOfflineManager.class, IracManager.class, IracVersionGenerator.class,
+                              BackupReceiver.class
 })
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
@@ -223,6 +226,10 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return configuration.sites().hasAsyncEnabledBackups() ?
                 new DefaultIracVersionGenerator() :
                 NoOpIracVersionGenerator.getInstance();
+      } else if (componentName.equals(BackupReceiver.class.getName())) {
+         return configuration.clustering().cacheMode().isClustered() ?
+               new ClusteredCacheBackupReceiver(configuration, componentRegistry.getCacheName()) :
+               null;
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);

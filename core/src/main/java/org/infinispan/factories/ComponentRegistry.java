@@ -51,6 +51,7 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
@@ -81,6 +82,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    //Cached fields:
    private ComponentRef<AdvancedCache> cache;
    private ComponentRef<AsyncInterceptorChain> asyncInterceptorChain;
+   private ComponentRef<BackupReceiver> backupReceiver;
    private ComponentRef<BackupSender> backupSender;
    private ComponentRef<BiasManager> biasManager;
    private ComponentRef<CacheNotifier> cacheNotifier;
@@ -356,6 +358,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    public void cacheComponents() {
       asyncInterceptorChain = basicComponentRegistry.getComponent(AsyncInterceptorChain.class);
       biasManager = basicComponentRegistry.getComponent(BiasManager.class);
+      backupReceiver = basicComponentRegistry.lazyGetComponent(BackupReceiver.class); //can we avoid instantiate BackupReceiver is not needed?
       backupSender = basicComponentRegistry.getComponent(BackupSender.class);
       takeOfflineManager = basicComponentRegistry.getComponent(TakeOfflineManager.class);
       cache = basicComponentRegistry.getComponent(AdvancedCache.class);
@@ -498,6 +501,10 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public ComponentRef<XSiteStateTransferManager> getXSiteStateTransferManager() {
       return xSiteStateTransferManager;
+   }
+
+   public ComponentRef<BackupReceiver> getBackupReceiver() {
+      return backupReceiver;
    }
 
 }

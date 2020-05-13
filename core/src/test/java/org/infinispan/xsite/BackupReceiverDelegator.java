@@ -2,7 +2,6 @@ package org.infinispan.xsite;
 
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.irac.IracUpdateKeyCommand;
 import org.infinispan.metadata.Metadata;
@@ -26,11 +25,6 @@ public abstract class BackupReceiverDelegator implements BackupReceiver {
          throw new NullPointerException("Delegate cannot be null");
       }
       this.delegate = delegate;
-   }
-
-   @Override
-   public Cache<?, ?> getCache() {
-      return delegate.getCache();
    }
 
    @Override

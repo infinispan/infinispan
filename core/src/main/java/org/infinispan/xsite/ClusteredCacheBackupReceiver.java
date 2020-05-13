@@ -1,5 +1,6 @@
 package org.infinispan.xsite;
 
+import static org.infinispan.configuration.cache.Configurations.isTxVersioned;
 import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
 import static org.infinispan.context.Flag.IRAC_UPDATE;
 import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
@@ -8,17 +9,14 @@ import static org.infinispan.util.concurrent.CompletableFutures.asCompletionExce
 import static org.infinispan.util.concurrent.CompletableFutures.completedExceptionFuture;
 import static org.infinispan.util.logging.Log.XSITE;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
@@ -44,13 +42,15 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
@@ -78,7 +78,6 @@ import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -98,6 +97,7 @@ import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
  * @author Pedro Ruivo
  * @since 7.1
  */
+@Scope(Scopes.NAMED_CACHE)
 public class ClusteredCacheBackupReceiver implements BackupReceiver {
 
    private static final Log log = LogFactory.getLog(ClusteredCacheBackupReceiver.class);
@@ -111,41 +111,33 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       throw CompletableFutures.asCompletionException(throwable);
    };
 
-   private final AdvancedCache<?, ?> cache;
-   private final ByteString cacheName;
-   private final TimeService timeService;
-   private final DefaultHandler defaultHandler;
-   private final AsyncBackupHandler asyncBackupHandler;
-   private final CommandsFactory commandsFactory;
-   private final InvocationHelper invocationHelper;
-   private final KeyPartitioner keyPartitioner;
+   @Inject Cache<Object, Object> cache;
+   @Inject TimeService timeService;
+   @Inject CommandsFactory commandsFactory;
+   @Inject KeyPartitioner keyPartitioner;
+   @Inject InvocationHelper invocationHelper;
+   @Inject RpcManager rpcManager;
+   @Inject ClusteringDependentLogic clusteringDependentLogic;
 
    private final boolean pessimisticTransaction;
+   private final ByteString cacheName;
 
-   ClusteredCacheBackupReceiver(Cache<Object, Object> cache) {
-      this.cache = cache.getAdvancedCache();
-      this.cacheName = ByteString.fromString(cache.getName());
-      ComponentRegistry registry = this.cache.getComponentRegistry();
-      Configuration config = cache.getCacheConfiguration();
-      this.timeService = registry.getTimeService();
-      this.commandsFactory = registry.getCommandsFactory();
+   private volatile DefaultHandler defaultHandler;
 
-      BlockingManager blockingManager = registry.getComponent(BlockingManager.class);
-      Executor nonBlockingExecutor = registry.getComponent(Executor.class, KnownComponentNames.NON_BLOCKING_EXECUTOR);
-      TransactionHandler txHandler = new TransactionHandler(cache);
-      boolean isVersionedTx = Configurations.isTxVersioned(cache.getCacheConfiguration());
-      this.defaultHandler = new DefaultHandler(txHandler, blockingManager, isVersionedTx);
-      this.asyncBackupHandler = new AsyncBackupHandler(txHandler, blockingManager, timeService, nonBlockingExecutor,
-            isVersionedTx);
-      this.invocationHelper = registry.getComponent(InvocationHelper.class);
-      this.keyPartitioner = registry.getComponent(KeyPartitioner.class);
-      this.pessimisticTransaction = config.transaction().transactionMode() == TransactionMode.TRANSACTIONAL &&
-            config.transaction().lockingMode() == LockingMode.PESSIMISTIC;
+   public ClusteredCacheBackupReceiver(Configuration configuration, String cacheName) {
+      //TODO #3 [ISPN-11824] split this class for pes/opt tx and non tx mode.
+      this.pessimisticTransaction = configuration.transaction().transactionMode() == TransactionMode.TRANSACTIONAL &&
+            configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
+      this.cacheName = ByteString.fromString(cacheName);
    }
 
-   @Override
-   public final Cache<?, ?> getCache() {
-      return cache;
+   @Start
+   public void start() {
+      //it would be nice if we could inject bootstrap component
+      //this feels kind hacky but saves 3 fields in this class
+      ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
+      TransactionHandler txHandler = new TransactionHandler(cache, cr.getTransactionTable());
+      defaultHandler = new DefaultHandler(txHandler, cr.getComponent(BlockingManager.class), isTxVersioned(cr.getConfiguration()));
    }
 
    @Override
@@ -173,9 +165,8 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       }
 
       final long endTime = timeService.expectedEndTime(cmd.getTimeout(), TimeUnit.MILLISECONDS);
-      final ClusteringDependentLogic clusteringDependentLogic = getClusteringDependentLogic();
       final Map<Address, List<XSiteState>> primaryOwnersChunks = new HashMap<>();
-      final Address localAddress = clusteringDependentLogic.getAddress();
+      final Address localAddress = rpcManager.getAddress();
 
       if (trace) {
          log.tracef("Received X-Site state transfer '%s'. Splitting by primary owner.", cmd);
@@ -197,7 +188,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
          if (trace) {
             log.tracef("Node '%s' will apply %s", entry.getKey(), entry.getValue());
          }
-         StatePushTask task = new StatePushTask(entry.getValue(), entry.getKey(), cache, endTime);
+         StatePushTask task = new StatePushTask(entry.getValue(), entry.getKey(), endTime);
          task.executeRemote();
          cf.dependsOn(task);
       }
@@ -210,7 +201,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       }
 
       if (localChunks != null) {
-         StatePushTask task = new StatePushTask(localChunks, localAddress, cache, endTime);
+         StatePushTask task = new StatePushTask(localChunks, localAddress, endTime);
          task.executeLocal();
          cf.dependsOn(task);
       }
@@ -221,9 +212,11 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    @Override
    public final CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
       try {
-         DefaultHandler visitor = preserveOrder ? asyncBackupHandler : defaultHandler;
+         //currently, it only handles sync xsite requests.
+         //async xsite requests are handle by the other methods.
+         assert !preserveOrder;
          //noinspection unchecked
-         return (CompletableFuture<Void>) command.acceptVisitor(null, visitor);
+         return (CompletableFuture<Void>) command.acceptVisitor(null, defaultHandler);
       } catch (Throwable throwable) {
          return completedExceptionFuture(throwable);
       }
@@ -245,6 +238,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    }
 
    private <T> CompletableFuture<T> checkInvocationAllowedFuture() {
+      //TODO #4 [ISPN-11824] no need to change the ComponentStatus. we have start/stop methods available now
       ComponentStatus status = cache.getStatus();
       if (!status.allowInvocations()) {
          return completedExceptionFuture(
@@ -282,13 +276,12 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       }
 
       Object key = command.getKey();
-      DistributionInfo dInfo = getClusteringDependentLogic().getCacheTopology().getDistribution(key);
+      DistributionInfo dInfo = clusteringDependentLogic.getCacheTopology().getDistribution(key);
       if (dInfo.isPrimary()) {
          return command.executeOperation(this);
       }
       Address primary = dInfo.primary();
       IracUpdateKeyCommand remoteCmd = command.copyForCacheName(cacheName);
-      RpcManager rpcManager = cache.getRpcManager();
       //not sure if it useful to retry in case of failure
       //the origin site has retry implemented and it will send an up-to-date value later.
       return rpcManager.invokeCommand(primary, remoteCmd, VoidResponseCollector.validOnly(),
@@ -296,15 +289,12 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    }
 
    private CompletionStage<Void> invokeRemotelyInLocalSite(CacheRpcCommand command) {
-      final RpcManager rpcManager = cache.getRpcManager();
       CompletionStage<Map<Address, Response>> remote = rpcManager
             .invokeCommandOnAll(command, validOnly(), rpcManager.getSyncRpcOptions());
+      //TODO #5 [ISPN-11824] this allocations can be removed and invoke XSiteStateConsumer
+      //handleStartReceivingStateTransfer and handleEndReceivingStateTransfer can be merged. both interact with XSiteStateConsumer.
       CompletionStage<Response> local = LocalInvocation.newInstanceFromCache(cache, command).callAsync();
       return CompletableFuture.allOf(remote.toCompletableFuture(), local.toCompletableFuture());
-   }
-
-   private ClusteringDependentLogic getClusteringDependentLogic() {
-      return cache.getComponentRegistry().getComponent(ClusteringDependentLogic.class);
    }
 
    private int segment(Object key) {
@@ -382,58 +372,6 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       }
    }
 
-   private static final class AsyncBackupHandler extends DefaultHandler {
-
-      private final ActionSequencer sequencer;
-
-      private AsyncBackupHandler(TransactionHandler txHandler, BlockingManager blockingManager, TimeService timeService,
-            Executor nonBlockingExecutor, boolean dropVersion) {
-         super(txHandler, blockingManager, dropVersion);
-         sequencer = new ActionSequencer(nonBlockingExecutor, false, timeService);
-      }
-
-      @Override
-      public CompletionStage<Object> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
-         assert !command.isConditional();
-         Callable<CompletionStage<Object>> action = () -> super.visitPutKeyValueCommand(null, command);
-         return sequencer.orderOnKey(command.getKey(), action);
-      }
-
-      @Override
-      public CompletionStage<Object> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
-         assert !command.isConditional();
-         Callable<CompletionStage<Object>> action = () -> super.visitRemoveCommand(null, command);
-         return sequencer.orderOnKey(command.getKey(), action);
-      }
-
-      @Override
-      public CompletionStage<Void> visitWriteOnlyManyEntriesCommand(InvocationContext ctx,
-            WriteOnlyManyEntriesCommand command) {
-         Collection<?> keys = command.getAffectedKeys();
-         Callable<CompletionStage<Void>> action = () -> super.visitWriteOnlyManyEntriesCommand(null, command);
-         return sequencer.orderOnKeys(keys, action);
-      }
-
-      @Override
-      public CompletionStage<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
-         Collection<?> keys = command.getAffectedKeys();
-         Callable<CompletionStage<Void>> action = () -> super.visitPrepareCommand(ctx, command);
-         return sequencer.orderOnKeys(keys, action);
-      }
-
-      @Override
-      public CompletionStage<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) {
-         //we don't support async xsite with 2 phase commit
-         throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public CompletionStage<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) {
-         //we don't support async xsite with 2 phase commit
-         throw new UnsupportedOperationException();
-      }
-   }
-
    // All conditional commands are unsupported
    private static final class TransactionHandler extends AbstractVisitor {
 
@@ -444,12 +382,14 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
 
       private final AdvancedCache<Object, Object> backupCache;
       private final FunctionalMap.WriteOnlyMap<Object, Object> writeOnlyMap;
+      private final TransactionTable transactionTable;
 
-      TransactionHandler(Cache<Object, Object> backup) {
+      TransactionHandler(Cache<Object, Object> backup, TransactionTable transactionTable) {
          //ignore return values on the backup
          this.backupCache = backup.getAdvancedCache().withStorageMediaType().withFlags(IGNORE_RETURN_VALUES, SKIP_XSITE_BACKUP);
          this.writeOnlyMap = WriteOnlyMapImpl.create(FunctionalMapImpl.create(backupCache));
          this.remote2localTx = new ConcurrentHashMap<>();
+         this.transactionTable = transactionTable;
       }
 
       @Override
@@ -533,21 +473,16 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
          throw new UnsupportedOperationException();
       }
 
-      private TransactionTable txTable() {
-         return backupCache.getComponentRegistry().getComponent(TransactionTable.class);
-      }
-
       private boolean isTransactional() {
-         return backupCache.getCacheConfiguration().transaction().transactionMode() == TransactionMode.TRANSACTIONAL;
+         return transactionTable != null;
       }
 
       private void completeTransaction(GlobalTransaction globalTransaction, boolean commit) throws Throwable {
-         TransactionTable txTable = txTable();
          GlobalTransaction localTxId = remote2localTx.remove(globalTransaction);
          if (localTxId == null) {
             throw XSITE.unableToFindRemoteSiteTransaction(globalTransaction);
          }
-         LocalTransaction localTx = txTable.getLocalTransaction(localTxId);
+         LocalTransaction localTx = transactionTable.getLocalTransaction(localTxId);
          if (localTx == null) {
             throw XSITE.unableToFindLocalTransactionFromRemoteSiteTransaction(globalTransaction);
          }
@@ -557,7 +492,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
             if (trace) {
                log.tracef("%s isn't enlisted! Removing it manually.", localTx);
             }
-            txTable().removeLocalTransaction(localTx);
+            transactionTable.removeLocalTransaction(localTx);
          }
          if (commit) {
             txManager.commit();
@@ -575,7 +510,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
             replayModifications(command);
             replaySuccessful = true;
          } finally {
-            LocalTransaction localTx = txTable().getLocalTransaction(tm.getTransaction());
+            LocalTransaction localTx = transactionTable.getLocalTransaction(tm.getTransaction());
             if (localTx != null) { //possible for the tx to be null if we got an exception during applying modifications
                localTx.setFromRemoteSite(true);
 
@@ -614,14 +549,12 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
          implements ResponseCollector<Response>, BiFunction<Response, Throwable, Void> {
       private final List<XSiteState> chunk;
       private final Address address;
-      private final AdvancedCache<?, ?> cache;
       private final long endTime;
 
 
-      private StatePushTask(List<XSiteState> chunk, Address address, AdvancedCache<?, ?> cache, long endTime) {
+      private StatePushTask(List<XSiteState> chunk, Address address, long endTime) {
          this.chunk = chunk;
          this.address = address;
-         this.cache = cache;
          this.endTime = endTime;
       }
 
@@ -631,8 +564,6 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
             if (isShouldGiveUp()) {
                return null;
             }
-
-            RpcManager rpcManager = cache.getRpcManager();
 
             if (rpcManager.getMembers().contains(this.address) && !rpcManager.getAddress().equals(this.address)) {
                if (trace) {
@@ -679,15 +610,14 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       }
 
       private void executeRemote() {
-         RpcManager rpcManager = cache.getRpcManager();
          RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
-         rpcManager.invokeCommand(address, newStatePushCommand(chunk), this, rpcOptions)
-               .handle(this);
+         rpcManager.invokeCommand(address, newStatePushCommand(chunk), this, rpcOptions).handle(this);
       }
 
       private void executeLocal() {
-         LocalInvocation.newInstanceFromCache(cache, newStatePushCommand(chunk)).callAsync()
-               .handle(this);
+         //TODO #1 [ISPN-11824] make state transfer non blocking
+         //TODO #2 [ISPN-11824] avoid all this allocations by invoking XSiteStateConsumer.apply() directly
+         LocalInvocation.newInstanceFromCache(cache, newStatePushCommand(chunk)).callAsync().handle(this);
       }
 
       /**

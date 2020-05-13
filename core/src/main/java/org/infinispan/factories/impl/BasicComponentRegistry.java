@@ -183,4 +183,14 @@ public interface BasicComponentRegistry {
     * <p>Components cannot be instantiated or started after this.</p>
     */
    void stop();
+
+   /**
+    * Looks up a component named {@code name} in the registry, or registers it if necessary.
+    *
+    * The component isn't instantiated neither running. Invoke {@link ComponentRef#running()} to instantiate and start it.
+    *
+    * @param componentType The expected component type, not used to identify the component.
+    */
+   @Experimental
+   <T> ComponentRef<T> lazyGetComponent(Class<T> componentType);
 }

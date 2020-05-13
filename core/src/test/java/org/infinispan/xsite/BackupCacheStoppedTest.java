@@ -1,5 +1,7 @@
 package org.infinispan.xsite;
 
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
+import static org.infinispan.util.ByteString.fromString;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -7,7 +9,8 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.remoting.inboundhandler.GlobalInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.testng.annotations.Test;
 
 /**
@@ -24,19 +27,14 @@ public class BackupCacheStoppedTest extends AbstractTwoSitesTest {
 
       cache(site, 0).put(key, val);
       Cache<Object,Object> backup = backup(site);
-      final GlobalComponentRegistry gcr = backup.getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry();
 
       assertEquals(backup.get(key), val);
       assertTrue(backup.getStatus().allowInvocations());
 
+      GlobalInboundInvocationHandler handler = (GlobalInboundInvocationHandler) extractGlobalComponent(backup.getCacheManager(), InboundInvocationHandler.class);
+
       backup.stop();
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            BackupReceiverRepositoryImpl component = (BackupReceiverRepositoryImpl) gcr.getComponent(BackupReceiverRepository.class);
-            return component.get(site, getDefaultCacheName()) == null;
-         }
-      });
+      eventually(() -> handler.getLocalCacheForRemoteSite(site, fromString(getDefaultCacheName())) == null);
 
       assertFalse(backup.getStatus().allowInvocations());
 

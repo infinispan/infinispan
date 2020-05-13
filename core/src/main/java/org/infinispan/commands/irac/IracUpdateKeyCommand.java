@@ -2,11 +2,9 @@ package org.infinispan.commands.irac;
 
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.BackupReceiver;
-import org.infinispan.xsite.BackupReceiverRepository;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.infinispan.xsite.irac.IracManager;
 
@@ -31,14 +29,7 @@ public abstract class IracUpdateKeyCommand extends XSiteReplicateCommand {
 
    @Override
    public final CompletionStage<?> invokeAsync(ComponentRegistry registry) {
-      //noinspection unchecked
-      Cache<Object, Object> cache = registry.getCache().running();
-      //TODO! create a component for BackupReceiver
-      // See https://issues.redhat.com/browse/ISPN-11800
-      BackupReceiver backupReceiver = registry.getGlobalComponentRegistry()
-            .getComponent(BackupReceiverRepository.class)
-            .getBackupReceiver(cache);
-      return executeOperation(backupReceiver);
+      return executeOperation(registry.getBackupReceiver().running());
    }
 
    @Override
