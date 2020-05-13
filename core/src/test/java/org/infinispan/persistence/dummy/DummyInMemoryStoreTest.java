@@ -1,21 +1,24 @@
 package org.infinispan.persistence.dummy;
 
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.BaseNonBlockingStoreTest;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.dummy.DummyInMemoryStoreTest")
-public class DummyInMemoryStoreTest /*extends BaseStoreTest*/ {
-   // TODO: need to repurpose or add a new base store test that new SPI implementors can extend
-//
-//   @Override
-//   protected AdvancedLoadWriteStore createStore() throws PersistenceException {
-//      DummyInMemoryStore store = new DummyInMemoryStore();
-//      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-//      final DummyInMemoryStoreConfigurationBuilder loader = builder
-//            .persistence()
-//            .addStore(DummyInMemoryStoreConfigurationBuilder.class);
-//      loader
-//         .storeName(getClass().getName());
-//      store.init(createContext(builder.build()));
-//      return store;
-//   }
+public class DummyInMemoryStoreTest extends BaseNonBlockingStoreTest {
+
+   @Override
+   protected NonBlockingStore createStore() {
+      return new DummyInMemoryStore();
+   }
+
+   @Override
+   protected Configuration buildConfig(ConfigurationBuilder configurationBuilder) {
+      return configurationBuilder.persistence()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .storeName(getClass().getName())
+            .build();
+   }
 }

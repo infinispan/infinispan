@@ -69,6 +69,8 @@ import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -1659,6 +1661,21 @@ public class TestingUtil {
 
    public static <K, V> Set<MarshallableEntry<K, V>> allEntries(AdvancedLoadWriteStore<K, V> cl) {
       return allEntries(cl, null);
+   }
+
+   public static <K, V> Set<MarshallableEntry<K, V>> allEntries(NonBlockingStore<K, V> store) {
+      return allEntries(store, IntSets.immutableSet(0), null);
+   }
+
+   public static <K, V> Set<MarshallableEntry<K, V>> allEntries(NonBlockingStore<K, V> store, Predicate<? super K> filter) {
+      return allEntries(store, IntSets.immutableSet(0), filter);
+   }
+
+   public static <K, V> Set<MarshallableEntry<K, V>> allEntries(NonBlockingStore<K, V> store, IntSet segments,
+         Predicate<? super K> filter) {
+      return Flowable.fromPublisher(store.publishEntries(segments, filter, true))
+            .collectInto(new HashSet<MarshallableEntry<K, V>>(), Set::add)
+            .blockingGet();
    }
 
    public static void outputPropertiesToXML(String outputFile, Properties properties) throws IOException {
