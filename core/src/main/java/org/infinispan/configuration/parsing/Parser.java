@@ -74,7 +74,6 @@ import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.BuiltinJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
@@ -2558,7 +2557,7 @@ public class Parser implements ConfigurationParser {
       Boolean preload = null;
       Boolean shared = null;
       Boolean transactional = null;
-      CacheLoader store = null;
+      Object store = null;
 
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);

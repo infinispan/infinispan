@@ -10,7 +10,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InCacheMode;
@@ -56,12 +55,12 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
    public void testRemoteLoadFromCacheLoader() throws Exception {
       Cache<String, String> cache1 = cache(0, "clusteredCl");
       Cache<String, String> cache2 = cache(1, "clusteredCl");
-      DummyInMemoryStore writer = TestingUtil.getFirstStore(cache2);
+      DummyInMemoryStore writer = TestingUtil.getStore(cache2, 1, false);
 
       assertNull(cache1.get("key"));
       assertNull(cache2.get("key"));
       writer.write(MarshalledEntryUtil.create("key", "value", cache2));
-      assertEquals(((CacheLoader)writer).loadEntry("key").getValue(), "value");
+      assertEquals(writer.loadEntry("key").getValue(), "value");
       assertEquals(cache1.get("key"), "value");
    }
 }

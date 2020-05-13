@@ -92,7 +92,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    @Factory
    public Object[] factory() {
       return new Object[]{
-            new CacheLoaderFunctionalTest().segmented(true),
+//            new CacheLoaderFunctionalTest().segmented(true),
             new CacheLoaderFunctionalTest().segmented(false),
       };
    }

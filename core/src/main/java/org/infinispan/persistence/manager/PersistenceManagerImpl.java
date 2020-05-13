@@ -41,9 +41,9 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -60,12 +60,9 @@ import org.infinispan.interceptors.impl.TransactionalStoreInterceptor;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.async.AsyncNonBlockingStore;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
-import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
@@ -75,7 +72,6 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.StoreUnavailableException;
 import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.persistence.support.ComposedSegmentedLoadWriteStore;
-import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.NonBlockingStoreAdapter;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
@@ -118,6 +114,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Inject BlockingManager blockingManager;
    @Inject NonBlockingManager nonBlockingManager;
    @Inject ComponentRef<InvocationHelper> invocationHelper;
+   @Inject ComponentRef<InternalExpirationManager<Object, Object>> expirationManager;
 
    // We use stamped lock since we require releasing locks in threads that may be the same that acquired it
    private final StampedLock lock = new StampedLock();
@@ -139,11 +136,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
       long stamp = lock.tryOptimisticRead();
       NonBlockingStore<K, V> store = getStoreLocked(predicate);
       if (!lock.validate(stamp)) {
-         stamp = lock.readLock();
+         stamp = acquireReadLock();
          try {
             store = getStoreLocked(predicate);
          } finally {
-            lock.unlockRead(stamp);
+            releaseReadLock(stamp);
          }
       }
       return store;
@@ -172,7 +169,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
       long stamp = lock.writeLock();
       try {
          Completable storeStartup = Flowable.fromIterable(configuration.persistence().stores())
-               .flatMapSingle(storeConfiguration -> {
+               // We have to ensure stores are started in configured order to ensure the stores map retains that order
+               .concatMapSingle(storeConfiguration -> {
                   NonBlockingStore<?, ?> actualStore = storeFromConfiguration(storeConfiguration);
                   NonBlockingStore<?, ?> nonBlockingStore;
                   if (storeConfiguration.async().enabled()) {
@@ -191,6 +189,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
                })
                // This relies upon visibility guarnatees of reactive streams for publishing map values
                .doOnNext(status -> stores.put(status.store, status))
+               .delay(status -> {
+                  if (status.config.purgeOnStartup()) {
+                     return Flowable.fromCompletable(Completable.fromCompletionStage(status.store.clear()));
+                  }
+                  return Flowable.empty();
+               })
                .ignoreElements();
 
          long interval = configuration.persistence().availabilityInterval();
@@ -245,6 +249,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   .flatMapMaybe(storeStatus -> {
                      CompletionStage<Boolean> availableStage = storeStatus.store.isAvailable();
                      return Maybe.fromCompletionStage(availableStage.thenApply(isAvailable -> {
+                        synchronized (storeStatus) {
+                           storeStatus.availability = isAvailable;
+                        }
                         if (!isAvailable) {
                            return storeStatus.store();
                         }
@@ -343,11 +350,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public CompletionStage<Void> preload() {
-      long stamp = lock.readLock();
+      long stamp = acquireReadLock();
       NonBlockingStore<Object, Object> nonBlockingStore = getStoreLocked(storeStatus ->
             storeStatus.config.preload());
       if (nonBlockingStore == null) {
-         lock.unlockRead(stamp);
+         releaseReadLock(stamp);
          return CompletableFutures.completedNull();
       }
       Publisher<MarshallableEntry<Object, Object>> publisher = nonBlockingStore.publishEntries(
@@ -362,7 +369,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       DataConversion valueDataConversion = tmpCache.getValueDataConversion();
 
       return Flowable.fromPublisher(publisher)
-            .doOnComplete(() -> lock.unlockRead(stamp))
+            .doFinally(() -> releaseReadLock(stamp))
             .take(maxEntries)
             .concatMapSingle(me -> preloadKey(flags, me, keyDataConversion, valueDataConversion))
             .count()
@@ -552,6 +559,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return store;
    }
 
+   private Object unwrapOldSPI(NonBlockingStore<?, ?> store) {
+      if (store instanceof NonBlockingStoreAdapter) {
+         return ((NonBlockingStoreAdapter<?, ?>) store).getActualStore();
+      }
+      return store;
+   }
+
    private boolean containedInAdapter(NonBlockingStore nonBlockingStore, String adaptedClassName) {
       return nonBlockingStore instanceof NonBlockingStoreAdapter &&
             ((NonBlockingStoreAdapter<?, ?>) nonBlockingStore).getActualStore().getClass().getName().equals(adaptedClassName);
@@ -559,54 +573,52 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public <T> Set<T> getStores(Class<T> storeClass) {
-      long stamp = lock.readLock();
+      long stamp = acquireReadLock();
       try {
          return stores.keySet().stream()
                .map(this::unwrapStore)
+               .map(this::unwrapOldSPI)
                .filter(store -> storeClass.isInstance(store))
                .map(store -> (T) store)
                .collect(Collectors.toCollection(HashSet::new));
       } finally {
-         lock.unlockRead(stamp);
+         releaseReadLock(stamp);
       }
    }
 
    @Override
    public Collection<String> getStoresAsString() {
-      long stamp = lock.readLock();
+      long stamp = acquireReadLock();
       try {
          return stores.keySet().stream()
                .map(store -> store.getClass().getName())
                .collect(Collectors.toCollection(ArrayList::new));
       } finally {
-         lock.unlockRead(stamp);
+         releaseReadLock(stamp);
       }
    }
 
    @Override
    public CompletionStage<Void> purgeExpired() {
-      long stamp = lock.readLock();
+      long stamp = acquireReadLock();
       try {
-         boolean submittedFirst = false;
+         checkStoreAvailability();
+         if (trace) {
+            log.tracef("Purging entries from stores");
+         }
          AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
          for (StoreStatus storeStatus : stores.values()) {
             if (storeStatus.characteristics.contains(Characteristic.EXPIRATION)) {
                Flowable<MarshallableEntry<Object, Object>> flowable = Flowable.fromPublisher(storeStatus.store().purgeExpired());
-               Completable completable;
-               if (!submittedFirst && cacheNotifier.hasListener(CacheEntryExpired.class)) {
-                  submittedFirst = true;
-                  completable = flowable.concatMapCompletable(me -> Completable.fromCompletionStage(
-                        cacheNotifier.notifyCacheEntryExpired(me.getKey(), me.getValue(), me.getMetadata(), ImmutableContext.INSTANCE)));
-               } else {
-                  completable = flowable.ignoreElements();
-               }
+               Completable completable = flowable.concatMapCompletable(me -> Completable.fromCompletionStage(
+                        expirationManager.running().handleInStoreExpirationInternal(me)));
                aggregateCompletionStage.dependsOn(completable.toCompletionStage(null));
             }
          }
          return aggregateCompletionStage.freeze()
-               .whenComplete((v, t) -> lock.unlockRead(stamp));
+               .whenComplete((v, t) -> releaseReadLock(stamp));
       } catch (Throwable t) {
-         lock.unlockRead(stamp);
+         releaseReadLock(stamp);
          throw t;
       }
    }
@@ -648,7 +660,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      // Let the delete work in parallel across the stores
                      .flatMapSingle(entry -> Single.fromCompletionStage(
                            entry.getKey().delete(segment, key)))
-                     .any(removed -> removed);
+                     // Can't use any, as we have to reduce to ensure that all stores are updated
+                     .reduce(Boolean.FALSE, (removed1, removed2) -> removed1 || removed2);
             },
             this::releaseReadLock
       ).toCompletionStage();
@@ -719,7 +732,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                return Flowable.fromIterable(stores.entrySet())
                      .filter(entry ->
                            !entry.getValue().characteristics.contains(Characteristic.WRITE_ONLY)
-                                 && allowLoad(null, localInvocation, includeStores))
+                                 && allowLoad(entry.getValue(), localInvocation, includeStores))
                      // Only do 1 request at a time
                      .concatMapMaybe(entry -> Maybe.fromCompletionStage(
                            PersistenceManagerImpl.<K, V>storeForEntry(entry).load(segment, key)), 1)
@@ -729,23 +742,31 @@ public class PersistenceManagerImpl implements PersistenceManager {
       ).toCompletionStage(null);
    }
 
-   private boolean allowLoad(CacheLoader loader, boolean localInvocation, boolean includeStores) {
-      return (localInvocation || !isLocalOnlyLoader(loader)) && (includeStores || !(loader instanceof CacheWriter));
+   private boolean allowLoad(StoreStatus storeStatus, boolean localInvocation, boolean includeStores) {
+      return (localInvocation || !isLocalOnlyLoader(storeStatus.store)) &&
+            (includeStores || storeStatus.characteristics.contains(Characteristic.READ_ONLY) || storeStatus.config.ignoreModifications());
    }
 
-   private boolean isLocalOnlyLoader(CacheLoader loader) {
-      if (loader instanceof LocalOnlyCacheLoader) return true;
-      // TODO: need to deal with new delegating type NonBlockingStore
-      if (loader instanceof DelegatingCacheLoader) {
-         CacheLoader unwrappedLoader = ((DelegatingCacheLoader) loader).undelegate();
-         return unwrappedLoader instanceof LocalOnlyCacheLoader;
+   private boolean isLocalOnlyLoader(NonBlockingStore store) {
+      if (store instanceof LocalOnlyCacheLoader) return true;
+      NonBlockingStore unwrappedStore;
+      if (store instanceof DelegatingNonBlockingStore) {
+         unwrappedStore = ((DelegatingNonBlockingStore) store).delegate();
+      } else {
+         unwrappedStore = store;
+      }
+      if (unwrappedStore instanceof LocalOnlyCacheLoader) {
+         return true;
+      }
+      if (unwrappedStore instanceof NonBlockingStoreAdapter) {
+         return ((NonBlockingStoreAdapter) unwrappedStore).getActualStore() instanceof LocalOnlyCacheLoader;
       }
       return false;
    }
 
    @Override
    public CompletionStage<Long> size(Predicate<? super StoreConfiguration> predicate) {
-      long stamp = lock.readLock();
+      long stamp = acquireReadLock();
       try {
          checkStoreAvailability();
          if (trace) {
@@ -754,20 +775,20 @@ public class PersistenceManagerImpl implements PersistenceManager {
          NonBlockingStore<?, ?> nonBlockingStore = getStoreLocked(storeStatus -> storeStatus.characteristics.contains(
                Characteristic.BULK_READ) && predicate.test(storeStatus.config));
          if (nonBlockingStore == null) {
-            lock.unlockRead(stamp);
+            releaseReadLock(stamp);
             return CompletableFuture.completedFuture(-1L);
          }
          return nonBlockingStore.size(IntSets.immutableRangeSet(segmentCount))
-               .whenComplete((ignore, ignoreT) -> lock.unlockRead(stamp));
+               .whenComplete((ignore, ignoreT) -> releaseReadLock(stamp));
       } catch (Throwable t) {
-         lock.unlockRead(stamp);
+         releaseReadLock(stamp);
          throw t;
       }
    }
 
    @Override
    public CompletionStage<Long> size(IntSet segments) {
-      long stamp = lock.readLock();
+      long stamp = acquireReadLock();
       try {
          checkStoreAvailability();
          if (trace) {
@@ -776,13 +797,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
          NonBlockingStore<?, ?> nonBlockingStore = getStoreLocked(storeStatus -> storeStatus.characteristics.contains(
                Characteristic.BULK_READ));
          if (nonBlockingStore == null) {
-            lock.unlockRead(stamp);
+            releaseReadLock(stamp);
             return CompletableFuture.completedFuture(-1L);
          }
          return nonBlockingStore.size(segments)
-               .whenComplete((ignore, ignoreT) -> lock.unlockRead(stamp));
+               .whenComplete((ignore, ignoreT) -> releaseReadLock(stamp));
       } catch (Throwable t) {
-         lock.unlockRead(stamp);
+         releaseReadLock(stamp);
          throw t;
       }
    }
@@ -1016,14 +1037,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
          this.store = store;
          this.config = config;
          this.characteristics = characteristics;
-      }
-
-      synchronized boolean checkAvailableChanged(boolean available) {
-         if (availability == available) {
-            return false;
-         }
-         availability = available;
-         return true;
       }
 
       <K, V> NonBlockingStore<K, V> store() {

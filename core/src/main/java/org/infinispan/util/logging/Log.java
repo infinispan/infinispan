@@ -2004,19 +2004,19 @@ public interface Log extends BasicLogger {
    @Message(value = "A store cannot be configured with both preload and purgeOnStartup", id = 589)
    CacheConfigurationException preloadAndPurgeOnStartupConflict();
 
-   @Message(value = "Store cannot be configured with both read and write only!", id = 589)
+   @Message(value = "Store cannot be configured with both read and write only!", id = 590)
    CacheConfigurationException storeBothReadAndWriteOnly();
 
-   @Message(value = "Store cannot be configured with purgeOnStartup or shared if it is read only!", id = 590)
+   @Message(value = "Store cannot be configured with purgeOnStartup or shared if it is read only!", id = 591)
    CacheConfigurationException storeReadOnlyExceptions();
 
-   @Message(value = "Store cannot be configured with fetchPersistenceStage or preload if it is write only!", id = 591)
+   @Message(value = "Store cannot be configured with fetchPersistenceStage or preload if it is write only!", id = 592)
    CacheConfigurationException storeWriteOnlyExceptions();
 
-   @Message(value = "Store %s cannot be configured to be %s as the implementation specifies it is already %s!", id = 592)
+   @Message(value = "Store %s cannot be configured to be %s as the implementation specifies it is already %s!", id = 593)
    CacheConfigurationException storeConfiguredHasBothReadAndWriteOnly(String storeClassName, NonBlockingStore.Characteristic configured,
          NonBlockingStore.Characteristic implSpecifies);
 
-   @Message(value = "At most one store can be set to 'preload'!", id = 593)
+   @Message(value = "At most one store can be set to 'preload'!", id = 594)
    CacheConfigurationException onlyOnePreloadStoreAllowed();
 }

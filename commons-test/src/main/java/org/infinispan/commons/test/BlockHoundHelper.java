@@ -17,6 +17,7 @@ public class BlockHoundHelper {
       // This is a terrible hack but gets around the issue that blockhound doesn't allow the registering thread
       // to be a dynamic blocking thread - in which case our checks in
       // AbstractInfinispanTest#currentThreadRequiresNonBlocking will never be evaluated
+      // To be removed when https://github.com/reactor/BlockHound/issues/121 is fixed
       // To be removed when BlockHound 1.0.4.RELEASE is available
       Thread otherThread = new Thread(BlockHound::install);
       otherThread.start();

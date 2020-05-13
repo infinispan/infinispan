@@ -30,6 +30,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
@@ -39,8 +40,8 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.support.EnsureNonBlockingStore;
 import org.infinispan.persistence.support.NonBlockingStoreAdapter;
-import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -50,6 +51,7 @@ import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Key;
 import org.infinispan.test.data.Person;
+import org.infinispan.test.fwk.NonBlockingTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.ControlledTimeService;
@@ -68,6 +70,7 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 // this needs to be here for the test to run in an IDE
 @Test(groups = "unit", testName = "persistence.BaseNonBlockingStoreTest")
+@NonBlockingTest
 public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
    protected static final int WRITE_DELETE_BATCH_MIN_ENTRIES = 80;
@@ -99,12 +102,18 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       TestingUtil.inject(factory, timeService);
       try {
          NonBlockingStore nonBlockingStore = createStore();
-         if (nonBlockingStore instanceof WaitNonBlockingStore) {
-            //noinspection unchecked
-            store = (WaitNonBlockingStore<Object, Object>) nonBlockingStore;
-         } else {
-            store = new WaitDelegatingNonBlockingStore<>(store, e -> 0);
-         }
+         // Make sure all store methods don't block when we invoke them
+         store = new EnsureNonBlockingStore<Object, Object>() {
+            @Override
+            public NonBlockingStore<Object, Object> delegate() {
+               return nonBlockingStore;
+            }
+
+            @Override
+            public KeyPartitioner getKeyPartitioner() {
+               return k -> 0;
+            }
+         };
 
          startStore(store);
       } catch (Exception e) {
@@ -584,6 +593,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       assertIsEmpty();
       assertNull("should not be present in the store", store.loadEntry(0));
       store.bulkUpdate(1, Flowable.empty());
+
       assertEquals(0, store.sizeWait(segments));
       store.deleteBatch(1, Collections.emptyList());
       assertEquals(0, store.sizeWait(segments));

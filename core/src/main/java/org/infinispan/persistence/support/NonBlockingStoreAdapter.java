@@ -28,7 +28,6 @@ import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -183,8 +182,16 @@ public class NonBlockingStoreAdapter<K, V> implements NonBlockingStore<K, V> {
                flowableProcessor.onNext(marshallableEntryFactory.create(key));
             }
          };
-         blockingManager.runBlocking(() -> advancedWriter().purge(new WithinThreadExecutor(), expirationPurgeListener),
-               nextTraceId()).whenComplete((ignore, t) -> {
+         CompletionStage<Void> purgeStage;
+         AdvancedCacheWriter<K, V> advancedCacheWriter = advancedWriter();
+         if (advancedCacheWriter instanceof AdvancedCacheExpirationWriter) {
+            purgeStage = blockingManager.runBlocking(() -> ((AdvancedCacheExpirationWriter<K, V>) advancedCacheWriter)
+                  .purge(Runnable::run, expirationPurgeListener), nextTraceId());
+         } else {
+            purgeStage = blockingManager.runBlocking(() -> advancedCacheWriter
+                  .purge(Runnable::run, expirationPurgeListener), nextTraceId());
+         }
+         purgeStage.whenComplete((ignore, t) -> {
             if (t != null) {
                flowableProcessor.onError(t);
             } else {

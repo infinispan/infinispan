@@ -150,12 +150,12 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    @SuppressWarnings("unchecked")
    private JCacheLoaderAdapter<K, V> getCacheLoaderAdapter(PersistenceManagerImpl persistenceManager) {
-      return (JCacheLoaderAdapter<K, V>) persistenceManager.getAllLoaders().get(0);
+      return (JCacheLoaderAdapter<K, V>) persistenceManager.getStores(JCacheLoaderAdapter.class).iterator().next();
    }
 
    @SuppressWarnings("unchecked")
    private JCacheWriterAdapter<K, V> getCacheWriterAdapter(PersistenceManagerImpl persistenceManager) {
-      return (JCacheWriterAdapter<K, V>) persistenceManager.getAllWriters().get(0);
+      return (JCacheWriterAdapter<K, V>) persistenceManager.getStores(JCacheWriterAdapter.class).iterator().next();
    }
 
    @Override

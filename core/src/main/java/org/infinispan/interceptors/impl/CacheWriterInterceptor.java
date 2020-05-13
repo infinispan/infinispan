@@ -478,10 +478,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    )
    public int getNumberOfPersistedEntries() {
       long size = CompletionStages.join(persistenceManager.size());
-      if (size > Integer.MAX_VALUE) {
-         return Integer.MAX_VALUE;
-      }
-      return (int) size;
+      return (int) Math.min(size, Integer.MAX_VALUE);
    }
 
    CompletionStage<Void> storeEntry(InvocationContext ctx, Object key, FlagAffectedCommand command) {

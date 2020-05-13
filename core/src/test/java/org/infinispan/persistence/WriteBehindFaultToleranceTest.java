@@ -21,7 +21,6 @@ import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -34,7 +33,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 @CleanupAfterMethod
@@ -107,19 +105,18 @@ public class WriteBehindFaultToleranceTest extends SingleCacheManagerTest {
    @Test
    public void testWritesFailSilentlyWhenConfigured() {
       Cache<Object, Object> cache = createManagerAndGetCache(true, 1);
-      AdvancedAsyncCacheWriter asyncWriter = TestingUtil.getFirstWriter(cache);
-      DummyInMemoryStore store = (DummyInMemoryStore) TestingUtil.extractField(AdvancedAsyncCacheWriter.class, asyncWriter, "actual");
-      assertTrue(CompletionStages.join(store.isAvailable()));
+      DummyInMemoryStore dims = TestingUtil.getStore(cache, 0, true);
+      assertTrue(dims.checkAvailable());
       cache.put(1, 1);
-      eventually(() -> store.loadEntry(1) != null);
-      assertEquals(1, store.size());
+      eventually(() -> dims.loadEntry(1) != null);
+      assertEquals(1, dims.size());
 
-      store.setAvailable(false);
-      assertFalse(CompletionStages.join(store.isAvailable()));
+      dims.setAvailable(false);
+      assertFalse(dims.checkAvailable());
       cache.put(1, 2); // Should fail on the store, but complete in-memory
       TestingUtil.sleepThread(1000); // Sleep to ensure async write is attempted
-      store.setAvailable(true);
-      MarshallableEntry entry = store.loadEntry(1);
+      dims.setAvailable(true);
+      MarshallableEntry entry = dims.loadEntry(1);
       assertNotNull(entry);
       assertEquals(1, entry.getValue());
       assertEquals(2, cache.get(1));
