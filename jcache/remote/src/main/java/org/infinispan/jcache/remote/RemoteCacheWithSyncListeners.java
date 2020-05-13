@@ -30,51 +30,36 @@ public class RemoteCacheWithSyncListeners<K, V> extends RemoteCacheWrapper<K, V>
 
    @Override
    public V put(final K key, final V value) {
-      return withSyncListeners(notifier.hasSyncCreatedListener(), key, value, new Callable<V>() {
-         @Override
-         public V call() throws Exception {
-            return delegate.put(key, value);
-         }
-      });
+      return withSyncListeners(notifier.hasSyncCreatedListener(), key, value, () -> delegate.put(key, value));
    }
 
    @Override
    public V putIfAbsent(final K key, final V value) {
-      return withSyncListeners(notifier.hasSyncCreatedListener(), key, value, new Callable<V>() {
-         @Override
-         public V call() throws Exception {
-            return delegate.putIfAbsent(key, value);
-         }
-      });
+      return withSyncListeners(notifier.hasSyncCreatedListener(), key, value, () -> delegate.putIfAbsent(key, value));
    }
 
    public V remove(final Object key) {
-      return withSyncListeners(notifier.hasSyncRemovedListener(), DONT_EXPECT_EVENT_ON_NULL_RESULT, (K) key, null, new Callable<V>() {
-         @Override
-         public V call() throws Exception {
-            return delegate.remove(key);
-         }
-      });
+      return withSyncListeners(notifier.hasSyncRemovedListener(), DONT_EXPECT_EVENT_ON_NULL_RESULT, (K) key, null, () -> delegate.remove(key));
+   }
+
+   @Override
+   public boolean remove(Object key, Object oldValue) {
+      return withSyncListeners(notifier.hasSyncRemovedListener(), DONT_EXPECT_EVENT_ON_NULL_RESULT, (K) key, null, () -> delegate.remove(key, oldValue));
    }
 
    @Override
    public V replace(final K key, final V value) {
-      return withSyncListeners(notifier.hasSyncUpdatedListener(), key, value, new Callable<V>() {
-         @Override
-         public V call() throws Exception {
-            return delegate.replace(key, value);
-         }
-      });
+      return withSyncListeners(notifier.hasSyncUpdatedListener(), key, value, () ->  delegate.replace(key, value));
+   }
+
+   @Override
+   public boolean replace(K key, V oldValue, V newValue) {
+      return withSyncListeners(notifier.hasSyncUpdatedListener(), key, newValue, () -> delegate.replace(key, oldValue, newValue));
    }
 
    @Override
    public boolean replaceWithVersion(final K key, final V newValue, final long version) {
-      return withSyncListeners(notifier.hasSyncUpdatedListener(), key, newValue, new Callable<Boolean>() {
-         @Override
-         public Boolean call() throws Exception {
-            return delegate.replaceWithVersion(key, newValue, version);
-         }
-      });
+      return withSyncListeners(notifier.hasSyncUpdatedListener(), key, newValue, () -> delegate.replaceWithVersion(key, newValue, version));
    }
 
    private <R> R withSyncListeners(boolean hasListeners, K key, V value, Callable<R> callable) {

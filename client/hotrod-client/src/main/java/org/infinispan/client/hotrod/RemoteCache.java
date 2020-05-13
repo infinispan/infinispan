@@ -67,7 +67,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     *
     * @return true if the entry has been removed
     * @see VersionedValue
-    * @see #getVersioned(Object)
+    * @see #getWithMetadata(Object)
     */
    boolean removeWithVersion(K key, long version);
 
@@ -133,7 +133,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * @param version numeric version that should match the one in the server
     *                for the operation to succeed
     * @return true if the value has been replaced
-    * @see #getVersioned(Object)
+    * @see #getWithMetadata(Object)
     * @see VersionedValue
     */
    boolean replaceWithVersion(K key, V newValue, long version);
@@ -199,9 +199,16 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    CompletableFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds, int maxIdleSeconds);
 
    /**
+    * @see #replaceWithVersion(Object, Object, long)
+    */
+   CompletableFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, long lifespanSeconds, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit);
+
+   /**
     * @see #retrieveEntries(String, Object[], java.util.Set, int)
     */
-   CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Set<Integer> segments, int batchSize);
+   default CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Set<Integer> segments, int batchSize) {
+      return retrieveEntries(filterConverterFactory, null, segments, batchSize);
+   }
 
    /**
     * Retrieve entries from the server
@@ -217,7 +224,9 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    /**
     * @see #retrieveEntries(String, Object[], java.util.Set, int)
     */
-   CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, int batchSize);
+   default CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, int batchSize) {
+      return retrieveEntries(filterConverterFactory, null, null, batchSize);
+   }
 
    /**
     * Retrieve entries from the server matching a query.
@@ -260,7 +269,9 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * returned from it to be closed. Failure to do so may cause additional resources to not be freed.
     */
    @Override
-   CloseableIteratorSet<K> keySet();
+   default CloseableIteratorSet<K> keySet() {
+      return keySet(null);
+   }
 
    /**
     * This method is identical to {@link #keySet()} except that it will only return keys that map to the given segments.
@@ -290,7 +301,9 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * returned from it to be closed. Failure to do so may cause additional resources to not be freed.
     */
    @Override
-   CloseableIteratorCollection<V> values();
+   default CloseableIteratorCollection<V> values() {
+      return values(null);
+   }
 
    /**
     * This method is identical to {@link #values()} except that it will only return values that map to the given segments.
@@ -324,7 +337,9 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * returned from it to be closed. Failure to do so may cause additional resources to not be freed.
     */
    @Override
-   CloseableIteratorSet<Entry<K, V>> entrySet();
+   default CloseableIteratorSet<Entry<K, V>> entrySet() {
+      return entrySet(null);
+   }
 
    /**
     * This method is identical to {@link #entrySet()} except that it will only return entries that map to the given segments.

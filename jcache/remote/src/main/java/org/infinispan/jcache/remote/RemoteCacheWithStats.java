@@ -60,6 +60,15 @@ public class RemoteCacheWithStats<K, V> extends RemoteCacheWrapper<K, V> {
    }
 
    @Override
+   public boolean replace(K key, V oldValue, V newValue) {
+      boolean replaced = delegate.replace(key, oldValue, newValue);
+      if (replaced) {
+         stats.incrementCachePuts();
+      }
+      return replaced;
+   }
+
+   @Override
    public boolean replaceWithVersion(K key, V newValue, long version) {
       boolean replaced = delegate.replaceWithVersion(key, newValue, version);
       if (replaced) {
@@ -75,6 +84,15 @@ public class RemoteCacheWithStats<K, V> extends RemoteCacheWrapper<K, V> {
          stats.incrementCacheRemovals();
       }
       return v;
+   }
+
+   @Override
+   public boolean remove(Object key, Object oldValue) {
+      boolean removed = delegate.remove(key, oldValue);
+      if (removed) {
+         stats.incrementCacheRemovals();
+      }
+      return removed;
    }
 
    @Override

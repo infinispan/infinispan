@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.impl.query;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
@@ -18,10 +18,10 @@ import org.infinispan.query.remote.client.impl.QueryRequest;
  */
 public final class RemoteQueryFactory extends BaseQueryFactory {
 
-   private final RemoteCacheImpl<?, ?> cache;
+   private final InternalRemoteCache<?, ?> cache;
    private final SerializationContext serializationContext;
 
-   public RemoteQueryFactory(RemoteCacheImpl<?, ?> cache) {
+   public RemoteQueryFactory(InternalRemoteCache<?, ?> cache) {
       this.cache = cache;
       Marshaller marshaller = cache.getRemoteCacheManager().getMarshaller();
       // we may or may not use Protobuf

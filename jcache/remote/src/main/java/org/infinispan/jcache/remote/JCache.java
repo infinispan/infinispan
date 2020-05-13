@@ -39,7 +39,6 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    private final RemoteCache<K, V> cacheWithoutStats;
    private final RemoteCache<K, V> cache;
-   private final RemoteCache<K, V> cacheWithoutReturnValue;
    private final RemoteCache<K, V> cacheWithCacheStore;
 
    private final LocalStatistics stats;
@@ -52,10 +51,9 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
       stats = new LocalStatistics();
 
-      this.cacheWithoutStats = new RemoteCacheWithOldValue<>(cache);
+      this.cacheWithoutStats = cache;
 
-      this.cache = new RemoteCacheWithOldValue<>(new RemoteCacheWithStats<>(new RemoteCacheWithSyncListeners<>(cacheForceReturnValue, notifier, this), stats));
-      this.cacheWithoutReturnValue = new RemoteCacheWithOldValue<>(new RemoteCacheWithStats<>(cache, stats));
+      this.cache = new RemoteCacheWithStats<>(new RemoteCacheWithSyncListeners<>(cacheForceReturnValue, notifier, this), stats);
       this.cacheWithCacheStore = new RemoteCacheWithCacheStore<K, V>(this.cache, jcacheLoader, jcacheWriter, configuration) {
          @Override
          protected void onLoad(K key, V value) {

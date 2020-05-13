@@ -548,19 +548,9 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
          kvGenerator.assertValueEquals(values.get(2),
                cache.replaceAsync(keys.get(2), values.get(8), 2, TimeUnit.MINUTES, 3, TimeUnit.MINUTES).get());
 
-         //async methods aren't supported in the original cache
-         expectException(UnsupportedOperationException.class,
-               () -> cache.replaceAsync(keys.get(3), values.get(3), values.get(9)));
-         expectException(UnsupportedOperationException.class,
-               () -> cache.replaceAsync(keys.get(4), values.get(4), values.get(10), 4, TimeUnit.MINUTES));
-         expectException(UnsupportedOperationException.class, () -> cache
-               .replaceAsync(keys.get(5), values.get(5), values.get(11), 5, TimeUnit.MINUTES, 6, TimeUnit.MINUTES));
-
-         //the test still expects this to be replaced.
-         assertTrue(cache.replace(keys.get(3), values.get(3), values.get(9)));
-         assertTrue(cache.replace(keys.get(4), values.get(4), values.get(10), 4, TimeUnit.MINUTES));
-         assertTrue(
-               cache.replace(keys.get(5), values.get(5), values.get(11), 5, TimeUnit.MINUTES, 6, TimeUnit.MINUTES));
+         cache.replaceAsync(keys.get(3), values.get(3), values.get(9));
+         cache.replaceAsync(keys.get(4), values.get(4), values.get(10), 4, TimeUnit.MINUTES);
+         cache.replaceAsync(keys.get(5), values.get(5), values.get(11), 5, TimeUnit.MINUTES, 6, TimeUnit.MINUTES);
       }
    }
 
@@ -607,10 +597,7 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
       } else {
          cache.removeAsync(keys.get(0)).get();
 
-         //not supported
-         expectException(UnsupportedOperationException.class, () -> cache.removeAsync(keys.get(1), values.get(1)));
-
-         cache.remove(keys.get(1));
+         cache.removeAsync(keys.get(1), values.get(1));
       }
    }
 

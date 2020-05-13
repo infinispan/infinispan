@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.multimap.operations.ContainsEntryMultimapOperation;
 import org.infinispan.client.hotrod.impl.multimap.operations.ContainsKeyMultimapOperation;
@@ -36,7 +37,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
    private static final Log log = LogFactory.getLog(RemoteMultimapCacheImpl.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private RemoteCacheImpl<K, Collection<V>> cache;
+   private final InternalRemoteCache<K, Collection<V>> cache;
    private final RemoteCacheManager remoteCacheManager;
    private MultimapOperationsFactory operationsFactory;
    private Marshaller marshaller;
@@ -51,7 +52,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
             remoteCacheManager.getCodec(),
             remoteCacheManager.getConfiguration(),
             cache.getDataFormat(),
-            cache.getClientStatistics());
+            cache.clientStatistics());
       this.marshaller = remoteCacheManager.getMarshaller();
       this.estimateKeySize = remoteCacheManager.getConfiguration().keySizeEstimate();
       this.estimateValueSize = remoteCacheManager.getConfiguration().valueSizeEstimate();
