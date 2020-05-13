@@ -15,8 +15,8 @@ import org.infinispan.util.logging.LogFactory;
 public class CountMarshallingPojo {
    private static final Log log = LogFactory.getLog(CountMarshallingPojo.class);
 
-   private static AtomicInteger marshallCount = new AtomicInteger();
-   private static AtomicInteger unmarshallCount = new AtomicInteger();
+   private static final AtomicInteger marshallCount = new AtomicInteger();
+   private static final AtomicInteger unmarshallCount = new AtomicInteger();
    private int value;
 
    public static void reset() {
