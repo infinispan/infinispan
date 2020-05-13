@@ -48,8 +48,8 @@ import org.infinispan.util.logging.LogFactory;
 public class ProtostreamTranscoder extends OneToManyTranscoder {
 
    public static final String WRAPPED_PARAM = "wrapped";
-   protected final static Log logger = LogFactory.getLog(ProtostreamTranscoder.class, Log.class);
-   private volatile SerializationContextRegistry ctxRegistry;
+   protected static final Log logger = LogFactory.getLog(ProtostreamTranscoder.class, Log.class);
+   private final SerializationContextRegistry ctxRegistry;
    private final ClassLoader classLoader;
 
    public ProtostreamTranscoder(SerializationContextRegistry ctxRegistry, ClassLoader classLoader) {
