@@ -69,17 +69,17 @@ public class TransactionContext<K, V> {
              '}';
    }
 
-   boolean containsKey(Object key, Function<K, MetadataValue<V>> remoteValueSupplier) {
-      ByRef<Boolean> result = new ByRef<>(null);
+   CompletableFuture<Boolean> containsKey(Object key, Function<K, MetadataValue<V>> remoteValueSupplier) {
+      CompletableFuture<Boolean> result = new CompletableFuture<>();
       //noinspection unchecked
       entries.compute(wrap((K) key), (wKey, entry) -> {
          if (entry == null) {
             entry = createEntryFromRemote(wKey.key, remoteValueSupplier);
          }
-         result.set(!entry.isNonExists());
+         result.complete(!entry.isNonExists());
          return entry;
       });
-      return result.get();
+      return result;
    }
 
    boolean containsValue(Object value, Supplier<CloseableIteratorSet<Map.Entry<K, V>>> iteratorSupplier,

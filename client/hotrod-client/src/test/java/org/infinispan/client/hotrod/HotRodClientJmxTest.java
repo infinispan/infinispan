@@ -6,7 +6,9 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.remoteCa
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.remoteCacheObjectName;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -96,15 +98,15 @@ public class HotRodClientJmxTest extends AbstractInfinispanTest {
       assertEquals(0L, mbeanServer.getAttribute(objectName, "RemoteStores"));
       remoteCache.put("a", "a");
       assertEquals(1L, mbeanServer.getAttribute(objectName, "RemoteStores"));
-      remoteCache.get("a"); // hit
+      assertEquals("a", remoteCache.get("a")); // hit
       assertEquals(1L, mbeanServer.getAttribute(objectName, "RemoteHits"));
       remoteCache.putIfAbsent("a", "a1");
       assertEquals(1L, mbeanServer.getAttribute(objectName, "RemoteStores"));
-      remoteCache.putIfAbsent("b", "b");
+      assertNull(remoteCache.putIfAbsent("b", "b"));
       assertEquals(2L, mbeanServer.getAttribute(objectName, "RemoteStores"));
-      remoteCache.replace("b", "a", "c");
+      assertFalse(remoteCache.replace("b", "a", "c"));
       assertEquals(2L, mbeanServer.getAttribute(objectName, "RemoteStores"));
-      remoteCache.replace("b", "b", "c");
+      assertTrue(remoteCache.replace("b", "b", "c"));
       assertEquals(3L, mbeanServer.getAttribute(objectName, "RemoteStores"));
 
       assertEquals(2, remoteCache.entrySet().stream().count());

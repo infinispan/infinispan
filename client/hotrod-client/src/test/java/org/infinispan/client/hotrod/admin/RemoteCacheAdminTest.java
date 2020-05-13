@@ -160,6 +160,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       // Create the cache
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
       RemoteCache<String, Transaction> cache = client(0).getCache(cacheName);
+      verifyQuery(cache, 0);
       Transaction tx = new TransactionPB();
       tx.setId(1);
       tx.setAccountId(777);

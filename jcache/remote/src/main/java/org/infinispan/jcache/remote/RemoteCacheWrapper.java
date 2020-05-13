@@ -15,7 +15,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.StreamingRemoteCache;
-import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
@@ -117,11 +116,6 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    @Override
    public String getVersion() {
       return delegate.getVersion();
-   }
-
-   @Override
-   public VersionedValue<V> getVersioned(K key) {
-      return delegate.getVersioned(key);
    }
 
    @Override
@@ -432,6 +426,11 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    public CompletableFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds,
                                                              int maxIdleSeconds) {
       return delegate.replaceWithVersionAsync(key, newValue, version, lifespanSeconds, maxIdleSeconds);
+   }
+
+   @Override
+   public CompletableFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, long lifespanSeconds, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+      return delegate.replaceWithVersionAsync(key, newValue, version, lifespanSeconds, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
    @Override

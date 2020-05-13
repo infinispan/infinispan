@@ -14,6 +14,7 @@ import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.client.hotrod.impl.Util;
 import org.infinispan.client.hotrod.impl.transaction.entry.TransactionEntry;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -41,7 +42,9 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
    private final TransactionManager transactionManager;
    private final TransactionTable transactionTable;
 
-   private final Function<K, MetadataValue<V>> remoteGet = super::getWithMetadata;
+   // TODO: the remote get is force to be sync and is blocking!
+   // https://issues.redhat.com/browse/ISPN-11633
+   private final Function<K, MetadataValue<V>> remoteGet = this::getWithMetadataNotTracked;
    private final Function<K, byte[]> keyMarshaller = this::keyToBytes;
    private final Function<V, byte[]> valueMarshaller = this::valueToBytes;
 
@@ -78,11 +81,15 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
    }
 
    @Override
-   public MetadataValue<V> getWithMetadata(K key) {
+   public CompletableFuture<MetadataValue<V>> getWithMetadataAsync(K key) {
       TransactionContext<K, V> txContext = getTransactionContext();
       return txContext == null ?
-            super.getWithMetadata(key) :
-            txContext.computeSync(key, TransactionEntry::toMetadataValue, remoteGet);
+            super.getWithMetadataAsync(key) :
+            txContext.compute(key, TransactionEntry::toMetadataValue, remoteGet);
+   }
+
+   private MetadataValue<V> getWithMetadataNotTracked(K key) {
+      return Util.await(super.getWithMetadataAsync(key));
    }
 
    @Override
@@ -141,22 +148,22 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
    }
 
    @Override
-   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime,
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime,
          TimeUnit maxIdleTimeUnit) {
       TransactionContext<K, V> txContext = getTransactionContext();
       return txContext == null ?
-            super.replace(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit) :
-            txContext.computeSync(key,
+            super.replaceAsync(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit) :
+            txContext.compute(key,
                   entry -> replaceEntryIfEquals(entry, oldValue, value, lifespan, lifespanUnit, maxIdleTime,
                         maxIdleTimeUnit),
                   remoteGet);
    }
 
    @Override
-   public boolean containsKey(Object key) {
+   public CompletableFuture<Boolean> containsKeyAsync(K key) {
       TransactionContext<K, V> txContext = getTransactionContext();
       return txContext == null ?
-            super.containsKey(key) :
+            super.containsKeyAsync(key) :
             txContext.containsKey(key, remoteGet);
    }
 
@@ -169,12 +176,12 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
    }
 
    @Override
-   public V get(Object key) {
+   public CompletableFuture<V> getAsync(Object key) {
       TransactionContext<K, V> txContext = getTransactionContext();
       //noinspection unchecked
       return txContext == null ?
-            super.get(key) :
-            txContext.computeSync((K) key, TransactionEntry::getValue, remoteGet);
+            super.getAsync(key) :
+            txContext.compute((K) key, TransactionEntry::getValue, remoteGet);
    }
 
    @Override
@@ -193,12 +200,12 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
    }
 
    @Override
-   public boolean remove(Object key, Object value) {
+   public CompletableFuture<Boolean> removeAsync(Object key, Object value) {
       TransactionContext<K, V> txContext = getTransactionContext();
       //noinspection unchecked
       return txContext == null ?
-            super.remove(key, value) :
-            txContext.computeSync((K) key, entry -> removeEntryIfEquals(entry, value), remoteGet);
+            super.removeAsync(key, value) :
+            txContext.compute((K) key, entry -> removeEntryIfEquals(entry, value), remoteGet);
    }
 
    @Override

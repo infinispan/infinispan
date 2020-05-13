@@ -111,7 +111,7 @@ public class CacheManagerStoppedTest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class, dependsOnMethods = "testStopCacheManager")
-   public void testVersionedGet() {
+   public void testGetWithMetadata() {
       remoteCache().getWithMetadata("key");
    }
 

@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.event.impl.ContinuousQueryImpl;
-import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.dsl.QueryFactory;
@@ -20,7 +20,7 @@ public final class Search {
          throw new IllegalArgumentException("cache parameter cannot be null");
       }
 
-      return new RemoteQueryFactory((RemoteCacheImpl) cache);
+      return new RemoteQueryFactory((InternalRemoteCache<?, ?>) cache);
    }
 
    public static <K, V> ContinuousQuery<K, V> getContinuousQuery(RemoteCache<K, V> cache) {

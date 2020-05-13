@@ -8,7 +8,7 @@ import java.util.Map;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.operations.QueryOperation;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.IndexedQueryMode;
@@ -22,14 +22,14 @@ import org.infinispan.query.remote.client.impl.BaseQueryResponse;
  */
 public final class RemoteQuery extends BaseQuery {
 
-   private final RemoteCacheImpl<?, ?> cache;
+   private final InternalRemoteCache<?, ?> cache;
    private final SerializationContext serializationContext;
    private final IndexedQueryMode indexedQueryMode;
 
    private List<?> results = null;
    private int totalResults;
 
-   RemoteQuery(QueryFactory queryFactory, RemoteCacheImpl<?, ?> cache, SerializationContext serializationContext,
+   RemoteQuery(QueryFactory queryFactory, InternalRemoteCache<?, ?> cache, SerializationContext serializationContext,
                String queryString, IndexedQueryMode indexQueryMode) {
       super(queryFactory, queryString);
       this.cache = cache;
@@ -37,7 +37,7 @@ public final class RemoteQuery extends BaseQuery {
       this.indexedQueryMode = indexQueryMode;
    }
 
-   RemoteQuery(QueryFactory queryFactory, RemoteCacheImpl<?, ?> cache, SerializationContext serializationContext,
+   RemoteQuery(QueryFactory queryFactory, InternalRemoteCache<?, ?> cache, SerializationContext serializationContext,
                String queryString, Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
       super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
       this.cache = cache;
