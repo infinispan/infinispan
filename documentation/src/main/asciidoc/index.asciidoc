@@ -11,7 +11,8 @@ Getting Started::
 
 Operator for Kubernetes and OpenShift::
 
-* link:https://infinispan.org/infinispan-operator/master/operator.html[Infinispan Operator Guide]
+* link:https://infinispan.org/infinispan-operator/master/operator.html[{brandname} Operator Guide: Development]
+* link:https://infinispan.org/infinispan-operator/1.1.x/operator.html[{brandname} Operator Guide: Stable]
 
 Configuring Infinispan::
 
