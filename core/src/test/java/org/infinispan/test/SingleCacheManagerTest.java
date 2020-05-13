@@ -126,17 +126,14 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
       assertNoTransactions(cache);
    }
 
-   protected void assertNoTransactions(final Cache<?, ?> cache) {
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            int localTxCount = TestingUtil.extractComponent(cache, TransactionTable.class).getLocalTxCount();
-            if (localTxCount != 0) {
-               log.tracef("Local tx=%s", localTxCount);
-               return false;
-            }
-            return true;
+   protected void assertNoTransactions(Cache<?, ?> cache) {
+      eventually(() -> {
+         int localTxCount = TestingUtil.extractComponent(cache, TransactionTable.class).getLocalTxCount();
+         if (localTxCount != 0) {
+            log.tracef("Local tx=%s", localTxCount);
+            return false;
          }
+         return true;
       });
    }
 }
