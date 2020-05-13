@@ -63,8 +63,12 @@ public class StringLogAppender extends AbstractAppender {
    }
 
    public String getLog(int index) {
-      if (index < 0 || index >= logs.size()) {
-         throw new IllegalArgumentException("Index " + index + " is out of bounds: [0.." + logs.size() + "]");
+      int size = logs.size();
+      if (size == 0) {
+         throw new IllegalStateException("No logs recorded yet");
+      }
+      if (index < 0 || index >= size) {
+         throw new IllegalArgumentException("Index " + index + " is out of bounds: [0.." + size + "]");
       }
       return logs.get(index);
    }
