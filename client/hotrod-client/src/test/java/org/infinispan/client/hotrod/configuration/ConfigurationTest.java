@@ -42,9 +42,11 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRUST_ST
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.USE_AUTH;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.USE_SSL;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SIZE_ESTIMATE;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -69,6 +71,7 @@ import org.infinispan.client.hotrod.SomeAsyncExecutorFactory;
 import org.infinispan.client.hotrod.SomeCustomConsistentHashV2;
 import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.HotRodURI;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.CacheConfigurationException;
@@ -217,10 +220,10 @@ public class ConfigurationTest extends AbstractInfinispanTest {
             .maxEntries(10_000)
             .cacheNamePattern("near.*")
             .addCluster("siteA")
-               .addClusterNode("hostA1", 11222)
-               .addClusterNode("hostA2", 11223)
+            .addClusterNode("hostA1", 11222)
+            .addClusterNode("hostA2", 11223)
             .addCluster("siteB")
-               .addClusterNodes("hostB1:11222; hostB2:11223");
+            .addClusterNodes("hostB1:11222; hostB2:11223");
 
       Configuration configuration = builder.build();
       validateConfiguration(configuration);
@@ -583,6 +586,55 @@ public class ConfigurationTest extends AbstractInfinispanTest {
    private static void assertEqualsConfig(Object expected, String propertyName, Configuration cfg) {
       assertEquals(expected, OPTIONS.get(propertyName).apply(cfg));
       assertEquals(TYPES.get(expected.getClass()).apply(expected), cfg.properties().get(propertyName));
+   }
+
+   @Test
+   public void testConfigurationViaURI() {
+      Configuration configuration = HotRodURI.create("hotrod://host1").toConfigurationBuilder().build();
+      assertEquals(1, configuration.servers().size());
+      assertFalse(configuration.security().ssl().enabled());
+      assertFalse(configuration.security().authentication().enabled());
+      configuration = HotRodURI.create("hotrod://host1?socket_timeout=5000&connect_timeout=1000").toConfigurationBuilder().build();
+      assertEquals(1, configuration.servers().size());
+      assertFalse(configuration.security().ssl().enabled());
+      assertFalse(configuration.security().authentication().enabled());
+      assertEquals(5000, configuration.socketTimeout());
+      assertEquals(1000, configuration.connectionTimeout());
+      configuration = HotRodURI.create("hotrod://host2:11322").toConfigurationBuilder().build();
+      assertEquals(1, configuration.servers().size());
+      assertEquals("host2", configuration.servers().get(0).host());
+      assertEquals(11322, configuration.servers().get(0).port());
+      assertFalse(configuration.security().ssl().enabled());
+      assertFalse(configuration.security().authentication().enabled());
+      configuration = HotRodURI.create("hotrod://user:password@host1:11222").toConfigurationBuilder().build();
+      assertEquals(1, configuration.servers().size());
+      assertFalse(configuration.security().ssl().enabled());
+      assertTrue(configuration.security().authentication().enabled());
+      BasicCallbackHandler callbackHandler = (BasicCallbackHandler)configuration.security().authentication().callbackHandler();
+      assertEquals("user", callbackHandler.getUsername());
+      assertArrayEquals("password".toCharArray(), callbackHandler.getPassword());
+      configuration = HotRodURI.create("hotrod://host1:11222,host2:11322,host3").toConfigurationBuilder().build();
+      assertEquals(3, configuration.servers().size());
+      assertEquals("host1", configuration.servers().get(0).host());
+      assertEquals(11222, configuration.servers().get(0).port());
+      assertEquals("host2", configuration.servers().get(1).host());
+      assertEquals(11322, configuration.servers().get(1).port());
+      assertEquals("host3", configuration.servers().get(2).host());
+      assertEquals(11222, configuration.servers().get(2).port());
+      assertFalse(configuration.security().ssl().enabled());
+      configuration = HotRodURI.create("hotrods://user:password@host1:11222,host2:11322?trust_store_path=cert.pem").toConfigurationBuilder().build();
+      assertEquals(2, configuration.servers().size());
+      assertEquals("host1", configuration.servers().get(0).host());
+      assertEquals(11222, configuration.servers().get(0).port());
+      assertEquals("host2", configuration.servers().get(1).host());
+      assertEquals(11322, configuration.servers().get(1).port());
+      assertTrue(configuration.security().ssl().enabled());
+      assertTrue(configuration.security().authentication().enabled());
+      callbackHandler = (BasicCallbackHandler)configuration.security().authentication().callbackHandler();
+      assertEquals("user", callbackHandler.getUsername());
+      assertArrayEquals("password".toCharArray(), callbackHandler.getPassword());
+      expectException(IllegalArgumentException.class, "ISPN004095:.*", () -> HotRodURI.create("http://host1"));
+      expectException(IllegalArgumentException.class, "ISPN004096:.*", () -> HotRodURI.create("hotrod://host1?property"));
    }
 
 }

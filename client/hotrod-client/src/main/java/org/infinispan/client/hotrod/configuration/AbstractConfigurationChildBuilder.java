@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.configuration;
 
+import java.net.URI;
 import java.util.Properties;
 import java.util.function.Supplier;
 
@@ -199,6 +200,16 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    @Override
    public RemoteCacheConfigurationBuilder remoteCache(String name) {
       return builder.remoteCache(name);
+   }
+
+   @Override
+   public ConfigurationBuilder uri(URI uri) {
+      return builder.uri(uri);
+   }
+
+   @Override
+   public ConfigurationBuilder uri(String uri) {
+      return builder.uri(uri);
    }
 
    @Override
