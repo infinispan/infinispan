@@ -2,9 +2,10 @@ package org.infinispan.xsite;
 
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.irac.IracUpdateKeyCommand;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
@@ -18,9 +19,8 @@ import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
  * @author Mircea Markus
  * @since 5.2
  */
+@Scope(Scopes.NAMED_CACHE)
 public interface BackupReceiver {
-
-   Cache<?, ?> getCache();
 
    CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder);
 

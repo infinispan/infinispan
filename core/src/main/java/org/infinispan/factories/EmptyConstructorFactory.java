@@ -23,8 +23,6 @@ import org.infinispan.util.concurrent.BlockingManagerImpl;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
-import org.infinispan.xsite.BackupReceiverRepository;
-import org.infinispan.xsite.BackupReceiverRepositoryImpl;
 
 /**
  * Factory for building global-scope components which have default empty constructors
@@ -34,7 +32,7 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {
-      BackupReceiverRepository.class, EventLogManager.class,
+      EventLogManager.class,
       InboundInvocationHandler.class, PersistentUUIDManager.class,
       RemoteCommandsFactory.class, TimeService.class, DataOperationOrderer.class,
       GlobalStateManager.class, GlobalConfigurationManager.class,
@@ -44,11 +42,8 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
    @Override
-   @SuppressWarnings("unchecked")
    public Object construct(String componentName) {
-      if (componentName.equals(BackupReceiverRepository.class.getName()))
-         return new BackupReceiverRepositoryImpl();
-      else if (componentName.equals(InboundInvocationHandler.class.getName()))
+      if (componentName.equals(InboundInvocationHandler.class.getName()))
          return new GlobalInboundInvocationHandler();
       else if (componentName.equals(RemoteCommandsFactory.class.getName()))
          return new RemoteCommandsFactory();

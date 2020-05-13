@@ -66,6 +66,11 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
    }
 
    @Override
+   public <T> ComponentRef<T> lazyGetComponent(Class<T> componentType) {
+      return getComponent0(componentType.getName(), componentType, false);
+   }
+
+   @Override
    public MBeanMetadata getMBeanMetadata(String className) {
       MBeanMetadata metadata = moduleRepository.getMBeanMetadata(className);
       if (metadata == null) {

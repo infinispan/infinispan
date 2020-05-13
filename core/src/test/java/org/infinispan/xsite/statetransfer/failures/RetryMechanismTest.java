@@ -1,7 +1,5 @@
 package org.infinispan.xsite.statetransfer.failures;
 
-import static org.infinispan.test.TestingUtil.extractGlobalComponent;
-import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.wrapComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.infinispan.xsite.statetransfer.XSiteStateTransferManager.STATUS_ERROR;
@@ -18,7 +16,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
@@ -26,8 +23,6 @@ import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverDelegator;
-import org.infinispan.xsite.BackupReceiverRepository;
-import org.infinispan.xsite.BackupReceiverRepositoryDelegator;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
@@ -52,7 +47,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       takeSiteOffline();
       final Object key = new MagicKey(cache(NYC, 1));
       final FailureHandler handler = FailureHandler.replaceOn(cache(NYC, 1));
-      final CounterBackupReceiverRepository counterRepository = CounterBackupReceiverRepository.replaceOn(cache(NYC, 0).getCacheManager());
+      final CounterBackupReceiver counterRepository = replaceBackupReceiverOn(cache(NYC, 0));
 
       cache(LON, 0).put(key, VALUE);
 
@@ -77,7 +72,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       takeSiteOffline();
       final Object key = new MagicKey(cache(NYC, 1));
       final FailureHandler handler = FailureHandler.replaceOn(cache(NYC, 1));
-      final CounterBackupReceiverRepository counterRepository = CounterBackupReceiverRepository.replaceOn(cache(NYC, 0).getCacheManager());
+      final CounterBackupReceiver counterRepository = replaceBackupReceiverOn(cache(NYC, 0));
 
       cache(LON, 0).put(key, VALUE);
 
@@ -103,7 +98,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       takeSiteOffline();
       final Object key = new MagicKey(cache(NYC, 1));
       final DiscardHandler handler = DiscardHandler.replaceOn(cache(NYC, 1));
-      final CounterBackupReceiverRepository counterRepository = CounterBackupReceiverRepository.replaceOn(cache(NYC, 0).getCacheManager());
+      final CounterBackupReceiver counterRepository = replaceBackupReceiverOn(cache(NYC, 0));
 
       cache(LON, 0).put(key, VALUE);
 
@@ -131,7 +126,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       final Object key = new MagicKey(cache(NYC, 1));
       final DiscardHandler handler = DiscardHandler.replaceOn(cache(NYC, 1));
       final FailureXSiteConsumer failureXSiteConsumer = FailureXSiteConsumer.replaceOn(cache(NYC, 0));
-      final CounterBackupReceiverRepository counterRepository = CounterBackupReceiverRepository.replaceOn(cache(NYC, 0).getCacheManager());
+      final CounterBackupReceiver counterRepository = replaceBackupReceiverOn(cache(NYC, 0));
 
       failureXSiteConsumer.fail();
 
@@ -163,7 +158,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       final Object key = new MagicKey(cache(NYC, 1));
       final DiscardHandler handler = DiscardHandler.replaceOn(cache(NYC, 1));
       final FailureXSiteConsumer failureXSiteConsumer = FailureXSiteConsumer.replaceOn(cache(NYC, 0));
-      final CounterBackupReceiverRepository counterRepository = CounterBackupReceiverRepository.replaceOn(cache(NYC, 0).getCacheManager());
+      final CounterBackupReceiver counterRepository = replaceBackupReceiverOn(cache(NYC, 0));
 
       failureXSiteConsumer.failAlways();
 
@@ -204,34 +199,6 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       ConfigurationBuilder builder = super.getNycActiveConfig();
       builder.clustering().hash().numSegments(8); //we only use 1 key; no need for 256 segments
       return builder;
-   }
-
-   private static class CounterBackupReceiverRepository extends BackupReceiverRepositoryDelegator {
-
-      private final AtomicInteger counter;
-
-      private CounterBackupReceiverRepository(BackupReceiverRepository delegate) {
-         super(delegate);
-         this.counter = new AtomicInteger();
-      }
-
-      @Override
-      public BackupReceiver getBackupReceiver(String originSiteName, String cacheName) {
-         return new BackupReceiverDelegator(super.getBackupReceiver(originSiteName, cacheName)) {
-            @Override
-            public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
-               counter.getAndIncrement();
-               return super.handleStateTransferState(cmd);
-            }
-         };
-      }
-
-      static CounterBackupReceiverRepository replaceOn(CacheContainer cacheContainer) {
-         BackupReceiverRepository delegate = extractGlobalComponent(cacheContainer, BackupReceiverRepository.class);
-         CounterBackupReceiverRepository wrapper = new CounterBackupReceiverRepository(delegate);
-         replaceComponent(cacheContainer, BackupReceiverRepository.class, wrapper, true);
-         return wrapper;
-      }
    }
 
    private static class FailureXSiteConsumer implements XSiteStateConsumer {
@@ -372,5 +339,25 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
          }
          return true;
       }
+   }
+
+   private static class CounterBackupReceiver extends BackupReceiverDelegator {
+
+      private final AtomicInteger counter;
+
+      CounterBackupReceiver(BackupReceiver delegate) {
+         super(delegate);
+         this.counter = new AtomicInteger();
+      }
+
+      @Override
+      public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
+         counter.getAndIncrement();
+         return super.handleStateTransferState(cmd);
+      }
+   }
+
+   private static CounterBackupReceiver replaceBackupReceiverOn(Cache<?,?> cache) {
+      return wrapComponent(cache, BackupReceiver.class, CounterBackupReceiver::new);
    }
 }
