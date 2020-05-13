@@ -335,4 +335,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot specify both template name and configuration for '%s'", id = 4094)
    CacheConfigurationException remoteCacheTemplateNameXorConfiguration(String name);
+
+   @Message(value = "Not a Hot Rod URI: %s", id = 4095)
+   IllegalArgumentException notaHotRodURI(String uri);
+
+   @Message(value = "Invalid property format in URI: %s", id = 4096)
+   IllegalArgumentException invalidPropertyFormat(String part);
 }

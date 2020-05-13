@@ -2,8 +2,18 @@
  * Hot Rod client configuration API.
  *
  * <p>It is possible to configure the {@link org.infinispan.client.hotrod.RemoteCacheManager} either programmatically,
- * by constructing a {@link org.infinispan.client.hotrod.configuration.Configuration} using a {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder}
+ * using a URI or by constructing a {@link org.infinispan.client.hotrod.configuration.Configuration} using a {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder}
  * or declaratively, by placing a properties file named<tt>hotrod-client.properties</tt> in the classpath.</p>
+ *
+ * <p>A Hot Rod URI follows the following format:
+ *    <code>hotrod[s]://[user[:password]@]host[:port][,host2[:port]][?property=value[&property2=value2]]</code>
+ * </p>
+ * <ul>
+ *    <li><b>hotrod</b> or <b>hotrods</b> specifies whether to use a plain connection or TLS/SSL encryption.</li>
+ *    <li><b>user</b> and <b>password</b> optionally specify authentication credentials.</li>
+ *    <li><b>host</b> and <b>port</b> comma-separated list of one or more servers.</li>
+ *    <li><b>proeprty</b> and <b>value</b> one or more ampersand-separated  (&amp;) property name/value pairs. The property name must omit the infinispan.client.hotrod prefix.</li>
+ * </ul>
  *
  * <p>The following table describes the individual properties
  * and the related programmatic configuration API.</p>
@@ -20,6 +30,12 @@
  *    <tbody>
  *       <tr>
  *          <th colspan="4">Connection properties</th>
+ *       </tr>
+ *       <tr>
+ *          <td><b>infinispan.client.hotrod.uri</b></td>
+ *          <td>String</td>
+ *          <td>N/A</td>
+ *          <td>Configures the client via a URI</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.server_list</b></td>

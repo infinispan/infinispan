@@ -33,6 +33,18 @@ public class BasicCallbackHandler implements CallbackHandler {
         this.realm = realm;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
+    public String getRealm() {
+        return realm;
+    }
+
+    public char[] getPassword() {
+        return password;
+    }
+
     @Override
     public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
         for (Callback callback : callbacks) {

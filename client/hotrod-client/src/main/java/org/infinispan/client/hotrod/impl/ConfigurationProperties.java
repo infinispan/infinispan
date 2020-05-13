@@ -23,7 +23,8 @@ import org.infinispan.commons.util.TypedProperties;
  * @version 4.1
  */
 public class ConfigurationProperties {
-   private static final String ICH = "infinispan.client.hotrod.";
+   static final String ICH = "infinispan.client.hotrod.";
+   public static final String URI = ICH + "uri";
    public static final String SERVER_LIST = ICH + "server_list";
    public static final String MARSHALLER = ICH + "marshaller";
    public static final String CONTEXT_INITIALIZERS = ICH + "context-initializers";
@@ -134,6 +135,14 @@ public class ConfigurationProperties {
 
    public ConfigurationProperties(Properties props) {
       this.props = props == null ? new TypedProperties() : TypedProperties.toTypedProperties(props);
+   }
+
+   public void setURI(String uri) {
+      props.setProperty(URI, uri);
+   }
+
+   public String getURI() {
+      return props.getProperty(URI);
    }
 
    public void setServerList(String serverList) {

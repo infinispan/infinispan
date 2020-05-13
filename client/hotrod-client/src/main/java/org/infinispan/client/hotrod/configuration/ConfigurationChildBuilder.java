@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.configuration;
 
+import java.net.URI;
 import java.util.Properties;
 import java.util.function.Supplier;
 
@@ -186,6 +187,16 @@ public interface ConfigurationChildBuilder {
     * Affects TCP KEEPALIVE on the TCP stack. Defaults to disable
     */
    ConfigurationBuilder tcpKeepAlive(boolean keepAlive);
+
+   /**
+    * Configures this builder using the specified URI.
+    */
+   ConfigurationBuilder uri(URI uri);
+
+   /**
+    * Configures this builder using the specified URI.
+    */
+   ConfigurationBuilder uri(String uri);
 
    /**
     * This hint allows sizing of byte buffers when serializing and deserializing values, to minimize

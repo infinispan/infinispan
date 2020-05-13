@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.configuration;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.lang.ref.WeakReference;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,6 +23,7 @@ import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.HotRodURI;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
@@ -311,6 +313,18 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public ConfigurationBuilder uri(URI uri) {
+      this.read(HotRodURI.create(uri).toConfigurationBuilder().build(false));
+      return this;
+   }
+
+   @Override
+   public ConfigurationBuilder uri(String uri) {
+      this.read(HotRodURI.create(uri).toConfigurationBuilder().build(false));
+      return this;
+   }
+
+   @Override
    public ConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
       this.valueSizeEstimate = valueSizeEstimate;
       return this;
@@ -355,6 +369,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
+
+      if (typed.containsKey(ConfigurationProperties.URI)) {
+         HotRodURI uri = HotRodURI.create(typed.getProperty(ConfigurationProperties.URI));
+         this.read(uri.toConfigurationBuilder().build());
+      }
 
       if (typed.containsKey(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY)) {
          this.asyncExecutorFactory().factoryClass(typed.getProperty(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY, null, true));

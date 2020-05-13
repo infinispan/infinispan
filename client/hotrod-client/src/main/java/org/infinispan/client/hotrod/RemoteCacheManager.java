@@ -8,6 +8,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketAddress;
+import java.net.URI;
 import java.security.Provider;
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,6 +42,7 @@ import org.infinispan.client.hotrod.counter.impl.RemoteCounterManager;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.HotRodURI;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 import org.infinispan.client.hotrod.impl.MarshallerRegistry;
@@ -142,6 +144,32 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
     */
    public RemoteCacheManager(Configuration configuration) {
       this(configuration, true);
+   }
+
+   /**
+    * Create a new RemoteCacheManager using the supplied URI. The RemoteCacheManager will be started
+    * automatically
+    *
+    * @param uri the URI to use for this RemoteCacheManager
+    * @since 11.0
+    */
+   public RemoteCacheManager(String uri) {
+      this(HotRodURI.create(uri));
+   }
+
+   /**
+    * Create a new RemoteCacheManager using the supplied URI. The RemoteCacheManager will be started
+    * automatically
+    *
+    * @param uri the URI to use for this RemoteCacheManager
+    * @since 11.0
+    */
+   public RemoteCacheManager(URI uri) {
+      this(HotRodURI.create(uri));
+   }
+
+   private RemoteCacheManager(HotRodURI uri) {
+      this(uri.toConfigurationBuilder().build());
    }
 
    /**
