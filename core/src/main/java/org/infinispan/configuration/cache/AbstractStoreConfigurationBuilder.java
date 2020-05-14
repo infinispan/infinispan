@@ -169,10 +169,15 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    private void validateStoreAttributes() {
       async.validate();
       boolean shared = attributes.attribute(SHARED).get();
+      boolean preload = attributes.attribute(PRELOAD).get();
       boolean fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE).get();
       boolean purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP).get();
       boolean transactional = attributes.attribute(TRANSACTIONAL).get();
       ConfigurationBuilder builder = getBuilder();
+
+      if (purgeOnStartup && preload) {
+         throw CONFIG.preloadAndPurgeOnStartupConflict();
+      }
 
       if (!shared && !fetchPersistentState && !purgeOnStartup
             && builder.clustering().cacheMode().isClustered() && !getBuilder().template())

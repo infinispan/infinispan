@@ -258,7 +258,7 @@
    -->
    <local-cache name="writeThroughToFile">
       <persistence passivation="false">
-         <file-store path="file-store-location" shared="false" preload="true" purge="true">
+         <file-store path="file-store-location" shared="false" preload="true" purge="false">
             <write-behind modification-queue-size="123" thread-pool-size="22" />
          </file-store>
       </persistence>
