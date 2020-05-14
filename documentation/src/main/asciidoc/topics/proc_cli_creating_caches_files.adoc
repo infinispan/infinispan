@@ -1,5 +1,6 @@
-= Creating Custom Caches
-Add caches with custom {brandname} configuration files in XML or JSON format.
+[id='cli_create_cache_file']
+= Creating Caches from XML or JSON Files
+Add caches with custom {brandname} configuration in XML or JSON format.
 
 .Procedure
 

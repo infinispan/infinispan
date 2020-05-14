@@ -1,0 +1,11 @@
+[id='cli_drop_caches']
+= Deleting Caches
+Drop caches to remove them and delete all data they contain.
+
+.Procedure
+
+* Remove caches with the **drop** command.
++
+----
+[//containers/default]> drop cache mycache
+----
