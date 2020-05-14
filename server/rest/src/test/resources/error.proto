@@ -1,0 +1,6 @@
+package org.infinispan.rest.search.error;
+
+messoge Error {
+
+    string street = -1;
+}

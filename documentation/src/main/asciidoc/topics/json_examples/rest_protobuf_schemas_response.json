@@ -1,0 +1,10 @@
+[ {
+  "name" : "users.proto",
+  "error" : {
+    "message": "Schema users.proto has errors",
+    "cause": "java.lang.IllegalStateException:Syntax error in error.proto at 3:8: unexpected label: messoge"
+  }
+}, {
+  "name" : "people.proto",
+  "error" : null
+}]
