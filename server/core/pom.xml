@@ -94,6 +94,12 @@
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>io.projectreactor.tools</groupId>
+         <artifactId>blockhound</artifactId>
+         <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>org.mockito</groupId>

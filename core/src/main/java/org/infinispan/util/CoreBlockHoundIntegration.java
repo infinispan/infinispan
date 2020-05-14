@@ -12,6 +12,7 @@ import org.infinispan.factories.impl.BasicComponentRegistryImpl;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.interceptors.impl.PrefetchInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistryImpl;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
@@ -122,5 +123,9 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
 
       // This can block if there is a store otherwise it won't block
       builder.allowBlockingCallsInside(CacheMgmtInterceptor.class.getName(), "getNumberOfEntries");
+
+      // Unfortunately retrieving the protobuf schema reads from a separately generated file - We hope this can be changed
+      // so instead the generated context initializer can just store the schema as a String.
+      builder.allowBlockingCallsInside(SerializationContextRegistryImpl.class.getName() + "$MarshallerContext", "update");
    }
 }

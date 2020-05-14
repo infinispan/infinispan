@@ -10,11 +10,13 @@ import java.util.List;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.DateUtils;
@@ -225,9 +227,18 @@ public class BaseCacheResource {
    private CompletionStage<RestResponse> putInCache(NettyRestResponse.Builder responseBuilder,
                                                     AdvancedCache<Object, Object> cache, Object key, byte[] data, Long ttl,
                                                     Long idleTime) {
-      final Metadata metadata = CacheOperationsHelper.createMetadata(SecurityActions.getCacheConfiguration(cache), ttl, idleTime);
+      Configuration config = SecurityActions.getCacheConfiguration(cache);
+      final Metadata metadata = CacheOperationsHelper.createMetadata(config, ttl, idleTime);
       responseBuilder.header("etag", calcETAG(data));
-      return cache.putAsync(key, data, metadata).thenApply(o -> responseBuilder.build());
+      CompletionStage<Object> stage;
+      // Indexing is still blocking - can be removed when https://issues.redhat.com/browse/ISPN-11731 is complete
+      if (config.indexing().enabled()) {
+         stage = CompletableFuture.supplyAsync(() -> cache.putAsync(key, data, metadata), invocationHelper.getExecutor())
+               .thenApply(Function.identity());
+      } else {
+         stage = cache.putAsync(key, data, metadata);
+      }
+      return stage.thenApply(o -> responseBuilder.build());
    }
 
 }

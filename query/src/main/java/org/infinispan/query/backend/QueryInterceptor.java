@@ -90,6 +90,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    @Inject RpcManager rpcManager;
    @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    ExecutorService nonBlockingExecutor;
+   @Inject BlockingManager blockingManager;
    @Inject protected KeyPartitioner keyPartitioner;
 
    private final SearchIntegrator searchFactory;
@@ -137,7 +138,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       stopping.set(false);
       boolean isClustered = cache.getCacheConfiguration().clustering().cacheMode().isClustered();
       if (isClustered) {
-         segmentListener = new SegmentListener(cache, this::purgeIndex);
+         segmentListener = new SegmentListener(cache, this::purgeIndex, blockingManager);
          this.cache.addListener(segmentListener);
       }
    }

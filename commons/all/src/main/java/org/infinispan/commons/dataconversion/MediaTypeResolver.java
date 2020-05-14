@@ -22,6 +22,11 @@ public final class MediaTypeResolver {
    private static final String MIME_TYPES = "mime.types";
 
    static {
+      populateFileMap();
+   }
+
+   // This has to be a separate method so we can mark it as blocking via blockhound
+   private static void populateFileMap() {
       InputStream in = null;
       BufferedInputStream bis = null;
       try {

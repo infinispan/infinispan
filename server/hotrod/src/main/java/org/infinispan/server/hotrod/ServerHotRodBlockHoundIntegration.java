@@ -1,12 +1,10 @@
 package org.infinispan.server.hotrod;
 
 import org.infinispan.commons.util.SaslUtils;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.utils.SslUtils;
 import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.kohsuke.MetaInfServices;
 
-import io.netty.util.concurrent.GlobalEventExecutor;
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
@@ -14,9 +12,6 @@ import reactor.blockhound.integration.BlockHoundIntegration;
 public class ServerHotRodBlockHoundIntegration implements BlockHoundIntegration {
    @Override
    public void applyTo(BlockHound.Builder builder) {
-      builder.allowBlockingCallsInside(GlobalEventExecutor.class.getName(), "addTask");
-      builder.allowBlockingCallsInside(GlobalEventExecutor.class.getName(), "takeTask");
-
       // Invokes stream method on a cache that is REPL or LOCAL without persistence (won't block)
       builder.allowBlockingCallsInside(GlobalTxTable.class.getName(), "getPreparedTransactions");
 
@@ -24,8 +19,6 @@ public class ServerHotRodBlockHoundIntegration implements BlockHoundIntegration 
    }
 
    private static void questionableBlockingMethod(BlockHound.Builder builder) {
-      // Starting a cache is blocking
-      builder.allowBlockingCallsInside(EmbeddedCacheManager.class.getName(), "createCounter");
       builder.allowBlockingCallsInside(HotRodServer.class.getName(), "obtainAnonymizedCache");
       builder.allowBlockingCallsInside(Encoder2x.class.getName(), "getCounterCacheTopology");
 
