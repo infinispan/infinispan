@@ -1,6 +1,7 @@
 package org.infinispan.server.core;
 
 import java.util.EnumSet;
+import java.util.concurrent.ExecutorService;
 
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.BinaryTranscoder;
@@ -10,8 +11,10 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -21,6 +24,10 @@ import org.infinispan.server.core.dataconversion.JBossMarshallingTranscoder;
 import org.infinispan.server.core.dataconversion.JavaSerializationTranscoder;
 import org.infinispan.server.core.dataconversion.JsonTranscoder;
 import org.infinispan.server.core.dataconversion.XMLTranscoder;
+import org.infinispan.server.core.transport.NettyTransport;
+
+import io.netty.channel.EventLoopGroup;
+import io.netty.util.concurrent.DefaultThreadFactory;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
@@ -60,6 +67,23 @@ public class LifecycleCallbacks implements ModuleLifecycle {
          BinaryTranscoder transcoder = encoderRegistry.getTranscoder(BinaryTranscoder.class);
          transcoder.overrideMarshaller(jbossMarshaller);
       }
+
+      ComponentRef<ExecutorService> executorServiceRef = basicComponentRegistry.getComponent(
+            KnownComponentNames.NON_BLOCKING_EXECUTOR, ExecutorService.class);
+      ExecutorService oldNonBlockingExecutor = executorServiceRef.wired();
+
+      String nodeName = globalConfiguration.transport().nodeName();
+
+      EventLoopGroup eventLoopGroup = NettyTransport.buildEventLoop(Runtime.getRuntime().availableProcessors(),
+            new DefaultThreadFactory("non-blocking-thread-netty" + (nodeName != null ? "-" + nodeName : "")));
+
+      basicComponentRegistry.replaceComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, eventLoopGroup, true);
+      basicComponentRegistry.rewire();
+      // TODO: need to ask if this is required or not - I don't think so
+      gcr.rewire();
+      basicComponentRegistry.registerComponent(EventLoopGroup.class, eventLoopGroup, false);
+
+      oldNonBlockingExecutor.shutdown();
    }
 
    private ConfigurationBuilder getServerStateCacheConfig(GlobalConfiguration globalConfiguration) {

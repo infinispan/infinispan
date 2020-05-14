@@ -67,8 +67,8 @@ public class NettyTransport implements Transport {
       this.configuration = configuration;
 
       // Need to initialize these in constructor since they require configuration
-      masterGroup = buildEventLoop(1, new DefaultThreadFactory(threadNamePrefix + "-ServerMaster"));
-      ioGroup = buildEventLoop(configuration.ioThreads(), new DefaultThreadFactory(threadNamePrefix + "-ServerIO"));
+      masterGroup = serverEventLoop(1, new DefaultThreadFactory(threadNamePrefix + "-ServerMaster"));
+      ioGroup = cacheManager.getGlobalComponentRegistry().getComponent(EventLoopGroup.class);
 
       serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels", ImmediateEventExecutor.INSTANCE);
       acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted", ImmediateEventExecutor.INSTANCE);
@@ -297,10 +297,15 @@ public class NettyTransport implements Transport {
       return channel;
    }
 
-   private EventLoopGroup buildEventLoop(int nThreads, DefaultThreadFactory threadFactory) {
-      EventLoopGroup eventLoop = EPollAvailable.USE_NATIVE_EPOLL ? new EpollEventLoopGroup(nThreads, threadFactory) :
-              new NioEventLoopGroup(nThreads, threadFactory);
+   private EventLoopGroup serverEventLoop(int nThreads, DefaultThreadFactory threadFactory) {
+      EventLoopGroup eventLoop = buildEventLoop(nThreads, threadFactory);
       log.createdNettyEventLoop(eventLoop.getClass().getName(), configuration.toString());
+      return eventLoop;
+   }
+
+   public static EventLoopGroup buildEventLoop(int nThreads, DefaultThreadFactory threadFactory) {
+      EventLoopGroup eventLoop = EPollAvailable.USE_NATIVE_EPOLL ? new EpollEventLoopGroup(nThreads, threadFactory) :
+            new NioEventLoopGroup(nThreads, threadFactory);
       return eventLoop;
    }
 }
