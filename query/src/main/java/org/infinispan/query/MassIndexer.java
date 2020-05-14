@@ -1,6 +1,7 @@
 package org.infinispan.query;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * Component to rebuild the indexes from the existing data.
@@ -20,14 +21,14 @@ public interface MassIndexer {
    /**
     * Deletes all the indexes and skip the reindexing.
     */
-   CompletableFuture<Void> purge();
+   CompletionStage<Void> purge();
 
    /**
     * @return {@link CompletableFuture}
     */
-   CompletableFuture<Void> startAsync();
+   CompletionStage<Void> startAsync();
 
-   CompletableFuture<Void> reindex(Object... keys);
+   CompletionStage<Void> reindex(Object... keys);
 
    /**
     * @return true if the MassIndexer process was started on this node and hasn't finished yet.

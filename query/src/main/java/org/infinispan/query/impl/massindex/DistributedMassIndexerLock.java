@@ -1,12 +1,11 @@
 package org.infinispan.query.impl.massindex;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.Cache;
 import org.infinispan.lock.EmbeddedClusteredLockManagerFactory;
 import org.infinispan.lock.api.ClusteredLock;
 import org.infinispan.lock.api.ClusteredLockManager;
-import org.infinispan.query.logging.Log;
-import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A cluster-wide lock to prevent multiple instances of the {@link org.infinispan.query.MassIndexer} to run concurrently.
@@ -14,7 +13,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 10.1
  */
 final class DistributedMassIndexerLock implements MassIndexLock {
-   private static final Log LOG = LogFactory.getLog(DistributedMassIndexerLock.class, Log.class);
    private final String lockName;
    private volatile ClusteredLock clusteredLock;
    private final Cache<?, ?> cache;
@@ -25,26 +23,13 @@ final class DistributedMassIndexerLock implements MassIndexLock {
    }
 
    @Override
-   public boolean lock() {
-      try {
-         return getLock().tryLock().get();
-      } catch (Exception e) {
-         throw LOG.errorAcquiringMassIndexerLock(e);
-      }
+   public CompletionStage<Boolean> lock() {
+      return getLock().tryLock();
    }
 
    @Override
-   public void unlock() {
-      try {
-         getLock().unlock();
-      } catch (Exception e) {
-         throw LOG.errorReleasingMassIndexerLock(e);
-      }
-   }
-
-   @Override
-   public boolean isAcquired() {
-      return CompletionStages.join(getLock().isLocked());
+   public CompletionStage<Void> unlock() {
+      return getLock().unlock();
    }
 
    private ClusteredLock getLock() {

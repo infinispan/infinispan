@@ -1,5 +1,7 @@
 package org.infinispan.query.impl.massindex;
 
+import java.util.concurrent.CompletionStage;
+
 /**
  * The lock used to prevent multiple executions of the MassIndexer concurrently.
  *
@@ -12,15 +14,10 @@ interface MassIndexLock {
     *
     * @return true if the lock was acquired, or false if it was already acquired.
     */
-   boolean lock();
+   CompletionStage<Boolean> lock();
 
    /**
     * Unlock the MassIndexer.
     */
-   void unlock();
-
-   /**
-    * @return true is the lock is acquired and thus the MassIndexer is already running.
-    */
-   boolean isAcquired();
+   CompletionStage<Void> unlock();
 }
