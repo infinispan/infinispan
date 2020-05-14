@@ -1,7 +1,9 @@
+[id='cli_add_entries']
 = Adding Cache Entries
 Add data to caches with the {brandname} CLI.
 
 .Prerequisites
+
 * Create a cache named "mycache" and `cd` into it.
 +
 [source,options="nowrap",subs=attributes+]
@@ -10,6 +12,7 @@ Add data to caches with the {brandname} CLI.
 ----
 
 .Procedure
+
 . Put an entry into "mycache".
 +
 [source,options="nowrap",subs=attributes+]
