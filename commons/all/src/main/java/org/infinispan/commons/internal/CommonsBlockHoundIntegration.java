@@ -2,7 +2,10 @@ package org.infinispan.commons.internal;
 
 import java.lang.reflect.Method;
 
+import org.infinispan.commons.dataconversion.MediaTypeResolver;
 import org.infinispan.commons.executors.NonBlockingResource;
+import org.infinispan.commons.util.ServiceFinder;
+import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.concurrent.NonBlockingRejectedExecutionHandler;
 import org.kohsuke.MetaInfServices;
 
@@ -17,6 +20,16 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
 
       // This should never block as non blocking thread will run the task if pool was full
       builder.disallowBlockingCallsInside(NonBlockingRejectedExecutionHandler.class.getName(), "rejectedExecution");
+
+      // This loads up a file to load the key store and a resource for getContext
+      builder.allowBlockingCallsInside(SslContextFactory.class.getName(), "loadKeyStore");
+      builder.allowBlockingCallsInside(SslContextFactory.class.getName(), "getContext");
+
+      // This reads in the mime.type file at class initialization
+      builder.allowBlockingCallsInside(MediaTypeResolver.class.getName(), "populateFileMap");
+
+      // Loading a service may require opening a file from classpath
+      builder.allowBlockingCallsInside(ServiceFinder.class.getName(), "load");
    }
 
    // Register all methods of a given class to allow for blocking - NOTE that if these methods invoke passed in code,

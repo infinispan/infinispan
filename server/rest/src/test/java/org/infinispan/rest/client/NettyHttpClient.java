@@ -5,6 +5,7 @@ import static io.netty.handler.ssl.ApplicationProtocolNames.HTTP_1_1;
 import static io.netty.handler.ssl.ApplicationProtocolNames.HTTP_2;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -17,6 +18,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.ServerConfiguration;
+import org.infinispan.rest.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -61,6 +64,8 @@ import io.netty.handler.ssl.SslContext;
  * @since 10.0
  */
 public final class NettyHttpClient {
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+
    private final HttpClientInitializer initializer;
    private final boolean enableSSL;
    private final String protocol;
@@ -186,12 +191,12 @@ public final class NettyHttpClient {
       protected void channelRead0(ChannelHandlerContext ctx, FullHttpResponse msg) {
          Integer streamId = msg.headers().getInt(HttpConversionUtil.ExtensionHeaderNames.STREAM_ID.text());
          if (streamId == null) {
-            System.err.println("HttpResponseHandler unexpected message received: " + msg);
+            log.error("HttpResponseHandler unexpected message received: " + msg);
             return;
          }
          CompletableFuture<FullHttpResponse> future = responseMap.remove(streamId);
          if (future == null) {
-            System.err.println("Message received for unknown stream id " + streamId);
+            log.error("Message received for unknown stream id " + streamId);
          } else {
             future.complete(msg);
          }
@@ -310,7 +315,7 @@ public final class NettyHttpClient {
    private static class UserEventLogger extends ChannelInboundHandlerAdapter {
       @Override
       public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
-         System.out.println("User Event Triggered: " + evt);
+         log.tracef("User Event Triggered: %s", evt);
          ctx.fireUserEventTriggered(evt);
       }
    }

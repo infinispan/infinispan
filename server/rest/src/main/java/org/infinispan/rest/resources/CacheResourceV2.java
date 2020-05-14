@@ -172,10 +172,14 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
          return CompletableFuture.completedFuture(responseBuilder.build());
       }
-      responseBuilder.entity(new CacheInputStream(cache.keySet().stream(), batch));
+      // Streaming over the cache is blocking
+      return CompletableFuture.supplyAsync(() -> {
+         responseBuilder.entity(new CacheInputStream(cache.keySet().stream(), batch));
 
-      responseBuilder.contentType(APPLICATION_JSON_TYPE);
-      return CompletableFuture.completedFuture(responseBuilder.build());
+         responseBuilder.contentType(APPLICATION_JSON_TYPE);
+
+         return responseBuilder.build();
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> removeCache(RestRequest request) {

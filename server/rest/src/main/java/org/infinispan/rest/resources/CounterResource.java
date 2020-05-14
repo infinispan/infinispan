@@ -112,8 +112,8 @@ public class CounterResource implements ResourceHandler {
 
       return counterManager.getConfigurationAsync(counterName).thenCompose(configuration -> {
          if (configuration == null) return completedFuture(new NettyRestResponse.Builder().status(NOT_FOUND).build());
-         counterManager.undefineCounter(counterName);
-         return completedFuture(new NettyRestResponse.Builder().status(NO_CONTENT).build());
+         return CompletableFuture.runAsync(() -> counterManager.undefineCounter(counterName), invocationHelper.getExecutor())
+               .thenApply(ignore -> new NettyRestResponse.Builder().status(NO_CONTENT).build());
       });
    }
 
