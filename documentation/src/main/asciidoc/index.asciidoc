@@ -42,7 +42,7 @@ APIs, Marshalling, Locks, Counters, Indexing and Querying, and more::
 Hibernate and Spring Framework Integration::
 
 * link:titles/integrating/integrating.html[Integration Guide]
-* link:https://infinispan.org/infinispan-spring-boot/master/spring_boot_starter.html[Spring Boot Starter]
+* link:https://infinispan.org/infinispan-spring-boot/10.1.x/spring_boot_starter.html[Spring Boot Starter]
 
 Security and Performance Tuning::
 
