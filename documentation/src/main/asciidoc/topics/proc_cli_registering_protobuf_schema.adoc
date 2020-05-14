@@ -1,7 +1,10 @@
+[id='cli_register_protobuf']
 = Registering Protobuf Schemas
-Protobuf schemas contain data structures known as messages in `.proto` definition files.
+Protobuf schemas contain data structures known as messages in `.proto`
+definition files.
 
 .Procedure
+
 . Create a schema file named `person.proto` with the following messages:
 +
 [source,json,options="nowrap",subs=attributes+]
