@@ -12,6 +12,7 @@ import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -68,7 +69,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    public void testPartiallyReindex() throws Exception {
       cache(0).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F1NUM"), new Car("megane", "white", 300));
-      Search.getSearchManager(cache(0)).getMassIndexer().reindex(key("F1NUM")).get();
+      CompletionStages.join(Search.getSearchManager(cache(0)).getMassIndexer().reindex(key("F1NUM")));
       verifyFindsCar(1, "megane");
       cache(0).remove(key("F1NUM"));
       verifyFindsCar(0, "megane");

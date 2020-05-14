@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
@@ -46,6 +47,8 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    private final BlockingManager blockingManager;
    private final MassIndexLock lock;
 
+   private volatile boolean isRunning = false;
+
    private static final TriConsumer<Address, Void, Throwable> TRI_CONSUMER = (a, v, t) -> {
       if (t != null) {
          throw new CacheException(t);
@@ -70,12 +73,12 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    }
 
    @Override
-   public CompletableFuture<Void> purge() {
+   public CompletionStage<Void> purge() {
       return executeInternal(true);
    }
 
    @Override
-   public CompletableFuture<Void> startAsync() {
+   public CompletionStage<Void> startAsync() {
       return executeInternal(false);
    }
 
@@ -104,11 +107,16 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
 
    @Override
    public boolean isRunning() {
-      return lock.isAcquired();
+      return isRunning;
    }
 
-   private CompletableFuture<Void> executeInternal(boolean skipIndex) {
-      if (lock.lock()) {
+   private CompletionStage<Void> executeInternal(boolean skipIndex) {
+      CompletionStage<Boolean> lockStage = lock.lock();
+      return lockStage.thenCompose(acquired -> {
+         if (!acquired) {
+            return CompletableFutures.completedExceptionFuture(new MassIndexerAlreadyStartedException());
+         }
+         isRunning = true;
          Deque<IndexedTypeIdentifier> toFlush = new LinkedList<>();
 
          BiConsumer<Void, Throwable> flushIfNeeded = (v, t) -> {
@@ -116,6 +124,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
                indexUpdater.flush(toFlush);
             } finally {
                lock.unlock();
+               isRunning = false;
             }
          };
          Set<IndexedTypeIdentifier> indexedTypes = new HashSet<>();
@@ -125,13 +134,12 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
          try {
             IndexWorker indexWork = new IndexWorker(cache.getName(), indexedTypes, skipIndex, null);
             CompletableFuture<Void> future = executor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS).submitConsumer(indexWork, TRI_CONSUMER);
-            return blockingManager.whenCompleteBlocking(future, flushIfNeeded, this).toCompletableFuture();
+            return blockingManager.whenCompleteBlocking(future, flushIfNeeded, this);
          } catch (Throwable t) {
             lock.unlock();
+            isRunning = false;
             return CompletableFutures.completedExceptionFuture(t);
          }
-      } else {
-         return CompletableFutures.completedExceptionFuture(new MassIndexerAlreadyStartedException());
-      }
+      });
    }
 }

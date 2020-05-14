@@ -82,7 +82,7 @@ public class SearchAdminResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> runMassIndexer(RestRequest request,
-                                                        Function<MassIndexer, CompletableFuture<Void>> op,
+                                                        Function<MassIndexer, CompletionStage<Void>> op,
                                                         boolean supportAsync) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 

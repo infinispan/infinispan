@@ -4,7 +4,7 @@ import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheCon
 
 import java.util.Collections;
 import java.util.Scanner;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -206,7 +206,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    class EventLoop implements Runnable {
 
       private MassIndexer massIndexer;
-      private CompletableFuture<Void> future;
+      private CompletionStage<Void> future;
       private AtomicInteger nexIndex = new AtomicInteger(OBJECT_COUNT);
 
       public EventLoop(MassIndexer massIndexer) {
@@ -240,7 +240,9 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
                   System.out.println("\rMassIndexer not started");
                   continue;
                } else {
-                  future.cancel(true);
+                  // Mass Indexer doesn't provide cancellation currently
+                  // https://issues.redhat.com/browse/ISPN-11735
+//                  future.cancel(true);
                   System.out.println("Mass Indexer cancelled");
                }
             }

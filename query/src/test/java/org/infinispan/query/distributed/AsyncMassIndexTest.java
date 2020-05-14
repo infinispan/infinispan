@@ -2,7 +2,7 @@ package org.infinispan.query.distributed;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 
 import org.infinispan.Cache;
@@ -62,7 +62,7 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
 
       SearchManager searchManager = Search.getSearchManager(cache);
 
-      CompletableFuture<Void> future = searchManager.getMassIndexer().startAsync();
+      CompletionStage<Void> future = searchManager.getMassIndexer().startAsync();
 
       final CountDownLatch endLatch = new CountDownLatch(1);
       future.whenComplete((v, t) -> {

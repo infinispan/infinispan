@@ -3,7 +3,8 @@ package org.infinispan.query.distributed;
 
 import static org.testng.Assert.assertEquals;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
@@ -16,6 +17,7 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.api.NotIndexedType;
 import org.infinispan.query.impl.massindex.MassIndexerAlreadyStartedException;
 import org.infinispan.query.queries.faceting.Car;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -59,21 +61,25 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
 
       IntStream.range(0, 10).forEach(i -> cache.put(i, new Car("whatever", "whatever", 0)));
 
-      CompletableFuture<Void> first = massIndexer.startAsync();
-      eventually(massIndexer::isRunning);
 
-      CompletableFuture<Void> second = massIndexer.startAsync();
+      CompletionStage<Void> first = massIndexer.startAsync();
+      eventually(() -> {
+         log.debug("Checking if massIndexer is running");
+         return massIndexer.isRunning();
+      }, 10_000, 10, TimeUnit.MILLISECONDS);
+
+      CompletionStage<Void> second = massIndexer.startAsync();
 
       assertSuccessCompletion(first);
       assertErrorCompletion(second, MassIndexerAlreadyStartedException.class);
       eventually(() -> !massIndexer.isRunning());
 
-      CompletableFuture<Void> third = massIndexer.startAsync();
+      CompletionStage<Void> third = massIndexer.startAsync();
 
       assertSuccessCompletion(third);
    }
 
-   private void assertSuccessCompletion(CompletableFuture<Void> future) {
+   private void assertSuccessCompletion(CompletionStage<Void> future) {
       try {
          FunctionalTestUtils.await(future);
       } catch (Exception e) {
@@ -81,7 +87,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
       }
    }
 
-   private void assertErrorCompletion(CompletableFuture<Void> future, Class<? extends Throwable> expected) {
+   private void assertErrorCompletion(CompletionStage<Void> future, Class<? extends Throwable> expected) {
       try {
          FunctionalTestUtils.await(future);
          Assert.fail("Future should've thrown an error");
@@ -94,7 +100,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
    protected void rebuildIndexes() throws Exception {
       Cache<?, ?> cache = cache(0);
       SearchManager searchManager = Search.getSearchManager(cache);
-      CompletableFuture<Void> future = searchManager.getMassIndexer().startAsync();
-      future.get();
+      CompletionStage<Void> future = searchManager.getMassIndexer().startAsync();
+      CompletionStages.join(future);
    }
 }

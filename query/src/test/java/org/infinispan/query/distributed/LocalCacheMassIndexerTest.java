@@ -15,6 +15,7 @@ import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -74,7 +75,7 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
       assertEquals(0, indexSize(cache));
 
       fillData();
-      massIndexer.startAsync().join();
+      CompletionStages.join(massIndexer.startAsync());
       assertFalse(massIndexer.isRunning());
       assertEquals(NUM_ENTITIES, indexSize(cache));
    }
@@ -82,7 +83,7 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
    public void testPartiallyReindex() throws Exception {
       cache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(0, new Person("name" + 0, "blurb" + 0, 0));
       verifyFindsPerson(0, "name" + 0);
-      Search.getSearchManager(cache).getMassIndexer().reindex(0).get();
+      CompletionStages.join(Search.getSearchManager(cache).getMassIndexer().reindex(0));
       verifyFindsPerson(1, "name" + 0);
       cache.remove(0);
       verifyFindsPerson(0, "name" + 0);

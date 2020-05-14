@@ -1,6 +1,9 @@
 package org.infinispan.query.impl.massindex;
 
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Semaphore;
+
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * A lock to prevent multiple {@link org.infinispan.query.MassIndexer} in non-clustered environments.
@@ -11,17 +14,13 @@ final class LocalMassIndexerLock implements MassIndexLock {
    private final Semaphore lock = new Semaphore(1);
 
    @Override
-   public boolean lock() {
-      return lock.tryAcquire();
+   public CompletionStage<Boolean> lock() {
+      return CompletableFutures.booleanStage(lock.tryAcquire());
    }
 
    @Override
-   public void unlock() {
+   public CompletionStage<Void> unlock() {
       lock.release();
-   }
-
-   @Override
-   public boolean isAcquired() {
-      return lock.availablePermits() == 0;
+      return CompletableFutures.completedNull();
    }
 }
