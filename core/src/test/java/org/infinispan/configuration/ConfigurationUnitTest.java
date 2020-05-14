@@ -389,6 +389,16 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       }
    }
 
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = "ISPN(\\d)*: .*preload and purgeOnStartup")
+   public void testPreloadAndPurgeOnStartupPersistence() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .preload(true)
+            .purgeOnStartup(true)
+            .validate();
+   }
+
    public static class NonValidatingBuilder implements Builder<Object> {
       public NonValidatingBuilder(GlobalConfigurationBuilder builder) {
       }

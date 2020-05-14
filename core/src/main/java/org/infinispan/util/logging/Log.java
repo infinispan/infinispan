@@ -1999,4 +1999,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot change max-count since max-size is already defined", id = 588)
    CacheException cannotIncreaseMaxCount();
+
+   @Message(value = "A store cannot be configured with both preload and purgeOnStartup", id = 589)
+   CacheConfigurationException preloadAndPurgeOnStartupConflict();
 }

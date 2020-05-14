@@ -489,7 +489,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       assertTrue(loaderCfg.fetchPersistentState());
       assertTrue(loaderCfg.ignoreModifications());
-      assertTrue(loaderCfg.purgeOnStartup());
+      assertFalse(loaderCfg.purgeOnStartup());
       assertEquals("/tmp/FileCacheStore-Location", loaderCfg.location());
       assertEquals(5, loaderCfg.async().threadPoolSize());
       assertTrue(loaderCfg.async().enabled());

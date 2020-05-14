@@ -92,7 +92,6 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
             .passivation(true)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .preload(true)
-            .purgeOnStartup(true)
          .indexing()
             .enable()
             .addIndexedEntity(Country.class)
