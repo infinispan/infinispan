@@ -16,6 +16,18 @@ import reactor.blockhound.integration.BlockHoundIntegration;
 public class CommonsTestBlockHoundIntegration implements BlockHoundIntegration {
    @Override
    public void applyTo(BlockHound.Builder builder) {
+      // Allow for various threads to determine blocking dynamically - which means the below non blocking predicate
+      // will be evaluated each time a blocking operation is found on these threads
+      builder.addDynamicThreadPredicate(t ->
+            // The threads our tests run on directly
+            t.getName().startsWith("testng") ||
+            // These threads are part of AbstractInfinispanTest#testExecutor and fork methods
+            t.getName().startsWith("ForkThread"));
+
+      builder.nonBlockingThreadPredicate(threadPredicate -> threadPredicate.or(t -> {
+         return BlockHoundHelper.currentThreadRequiresNonBlocking();
+      }));
+
       // SecureRandom reads from a socket
       builder.allowBlockingCallsInside(SecureRandom.class.getName(), "nextBytes");
 
