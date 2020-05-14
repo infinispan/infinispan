@@ -60,6 +60,7 @@ import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -186,14 +187,19 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
             prev = UNKNOWN;
          }
          Object oldValue = prev;
-         return invokeNextThenAccept(ctx, command, (rCtx, cmd, rv) -> {
+         return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
             if (!cmd.isSuccessful()) {
-               return;
+               return rv;
             }
             CacheEntry entry2 = entry != null ? entry : rCtx.lookupEntry(cmd.getKey());
             if (entry2 != null && entry2.isChanged()) {
-               processChange(rCtx, cmd, cmd.getKey(), oldValue, entry2.getValue(), NoTransactionContext.INSTANCE);
+               // TODO: need to reduce the scope of the blocking thread to less if possible later as part of
+               // https://issues.redhat.com/browse/ISPN-11731
+               return asyncValue(blockingManager.runBlocking(() -> processChange(rCtx, cmd, cmd.getKey(), oldValue,
+                     entry2.getValue(), NoTransactionContext.INSTANCE), cmd)
+                     .thenApply(ignore -> rv));
             }
+            return rv;
          });
       }
    }

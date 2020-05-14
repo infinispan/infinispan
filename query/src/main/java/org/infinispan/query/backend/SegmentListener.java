@@ -58,6 +58,10 @@ final class SegmentListener {
          }
       }
 
+      if (removedSegments.isEmpty()) {
+         return CompletableFutures.completedNull();
+      }
+
       return blockingManager.runBlocking(() -> segmentDeleted.accept(removedSegments), this);
    }
 }

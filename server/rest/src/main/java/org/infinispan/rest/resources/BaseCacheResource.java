@@ -234,7 +234,7 @@ public class BaseCacheResource {
       // Indexing is still blocking - can be removed when https://issues.redhat.com/browse/ISPN-11731 is complete
       if (config.indexing().enabled()) {
          stage = CompletableFuture.supplyAsync(() -> cache.putAsync(key, data, metadata), invocationHelper.getExecutor())
-               .thenApply(Function.identity());
+               .thenCompose(Function.identity());
       } else {
          stage = cache.putAsync(key, data, metadata);
       }
