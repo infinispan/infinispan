@@ -1,3 +1,4 @@
+[id='cli_create_cache_template']
 = Creating Caches from Templates
 Use {brandname} cache templates to add caches with recommended default settings.
 

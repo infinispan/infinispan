@@ -1,3 +1,4 @@
+[id='cli_clear_caches']
 = Clearing Caches and Deleting Entries
 Remove data from caches with the {brandname} CLI.
 
