@@ -34,6 +34,12 @@ Create, delete, and modify counters via the REST API.
 
 include::{topics}/ref_rest_counters.adoc[leveloffset=+2]
 
+[id='rest_v2_protobuf_schemas']
+== Working with Protobuf Schemas
+Create and manage Protobuf schemas, `.proto` files, via the {brandname} REST
+API.
+
+include::{topics}/ref_rest_protobuf.adoc[leveloffset=+2]
 
 [id='rest_v2_cache_managers']
 == Working with Cache Managers

@@ -10,4 +10,7 @@ public class NoDataFoundException extends RestResponseException {
       super(HttpResponseStatus.BAD_REQUEST, "No data supplied");
    }
 
+   public NoDataFoundException(String message) {
+      super(HttpResponseStatus.BAD_REQUEST, message);
+   }
 }

@@ -10,4 +10,8 @@ public class NoKeyException extends RestResponseException {
       super(HttpResponseStatus.BAD_REQUEST, "No key specified");
    }
 
+   public NoKeyException(String paramName) {
+      super(HttpResponseStatus.BAD_REQUEST, "No key " + paramName + " specified");
+   }
+
 }

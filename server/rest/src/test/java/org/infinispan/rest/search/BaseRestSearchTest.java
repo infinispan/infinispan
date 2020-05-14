@@ -31,6 +31,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.rest.RestTestSCI;
 import org.infinispan.rest.assertion.ResponseAssertion;
@@ -424,7 +425,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
             .method(POST)
             .send();
       assertEquals(response.getStatus(), HttpStatus.NO_CONTENT_204);
-      String errorKey = protoFileName.concat(".error");
+      String errorKey = protoFileName.concat(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
 
       ContentResponse errorCheck = client.newRequest(getProtobufMetadataUrl(errorKey)).method(GET).send();
 
