@@ -1489,26 +1489,62 @@ marshaller. This is _key_ for the search capability to work. But it's also possi
 gaining the benefit of platform independence and not enable indexing if you do not need it.
 
 [[enable_indexing]]
-=== Indexing of Protobuf encoded entries
-After configuring the client as described in the previous section you can start configuring indexing for your caches on
-the server side. Activating indexing and the various indexing specific configurations is identical to embedded mode and
-is detailed in the link:#query_configuration_api[Querying {brandname}] chapter.
+=== Indexing Protobuf-encoded entries
+After configuring the client as described in the previous section you can start
+configuring indexing for your caches on the server side. Activating indexing
+and the various indexing specific configurations is identical to embedded mode
+and is explained in link:#query_configuration_api[Querying {brandname}].
 
-There is however an extra configuration step involved. While in embedded mode the indexing metadata is obtained via Java
-reflection by analyzing the presence of various Hibernate Search annotations on the entry's class, this is obviously not
-possible if the entry is protobuf encoded.
-The server needs to obtain the relevant metadata from the same descriptor (.proto file) as the client.
-The descriptors are stored in a dedicated cache on the server named _'___protobuf_metadata'_. Both keys and values in
-this cache are plain strings. Registering a new schema is therefore as simple as performing a _put_ operation on this
-cache using the schema's name as key and the schema file itself as the value.
-Alternatively you can use the CLI (via the cache-container=*:register-proto-schemas() operation), the Management Console
-or the _ProtobufMetadataManager_ MBean via JMX.
-Be aware that, when security is enabled, access to the schema cache via the remote protocols requires
-that the user belongs to the pass:['___schema_manager'] role.
+[NOTE]
+====
+{brandname} does not index fields in Protobuf-encoded entries unless you use
+the _@Indexed_ and _@Field_ annotations to specify which fields are indexed.
+====
 
-NOTE: Even if indexing is enabled for a cache no fields of Protobuf encoded entries will be indexed unless you use
-the _@Indexed_ and _@Field_ protobuf schema documentation annotations in order to specify what fields need to get
-indexed.
+==== Registering Protobuf Schemas on {brandname} Servers
+{brandname} servers need to access indexing metadata from the same descriptor,
+`.proto` file, as clients. For this reason, {brandname} servers store `.proto`
+files in a dedicated cache, `___protobuf_metadata`, that stores both keys and
+values as plain strings.
+
+.Prerequisites
+
+* If you use cache authorization to control access, assign users the
+pass:['___schema_manager'] role so they can write to the `___protobuf_metadata`
+cache.
+
+.Procedure
+
+To register a schema with {brandname} server, use the {brandname} CLI:
+
+. Start the {brandname} CLI and connect to your {brandname} cluster.
+. Register schemas with the **schema** command.
++
+For example, to register a file named `person.proto`, do the following:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> schema --upload=person.proto person.proto
+----
++
+. Use the **get** command to verify schemas.
++
+For example, verify `person.proto` as follows:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> cd caches/___protobuf_metadata
+[//containers/default/caches/___protobuf_metadata]> ls
+person.proto
+[//containers/default/caches/___protobuf_metadata]> get person.proto
+----
+
+Alternatively, if you enable JMX, you can invoke the `registerProtofile()`
+operation on the _ProtobufMetadataManager_ MBean.
+
+.Reference
+
+* link:{cli_docs}#protobuf_query[{brandname} CLI: Querying Caches with Protobuf Metadata]
 
 === A remote query example
 In this example, we will show you how to configure the client to utilise the example link:#protostream[LibraryInitializerImpl],
