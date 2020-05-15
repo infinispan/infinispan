@@ -30,11 +30,18 @@ public class Create extends CliCommand {
    public static final String TYPE = "type";
    public static final String NAME = "name";
 
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
    @Override
-   public CommandResult exec(ContextAwareCommandInvocation commandInvocation) {
-      if (help) {
-         commandInvocation.println(commandInvocation.getHelpInfo());
-      }
+   public boolean isHelp() {
+      return help;
+   }
+
+   @Override
+   public CommandResult exec(ContextAwareCommandInvocation invocation) {
+      // This command serves only to wrap the sub-commands
+      invocation.println(invocation.getHelpInfo());
       return CommandResult.FAILURE;
    }
 
@@ -44,6 +51,7 @@ public class Create extends CliCommand {
       public static final String TEMPLATE = "template";
       public static final String FILE = "file";
       public static final String VOLATILE = "volatile";
+
       @Argument(required = true)
       String name;
 
@@ -55,6 +63,14 @@ public class Create extends CliCommand {
 
       @Option(defaultValue = "false", name = "volatile", shortName = 'v')
       boolean volatileCache;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -83,6 +99,7 @@ public class Create extends CliCommand {
       public static final String UPPER_BOUND = "upper-bound";
       public static final String LOWER_BOUND = "lower-bound";
       public static final String CONCURRENCY_LEVEL = "concurrency-level";
+
       @Argument(required = true)
       String name;
 
@@ -103,6 +120,14 @@ public class Create extends CliCommand {
 
       @Option(shortName = 'c', name = "concurrency-level", defaultValue = "16")
       Integer concurrencyLevel;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {

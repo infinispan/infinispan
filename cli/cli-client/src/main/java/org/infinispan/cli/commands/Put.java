@@ -50,6 +50,14 @@ public class Put extends CliCommand {
    @Option(name = "if-absent", shortName = 'a')
    boolean ifAbsent;
 
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
+
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
       if ((file != null) && (args.size() != 1)) {

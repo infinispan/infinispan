@@ -9,6 +9,7 @@ import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Option;
 import org.aesh.io.Resource;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.kohsuke.MetaInfServices;
@@ -24,6 +25,14 @@ public class Run extends CliCommand {
 
    @Arguments(required = true, completer = FileOptionCompleter.class)
    private List<Resource> arguments;
+
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {

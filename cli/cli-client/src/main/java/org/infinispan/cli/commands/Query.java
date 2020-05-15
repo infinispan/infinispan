@@ -39,6 +39,14 @@ public class Query extends CliCommand {
    @Option(name = QUERY_MODE, completer = QueryModeCompleter.class, defaultValue = "FETCH")
    String queryMode;
 
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
+
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
       CommandInputLine cmd = new CommandInputLine(CMD)

@@ -36,10 +36,15 @@ public class User extends CliCommand {
    protected boolean help;
 
    @Override
+   public boolean isHelp() {
+      return help;
+   }
+
+   @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
       // This command serves only to wrap the sub-commands
       invocation.println(invocation.getHelpInfo());
-      return CommandResult.SUCCESS;
+      return CommandResult.FAILURE;
    }
 
    static String getPasswordInteractively(ContextAwareCommandInvocation invocation) throws InterruptedException {
@@ -85,8 +90,14 @@ public class User extends CliCommand {
       @Option(description = "The server root", defaultValue = "server", name = "server-root", shortName = 's')
       String serverRoot;
 
+
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
       protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -131,6 +142,11 @@ public class User extends CliCommand {
       protected boolean help;
 
       @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          UserTool userTool = new UserTool(serverRoot, usersFile, groupsFile);
          invocation.getShell().writeln(userTool.describeUser(username));
@@ -156,6 +172,11 @@ public class User extends CliCommand {
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
       protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -197,6 +218,11 @@ public class User extends CliCommand {
       protected boolean help;
 
       @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          if (password == null) { // Get the password interactively
             try {
@@ -234,6 +260,11 @@ public class User extends CliCommand {
       protected boolean help;
 
       @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          UserTool userTool = new UserTool(serverRoot, usersFile, groupsFile);
          userTool.modifyUser(username, null, null, UserTool.Encryption.DEFAULT, groups, null);
@@ -259,6 +290,11 @@ public class User extends CliCommand {
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
       protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -298,6 +334,11 @@ public class User extends CliCommand {
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
       protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {

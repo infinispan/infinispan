@@ -24,6 +24,14 @@ public class Remove extends CliCommand {
    @Option(completer = CacheCompleter.class)
    String cache;
 
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
+
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
       CommandInputLine cmd = new CommandInputLine(CMD).arg("key", key).optionalArg("cache", cache);

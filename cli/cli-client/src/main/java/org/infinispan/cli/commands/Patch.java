@@ -30,11 +30,19 @@ public class Patch extends CliCommand {
 
    public static final String CMD = "patch";
 
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
+
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
       // This command serves only to wrap the sub-commands
       invocation.println(invocation.getHelpInfo());
-      return CommandResult.SUCCESS;
+      return CommandResult.FAILURE;
    }
 
    @CommandDefinition(name = Create.CMD, description = "Creates a patch archive")
@@ -46,6 +54,14 @@ public class Patch extends CliCommand {
 
       @Arguments(completer = FileOptionCompleter.class, description = "The path to the patch archive, the path to the target server and one or more paths to the source servers")
       List<Resource> paths;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
@@ -78,6 +94,14 @@ public class Patch extends CliCommand {
       @Option(shortName = 'v', hasValue = false, description = "List the contents of the patch including all the actions that will be performed")
       boolean verbose;
 
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          if (patch == null) {
@@ -107,6 +131,14 @@ public class Patch extends CliCommand {
       @Option(hasValue = false, name = "dry-run", description = "Only list the actions that will be performed without executing them.")
       boolean dryRun;
 
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          if (patch == null) {
@@ -132,6 +164,14 @@ public class Patch extends CliCommand {
       @Option(shortName = 'v', hasValue = false, description = "List the contents of all installed patches.")
       boolean verbose;
 
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          PatchTool patchTool = new PatchTool(invocation.getShellOutput(), invocation.getShellError());
@@ -149,6 +189,14 @@ public class Patch extends CliCommand {
 
       @Option(hasValue = false, name = "dry-run", description = "Only list the actions that will be performed without executing them.")
       boolean dryRun;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {

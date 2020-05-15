@@ -7,6 +7,7 @@ import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
+import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.completers.CacheCompleter;
 import org.infinispan.cli.completers.CounterCompleter;
@@ -23,19 +24,35 @@ public class Drop extends CliCommand {
 
    public static final String CMD = "drop";
 
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
    @Override
-   public CommandResult exec(ContextAwareCommandInvocation commandInvocation) {
-      if (help) {
-         commandInvocation.println(commandInvocation.getHelpInfo());
-      }
-      return CommandResult.SUCCESS;
+   public boolean isHelp() {
+      return help;
+   }
+
+   @Override
+   public CommandResult exec(ContextAwareCommandInvocation invocation) {
+      // This command serves only to wrap the sub-commands
+      invocation.println(invocation.getHelpInfo());
+      return CommandResult.FAILURE;
    }
 
    @CommandDefinition(name = Cache.CMD, description = "Drop a cache", activator = ConnectionActivator.class)
    public static class Cache extends CliCommand {
       public static final String CMD = "cache";
+
       @Argument(required = true, completer = CacheCompleter.class)
       String name;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -52,8 +69,17 @@ public class Drop extends CliCommand {
    @CommandDefinition(name = Counter.CMD, description = "Drop a counter", activator = ConnectionActivator.class)
    public static class Counter extends CliCommand {
       public static final String CMD = "counter";
+
       @Argument(required = true, completer = CounterCompleter.class)
       String name;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {

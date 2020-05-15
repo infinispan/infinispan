@@ -18,11 +18,20 @@ import org.kohsuke.MetaInfServices;
 @CommandDefinition(name = Get.CMD, description = "Gets an entry from the cache", activator = ConnectionActivator.class, aliases = "cat")
 public class Get extends CliCommand {
    public static final String CMD = "get";
+
    @Argument(required = true)
    String key;
 
    @Option(completer = CacheCompleter.class, shortName = 'c')
    String cache;
+
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {

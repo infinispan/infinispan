@@ -24,7 +24,6 @@ import org.aesh.command.settings.SettingsBuilder;
 import org.aesh.command.shell.Shell;
 import org.aesh.io.Resource;
 import org.aesh.readline.ReadlineConsole;
-import org.aesh.readline.tty.terminal.TerminalConnection;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.activators.ContextAwareCommandActivatorProvider;
 import org.infinispan.cli.completers.ContextAwareCompleterInvocationProvider;
@@ -84,6 +83,8 @@ import org.wildfly.security.provider.util.ProviderUtil;
 public class CLI extends CliCommand {
    public static final String CMD = "cli";
 
+   private Context context;
+
    @Option(completer = FileOptionCompleter.class, shortName = 't', name = "truststore", description = "A truststore to use when connecting to SSL/TLS-enabled servers")
    Resource truststore;
 
@@ -102,7 +103,13 @@ public class CLI extends CliCommand {
    @Option(shortName = 'c', description = "A connection URL. Use '-' to connect to http://localhost:11222")
    String connect;
 
-   private Context context;
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -240,16 +247,11 @@ public class CLI extends CliCommand {
    }
 
    public static void main(String[] args) {
-      TerminalConnection connection = null;
       try {
          AeshCommandRuntimeBuilder runtimeBuilder = initialCommandRuntimeBuilder(new DefaultShell());
          AeshRuntimeRunner.builder().commandRuntime(runtimeBuilder.build()).args(args).execute();
       } catch (Exception e) {
          throw new RuntimeException(e);
-      } finally {
-         if (connection != null) {
-            connection.close();
-         }
       }
    }
 }

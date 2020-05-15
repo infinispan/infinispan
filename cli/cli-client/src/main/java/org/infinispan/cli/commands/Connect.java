@@ -25,6 +25,14 @@ public class Connect extends CliCommand {
    @Option(shortName = 'p')
    String password;
 
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
+
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
       if (username != null) {

@@ -29,17 +29,32 @@ public class Logging extends CliCommand {
    public static final String TYPE = "type";
    public static final String NAME = "name";
 
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
    @Override
-   public CommandResult exec(ContextAwareCommandInvocation commandInvocation) {
-      if (help) {
-         commandInvocation.println(commandInvocation.getHelpInfo());
-      }
-      return CommandResult.SUCCESS;
+   public boolean isHelp() {
+      return help;
+   }
+
+   @Override
+   public CommandResult exec(ContextAwareCommandInvocation invocation) {
+      // This command serves only to wrap the sub-commands
+      invocation.println(invocation.getHelpInfo());
+      return CommandResult.FAILURE;
    }
 
    @CommandDefinition(name = Loggers.CMD, description = "Lists available loggers", activator = ConnectionActivator.class)
    public static class Loggers extends CliCommand {
       public static final String CMD = "list-loggers";
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -53,6 +68,14 @@ public class Logging extends CliCommand {
    public static class Appenders extends CliCommand {
       public static final String CMD = "list-appenders";
 
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          CommandInputLine cmd = new CommandInputLine(Logging.CMD)
@@ -64,6 +87,14 @@ public class Logging extends CliCommand {
    @CommandDefinition(name = Remove.CMD, description = "Removes a logger", activator = ConnectionActivator.class)
    public static class Remove extends CliCommand {
       public static final String CMD = "remove";
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Argument(required = true, completer = LoggersCompleter.class)
       String name;
@@ -91,6 +122,14 @@ public class Logging extends CliCommand {
 
       @OptionList(shortName = 'a', description = "One or more appender names", completer = LogAppenderCompleter.class)
       List<String> appenders;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
