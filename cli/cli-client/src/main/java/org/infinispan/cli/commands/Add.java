@@ -31,6 +31,14 @@ public class Add extends CliCommand {
    @Option(description = "The delta to add/subtract from/to the value. Defaults to adding 1", defaultValue = "1")
    long delta;
 
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
+
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
       CommandInputLine cmd = new CommandInputLine(CMD)

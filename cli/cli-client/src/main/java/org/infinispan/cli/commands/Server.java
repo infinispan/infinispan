@@ -4,6 +4,7 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
+import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.kohsuke.MetaInfServices;
@@ -19,6 +20,14 @@ public class Server extends CliCommand {
    public static final String CMD = "server";
    public static final String NAME = "name";
 
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
+
    @Override
    public CommandResult exec(ContextAwareCommandInvocation commandInvocation) {
       commandInvocation.println(commandInvocation.getHelpInfo());
@@ -28,6 +37,14 @@ public class Server extends CliCommand {
    @CommandDefinition(name = Report.CMD, description = "Obtains an aggregate report from the server", activator = ConnectionActivator.class)
    public static class Report extends CliCommand {
       public static final String CMD = "report";
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {

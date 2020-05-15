@@ -68,6 +68,10 @@
          <artifactId>wildfly-elytron</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-core</artifactId>
+      </dependency>
+      <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>
          <scope>test</scope>
@@ -238,6 +242,7 @@
                            <arguments>
                               <argument>--verbose</argument>
                               <argument>-H:+ReportUnsupportedElementsAtRuntime</argument>
+                              <argument>-H:+ReportExceptionStackTraces</argument>
                               <argument>-H:ReflectionConfigurationFiles=cli_reflection.json</argument>
                               <argument>-cp</argument>
                               <argument>${maven.compile.classpath}</argument>

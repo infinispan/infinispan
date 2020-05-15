@@ -4,6 +4,7 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
+import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.completers.CounterCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
@@ -21,6 +22,14 @@ public class Counter extends CliCommand {
 
    @Argument(description = "The name of the counter to select", completer = CounterCompleter.class, required = true)
    String name;
+
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {

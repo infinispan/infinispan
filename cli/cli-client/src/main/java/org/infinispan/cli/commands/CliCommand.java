@@ -3,7 +3,6 @@ package org.infinispan.cli.commands;
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.option.Option;
 import org.aesh.terminal.utils.ANSI;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.commons.util.Util;
@@ -23,12 +22,9 @@ public abstract class CliCommand implements Command<ContextAwareCommandInvocatio
    public static final String TYPE = "type";
    public static final String VALUE = "value";
 
-   @Option(shortName = 'h', hasValue = false)
-   protected boolean help;
-
    @Override
    public CommandResult execute(ContextAwareCommandInvocation invocation) throws CommandException {
-      if (help) {
+      if (isHelp()) {
          invocation.println(invocation.getHelpInfo());
          return CommandResult.SUCCESS;
       }
@@ -44,6 +40,8 @@ public abstract class CliCommand implements Command<ContextAwareCommandInvocatio
          return CommandResult.FAILURE;
       }
    }
+
+   protected abstract boolean isHelp();
 
    protected abstract CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException;
 

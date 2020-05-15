@@ -26,12 +26,19 @@ import org.kohsuke.MetaInfServices;
 public class Task extends CliCommand {
    public static final String CMD = "task";
 
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
    @Override
-   public CommandResult exec(ContextAwareCommandInvocation commandInvocation) {
-      if (help) {
-         commandInvocation.println(commandInvocation.getHelpInfo());
-      }
-      return CommandResult.SUCCESS;
+   public boolean isHelp() {
+      return help;
+   }
+
+   @Override
+   public CommandResult exec(ContextAwareCommandInvocation invocation) {
+      // This command serves only to wrap the sub-commands
+      invocation.println(invocation.getHelpInfo());
+      return CommandResult.FAILURE;
    }
 
    @CommandDefinition(name = Task.Exec.CMD, description = "Executes a server-side task", activator = ConnectionActivator.class)
@@ -45,11 +52,16 @@ public class Task extends CliCommand {
       @OptionGroup(shortName = 'P', description = "Task parameters")
       Map<String, String> parameters;
 
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
-         if (help) {
-            invocation.println(invocation.getHelpInfo());
-         }
          CommandInputLine cmd = new CommandInputLine(Task.CMD)
                .arg(TYPE, Task.Exec.CMD)
                .arg(NAME, taskName)
@@ -67,6 +79,14 @@ public class Task extends CliCommand {
 
       @Option(completer = FileOptionCompleter.class, shortName = 'f', required = true)
       Resource file;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {

@@ -45,9 +45,19 @@ public class Site extends CliCommand {
    public static final String OP = "op";
    public static final String CACHE = "cache";
 
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
+
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
-      return CommandResult.SUCCESS;
+      // This command serves only to wrap the sub-commands
+      invocation.println(invocation.getHelpInfo());
+      return CommandResult.FAILURE;
    }
 
    @CommandDefinition(name = STATUS, description = "Shows site status", activator = ConnectionActivator.class)
@@ -57,6 +67,14 @@ public class Site extends CliCommand {
 
       @Option
       String site;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -73,6 +91,14 @@ public class Site extends CliCommand {
       @Option(required = true)
       String site;
 
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, BRING_ONLINE).arg(CACHE, cache).arg(SITE_NAME, site);
@@ -87,6 +113,14 @@ public class Site extends CliCommand {
 
       @Option(required = true)
       String site;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -103,6 +137,14 @@ public class Site extends CliCommand {
       @Option(required = true)
       String site;
 
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, PUSH_SITE_STATE).arg(CACHE, cache).arg(SITE_NAME, site);
@@ -117,6 +159,14 @@ public class Site extends CliCommand {
 
       @Option(required = true)
       String site;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -133,6 +183,14 @@ public class Site extends CliCommand {
       @Option(required = true)
       String site;
 
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, CANCEL_RECEIVE_STATE).arg(CACHE, cache).arg(SITE_NAME, site);
@@ -145,6 +203,14 @@ public class Site extends CliCommand {
       @Option(required = true, completer = CacheCompleter.class)
       String cache;
 
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, PUSH_SITE_STATUS).arg(CACHE, cache);
@@ -156,6 +222,14 @@ public class Site extends CliCommand {
    public static class ClearPushStateStatus extends CliCommand {
       @Option(required = true, completer = CacheCompleter.class)
       String cache;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {

@@ -34,6 +34,14 @@ public class Cas extends CliCommand {
    @Option(required = true, description = "The new value")
    long value;
 
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
+
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
       CommandInputLine cmd = new CommandInputLine(CMD)

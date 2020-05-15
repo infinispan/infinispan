@@ -6,6 +6,7 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Arguments;
+import org.aesh.command.option.Option;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.kohsuke.MetaInfServices;
 
@@ -20,6 +21,14 @@ public class Echo extends CliCommand {
 
    @Arguments(required = false)
    private List<String> arguments;
+
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {

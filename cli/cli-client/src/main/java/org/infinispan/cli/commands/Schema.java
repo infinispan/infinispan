@@ -28,6 +28,14 @@ public class Schema extends CliCommand {
    @Option(completer = FileOptionCompleter.class, shortName = 'u')
    Resource upload;
 
+   @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+   protected boolean help;
+
+   @Override
+   public boolean isHelp() {
+      return help;
+   }
+
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
       if ((upload != null) && (args.size() != 1)) {
