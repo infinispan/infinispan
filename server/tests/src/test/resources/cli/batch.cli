@@ -1,5 +1,5 @@
 echo Hi CLI running on ${os.arch}
-connect
+connect http://${serverAddress}:11222
 ls
 cd caches
 ls

@@ -1,6 +1,7 @@
 package org.infinispan.server.functional;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -70,16 +71,10 @@ public class ClusteredIT {
       String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", testMethodRule.getClass().getClassLoader()));
       metadataCache.putIfAbsent("sample_bank_account/bank.proto", schema);
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      assertNotNull(metadataCache.get("sample_bank_account/bank.proto"));
 
       Exceptions.unchecked(() -> MarshallerRegistration.registerMarshallers(MarshallerUtil.getSerializationContext(remoteCacheManager)));
 
       return cache;
-   }
-
-   static <K, V> RemoteCache<K, V> createStatsEnabledCache(InfinispanServerTestMethodRule testMethodRule) {
-      org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true).hash().numOwners(2);
-      builder.statistics().enable();
-      return testMethodRule.hotrod().withClientConfiguration(new ConfigurationBuilder()).withServerConfiguration(builder).create();
    }
 }
