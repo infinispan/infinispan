@@ -237,7 +237,7 @@ public class InfinispanRegionFactoryTestCase  {
 			Configuration cacheCfg = cache.getCacheConfiguration();
 			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(3000, cacheCfg.expiration().wakeUpInterval());
-			assertEquals(30000, cacheCfg.memory().size());
+			assertEquals(30000, cacheCfg.memory().maxCount());
 			// Max idle value comes from base XML configuration
 			assertEquals(100000, cacheCfg.expiration().maxIdle());
 

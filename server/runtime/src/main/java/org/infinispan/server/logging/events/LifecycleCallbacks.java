@@ -53,7 +53,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 
    private ConfigurationBuilder getTaskHistoryCacheConfiguration(EmbeddedCacheManager cacheManager) {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.memory().size(100L).persistence().passivation(true).expiration().lifespan(7, TimeUnit.DAYS);
+      cfg.memory().maxCount(100L).persistence().passivation(true).expiration().lifespan(7, TimeUnit.DAYS);
       return cfg;
    }
 }

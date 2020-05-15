@@ -371,11 +371,11 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
          builder.expiration().wakeUpInterval( Long.parseLong(value) );
       } else if ( (suffixLoc = key.indexOf(SIZE_SUFFIX)) != -1 ) {
          builder = getOrCreateConfig( prefixLoc, key, suffixLoc );
-         builder.memory().size( Long.parseLong(value) );
+         builder.memory().maxCount( Long.parseLong(value) );
       } else if ( (suffixLoc = key.indexOf(DEPRECATED_MAX_ENTRIES_SUFFIX)) != -1 ) {
          log.deprecatedProperty(DEPRECATED_MAX_ENTRIES_SUFFIX, SIZE_SUFFIX);
          builder = getOrCreateConfig( prefixLoc, key, suffixLoc );
-         builder.memory().size( Long.parseLong(value) );
+         builder.memory().maxCount( Long.parseLong(value) );
       } else if ( (suffixLoc = key.indexOf( LIFESPAN_SUFFIX )) != -1 ) {
          builder = getOrCreateConfig( prefixLoc, key, suffixLoc );
          builder.expiration().lifespan( Long.parseLong(value) );
