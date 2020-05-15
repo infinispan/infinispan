@@ -35,7 +35,6 @@ public class TaskRequestProcessor extends BaseRequestProcessor {
          taskContext.cache(cache);
       }
 
-      // TODO: TaskManager API is already asynchronous, though we cannot be sure that it won't block anywhere
       taskManager.runTask(taskName, taskContext).whenComplete((result, throwable) -> handleExec(header, result, throwable));
    }
 

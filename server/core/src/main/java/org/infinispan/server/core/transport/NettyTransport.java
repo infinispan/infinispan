@@ -3,6 +3,7 @@ package org.infinispan.server.core.transport;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -24,6 +25,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultithreadEventLoopGroup;
 import io.netty.channel.ServerChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
@@ -62,6 +64,7 @@ public class NettyTransport implements Transport {
    private final ProtocolServerConfiguration configuration;
 
    private final ChannelGroup serverChannels;
+   private final EmbeddedCacheManager cacheManager;
    final ChannelGroup acceptedChannels;
 
    private EventLoopGroup masterGroup;
@@ -95,6 +98,7 @@ public class NettyTransport implements Transport {
       serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels", ImmediateEventExecutor.INSTANCE);
       acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted", ImmediateEventExecutor.INSTANCE);
 
+      this.cacheManager = cacheManager;
       connectionStats = new NettyTransportConnectionStats(cacheManager, acceptedChannels, threadNamePrefix);
    }
 
@@ -117,8 +121,13 @@ public class NettyTransport implements Transport {
          InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
 
       // Need to initialize these in constructor since they require configuration
-      masterGroup = buildEventLoop(1, masterThreadFactory);
-      ioGroup = buildEventLoop(configuration.ioThreads(), ioThreadFactory);
+      masterGroup = buildEventLoop(1, masterThreadFactory, configuration.toString());
+      // Need to initialize these in constructor since they require configuration. probably we need to inject the ioGroup in the constructor somehow.
+      if (cacheManager == null) { //it is null for single-port endpoint. probably we need to inject the ioGroup in the constructor.
+         ioGroup = buildEventLoop(configuration.ioThreads(), ioThreadFactory, configuration.toString());
+      } else {
+         ioGroup = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(EventLoopGroup.class);
+      }
 
       ServerBootstrap bootstrap = new ServerBootstrap();
       bootstrap.group(masterGroup, ioGroup);
@@ -162,10 +171,12 @@ public class NettyTransport implements Transport {
    @GuardedBy("this")
    private void stopInternal() {
       Future<?> masterTerminationFuture = masterGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
-      Future<?> ioTerminationFuture = ioGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
+      if (cacheManager == null) {
+         Future<?> ioTerminationFuture = ioGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
+         ioTerminationFuture.awaitUninterruptibly();
+      }
 
       masterTerminationFuture.awaitUninterruptibly();
-      ioTerminationFuture.awaitUninterruptibly();
 
       if (serverChannels.isEmpty() && acceptedChannels.isEmpty()) {
          log.debug("Channel group completely closed, external resources released");
@@ -340,10 +351,11 @@ public class NettyTransport implements Transport {
       return channel;
    }
 
-   private EventLoopGroup buildEventLoop(int nThreads, DefaultThreadFactory threadFactory) {
-      EventLoopGroup eventLoop = EPollAvailable.USE_NATIVE_EPOLL ? new EpollEventLoopGroup(nThreads, threadFactory) :
+   public static MultithreadEventLoopGroup buildEventLoop(int nThreads, ThreadFactory threadFactory,
+         String configuration) {
+      MultithreadEventLoopGroup eventLoop = EPollAvailable.USE_NATIVE_EPOLL ? new EpollEventLoopGroup(nThreads, threadFactory) :
             new NioEventLoopGroup(nThreads, threadFactory);
-      log.createdNettyEventLoop(eventLoop.getClass().getName(), configuration.toString());
+      log.createdNettyEventLoop(eventLoop.getClass().getName(), configuration);
       return eventLoop;
    }
 }

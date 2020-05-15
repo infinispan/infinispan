@@ -76,7 +76,7 @@ public final class LoggingResource implements ResourceHandler {
             new TaskContext()
                   .addParameter("loggerName", loggerName)
                   .subject(request.getSubject())
-            ).handle((o, t) -> handle(t));
+      ).handle((o, t) -> handle(t));
    }
 
    private CompletionStage<RestResponse> listLoggers(RestRequest request) {

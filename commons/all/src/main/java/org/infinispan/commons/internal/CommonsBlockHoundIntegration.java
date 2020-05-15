@@ -32,6 +32,9 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
       // Loading a service may require opening a file from classpath
       builder.allowBlockingCallsInside(ServiceFinder.class.getName(), "load");
 
+      // BoundedLocalCache is unfortunately package private
+      builder.allowBlockingCallsInside("com.github.benmanes.caffeine.cache.BoundedLocalCache", "performCleanUp");
+
       handleJREClasses(builder);
    }
 

@@ -188,7 +188,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       return cache.iterator();
    }
 
-   private boolean isConnected() {
+   boolean isConnected() {
       return listenerNotifier.isListenerConnected(listenerId);
    }
 

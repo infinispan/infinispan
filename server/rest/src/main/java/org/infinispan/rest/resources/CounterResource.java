@@ -8,7 +8,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
-import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
@@ -135,9 +134,14 @@ public class CounterResource implements ResourceHandler {
                .contentType(contentType)
                .header(CACHE_CONTROL.toString(), CacheControl.noCache());
 
-         CompletionStage<Long> response = configuration.type() == CounterType.WEAK ?
-               completedFuture(counterManager.getWeakCounter(counterName).getValue()) :
-               counterManager.getStrongCounter(counterName).getValue();
+         CompletionStage<Long> response;
+         if (configuration.type() == CounterType.WEAK) {
+            response = getWeakCounter(counterName)
+                  .thenApply(WeakCounter::getValue);
+         } else {
+            response = getStrongCounter(counterName)
+                  .thenCompose(StrongCounter::getValue);
+         }
 
          return response.thenApply(v -> responseBuilder.entity(Long.toString(v)).build());
       });
@@ -170,29 +174,10 @@ public class CounterResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> addValue(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-      String counterName = request.variables().get("counterName");
       Long delta = checkForNumericParam("delta", request, responseBuilder);
       if (delta == null) return completedFuture(responseBuilder.build());
 
-      CounterConfiguration configuration = counterManager.getConfiguration(counterName);
-      if (configuration == null) return notFoundResponseFuture();
-
-      CounterType type = configuration.type();
-      if (type == CounterType.WEAK) {
-         CompletionStage<WeakCounter> weakCounter = getWeakCounter(counterName);
-         return weakCounter.thenCompose(counter -> {
-            if (counter == null) {
-               responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity(String.format("Weak counter '%s' not found", counterName));
-               return completedFuture(responseBuilder.build());
-            }
-            return counter.add(delta).thenApply(v -> responseBuilder.status(NO_CONTENT).build());
-         });
-      } else {
-         StrongCounter strongCounter = checkForStrongCounter(counterName, responseBuilder);
-         if (strongCounter == null) return completedFuture(responseBuilder.build());
-         return strongCounter.addAndGet(delta)
-               .thenApply(value -> addEntityAsJson(Json.make(value), responseBuilder).build());
-      }
+      return executeCommonCounterOp(request, weakCounter -> weakCounter.add(delta), strongCounter -> strongCounter.addAndGet(delta));
    }
 
    private CompletionStage<RestResponse> compareSet(RestRequest request) {
@@ -224,14 +209,17 @@ public class CounterResource implements ResourceHandler {
                                                                 Function<WeakCounter, CompletionStage<Void>> weakOp,
                                                                 Function<StrongCounter, CompletableFuture<Long>> strongOp) {
       String counterName = request.variables().get("counterName");
-      CounterConfiguration configuration = counterManager.getConfiguration(counterName);
-      if (configuration == null) return notFoundResponseFuture();
 
-      CounterType type = configuration.type();
+      CompletableFuture<CounterConfiguration> counterConfigAsync = counterManager.getConfigurationAsync(counterName);
 
-      if (type == CounterType.WEAK) return executeWeakCounterOp(counterName, weakOp);
+      return counterConfigAsync.thenCompose(configuration -> {
+         if (configuration == null) return notFoundResponseFuture();
+         CounterType type = configuration.type();
 
-      return executeStrongCounterOp(counterName, strongOp);
+         if (type == CounterType.WEAK) return executeWeakCounterOp(counterName, weakOp);
+
+         return executeStrongCounterOp(counterName, strongOp);
+      });
    }
 
    private <T> CompletionStage<RestResponse> executeCounterCAS(RestRequest request, CASInvocation<StrongCounter, Long, Long, CompletableFuture<T>> invocation) {
@@ -244,11 +232,16 @@ public class CounterResource implements ResourceHandler {
       Long update = checkForNumericParam("update", request, responseBuilder);
       if (update == null) return completedFuture(responseBuilder.build());
 
-      StrongCounter strongCounter = checkForStrongCounter(counterName, responseBuilder);
-      if (strongCounter == null) return completedFuture(responseBuilder.build());
-      CompletableFuture<T> opResult = invocation.apply(strongCounter, expect, update);
+      CompletionStage<StrongCounter> strongCounter = getStrongCounter(counterName);
+      return strongCounter.thenCompose(counter -> {
+         if (counter == null) {
+            responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity(String.format("Strong counter '%s' not found", counterName));
+            return completedFuture(responseBuilder.build());
+         }
+         CompletableFuture<T> opResult = invocation.apply(counter, expect, update);
 
-      return opResult.thenCompose(value -> asJsonResponseFuture(Json.make(value)));
+         return opResult.thenCompose(value -> asJsonResponseFuture(Json.make(value)));
+      });
    }
 
    @FunctionalInterface
@@ -259,23 +252,33 @@ public class CounterResource implements ResourceHandler {
    private CompletionStage<RestResponse> executeStrongCounterOp(String counterName, Function<StrongCounter, CompletableFuture<Long>> op) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
-      StrongCounter strongCounter = checkForStrongCounter(counterName, responseBuilder);
-      if (strongCounter == null) return notFoundResponseFuture();
-      return op.apply(strongCounter)
-            .thenCompose(value -> asJsonResponseFuture(Json.make(value), responseBuilder));
+      CompletionStage<StrongCounter> strongCounter = getStrongCounter(counterName);
+      return strongCounter.thenCompose(counter -> {
+         if (counter == null) {
+            responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity(String.format("Strong counter '%s' not found", counterName));
+            return completedFuture(responseBuilder.build());
+         }
+         return op.apply(counter)
+               .thenCompose(value -> asJsonResponseFuture(Json.make(value), responseBuilder));
+      });
    }
 
    private CompletionStage<WeakCounter> getWeakCounter(String name) {
-      return CompletableFuture.supplyAsync(() -> counterManager.getWeakCounter(name), invocationHelper.getExecutor());
+      WeakCounter weakCounter = counterManager.getCreatedWeakCounter(name);
+      if (weakCounter != null) {
+         return CompletableFuture.completedFuture(weakCounter);
+      }
+      return CompletableFuture.supplyAsync(() -> counterManager.getWeakCounter(name), invocationHelper.getExecutor())
+            .exceptionally(ignore -> null);
    }
 
-   private StrongCounter checkForStrongCounter(String name, NettyRestResponse.Builder builder) {
-      try {
-         return counterManager.getStrongCounter(name);
-      } catch (Exception e) {
-         builder.status(HttpResponseStatus.BAD_REQUEST).entity(String.format("Strong counter '%s' not found", name));
+   private CompletionStage<StrongCounter> getStrongCounter(String name) {
+      StrongCounter strongCounter = counterManager.getCreatedStrongCounter(name);
+      if (strongCounter != null) {
+         return CompletableFuture.completedFuture(strongCounter);
       }
-      return null;
+      return CompletableFuture.supplyAsync(() -> counterManager.getStrongCounter(name), invocationHelper.getExecutor())
+            .exceptionally(ignore -> null);
    }
 
    private Long checkForNumericParam(String name, RestRequest request, NettyRestResponse.Builder builder) {

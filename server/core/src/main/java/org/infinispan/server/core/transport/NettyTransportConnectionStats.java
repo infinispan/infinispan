@@ -29,7 +29,7 @@ class NettyTransportConnectionStats {
       this.cacheManager = cacheManager;
       this.acceptedChannels = acceptedChannels;
       this.threadNamePrefix = threadNamePrefix;
-      this.isGlobalStatsEnabled = cacheManager != null && cacheManager.getCacheManagerConfiguration().statistics();
+      this.isGlobalStatsEnabled = cacheManager != null && SecurityActions.getCacheManagerConfiguration(cacheManager).statistics();
    }
 
    private void increment(AtomicLong base, long bytes) {

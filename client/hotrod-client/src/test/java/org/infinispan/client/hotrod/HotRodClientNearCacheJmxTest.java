@@ -63,12 +63,12 @@ public class HotRodClientNearCacheJmxTest extends AbstractInfinispanTest {
 
    @AfterMethod
    void tearDown() {
-      TestingUtil.killCacheManagers(cacheContainer);
       for (int i = 0; i < 2; i++) {
          killRemoteCacheManager(rcms[i]);
       }
       killServers(hotrodServer);
       hotrodServer = null;
+      TestingUtil.killCacheManagers(cacheContainer);
    }
 
    public void testNearRemoteCacheMBean() throws Exception {

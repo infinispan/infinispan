@@ -75,9 +75,14 @@ public class InvalidatedFailoverNearCacheTest extends MultiHotRodServersTest {
          boolean headClientClear = isClientListenerAttachedToSameServer(headClient(), stickyClient);
          boolean tailClientClear = isClientListenerAttachedToSameServer(tailClient(), stickyClient);
          killServerForClient(stickyClient);
+
          // The clear will be executed when the connection to the server is closed from the listener.
+         stickyClient.expectNearClear();
+
+         // Also make sure the near cache is fully connected so the events will work deterministically
+         eventually(stickyClient::isNearCacheConnected);
+
          stickyClient.get(1, "v1")
-               .expectNearClear()
                .expectNearGetNull(1)
                .expectNearPutIfAbsent(1, "v1");
          stickyClient.expectNoNearEvents();

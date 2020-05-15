@@ -2,6 +2,7 @@ package org.infinispan.server.router.router;
 
 import java.net.InetAddress;
 
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.router.RoutingTable;
 
 /**
@@ -23,7 +24,7 @@ public interface EndpointRouter {
      *
      * @param routingTable {@link RoutingTable} for supplying {@link org.infinispan.server.router.routes.Route}s.
      */
-    void start(RoutingTable routingTable);
+    void start(RoutingTable routingTable, EmbeddedCacheManager cm);
 
     /**
      * Stops the {@link EndpointRouter}.
