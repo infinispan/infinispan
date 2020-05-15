@@ -14,13 +14,12 @@ import org.infinispan.container.entries.AbstractInternalCacheEntry;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
-import org.infinispan.container.entries.versioned.Versioned;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
- * A form of {@link TransientMortalCacheEntry} that is {@link Versioned}
+ * A form of {@link TransientMortalCacheEntry} that stores {@link Metadata}
  *
  * @author Manik Surtani
  * @since 5.1

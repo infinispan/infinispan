@@ -3,13 +3,12 @@ package org.infinispan.container.versioning;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.infinispan.container.versioning.InequalVersionComparisonResult.EQUAL;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
+import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -61,25 +60,25 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
    public void testValidationOnlyInPrimaryOwner() throws Exception {
       final Object key = new MagicKey(cache(1), cache(0));
-      final DataContainer primaryOwnerDataContainer = extractComponent(cache(1), InternalDataContainer.class);
-      final DataContainer backupOwnerDataContainer = extractComponent(cache(0), InternalDataContainer.class);
+      final DataContainer<?, ?> primaryOwnerDataContainer = extractComponent(cache(1), InternalDataContainer.class);
+      final DataContainer<?, ?> backupOwnerDataContainer = extractComponent(cache(0), InternalDataContainer.class);
       final VersionGenerator versionGenerator = extractComponent(cache(1), VersionGenerator.class);
 
       injectReorderResponseRpcManager(cache(3), cache(0));
       cache(1).put(key, 1);
-      for (Cache cache : caches()) {
+      for (Cache<?, ?> cache : caches()) {
          assertEquals("Wrong initial value for cache " + address(cache), 1, cache.get(key));
       }
 
-      InternalCacheEntry ice0 = primaryOwnerDataContainer.get(key);
-      InternalCacheEntry ice1 = backupOwnerDataContainer.get(key);
-      assertVersion("Wrong version for the same key", ice0.getMetadata().version(), ice1.getMetadata().version(), EQUAL);
+      InternalCacheEntry<? ,?> ice0 = primaryOwnerDataContainer.peek(key);
+      InternalCacheEntry<?, ?> ice1 = backupOwnerDataContainer.peek(key);
+      assertSameVersion("Wrong version for the same key", versionFromEntry(ice0), versionFromEntry(ice1));
 
-      final EntryVersion version0 = ice0.getMetadata().version();
+      final IncrementableEntryVersion version0 = versionFromEntry(ice0);
       //version1 is put by tx1
-      final EntryVersion version1 = versionGenerator.increment((IncrementableEntryVersion) version0);
+      final IncrementableEntryVersion version1 = versionGenerator.increment(version0);
       //version2 is put by tx2
-      final EntryVersion version2 = versionGenerator.increment((IncrementableEntryVersion) version1);
+      final IncrementableEntryVersion version2 = versionGenerator.increment(version1);
 
       ControllerInboundInvocationHandler handler = wrapInboundInvocationHandler(cache(0), ControllerInboundInvocationHandler::new);
       BackupOwnerInterceptor backupOwnerInterceptor = injectBackupOwnerInterceptor(cache(0));
@@ -102,10 +101,10 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
          return value != null && value == 2;
       });
 
-      assertVersion("Wrong version in the primary owner", primaryOwnerDataContainer.get(key).getMetadata().version(),
-                    version1, EQUAL);
-      assertVersion("Wrong version in the backup owner", backupOwnerDataContainer.get(key).getMetadata().version(),
-                    version0, EQUAL);
+      assertSameVersion("Wrong version in the primary owner", versionFromEntry(primaryOwnerDataContainer.peek(key)),
+                    version1);
+      assertSameVersion("Wrong version in the backup owner", versionFromEntry(backupOwnerDataContainer.peek(key)),
+                    version0);
 
       backupOwnerInterceptor.resetPrepare();
 
@@ -130,44 +129,42 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       AssertJUnit.assertTrue("Error in tx2.", tx2.get(15, SECONDS));
 
       //both txs has committed
-      assertVersion("Wrong version in the primary owner", primaryOwnerDataContainer.get(key).getMetadata().version(),
-                    version2, EQUAL);
-      assertVersion("Wrong version in the backup owner", backupOwnerDataContainer.get(key).getMetadata().version(),
-                    version2, EQUAL);
+      assertSameVersion("Wrong version in the primary owner", versionFromEntry(primaryOwnerDataContainer.peek(key)),
+                    version2);
+      assertSameVersion("Wrong version in the backup owner", versionFromEntry(backupOwnerDataContainer.peek(key)),
+                    version2);
 
 
       assertNoTransactions();
       assertNotLocked(key);
-
-
    }
 
    @Override
-   protected final void createCacheManagers() throws Throwable {
+   protected final void createCacheManagers() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       builder.clustering().hash().numSegments(60);
       createClusteredCaches(4, TestDataSCI.INSTANCE, builder);
    }
 
-   private BackupOwnerInterceptor injectBackupOwnerInterceptor(Cache cache) {
+   private BackupOwnerInterceptor injectBackupOwnerInterceptor(Cache<?, ?> cache) {
       BackupOwnerInterceptor ownerInterceptor = new BackupOwnerInterceptor();
       extractInterceptorChain(cache).addInterceptor(ownerInterceptor, 1);
       return ownerInterceptor;
    }
 
-   private ReorderResponsesRpcManager injectReorderResponseRpcManager(Cache toInject, Cache lastResponse) {
+   private void injectReorderResponseRpcManager(Cache<?, ?> toInject, Cache<?, ?> lastResponse) {
       RpcManager rpcManager = extractComponent(toInject, RpcManager.class);
       ReorderResponsesRpcManager newRpcManager = new ReorderResponsesRpcManager(address(lastResponse), rpcManager);
       replaceComponent(toInject, RpcManager.class, newRpcManager, true);
-      return newRpcManager;
    }
 
-   private void assertVersion(String message, EntryVersion v0, EntryVersion v1, InequalVersionComparisonResult result) {
-      assertTrue(message, v0.compareTo(v1) == result);
+   private void assertSameVersion(String message, EntryVersion v0, EntryVersion v1) {
+      assertEquals(message, InequalVersionComparisonResult.EQUAL, v0.compareTo(v1));
    }
 
-   class BackupOwnerInterceptor extends DDAsyncInterceptor {
+   @SuppressWarnings("rawtypes")
+   static class BackupOwnerInterceptor extends DDAsyncInterceptor {
 
       private final Object blockCommitLock = new Object();
       private final Object prepareProcessedLock = new Object();
@@ -182,9 +179,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, throwable) -> {
-            notifyPrepareProcessed();
-         });
+         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, throwable) -> notifyPrepareProcessed());
       }
 
       public void blockCommit(boolean blockCommit) {
@@ -239,6 +234,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
          this.lastResponse = lastResponse;
       }
 
+      @SuppressWarnings("unchecked")
       @Override
       protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
                                                       ResponseCollector<T> collector,
@@ -271,7 +267,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       }
    }
 
-   private class ControllerInboundInvocationHandler extends AbstractDelegatingHandler {
+   private static class ControllerInboundInvocationHandler extends AbstractDelegatingHandler {
       private volatile boolean discardRemoteGet;
 
       private ControllerInboundInvocationHandler(PerCacheInboundInvocationHandler delegate) {

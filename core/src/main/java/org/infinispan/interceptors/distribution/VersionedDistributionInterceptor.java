@@ -1,5 +1,6 @@
 package org.infinispan.interceptors.distribution;
 
+import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.Collection;
@@ -10,12 +11,12 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.responses.PrepareResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
@@ -48,13 +49,10 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
    @Override
    protected void wrapRemoteEntry(InvocationContext ctx, Object key, CacheEntry ice, boolean isWrite) {
       if (ctx.isInTxScope()) {
-         AbstractCacheTransaction cacheTransaction = ((TxInvocationContext) ctx).getCacheTransaction();
+         AbstractCacheTransaction cacheTransaction = ((TxInvocationContext<?>) ctx).getCacheTransaction();
          EntryVersion seenVersion = cacheTransaction.getVersionsRead().get(key);
          if (seenVersion != null) {
-            EntryVersion newVersion = null;
-            if (ice != null && ice.getMetadata() != null) {
-               newVersion = ice.getMetadata().version();
-            }
+            IncrementableEntryVersion newVersion = versionFromEntry(ice);
             if (newVersion == null) {
                throw new IllegalStateException("Wrapping entry without version");
             }
@@ -77,10 +75,8 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
 
    @Override
    protected Object wrapFunctionalResultOnNonOriginOnReturn(Object rv, CacheEntry entry) {
-      Metadata metadata = entry.getMetadata();
-      EntryVersion version = metadata == null || metadata.version() == null ?
-            versionGenerator.nonExistingVersion() : metadata.version();
-      return new VersionedResult(rv, version);
+      IncrementableEntryVersion version = versionFromEntry(entry);
+      return new VersionedResult(rv, version == null ? versionGenerator.nonExistingVersion() : version);
    }
 
    @Override
@@ -89,10 +85,8 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
       EntryVersion[] versions = new EntryVersion[keys.size()];
       int i = 0;
       for (Object key : keys) {
-         CacheEntry entry = ctx.lookupEntry(key);
-         Metadata metadata = entry.getMetadata();
-         versions[i++] = metadata == null || metadata.version() == null ?
-               versionGenerator.nonExistingVersion() : metadata.version();
+         IncrementableEntryVersion version = versionFromEntry(ctx.lookupEntry(key));
+         versions[i++] = version == null ? versionGenerator.nonExistingVersion() : version;
       }
       return new VersionedResults(values, versions);
    }
@@ -102,7 +96,7 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
       if (responseValue instanceof VersionedResults) {
          VersionedResults vrs = (VersionedResults) responseValue;
          if (ctx.isInTxScope()) {
-            AbstractCacheTransaction tx = ((TxInvocationContext) ctx).getCacheTransaction();
+            AbstractCacheTransaction tx = ((TxInvocationContext<?>) ctx).getCacheTransaction();
             for (int i = 0; i < vrs.versions.length; ++i) {
                checkAndAddReadVersion(tx, keys.get(i), vrs.versions[i]);
             }

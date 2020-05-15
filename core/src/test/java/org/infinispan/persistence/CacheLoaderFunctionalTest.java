@@ -25,6 +25,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -295,7 +296,11 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    public void testLoading() throws PersistenceException {
       assertNotInCacheAndStore("k1", "k2", "k3", "k4");
-      for (int i = 1; i < 5; i++) writer.write(MarshalledEntryUtil.create("k" + i, "v" + i, cache));
+      if (Configurations.isTxVersioned(cache.getCacheConfiguration())) {
+         for (int i = 1; i < 5; i++) writer.write(MarshalledEntryUtil.createWithVersion("k" + i, "v" + i, cache));
+      } else {
+         for (int i = 1; i < 5; i++) writer.write(MarshalledEntryUtil.create("k" + i, "v" + i, cache));
+      }
       for (int i = 1; i < 5; i++) assertEquals("v" + i, cache.get("k" + i));
       // make sure we have no stale locks!!
       assertNoLocks(cache);

@@ -147,10 +147,9 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
             }
          }
 
+         copy.setInternalMetadata(internalMetadata);
          if (trace)
             log.tracef("Store %s=%s in container", k, copy);
-
-         copy.setInternalMetadata(internalMetadata);
          entries.put(k, copy);
       } else {
          log.tracef("Insertion attempted for key: %s but there was no map created for it at segment: %d", k, segment);

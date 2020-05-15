@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
@@ -50,7 +51,7 @@ public class GroupingInterceptor extends DDAsyncInterceptor {
          return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
             if (rv instanceof List) {
                //noinspection unchecked
-               filter((List<CacheEntry>) rv);
+               filter((List<CacheEntry<?, ?>>) rv);
             }
          });
       }
@@ -65,7 +66,7 @@ public class GroupingInterceptor extends DDAsyncInterceptor {
             //noinspection unchecked
             ((List) rv).addAll(listener.activatedKeys);
             //noinspection unchecked
-            filter((List<CacheEntry>) rv);
+            filter((List<CacheEntry<?, ?>>) rv);
          } else if (rv instanceof Map) {
             for (CacheEntry entry : listener.activatedKeys) {
                //noinspection unchecked
@@ -75,11 +76,13 @@ public class GroupingInterceptor extends DDAsyncInterceptor {
       });
    }
 
-   private void filter(List<CacheEntry> list) {
+   private void filter(List<CacheEntry<?, ?>> list) {
       for (int i = 0; i < list.size(); ++i) {
-         CacheEntry entry = list.get(i);
+         CacheEntry<?, ?> entry = list.get(i);
          if (entry instanceof MVCCEntry) {
-            list.set(i, factory.create(entry));
+            InternalCacheEntry<?, ?> ice = factory.create(entry);
+            ice.setInternalMetadata(entry.getInternalMetadata());
+            list.set(i, ice);
          }
       }
    }

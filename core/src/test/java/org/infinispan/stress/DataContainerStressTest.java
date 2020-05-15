@@ -119,6 +119,16 @@ public class DataContainerStressTest {
                public CompletionStage<Boolean> handlePossibleExpiration(InternalCacheEntry entry, int segment, boolean isWrite) {
                   return null;
                }
+
+               @Override
+               public void addInternalListener(ExpirationConsumer consumer) {
+
+               }
+
+               @Override
+               public void removeInternalListener(Object listener) {
+
+               }
             });
    }
 

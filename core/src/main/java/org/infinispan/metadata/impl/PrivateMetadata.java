@@ -1,6 +1,11 @@
 package org.infinispan.metadata.impl;
 
+import java.util.Objects;
+
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
+import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -22,13 +27,15 @@ public final class PrivateMetadata {
    /**
     * A cached empty {@link PrivateMetadata}.
     */
-   private static final PrivateMetadata EMPTY = new PrivateMetadata(null);
+   private static final PrivateMetadata EMPTY = new PrivateMetadata(null, null);
 
    @ProtoField(number = 1)
    final IracMetadata iracMetadata;
+   private final IncrementableEntryVersion entryVersion;
 
-   private PrivateMetadata(IracMetadata iracMetadata) {
+   private PrivateMetadata(IracMetadata iracMetadata, IncrementableEntryVersion entryVersion) {
       this.iracMetadata = iracMetadata;
+      this.entryVersion = entryVersion;
    }
 
    /**
@@ -56,8 +63,14 @@ public final class PrivateMetadata {
     * It allows to do some logic before instantiate a new instance.
     */
    @ProtoFactory
-   static PrivateMetadata protoFactory(IracMetadata iracMetadata) {
-      return iracMetadata == null ? EMPTY : new PrivateMetadata(iracMetadata);
+   static PrivateMetadata protoFactory(IracMetadata iracMetadata, NumericVersion numericVersion,
+         SimpleClusteredVersion clusteredVersion) {
+      IncrementableEntryVersion entryVersion = numericVersion == null ? clusteredVersion : numericVersion;
+      return newInstance(iracMetadata, entryVersion);
+   }
+
+   private static PrivateMetadata newInstance(IracMetadata iracMetadata, IncrementableEntryVersion entryVersion) {
+      return iracMetadata == null && entryVersion == null ? EMPTY : new PrivateMetadata(iracMetadata, entryVersion);
    }
 
    /**
@@ -75,28 +88,74 @@ public final class PrivateMetadata {
    }
 
    /**
+    * @return The {@link IncrementableEntryVersion} associated with the entry.
+    */
+   public IncrementableEntryVersion entryVersion() {
+      return entryVersion;
+   }
+
+   /**
     * @return {@code true} if not metadata is stored in this instance.
     */
    public boolean isEmpty() {
-      return iracMetadata == null;
+      return iracMetadata == null && entryVersion == null;
    }
+
+   @Override
+   public String toString() {
+      return "PrivateMetadata{" +
+            "iracMetadata=" + iracMetadata +
+            ", entryVersion=" + entryVersion +
+            '}';
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+         return false;
+      }
+      PrivateMetadata metadata = (PrivateMetadata) o;
+      return Objects.equals(iracMetadata, metadata.iracMetadata) &&
+            Objects.equals(entryVersion, metadata.entryVersion);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(iracMetadata, entryVersion);
+   }
+
+   @ProtoField(number = 2)
+   public NumericVersion getNumericVersion() {
+      return entryVersion instanceof NumericVersion ? (NumericVersion) entryVersion : null;
+   }
+
+   @ProtoField(number = 3)
+   public SimpleClusteredVersion getClusteredVersion() {
+      return entryVersion instanceof SimpleClusteredVersion ? (SimpleClusteredVersion) entryVersion : null;
+   }
+
 
    public static class Builder {
 
       private IracMetadata iracMetadata;
+      private IncrementableEntryVersion entryVersion;
 
       public Builder() {
       }
 
       private Builder(PrivateMetadata metadata) {
          this.iracMetadata = metadata.iracMetadata;
+         this.entryVersion = metadata.entryVersion;
       }
 
       /**
        * @return A new instance of {@link PrivateMetadata}.
        */
       public PrivateMetadata build() {
-         return protoFactory(iracMetadata);
+         return newInstance(iracMetadata, entryVersion);
       }
 
       /**
@@ -107,6 +166,17 @@ public final class PrivateMetadata {
        */
       public Builder iracMetadata(IracMetadata metadata) {
          this.iracMetadata = metadata;
+         return this;
+      }
+
+      /**
+       * Sets the {@link IncrementableEntryVersion} to store.
+       *
+       * @param entryVersion The version to store.
+       * @return This instance.
+       */
+      public Builder entryVersion(IncrementableEntryVersion entryVersion) {
+         this.entryVersion = entryVersion;
          return this;
       }
 

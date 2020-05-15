@@ -54,20 +54,6 @@ public class InvalidServerConfigTxTest extends SingleHotRodServerTest {
       assertFalse(cache.isTransactional());
    }
 
-   public void testOptimistic(Method method) {
-      ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
-      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
-      builder.transaction().lockingMode(LockingMode.OPTIMISTIC);
-      cacheManager.defineConfiguration(method.getName(), builder.build());
-
-      assertFalse(remoteCacheManager.isTransactional(method.getName()));
-      Exceptions.expectException(CacheNotTransactionalException.class, "ISPN004084.*",
-            () -> remoteCacheManager.getCache(method.getName(), TransactionMode.NON_XA));
-
-      RemoteCache<String, String> cache = remoteCacheManager.getCache(method.getName(), TransactionMode.NONE);
-      assertFalse(cache.isTransactional());
-   }
-
    public void testOkConfig(Method method) throws Exception {
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);

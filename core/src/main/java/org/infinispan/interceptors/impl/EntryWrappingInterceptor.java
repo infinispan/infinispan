@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
+import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 
 import java.util.Collection;
 import java.util.Map;
@@ -49,7 +50,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -631,7 +632,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   protected CompletionStage<Void> commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command,
+   protected CompletionStage<Void> commitContextEntry(CacheEntry<?, ?> entry, InvocationContext ctx, FlagAffectedCommand command,
                                      Flag stateTransferFlag, boolean l1Invalidation) {
       return cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
    }
@@ -717,14 +718,15 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return rv;
    }
 
-   private void addVersionRead(TxInvocationContext rCtx, CacheEntry cacheEntry, Object key) {
-      EntryVersion version;
-      if (cacheEntry != null && cacheEntry.getMetadata() != null) {
-         version = cacheEntry.getMetadata().version();
-         if (trace) log.tracef("Adding version read %s for key %s", version, key);
-      } else {
+   private void addVersionRead(TxInvocationContext<?> rCtx, CacheEntry<?, ?> cacheEntry, Object key) {
+      IncrementableEntryVersion version = versionFromEntry(cacheEntry);
+      if (version == null) {
          version = versionGenerator.nonExistingVersion();
-         if (trace) log.tracef("Adding non-existent version read for key %s", key);
+         if (trace) {
+            log.tracef("Adding non-existent version read for key %s", key);
+         }
+      } else if (trace) {
+         log.tracef("Adding version read %s for key %s", version, key);
       }
       rCtx.getCacheTransaction().addVersionRead(key, version);
    }

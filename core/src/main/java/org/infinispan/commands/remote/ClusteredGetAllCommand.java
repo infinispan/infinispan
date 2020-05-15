@@ -89,6 +89,7 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
                value = ((InternalCacheEntry<K, V>) entry).toInternalCacheValue();
             } else {
                value = cr.getInternalEntryFactory().running().createValue(entry);
+               value.setInternalMetadata(entry.getInternalMetadata());
             }
             values[i++] = value;
          }

@@ -1,6 +1,5 @@
 package org.infinispan.xsite;
 
-import static org.infinispan.configuration.cache.Configurations.isTxVersioned;
 import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
 import static org.infinispan.context.Flag.IRAC_UPDATE;
 import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
@@ -137,7 +136,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       //this feels kind hacky but saves 3 fields in this class
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       TransactionHandler txHandler = new TransactionHandler(cache, cr.getTransactionTable());
-      defaultHandler = new DefaultHandler(txHandler, cr.getComponent(BlockingManager.class), isTxVersioned(cr.getConfiguration()));
+      defaultHandler = new DefaultHandler(txHandler, cr.getComponent(BlockingManager.class));
    }
 
    @Override
@@ -305,18 +304,15 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
 
       final TransactionHandler txHandler;
       final BlockingManager blockingManager;
-      final boolean dropVersion;
 
-      private DefaultHandler(TransactionHandler txHandler, BlockingManager blockingManager, boolean dropVersion) {
+      private DefaultHandler(TransactionHandler txHandler, BlockingManager blockingManager) {
          this.txHandler = txHandler;
          this.blockingManager = blockingManager;
-         this.dropVersion = dropVersion;
       }
 
       @Override
       public CompletionStage<Object> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
-         Metadata metadata = dropVersionIfNeeded(command.getMetadata());
-         return cache().putAsync(command.getKey(), command.getValue(), metadata);
+         return cache().putAsync(command.getKey(), command.getValue(), command.getMetadata());
       }
 
       @Override
@@ -362,13 +358,6 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
 
       private FunctionalMap.WriteOnlyMap<Object, Object> fMap() {
          return txHandler.writeOnlyMap;
-      }
-
-      private Metadata dropVersionIfNeeded(Metadata metadata) {
-         if (dropVersion && metadata != null) {
-            return metadata.builder().version(null).build();
-         }
-         return metadata;
       }
    }
 

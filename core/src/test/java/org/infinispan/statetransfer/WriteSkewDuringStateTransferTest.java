@@ -5,6 +5,7 @@ import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.withTx;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 import static org.infinispan.util.BlockingLocalTopologyManager.confirmTopologyUpdate;
 import static org.infinispan.util.logging.Log.CLUSTER;
 import static org.testng.AssertJUnit.assertEquals;
@@ -166,20 +167,20 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       createClusteredCaches(2, WriteSkewDuringStateTransferSCI.INSTANCE, configuration());
    }
 
-   private void assertKeyVersionInDataContainer(Object key, Cache... owners) {
-      for (Cache cache : owners) {
-         DataContainer dataContainer = extractComponent(cache, InternalDataContainer.class);
-         InternalCacheEntry entry = dataContainer.get(key);
+   private void assertKeyVersionInDataContainer(Object key, Cache<?, ?>... owners) {
+      for (Cache<?, ?> cache : owners) {
+         DataContainer<?, ?> dataContainer = extractComponent(cache, InternalDataContainer.class);
+         InternalCacheEntry<?, ?> entry = dataContainer.peek(key);
          assertNotNull("Entry cannot be null in " + address(cache) + ".", entry);
-         assertNotNull("Version cannot be null.", entry.getMetadata().version());
+         assertNotNull("Version cannot be null.", versionFromEntry(entry));
       }
    }
 
-   private void awaitForTopology(final int expectedTopologyId, final Cache cache) {
+   private void awaitForTopology(final int expectedTopologyId, final Cache<?, ?> cache) {
       eventually(() -> expectedTopologyId == currentTopologyId(cache));
    }
 
-   private int currentTopologyId(Cache cache) {
+   private int currentTopologyId(Cache<?, ?> cache) {
       return cache.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
    }
 
@@ -187,11 +188,12 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       return fork(() -> withTx(cache.getAdvancedCache().getTransactionManager(), () -> cache.put(key, "value")));
    }
 
-   private NewNode addNode(final int currentTopologyId) throws InterruptedException {
+   private NewNode addNode(final int currentTopologyId) {
       final NewNode newNode = new NewNode();
       ConfigurationBuilder builder = configuration();
       newNode.controller = new NodeController();
       newNode.controller.interceptor = new ControlledCommandInterceptor();
+      //noinspection deprecation
       builder.customInterceptors().addInterceptor().index(0).interceptor(newNode.controller.interceptor);
 
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
@@ -207,11 +209,12 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
          }
 
          @Override
-         public void before(InvocationContext context, VisitableCommand command, Cache cache) {
+         public void before(InvocationContext context, VisitableCommand command, Cache<?, ?> cache) {
             log.tracef("Before: command=%s. origin=%s", command, context.getOrigin());
             if (context.getOrigin().equals(address(cache(1)))) {
                //from node B, i.e, it is forwarded. it needs to wait until the topology changes
                try {
+                  //noinspection deprecation
                   cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().waitForTopology(currentTopologyId + 2,
                                                                                                          10, TimeUnit.SECONDS);
                } catch (InterruptedException e) {
@@ -223,7 +226,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
          }
 
          @Override
-         public void after(InvocationContext context, VisitableCommand command, Cache cache) {
+         public void after(InvocationContext context, VisitableCommand command, Cache<?, ?> cache) {
             log.tracef("After: command=%s. origin=%s", command, context.getOrigin());
             if (context.getOrigin().equals(address(cache(0)))) {
                newNode.commandLatch.countDown();
@@ -248,7 +251,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       return builder;
    }
 
-   private void assertKeyOwnership(Object key, Cache primaryOwner, Cache... backupOwners) {
+   private void assertKeyOwnership(Object key, Cache<?, ?> primaryOwner, Cache<?, ?>... backupOwners) {
       assertTrue("Wrong ownership for " + key + ".", hasOwners(key, primaryOwner, backupOwners));
    }
 
@@ -277,8 +280,9 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
          }
 
          @Override
-         public void before(InvocationContext context, VisitableCommand command, Cache cache) {
+         public void before(InvocationContext context, VisitableCommand command, Cache<?, ?> cache) {
             try {
+               //noinspection deprecation
                cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().waitForTopology(currentTopology + 1, 10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
@@ -288,7 +292,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
          }
 
          @Override
-         public void after(InvocationContext context, VisitableCommand command, Cache cache) {
+         public void after(InvocationContext context, VisitableCommand command, Cache<?, ?> cache) {
             //no-op
          }
       });
@@ -304,8 +308,9 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
          }
 
          @Override
-         public void before(InvocationContext context, VisitableCommand command, Cache cache) {
+         public void before(InvocationContext context, VisitableCommand command, Cache<?, ?> cache) {
             try {
+               //noinspection deprecation
                cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().waitForTopology(currentTopology + 2,
                                                                                                       10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
@@ -316,7 +321,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
          }
 
          @Override
-         public void after(InvocationContext context, VisitableCommand command, Cache cache) {
+         public void after(InvocationContext context, VisitableCommand command, Cache<?, ?> cache) {
             //no-op
          }
       });
@@ -326,12 +331,13 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
 
       boolean isApplicable(InvocationContext context, VisitableCommand command);
 
-      void before(InvocationContext context, VisitableCommand command, Cache cache);
+      void before(InvocationContext context, VisitableCommand command, Cache<?, ?> cache);
 
-      void after(InvocationContext context, VisitableCommand command, Cache cache);
+      void after(InvocationContext context, VisitableCommand command, Cache<?, ?> cache);
 
    }
 
+   @SuppressWarnings("deprecation")
    @SerializeWith(ConsistentHashFactoryImpl.Externalizer.class)
    public static class ConsistentHashFactoryImpl extends BaseControlledConsistentHashFactory.Default {
 
@@ -368,13 +374,11 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
 
       private final List<Action> actionList;
       private Cache<Object, Object> cache;
-      private EmbeddedCacheManager embeddedCacheManager;
 
       public ControlledCommandInterceptor(Cache<Object, Object> cache) {
          actionList = new ArrayList<>(3);
          this.cache = cache;
          this.cacheConfiguration = cache.getCacheConfiguration();
-         this.embeddedCacheManager = cache.getCacheManager();
          extractInterceptorChain(cache).addInterceptor(this, 0);
       }
 

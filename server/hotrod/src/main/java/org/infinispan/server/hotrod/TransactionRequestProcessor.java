@@ -19,7 +19,6 @@ import org.infinispan.server.hotrod.tx.operation.CommitTransactionOperation;
 import org.infinispan.server.hotrod.tx.operation.RollbackTransactionOperation;
 import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.infinispan.server.hotrod.tx.table.TxState;
-import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.LogFactory;
@@ -174,13 +173,6 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
       }
       if (configuration.locking().isolationLevel() != IsolationLevel.REPEATABLE_READ) {
          throw log.unexpectedIsolationLevel(cache.getName());
-      }
-
-      //TODO because of ISPN-7672, optimistic and total order transactions needs versions. however, versioning is currently broken
-      if (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
-         //no Log. see comment above
-         throw new IllegalStateException(
-               String.format("Cache '%s' cannot use Optimistic transactions.", cache.getName()));
       }
    }
 

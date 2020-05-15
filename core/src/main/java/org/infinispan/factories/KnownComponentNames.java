@@ -26,6 +26,7 @@ public class KnownComponentNames {
    public static final String MODULE_COMMAND_FACTORIES ="org.infinispan.modules.command.factories";
    public static final String CLASS_LOADER = "java.lang.ClassLoader";
    public static final String TRANSACTION_VERSION_GENERATOR = "org.infinispan.transaction.versionGenerator";
+   public static final String HOT_ROD_VERSION_GENERATOR = "org.infinispan.server.hotrod.versionGenerator";
    public static final String CACHE_DEPENDENCY_GRAPH = "org.infinispan.CacheDependencyGraph";
    public static final String INTERNAL_MARSHALLER = "org.infinispan.marshaller.internal";
    public static final String PERSISTENCE_MARSHALLER = "org.infinispan.marshaller.persistence";

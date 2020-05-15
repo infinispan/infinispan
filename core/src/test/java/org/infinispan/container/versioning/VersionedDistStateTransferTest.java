@@ -1,5 +1,6 @@
 package org.infinispan.container.versioning;
 
+import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 import static org.jgroups.util.Util.assertNotNull;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
@@ -35,18 +36,12 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
             .transaction().lockingMode(LockingMode.OPTIMISTIC);
 
-      amendConfig(builder);
       createCluster(TestDataSCI.INSTANCE, builder, 4);
       waitForClusterToForm();
    }
 
-   protected void amendConfig(ConfigurationBuilder builder) {
-   }
-
    public void testStateTransfer() throws Exception {
       Cache<Object, Object> cache0 = cache(0);
-      Cache<Object, Object> cache1 = cache(1);
-      Cache<Object, Object> cache2 = cache(2);
       Cache<Object, Object> cache3 = cache(3);
 
       int NUM_KEYS = 20;
@@ -95,9 +90,9 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
       for (int i = 0; i < NUM_KEYS; i++) {
          int cacheIndex = i % 3;
          log.tracef("Expecting a write skew failure for key %s on cache %s", keys[i], cache(cacheIndex));
-         tm(cacheIndex).resume(txs[i]); {
-            cache(cacheIndex).put(keys[i], "new new " + values[i]);
-         }
+         tm(cacheIndex).resume(txs[i]);
+         cache(cacheIndex).put(keys[i], "new new " + values[i]);
+
          try {
             tm(cacheIndex).commit();
             fail("The write skew check should have failed!");
@@ -128,7 +123,7 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
       if (topology.isReadOwner(key)) {
          InternalCacheEntry<Object, Object> ice = c.getAdvancedCache().getDataContainer().peek(key);
          assertNotNull("Entry not found on owner cache " + c, ice);
-         assertNotNull("Version is null on owner cache " + c, ice.getMetadata().version());
+         assertNotNull("Version is null on owner cache " + c, versionFromEntry(ice));
       }
    }
 }

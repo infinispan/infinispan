@@ -1,11 +1,12 @@
 package org.infinispan.container.entries;
 
 import static org.infinispan.commons.util.Util.toStr;
+import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.container.entries.versioned.Versioned;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -21,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Manik Surtani
  * @since 5.1
  */
-public class VersionedRepeatableReadEntry extends RepeatableReadEntry implements Versioned {
+public class VersionedRepeatableReadEntry extends RepeatableReadEntry {
 
    private static final Log log = LogFactory.getLog(VersionedRepeatableReadEntry.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -48,13 +49,13 @@ public class VersionedRepeatableReadEntry extends RepeatableReadEntry implements
          //version seen is null when the entry was not read. In this case, the write skew is not needed.
          return CompletableFutures.completedTrue();
       }
-      CompletionStage<EntryVersion> entryStage;
+      CompletionStage<IncrementableEntryVersion> entryStage;
       if (ctx.isOriginLocal()) {
          entryStage = getCurrentEntryVersion(entryLoader, segment, ctx, versionGenerator);
       } else {
          // If this node is an owner and not originator, the entry has been loaded and wrapped under lock,
          // so the version in context should be up-to-date
-         EntryVersion prevVersion = ctx.getCacheTransaction().getVersionsRead().get(key);
+         IncrementableEntryVersion prevVersion = ctx.getCacheTransaction().getVersionsRead().get(key);
          if (prevVersion == null) {
             // If the command has IGNORE_RETURN_VALUE flags it's possible that the entry was not loaded
             // from cache loader - we have to force load
@@ -66,20 +67,10 @@ public class VersionedRepeatableReadEntry extends RepeatableReadEntry implements
       return entryStage.thenApply(prevVersion -> skewed(prevVersion, versionSeen, versionGenerator));
    }
 
-   private boolean skewed(EntryVersion prevVersion, EntryVersion versionSeen, VersionGenerator versionGenerator) {
+   private boolean skewed(IncrementableEntryVersion prevVersion, EntryVersion versionSeen, VersionGenerator versionGenerator) {
       // If it is expired then it is possible the previous version doesn't exist - because entry didn't exist)
       if (isExpired() && prevVersion == versionGenerator.nonExistingVersion()) {
          return true;
-      }
-      // ISPN-7170: With total-order protocol, a command may skip loading the entry from persistence layer, and keep
-      // the entry would have non-existing version. Then TotalOrderVersionedEntryWrappingInterceptor would
-      // increase the version and store the entry during commit phase, potentially overwriting newer version.
-      // Therefore we use the compulsory load during this check (in prepare phase) and update the entry version.
-      if (prevVersion.compareTo(metadata.version()) != InequalVersionComparisonResult.EQUAL) {
-         if (trace) {
-            log.tracef("Updating version in metadata %s -> %s", metadata.version(), prevVersion);
-         }
-         metadata = metadata.builder().version(prevVersion).build();
       }
 
       //in this case, the transaction read some value and the data container has a value stored.
@@ -93,40 +84,29 @@ public class VersionedRepeatableReadEntry extends RepeatableReadEntry implements
       return InequalVersionComparisonResult.EQUAL == result;
    }
 
-   private CompletionStage<EntryVersion> getCurrentEntryVersion(EntryLoader entryLoader, int segment, TxInvocationContext ctx, VersionGenerator versionGenerator) {
+   private CompletionStage<IncrementableEntryVersion> getCurrentEntryVersion(EntryLoader entryLoader, int segment, TxInvocationContext ctx, VersionGenerator versionGenerator) {
       // TODO: persistence should be more orthogonal to any entry type - this should be handled in interceptor
+      // on origin, the version seen is acquired without the lock, so we have to retrieve it again
       CompletionStage<InternalCacheEntry> entry = entryLoader.loadAndStoreInDataContainer(ctx, getKey(), segment, null);
 
       return entry.thenApply(ice -> {
-         EntryVersion prevVersion;// on origin, the version seen is acquired without the lock, so we have to retrieve it again
          if (ice == null) {
             if (trace) {
                log.tracef("No entry for key %s found in data container", toStr(key));
             }
             //in this case, the key does not exist. So, the only result possible is the version seen be the NonExistingVersion
-            prevVersion = versionGenerator.nonExistingVersion();
-         } else {
-            prevVersion = ice.getMetadata().version();
-            if (prevVersion == null)
-               throw new IllegalStateException("Entries cannot have null versions!");
+            return versionGenerator.nonExistingVersion();
+         }
+
+         if (trace) {
+            log.tracef("Entry found in data container: %s", toStr(ice));
+         }
+         IncrementableEntryVersion prevVersion = versionFromEntry(ice);
+         if (prevVersion == null) {
+            throw new IllegalStateException("Entries cannot have null versions!");
          }
          return prevVersion;
       });
-   }
-
-   // This entry is only used when versioning is enabled, and in these
-   // situations, versions are generated internally and assigned at a
-   // different stage to the rest of metadata. So, keep the versioned API
-   // to make it easy to apply version information when needed.
-
-   @Override
-   public EntryVersion getVersion() {
-      return metadata.version();
-   }
-
-   @Override
-   public void setVersion(EntryVersion version) {
-      metadata = metadata.builder().version(version).build();
    }
 
    @Override

@@ -156,8 +156,8 @@ public class ReadCommittedEntry implements MVCCEntry {
    private boolean shouldCommit() {
       if (isChanged()) {
          if (trace)
-            log.tracef("Updating entry (key=%s removed=%s changed=%s created=%s value=%s metadata=%s)",
-                  toStr(getKey()), isRemoved(), isChanged(), isCreated(), toStr(value), getMetadata());
+            log.tracef("Updating entry (key=%s removed=%s changed=%s created=%s value=%s metadata=%s internalMetadata=%s)",
+                  toStr(getKey()), isRemoved(), isChanged(), isCreated(), toStr(value), getMetadata(), internalMetadata);
          return true;
       }
       return false;
@@ -328,6 +328,7 @@ public class ReadCommittedEntry implements MVCCEntry {
             ", isExpired=" + isExpired() +
             ", skipLookup=" + skipLookup() +
             ", metadata=" + metadata +
+            ", internalMetadata=" + internalMetadata +
             '}';
    }
 }

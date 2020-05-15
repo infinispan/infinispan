@@ -112,7 +112,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    @Inject protected PartitionHandlingManager partitionHandlingManager;
    @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
-   @Inject TransactionOriginatorChecker transactionOriginatorChecker;
+   @Inject protected TransactionOriginatorChecker transactionOriginatorChecker;
    @Inject TransactionManager transactionManager;
    @Inject ComponentRegistry componentRegistry;
 

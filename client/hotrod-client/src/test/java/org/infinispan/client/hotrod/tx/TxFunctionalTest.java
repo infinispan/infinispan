@@ -1,14 +1,14 @@
 package org.infinispan.client.hotrod.tx;
 
-import static org.infinispan.client.hotrod.configuration.TransactionMode.FULL_XA;
-import static org.infinispan.client.hotrod.configuration.TransactionMode.NON_DURABLE_XA;
-import static org.infinispan.client.hotrod.configuration.TransactionMode.NON_XA;
+import static org.infinispan.client.hotrod.configuration.TransactionMode.NONE;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.assertNoTransaction;
 import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.BYTE_ARRAY_GENERATOR;
 import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.GENERIC_ARRAY_GENERATOR;
 import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.STRING_GENERATOR;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
@@ -21,10 +21,10 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.client.hotrod.tx.util.KeyValueGenerator;
 import org.infinispan.client.hotrod.tx.util.TransactionSetup;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -52,17 +52,23 @@ public class TxFunctionalTest<K, V> extends MultiHotRodServersTest {
 
    @Override
    public Object[] factory() {
-      return new Object[]{
-            new TxFunctionalTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(NON_XA),
-            new TxFunctionalTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA),
-            new TxFunctionalTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(FULL_XA),
-            new TxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(FULL_XA),
-            new TxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_XA),
-            new TxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_DURABLE_XA),
-            new TxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_XA).javaSerialization(),
-            new TxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA).javaSerialization(),
-            new TxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(FULL_XA).javaSerialization()
-      };
+      return Arrays.stream(TransactionMode.values())
+            .filter(tMode -> tMode != NONE)
+            .flatMap(txMode -> Arrays.stream(LockingMode.values())
+                  .flatMap(lockingMode -> Stream.builder()
+                        .add(new TxFunctionalTest<byte[], byte[]>()
+                              .keyValueGenerator(BYTE_ARRAY_GENERATOR)
+                              .transactionMode(txMode)
+                              .lockingMode(lockingMode))
+                        .add(new TxFunctionalTest<String, String>()
+                              .keyValueGenerator(STRING_GENERATOR)
+                              .transactionMode(txMode)
+                              .lockingMode(lockingMode))
+                        .add(new TxFunctionalTest<Object[], Object[]>()
+                              .keyValueGenerator(GENERIC_ARRAY_GENERATOR).javaSerialization()
+                              .transactionMode(txMode)
+                              .lockingMode(lockingMode))
+                        .build())).toArray();
    }
 
    @AfterMethod(alwaysRun = true)
@@ -414,17 +420,17 @@ public class TxFunctionalTest<K, V> extends MultiHotRodServersTest {
 
    @Override
    protected String[] parameterNames() {
-      return concat(super.parameterNames(), null, null);
+      return concat(super.parameterNames(), null, null, null);
    }
 
    @Override
    protected Object[] parameterValues() {
-      return concat(super.parameterValues(), kvGenerator.toString(), transactionMode);
+      return concat(super.parameterValues(), kvGenerator.toString(), transactionMode, lockingMode);
    }
 
    @Override
    protected String parameters() {
-      return "[" + kvGenerator + "/" + transactionMode + "]";
+      return "[" + kvGenerator + "/" + transactionMode + "/" + lockingMode + "]";
    }
 
    protected String cacheName() {
@@ -435,7 +441,7 @@ public class TxFunctionalTest<K, V> extends MultiHotRodServersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       cacheBuilder.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
-      cacheBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+      cacheBuilder.transaction().lockingMode(lockingMode);
       cacheBuilder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       createHotRodServers(numberOfNodes(), new ConfigurationBuilder());
       defineInAll(cacheName(), cacheBuilder);

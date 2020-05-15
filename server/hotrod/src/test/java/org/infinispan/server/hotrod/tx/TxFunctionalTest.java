@@ -10,6 +10,7 @@ import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
@@ -41,18 +42,13 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
    @Override
    public Object[] factory() {
-      return new Object[]{
-            //TODO add optimistic tests when supported!
-            new TxFunctionalTest()
-                  .transactionMode(org.infinispan.configuration.cache.TransactionMode.NON_XA).lockingMode(
-                  LockingMode.PESSIMISTIC),
-            new TxFunctionalTest()
-                  .transactionMode(org.infinispan.configuration.cache.TransactionMode.NON_DURABLE_XA).lockingMode(
-                  LockingMode.PESSIMISTIC),
-            new TxFunctionalTest()
-                  .transactionMode(org.infinispan.configuration.cache.TransactionMode.FULL_XA).lockingMode(
-                  LockingMode.PESSIMISTIC)
-      };
+      return Arrays.stream(org.infinispan.configuration.cache.TransactionMode.values())
+            .filter(tMode -> tMode != org.infinispan.configuration.cache.TransactionMode.NONE)
+            .flatMap(txMode -> Arrays.stream(LockingMode.values())
+                  .map(lockingMode -> new TxFunctionalTest()
+                        .transactionMode(txMode)
+                        .lockingMode(lockingMode)))
+            .toArray();
    }
 
    public TxFunctionalTest transactionMode(org.infinispan.configuration.cache.TransactionMode transactionMode) {
@@ -582,7 +578,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
    }
 
    private void assertServerTransactionTableEmpty() {
-      for (Cache cache : caches(cacheName())) {
+      for (Cache<?, ?> cache : caches(cacheName())) {
          PerCacheTxTable perCacheTxTable = extractComponent(cache, PerCacheTxTable.class);
          assertTrue(perCacheTxTable.isEmpty());
       }

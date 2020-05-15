@@ -216,11 +216,20 @@ public interface ClusteringDependentLogic {
 
       @Override
       public CompletionStage<Map<Object, IncrementableEntryVersion>> createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
-         return createNewVersionsMap(versionGenerator, context, prepareCommand);
-      }
+         // Perform a write skew check on mapped entries.
+         CompletionStage<Map<Object, IncrementableEntryVersion>> uv = performWriteSkewCheckAndReturnNewVersions(prepareCommand, entryLoader, versionGenerator, context,
+               keySpecificLogic, keyPartitioner);
 
-      private CompletionStage<Map<Object, IncrementableEntryVersion>> createNewVersionsMap(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
-         return clusteredCreateNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand);
+         return uv.thenApply(evm -> {
+            CacheTransaction cacheTransaction = context.getCacheTransaction();
+            Map<Object, IncrementableEntryVersion> uvOld = cacheTransaction.getUpdatedEntryVersions();
+            if (uvOld != null && !uvOld.isEmpty()) {
+               uvOld.putAll(evm);
+               evm = uvOld;
+            }
+            cacheTransaction.setUpdatedEntryVersions(evm);
+            return (evm.isEmpty()) ? null : evm;
+         });
       }
 
       @Override
@@ -288,24 +297,6 @@ public interface ClusteringDependentLogic {
       }
 
       protected abstract WriteSkewHelper.KeySpecificLogic initKeySpecificLogic();
-
-      private CompletionStage<Map<Object, IncrementableEntryVersion>> clusteredCreateNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context,
-                                                                               VersionedPrepareCommand prepareCommand) {
-         // Perform a write skew check on mapped entries.
-         CompletionStage<Map<Object, IncrementableEntryVersion>> uv = performWriteSkewCheckAndReturnNewVersions(prepareCommand, entryLoader, versionGenerator, context,
-                                                                         keySpecificLogic, keyPartitioner);
-
-         return uv.thenApply(evm -> {
-            CacheTransaction cacheTransaction = context.getCacheTransaction();
-            Map<Object, IncrementableEntryVersion> uvOld = cacheTransaction.getUpdatedEntryVersions();
-            if (uvOld != null && !uvOld.isEmpty()) {
-               uvOld.putAll(evm);
-               evm = uvOld;
-            }
-            cacheTransaction.setUpdatedEntryVersions(evm);
-            return (evm.isEmpty()) ? null : evm;
-         });
-      }
 
       @Override
       public LocalizedCacheTopology getCacheTopology() {
