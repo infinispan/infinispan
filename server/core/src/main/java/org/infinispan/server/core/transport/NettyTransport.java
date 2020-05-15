@@ -68,7 +68,11 @@ public class NettyTransport implements Transport {
 
       // Need to initialize these in constructor since they require configuration
       masterGroup = serverEventLoop(1, new DefaultThreadFactory(threadNamePrefix + "-ServerMaster"));
-      ioGroup = cacheManager.getGlobalComponentRegistry().getComponent(EventLoopGroup.class);
+      if (shouldShutdownIOGroup = cacheManager == null) {
+         ioGroup = serverEventLoop(configuration.ioThreads(), new DefaultThreadFactory(threadNamePrefix + "-ServerIO"));
+      } else {
+         ioGroup = cacheManager.getGlobalComponentRegistry().getComponent(EventLoopGroup.class);
+      }
 
       serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels", ImmediateEventExecutor.INSTANCE);
       acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted", ImmediateEventExecutor.INSTANCE);
@@ -93,6 +97,7 @@ public class NettyTransport implements Transport {
    private final NettyTransportConnectionStats connectionStats;
 
    private Optional<Integer> nettyPort = Optional.empty();
+   boolean shouldShutdownIOGroup;
 
    @Override
    public void start() {
@@ -125,10 +130,12 @@ public class NettyTransport implements Transport {
    @Override
    public void stop() {
       Future<?> masterTerminationFuture = masterGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
-      Future<?> ioTerminationFuture = ioGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
+      if (shouldShutdownIOGroup) {
+         Future<?> ioTerminationFuture = ioGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
+         ioTerminationFuture.awaitUninterruptibly();
+      }
 
       masterTerminationFuture.awaitUninterruptibly();
-      ioTerminationFuture.awaitUninterruptibly();
 
       // This is probably not necessary, all Netty resources should have been freed already
       ChannelGroupFuture serverChannelsTerminationFuture = serverChannels.close();
