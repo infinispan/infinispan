@@ -42,7 +42,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
    }
 
    public HotRodMergeTest() {
-      numMembersInCluster = 2;
+      numMembersInCluster = 3;
       cacheMode = CacheMode.DIST_SYNC;
       cleanup = CleanupPhase.AFTER_TEST;
    }
@@ -50,7 +50,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = hotRodCacheConfiguration();
-      dcc.clustering().cacheMode(cacheMode).hash().numOwners(1);
+      dcc.clustering().cacheMode(cacheMode).hash();
       dcc.clustering().partitionHandling().whenSplit(partitionHandling);
       createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true));
       waitForClusterToForm();
@@ -84,25 +84,31 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       int initialTopology = advancedCache(0).getRpcManager().getTopologyId();
 
       expectCompleteTopology(client, initialTopology);
-      PartitionDescriptor p0 = new PartitionDescriptor(0);
-      PartitionDescriptor p1 = new PartitionDescriptor(1);
+      PartitionDescriptor p0 = new PartitionDescriptor(0, 1);
+      PartitionDescriptor p1 = new PartitionDescriptor(2);
       splitCluster(p0.getNodes(), p1.getNodes());
-      eventuallyEquals(1, () -> advancedCache(0).getDistributionManager().getCacheTopology().getActualMembers().size());
-      eventuallyEquals(1, () -> advancedCache(1).getDistributionManager().getCacheTopology().getActualMembers().size());
-      expectPartialTopology(client, initialTopology + 1);
+      eventuallyEquals(2, () -> advancedCache(0).getDistributionManager().getCacheTopology().getActualMembers().size());
+      eventuallyEquals(1, () -> advancedCache(2).getDistributionManager().getCacheTopology().getActualMembers().size());
+
+      int splitTopologyId = initialTopology + (partitionHandling == PartitionHandling.DENY_READ_WRITES ? 6 : 5);
+      eventuallyExpectPartialTopology(client, splitTopologyId, servers.get(0), servers.get(1));
+
       partition(0).merge(partition(1));
-      int finalTopologyId =  initialTopology + (partitionHandling == PartitionHandling.DENY_READ_WRITES ? 4 : 8);
+      int finalTopologyId = splitTopologyId + 6;
       eventuallyExpectCompleteTopology(client, finalTopologyId);
-      // Check that we got the number of topology updates to NO_REBALANCE right
-      // With DENY_READ_WRITES:
-      // T+1: DEGRADED_MODE in both partitions
-      // T+3: merged, still DEGRADED_MODE
-      // T+4: back to AVAILABLE
-      // With ALLOW_READ_WRITES:
-      // T+2: NO_REBALANCE in partition [B] before merge
-      // T+3: CONFLICT_RESOLUTION, preferred CH: owners = (1) [test-NodeA-22368: 256+0]
-      // T+4: NO_REBALANCE update topology after CR and before rebalance begins
-      // T+5:READ_OLD (rebalance starts), T+6:READ_ALL, T+7:READ_NEW, T+8: NO_REBALANCE
+      // Check that we got the number of topology updates from the initialTopology to NO_REBALANCE right
+      // T+1: NO_REBALANCE actual_members=[0, 1], owners=[0,1,2] -> DENY_READ_WRITES only
+      // T+2: NO_REBALANCE actual_members=[0, 1], owners=[0,1]
+      // T+3: READ_OLD_WRITE_ALL
+      // T+4: READ_ALL_WRITE_ALL
+      // T+5: READ_NEW_WRITE_ALL
+      // T+6: NO_REBALANCE
+      // T+7: NO_REBALANCE
+      // T+8: NO_REBALANCE
+      // T+9: READ_OLD_WRITE_ALL
+      // T+10: READ_ALL_WRITE_ALL,
+      // T+11: READ_NEW_WRITE_ALL
+      // T+12: NO_REBALANCE
       LocalizedCacheTopology newTopology = advancedCache(0).getDistributionManager().getCacheTopology();
       assertEquals(CacheTopology.Phase.NO_REBALANCE, newTopology.getPhase());
       assertEquals(finalTopologyId, newTopology.getTopologyId());
@@ -110,32 +116,38 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
 
    public void testNewTopologySentAfterOverlappingMerge() {
       TestingUtil.waitForNoRebalanceAcrossManagers(managers());
-      int initialTopology = advancedCache(0).getRpcManager().getTopologyId();
-      expectCompleteTopology(client, initialTopology);
+      CacheTopology initialTopology = advancedCache(0).getDistributionManager().getCacheTopology();
+      int initialTopologyId = initialTopology.getTopologyId();
+      expectCompleteTopology(client, initialTopologyId);
+
       PartitionDescriptor p1 = new PartitionDescriptor(0);
       // isolatePartitions will always result in a CR fail as Node 0 tries to contact Node 1 in order to receive segments
       // which is not possible as all messages received by Node 1 from Node 0 are discarded by the DISCARD protocol.
       // Therefore, it is necessary for the state transfer timeout to be < then the timeout utilised by TestingUtil::waitForNoRebalance
       isolatePartition(p1.getNodes());
       eventuallyEquals(1, () -> advancedCache(0).getDistributionManager().getCacheTopology().getActualMembers().size());
-      eventuallyExpectPartialTopology(client, initialTopology + 1);
+
+      int expectedTologyId = initialTopologyId + 1;
+      eventuallyExpectPartialTopology(client, expectedTologyId, servers.get(0));
 
       partition(0).merge(partition(1));
-      int finalTopologyId = initialTopology + (partitionHandling == PartitionHandling.DENY_READ_WRITES ? 2 : 7);
+      int finalTopologyId = initialTopologyId + (partitionHandling == PartitionHandling.DENY_READ_WRITES ? 2 : 7);
       eventuallyExpectCompleteTopology(client, finalTopologyId);
       // Check that we got the number of topology updates to NO_REBALANCE right
       // With DENY_READ_WRITES:
-      // T+1: DEGRADED_MODE in partition [A]
-      // T+2: back to AVAILABLE
+      // T+1: NO_REBALANCE, owners = [0,1,2], actual_members = [0]
+      // T+2: NO_REBALANCE, owners = [0,1,2], actual_members = [0,1,2] back to AVAILABLE
       // With ALLOW_READ_WRITES:
-      // With ALLOW_READ_WRITES:
-      // T+2: CONFLICT_RESOLUTION, preferred CH: owners = (1) [test-NodeA-22368: 256+0]
-      // T+3: NO_REBALANCE update topology after CR and before rebalance begins
-      // T+4:READ_OLD (rebalance starts), T+5:READ_ALL, T+6:READ_NEW, T+7: NO_REBALANCE
+      // T+1: NO_REBALANCE owners = [0]
+      // T+2: NO_REBALANCE owners = [0]
+      // T+3: NO_REBALANCE owners = [0]
+      // T+4: READ_OLD_WRITE_ALL
+      // T+5: READ_ALL_WRITE_ALL
+      // T+6: READ_NEW_WRITE_ALL
+      // T+7: NO_REBALANCE
       LocalizedCacheTopology newTopology = advancedCache(0).getDistributionManager().getCacheTopology();
       assertEquals(CacheTopology.Phase.NO_REBALANCE, newTopology.getPhase());
    }
-
 
    private void eventuallyExpectCompleteTopology(HotRodClient c, int expectedTopologyId) {
       eventually(() -> {
@@ -155,24 +167,16 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       assertHashTopology20Received(resp.topologyResponse, servers, client.defaultCacheName(), expectedTopologyId);
    }
 
-   private void eventuallyExpectPartialTopology(HotRodClient c, int expectedTopologyId) {
+   private void eventuallyExpectPartialTopology(HotRodClient c, int expectedTopologyId, HotRodServer... servers) {
       eventually(() -> {
          TestResponse resp = c.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0);
          assertStatus(resp, Success);
          if (resp.topologyResponse == null || (resp.topologyResponse.topologyId < expectedTopologyId)) {
             return false;
          }
-         assertHashTopology20Received(resp.topologyResponse, Arrays.asList(servers.get(0)), client.defaultCacheName(),
+         assertHashTopology20Received(resp.topologyResponse, Arrays.asList(servers), client.defaultCacheName(),
                                       expectedTopologyId);
          return true;
       });
    }
-
-   private void expectPartialTopology(HotRodClient c, int expectedTopologyId) {
-      TestResponse resp = c.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0);
-      assertStatus(resp, Success);
-      assertHashTopology20Received(resp.topologyResponse, Arrays.asList(servers.get(0)), client.defaultCacheName(),
-                                   expectedTopologyId);
-   }
-
 }
