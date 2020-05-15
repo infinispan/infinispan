@@ -35,6 +35,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.backup.resources.ContainerResourceFactory;
 import org.infinispan.server.core.logging.Log;
+import org.infinispan.server.core.transport.NonRecursiveEventLoopGroup;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -104,8 +105,13 @@ class BackupWriter {
       Collection<ContainerResource> resources = ContainerResourceFactory
             .getResources(params, blockingManager, cm, parserRegistry, containerRoot);
 
-      // Prepare and ensure all requested resources are valid before starting the backup process
-      resources.forEach(ContainerResource::prepareAndValidateBackup);
+      NonRecursiveEventLoopGroup.reserveCurrentThread();
+      try {
+         // Prepare and ensure all requested resources are valid before starting the backup process
+         resources.forEach(ContainerResource::prepareAndValidateBackup);
+      } finally {
+         NonRecursiveEventLoopGroup.unreserveCurrentThread();
+      }
 
       AggregateCompletionStage<Void> stages = CompletionStages.aggregateCompletionStage();
       for (ContainerResource cr : resources)

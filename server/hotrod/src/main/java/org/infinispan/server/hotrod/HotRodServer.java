@@ -75,6 +75,7 @@ import org.infinispan.server.core.QueryFacade;
 import org.infinispan.server.core.ServerConstants;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
+import org.infinispan.server.core.transport.NonRecursiveEventLoopGroup;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.hotrod.counter.listener.ClientCounterManagerNotificationManager;
 import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterFactory;
@@ -379,7 +380,13 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       if (info == null) {
          boolean keep = checkCacheIsAvailable(cacheName, hotRodVersion, messageId);
 
-         AdvancedCache<byte[], byte[]> cache = obtainAnonymizedCache(cacheName);
+         AdvancedCache<byte[], byte[]> cache;
+         NonRecursiveEventLoopGroup.reserveCurrentThread();
+         try {
+            cache = obtainAnonymizedCache(cacheName);
+         } finally {
+            NonRecursiveEventLoopGroup.unreserveCurrentThread();
+         }
          Configuration cacheCfg = SecurityActions.getCacheConfiguration(cache);
          info = new ExtendedCacheInfo(cache, cacheCfg);
          updateCacheInfo(info);

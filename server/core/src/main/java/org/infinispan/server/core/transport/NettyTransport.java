@@ -22,6 +22,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultithreadEventLoopGroup;
 import io.netty.channel.ServerChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
@@ -65,9 +66,14 @@ public class NettyTransport implements Transport {
       this.address = address;
       this.configuration = configuration;
 
-      // Need to initialize these in constructor since they require configuration
       masterGroup = buildEventLoop(1, new DefaultThreadFactory(threadNamePrefix + "-ServerMaster"));
-      ioGroup = buildEventLoop(configuration.ioThreads(), new DefaultThreadFactory(threadNamePrefix + "-ServerIO"));
+      // Need to initialize these in constructor since they require configuration. probably we need to inject the ioGroup in the constructor somehow.
+      if (cacheManager == null) { //it is null for single-port endpoint. probably we need to inject the ioGroup in the constructor.
+         shouldShutdownIOGroup = true;
+         ioGroup = buildEventLoop(configuration.ioThreads(), new DefaultThreadFactory(threadNamePrefix + "-ServerIO"));
+      } else {
+         ioGroup = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(EventLoopGroup.class);
+      }
 
       serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels", ImmediateEventExecutor.INSTANCE);
       acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted", ImmediateEventExecutor.INSTANCE);
@@ -92,6 +98,7 @@ public class NettyTransport implements Transport {
    private final NettyTransportConnectionStats connectionStats;
 
    private Optional<Integer> nettyPort = Optional.empty();
+   private boolean shouldShutdownIOGroup;
 
    @Override
    public void start() {
@@ -124,10 +131,12 @@ public class NettyTransport implements Transport {
    @Override
    public void stop() {
       Future<?> masterTerminationFuture = masterGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
-      Future<?> ioTerminationFuture = ioGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
+      if (shouldShutdownIOGroup) {
+         Future<?> ioTerminationFuture = ioGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
+         ioTerminationFuture.awaitUninterruptibly();
+      }
 
       masterTerminationFuture.awaitUninterruptibly();
-      ioTerminationFuture.awaitUninterruptibly();
 
       if (serverChannels.isEmpty() && acceptedChannels.isEmpty()) {
          log.debug("Channel group completely closed, external resources released");
@@ -282,10 +291,8 @@ public class NettyTransport implements Transport {
       return channel;
    }
 
-   private EventLoopGroup buildEventLoop(int nThreads, DefaultThreadFactory threadFactory) {
-      EventLoopGroup eventLoop = EPollAvailable.USE_NATIVE_EPOLL ? new EpollEventLoopGroup(nThreads, threadFactory) :
+   public static MultithreadEventLoopGroup buildEventLoop(int nThreads, DefaultThreadFactory threadFactory) {
+      return EPollAvailable.USE_NATIVE_EPOLL ? new EpollEventLoopGroup(nThreads, threadFactory) :
               new NioEventLoopGroup(nThreads, threadFactory);
-      log.createdNettyEventLoop(eventLoop.getClass().getName(), configuration.toString());
-      return eventLoop;
    }
 }

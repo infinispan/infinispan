@@ -37,6 +37,7 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
+import org.infinispan.server.core.transport.NonRecursiveEventLoopGroup;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -135,9 +136,26 @@ public class CounterResource implements ResourceHandler {
                .contentType(contentType)
                .header(CACHE_CONTROL.toString(), CacheControl.noCache());
 
-         CompletionStage<Long> response = configuration.type() == CounterType.WEAK ?
-               completedFuture(counterManager.getWeakCounter(counterName).getValue()) :
-               counterManager.getStrongCounter(counterName).getValue();
+         CompletionStage<Long> response;
+         if (configuration.type() == CounterType.WEAK) {
+            WeakCounter weakCounter;
+            NonRecursiveEventLoopGroup.reserveCurrentThread();
+            try {
+               weakCounter = counterManager.getWeakCounter(counterName);
+            } finally {
+               NonRecursiveEventLoopGroup.unreserveCurrentThread();
+            }
+            response = completedFuture(weakCounter.getValue());
+         } else {
+            StrongCounter strongCounter;
+            NonRecursiveEventLoopGroup.reserveCurrentThread();
+            try {
+               strongCounter = counterManager.getStrongCounter(counterName);
+            } finally {
+               NonRecursiveEventLoopGroup.unreserveCurrentThread();
+            }
+            response = strongCounter.getValue();
+         }
 
          return response.thenApply(v -> responseBuilder.entity(Long.toString(v)).build());
       });
@@ -174,8 +192,15 @@ public class CounterResource implements ResourceHandler {
       Long delta = checkForNumericParam("delta", request, responseBuilder);
       if (delta == null) return completedFuture(responseBuilder.build());
 
-      CounterConfiguration configuration = counterManager.getConfiguration(counterName);
-      if (configuration == null) return notFoundResponseFuture();
+      NonRecursiveEventLoopGroup.reserveCurrentThread();
+      CounterConfiguration configuration;
+      try {
+         configuration = counterManager.getConfiguration(counterName);
+         if (configuration == null) return notFoundResponseFuture();
+      } finally {
+         NonRecursiveEventLoopGroup.unreserveCurrentThread();
+      }
+
 
       CounterType type = configuration.type();
       if (type == CounterType.WEAK) {
@@ -224,8 +249,14 @@ public class CounterResource implements ResourceHandler {
                                                                 Function<WeakCounter, CompletionStage<Void>> weakOp,
                                                                 Function<StrongCounter, CompletableFuture<Long>> strongOp) {
       String counterName = request.variables().get("counterName");
-      CounterConfiguration configuration = counterManager.getConfiguration(counterName);
-      if (configuration == null) return notFoundResponseFuture();
+      NonRecursiveEventLoopGroup.reserveCurrentThread();
+      CounterConfiguration configuration;
+      try {
+         configuration = counterManager.getConfiguration(counterName);
+         if (configuration == null) return notFoundResponseFuture();
+      } finally {
+         NonRecursiveEventLoopGroup.unreserveCurrentThread();
+      }
 
       CounterType type = configuration.type();
 
@@ -270,10 +301,13 @@ public class CounterResource implements ResourceHandler {
    }
 
    private StrongCounter checkForStrongCounter(String name, NettyRestResponse.Builder builder) {
+      NonRecursiveEventLoopGroup.reserveCurrentThread();
       try {
          return counterManager.getStrongCounter(name);
       } catch (Exception e) {
          builder.status(HttpResponseStatus.BAD_REQUEST).entity(String.format("Strong counter '%s' not found", name));
+      } finally {
+         NonRecursiveEventLoopGroup.unreserveCurrentThread();
       }
       return null;
    }
