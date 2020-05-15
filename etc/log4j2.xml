@@ -11,7 +11,7 @@
       <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%throwable{10}%n"/>
     </Console>
      <!-- Use the sys: lookup so system properties set on the command line are preferred -->
-    <File name="File" fileName="${sys:infinispan.log.path}/infinispan${sys:infinispan.module-suffix}.log"
+    <File name="FILE" fileName="${sys:infinispan.log.path}/infinispan${sys:infinispan.module-suffix}.log"
           append="false">
       <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t:%x) [%c{1}] %m%n"/>
     </File>
@@ -24,7 +24,7 @@
 
     <Root level="DEBUG">
       <AppenderRef ref="STDOUT" level="FATAL"/>
-      <AppenderRef ref="File"/>
+      <AppenderRef ref="FILE"/>
     </Root>
   </Loggers>
 </Configuration>

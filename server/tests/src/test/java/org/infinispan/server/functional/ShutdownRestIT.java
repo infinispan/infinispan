@@ -2,7 +2,6 @@ package org.infinispan.server.functional;
 
 import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.security.Common.sync;
-import static org.junit.Assert.assertFalse;
 
 import java.net.ConnectException;
 
@@ -34,7 +33,7 @@ public class ShutdownRestIT {
       RestClient client = SERVER_TEST.rest().create();
       sync(client.server().stop());
       eventually(() -> isServerShutdown(client));
-      assertFalse(SERVER.getServerDriver().isRunning(0));
+      eventually(() -> !SERVER.getServerDriver().isRunning(0));
    }
 
    static boolean isServerShutdown(RestClient client) {
