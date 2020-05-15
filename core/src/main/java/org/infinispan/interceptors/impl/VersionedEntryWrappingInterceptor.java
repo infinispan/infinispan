@@ -1,9 +1,9 @@
 package org.infinispan.interceptors.impl;
 
-import java.util.Map;
 import static org.infinispan.remoting.responses.PrepareResponse.asPrepareResponse;
 import static org.infinispan.transaction.impl.WriteSkewHelper.mergeInPrepareResponse;
 
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
@@ -11,18 +11,18 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.InvocationFinallyFunction;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessFunction;
-import org.infinispan.metadata.EmbeddedMetadata;
-import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -35,11 +35,15 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor {
    private static final Log log = LogFactory.getLog(VersionedEntryWrappingInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    @Inject protected VersionGenerator versionGenerator;
 
    private final InvocationSuccessFunction<VersionedPrepareCommand> prepareHandler = this::prepareHandler;
+   private final InvocationSuccessFunction<VersionedPrepareCommand> afterPrepareHandler = this::afterPrepareHandler;
+   private final InvocationFinallyFunction<VersionedCommitCommand> commitHandler = this::commitHandler;
 
+   @SuppressWarnings("rawtypes")
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       VersionedPrepareCommand versionedPrepareCommand = (VersionedPrepareCommand) command;
@@ -50,10 +54,13 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
    }
 
    private Object prepareHandler(InvocationContext nonTxCtx, VersionedPrepareCommand command, Object nil) {
-      TxInvocationContext ctx = (TxInvocationContext) nonTxCtx;
+      TxInvocationContext<?> ctx = (TxInvocationContext<?>) nonTxCtx;
       CompletionStage<Map<Object, IncrementableEntryVersion>> originVersionData;
-      if (ctx.isOriginLocal() && !ctx.getCacheTransaction().isFromStateTransfer()) {
-         originVersionData = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, command);
+      if (ctx.getCacheTransaction().isFromStateTransfer()) {
+         storeEntryVersionForStateTransfer(ctx);
+         originVersionData = CompletableFutures.completedNull();
+      } else if (ctx.isOriginLocal()) {
+         originVersionData = checkWriteSkew(ctx, command);
       } else {
          originVersionData = CompletableFutures.completedNull();
       }
@@ -61,32 +68,26 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       InvocationStage originVersionStage = makeStage(asyncInvokeNext(ctx, command, originVersionData));
 
       InvocationStage newVersionStage = originVersionStage.thenApplyMakeStage(ctx, command, (rCtx, rCommand, rv) -> {
-         TxInvocationContext txCtx = (TxInvocationContext) rCtx;
-         if (txCtx.isOriginLocal()) {
-            // This is already completed, so just return a sync stage
-            return asyncValue(originVersionData
-                  .thenApply(versionsMap -> mergeInPrepareResponse(versionsMap, asPrepareResponse(rv))));
-         } else {
-            return asyncValue(cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, txCtx, rCommand)
-                  .thenApply(versionsMap -> mergeInPrepareResponse(versionsMap, asPrepareResponse(rv))));
-         }
+         CompletionStage<Map<Object, IncrementableEntryVersion>> stage = rCtx.isOriginLocal() ?
+               originVersionData :
+               checkWriteSkew((TxInvocationContext<?>) rCtx, rCommand);
+         return asyncValue(stage.thenApply(vMap -> mergeInPrepareResponse(vMap, asPrepareResponse(rv))));
       });
 
-      return newVersionStage.thenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
-         boolean onePhaseCommit = rCommand.isOnePhaseCommit();
-         if (onePhaseCommit) {
-            txInvocationContext.getCacheTransaction().setUpdatedEntryVersions(rCommand.getVersionsSeen());
-         }
-
-         CompletionStage<Void> stage = null;
-         if (onePhaseCommit) {
-            stage = commitContextEntries(txInvocationContext, null);
-         }
-         return delayedValue(stage, rv);
-      });
+      return newVersionStage.thenApply(ctx, command, afterPrepareHandler);
    }
 
+   private Object afterPrepareHandler(InvocationContext ctx, VersionedPrepareCommand command, Object rv) {
+      if (command.isOnePhaseCommit()) {
+         TxInvocationContext<?> txCtx = (TxInvocationContext<?>) ctx;
+         txCtx.getCacheTransaction().setUpdatedEntryVersions(command.getVersionsSeen());
+         CompletionStage<Void> stage = commitContextEntries(ctx, null);
+         return delayedValue(stage, rv);
+      }
+      return rv;
+   }
+
+   @SuppressWarnings("rawtypes")
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       VersionedCommitCommand versionedCommitCommand = (VersionedCommitCommand) command;
@@ -94,43 +95,61 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
          versionedCommitCommand.setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
       }
 
-      return invokeNextAndHandle(ctx, versionedCommitCommand, (rCtx, rCommand, rv, t) ->
-            delayedValue(doCommit(rCtx, rCommand), rv, t));
-   }
-
-   private CompletionStage<Void> doCommit(InvocationContext rCtx, VersionedCommitCommand versionedCommitCommand) {
-      if (!rCtx.isOriginLocal()) {
-         ((TxInvocationContext<?>) rCtx).getCacheTransaction().setUpdatedEntryVersions(
-               versionedCommitCommand.getUpdatedVersions());
-      }
-      return commitContextEntries(rCtx, null);
+      return invokeNextAndHandle(ctx, versionedCommitCommand, commitHandler);
    }
 
    @Override
-   protected CompletionStage<Void> commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command,
-                                     Flag stateTransferFlag, boolean l1Invalidation) {
+   protected CompletionStage<Void> commitContextEntry(CacheEntry<?, ?> entry, InvocationContext ctx,
+         FlagAffectedCommand command, Flag stateTransferFlag, boolean l1Invalidation) {
       if (ctx.isInTxScope() && stateTransferFlag == null) {
-         EntryVersion updatedEntryVersion = ((TxInvocationContext) ctx)
-               .getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
-         Metadata commitMetadata = createMetadataForCommit(entry, updatedEntryVersion);
-         entry.setMetadata(commitMetadata);
-         return cdl.commitEntry(entry, command, ctx, null, l1Invalidation);
-      } else {
-         // This could be a state transfer call!
-         return cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
+         storeEntryVersion(entry, (TxInvocationContext<?>) ctx);
+      }
+      return cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
+   }
+
+   private void storeEntryVersion(CacheEntry<?, ?> entry, TxInvocationContext<?> ctx) {
+      IncrementableEntryVersion entryVersion = ctx.getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
+      if (entryVersion == null) {
+         return; //nothing to set
+      }
+      PrivateMetadata.Builder builder = PrivateMetadata.getBuilder(entry.getInternalMetadata());
+      builder.entryVersion(entryVersion);
+      entry.setInternalMetadata(builder.build());
+   }
+
+   private void storeEntryVersionForStateTransfer(TxInvocationContext<?> ctx) {
+      //the write command has the PrivateMetadata with the version when it is received from other nodes (state transfer).
+      //we need to set copy the PrivateMetadata to the contxt entry.
+      for (WriteCommand cmd : ctx.getCacheTransaction().getAllModifications()) {
+         for (Object key : cmd.getAffectedKeys()) {
+            PrivateMetadata metadata = cmd.getInternalMetadata(key);
+            assert metadata != null;
+            IncrementableEntryVersion entryVersion = metadata.entryVersion();
+            assert entryVersion != null;
+            CacheEntry<?, ?> entry = ctx.lookupEntry(key);
+            PrivateMetadata.Builder builder = PrivateMetadata.getBuilder(entry.getInternalMetadata());
+            entry.setInternalMetadata(builder.entryVersion(entryVersion).build());
+            if (trace) {
+               log.tracef("Updated entry from state transfer: %s", entry);
+            }
+         }
       }
    }
 
-   protected Metadata createMetadataForCommit(CacheEntry<?, ?> entry, EntryVersion version) {
-      if (version != null) {
-         if (entry.getMetadata() == null) {
-            return new EmbeddedMetadata.Builder().version(version).build();
-         } else {
-            return entry.getMetadata().builder().version(version).build();
-         }
-      } else {
-         return entry.getMetadata();
+   private Object commitHandler(InvocationContext ctx, VersionedCommitCommand command, Object rv, Throwable t) {
+      return delayedValue(doCommit(ctx, command), rv, t);
+   }
+
+   private CompletionStage<Map<Object, IncrementableEntryVersion>> checkWriteSkew(TxInvocationContext<?> ctx,
+         VersionedPrepareCommand command) {
+      return cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, command);
+   }
+
+   private CompletionStage<Void> doCommit(InvocationContext ctx, VersionedCommitCommand command) {
+      if (!ctx.isOriginLocal()) {
+         ((TxInvocationContext<?>) ctx).getCacheTransaction().setUpdatedEntryVersions(command.getUpdatedVersions());
       }
+      return commitContextEntries(ctx, null);
    }
 
 }

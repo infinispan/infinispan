@@ -1,8 +1,6 @@
 package org.infinispan.client.hotrod.tx;
 
-import static org.infinispan.client.hotrod.configuration.TransactionMode.FULL_XA;
-import static org.infinispan.client.hotrod.configuration.TransactionMode.NON_DURABLE_XA;
-import static org.infinispan.client.hotrod.configuration.TransactionMode.NON_XA;
+import static org.infinispan.client.hotrod.configuration.TransactionMode.NONE;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.assertNoTransaction;
 import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.BYTE_ARRAY_GENERATOR;
 import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.GENERIC_ARRAY_GENERATOR;
@@ -16,12 +14,14 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -60,17 +60,23 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
 
    @Override
    public Object[] factory() {
-      return new Object[]{
-            new APITxTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(NON_XA),
-            new APITxTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA),
-            new APITxTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(FULL_XA),
-            new APITxTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_XA),
-            new APITxTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_DURABLE_XA),
-            new APITxTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(FULL_XA),
-            new APITxTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_XA).javaSerialization(),
-            new APITxTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA).javaSerialization(),
-            new APITxTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(FULL_XA).javaSerialization()
-      };
+      return Arrays.stream(TransactionMode.values())
+            .filter(tMode -> tMode != NONE)
+            .flatMap(txMode -> Arrays.stream(LockingMode.values())
+                  .flatMap(lockingMode -> Stream.builder()
+                        .add(new APITxTest<byte[], byte[]>()
+                              .keyValueGenerator(BYTE_ARRAY_GENERATOR)
+                              .transactionMode(txMode)
+                              .lockingMode(lockingMode))
+                        .add(new APITxTest<String, String>()
+                              .keyValueGenerator(STRING_GENERATOR)
+                              .transactionMode(txMode)
+                              .lockingMode(lockingMode))
+                        .add(new APITxTest<Object[], Object[]>()
+                              .keyValueGenerator(GENERIC_ARRAY_GENERATOR).javaSerialization()
+                              .transactionMode(txMode)
+                              .lockingMode(lockingMode))
+                        .build())).toArray();
    }
 
    @AfterMethod(alwaysRun = true)
@@ -307,23 +313,23 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
 
    @Override
    protected String[] parameterNames() {
-      return concat(super.parameterNames(), null, null);
+      return concat(super.parameterNames(), null, null, null);
    }
 
    @Override
    protected Object[] parameterValues() {
-      return concat(super.parameterValues(), kvGenerator.toString(), transactionMode);
+      return concat(super.parameterValues(), kvGenerator.toString(), transactionMode, lockingMode);
    }
 
    @Override
    protected String parameters() {
-      return "[" + kvGenerator + "/" + transactionMode + "]";
+      return "[" + kvGenerator + "/" + transactionMode + "/" + lockingMode + "]";
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      cacheBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+      cacheBuilder.transaction().lockingMode(lockingMode);
       cacheBuilder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       createHotRodServers(NR_NODES, new ConfigurationBuilder());
       defineInAll(CACHE_NAME, cacheBuilder);
@@ -414,10 +420,6 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
    }
 
    private void checkInitValue(List<K> keys, List<V> values) {
-      checkInitValue(keys, values, true);
-   }
-
-   private void checkInitValue(List<K> keys, List<V> values, boolean inTx) {
       RemoteCache<K, V> cache = txRemoteCache();
       for (int i = 0; i < keys.size(); ++i) {
          kvGenerator.assertValueEquals(values.get(i), cache.get(keys.get(i)));
@@ -605,11 +607,10 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
       assertEquals(1, keys.size());
       assertEquals(1, values.size());
       RemoteCache<K, V> cache = txRemoteCache();
+      MetadataValue<V> value = cache.getWithMetadata(keys.get(0));
       if (sync) {
-         MetadataValue<V> value = cache.getWithMetadata(keys.get(0));
          assertTrue(cache.removeWithVersion(keys.get(0), value.getVersion()));
       } else {
-         MetadataValue<V> value = cache.getWithMetadata(keys.get(0));
          assertTrue(cache.removeWithVersionAsync(keys.get(0), value.getVersion()).get());
       }
    }

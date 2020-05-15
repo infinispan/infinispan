@@ -3,6 +3,7 @@ package org.infinispan.interceptors.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.functional.impl.EntryViews.snapshot;
+import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 
 import java.lang.invoke.MethodHandles;
 import java.util.AbstractCollection;
@@ -522,7 +523,6 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       if (e != null && !e.isRemoved()) {
          Object prevValue = e.getValue();
          Object optionalValue = command.getValue();
-         Metadata metadata = e.getMetadata();
          Long lifespan = command.getLifespan();
          ValueMatcher valueMatcher = command.getValueMatcher();
          // If the provided lifespan is null, that means it is a store removal command, so we can't compare lifespan
@@ -531,7 +531,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
                e.setExpired(true);
                return performRemove(e, ctx, valueMatcher, key, prevValue, optionalValue, false, command);
             }
-         } else if (metadata == null || metadata.version() == nonExistentVersion) {
+         } else if (versionFromEntry(e) == nonExistentVersion) {
             // If there is no metadata and no value that means it is gone currently or not shown due to expired
             // Non existent version is used when versioning is enabled and the entry doesn't exist
             // If we have a value though we should verify it matches the value as well

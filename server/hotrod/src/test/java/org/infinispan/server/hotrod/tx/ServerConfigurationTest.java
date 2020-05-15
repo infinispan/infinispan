@@ -79,16 +79,12 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
       doCorrectConfigurationTest(cacheName, builder);
    }
 
-   /*
-    * TODO change when ISPN-7672 is finished!
-    */
    public void testOptimisticConfiguration() {
       final String cacheName = "opt-cache";
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       builder.transaction().lockingMode(LockingMode.OPTIMISTIC);
-      doWrongConfigurationTest(cacheName, builder,
-            "java.lang.IllegalStateException: Cache 'opt-cache' cannot use Optimistic transactions.");
+      doCorrectConfigurationTest(cacheName, builder);
    }
 
    @Override
@@ -143,7 +139,7 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
    }
 
    private void assertServerTransactionTableEmpty(String cacheName) {
-      for (Cache cache : caches(cacheName)) {
+      for (Cache<?, ?> cache : caches(cacheName)) {
          if (cache.getCacheConfiguration().transaction().transactionMode().isTransactional()) {
             PerCacheTxTable perCacheTxTable = extractComponent(cache, PerCacheTxTable.class);
             assertTrue(perCacheTxTable.isEmpty());

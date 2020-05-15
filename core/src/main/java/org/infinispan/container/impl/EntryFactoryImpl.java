@@ -22,7 +22,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -53,6 +52,7 @@ public class EntryFactoryImpl implements EntryFactory {
    private boolean isL1Enabled;
    private boolean useRepeatableRead;
    private boolean useVersioning;
+   private PrivateMetadata nonExistingPrivateMetadata;
 
    @Start (priority = 8)
    public void init() {
@@ -64,6 +64,9 @@ public class EntryFactoryImpl implements EntryFactory {
       isL1Enabled = configuration.clustering().l1().enabled();
       // Write-skew check implies isolation level = REPEATABLE_READ && locking mode = OPTIMISTIC
       useVersioning = Configurations.isTxVersioned(configuration);
+      nonExistingPrivateMetadata = new PrivateMetadata.Builder()
+            .entryVersion(versionGenerator.nonExistingVersion())
+            .build();
    }
 
    @Override
@@ -227,7 +230,7 @@ public class EntryFactoryImpl implements EntryFactory {
          boolean isWrite) {
       // For a write operation, the entry is always already wrapped. For a read operation, the entry may be
       // in the context as an InternalCacheEntry, as null, or missing altogether.
-      CacheEntry contextEntry = getFromContext(ctx, key);
+      CacheEntry<?, ?> contextEntry = getFromContext(ctx, key);
       if (contextEntry instanceof MVCCEntry) {
          MVCCEntry mvccEntry = (MVCCEntry) contextEntry;
          // Already wrapped for a write. Update the value and the metadata.
@@ -244,11 +247,12 @@ public class EntryFactoryImpl implements EntryFactory {
          mvccEntry.setCreated(externalEntry.getCreated());
          mvccEntry.setLastUsed(externalEntry.getLastUsed());
          mvccEntry.setMetadata(externalEntry.getMetadata());
+         mvccEntry.setInternalMetadata(externalEntry.getInternalMetadata());
          mvccEntry.updatePreviousValue();
          if (trace) log.tracef("Updated context entry %s", contextEntry);
       } else if (contextEntry == null || contextEntry.isNull()) {
          if (isWrite || useRepeatableRead) {
-            MVCCEntry mvccEntry = createWrappedEntry(key, externalEntry);
+            MVCCEntry<?, ?> mvccEntry = createWrappedEntry(key, externalEntry);
             if (isRead) {
                mvccEntry.setRead();
             }
@@ -271,8 +275,8 @@ public class EntryFactoryImpl implements EntryFactory {
       }
    }
 
-   private CacheEntry getFromContext(InvocationContext ctx, Object key) {
-      final CacheEntry cacheEntry = ctx.lookupEntry(key);
+   private CacheEntry<?, ?> getFromContext(InvocationContext ctx, Object key) {
+      final CacheEntry<?, ?> cacheEntry = ctx.lookupEntry(key);
       if (trace) log.tracef("Exists in context? %s ", cacheEntry);
       return cacheEntry;
    }
@@ -290,7 +294,7 @@ public class EntryFactoryImpl implements EntryFactory {
       return ice;
    }
 
-   protected MVCCEntry createWrappedEntry(Object key, CacheEntry cacheEntry) {
+   protected MVCCEntry<?, ?> createWrappedEntry(Object key, CacheEntry<?, ?> cacheEntry) {
       Object value = null;
       Metadata metadata = null;
       PrivateMetadata internalMetadata = null;
@@ -301,11 +305,11 @@ public class EntryFactoryImpl implements EntryFactory {
       }
 
       if (trace) log.tracef("Creating new entry for key %s", toStr(key));
-      MVCCEntry mvccEntry;
+      MVCCEntry<?, ?> mvccEntry;
       if (useRepeatableRead) {
          if (useVersioning) {
-            if (metadata == null) {
-               metadata = new EmbeddedMetadata.Builder().version(versionGenerator.nonExistingVersion()).build();
+            if (internalMetadata == null) {
+               internalMetadata = nonExistingPrivateMetadata;
             }
             mvccEntry = new VersionedRepeatableReadEntry(key, value, metadata);
          } else {

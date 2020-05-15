@@ -2,18 +2,18 @@ package org.infinispan.container.entries;
 
 import org.infinispan.commons.util.AbstractEntrySizeCalculatorHelper;
 import org.infinispan.commons.util.EntrySizeCalculator;
-import org.infinispan.container.impl.InternalEntryFactoryImpl;
-import org.infinispan.container.impl.KeyValueMetadataSizeCalculator;
 import org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheEntry;
+import org.infinispan.container.impl.InternalEntryFactoryImpl;
+import org.infinispan.container.impl.KeyValueMetadataSizeCalculator;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
- * Implementation of a size calculator that calcultes only the size of the value assuming it is an InternalCacheEntry.
+ * Implementation of a size calculator that calculates only the size of the value assuming it is an InternalCacheEntry.
  * This delegates the calculation of the key and the value contained within the InternalCacheEntry to the provided
  * SizeCalculator.
  * @param <K> The type of the key
@@ -71,15 +71,15 @@ public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorH
    }
 
    @Override
-   public long calculateSize(K key, V value, Metadata metadata, PrivateMetadata internalMetadata) {
+   public long calculateSize(K key, V value, Metadata metadata, PrivateMetadata pvtMetadata) {
       long objSize = calculator.calculateSize(key, value);
 
       // This is for the surrounding ICE
       long iceSize = 0;
       // ICE itself is an object and has a reference to it's class
       iceSize += OBJECT_SIZE + POINTER_SIZE;
-      // Each ICE references key and value
-      iceSize += 2 * POINTER_SIZE;
+      // Each ICE references key and value and private metadata
+      iceSize += 3 * POINTER_SIZE;
 
       long metadataSize = 0;
       if (metadata != null) {
@@ -100,11 +100,45 @@ public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorH
             metadataSize += POINTER_SIZE;
             metadataSize = roundUpToNearest8(metadataSize);
             // This is for the NumericVersion and the long inside of it
-            metadataSize += OBJECT_SIZE + POINTER_SIZE + 8;
+            metadataSize += numericVersionSize();
             metadataSize = roundUpToNearest8(metadataSize);
          }
       }
-      //TODO!??? compute internal metadata size?
-      return objSize + roundUpToNearest8(iceSize) + metadataSize;
+      long pvtMetadataSize = pvtMetadata == null || pvtMetadata.isEmpty() ? 0 : privateMetadataSize(pvtMetadata);
+
+      return objSize + roundUpToNearest8(iceSize) + metadataSize + pvtMetadataSize;
+   }
+
+   private static long privateMetadataSize(PrivateMetadata metadata) {
+      long size = HEADER_AND_CLASS_REFERENCE;
+      size += 2 * POINTER_SIZE; //two fields, IracMetadata & EntryVersion
+      size = roundUpToNearest8(size);
+      if (metadata.iracMetadata() != null) {
+         size += iracMetadataSize();
+      }
+      if (metadata.getNumericVersion() != null) {
+         size += numericVersionSize();
+      } else if (metadata.getClusteredVersion() != null) {
+         size += simpleClusteredVersionSize();
+      }
+      return size;
+   }
+
+   private static long iracMetadataSize() {
+      //estimated
+      long size = HEADER_AND_CLASS_REFERENCE;
+      size += 2 * POINTER_SIZE; //site: String, version: IracEntryVersion
+      //go recursive?
+      return roundUpToNearest8(size);
+   }
+
+   private static long numericVersionSize() {
+      //only a long stored
+      return roundUpToNearest8(HEADER_AND_CLASS_REFERENCE + 8);
+   }
+
+   private static long simpleClusteredVersionSize() {
+      //only a int and long
+      return roundUpToNearest8(HEADER_AND_CLASS_REFERENCE + 4 + 8);
    }
 }

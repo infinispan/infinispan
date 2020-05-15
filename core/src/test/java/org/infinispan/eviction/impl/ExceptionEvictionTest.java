@@ -61,7 +61,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
    /**
     * The overhead per entry in bytes when using optimistic transactions, due to extra storage in the metadata.
     */
-   public static final int OPTIMISTIC_TX_OVERHEAD = 40;
+   public static final int OPTIMISTIC_TX_OVERHEAD = 48;
 
    /**
     * The extra overhead per entry in bytes due to usage of maxIdle or lifespan.

@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
@@ -318,7 +319,12 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       CacheWriter<String, String> writer = TestingUtil.getFirstWriter(testCache);
       Object writerKey = testCache.getKeyDataConversion().toStorage(key);
       Object writerValue = testCache.getValueDataConversion().toStorage(value);
-      MarshallableEntry entry = MarshalledEntryUtil.create(writerKey, writerValue, testCache);
+      MarshallableEntry entry;
+      if (Configurations.isTxVersioned(testCache.getCacheConfiguration())) {
+         entry = MarshalledEntryUtil.createWithVersion(writerKey, writerValue, testCache);
+      } else {
+         entry = MarshalledEntryUtil.create(writerKey, writerValue, testCache);
+      }
       writer.write(entry);
    }
 

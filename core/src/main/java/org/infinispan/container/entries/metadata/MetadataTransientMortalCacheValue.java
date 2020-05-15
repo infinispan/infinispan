@@ -13,13 +13,12 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
-import org.infinispan.container.entries.versioned.Versioned;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
- * A form of {@link TransientMortalCacheValue} that is {@link Versioned}
+ * A form of {@link TransientMortalCacheValue} that stores {@link Metadata}
  *
  * @author Manik Surtani
  * @since 5.1

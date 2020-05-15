@@ -13,7 +13,9 @@ public abstract class AbstractEntrySizeCalculatorHelper<K, V> implements EntrySi
    // has to reference its class
    public static final int POINTER_SIZE = sun.misc.Unsafe.ARRAY_OBJECT_INDEX_SCALE;
 
-   public long roundUpToNearest8(long size) {
+   public static final int HEADER_AND_CLASS_REFERENCE = OBJECT_SIZE + POINTER_SIZE;
+
+   public static long roundUpToNearest8(long size) {
       return (size + 7) & ~0x7;
    }
 }

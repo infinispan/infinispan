@@ -7,6 +7,8 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.Callable;
 
 import org.infinispan.Cache;
@@ -36,7 +38,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "persistence.WriteSkewCacheLoaderFunctionalTest")
 public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
 
-   CacheLoader loader;
+   CacheLoader<?, ?> loader;
    static final long LIFESPAN = 60000000; // very large lifespan so nothing actually expires
 
    @Override
@@ -57,17 +59,17 @@ public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
       return builder;
    }
 
-   private void assertInCacheAndStore(Cache cache, CacheLoader loader, Object key, Object value) throws PersistenceException {
+   private void assertInCacheAndStore(Cache<?, ?> cache, CacheLoader<?, ?> loader, Object key, Object value) throws PersistenceException {
       assertInCacheAndStore(cache, loader, key, value, -1);
    }
 
-   private void assertInCacheAndStore(Cache cache, CacheLoader store, Object key, Object value, long lifespanMillis) throws PersistenceException {
-      InternalCacheValue icv = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
+   private void assertInCacheAndStore(Cache<?, ?> cache, CacheLoader<?, ?> store, Object key, Object value, long lifespanMillis) throws PersistenceException {
+      InternalCacheValue<?> icv = cache.getAdvancedCache().getDataContainer().peek(key).toInternalCacheValue();
       assertStoredEntry(icv.getValue(), value, icv.getLifespan(), lifespanMillis, "Cache", key);
-      assertNotNull("For :" + icv, icv.getMetadata().version());
-      MarshallableEntry load = store.loadEntry(key);
+      assertNotNull("For :" + icv, icv.getInternalMetadata().entryVersion());
+      MarshallableEntry<?, ?> load = store.loadEntry(key);
       assertStoredEntry(load.getValue(), value, load.getMetadata().lifespan(), lifespanMillis, "Store", key);
-      assertNotNull("For :" + load, load.getMetadata().version());
+      assertNotNull("For :" + load, load.getInternalMetadata().entryVersion());
    }
 
    private void assertStoredEntry(Object value, Object expectedValue, long lifespanMillis, long expectedLifespan, String src, Object key) {
@@ -76,7 +78,7 @@ public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
       assertEquals(src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + lifespanMillis, expectedLifespan, lifespanMillis);
    }
 
-   private <T> void assertNotInCacheAndStore(Cache cache, CacheLoader store, T... keys) throws PersistenceException {
+   private <T> void assertNotInCacheAndStore(Cache<?, ?> cache, CacheLoader<?, ?> store, Collection<T> keys) throws PersistenceException {
       for (Object key : keys) {
          assertFalse("Cache should not contain key " + key, cache.getAdvancedCache().getDataContainer().containsKey(key));
          assertFalse("Store should not contain key " + key, store.contains(key));
@@ -86,7 +88,7 @@ public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
    public void testPreloadingInTransactionalCache() throws Exception {
       assertTrue(cache.getCacheConfiguration().persistence().preload());
 
-      assertNotInCacheAndStore(cache, loader, "k1", "k2", "k3", "k4");
+      assertNotInCacheAndStore(cache, loader, Arrays.asList("k1", "k2", "k3", "k4"));
 
       cache.put("k1", "v1");
       cache.put("k2", "v2", LIFESPAN, MILLISECONDS);
@@ -100,7 +102,7 @@ public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
             assertInCacheAndStore(cache, loader, "k" + i, "v" + i, LIFESPAN);
       }
 
-      DataContainer c = cache.getAdvancedCache().getDataContainer();
+      DataContainer<?, ?> c = cache.getAdvancedCache().getDataContainer();
 
       assertEquals(4, c.size());
       cache.stop();

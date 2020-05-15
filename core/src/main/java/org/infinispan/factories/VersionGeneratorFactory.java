@@ -16,15 +16,18 @@ import org.infinispan.factories.scopes.Scopes;
  * @author Galder Zamarreño
  * @since 5.1
  */
-@DefaultFactoryFor(classes = VersionGenerator.class, names = KnownComponentNames.TRANSACTION_VERSION_GENERATOR)
+@DefaultFactoryFor(classes = VersionGenerator.class, names = {KnownComponentNames.TRANSACTION_VERSION_GENERATOR, KnownComponentNames.HOT_ROD_VERSION_GENERATOR})
 @Scope(Scopes.NAMED_CACHE)
 public class VersionGeneratorFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
    public Object construct(String componentName) {
       if (KnownComponentNames.TRANSACTION_VERSION_GENERATOR.equals(componentName)) {
          return new NumericVersionGenerator();
-      }
-      if (Configurations.isTxVersioned(configuration)) {
+      } else if (KnownComponentNames.HOT_ROD_VERSION_GENERATOR.equals(componentName)) {
+         //Note: HotRod cannot use the same version generator as Optimistic Transaction.
+         //the SimpleClusteredVersionGenerator#generateNew() always generates version=1. Not useful to detect conflicts.
+         return new NumericVersionGenerator();
+      } else if (Configurations.isTxVersioned(configuration)) {
          return configuration.clustering().cacheMode().isClustered() ?
                 new SimpleClusteredVersionGenerator() :
                 new NumericVersionGenerator();

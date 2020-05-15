@@ -62,9 +62,13 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    @Override
    public void cleanupLeaverTransactions(List<Address> members) {
       Iterator<RemoteTransaction> it = getRemoteTransactions().iterator();
+      HashSet<Address> membersSet = new HashSet<>(members); //faster lookup
       while (it.hasNext()) {
          RecoveryAwareRemoteTransaction recTx = (RecoveryAwareRemoteTransaction) it.next();
-         recTx.computeOrphan(members);
+         if (!transactionOriginatorChecker.isOriginatorMissing(recTx.getGlobalTransaction(), membersSet)) {
+            continue; //Hot Rod transaction
+         }
+         recTx.computeOrphan(membersSet);
          if (recTx.isInDoubt()) {
             recoveryManager.registerInDoubtTransaction(recTx);
             it.remove();

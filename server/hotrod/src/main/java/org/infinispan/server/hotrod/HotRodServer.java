@@ -47,6 +47,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
@@ -607,7 +608,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          this.anonymizedCache = SecurityActions.anonymizeSecureCache(cache);
          this.distributionManager = SecurityActions.getDistributionManager(cache);
          ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache);
-         this.versionGenerator = componentRegistry.getVersionGenerator();
+         //Note: HotRod cannot use the same version generator as Optimistic Transaction.
+         this.versionGenerator = componentRegistry.getComponent(VersionGenerator.class, KnownComponentNames.HOT_ROD_VERSION_GENERATOR);
          this.configuration = configuration;
          this.transactional = configuration.transaction().transactionMode().isTransactional();
          this.clustered = configuration.clustering().cacheMode().isClustered();

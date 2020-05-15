@@ -3,10 +3,12 @@ package org.infinispan.expiration.impl;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +32,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -70,6 +73,8 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
     */
    protected ConcurrentMap<K, CompletableFuture<Boolean>> expiring = new ConcurrentHashMap<>();
    protected ScheduledFuture<?> expirationTask;
+
+   private final List<ExpirationConsumer<K, V>> listeners = new CopyOnWriteArrayList<>();
 
    // used only for testing
    void initialize(ScheduledExecutorService executor, String cacheName, Configuration cfg) {
@@ -142,7 +147,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
          if (oldEntry != null) {
             synchronized (oldEntry) {
                if (oldEntry.isExpired(currentTime)) {
-                  deleteFromStoresAndNotify(k, oldEntry.getValue(), oldEntry.getMetadata());
+                  deleteFromStoresAndNotify(k, oldEntry.getValue(), oldEntry.getMetadata(), oldEntry.getInternalMetadata());
                } else {
                   return oldEntry;
                }
@@ -160,7 +165,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    }
 
    /**
-    * Same as {@link #deleteFromStoresAndNotify(Object, Object, Metadata)} except that the store removal is done
+    * Same as {@link #deleteFromStoresAndNotify(Object, Object, Metadata, PrivateMetadata)} except that the store removal is done
     * synchronously - this means this method <b>MUST</b> be invoked in the blocking thread pool
     * @param key
     * @param value
@@ -182,20 +187,20 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
       // Note since this is invoked without the actual key lock it is entirely possible for a remove to occur
       // concurrently before the data container lock is acquired and then the oldEntry below will be null causing an
       // expiration event to be generated that is extra
-      return handleInStoreExpirationInternal(key, null, null);
+      return handleInStoreExpirationInternal(key, null, null, null);
    }
 
    @Override
    public CompletionStage<Void> handleInStoreExpirationInternal(final MarshallableEntry<K, V> marshalledEntry) {
-      return handleInStoreExpirationInternal(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata());
+      return handleInStoreExpirationInternal(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata(), marshalledEntry.getInternalMetadata());
    }
 
-   private CompletionStage<Void> handleInStoreExpirationInternal(K key, V value, Metadata metadata) {
+   private CompletionStage<Void> handleInStoreExpirationInternal(K key, V value, Metadata metadata, PrivateMetadata privateMetadata) {
       dataContainer.running().compute(key, (oldKey, oldEntry, factory) -> {
          boolean shouldRemove = false;
          if (oldEntry == null) {
             shouldRemove = true;
-            deleteFromStoresAndNotify(key, value, metadata);
+            deleteFromStoresAndNotify(key, value, metadata, privateMetadata);
          } else if (oldEntry.canExpire()) {
             long time = timeService.time();
             if (oldEntry.isExpired(time)) {
@@ -206,7 +211,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
                      if (shouldRemove = (metadata == null || oldEntry.getMetadata().equals(metadata)) &&
                              (value == null || value.equals(oldEntry.getValue()))) {
                         // TODO: this is blocking! - this needs to be fixed in https://issues.redhat.com/browse/ISPN-10377
-                        deleteFromStoresAndNotify(key, value, metadata);
+                        deleteFromStoresAndNotify(key, value, metadata, privateMetadata);
                      }
                   }
                }
@@ -226,11 +231,9 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
     * <p>
     * This method must be invoked while holding data container lock for the given key to ensure events are ordered
     * properly.
-    * @param key
-    * @param value
-    * @param metadata
     */
-   private void deleteFromStoresAndNotify(K key, V value, Metadata metadata) {
+   private void deleteFromStoresAndNotify(K key, V value, Metadata metadata, PrivateMetadata privateMetadata) {
+      listeners.forEach(l -> l.expired(key, value, metadata, privateMetadata)); //for internal use, assume non-blocking
       CompletionStages.join(CompletionStages.allOf(
             persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), PersistenceManager.AccessMode.BOTH),
             cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null)));
@@ -279,6 +282,16 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
       if (expirationTask != null) {
          expirationTask.cancel(true);
       }
+   }
+
+   @Override
+   public void addInternalListener(ExpirationConsumer<K, V> consumer) {
+      listeners.add(consumer);
+   }
+
+   @Override
+   public void removeInternalListener(Object listener) {
+      listeners.remove(listener);
    }
 
    class ScheduledTask implements Runnable {

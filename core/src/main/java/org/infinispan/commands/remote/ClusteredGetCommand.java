@@ -11,6 +11,7 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -82,10 +83,12 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
                if (trace) log.tracef("Return value for key=%s is %s", key, rv);
                //this might happen if the value was fetched from a cache loader
                if (rv instanceof MVCCEntry) {
-                  MVCCEntry mvccEntry = (MVCCEntry) rv;
-                  return componentRegistry.getInternalEntryFactory().wired().createValue(mvccEntry);
+                  MVCCEntry<?, ?> mvccEntry = (MVCCEntry<?, ?>) rv;
+                  InternalCacheValue<?> icv = componentRegistry.getInternalEntryFactory().wired().createValue(mvccEntry);
+                  icv.setInternalMetadata(mvccEntry.getInternalMetadata());
+                  return icv;
                } else if (rv instanceof InternalCacheEntry) {
-                  InternalCacheEntry internalCacheEntry = (InternalCacheEntry) rv;
+                  InternalCacheEntry<?, ?> internalCacheEntry = (InternalCacheEntry<? ,?>) rv;
                   return internalCacheEntry.toInternalCacheValue();
                } else { // null or Response
                   return rv;

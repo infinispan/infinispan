@@ -7,19 +7,25 @@ import org.infinispan.container.versioning.EntryVersion;
  *
  * @author Manik Surtani
  * @since 5.1
+ * @deprecated since 11.0 (no longer used).
  */
+@Deprecated
 public interface Versioned {
 
    /**
     * @return the version of the entry.  May be null if versioning is not supported, and must never be null if
     *         versioning is supported.
     */
-   EntryVersion getVersion();
+   default EntryVersion getVersion() {
+      throw new UnsupportedOperationException();
+   }
 
    /**
     * Sets the version on this entry.
     *
     * @param version version to set
     */
-   void setVersion(EntryVersion version);
+   default void setVersion(EntryVersion version) {
+      throw new UnsupportedOperationException();
+   }
 }

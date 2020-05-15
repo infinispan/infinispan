@@ -7,6 +7,8 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.util.concurrent.CompletionStages;
 
@@ -82,4 +84,32 @@ public interface InternalExpirationManager<K, V> extends ExpirationManager<K, V>
     * @return a stage that will complete with {@code true} if the entry was expired and {@code false} otherwise
     */
    CompletionStage<Boolean> handlePossibleExpiration(InternalCacheEntry<K, V> entry, int segment, boolean isWrite);
+
+   /**
+    * Adds an {@link ExpirationConsumer} to be invoked when an entry is expired.
+    * <p>
+    * It exposes the {@link PrivateMetadata}
+    *
+    * @param consumer The instance to invoke.
+    */
+   void addInternalListener(ExpirationConsumer<K, V> consumer);
+
+   /**
+    * Removes a previous registered {@link ExpirationConsumer}.
+    *
+    * @param listener The instance to remove.
+    */
+   void removeInternalListener(Object listener);
+
+   interface ExpirationConsumer<T, U> {
+      /**
+       * Invoked when an entry is expired.
+       *
+       * @param key             The key.
+       * @param value           The value.
+       * @param metadata        The {@link Metadata}.
+       * @param privateMetadata The {@link PrivateMetadata}.
+       */
+      void expired(T key, U value, Metadata metadata, PrivateMetadata privateMetadata);
+   }
 }

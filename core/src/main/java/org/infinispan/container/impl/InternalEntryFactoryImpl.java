@@ -33,6 +33,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * An implementation that generates non-versioned entries
@@ -207,33 +208,23 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
 
    @Override
    public <K, V> InternalCacheValue<V> getValueFromCtx(K key, InvocationContext ctx) {
-      CacheEntry entry = ctx.lookupEntry(key);
+      CacheEntry<K, V> entry = ctx.lookupEntry(key);
       if (entry instanceof InternalCacheEntry) {
-         return ((InternalCacheEntry) entry).toInternalCacheValue();
+         return ((InternalCacheEntry<K, V>) entry).toInternalCacheValue();
       } else if (entry != null) {
+         InternalCacheValue<V> cv = create(entry).toInternalCacheValue();
+         PrivateMetadata metadata = entry.getInternalMetadata();
          if (ctx.isInTxScope()) {
-            Map<Object, IncrementableEntryVersion> updatedVersions =
-                  ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions();
+            Map<Object, IncrementableEntryVersion> updatedVersions = ((TxInvocationContext<?>) ctx)
+                  .getCacheTransaction().getUpdatedEntryVersions();
             if (updatedVersions != null) {
-               EntryVersion version = updatedVersions.get(entry.getKey());
+               IncrementableEntryVersion version = updatedVersions.get(entry.getKey());
                if (version != null) {
-                  Metadata metadata = entry.getMetadata();
-                  if (metadata == null) {
-                     // If no metadata passed, assumed embedded metadata
-                     metadata = new EmbeddedMetadata.Builder()
-                           .lifespan(entry.getLifespan()).maxIdle(entry.getMaxIdle())
-                           .version(version).build();
-                  } else {
-                     metadata = metadata.builder().version(version).build();
-                  }
-                  InternalCacheValue cv = create(entry.getKey(), entry.getValue(), metadata).toInternalCacheValue();
-                  cv.setInternalMetadata(entry.getInternalMetadata());
-                  return cv;
+                  metadata = PrivateMetadata.getBuilder(metadata).entryVersion(version).build();
                }
             }
          }
-         InternalCacheValue cv = create(entry).toInternalCacheValue();
-         cv.setInternalMetadata(entry.getInternalMetadata());
+         cv.setInternalMetadata(metadata);
          return cv;
       } else {
          return null;
