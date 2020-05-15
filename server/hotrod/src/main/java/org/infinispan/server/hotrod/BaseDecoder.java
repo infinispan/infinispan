@@ -49,9 +49,16 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
    public void handlerAdded(ChannelHandlerContext ctx) {
       auth = new Authentication(ctx.channel(), executor, server);
       cacheProcessor = new TransactionRequestProcessor(ctx.channel(), executor, server);
+      SecurityActions.addListener(server.getCacheManager(), cacheProcessor);
       counterProcessor = new CounterRequestProcessor(ctx.channel(), (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager), executor, server);
       multimapProcessor = new MultimapRequestProcessor(ctx.channel(), executor, server);
       taskProcessor = new TaskRequestProcessor(ctx.channel(), executor, server);
+   }
+
+   @Override
+   protected void handlerRemoved0(ChannelHandlerContext ctx) throws Exception {
+      SecurityActions.removeListener(server.getCacheManager(), cacheProcessor);
+      super.handlerRemoved0(ctx);
    }
 
    @Override
