@@ -50,6 +50,12 @@ the value for "k1" that originates from **LON**. This results in "k1=5" in both
 **LON** and **NYC** after {brandname} resolves the conflict and replicates the
 value.
 
+[TIP]
+====
+Prepend site names with numbers as a simple way to represent the order of
+priority for resolving conflicting entries; for example, **1LON** and **2NYC**.
+====
+
 .Reference
 
 * link:https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#compareTo-java.lang.String-[java.lang.String#compareTo()]
