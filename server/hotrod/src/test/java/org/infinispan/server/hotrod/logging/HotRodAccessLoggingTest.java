@@ -4,9 +4,9 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.skip.StringLogAppender;
 import org.infinispan.server.hotrod.HotRodSingleNodeTest;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**
@@ -23,7 +23,7 @@ public class HotRodAccessLoggingTest extends HotRodSingleNodeTest {
       testShortName = TestResourceTracker.getCurrentTestShortName();
       logAppender = new StringLogAppender("org.infinispan.HOTROD_ACCESS_LOG",
                                           Level.TRACE,
-            t -> t.getName().startsWith("HotRod-" + testShortName + "-ServerIO"),
+            t -> t.getName().startsWith("non-blocking-thread-" + testShortName),
                                           PatternLayout.newBuilder().withPattern(LOG_FORMAT).build());
       logAppender.install();
       super.setup();

@@ -102,28 +102,32 @@ class BackupWriter {
       Collection<ContainerResource> resources = ContainerResourceFactory
             .getResources(params, blockingManager, cm, gcr, parserRegistry, containerRoot);
 
-      // Prepare and ensure all requested resources are valid before starting the backup process
-      resources.forEach(ContainerResource::prepareAndValidateBackup);
+      CompletionStage<Void> prepareStage = blockingManager.runBlocking(() -> {
+         // Prepare and ensure all requested resources are valid before starting the backup process
+         resources.forEach(ContainerResource::prepareAndValidateBackup);
+      }, "backupWriter - prepare");
 
-      AggregateCompletionStage<Void> stages = CompletionStages.aggregateCompletionStage();
-      for (ContainerResource cr : resources)
-         stages.dependsOn(cr.backup());
+      return prepareStage.thenCompose(ignore -> {
+         AggregateCompletionStage<Void> stages = CompletionStages.aggregateCompletionStage();
+         for (ContainerResource cr : resources)
+            stages.dependsOn(cr.backup());
 
-      stages.dependsOn(
-            // Write the global configuration xml
-            blockingManager.runBlocking(() ->
-                  writeGlobalConfig(SecurityActions.getGlobalConfiguration(cm), containerRoot), "global-config")
-      );
+         stages.dependsOn(
+               // Write the global configuration xml
+               blockingManager.runBlocking(() ->
+                     writeGlobalConfig(SecurityActions.getGlobalConfiguration(cm), containerRoot), "backupWriter - writeGlobalConfig")
+         );
 
-      return blockingManager.thenRunBlocking(
-            stages.freeze(),
-            () -> {
-               Properties manifest = new Properties();
-               resources.forEach(r -> r.writeToManifest(manifest));
-               storeProperties(manifest, "Container Properties", containerRoot.resolve(CONTAINERS_PROPERTIES_FILE));
-            },
-            "create-manifest"
-      );
+         return blockingManager.thenRunBlocking(
+               stages.freeze(),
+               () -> {
+                  Properties manifest = new Properties();
+                  resources.forEach(r -> r.writeToManifest(manifest));
+                  storeProperties(manifest, "Container Properties", containerRoot.resolve(CONTAINERS_PROPERTIES_FILE));
+               },
+               "backupWriter - createManifest"
+         );
+      });
    }
 
    private CompletionStage<Void> writeManifest(Set<String> containers) {

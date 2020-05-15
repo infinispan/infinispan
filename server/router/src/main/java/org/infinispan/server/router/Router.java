@@ -42,7 +42,7 @@ public class Router {
     * Starts the router.
     */
    public void start() {
-      endpointRouters.forEach(r -> r.start(routerConfiguration.routingTable()));
+      endpointRouters.forEach(r -> r.start(routerConfiguration.routingTable(), null));
       RouterLogger.SERVER.printOutRoutingTable(routerConfiguration.routingTable());
    }
 

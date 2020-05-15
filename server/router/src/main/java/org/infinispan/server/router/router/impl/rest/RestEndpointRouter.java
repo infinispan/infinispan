@@ -3,6 +3,7 @@ package org.infinispan.server.router.router.impl.rest;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.configuration.RestRouterConfiguration;
 import org.infinispan.server.router.logging.RouterLogger;
@@ -32,7 +33,7 @@ public class RestEndpointRouter implements EndpointRouter {
    }
 
    @Override
-   public void start(RoutingTable routingTable) {
+   public void start(RoutingTable routingTable, EmbeddedCacheManager ecm) {
       try {
          ServerBootstrap bootstrap = new ServerBootstrap();
          bootstrap.group(masterGroup, workerGroup)

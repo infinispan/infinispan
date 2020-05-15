@@ -141,10 +141,28 @@ public class EmbeddedCounterManager implements CounterManager {
       return validateCounter(StrongCounter.class, counter);
    }
 
+   public StrongCounter getCreatedStrongCounter(String name) {
+      checkStarted();
+      Object counter = counters.get(name);
+      if (counter == null) {
+         return null;
+      }
+      return validateCounter(StrongCounter.class, counter);
+   }
+
    @Override
    public WeakCounter getWeakCounter(String name) {
       checkStarted();
       Object counter = counters.computeIfAbsent(name, this::createCounter);
+      return validateCounter(WeakCounter.class, counter);
+   }
+
+   public WeakCounter getCreatedWeakCounter(String name) {
+      checkStarted();
+      Object counter = counters.get(name);
+      if (counter == null) {
+         return null;
+      }
       return validateCounter(WeakCounter.class, counter);
    }
 

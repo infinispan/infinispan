@@ -252,6 +252,10 @@ class AssertsNearCache<K, V> {
       return get;
    }
 
+   public boolean isNearCacheConnected() {
+      return this.nearCacheService.get().isConnected();
+   }
+
    public int nearCacheSize() {
       return this.nearCacheService.get().size();
    }

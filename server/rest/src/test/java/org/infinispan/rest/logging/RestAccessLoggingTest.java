@@ -39,7 +39,7 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
       testShortName = TestResourceTracker.getCurrentTestShortName();
       logAppender = new StringLogAppender("org.infinispan.REST_ACCESS_LOG",
             Level.TRACE,
-            t -> t.getName().startsWith("REST-" + testShortName + "-ServerIO-"),
+            t -> t.getName().startsWith("non-blocking-thread-" + testShortName),
             PatternLayout.newBuilder().withPattern(LOG_FORMAT).build());
       logAppender.install();
       restServer = new RestServerHelper(cacheManager);

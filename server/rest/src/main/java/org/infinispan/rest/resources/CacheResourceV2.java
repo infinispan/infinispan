@@ -323,8 +323,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private CompletionStage<RestResponse> getCacheStats(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      Stats stats = cache.getAdvancedCache().getStats();
-      return asJsonResponseFuture(stats.toJson());
+      return CompletableFuture.supplyAsync(() ->
+         asJsonResponse(cache.getAdvancedCache().getStats().toJson()), invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> getAllDetails(RestRequest request) {

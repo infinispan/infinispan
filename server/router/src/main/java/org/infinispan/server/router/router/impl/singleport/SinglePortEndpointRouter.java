@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.RestServer;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.ProtocolServer;
@@ -39,9 +40,10 @@ public class SinglePortEndpointRouter extends AbstractProtocolServer<SinglePortR
    }
 
    @Override
-   public void start(RoutingTable routingTable) {
+   public void start(RoutingTable routingTable, EmbeddedCacheManager ecm) {
       this.routingTable = routingTable;
       this.routingTable.streamRoutes().forEach(r -> r.getRouteDestination().getProtocolServer().setEnclosingProtocolServer(this));
+      this.cacheManager = ecm;
       InetSocketAddress address = new InetSocketAddress(configuration.host(), configuration.port());
       transport = new NettyTransport(address, configuration, getQualifiedName(), cacheManager);
       transport.initializeHandler(getInitializer());
