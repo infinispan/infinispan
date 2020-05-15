@@ -12,6 +12,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -23,6 +26,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  * @since 5.3
  */
+@Scope(Scopes.GLOBAL)
 public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorService implements BlockingTaskAwareExecutorService {
 
    private static final Log log = LogFactory.getLog(BlockingTaskAwareExecutorServiceImpl.class);
@@ -67,6 +71,7 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
       executorService.shutdown();
    }
 
+   @Stop
    @Override
    public List<Runnable> shutdownNow() {
       shutdown = true;
