@@ -45,7 +45,7 @@ public class ConfigurationAdapter<K, V> {
    private org.infinispan.configuration.cache.Configuration build(ConfigurationBuilder cb) {
 
       if (c.isStoreByValue())
-         cb.memory().storageType(StorageType.BINARY);
+         cb.memory().storage(StorageType.BINARY);
 
       Factory<CacheLoader<K,V>> cacheLoaderFactory = c.getCacheLoaderFactory();
       if (cacheLoaderFactory != null) {

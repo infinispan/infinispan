@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -115,7 +114,7 @@ public final class QueryCache {
             .clustering().cacheMode(CacheMode.LOCAL)
             .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
             .expiration().maxIdle(ENTRY_LIFESPAN, TimeUnit.SECONDS)
-            .memory().evictionType(EvictionType.COUNT).size(MAX_ENTRIES);
+            .memory().maxCount(MAX_ENTRIES);
       return cfgBuilder;
    }
 

@@ -15,9 +15,6 @@
       </global-state>
       <local-cache-configuration name="org.infinispan.LOCAL" statistics="true">
          <locking acquire-timeout="15000" striping="false" concurrency-level="1000"/>
-         <memory>
-            <object/>
-         </memory>
       </local-cache-configuration>
       <replicated-cache-configuration name="org.infinispan.REPL_SYNC" remote-timeout="17500" configuration="org.infinispan.LOCAL">
          <state-transfer timeout="60000"/>
