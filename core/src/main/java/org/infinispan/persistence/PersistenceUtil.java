@@ -15,6 +15,7 @@ import java.util.function.Predicate;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
@@ -160,11 +161,19 @@ public class PersistenceUtil {
    }
 
    public static Path getLocation(GlobalConfiguration globalConfiguration, String location) {
-      Path persistentLocation = Paths.get(globalConfiguration.globalState().persistentLocation());
-      if (location == null)
-         return persistentLocation;
+      GlobalStateConfiguration globalState = globalConfiguration.globalState();
+      Path persistentLocation = Paths.get(globalState.persistentLocation());
+      if (location == null) {
+          if (!globalState.enabled()) {
+              throw PERSISTENCE.storeLocationRequired();
+          }
+          return persistentLocation;
+      }
 
       Path path = Paths.get(location);
+      if (!globalState.enabled()) {
+          return path;
+      }
       if (path.isAbsolute()) {
          // Ensure that the path lives under the global persistent location
          if (path.startsWith(persistentLocation)) {

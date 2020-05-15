@@ -103,6 +103,10 @@ public class SingleFileStoreConfigurationBuilder
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
+      Attribute<String> location = attributes.attribute(LOCATION);
+      if (location.isNull() && !globalConfig.globalState().enabled()) {
+         throw Log.CONFIG.storeLocationRequired();
+      }
       super.validate(globalConfig);
    }
 

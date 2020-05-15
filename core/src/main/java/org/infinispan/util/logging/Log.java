@@ -2002,4 +2002,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "A store cannot be configured with both preload and purgeOnStartup", id = 589)
    CacheConfigurationException preloadAndPurgeOnStartupConflict();
+
+   @Message(value = "Store must specify a location when global state is disabled", id = 590)
+   CacheConfigurationException storeLocationRequired();
 }
