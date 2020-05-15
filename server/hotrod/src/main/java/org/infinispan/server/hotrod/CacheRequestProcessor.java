@@ -38,7 +38,6 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    CacheRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
       super(channel, executor, server);
       listenerRegistry = server.getClientListenerRegistry();
-      SecurityActions.addListener(server.getCacheManager(), this);
    }
 
    @CacheStopped
