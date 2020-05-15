@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import javax.management.MBeanServerConnection;
@@ -41,6 +42,7 @@ import org.infinispan.server.Server;
 import org.infinispan.util.logging.LogFactory;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.utility.Base58;
 
@@ -58,6 +60,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private static final Log log = org.infinispan.commons.logging.LogFactory.getLog(ContainerInfinispanServerDriver.class);
    private static final String STARTUP_MESSAGE_REGEX = ".*ISPN080001.*";
    private static final String SHUTDOWN_MESSAGE_REGEX = ".*ISPN080003.*";
+   private static final String CLUSTER_VIEW_REGEX = ".*ISPN000094.*(?<=\\()(%d)(?=\\)).*";
    private static final int TIMEOUT_SECONDS = Integer.getInteger(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_TIMEOUT_SECONDS, 45);
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    public static final int JMX_PORT = 9999;
@@ -66,7 +69,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private final InfinispanGenericContainer[] containers;
    private final String[] volumes;
    private String name;
-   CountdownLatchLoggingConsumer latch;
    ImageFromDockerfile image;
 
    protected ContainerInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
@@ -219,17 +221,21 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                .user(IMAGE_USER);
       });
 
+      int numServers = configuration.numServers();
+      CountdownLatchLoggingConsumer clusterLatch = new CountdownLatchLoggingConsumer(numServers, String.format(CLUSTER_VIEW_REGEX, numServers));
       if (configuration.isParallelStartup()) {
-         latch = new CountdownLatchLoggingConsumer(configuration.numServers(), STARTUP_MESSAGE_REGEX);
-         IntStream.range(0, configuration.numServers()).forEach(this::createContainer);
-         Exceptions.unchecked(() -> latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+         CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(numServers, STARTUP_MESSAGE_REGEX);
+         IntStream.range(0, configuration.numServers()).forEach(i -> createContainer(i, startupLatch, clusterLatch));
+         Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
       } else {
          for (int i = 0; i < configuration.numServers(); i++) {
-            latch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
-            createContainer(i);
-            Exceptions.unchecked(() -> latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
+            createContainer(i, startupLatch, clusterLatch);
+            Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
          }
       }
+      // Ensure that a cluster of numServers has actually formed before proceeding
+      Exceptions.unchecked(() -> clusterLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
    public InfinispanGenericContainer getContainer(int i) {
@@ -257,7 +263,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       return serverOutputPath;
    }
 
-   private GenericContainer createContainer(int i) {
+   private GenericContainer createContainer(int i, Consumer<OutputFrame>... logConsumers) {
 
       if (this.volumes[i] == null) {
          String volumeName = UUID.randomUUID().toString();
@@ -270,9 +276,10 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             Arrays.asList(new Mount().withSource(this.volumes[i]).withTarget(serverPath()).withType(MountType.VOLUME))
          ));
       // Process any enhancers
-      container
-            .withLogConsumer(new JBossLoggingConsumer(LogFactory.getLogger(name)).withPrefix(Integer.toString(i)))
-            .withLogConsumer(latch);
+      container.withLogConsumer(new JBossLoggingConsumer(LogFactory.getLogger(name)).withPrefix(Integer.toString(i)));
+      for (Consumer<OutputFrame> consumer : logConsumers)
+         container.withLogConsumer(consumer);
+
       log.infof("Starting container %d", i);
       container.start();
       containers[i] = new InfinispanGenericContainer(container);
@@ -353,13 +360,13 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       if (isRunning(server)) {
          throw new IllegalStateException("Server " + server + " is still running");
       }
-      latch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
+      CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
       // We can stop the server by doing a rest call. TestContainers has a state about each container. We clean that state
       stop(server);
 
       log.infof("Restarting container %d", server);
-      createContainer(server);
-      Exceptions.unchecked(() -> latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      createContainer(server, startupLatch);
+      Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
    @Override
