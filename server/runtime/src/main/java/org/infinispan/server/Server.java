@@ -393,7 +393,7 @@ public class Server implements ServerManagement, AutoCloseable {
             // Next we start the single-port endpoints
             SinglePortRouterConfiguration singlePortRouter = endpoint.singlePortRouter();
             SinglePortEndpointRouter endpointServer = new SinglePortEndpointRouter(singlePortRouter);
-            endpointServer.start(new RoutingTable(routes.keySet()));
+            endpointServer.start(new RoutingTable(routes.keySet()), cm);
             protocolServers.put("endpoint-" + singlePortRouter.host() + ":" + singlePortRouter.port(), endpointServer);
             log.protocolStarted(endpointServer.getName(), singlePortRouter.socketBinding(), singlePortRouter.host(), singlePortRouter.port());
             log.endpointUrl(

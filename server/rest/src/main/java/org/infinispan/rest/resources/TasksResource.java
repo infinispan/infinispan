@@ -1,16 +1,16 @@
 package org.infinispan.rest.resources;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JAVASCRIPT;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
-import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 
 import java.security.PrivilegedAction;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
@@ -27,6 +27,7 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.scripting.ScriptingManager;
+import org.infinispan.server.core.transport.NonRecursiveEventLoopGroup;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
@@ -56,8 +57,10 @@ public class TasksResource implements ResourceHandler {
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);
-      List<Task> tasks = userOnly ? taskManager.getUserTasks() : taskManager.getTasks();
-      return asJsonResponseFuture(Json.make(tasks));
+      return CompletableFuture.supplyAsync(() -> {
+         List<Task> tasks = userOnly ? taskManager.getUserTasks() : taskManager.getTasks();
+         return asJsonResponse(Json.make(tasks));
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> createScriptTask(RestRequest request) {
@@ -69,11 +72,14 @@ public class TasksResource implements ResourceHandler {
       byte[] bytes = contents.rawContent();
       MediaType sourceType = request.contentType() == null ? APPLICATION_JAVASCRIPT : request.contentType();
       String script = StandardConversions.convertTextToObject(bytes, sourceType);
-      Subject.doAs(request.getSubject(), (PrivilegedAction<Void>) () -> {
-         scriptingManager.addScript(taskName, script);
-         return null;
-      });
-      return completedFuture(builder.build());
+
+      return CompletableFuture.supplyAsync(() -> {
+         Subject.doAs(request.getSubject(), (PrivilegedAction<Void>) () -> {
+            scriptingManager.addScript(taskName, script);
+            return null;
+         });
+         return builder.build();
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> runTask(RestRequest request) {
@@ -87,8 +93,14 @@ public class TasksResource implements ResourceHandler {
          }
       });
 
-      CompletionStage<Object> runResult = Subject.doAs(request.getSubject(),
-            (PrivilegedAction<CompletionStage<Object>>) () -> taskManager.runTask(taskName, taskContext));
+      CompletionStage<Object> runResult;
+      NonRecursiveEventLoopGroup.reserveCurrentThread();
+      try {
+         runResult = Subject.doAs(request.getSubject(),
+               (PrivilegedAction<CompletionStage<Object>>) () -> taskManager.runTask(taskName, taskContext));
+      } finally {
+         NonRecursiveEventLoopGroup.unreserveCurrentThread();
+      }
 
       return runResult.thenApply(result -> {
          NettyRestResponse.Builder builder = new NettyRestResponse.Builder();

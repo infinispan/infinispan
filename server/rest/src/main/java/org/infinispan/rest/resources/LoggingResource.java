@@ -23,6 +23,7 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.server.core.transport.NonRecursiveEventLoopGroup;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
 
@@ -60,23 +61,33 @@ public final class LoggingResource implements ResourceHandler {
       if (level == null && appenders == null) {
          return completedFuture(new NettyRestResponse.Builder().status(HttpResponseStatus.BAD_REQUEST).build());
       }
-      return taskManager.runTask("@@logging@set",
-            new TaskContext()
-                  .addOptionalParameter("loggerName", loggerName)
-                  .addOptionalParameter("level", level)
-                  .addOptionalParameter("appenders", appenders)
-                  .subject(request.getSubject())
-      ).handle((o, t) -> handle(t));
+      NonRecursiveEventLoopGroup.reserveCurrentThread();
+      try {
+         return taskManager.runTask("@@logging@set",
+               new TaskContext()
+                     .addOptionalParameter("loggerName", loggerName)
+                     .addOptionalParameter("level", level)
+                     .addOptionalParameter("appenders", appenders)
+                     .subject(request.getSubject())
+         ).handle((o, t) -> handle(t));
+      } finally {
+         NonRecursiveEventLoopGroup.unreserveCurrentThread();
+      }
    }
 
    private CompletionStage<RestResponse> deleteLogger(RestRequest request) {
       TaskManager taskManager = invocationHelper.getServer().getTaskManager();
       String loggerName = request.variables().get("loggerName");
-      return taskManager.runTask("@@logging@remove",
-            new TaskContext()
-                  .addParameter("loggerName", loggerName)
-                  .subject(request.getSubject())
-            ).handle((o, t) -> handle(t));
+      NonRecursiveEventLoopGroup.reserveCurrentThread();
+      try {
+         return taskManager.runTask("@@logging@remove",
+               new TaskContext()
+                     .addParameter("loggerName", loggerName)
+                     .subject(request.getSubject())
+         ).handle((o, t) -> handle(t));
+      } finally {
+         NonRecursiveEventLoopGroup.unreserveCurrentThread();
+      }
    }
 
    private CompletionStage<RestResponse> listLoggers(RestRequest request) {

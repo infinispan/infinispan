@@ -8,6 +8,7 @@ import javax.security.auth.Subject;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
+import org.infinispan.server.core.transport.NonRecursiveEventLoopGroup;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
@@ -36,7 +37,12 @@ public class TaskRequestProcessor extends BaseRequestProcessor {
       }
 
       // TODO: TaskManager API is already asynchronous, though we cannot be sure that it won't block anywhere
-      taskManager.runTask(taskName, taskContext).whenComplete((result, throwable) -> handleExec(header, result, throwable));
+      NonRecursiveEventLoopGroup.reserveCurrentThread();
+      try {
+         taskManager.runTask(taskName, taskContext).whenComplete((result, throwable) -> handleExec(header, result, throwable));
+      } finally {
+         NonRecursiveEventLoopGroup.unreserveCurrentThread();
+      }
    }
 
    private void handleExec(HotRodHeader header, Object result, Throwable throwable) {

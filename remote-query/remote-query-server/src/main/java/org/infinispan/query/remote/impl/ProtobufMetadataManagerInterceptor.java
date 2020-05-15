@@ -50,6 +50,7 @@ import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.logging.Log;
+import org.infinispan.server.core.transport.NonRecursiveEventLoopGroup;
 
 /**
  * Intercepts updates to the protobuf schema file caches and updates the SerializationContext accordingly.
@@ -250,7 +251,12 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
          // lock .errors key
          LockControlCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
-         invoker.running().invoke(ctx, cmd);
+         NonRecursiveEventLoopGroup.reserveCurrentThread();
+         try {
+            invoker.running().invoke(ctx, cmd);
+         } finally {
+            NonRecursiveEventLoopGroup.unreserveCurrentThread();
+         }
       }
 
       return invokeNextThenAccept(ctx, command, this::handlePutKeyValueResult);
@@ -472,7 +478,12 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          cmd = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(),
                keyPartitioner.getSegment(ERRORS_KEY_SUFFIX), DEFAULT_METADATA, flagsBitSet);
       }
-      invoker.running().invoke(ctx, cmd);
+      NonRecursiveEventLoopGroup.reserveCurrentThread();
+      try {
+         invoker.running().invoke(ctx, cmd);
+      } finally {
+         NonRecursiveEventLoopGroup.unreserveCurrentThread();
+      }
    }
 
    // --- unsupported operations: compute, computeIfAbsent, eval or any other functional map commands  ---

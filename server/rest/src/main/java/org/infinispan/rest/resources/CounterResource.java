@@ -37,6 +37,7 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
+import org.infinispan.server.core.transport.NonRecursiveEventLoopGroup;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -135,9 +136,26 @@ public class CounterResource implements ResourceHandler {
                .contentType(contentType)
                .header(CACHE_CONTROL.toString(), CacheControl.noCache());
 
-         CompletionStage<Long> response = configuration.type() == CounterType.WEAK ?
-               completedFuture(counterManager.getWeakCounter(counterName).getValue()) :
-               counterManager.getStrongCounter(counterName).getValue();
+         CompletionStage<Long> response;
+         if (configuration.type() == CounterType.WEAK) {
+            WeakCounter weakCounter;
+            NonRecursiveEventLoopGroup.reserveCurrentThread();
+            try {
+               weakCounter = counterManager.getWeakCounter(counterName);
+            } finally {
+               NonRecursiveEventLoopGroup.unreserveCurrentThread();
+            }
+            response = completedFuture(weakCounter.getValue());
+         } else {
+            StrongCounter strongCounter;
+            NonRecursiveEventLoopGroup.reserveCurrentThread();
+            try {
+               strongCounter = counterManager.getStrongCounter(counterName);
+            } finally {
+               NonRecursiveEventLoopGroup.unreserveCurrentThread();
+            }
+            response = strongCounter.getValue();
+         }
 
          return response.thenApply(v -> responseBuilder.entity(Long.toString(v)).build());
       });
