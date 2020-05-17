@@ -19,7 +19,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.TransactionPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.CurrencyMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.GenderMarshaller;
@@ -144,9 +143,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
 
       // get account back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(AccountPB.class)
-            .having("description").like("%test%")
-            .build();
+      Query query = qf.create("FROM sample_bank_account.Account WHERE description LIKE '%test%'");
       List<Account> list = query.list();
 
       assertNotNull(list);
@@ -163,9 +160,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
 
       // get account back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(AccountPB.class)
-            .having("description").like("%test%")
-            .build();
+      Query query = qf.create("FROM sample_bank_account.Account WHERE description LIKE '%test%'");
       List<Account> list = query.list();
 
       assertNotNull(list);
@@ -184,9 +179,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(UserPB.class)
-            .having("notes").like("%567%")
-            .build();
+      Query query = qf.create("FROM sample_bank_account.User WHERE notes LIKE '%567%'");
       List<User> list = query.list();
 
       assertNotNull(list);
@@ -202,9 +195,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from("sample_bank_account.NotIndexed")
-            .having("notIndexedField").like("%123%")
-            .build();
+      Query query = qf.create("FROM sample_bank_account.NotIndexed WHERE notIndexedField LIKE '%123%'");
       List<NotIndexed> list = query.list();
 
       assertNotNull(list);
@@ -224,11 +215,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(UserPB.class)
-            .having("notes").like("%567%")
-            .and()
-            .having("surname").eq("test surname")
-            .build();
+      Query query = qf.create("FROM sample_bank_account.User WHERE notes LIKE '%567%' AND surname = 'test surname'");
       List<User> list = query.list();
 
       assertNotNull(list);
@@ -249,10 +236,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
 
       // get account back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(AccountPB.class)
-            .select("description", "id")
-            .having("description").like("%test%")
-            .build();
+      Query query = qf.create("SELECT description, id FROM sample_bank_account.Account WHERE description LIKE '%test%'");
       List<Object[]> list = query.list();
 
       assertNotNull(list);
@@ -281,7 +265,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertEquals(1, list.size());
    }
 
-   public void testEmbeddedLuceneQuery() throws Exception {
+   public void testEmbeddedLuceneQuery() {
       Account account = createAccountPB(1);
       remoteCache.put(1, account);
 
@@ -306,9 +290,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
-      Query query = qf.from(UserHS.class)
-            .having("notes").like("%567%")
-            .build();
+      Query query = qf.create("FROM " + UserHS.class.getName() + " WHERE notes LIKE '%567%'");
       List<User> list = query.list();
 
       assertNotNull(list);
@@ -324,9 +306,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
-      Query query = qf.from(NotIndexed.class)
-            .having("notIndexedField").like("%123%")
-            .build();
+      Query query = qf.create("FROM " + NotIndexed.class.getName() + " WHERE notIndexedField LIKE '%123%'");
       List<NotIndexed> list = query.list();
 
       assertNotNull(list);
@@ -346,11 +326,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
-      Query query = qf.from(UserHS.class)
-            .having("notes").like("%567%")
-            .and()
-            .having("surname").eq("test surname")
-            .build();
+      Query query = qf.create("FROM " + UserHS.class.getName() + " WHERE notes LIKE '%567%' AND surname = 'test surname'");
       List<User> list = query.list();
 
       assertNotNull(list);
@@ -418,10 +394,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       cache.put(1, user);
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-
-      Query q = qf.from(UserPB.class)
-            .having("name").eq("")
-            .build();
+      Query q = qf.create("FROM sample_bank_account.User WHERE name = ''");
 
       List<User> list = q.list();
       assertTrue(list.isEmpty());
@@ -435,10 +408,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       cache.put(1, account);
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-
-      Query q = qf.from(AccountPB.class)
-            .having("description").eq("John Doe's first bank account")
-            .build();
+      Query q = qf.create("FROM sample_bank_account.Account WHERE description = \"John Doe's first bank account\"");
 
       List<Account> list = q.list();
       assertEquals(1, list.size());
@@ -455,10 +425,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       cache.put(1, user);
 
       QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
-
-      Query q = qf.from(UserHS.class)
-            .having("name").eq("")
-            .build();
+      Query q = qf.create("FROM " + UserHS.class.getName() + " WHERE name = ''");
 
       List<User> list = q.list();
       assertTrue(list.isEmpty());
@@ -472,10 +439,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       cache.put(1, account);
 
       QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
-
-      Query q = qf.from(AccountHS.class)
-            .having("description").eq("John Doe's first bank account")
-            .build();
+      Query q = qf.create("FROM " + AccountHS.class.getName() + " WHERE description = \"John Doe's first bank account\"");
 
       List<Account> list = q.list();
       assertEquals(1, list.size());
@@ -494,11 +458,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       cache.put(transaction.getId(), transaction);
 
       QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
-
-      Query q = qf.from(TransactionHS.class)
-            .select("id", "isDebit", "isDebit")
-            .having("description").eq("Hotel")
-            .build();
+      Query q = qf.create("SELECT id, isDebit, isDebit FROM " + TransactionHS.class.getName() + " WHERE description = 'Hotel'");
       List<Object[]> list = q.list();
 
       assertEquals(1, list.size());
@@ -520,11 +480,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       cache.put(transaction.getId(), transaction);
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-
-      Query q = qf.from(TransactionPB.class)
-            .select("id", "isDebit", "isDebit")
-            .having("description").eq("Hotel")
-            .build();
+      Query q = qf.create("SELECT id, isDebit, isDebit FROM sample_bank_account.Transaction WHERE description = 'Hotel'");
       List<Object[]> list = q.list();
 
       assertEquals(1, list.size());

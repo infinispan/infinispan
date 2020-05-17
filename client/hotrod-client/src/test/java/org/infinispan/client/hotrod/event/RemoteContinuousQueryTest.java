@@ -1,8 +1,6 @@
 package org.infinispan.client.hotrod.event;
 
 
-import static org.infinispan.query.dsl.Expression.max;
-import static org.infinispan.query.dsl.Expression.param;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -49,7 +47,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.event.RemoteContinuousQueryTest")
 public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
 
-   private final int NUM_NODES = 5;
+   private static final int NUM_NODES = 5;
 
    private RemoteCache<String, User> remoteCache;
 
@@ -92,10 +90,8 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
     */
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
-      Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
-            .select(max("age"))
-            .having("age").gte(20)
-            .build();
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+      Query query = qf.create("SELECT MAX(age) FROM sample_bank_account.User WHERE age >= 20");
 
       ContinuousQuery<String, User> continuousQuery = Search.getContinuousQuery(remoteCache);
 
@@ -137,10 +133,8 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
-      Query query = qf.from(UserPB.class)
-            .having("age").lte(param("ageParam"))
-            .build()
-            .setParameter("ageParam", 32);
+      Query query = qf.create("FROM sample_bank_account.User WHERE age <= :ageParam")
+                      .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, User>> joined = new LinkedBlockingQueue<>();
       final BlockingQueue<KeyValuePair<String, User>> updated = new LinkedBlockingQueue<>();
@@ -253,12 +247,8 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       assertEquals(3, remoteCache.size());
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-
-      Query query = qf.from(UserPB.class)
-            .select("age")
-            .having("age").lte(param("ageParam"))
-            .build()
-            .setParameter("ageParam", 32);
+      Query query = qf.create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
+                      .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, Object[]>> joined = new LinkedBlockingQueue<>();
       final BlockingQueue<KeyValuePair<String, Object[]>> updated = new LinkedBlockingQueue<>();
@@ -371,12 +361,8 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       assertEquals(3, remoteCache.size());
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-
-      Query query = qf.from(UserPB.class)
-            .select("age")
-            .having("age").lte(param("ageParam"))
-            .build()
-            .setParameter("ageParam", 32);
+      Query query = qf.create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
+                      .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, Object[]>> joined = new LinkedBlockingQueue<>();
       final BlockingQueue<KeyValuePair<String, Object[]>> updated = new LinkedBlockingQueue<>();

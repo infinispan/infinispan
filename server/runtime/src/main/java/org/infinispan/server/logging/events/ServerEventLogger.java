@@ -15,9 +15,8 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.core.Search;
-import org.infinispan.query.dsl.FilterConditionContext;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLog;
@@ -99,15 +98,21 @@ public class ServerEventLogger implements EventLogger {
       try {
          SecurityActions.getClusterExecutor(cacheManager).submitConsumer(m -> {
             Cache<Object, Object> cache = m.getCache(EVENT_LOG_CACHE);
+            String queryStr = "FROM " + ServerEventImpl.class.getName()+ " WHERE when <= :when";   //todo [anistor]  is start parameter supposed to indicate before or after?
+            if (category.isPresent()) {
+               queryStr += " AND category = :category";
+            }
+            if (level.isPresent()) {
+               queryStr += " AND level = :level";
+            }
+            queryStr += " ORDER BY when DESC";
             QueryFactory queryFactory = Search.getQueryFactory(cache);
-            FilterConditionContext filter = queryFactory.from(ServerEventImpl.class)
-                  .orderBy("when", SortOrder.DESC)
-                  .maxResults(count)
-                  .having("when").lte(start);
-            category.map(c -> filter.and(queryFactory.having("category").eq(c)));
-            level.map(l -> filter.and(queryFactory.having("level").eq(l)));
-            List<EventLog> nodeEvents = filter.toBuilder().build().list();
-            return nodeEvents;
+            Query<EventLog> query = queryFactory.create(queryStr);
+            query.maxResults(count);
+            query.setParameter("when", start);
+            category.ifPresent(c -> query.setParameter("category", c));
+            level.ifPresent(l -> query.setParameter("level", l));
+            return query.list();
          }, (address, nodeEvents, t) -> {
             if (t == null) {
                events.addAll(nodeEvents);
@@ -126,6 +131,7 @@ public class ServerEventLogger implements EventLogger {
          log.debug("Could not retrieve events", e);
          throw new CacheException(e);
       }
+      // must sort and limit again the distributed results
       Collections.sort(events);
       return events.subList(0, Math.min(events.size(), count));
    }

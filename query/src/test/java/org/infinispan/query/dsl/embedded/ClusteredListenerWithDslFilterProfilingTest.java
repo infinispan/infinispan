@@ -26,31 +26,30 @@ import org.testng.annotations.Test;
 @Test(groups = "profiling", testName = "query.dsl.embedded.ClusteredListenerWithDslFilterProfilingTest")
 public class ClusteredListenerWithDslFilterProfilingTest extends MultipleCacheManagersTest {
 
-   private final int NUM_NODES = 10;
-
-   private final int NUM_OWNERS = 3;
+   private static final int NUM_NODES = 10;
+   private static final int NUM_OWNERS = 3;
+   private static final int NUM_ENTRIES = 100000;
+   private static final int NUM_LISTENERS = 1000;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cfgBuilder.clustering().hash().numOwners(NUM_OWNERS);
-      createClusteredCaches(NUM_NODES, cfgBuilder);
+      createClusteredCaches(NUM_NODES, DslSCI.INSTANCE, cfgBuilder);
    }
 
    public void testEventFilterPerformance() {
       long t1 = testEventFilterPerformance(false);
       long t2 = testEventFilterPerformance(true);
-      log.infof("ClusteredListenerWithDslFilterProfilingTest.testEventFilterPerformance doRegisterListener=false took %d ms\n", t1 / 1000000);
-      log.infof("ClusteredListenerWithDslFilterProfilingTest.testEventFilterPerformance doRegisterListener=true  took %d ms\n", t2 / 1000000);
+      log.infof("ClusteredListenerWithDslFilterProfilingTest.testEventFilterPerformance doRegisterListener=false took %d us\n", t1 / 1000);
+      log.infof("ClusteredListenerWithDslFilterProfilingTest.testEventFilterPerformance doRegisterListener=true  took %d us\n", t2 / 1000);
    }
 
    private long testEventFilterPerformance(boolean doRegisterListener) {
-      final int numEntries = 100000;
-      final int numListeners = 1000;
-      List<NoOpEntryListener> listeners = new ArrayList<NoOpEntryListener>(numListeners);
+      List<NoOpEntryListener> listeners = new ArrayList<>(NUM_LISTENERS);
       if (doRegisterListener) {
          Query query = makeQuery(cache(0));
-         for (int i = 0; i < numListeners; i++) {
+         for (int i = 0; i < NUM_LISTENERS; i++) {
             NoOpEntryListener listener = new NoOpEntryListener();
             listeners.add(listener);
             cache(0).addListener(listener, Search.makeFilter(query), null);
@@ -59,7 +58,7 @@ public class ClusteredListenerWithDslFilterProfilingTest extends MultipleCacheMa
 
       long startTs = System.nanoTime();
       // create entries
-      for (int i = 0; i < numEntries; ++i) {
+      for (int i = 0; i < NUM_ENTRIES; ++i) {
          Person value = new Person();
          value.setName("John");
          value.setAge(i + 25);
@@ -68,7 +67,7 @@ public class ClusteredListenerWithDslFilterProfilingTest extends MultipleCacheMa
          cache.put(value.getName(), value);
       }
       // update entries (with same value)
-      for (int i = 0; i < numEntries; ++i) {
+      for (int i = 0; i < NUM_ENTRIES; ++i) {
          Person value = new Person();
          value.setName("John");
          value.setAge(i + 25);
@@ -85,11 +84,9 @@ public class ClusteredListenerWithDslFilterProfilingTest extends MultipleCacheMa
       return endTs - startTs;
    }
 
-   private Query makeQuery(Cache c) {
+   private Query makeQuery(Cache<?, ?> c) {
       QueryFactory qf = Search.getQueryFactory(c);
-      return qf.from(Person.class)
-            .having("age").gte(18)
-            .build();
+      return qf.create("FROM org.infinispan.query.test.Person WHERE age >= 18");
    }
 
    @Listener(clustered = true)

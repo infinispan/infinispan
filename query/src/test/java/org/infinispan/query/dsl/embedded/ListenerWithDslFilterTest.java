@@ -1,7 +1,5 @@
 package org.infinispan.query.dsl.embedded;
 
-import static org.infinispan.query.dsl.Expression.max;
-import static org.infinispan.query.dsl.Expression.param;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -43,9 +41,9 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();
       cfgBuilder.indexing().enable()
-            .addIndexedEntity(Person.class)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+                .addIndexedEntity(Person.class)
+                .addProperty("default.directory_provider", "local-heap")
+                .addProperty("lucene_version", "LUCENE_CURRENT");
       return cfgBuilder;
    }
 
@@ -60,10 +58,8 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
       assertEquals(10, cache.size());
 
       QueryFactory qf = Search.getQueryFactory(cache());
-
-      Query query = qf.from(Person.class)
-            .having("age").lte(param("ageParam"))
-            .build().setParameter("ageParam", 31);
+      Query query = qf.create("FROM " + Person.class.getName() + " WHERE age <= :ageParam")
+                      .setParameter("ageParam", 31);
 
       EntryListener listener = new EntryListener();
 
@@ -115,10 +111,8 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
       assertEquals(10, cache.size());
 
       QueryFactory qf = Search.getQueryFactory(cache());
-
-      Query query = qf.from(Person.class)
-            .having("age").lte(param("ageParam"))
-            .build().setParameter("ageParam", 31);
+      Query query = qf.create("FROM " + Person.class.getName() + " WHERE age <= :ageParam")
+                      .setParameter("ageParam", 31);
 
       EntryListener listener = new EntryListener();
 
@@ -176,11 +170,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
 
    public void testEventFilterAndConverter() {
       QueryFactory qf = Search.getQueryFactory(cache());
-
-      Query query = qf.from(Person.class)
-            .having("age").lte(31)
-            .select("name", "age")
-            .build();
+      Query query = qf.create("SELECT name, age FROM " + Person.class.getName() + " WHERE age <= 31");
 
       EntryListener listener = new EntryListener();
 
@@ -210,7 +200,8 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028523: Filters cannot use full-text searches")
    public void testDisallowFullTextQuery() {
-      Query query = Search.getQueryFactory(cache()).create("from org.infinispan.query.test.Person where name : 'john'");
+      QueryFactory qf = Search.getQueryFactory(cache());
+      Query query = qf.create("FROM " + Person.class.getName() + " WHERE name : 'john'");
 
       cache().addListener(new EntryListener(), Search.makeFilter(query), null);
    }
@@ -220,10 +211,8 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
     */
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
-      Query query = Search.getQueryFactory(cache()).from(Person.class)
-            .having("age").gte(20)
-            .select(max("age"))
-            .build();
+      QueryFactory qf = Search.getQueryFactory(cache());
+      Query query = qf.create("SELECT MAX(age) FROM " + Person.class.getName() + " WHERE age >= 20");
 
       cache().addListener(new EntryListener(), Search.makeFilter(query), null);
    }

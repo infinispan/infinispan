@@ -49,9 +49,7 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
    protected CallCountingCQResultListener<Object, Object> createContinuousQuery() {
       QueryFactory qf = Search.getQueryFactory(cache(0));
 
-      Query query = qf.from(Person.class)
-            .having("age").lte(30)
-            .build();
+      Query query = qf.create("FROM org.infinispan.query.test.Person WHERE age <= 30");
 
       CallCountingCQResultListener<Object, Object> listener = new CallCountingCQResultListener<>();
       ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache(0));
@@ -171,5 +169,4 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
       }
       joined.clear();
    }
-
 }

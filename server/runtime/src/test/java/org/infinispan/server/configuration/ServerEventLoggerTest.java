@@ -49,7 +49,6 @@ import org.junit.Test;
  * @author Tristan Tarrant
  * @since 8.2
  */
-
 public class ServerEventLoggerTest {
    private static final Log log = LogFactory.getLog(ServerEventLoggerTest.class);
 
