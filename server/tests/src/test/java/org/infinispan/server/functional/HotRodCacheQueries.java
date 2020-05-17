@@ -24,7 +24,6 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
@@ -80,9 +79,7 @@ public class HotRodCacheQueries {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(User.class)
-            .having("name").eq("Tom")
-            .build();
+      Query query = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
       List<User> list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -98,9 +95,7 @@ public class HotRodCacheQueries {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(User.class)
-            .having("addresses.postCode").eq("1234")
-            .build();
+      Query query = qf.create("FROM sample_bank_account.User u WHERE u.addresses.postCode = '1234'");
       List<User> list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -120,10 +115,7 @@ public class HotRodCacheQueries {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(User.class)
-            .select("name", "surname")
-            .having("name").eq("Tom")
-            .build();
+      Query query = qf.create("SELECT name, surname FROM sample_bank_account.User WHERE name = 'Tom'");
       List<Object[]> list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -144,10 +136,7 @@ public class HotRodCacheQueries {
       remoteCache.put(2, createUser2());
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(User.class)
-            .having("name").eq("John")
-            .orderBy("id")
-            .build();
+      Query query = qf.create("FROM sample_bank_account.User WHERE name = 'John' ORDER BY id ASC");
       assertEquals(0, query.list().size());
    }
 
@@ -158,7 +147,7 @@ public class HotRodCacheQueries {
       remoteCache.put(2, createUser2());
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query simpleQuery = qf.from(User.class).having("name").eq("Tom").build();
+      Query simpleQuery = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
 
       List<Map.Entry<Object, Object>> entries = new ArrayList<>(1);
       try (CloseableIterator<Map.Entry<Object, Object>> iter = remoteCache.retrieveEntriesByQuery(simpleQuery, null, 3)) {
@@ -177,7 +166,7 @@ public class HotRodCacheQueries {
       remoteCache.put(2, createUser2());
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query simpleQuery = qf.from(User.class).select("surname", "name").having("name").eq("Tom").build();
+      Query simpleQuery = qf.create("SELECT surname, name FROM sample_bank_account.User WHERE name = 'Tom'");
 
       List<Map.Entry<Object, Object>> entries = new ArrayList<>(1);
       try (CloseableIterator<Map.Entry<Object, Object>> iter = remoteCache.retrieveEntriesByQuery(simpleQuery, null, 3)) {
@@ -197,7 +186,7 @@ public class HotRodCacheQueries {
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
-      String query = "from sample_bank_account.User where name='Adrian'";
+      String query = "FROM sample_bank_account.User WHERE name='Adrian'";
 
       RestClient restClient = SERVER_TEST.newRestClient(new RestClientConfigurationBuilder());
 
@@ -224,12 +213,12 @@ public class HotRodCacheQueries {
       for (int i = 0; i < 1024; i++) {
          values.add("test" + i);
       }
-      QueryBuilder qb = qf.from(User.class).having("name").in(values);
+      Query query = qf.from(User.class).having("name").in(values).build();
 
       // this Ickle query translates to a BooleanQuery with 1025 clauses, 1 more than the max default (1024) so
       // executing it will fail unless the server jvm arg -Dinfinispan.query.lucene.max-boolean-clauses=1025 takes effect
 
-      List<User> list = qb.build().list();
+      List<User> list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());
       assertEquals(User.class, list.get(0).getClass());
@@ -251,12 +240,12 @@ public class HotRodCacheQueries {
       }
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      QueryBuilder qb = qf.from(User.class).having("name").in(values);
+      Query query = qf.from(User.class).having("name").in(values).build();
 
       // this Ickle query translates to a BooleanQuery with 1026 clauses, 1 more than the configured
       // -Dinfinispan.query.lucene.max-boolean-clauses=1025, so executing the query is expected to fail
 
-      qb.build().list();
+      query.list();
    }
 
    private User createUser1() {

@@ -59,7 +59,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
     */
    public void testQueryInnerClass() {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query query = queryFactory.from(Person.class).build();
+      Query query = queryFactory.create("FROM " + Person.class.getName());
 
       List<Person> matches = query.list();
       assertEquals(1, matches.size());
@@ -70,9 +70,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
     */
    public void testField() {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query query = queryFactory.from(Person.class)
-            .having("driverLicenseId").eq("ZZ3141592")
-            .build();
+      Query query = queryFactory.create("FROM " + Person.class.getName() + " WHERE driverLicenseId = 'ZZ3141592'");
 
       List<Person> matches = query.list();
       assertEquals(1, matches.size());
@@ -81,11 +79,9 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
    /**
     * Test querying for an inherited indexed field - direct inherited field access.
     */
-   public void testInheritedField() throws Exception {
+   public void testInheritedField() {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query query = queryFactory.from(Person.class)
-            .having("age").lte(52)
-            .build();
+      Query query = queryFactory.create("FROM " + Person.class.getName() + " WHERE age <= 52");
 
       List<Person> matches = query.list();
       assertEquals(1, matches.size());
@@ -96,9 +92,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
     */
    public void testInheritedField2() {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query query = queryFactory.from(Person.class)
-            .having("name").eq("William")
-            .build();
+      Query query = queryFactory.create("FROM " + Person.class.getName() + " WHERE name <= 'William'");
 
       List<Person> matches = query.list();
       assertEquals(1, matches.size());
@@ -109,9 +103,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
     */
    public void testInheritedField3() {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query query = queryFactory.from(Person.class)
-            .having("gender").eq("M")
-            .build();
+      Query query = queryFactory.create("FROM " + Person.class.getName() + " WHERE gender = 'M'");
 
       List<Person> matches = query.list();
       assertEquals(1, matches.size());
@@ -122,9 +114,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
     */
    public void testInheritedField4() {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query query = queryFactory.from(Person.class)
-            .having("surname").eq("Shakespeare")
-            .build();
+      Query query = queryFactory.create("FROM " + Person.class.getName() + " WHERE surname = 'Shakespeare'");
 
       List<Person> matches = query.list();
       assertEquals(1, matches.size());

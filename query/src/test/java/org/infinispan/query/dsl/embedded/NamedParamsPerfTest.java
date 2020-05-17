@@ -13,7 +13,6 @@ import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.core.impl.QueryCache;
-import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -70,7 +69,7 @@ public class NamedParamsPerfTest extends AbstractQueryDslTest {
       createClusteredCaches(1, cfg);
    }
 
-   public void testNamedParamPerfComparison() throws Exception {
+   public void testNamedParamPerfComparison() {
       QueryFactory factory = getQueryFactory();
 
       String[] fnames = {"Matej", "Roman", "Jakub", "Jiri", "Anna", "Martin", "Vojta", "Alan"};
@@ -85,15 +84,7 @@ public class NamedParamsPerfTest extends AbstractQueryDslTest {
       QueryCache queryCache = manager(0).getGlobalComponentRegistry().getComponent(QueryCache.class);
       assertNotNull(queryCache);
 
-      Query query = factory.from(Person.class)
-            .having("firstName").eq(Expression.param("nameParam1"))
-            .or()
-            .having("lastName").eq(Expression.param("nameParam2"))
-            .or()
-            .having("id").gte(Expression.param("idParam1"))
-            .or()
-            .having("id").lt(Expression.param("idParam2"))
-            .build();
+      Query query = factory.create("FROM " + Person.class.getName() + " WHERE firstName = :nameParam1 OR lastName = :nameParam2 OR id >= :idParam1 OR id < :idParam2");
 
       final int iterations = 1000;
       long t1 = 0;

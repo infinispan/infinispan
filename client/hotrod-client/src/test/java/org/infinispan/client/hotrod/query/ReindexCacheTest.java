@@ -20,6 +20,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -106,7 +107,8 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
    }
 
    private int query(RemoteCache<?, ?> cache) {
-      Query q = Search.getQueryFactory(cache).from(UserPB.class).build();
+      QueryFactory qf = Search.getQueryFactory(cache);
+      Query q = qf.create("FROM sample_bank_account.User");
       return q.list().size();
    }
 

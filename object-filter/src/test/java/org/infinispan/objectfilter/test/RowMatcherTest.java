@@ -234,8 +234,7 @@ public class RowMatcherTest {
 
    @Test
    public void testDSL() {
-      Query q = queryFactory.from(Person.class)
-            .having("name").eq("John").build();
+      Query q = queryFactory.create("FROM " + Person.class.getName() + " WHERE name = 'John'");
       assertTrue(match(q, createPerson1()));
    }
 
@@ -280,11 +279,7 @@ public class RowMatcherTest {
       Object person = createPerson1();
 
       // use the same '< 1000' predicate on two different attributes to demonstrate they do not interfere (see ISPN-4654)
-      Query q = queryFactory.from(Person.class)
-            .having("id").lt(1000)
-            .and()
-            .having("age").lt(1000)
-            .build();
+      Query q = queryFactory.create("FROM " + Person.class.getName() + " WHERE id < 1000 AND age < 1000");
 
       ObjectFilter objectFilter = matcher.getObjectFilter(q);
 
@@ -299,10 +294,7 @@ public class RowMatcherTest {
       Object person = createPerson1();
 
       // use the same "like 'Jo%'" predicate (in positive and negative form) on the same attribute to demonstrate they do not interfere (see ISPN-4654)
-      Query q = queryFactory.from(Person.class)
-            .having("name").like("Jo%")
-            .and(queryFactory.not().having("name").like("Jo%").or().having("id").lt(1000))
-            .build();
+      Query q = queryFactory.create("FROM " + Person.class.getName() + " p WHERE p.name LIKE 'Jo%' AND (p.name NOT LIKE 'Jo%' OR p.id < 1000)");
 
       ObjectFilter objectFilter = matcher.getObjectFilter(q);
 
@@ -316,8 +308,7 @@ public class RowMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      Query q = queryFactory.from(Person.class)
-            .having("name").eq("John").build();
+      Query q = queryFactory.create("FROM " + Person.class.getName() + " WHERE name = 'John'");
 
       boolean[] b = {false};
       FilterSubscription filterSubscription = matcher.registerFilter(q, (userContext, eventType, instance, projection, sortProjection) -> b[0] = true);
@@ -337,8 +328,7 @@ public class RowMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      Query q = queryFactory.from(Person.class)
-            .having("name").eq("John").build();
+      Query q = queryFactory.create("FROM " + Person.class.getName() + " WHERE name = 'John'");
 
       ObjectFilter objectFilter = matcher.getObjectFilter(q);
 

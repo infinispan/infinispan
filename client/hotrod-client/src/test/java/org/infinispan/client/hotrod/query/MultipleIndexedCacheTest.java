@@ -21,6 +21,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
@@ -85,19 +86,18 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
       getAccountsPB().forEach(a -> accountCache.put(a.getId(), a));
       getUsersPB().forEach(u -> userCache.put(u.getId(), u));
 
-      assertEquals(query(AccountPB.class, accountCache, "description:account1"), 1);
-      assertEquals(query(UserPB.class, userCache, "name:name1"), 1);
+      assertEquals(query("sample_bank_account.Account", accountCache, "description", "'account1'"), 1);
+      assertEquals(query("sample_bank_account.User", userCache, "name", "'name1'"), 1);
 
       reindex(ACCOUNT_CACHE);
 
-      assertEquals(query(AccountPB.class, accountCache, "description:account1"), 1);
-      assertEquals(query(UserPB.class, userCache, "name:name1"), 1);
+      assertEquals(query("sample_bank_account.Account", accountCache, "description", "'account1'"), 1);
+      assertEquals(query("sample_bank_account.User", userCache, "name", "'name1'"), 1);
 
       reindex(USER_CACHE);
 
-      assertEquals(query(AccountPB.class, accountCache, "description:account1"), 1);
-      assertEquals(query(UserPB.class, userCache, "name:name1"), 1);
-
+      assertEquals(query("sample_bank_account.Account", accountCache, "description", "'account1'"), 1);
+      assertEquals(query("sample_bank_account.User", userCache, "name", "'name1'"), 1);
    }
 
    private void reindex(String cacheName) {
@@ -106,9 +106,9 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
       CompletionStages.join(massIndexer.run());
    }
 
-   private <T> int query(Class<T> entity, RemoteCache<?, ?> cache, String query) {
-      String[] fields = query.split(":");
-      Query q = Search.getQueryFactory(cache).from(entity).having(fields[0]).eq(fields[1]).build();
+   private <T> int query(String entity, RemoteCache<?, ?> cache, String fieldName, String fieldValue) {
+      QueryFactory qf = Search.getQueryFactory(cache);
+      Query q = qf.create("FROM " + entity + " WHERE " + fieldName + " = " + fieldValue);
       return q.list().size();
    }
 
@@ -131,5 +131,4 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
          return userPB;
       }).collect(Collectors.toList());
    }
-
 }

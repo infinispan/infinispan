@@ -1,11 +1,10 @@
 package org.infinispan.client.hotrod.event;
 
 
-import static org.infinispan.query.dsl.Expression.max;
-import static org.infinispan.query.dsl.Expression.param;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -52,7 +51,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.event.RemoteListenerWithDslFilterTest")
 public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
 
-   private final int NUM_NODES = 5;
+   private static final int NUM_NODES = 5;
 
    private RemoteCache<Object, Object> remoteCache;
 
@@ -133,11 +132,8 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       SerializationContext serCtx = MarshallerUtil.getSerializationContext(client(0));
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
-      Query query = qf.from(UserPB.class)
-            .having("age").lte(param("ageParam"))
-            .select("age")
-            .build()
-            .setParameter("ageParam", 32);
+      Query query = qf.create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
+                      .setParameter("ageParam", 32);
 
       ClientEntryListener listener = new ClientEntryListener(serCtx);
       ClientEvents.addClientQueryListener(remoteCache, listener, query);
@@ -201,11 +197,8 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       SerializationContext serCtx = MarshallerUtil.getSerializationContext(client(0));
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
-      Query query = qf.from(UserPB.class)
-            .having("age").lte(param("ageParam"))
-            .select("age")
-            .build()
-            .setParameter("ageParam", 32);
+      Query query = qf.create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
+                      .setParameter("ageParam", 32);
 
       ClientEntryListener listener = new ClientEntryListener(serCtx);
       ClientEvents.addClientQueryListener(remoteCache, listener, query);
@@ -227,10 +220,8 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
     */
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
-      Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
-            .having("age").gte(20)
-            .select(max("age"))
-            .build();
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+      Query query = qf.create("SELECT MAX(age) FROM sample_bank_account.User WHERE age >= 20");
 
       ClientEntryListener listener = new ClientEntryListener(MarshallerUtil.getSerializationContext(client(0)));
       ClientEvents.addClientQueryListener(remoteCache, listener, query);
@@ -241,9 +232,8 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
     */
    @Test(expectedExceptions = IncorrectClientListenerException.class, expectedExceptionsMessageRegExp = "ISPN004058:.*")
    public void testRequireRawDataListener() {
-      Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
-            .having("age").gte(20)
-            .build();
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+      Query query = qf.create("FROM sample_bank_account.User WHERE age >= 20");
 
       @ClientListener(filterFactoryName = Filters.QUERY_DSL_FILTER_FACTORY_NAME,
             converterFactoryName = Filters.QUERY_DSL_FILTER_FACTORY_NAME,
@@ -262,9 +252,8 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
     */
    @Test(expectedExceptions = IncorrectClientListenerException.class, expectedExceptionsMessageRegExp = "ISPN004059:.*")
    public void testRequireQueryDslFilterFactoryNameForListener() {
-      Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
-            .having("age").gte(20)
-            .build();
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+      Query query = qf.create("FROM sample_bank_account.User WHERE age >= 20");
 
       @ClientListener(filterFactoryName = "some-filter-factory-name",
             converterFactoryName = "some-filter-factory-name",
@@ -290,7 +279,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       try {
          // no more elements expected here
          Object e = queue.poll(100, TimeUnit.MILLISECONDS);
-         assertEquals("No more elements expected in queue!", null, e);
+         assertNull("No more elements expected in queue!", e);
       } catch (InterruptedException e) {
          throw new AssertionError("Interrupted while waiting for condition", e);
       }
