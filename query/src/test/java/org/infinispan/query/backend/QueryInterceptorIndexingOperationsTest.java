@@ -14,8 +14,8 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -135,7 +135,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    }
 
    private int countIndexedDocuments(Class<?> clazz) {
-      CacheQuery<?> query = Search.getSearchManager(cache).getQuery("FROM " + clazz.getName());
+      Query query = Search.getQueryFactory(cache).create("FROM " + clazz.getName());
       return query.list().size();
    }
 

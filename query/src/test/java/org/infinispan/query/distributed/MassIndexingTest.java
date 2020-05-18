@@ -1,24 +1,28 @@
 package org.infinispan.query.distributed;
 
 
-import static org.testng.Assert.assertEquals;
+import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.testng.Assert.assertFalse;
 
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.functional.FunctionalTestUtils;
-import org.infinispan.query.MassIndexer;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.api.NotIndexedType;
+import org.infinispan.query.impl.massindex.IndexUpdater;
 import org.infinispan.query.impl.massindex.MassIndexerAlreadyStartedException;
 import org.infinispan.query.queries.faceting.Car;
-import org.infinispan.util.concurrent.CompletionStages;
-import org.testng.Assert;
+import org.infinispan.test.TestingUtil;
+import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 /**
@@ -56,51 +60,58 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
 
    public void testOverlappingMassIndexers() {
       Cache<Integer, Car> cache = cache(0);
-      SearchManager searchManager = Search.getSearchManager(cache);
-      MassIndexer massIndexer = searchManager.getMassIndexer();
-
       IntStream.range(0, 10).forEach(i -> cache.put(i, new Car("whatever", "whatever", 0)));
 
+      Indexer massIndexer = Search.getIndexer(cache);
 
-      CompletionStage<Void> first = massIndexer.startAsync();
-      eventually(() -> {
-         log.debug("Checking if massIndexer is running");
-         return massIndexer.isRunning();
-      }, 10_000, 10, TimeUnit.MILLISECONDS);
+      CountDownLatch latch = new CountDownLatch(1);
+      instrumentIndexer(massIndexer, latch);
 
-      CompletionStage<Void> second = massIndexer.startAsync();
+      CompletionStage<Void> first = massIndexer.run();
+      CompletionStage<Void> second = massIndexer.run();
 
-      assertSuccessCompletion(first);
-      assertErrorCompletion(second, MassIndexerAlreadyStartedException.class);
-      eventually(() -> !massIndexer.isRunning());
+      latch.countDown();
 
-      CompletionStage<Void> third = massIndexer.startAsync();
+      assertTrue((isSuccess(first) && isError(second)) || (isError(second) && isSuccess(first)));
+      assertFalse(massIndexer.isRunning());
 
-      assertSuccessCompletion(third);
+      CompletionStage<Void> third = massIndexer.run();
+
+      assertTrue(isSuccess(third));
    }
 
-   private void assertSuccessCompletion(CompletionStage<Void> future) {
+   private void instrumentIndexer(Indexer original, CountDownLatch latch) {
+      TestingUtil.replaceField(original, "indexUpdater", (Function<IndexUpdater, IndexUpdater>) indexUpdater -> {
+         IndexUpdater mock = Mockito.spy(indexUpdater);
+         Mockito.doAnswer(invocation -> {
+            latch.await();
+            return invocation.callRealMethod();
+         }).when(mock).flush(any());
+         return mock;
+      });
+   }
+
+   public boolean isSuccess(CompletionStage<Void> future) {
       try {
          FunctionalTestUtils.await(future);
+         return true;
       } catch (Exception e) {
-         Assert.fail("Future should've completed successfully");
+         return false;
       }
    }
 
-   private void assertErrorCompletion(CompletionStage<Void> future, Class<? extends Throwable> expected) {
+   private boolean isError(CompletionStage<Void> future) {
       try {
          FunctionalTestUtils.await(future);
-         Assert.fail("Future should've thrown an error");
+         return false;
       } catch (Error e) {
-         assertEquals(Util.getRootCause(e).getClass(), expected);
+         return Util.getRootCause(e).getClass().equals(MassIndexerAlreadyStartedException.class);
       }
    }
 
    @Override
-   protected void rebuildIndexes() throws Exception {
+   protected void rebuildIndexes() {
       Cache<?, ?> cache = cache(0);
-      SearchManager searchManager = Search.getSearchManager(cache);
-      CompletionStage<Void> future = searchManager.getMassIndexer().startAsync();
-      CompletionStages.join(future);
+      join(Search.getIndexer(cache).run());
    }
 }

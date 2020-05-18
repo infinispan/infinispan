@@ -16,6 +16,7 @@ import java.util.stream.StreamSupport;
 import org.apache.lucene.index.IndexReader;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.exception.SearchException;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
@@ -34,6 +35,7 @@ import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -372,8 +374,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    private int countLocalIndex(Cache<String, Person> cache) {
-      SearchManager sm = Search.getSearchManager(cache);
-      ExtendedSearchIntegrator esi = sm.unwrap(ExtendedSearchIntegrator.class);
+      ExtendedSearchIntegrator esi = (ExtendedSearchIntegrator) TestingUtil.extractComponent(cache, SearchIntegrator.class);
       IndexReader indexReader = esi.getIndexManager("person").getReaderProvider().openIndexReader();
       return indexReader.numDocs();
    }

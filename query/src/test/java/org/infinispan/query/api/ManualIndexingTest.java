@@ -1,5 +1,6 @@
 package org.infinispan.query.api;
 
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public class ManualIndexingTest extends MultipleCacheManagersTest {
       assertNumberOfCars(0, "ford");
 
       // rebuild index
-      Search.getSearchManager(caches.get(0)).getMassIndexer().start();
+      join(Search.getIndexer(caches.get(0)).run());
 
       assertNumberOfCars(2, "megane");
       assertNumberOfCars(1, "ford");

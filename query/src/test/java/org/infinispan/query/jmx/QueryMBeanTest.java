@@ -13,6 +13,7 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
+import org.hibernate.search.stat.Statistics;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.MBeanServerLookup;
@@ -24,6 +25,7 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -89,7 +91,8 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
 
          // check that our settings are not ignored
          SearchManager searchManager = Search.getSearchManager(cache);
-         assertTrue(searchManager.getStatistics().isStatisticsEnabled());
+         Statistics statistics = ComponentRegistryUtils.getSearchIntegrator(cache).getStatistics();
+         assertTrue(statistics.isStatisticsEnabled());
 
          // add some test data
          for (int i = 0; i < numberOfEntries; i++) {
@@ -103,7 +106,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          }
 
          // after adding more classes and reconfiguring the SearchFactory it might happen isStatisticsEnabled is reset, so we check again
-         assertTrue(searchManager.getStatistics().isStatisticsEnabled());
+         assertTrue(statistics.isStatisticsEnabled());
 
          assertEquals(0L, mBeanServer.getAttribute(name, "SearchQueryExecutionCount"));
 
@@ -118,7 +121,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
                new Object[]{Person.class.getName()},
                new String[]{String.class.getName()}));
 
-         assertEquals(2, searchManager.getStatistics().indexedEntitiesCount().size());
+         assertEquals(2, statistics.indexedEntitiesCount().size());
 
          // add more test data
          AnotherGrassEater anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
@@ -135,7 +138,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          assertEquals(2, classNames.size());
          assertTrue("The set should contain the Person class name.", classNames.contains(Person.class.getName()));
          assertTrue("The set should contain the AnotherGrassEater class name.", classNames.contains(AnotherGrassEater.class.getName()));
-         assertEquals(2, searchManager.getStatistics().indexedEntitiesCount().size());
+         assertEquals(2, statistics.indexedEntitiesCount().size());
 
          // check the statistics and see they have reasonable values
          assertTrue("The query execution total time should be > 0.", (Long) mBeanServer.getAttribute(name, "SearchQueryTotalTime") > 0);

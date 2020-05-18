@@ -26,8 +26,8 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
@@ -35,6 +35,7 @@ import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -143,16 +144,17 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
             cache.put("P2", person2);
             cache.put("C1", car1);
             cache.put("C2", car2);
-            SearchManager searchManager = Search.getSearchManager(cache);
 
             assertEquals(2, countIndex(Car.class, cache));
             assertEquals(2, countIndex(Person.class, cache));
 
-            searchManager.purge(Car.class);
+            Indexer indexer = Search.getIndexer(cache);
+
+            CompletionStages.join(indexer.remove(Car.class));
             assertEquals(0, countIndex(Car.class, cache));
             assertEquals(2, countIndex(Person.class, cache));
 
-            searchManager.purge(Person.class);
+            CompletionStages.join(indexer.remove(Person.class));
             assertEquals(0, countIndex(Car.class, cache));
             assertEquals(0, countIndex(Person.class, cache));
          }
@@ -245,7 +247,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
    }
 
    private int countIndex(Class<?> entityType, Cache<?, ?> cache) {
-      return Search.getSearchManager(cache).getQuery("FROM " + entityType.getName()).getResultSize();
+      return Search.getQueryFactory(cache).create("FROM " + entityType.getName()).getResultSize();
    }
 
    private static final class LuceneIndexTracker {

@@ -5,7 +5,7 @@ import java.util.List;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -46,10 +46,10 @@ public class BooksExampleTest extends SingleCacheManagerTest {
                   "Paolo Perrotta",
                   "The Pragmatic Programmers"));
 
-      SearchManager qf = Search.getSearchManager(cache);
+      QueryFactory qf = Search.getQueryFactory(cache);
 
       String query = String.format("FROM %s WHERE title:'in action'", Book.class.getName());
-      List<?> list = qf.getQuery(query).list();
+      List<?> list = qf.create(query).list();
       assert list.size() == 2;
    }
 

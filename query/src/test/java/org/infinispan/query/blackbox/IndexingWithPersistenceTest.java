@@ -3,6 +3,7 @@ package org.infinispan.query.blackbox;
 import static org.infinispan.query.helper.TestQueryHelperFactory.queryAll;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
@@ -20,12 +21,11 @@ import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -49,8 +49,8 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
       builder.persistence().addStore(new DummyInMemoryStoreConfigurationBuilder(builder.persistence()));
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, builder);
       cache = cacheManager.getCache();
-      store = cache.getAdvancedCache().getComponentRegistry().getComponent(PersistenceManager.class)
-            .getStores(DummyInMemoryStore.class).iterator().next();
+      PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
+      store = pm.getStores(DummyInMemoryStore.class).iterator().next();
       return cacheManager;
    }
 
@@ -90,7 +90,7 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
       test(c -> c.merge(KEY, FLUFFY, (o, n) -> null), sm -> {}, true);
    }
 
-   private void test(Consumer<Cache> op, Consumer<SearchManager> check, boolean remove) {
+   private void test(Consumer<Cache<Object, Object>> op, Consumer<Cache<?, ?>> check, boolean remove) {
       // insert entity and make it evicted (move to the store)
       cache.put(KEY, RADIM);
 
@@ -98,33 +98,32 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
       cache.put("k2", DAN);
 
       // it should be indexed
-      SearchManager sm = Search.getSearchManager(cache);
-      List<Person> found = queryAll(sm, Person.class);
+      List<Person> found = queryAll(cache, Person.class);
       assertEquals(Arrays.asList(RADIM, DAN), sortByAge(found));
 
       // evict
       cache.evict(KEY);
 
       // check the entry is in the store
-      MarshallableEntry inStore = store.loadEntry(KEY);
+      MarshallableEntry<?, ?> inStore = store.loadEntry(KEY);
       assertNotNull(inStore);
       assertTrue("In store: " + inStore, inStore.getValue() instanceof Person);
       // ...and not in the container
-      assertEquals(null, cache.getAdvancedCache().getDataContainer().get(KEY));
+      assertNull(cache.getAdvancedCache().getDataContainer().peek(KEY));
 
       // do the modification
       op.accept(cache);
 
       // now the person should be gone
-      assertEquals(Collections.singletonList(DAN), queryAll(sm, Person.class));
+      assertEquals(Collections.singletonList(DAN), queryAll(cache, Person.class));
       // and the indexes for other type should be updated
-      check.accept(sm);
+      check.accept(cache);
 
-      InternalCacheEntry ice = cache.getAdvancedCache().getDataContainer().get(KEY);
+      InternalCacheEntry<?, ?> ice = cache.getAdvancedCache().getDataContainer().peek(KEY);
       inStore = store.loadEntry(KEY);
       if (remove) {
-         assertEquals(null, ice);
-         assertEquals(null, inStore);
+         assertNull(ice);
+         assertNull(inStore);
       } else {
          assertNotNull(ice);
          assertTrue("In DC: " + ice, ice.getValue() instanceof AnotherGrassEater);
@@ -134,11 +133,11 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
    }
 
    private List<Person> sortByAge(List<Person> people) {
-      Collections.sort(people, Comparator.comparingInt(Person::getAge));
+      people.sort(Comparator.comparingInt(Person::getAge));
       return people;
    }
 
-   private void assertFluffyIndexed(SearchManager sm) {
-      assertEquals(Collections.singletonList(FLUFFY), queryAll(sm, AnotherGrassEater.class));
+   private void assertFluffyIndexed(Cache<?, ?> cache) {
+      assertEquals(Collections.singletonList(FLUFFY), queryAll(cache, AnotherGrassEater.class));
    }
 }

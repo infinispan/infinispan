@@ -5,6 +5,7 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.queryAll;
 import static org.infinispan.test.TestingUtil.orTimeout;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,10 +24,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.context.Flag;
-import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
@@ -64,8 +62,6 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      builder.memory()
-            .storageType(StorageType.OBJECT);
       builder.clustering().hash().numSegments(1).numOwners(2).consistentHashFactory(chf);
       createClusteredCaches(2, QueryTestSCI.INSTANCE, builder);
    }
@@ -125,19 +121,21 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
     * The test checks that when we replace a Person entity with entity of another type (Animal)
     * or completely remove it the old index is still correctly updated.
     */
-   private void test(Consumer<Cache<Object, Object>> op, Consumer<SearchManager> check) {
-      SearchManager sm0 = Search.getSearchManager(cache(0));
-      assertEquals(0, queryAll(sm0, Person.class).size());
+   private void test(Consumer<Cache<Object, Object>> op, Consumer<Cache<Object, Object>> check) {
+      Cache<Object, Object> cache0 = cache(0);
+      Cache<Object, Object> cache1 = cache(1);
+
+      assertEquals(0, queryAll(cache0, Person.class).size());
 
       // add a new key
-      cache(0).put(KEY, RADIM);
+      cache0.put(KEY, RADIM);
 
       // to prevent the case when index becomes empty (and we mistake it for correctly removed item) we add another person
-      cache(0).put("k2", DAN);
+      cache0.put("k2", DAN);
 
-      StaticTestingErrorHandler.assertAllGood(cache(0), cache(1));
+      StaticTestingErrorHandler.assertAllGood(cache0, cache1);
 
-      List<Person> found = queryAll(sm0, Person.class);
+      List<Person> found = queryAll(cache0, Person.class);
       assertEquals(Arrays.asList(RADIM, DAN), sortByAge(found));
 
       // add new node, cache(0) will lose ownership of the segment
@@ -145,7 +143,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(QueryTestSCI.INSTANCE, builder).getCache();
 
       // wait until the node discards old entries
-      eventuallyEquals(null, () -> cache(0).getAdvancedCache().getDataContainer().peek(KEY));
+      eventuallyEquals(null, () -> cache0.getAdvancedCache().getDataContainer().peek(KEY));
 
       // block state response commands
       AtomicReference<Throwable> exception = new AtomicReference<>();
@@ -159,7 +157,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
                                                                RpcOptions rpcOptions) {
                   if (command instanceof StateResponseCommand) {
                      CompletableFuture<Void> stageWithTimeout = orTimeout(allowStateResponse, 10, SECONDS,
-                                                                          testExecutor());
+                           testExecutor());
                      return CompletionStages.handleAndCompose(stageWithTimeout, (ignored, t) -> {
                         if (t != null) {
                            exception.set(t);
@@ -167,9 +165,9 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
                         return super.performRequest(targets, command, collector, invoker, rpcOptions);
                      });
                   }
-            return super.performRequest(targets, command, collector, invoker, rpcOptions);
-         }
-      }));
+                  return super.performRequest(targets, command, collector, invoker, rpcOptions);
+               }
+            }));
 
       // stop the other cache, cache(0) should get the entry back
       chf.setOwnerIndexes(0, 1);
@@ -179,10 +177,10 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       TestingUtil.waitForTopologyPhase(Collections.emptyList(), CacheTopology.Phase.READ_OLD_WRITE_ALL, cache(0));
 
       // check that cache(0) does not have the data yet
-      assertEquals(null, cache(0).getAdvancedCache().getDataContainer().get(KEY));
+      assertNull(cache0.getAdvancedCache().getDataContainer().peek(KEY));
 
       // overwrite the entry with another type
-      op.accept(cache(0));
+      op.accept(cache0);
 
       // unblock state transfer
       allowStateResponse.complete(null);
@@ -193,25 +191,25 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
-      assertEquals(null, exception.get());
+      assertNull(exception.get());
 
       // check results
-      StaticTestingErrorHandler.assertAllGood(cache(0), cache(1));
+      StaticTestingErrorHandler.assertAllGood(cache0, cache(1));
       // The person should have been removed
-      assertEquals(Collections.singletonList(DAN), queryAll(sm0, Person.class));
+      assertEquals(Collections.singletonList(DAN), queryAll(cache0, Person.class));
       Object value = cache(0).get(KEY);
       assertFalse("Current value: " + value, value instanceof Person);
 
       // Check that the operation is reflected in index
-      check.accept(sm0);
+      check.accept(cache0);
    }
 
    private List<Person> sortByAge(List<Person> people) {
-      Collections.sort(people, Comparator.comparingInt(Person::getAge));
+      people.sort(Comparator.comparingInt(Person::getAge));
       return people;
    }
 
-   private void assertFluffyIndexed(SearchManager sm) {
-      assertEquals(Collections.singletonList(FLUFFY), queryAll(sm, AnotherGrassEater.class));
+   private void assertFluffyIndexed(Cache<Object,Object> cache) {
+      assertEquals(Collections.singletonList(FLUFFY), queryAll(cache, AnotherGrassEater.class));
    }
 }

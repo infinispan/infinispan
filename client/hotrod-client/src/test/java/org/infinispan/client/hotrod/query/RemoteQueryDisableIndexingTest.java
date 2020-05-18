@@ -28,6 +28,7 @@ import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.remote.impl.ProgrammaticSearchMappingProviderImpl;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -107,7 +108,7 @@ public class RemoteQueryDisableIndexingTest extends AbstractQueryDslTest {
    }
 
    public void testEmptyIndexIsPresent() {
-      SearchIntegrator searchIntegrator = org.infinispan.query.Search.getSearchManager(cache).unwrap(SearchIntegrator.class);
+      SearchIntegrator searchIntegrator = TestingUtil.extractComponent(cache, SearchIntegrator.class);
 
       // we have indexing for remote query!
       assertTrue(searchIntegrator.getIndexBindings().containsKey(ProtobufValueWrapper.INDEXING_TYPE));

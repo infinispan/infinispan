@@ -5,8 +5,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.QueryTestSCI;
@@ -40,7 +40,7 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
 
    protected void verifyFindsCar(Cache cache, int count, String carMake) {
       String q = String.format("FROM %s where make:'%s'", Car.class.getName(), carMake);
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(q);
+      Query cacheQuery = Search.getQueryFactory(cache).create(q);
 
       assertEquals(count, cacheQuery.getResultSize());
 

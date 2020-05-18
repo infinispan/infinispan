@@ -5,9 +5,9 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.Search;
 import org.infinispan.query.remote.impl.ProgrammaticSearchMappingProviderImpl;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 /**
@@ -40,7 +40,7 @@ public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsF
 
    @Override
    public void testIndexPresence() {
-      SearchIntegrator searchIntegrator = Search.getSearchManager(getEmbeddedCache()).unwrap(SearchIntegrator.class);
+      SearchIntegrator searchIntegrator = TestingUtil.extractComponent(cache, SearchIntegrator.class);
       assertTrue(searchIntegrator.getIndexBindings().containsKey(ProtobufValueWrapper.INDEXING_TYPE));
       for (int shard = 0; shard < NUM_SHARDS; shard++) {
          assertNotNull(searchIntegrator.getIndexManager(ProgrammaticSearchMappingProviderImpl.getIndexName(cache.getName()) + '.' + shard));

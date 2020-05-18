@@ -7,9 +7,9 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
@@ -98,8 +98,8 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
    private void checkIndex(int expectedCount, String q, Class<?> entity) {
       for (Cache<?, ?> cache : caches()) {
          StaticTestingErrorHandler.assertAllGood(cache);
-         SearchManager searchManager = Search.getSearchManager(cache);
-         CacheQuery<?> cacheQuery = searchManager.getQuery(q);
+         QueryFactory searchManager = Search.getQueryFactory(cache);
+         Query cacheQuery = searchManager.create(q);
          assertEquals(expectedCount, cacheQuery.getResultSize());
       }
    }

@@ -11,9 +11,9 @@ import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.cfg.SearchMapping;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -58,13 +58,13 @@ public class SearchMappingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Cache<Long, BondPVO> cache = cm.getCache();
-            SearchManager sm = Search.getSearchManager(cache);
+            QueryFactory queryFactory = Search.getQueryFactory(cache);
 
             BondPVO bond = new BondPVO(1, "Test", "DE000123");
             cache.put(bond.getId(), bond);
 
             String q = String.format("FROM %s WHERE name:'Test'", BondPVO.class.getName());
-            CacheQuery<?> cq = sm.getQuery(q);
+            Query cq = queryFactory.create(q);
             Assert.assertEquals(cq.getResultSize(), 1);
          }
       });
@@ -126,12 +126,12 @@ public class SearchMappingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Cache<Long, BondPVO2> cache = cm.getCache();
-            SearchManager sm = Search.getSearchManager(cache);
+            QueryFactory queryFactory = Search.getQueryFactory(cache);
 
             BondPVO2 bond = new BondPVO2(1, "Test", "DE000123");
             cache.put(bond.getId(), bond);
             String q = String.format("FROM %s WHERE name:'Test'", BondPVO2.class.getName());
-            CacheQuery<?> cq = sm.getQuery(q);
+            Query cq = queryFactory.create(q);
             Assert.assertEquals(cq.getResultSize(), 1);
          }
       });
