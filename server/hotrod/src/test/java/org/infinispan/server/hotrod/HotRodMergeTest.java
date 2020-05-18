@@ -28,7 +28,7 @@ import org.infinispan.topology.CacheTopology;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "server.hotrod.HotRodMergeTest")
+@Test(groups = {"functional", "unstable"}, description = "ISPN-11566", testName = "server.hotrod.HotRodMergeTest")
 public class HotRodMergeTest extends BasePartitionHandlingTest {
 
    private List<HotRodServer> servers = new ArrayList<>();
