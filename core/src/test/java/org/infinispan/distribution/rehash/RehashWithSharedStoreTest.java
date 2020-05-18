@@ -1,6 +1,7 @@
 package org.infinispan.distribution.rehash;
 
-import static java.lang.String.format;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
 
@@ -57,7 +58,7 @@ public class RehashWithSharedStoreTest extends BaseDistStoreTest<Object, String,
       // Ensure the loader is shared!
       for (Cache<Object, String> c: Arrays.asList(c1, c2, c3)) {
          DummyInMemoryStore dims = TestingUtil.getFirstStore(c);
-         assert dims.contains(k) : format("CacheStore on %s should contain key %s", c, k);
+         assertTrue("CacheStore on " + c + " should contain key " + k, dims.contains(k));
       }
 
       Cache<Object, String> primaryOwner = owners[0];
@@ -65,7 +66,7 @@ public class RehashWithSharedStoreTest extends BaseDistStoreTest<Object, String,
 
       for (Cache<Object, String> c: owners) {
          int numWrites = getCacheStoreStats(c, "write");
-         assert numWrites == 1 : "store() should have been invoked on the cache store once.  Was " + numWrites;
+         assertEquals(1, numWrites);
       }
 
       log.infof("Stopping node %s", primaryOwner);
@@ -83,12 +84,12 @@ public class RehashWithSharedStoreTest extends BaseDistStoreTest<Object, String,
 
       log.infof("After shutting one node down, owners list for key %s: %s", k, Arrays.asList(owners));
 
-      assert owners.length == numOwners;
+      assertEquals(numOwners, owners.length);
 
       for (Cache<Object, String> o : owners) {
          int numWrites = getCacheStoreStats(o, "write");
-         assert numWrites == 1 : "store() should have been invoked on the cache store once.  Was " + numWrites;
-         assert "v".equals(o.get(k)) : "Should be able to see key on new owner";
+         assertEquals(1, numWrites);
+         assertEquals("v", o.get(k));
       }
    }
 }

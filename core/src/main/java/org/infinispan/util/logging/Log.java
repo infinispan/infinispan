@@ -2010,7 +2010,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Store cannot be configured with purgeOnStartup or shared if it is read only!", id = 591)
    CacheConfigurationException storeReadOnlyExceptions();
 
-   @Message(value = "Store cannot be configured with fetchPersistenceStage or preload if it is write only!", id = 592)
+   @Message(value = "Store cannot be configured with fetchPersistenceState or preload if it is write only!", id = 592)
    CacheConfigurationException storeWriteOnlyExceptions();
 
    @Message(value = "Store %s cannot be configured to be %s as the implementation specifies it is already %s!", id = 593)

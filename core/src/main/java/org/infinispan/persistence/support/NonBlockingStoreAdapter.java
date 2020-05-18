@@ -19,6 +19,7 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
+import org.infinispan.persistence.spi.FlagAffectedStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
@@ -295,6 +296,14 @@ public class NonBlockingStoreAdapter<K, V> implements NonBlockingStore<K, V> {
    public CompletionStage<Void> rollback(Transaction transaction) {
       return blockingManager.runBlocking(
             () -> transactionalStore().rollback(transaction), nextTraceId());
+   }
+
+   @Override
+   public boolean ignoreCommandWithFlags(long commandFlags) {
+      if (oldStoreImpl instanceof FlagAffectedStore) {
+         return !((FlagAffectedStore) oldStoreImpl).shouldWrite(commandFlags);
+      }
+      return false;
    }
 
    boolean isSegmented() {

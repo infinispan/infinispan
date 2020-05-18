@@ -13,6 +13,16 @@ public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBui
    AsyncStoreConfigurationBuilder<S> async();
 
    /**
+    * If true, fetch persistent state when joining a cluster. If multiple cache stores are chained,
+    * only one of them can have this property enabled. Persistent state transfer with a shared cache
+    * store does not make sense, as the same persistent store that provides the data will just end
+    * up receiving it. Therefore, if a shared cache store is used, the cache will not allow a
+    * persistent state transfer even if a cache store has this property set to true. Finally,
+    * setting it to true only makes sense if in a clustered environment.
+    */
+   S fetchPersistentState(boolean b);
+
+   /**
     * If true, any operation that modifies the cache (put, remove, clear, store...etc) won't be
     * applied to the cache store. This means that the cache store could become out of sync with the
     * cache.
@@ -28,17 +38,6 @@ public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBui
     * If true, this cache store will be only used to write entries.
     */
    S writeOnly(boolean b);
-
-   /**
-    * If true, fetch persistent state when joining a cluster. If multiple cache stores are chained,
-    * only one of them can have this property enabled. Persistent state transfer with a shared cache
-    * store does not make sense, as the same persistent store that provides the data will just end
-    * up receiving it. Therefore, if a shared cache store is used, the cache will not allow a
-    * persistent state transfer even if a cache store has this property set to true. Finally,
-    * setting it to true only makes sense if in a clustered environment, and only 'replication' and
-    * 'invalidation' cluster modes are supported.
-    */
-   S fetchPersistentState(boolean b);
 
    /**
     * If true, when the cache starts, data stored in the cache store will be pre-loaded into memory.

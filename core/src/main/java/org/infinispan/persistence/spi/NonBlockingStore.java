@@ -95,7 +95,7 @@ public interface NonBlockingStore<K, V> {
    /**
     *
     * @param ctx initialization context used to initialize this store
-    * @return a stage that when complete signals taht this store has been successfully started
+    * @return a stage that when complete signals that this store has been successfully started
     */
    CompletionStage<Void> start(InitializationContext ctx);
 
