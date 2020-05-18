@@ -11,17 +11,19 @@ instead of doing an expensive roundtrip or recalculation. This document
 specifies how to use JCache with the {brandname} implementation of the
 specification, and explains key aspects of the API.
 
-== Dependencies
+== Creating embedded caches
+
+.Prerequisites
 
 . Ensure that `cache-api` is on your classpath.
-. Add the following dependencies to your `pom.xml`:
+. Add the following dependency to your `pom.xml`:
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::dependencies_maven/jcache.xml[]
 ----
 
-== Creating embedded caches
+.Procedure
 
 * Create embedded caches that use the default JCache API configuration as follows:
 
@@ -56,10 +58,19 @@ include::code_examples/CreateCacheMutableConfiguration.java[]
 
 == Creating remote caches
 
-To create caches on remote {brandname} server
+.Prerequisites
 
-. Add `infinispan-jcache-remote-<version>.jar` and all transitive dependencies to your classpath.
-. Create caches on remote {brandname} servers and use the default JCache API configuration as follows:
+. Ensure that `cache-api` is on your classpath.
+. Add the following dependency to your `pom.xml`:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/jcache-remote.xml[]
+----
+
+.Procedure
+
+* Create caches on remote {brandname} servers and use the default JCache API configuration as follows:
 
 [source,java]
 ----
