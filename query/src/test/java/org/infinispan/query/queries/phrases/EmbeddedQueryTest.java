@@ -8,8 +8,8 @@ import java.util.Set;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.test.Author;
 import org.infinispan.query.test.Book;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -23,9 +23,9 @@ public class EmbeddedQueryTest extends SingleCacheManagerTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   private <T> CacheQuery<T> createCacheQuery(Class<T> clazz, String alias, String predicate) {
+   private Query createCacheQuery(Class clazz, String alias, String predicate) {
       String queryStr = String.format("FROM %s %s WHERE %s", clazz.getName(), alias, predicate);
-      return Search.getSearchManager(cache).getQuery(queryStr);
+      return Search.getQueryFactory(cache).create(queryStr);
    }
 
    public void testSimpleQuery() {
@@ -35,7 +35,7 @@ public class EmbeddedQueryTest extends SingleCacheManagerTest {
       cache.put("author#3", new Author("author3", "surname3"));
       assertEquals(3, cache.size());
 
-      CacheQuery<Author> query = createCacheQuery(Author.class, "a", "a.name:'author1'");
+      Query query = createCacheQuery(Author.class, "a", "a.name:'author1'");
       List<Author> result = query.list();
       assertEquals(1, result.size());
       assertEquals("surname1", result.get(0).getSurname());
@@ -63,7 +63,7 @@ public class EmbeddedQueryTest extends SingleCacheManagerTest {
       cache.put("book#3", book3);
       assertEquals(3, cache.size());
 
-      CacheQuery<Book> query = createCacheQuery(Book.class, "b", "b.authors.name:'author1'");
+      Query query = createCacheQuery(Book.class, "b", "b.authors.name:'author1'");
       List<Book> result = query.list();
       assertEquals(2, result.size());
 

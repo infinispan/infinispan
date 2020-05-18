@@ -24,6 +24,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.QueryDslConditionsTest;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -101,7 +102,7 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
    @Override
    public void testIndexPresence() {
-      SearchIntegrator searchIntegrator = org.infinispan.query.Search.getSearchManager(getEmbeddedCache()).unwrap(SearchIntegrator.class);
+      SearchIntegrator searchIntegrator = TestingUtil.extractComponent(cache, SearchIntegrator.class);
 
       verifyClassIsIndexed(searchIntegrator, getModelFactory().getUserImplClass());
       verifyClassIsIndexed(searchIntegrator, getModelFactory().getAccountImplClass());

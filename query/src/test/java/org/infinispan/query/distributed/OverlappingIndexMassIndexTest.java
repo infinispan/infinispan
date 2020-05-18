@@ -1,5 +1,6 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
@@ -9,7 +10,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Block;
@@ -79,17 +79,15 @@ public class OverlappingIndexMassIndexTest extends MultipleCacheManagersTest {
 
    protected void checkIndex(int expectedNumber, Class<?> entity, int otherExpected, Class<?> otherEntity) {
       for (Cache<?, ?> c : caches) {
-         SearchManager searchManager = Search.getSearchManager(c);
-         int query1ResultSize = TestQueryHelperFactory.queryAll(searchManager, entity).size();
-         int query2ResultSize = TestQueryHelperFactory.queryAll(searchManager, otherEntity).size();
+         int query1ResultSize = TestQueryHelperFactory.queryAll(c, entity).size();
+         int query2ResultSize = TestQueryHelperFactory.queryAll(c, otherEntity).size();
          assertEquals(expectedNumber, query1ResultSize);
          assertEquals(otherExpected, query2ResultSize);
       }
    }
 
    protected void runMassIndexer() {
-      Cache cache = caches.get(0);
-      SearchManager searchManager = Search.getSearchManager(cache);
-      searchManager.getMassIndexer().start();
+      Cache<?, ?> cache = caches.get(0);
+      join((Search.getIndexer(cache)).run());
    }
 }

@@ -14,7 +14,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
-import org.infinispan.query.Search;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 /**
@@ -83,7 +83,7 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
    }
 
    private void checkIndexPresence(Cache cache) {
-      SearchIntegrator searchIntegrator = Search.getSearchManager(cache).unwrap(SearchIntegrator.class);
+      SearchIntegrator searchIntegrator = TestingUtil.extractComponent(cache, SearchIntegrator.class);
 
       verifyClassIsIndexed(searchIntegrator, getModelFactory().getUserImplClass());
       verifyClassIsIndexed(searchIntegrator, getModelFactory().getAccountImplClass());

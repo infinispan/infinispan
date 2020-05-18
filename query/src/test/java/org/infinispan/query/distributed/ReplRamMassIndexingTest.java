@@ -1,12 +1,13 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.MassIndexer;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
@@ -59,10 +60,10 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
 
    @Override
    protected void rebuildIndexes() {
-      for (Cache cache : caches()) {
-         MassIndexer massIndexer = Search.getSearchManager(cache).getMassIndexer();
-         eventually(() -> !massIndexer.isRunning());
-         massIndexer.start();
+      for (Cache<?, ?> cache : caches()) {
+         Indexer indexer = Search.getIndexer(cache);
+         eventually(() -> !indexer.isRunning());
+         join(indexer.run());
       }
    }
 }

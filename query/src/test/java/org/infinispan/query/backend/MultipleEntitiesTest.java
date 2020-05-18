@@ -16,9 +16,9 @@ import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -49,25 +49,27 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
 
    @Test
    public void testIndexAndQuery() {
-      SearchManager searchManager = Search.getSearchManager(cache);
+      QueryFactory queryFactory = Search.getQueryFactory(cache);
+
+      SearchIntegrator searchIntegrator = TestingUtil.extractComponent(cache, SearchIntegrator.class);
 
       cache.put(123405, new Bond(new Date(System.currentTimeMillis()), 450L));
-      assertEfficientIndexingUsed(searchManager.unwrap(SearchIntegrator.class), Bond.class);
+      assertEfficientIndexingUsed(searchIntegrator, Bond.class);
 
       cache.put(123502, new Debenture("GB", 116d));
-      assertEfficientIndexingUsed(searchManager.unwrap(SearchIntegrator.class), Debenture.class);
+      assertEfficientIndexingUsed(searchIntegrator, Debenture.class);
 
       cache.put(223456, new Bond(new Date(System.currentTimeMillis()), 550L));
-      assertEfficientIndexingUsed(searchManager.unwrap(SearchIntegrator.class), Bond.class);
+      assertEfficientIndexingUsed(searchIntegrator, Bond.class);
 
-      CacheQuery<?> query = searchManager.getQuery("FROM " + Bond.class.getName());
-      CacheQuery<?> query2 = searchManager.getQuery("FROM " + Debenture.class.getName());
+      Query query = queryFactory.create("FROM " + Bond.class.getName());
+      Query query2 = queryFactory.create("FROM " + Debenture.class.getName());
       assertEquals(query.list().size() + query2.list().size(), 3);
 
-      CacheQuery<?> queryBond = searchManager.getQuery("FROM " + Bond.class.getName());
+      Query queryBond = queryFactory.create("FROM " + Bond.class.getName());
       assertEquals(queryBond.getResultSize(), 2);
 
-      CacheQuery<?> queryDeb = searchManager.getQuery("FROM " + Debenture.class.getName());
+      Query queryDeb = queryFactory.create("FROM " + Debenture.class.getName());
       assertEquals(queryDeb.getResultSize(), 1);
    }
 

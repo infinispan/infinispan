@@ -17,10 +17,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
-import org.infinispan.query.MassIndexer;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.massindex.IndexUpdater;
@@ -64,7 +63,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    private static final int PRINT_EACH = 10;
 
    private Cache<Integer, Transaction> cache1, cache2;
-   private MassIndexer massIndexer;
+   private Indexer indexer;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -94,7 +93,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
          cache1 = cacheManager.getCache();
          cache2 = cacheManager.getCache();
       }
-      massIndexer = Search.getSearchManager(cache1).getMassIndexer();
+      indexer = Search.getIndexer(cache1);
    }
 
    private void writeData() throws InterruptedException {
@@ -149,7 +148,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
       stopTimer.stop();
       System.out.printf("\rData inserted in %d seconds.", stopTimer.getElapsedIn(TimeUnit.SECONDS));
       info();
-      new Thread(new EventLoop(massIndexer)).start();
+      new Thread(new EventLoop(indexer)).start();
    }
 
    private void info() {
@@ -193,30 +192,28 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    }
 
    protected int countIndex() {
-      SearchManager searchManager = Search.getSearchManager(cache1);
-      CacheQuery<?> q = searchManager.getQuery("FROM " + Transaction.class.getName());
+      Query q = Search.getQueryFactory(cache1).create("FROM " + Transaction.class.getName());
       return q.getResultSize();
    }
 
    protected void clearIndex() {
-      SearchManager searchManager = Search.getSearchManager(cache1);
-      searchManager.purge(Transaction.class);
+      Search.getIndexer(cache1).remove();
    }
 
    class EventLoop implements Runnable {
 
-      private MassIndexer massIndexer;
+      private Indexer indexer;
       private CompletionStage<Void> future;
       private AtomicInteger nexIndex = new AtomicInteger(OBJECT_COUNT);
 
-      public EventLoop(MassIndexer massIndexer) {
-         this.massIndexer = massIndexer;
+      public EventLoop(Indexer indexer) {
+         this.indexer = indexer;
       }
 
       void startMassIndexer() {
          System.out.println("Running MassIndexer");
          final StopTimer stopTimer = new StopTimer();
-         future = massIndexer.startAsync();
+         future = indexer.run().toCompletableFuture();
          future.whenComplete((v, t) -> {
             stopTimer.stop();
             if (t != null) {

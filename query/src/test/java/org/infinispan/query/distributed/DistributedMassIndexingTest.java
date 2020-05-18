@@ -5,9 +5,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -69,7 +68,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    public void testPartiallyReindex() throws Exception {
       cache(0).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F1NUM"), new Car("megane", "white", 300));
-      CompletionStages.join(Search.getSearchManager(cache(0)).getMassIndexer().reindex(key("F1NUM")));
+      Search.getIndexer(cache(0)).run(key("F1NUM")).toCompletableFuture().join();
       verifyFindsCar(1, "megane");
       cache(0).remove(key("F1NUM"));
       verifyFindsCar(0, "megane");
@@ -82,8 +81,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    protected void rebuildIndexes() throws Exception {
       Cache<?, ?> cache = cache(0);
-      SearchManager searchManager = Search.getSearchManager(cache);
-      searchManager.getMassIndexer().start();
+      CompletionStages.join(Search.getIndexer(cache).run());
    }
 
    protected void verifyFindsCar(int expectedCount, String carMake) {
@@ -94,9 +92,8 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
    }
 
    protected void verifyFindsCar(Cache<?, Car> cache, int expectedCount, String carMake) {
-      SearchManager searchManager = Search.getSearchManager(cache);
       String q = String.format("FROM %s where make:'%s'", Car.class.getName(), carMake);
-      CacheQuery<Car> cacheQuery = searchManager.getQuery(q);
+      Query cacheQuery = Search.getQueryFactory(cache).create(q);
       assertEquals(expectedCount, cacheQuery.getResultSize());
    }
 }

@@ -13,7 +13,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.indexedembedded.City;
 import org.infinispan.query.indexedembedded.Country;
 import org.infinispan.query.test.QueryTestSCI;
@@ -33,7 +33,8 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
    Cache<String, Country> cache;
    WaitNonBlockingStore store;
    CacheContainer cm;
-   SearchManager search;
+   QueryFactory queryFactory;
+   SearchIntegrator searchIntegrator;
 
    @BeforeClass
    public void setUp() {
@@ -55,7 +56,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       italy.cities.add(rome);
 
       cache.put("IT", italy);
-      assert ! store.contains("IT");
+      assert !store.contains("IT");
 
       verifyFullTextHasMatches(1);
 
@@ -63,7 +64,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       assert store.contains("IT");
 
       InternalCacheEntry internalCacheEntry = cache.getAdvancedCache().getDataContainer().get("IT");
-      assert internalCacheEntry==null;
+      assert internalCacheEntry == null;
 
       verifyFullTextHasMatches(1);
 
@@ -74,7 +75,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       verifyFullTextHasMatches(1);
 
       cache.stop();
-      assert search.unwrap(SearchIntegrator.class).isStopped();
+      assert searchIntegrator.isStopped();
       TestingUtil.killCacheManagers(cm);
 
       // Now let's check the entry is not re-indexed during data preloading:
@@ -101,12 +102,13 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       cm = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
       cache = cm.getCache();
       store = TestingUtil.getFirstStore(cache);
-      search = Search.getSearchManager(cache);
+      queryFactory = Search.getQueryFactory(cache);
+      searchIntegrator = TestingUtil.extractComponent(cache, SearchIntegrator.class);
    }
 
    private void verifyFullTextHasMatches(int i) {
       String query = String.format("FROM %s WHERE countryName:'Italy'", Country.class.getName());
-      List<Object> list = search.getQuery(query).list();
+      List<Object> list = queryFactory.create(query).list();
       assertEquals(i, list.size());
    }
 

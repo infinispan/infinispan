@@ -7,9 +7,9 @@ import java.util.List;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.indexedembedded.CollectionsIndexingTest")
 public class CollectionsIndexingTest extends SingleCacheManagerTest {
 
-   private SearchManager searchManager;
+   private QueryFactory queryFactory;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
@@ -38,7 +38,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
 
    @BeforeClass
    public void prepareSearchManager() {
-      searchManager = Search.getSearchManager(cache);
+      queryFactory = Search.getQueryFactory(cache);
    }
 
    @AfterMethod
@@ -52,14 +52,14 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       assertEquals(0, list.size());
    }
 
-   private CacheQuery<?> getCountryQuery() {
+   private Query getCountryQuery() {
       String q = String.format("FROM %s where countryName:'Italy'", Country.class.getName());
-      return searchManager.getQuery(q);
+      return queryFactory.create(q);
    }
 
-   private CacheQuery<?> getMatchAllQuery() {
+   private Query getMatchAllQuery() {
       String q = String.format("FROM %s", Country.class.getName());
-      return searchManager.getQuery(q);
+      return queryFactory.create(q);
    }
 
    @Test
@@ -100,7 +100,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       cache.put("UK", uk);
       cache.put("UK", uk);
       String q = String.format("FROM %s c where c.cities.name:'Newcastle'", Country.class.getName());
-      List<?> list = searchManager.getQuery(q).list();
+      List<?> list = queryFactory.create(q).list();
       assertEquals(1, list.size());
       assertSame(uk, list.get(0));
    }

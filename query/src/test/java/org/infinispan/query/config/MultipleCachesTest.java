@@ -15,8 +15,6 @@ import org.hibernate.search.store.impl.RAMDirectoryProvider;
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
-import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -100,8 +98,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
       assertEquals("A paragraph containing some text", p.getBlurb());
       assertEquals(75, p.getAge());
 
-      SearchManager queryFactory = Search.getSearchManager(indexedCache);
-      SearchIntegrator searchImpl = queryFactory.unwrap(SearchIntegrator.class);
+      SearchIntegrator searchImpl = TestingUtil.extractComponent(indexedCache, SearchIntegrator.class);
       Set<IndexManager> indexManagers = searchImpl.getIndexBindings().get(Person.class).getIndexManagerSelector().all();
       assert indexManagers != null && indexManagers.size() == 1;
       DirectoryBasedIndexManager directory = (DirectoryBasedIndexManager) indexManagers.iterator().next();

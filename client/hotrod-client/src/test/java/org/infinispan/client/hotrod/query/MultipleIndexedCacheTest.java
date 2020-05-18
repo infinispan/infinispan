@@ -19,8 +19,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.MassIndexer;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 /**
@@ -98,8 +99,8 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
 
    private void reindex(String cacheName) {
       Cache<?, ?> cache = cacheManagers.get(0).getCache(cacheName);
-      MassIndexer massIndexer = org.infinispan.query.Search.getSearchManager(cache).getMassIndexer();
-      massIndexer.start();
+      Indexer massIndexer = org.infinispan.query.Search.getIndexer(cache);
+      CompletionStages.join(massIndexer.run());
    }
 
    private <T> int query(Class<T> entity, RemoteCache<?, ?> cache, String query) {

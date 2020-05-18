@@ -9,9 +9,8 @@ import javax.transaction.TransactionManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -67,8 +66,7 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
    }
 
    protected void assertIndexSize(int expectedIndexSize) {
-      SearchManager searchManager = Search.getSearchManager(cache);
-      CacheQuery<Person> query = searchManager.getQuery("FROM " + Person.class.getName());
+      Query query = Search.getQueryFactory(cache).create("FROM " + Person.class.getName());
       assertEquals(expectedIndexSize, query.list().size());
       StaticTestingErrorHandler.assertAllGood(cache);
    }

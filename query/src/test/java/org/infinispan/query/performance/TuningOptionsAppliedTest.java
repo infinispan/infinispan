@@ -12,8 +12,6 @@ import org.hibernate.search.store.DirectoryProvider;
 import org.hibernate.search.store.impl.FSDirectoryProvider;
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -45,8 +43,8 @@ public class TuningOptionsAppliedTest extends AbstractInfinispanTest {
    private SearchIntegrator extractSearchFactoryImplementor(EmbeddedCacheManager embeddedCacheManager) {
       Cache<Object, Object> cache = embeddedCacheManager.getCache("Indexed");
       cache.put("hey this type exists", new Person("id", "name", 3));
-      SearchManager searchManager = Search.getSearchManager(cache);
-      return searchManager.unwrap(SearchIntegrator.class);
+
+      return TestingUtil.extractComponent(cache, SearchIntegrator.class);
    }
 
    private NRTIndexManager verifyShardingOptions(SearchIntegrator searchIntegrator, int expectedShards) {

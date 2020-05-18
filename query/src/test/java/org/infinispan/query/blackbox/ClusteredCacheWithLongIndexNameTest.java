@@ -14,9 +14,8 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -68,16 +67,14 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
          cache0.put("key" + i, new ClassWithLongIndexName("value" + i));
       }
 
-      SearchManager sm2 = Search.getSearchManager(cache2);
-      String q = String.format("FROM %s WHERE name:'value*'",ClassWithLongIndexName.class.getName());
-      CacheQuery<?> cq = sm2.getQuery(q);
+      String q = String.format("FROM %s WHERE name:'value*'", ClassWithLongIndexName.class.getName());
+      Query cq = Search.getQueryFactory(cache2).create(q);
       assertEquals(100, cq.getResultSize());
 
       addClusterEnabledCacheManager(SCI.INSTANCE, getDefaultConfiguration());
       TestingUtil.waitForNoRebalance(cache(0), cache(1), cache(2), cache(3));
 
-      SearchManager sm3 = Search.getSearchManager(cache(3));
-      cq = sm3.getQuery(q);
+      cq = Search.getQueryFactory(cache(3)).create(q);
       assertEquals(100, cq.getResultSize());
    }
 

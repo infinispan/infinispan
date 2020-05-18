@@ -9,9 +9,8 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -87,9 +86,8 @@ public class PerfTest extends MultipleCacheManagersTest {
    }
 
    private void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
-      SearchManager searchManager = Search.getSearchManager(cache);
       String q = String.format("FROM %s WHERE make:'%s'", Car.class.getName(), carMake);
-      CacheQuery<?> cacheQuery = searchManager.getQuery(q);
+      Query cacheQuery = Search.getQueryFactory(cache).create(q);
       assertEquals(expectedCount, cacheQuery.getResultSize());
    }
 

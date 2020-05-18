@@ -17,6 +17,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.QueryTestSCI;
@@ -38,11 +39,12 @@ public class TestQueryHelperFactory {
       return queryFactory.getQuery(q);
    }
 
-   public static <T> List<T> queryAll(SearchManager sm, Class<T> entityType) {
-      return sm.<T>getQuery("FROM " + entityType.getName()).list();
+   public static <T> List<T> queryAll(Cache<?, ?> cache, Class<T> entityType) {
+      Query query = Search.getQueryFactory(cache).create("FROM " + entityType.getName());
+      return query.list();
    }
 
-   public static SearchIntegrator extractSearchFactory(Cache cache) {
+   public static SearchIntegrator extractSearchFactory(Cache<?, ?> cache) {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       SearchIntegrator component = componentRegistry.getComponent(SearchIntegrator.class);
       assertNotNull(component);
@@ -62,8 +64,6 @@ public class TestQueryHelperFactory {
       List<EmbeddedCacheManager> managers = new ArrayList<>();
 
       ConfigurationBuilder builder = AbstractCacheTest.getDefaultClusteredCacheConfig(cacheMode, transactional);
-
-      builder.indexing().enable();
 
       builder.indexing().enable().addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
 

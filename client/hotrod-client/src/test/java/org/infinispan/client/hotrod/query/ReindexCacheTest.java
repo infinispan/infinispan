@@ -18,7 +18,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.MassIndexer;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Factory;
@@ -89,8 +89,8 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
 
    private void wipeIndexes() {
       Cache<?, ?> cache = cacheManager.getCache(USER_CACHE);
-      MassIndexer massIndexer = org.infinispan.query.Search.getSearchManager(cache).getMassIndexer();
-      CompletionStages.join(massIndexer.purge());
+      Indexer indexer = org.infinispan.query.Search.getIndexer(cache);
+      CompletionStages.join(indexer.remove());
    }
 
    private void assertIndexEmpty() {
@@ -99,8 +99,8 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
 
    private void reindex() {
       Cache<?, ?> cache = cacheManager.getCache(USER_CACHE);
-      MassIndexer massIndexer = org.infinispan.query.Search.getSearchManager(cache).getMassIndexer();
-      massIndexer.start();
+      Indexer indexer = org.infinispan.query.Search.getIndexer(cache);
+      CompletionStages.join(indexer.run());
    }
 
    private int query(RemoteCache<?, ?> cache) {

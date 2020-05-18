@@ -30,7 +30,6 @@ import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.objectfilter.ParsingException;
-import org.infinispan.query.Search;
 import org.infinispan.query.core.impl.EmbeddedQueryFactory;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
@@ -43,6 +42,7 @@ import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.BeforeClass;
@@ -239,7 +239,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testIndexPresence() {
-      SearchIntegrator searchIntegrator = Search.getSearchManager((Cache) getCacheForQuery()).unwrap(SearchIntegrator.class);
+      SearchIntegrator searchIntegrator = TestingUtil.extractComponent((Cache<?, ?>) getCacheForQuery(), SearchIntegrator.class);
 
       verifyClassIsIndexed(searchIntegrator, getModelFactory().getUserImplClass());
       verifyClassIsIndexed(searchIntegrator, getModelFactory().getAccountImplClass());

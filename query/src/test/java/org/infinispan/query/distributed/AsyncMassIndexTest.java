@@ -2,15 +2,14 @@ package org.infinispan.query.distributed;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.query.test.Transaction;
@@ -60,14 +59,10 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
       int elements = 50;
       populate(elements);
 
-      SearchManager searchManager = Search.getSearchManager(cache);
-
-      CompletionStage<Void> future = searchManager.getMassIndexer().startAsync();
+      CompletableFuture<Void> future = Search.getIndexer(cache).run().toCompletableFuture();
 
       final CountDownLatch endLatch = new CountDownLatch(1);
-      future.whenComplete((v, t) -> {
-         endLatch.countDown();
-      });
+      future.whenComplete((v, t) -> endLatch.countDown());
       endLatch.await();
 
       checkIndex(elements);
@@ -75,8 +70,7 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
 
    protected void checkIndex(int expectedNumber) {
       Cache<Integer, Transaction> c = cache(0);
-      SearchManager searchManager = Search.getSearchManager(c);
-      CacheQuery<?> q = searchManager.getQuery("FROM " + Transaction.class.getName());
+      Query q = Search.getQueryFactory(c).create("FROM " + Transaction.class.getName());
       int resultSize = q.getResultSize();
       assertEquals(expectedNumber, resultSize);
    }

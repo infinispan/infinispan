@@ -17,11 +17,10 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
-import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.remote.impl.ProgrammaticSearchMappingProviderImpl;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
@@ -54,9 +53,7 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
       cache.put(new byte[]{1, 2, 3}, value1);
       cache.put(new byte[]{4, 5, 6}, value2);
 
-      SearchManager sm = Search.getSearchManager(cache);
-
-      SearchIntegrator searchFactory = sm.unwrap(SearchIntegrator.class);
+      SearchIntegrator searchFactory = TestingUtil.extractComponent(cache, SearchIntegrator.class);
       assertNotNull(searchFactory.getIndexManager(ProgrammaticSearchMappingProviderImpl.getIndexName(cache.getName())));
 
       Query luceneQuery2 = searchFactory.buildQueryBuilder().forEntity(ProtobufValueWrapper.class).get()

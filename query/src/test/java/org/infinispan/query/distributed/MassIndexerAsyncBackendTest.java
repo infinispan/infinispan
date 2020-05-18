@@ -8,6 +8,7 @@ import org.infinispan.query.Search;
 import org.infinispan.query.test.Transaction;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.jboss.byteman.contrib.bmunit.BMNGListener;
 import org.jboss.byteman.contrib.bmunit.BMRule;
 import org.testng.annotations.AfterClass;
@@ -60,7 +61,7 @@ public class MassIndexerAsyncBackendTest extends MultipleCacheManagersTest {
       }
 
       for (Cache c : caches()) {
-         Search.getSearchManager(c).getMassIndexer().start();
+         CompletionStages.join(Search.getIndexer(c).run());
          assertAllIndexed(c);
       }
 
@@ -68,7 +69,7 @@ public class MassIndexerAsyncBackendTest extends MultipleCacheManagersTest {
 
    private void assertAllIndexed(final Cache cache) {
       eventually(() -> {
-         int size = Search.getSearchManager(cache).getQuery("FROM " + Transaction.class.getName()).list().size();
+         int size = Search.getQueryFactory(cache).create("FROM " + Transaction.class.getName()).list().size();
          return size == NUM_ENTRIES;
       });
    }

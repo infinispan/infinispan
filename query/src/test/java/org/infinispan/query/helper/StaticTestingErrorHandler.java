@@ -12,9 +12,8 @@ import org.hibernate.search.exception.ErrorContext;
 import org.hibernate.search.exception.ErrorHandler;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
-import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.WrappingErrorHandler;
+import org.infinispan.test.TestingUtil;
 
 public class StaticTestingErrorHandler implements ErrorHandler {
 
@@ -53,8 +52,7 @@ public class StaticTestingErrorHandler implements ErrorHandler {
    }
 
    public static StaticTestingErrorHandler extract(Cache cache) {
-      SearchManager searchManager = Search.getSearchManager(cache);
-      SearchIntegrator searchFactory = searchManager.unwrap(SearchIntegrator.class);
+      SearchIntegrator searchFactory = TestingUtil.extractComponent(cache, SearchIntegrator.class);
       ErrorHandler errorHandler = searchFactory.getErrorHandler();
       assertNotNull(errorHandler);
       if (errorHandler instanceof WrappingErrorHandler) {
