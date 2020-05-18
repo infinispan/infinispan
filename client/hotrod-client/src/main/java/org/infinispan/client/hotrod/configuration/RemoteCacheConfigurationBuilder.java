@@ -6,9 +6,12 @@ import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguratio
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_MAX_ENTRIES;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_MODE;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TEMPLATE_NAME;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TRANSACTION_MANAGER;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TRANSACTION_MODE;
 
 import java.util.Properties;
+
+import javax.transaction.TransactionManager;
 
 import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -28,7 +31,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    private final ConfigurationBuilder builder;
    private final AttributeSet attributes;
 
-   public RemoteCacheConfigurationBuilder(ConfigurationBuilder builder, String name) {
+   RemoteCacheConfigurationBuilder(ConfigurationBuilder builder, String name) {
       this.builder = builder;
       this.attributes = RemoteCacheConfiguration.attributeDefinitionSet();
       this.attributes.attribute(NAME).set(name);
@@ -101,6 +104,16 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
     */
    public RemoteCacheConfigurationBuilder transactionMode(TransactionMode mode) {
       attributes.attribute(TRANSACTION_MODE).set(mode);
+      return this;
+   }
+
+   /**
+    * The {@link javax.transaction.TransactionManager} to use for the cache
+    * @param manager an instance of a TransactionManager
+    * @return an instance of the builder
+    */
+   public RemoteCacheConfigurationBuilder transactionManager(TransactionManager manager) {
+      attributes.attribute(TRANSACTION_MANAGER).set(manager);
       return this;
    }
 
