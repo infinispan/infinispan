@@ -824,9 +824,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   log.tracef("Writing entry %s for with segment: %d", marshalledEntry, segment);
                }
                return Flowable.fromIterable(stores.entrySet())
-                     .filter(entry ->
-                           !entry.getValue().characteristics.contains(Characteristic.READ_ONLY)
-                                 && predicate.test(entry.getValue().config))
+                     .filter(entry -> shouldWrite(entry.getValue(), predicate, flags))
                      // Let the write work in parallel across the stores
                      .flatMapCompletable(entry -> Completable.fromCompletionStage(entry.getKey().write(segment, marshalledEntry)));
             },
@@ -834,8 +832,15 @@ public class PersistenceManagerImpl implements PersistenceManager {
       ).toCompletionStage(null);
    }
 
+   private boolean shouldWrite(StoreStatus storeStatus, Predicate<? super StoreConfiguration> userPredicate, long flags) {
+      return !storeStatus.characteristics.contains(Characteristic.READ_ONLY)
+            && userPredicate.test(storeStatus.config)
+            && !storeStatus.store.ignoreCommandWithFlags(flags);
+   }
+
    @Override
-   public CompletionStage<Void> prepareAllTxStores(Transaction transaction, BatchModification batchModification, Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
+   public CompletionStage<Void> prepareAllTxStores(Transaction transaction, BatchModification batchModification,
+         Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
       return Completable.using(
             this::acquireReadLock,
             ignore -> {
@@ -907,9 +912,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   log.trace("Writing batch to stores");
                }
                return Flowable.fromIterable(stores.entrySet())
-                     .filter(entry ->
-                           !entry.getValue().characteristics.contains(Characteristic.READ_ONLY)
-                                 && predicate.test(entry.getValue().config))
+                     .filter(entry -> shouldWrite(entry.getValue(), predicate, flags))
                      // Let the rollback work in parallel across the stores
                      .flatMapCompletable(entry -> Completable.fromCompletionStage(
                            PersistenceManagerImpl.<K, V>storeForEntry(entry).bulkWrite(segmentCount, flowable)));

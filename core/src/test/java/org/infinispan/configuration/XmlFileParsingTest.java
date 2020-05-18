@@ -488,7 +488,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       SingleFileStoreConfiguration loaderCfg = (SingleFileStoreConfiguration) c.persistence().stores().get(0);
 
       assertTrue(loaderCfg.fetchPersistentState());
-      assertTrue(loaderCfg.ignoreModifications());
+      assertFalse(loaderCfg.ignoreModifications());
       assertFalse(loaderCfg.purgeOnStartup());
       assertEquals("/tmp/FileCacheStore-Location", loaderCfg.location());
       assertEquals(5, loaderCfg.async().threadPoolSize());

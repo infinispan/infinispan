@@ -33,7 +33,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "      <distributed-cache name=\"default\">\n" +
             "     <persistence>\n" +
             "       <string-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:"+ Version.getSchemaVersion() + "\" key-to-string-mapper=\"DummyKey2StringMapper\" shared=\"true\" " +
-            "                                preload=\"true\" read-only=\"true\" fetch-state=\"true\" dialect=\"H2\">\n" +
+            "                                preload=\"true\" read-only=\"false\" fetch-state=\"true\" dialect=\"H2\">\n" +
             "         <connection-pool connection-url=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driver=\"org.h2.Driver\"/>\n" +
             "         <string-keyed-table prefix=\"entry\" fetch-size=\"34\" batch-size=\"128\" >\n" +
             "           <id-column name=\"id\" type=\"VARCHAR\" />\n" +
@@ -67,7 +67,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("org.h2.Driver", connectionFactory.driverClass());
       assertEquals("dbuser", connectionFactory.username());
       assertEquals("dbpass", connectionFactory.password());
-      assertTrue(store.ignoreModifications());
+      assertFalse(store.ignoreModifications());
       assertTrue(store.fetchPersistentState());
       assertFalse(store.purgeOnStartup());
    }
