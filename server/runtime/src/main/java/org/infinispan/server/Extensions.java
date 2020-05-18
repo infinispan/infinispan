@@ -9,6 +9,7 @@ import javax.script.ScriptEngineFactory;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.NamedFactory;
+import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
@@ -28,6 +29,7 @@ public class Extensions {
    private final Map<String, CacheEventConverterFactory> converterFactories = new HashMap<>();
    private final Map<String, CacheEventFilterConverterFactory> filterConverterFactories = new HashMap<>();
    private final Map<String, KeyValueFilterConverterFactory> keyValueFilterConverterFactories = new HashMap<>();
+   private final Map<String, ParamKeyValueFilterConverterFactory> paramKeyValueFilterConverterFactories = new HashMap<>();
    private final Map<String, ServerTaskWrapper> serverTasks = new HashMap<>();
 
    public Extensions() {
@@ -38,6 +40,7 @@ public class Extensions {
       loadNamedFactory(classLoader, CacheEventConverterFactory.class, converterFactories);
       loadNamedFactory(classLoader, CacheEventFilterConverterFactory.class, filterConverterFactories);
       loadNamedFactory(classLoader, KeyValueFilterConverterFactory.class, keyValueFilterConverterFactories);
+      loadNamedFactory(classLoader, ParamKeyValueFilterConverterFactory.class, paramKeyValueFilterConverterFactories);
       loadService(classLoader, Driver.class);
       loadService(classLoader, ScriptEngineFactory.class);
       loadServerTasks(classLoader);
@@ -54,6 +57,9 @@ public class Extensions {
          server.addCacheEventFilterConverterFactory(factory.getKey(), factory.getValue());
       }
       for (Map.Entry<String, KeyValueFilterConverterFactory> factory : keyValueFilterConverterFactories.entrySet()) {
+         server.addKeyValueFilterConverterFactory(factory.getKey(), factory.getValue());
+      }
+      for (Map.Entry<String, ParamKeyValueFilterConverterFactory> factory : paramKeyValueFilterConverterFactories.entrySet()) {
          server.addKeyValueFilterConverterFactory(factory.getKey(), factory.getValue());
       }
    }
