@@ -8,16 +8,16 @@ import org.infinispan.lock.api.ClusteredLock;
 import org.infinispan.lock.api.ClusteredLockManager;
 
 /**
- * A cluster-wide lock to prevent multiple instances of the {@link org.infinispan.query.MassIndexer} to run concurrently.
+ * A cluster-wide lock to prevent multiple instances of the {@link org.infinispan.query.Indexer} to run concurrently.
  *
  * @since 10.1
  */
-final class DistributedMassIndexerLock implements MassIndexLock {
+final class DistributedIndexerLock implements IndexLock {
    private final String lockName;
    private volatile ClusteredLock clusteredLock;
    private final Cache<?, ?> cache;
 
-   DistributedMassIndexerLock(Cache<?, ?> cache) {
+   DistributedIndexerLock(Cache<?, ?> cache) {
       this.cache = cache;
       this.lockName = String.format("massIndexer-%s", cache.getName());
    }

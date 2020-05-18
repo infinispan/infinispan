@@ -9,9 +9,9 @@ class MassIndexerLockFactory {
    private MassIndexerLockFactory() {
    }
 
-   static MassIndexLock buildLock(Cache<?, ?> cache) {
+   static IndexLock buildLock(Cache<?, ?> cache) {
       if (cache.getCacheConfiguration().clustering().cacheMode().isClustered())
-         return new DistributedMassIndexerLock(cache);
-      return new LocalMassIndexerLock();
+         return new DistributedIndexerLock(cache);
+      return new LocalIndexerLock();
    }
 }

@@ -1,5 +1,6 @@
 package org.infinispan.query.impl.massindex;
 
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -8,9 +9,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
@@ -19,6 +22,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.manager.ClusterExecutor;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.logging.Log;
@@ -36,7 +40,7 @@ import org.infinispan.util.logging.LogFactory;
 @MBean(objectName = "MassIndexer",
       description = "Component that rebuilds the Lucene index from the cached data")
 @Scope(Scopes.NAMED_CACHE)
-public class DistributedExecutorMassIndexer implements MassIndexer {
+public class DistributedExecutorMassIndexer implements MassIndexer, Indexer {
 
    private static final Log LOG = LogFactory.getLog(DistributedExecutorMassIndexer.class, Log.class);
 
@@ -45,7 +49,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    private final IndexUpdater indexUpdater;
    private final ClusterExecutor executor;
    private final BlockingManager blockingManager;
-   private final MassIndexLock lock;
+   private final IndexLock lock;
 
    private volatile boolean isRunning = false;
 
@@ -73,13 +77,13 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    }
 
    @Override
-   public CompletionStage<Void> purge() {
-      return executeInternal(true);
+   public CompletableFuture<Void> purge() {
+      return executeInternal(true).toCompletableFuture();
    }
 
    @Override
-   public CompletionStage<Void> startAsync() {
-      return executeInternal(false);
+   public CompletableFuture<Void> startAsync() {
+      return executeInternal(false).toCompletableFuture();
    }
 
    @Override
@@ -106,11 +110,31 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    }
 
    @Override
+   public CompletionStage<Void> run() {
+      return startAsync();
+   }
+
+   @Override
+   public CompletionStage<Void> run(Object... keys) {
+      return reindex(keys);
+   }
+
+   @Override
+   public CompletionStage<Void> remove() {
+      return purge();
+   }
+
+   @Override
+   public CompletionStage<Void> remove(Class<?>... entities) {
+      return executeInternal(true, entities);
+   }
+
+   @Override
    public boolean isRunning() {
       return isRunning;
    }
 
-   private CompletionStage<Void> executeInternal(boolean skipIndex) {
+   private CompletionStage<Void> executeInternal(boolean skipIndex, Class<?>... entities) {
       CompletionStage<Boolean> lockStage = lock.lock();
       return lockStage.thenCompose(acquired -> {
          if (!acquired) {
@@ -127,9 +151,16 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
                isRunning = false;
             }
          };
-         Set<IndexedTypeIdentifier> indexedTypes = new HashSet<>();
-         for (IndexedTypeIdentifier indexedType : searchIntegrator.getIndexBindings().keySet()) {
-            indexedTypes.add(indexedType);
+         Set<IndexedTypeIdentifier> indexedTypes;
+         if (entities.length > 0) {
+            indexedTypes = Arrays.stream(entities)
+                  .map(PojoIndexedTypeIdentifier::convertFromLegacy)
+                  .collect(Collectors.toSet());
+         } else {
+            indexedTypes = new HashSet<>();
+            for (IndexedTypeIdentifier indexedType : searchIntegrator.getIndexBindings().keySet()) {
+               indexedTypes.add(indexedType);
+            }
          }
          try {
             IndexWorker indexWork = new IndexWorker(cache.getName(), indexedTypes, skipIndex, null);

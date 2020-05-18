@@ -42,7 +42,7 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.metrics.impl.CacheMetricsRegistration;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
-import org.infinispan.query.MassIndexer;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
@@ -113,7 +113,7 @@ public class LifecycleManager implements ModuleLifecycle {
             cr.registerComponent(new QueryBox(), QueryBox.class);
             DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache, searchFactory,
                   keyTransformationHandler, ComponentRegistryUtils.getTimeService(cache));
-            cr.registerComponent(massIndexer, MassIndexer.class);
+            cr.registerComponent(massIndexer, Indexer.class);
          }
 
          cr.registerComponent(ObjectReflectionMatcher.create(new ReflectionEntityNamesResolver(aggregatedClassLoader), searchFactory), ObjectReflectionMatcher.class);
@@ -177,7 +177,7 @@ public class LifecycleManager implements ModuleLifecycle {
       checkIndexableClasses(searchFactory, indexingConfiguration.indexedEntities());
 
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
-      MassIndexer massIndexer = ComponentRegistryUtils.getMassIndexer(cache);
+      Indexer massIndexer = ComponentRegistryUtils.getIndexer(cache);
       InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchFactory, massIndexer);
       stats.setStatisticsEnabled(configuration.statistics().enabled());
       cr.registerComponent(stats, InfinispanQueryStatisticsInfo.class);
@@ -209,7 +209,7 @@ public class LifecycleManager implements ModuleLifecycle {
    /**
     * Register query statistics and mass-indexer MBeans for a cache.
     */
-   private void registerQueryMBeans(ComponentRegistry cr, MassIndexer massIndexer, InfinispanQueryStatisticsInfo stats) {
+   private void registerQueryMBeans(ComponentRegistry cr, Indexer massIndexer, InfinispanQueryStatisticsInfo stats) {
       GlobalConfiguration globalConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration();
       if (globalConfig.jmx().enabled()) {
          Cache<?, ?> cache = cr.getComponent(Cache.class);

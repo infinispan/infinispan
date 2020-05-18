@@ -14,7 +14,7 @@ import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.query.MassIndexer;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.InfinispanQueryStatisticsInfo;
 import org.infinispan.query.impl.massindex.MassIndexerAlreadyStartedException;
@@ -47,7 +47,7 @@ public class SearchAdminResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder()
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/search/indexes").withAction("mass-index").handleWith(this::massIndex)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}/search/indexes").withAction("mass-index").handleWith(this::reindex)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/search/indexes").withAction("clear").handleWith(this::clearIndexes)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/search/indexes/stats").handleWith(this::indexStats)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/search/query/stats").handleWith(this::queryStats)
@@ -55,12 +55,12 @@ public class SearchAdminResource implements ResourceHandler {
             .create();
    }
 
-   private CompletionStage<RestResponse> massIndex(RestRequest request) {
-      return runMassIndexer(request, MassIndexer::startAsync, true);
+   private CompletionStage<RestResponse> reindex(RestRequest request) {
+      return runIndexer(request, Indexer::run, true);
    }
 
    private CompletionStage<RestResponse> clearIndexes(RestRequest request) {
-      return runMassIndexer(request, MassIndexer::purge, false);
+      return runIndexer(request, Indexer::remove, false);
    }
 
    private CompletionStage<RestResponse> indexStats(RestRequest request) {
@@ -81,9 +81,9 @@ public class SearchAdminResource implements ResourceHandler {
       return completedFuture(responseBuilder.build());
    }
 
-   private CompletionStage<RestResponse> runMassIndexer(RestRequest request,
-                                                        Function<MassIndexer, CompletionStage<Void>> op,
-                                                        boolean supportAsync) {
+   private CompletionStage<RestResponse> runIndexer(RestRequest request,
+                                                    Function<Indexer, CompletionStage<Void>> op,
+                                                    boolean supportAsync) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
       List<String> mode = request.parameters().get("mode");
@@ -96,12 +96,12 @@ public class SearchAdminResource implements ResourceHandler {
          return completedFuture(responseBuilder.build());
       }
 
-      MassIndexer massIndexer = ComponentRegistryUtils.getMassIndexer(cache);
+      Indexer indexer = ComponentRegistryUtils.getIndexer(cache);
 
       if (async) {
          try {
             LOG.asyncMassIndexerStarted();
-            op.apply(massIndexer).whenComplete((v,e) -> {
+            op.apply(indexer).whenComplete((v,e) -> {
                if(e == null) {
                   LOG.asyncMassIndexerSuccess();
                } else {
@@ -114,7 +114,7 @@ public class SearchAdminResource implements ResourceHandler {
          return CompletableFuture.completedFuture(responseBuilder.build());
       }
 
-      return op.apply(massIndexer).exceptionally(e -> {
+      return op.apply(indexer).exceptionally(e -> {
          if (e instanceof MassIndexerAlreadyStartedException) {
             responseBuilder.status(BAD_REQUEST.code()).entity("MassIndexer already started");
          } else {

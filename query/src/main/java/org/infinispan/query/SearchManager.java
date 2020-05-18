@@ -2,6 +2,7 @@ package org.infinispan.query;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.hibernate.search.stat.Statistics;
+import org.infinispan.Cache;
 import org.infinispan.query.dsl.IndexedQueryMode;
 
 /**
@@ -9,7 +10,9 @@ import org.infinispan.query.dsl.IndexedQueryMode;
  *
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author Marko Luksa
+ * @deprecated since 11.0, all search operations should be done with the {@link Search} entry point.
  */
+@Deprecated
 public interface SearchManager {
 
    /**
@@ -33,7 +36,9 @@ public interface SearchManager {
     * The MassIndexer can be used to rebuild the Lucene indexes from the entries stored in Infinispan.
     *
     * @return the MassIndexer component
+    * @deprecated Since 11.0, use {@link Search#getIndexer(Cache)} instead.
     */
+   @Deprecated
    MassIndexer getMassIndexer();
 
    /**
@@ -41,7 +46,9 @@ public interface SearchManager {
     *
     * @return The statistics.
     * @since 7.0
+    * @deprecated Since 11.0, with no replacement.
     */
+   @Deprecated
    Statistics getStatistics();
 
    /**
@@ -51,7 +58,9 @@ public interface SearchManager {
     * @return analyzer with the specified name
     * @throws org.hibernate.search.exception.SearchException if the definition name is unknown
     * @since 7.0
+    * @deprecated Since 11.0, with no replacement.
     */
+   @Deprecated
    Analyzer getAnalyzer(String name);
 
    /**
@@ -62,14 +71,18 @@ public interface SearchManager {
     * @throws java.lang.IllegalArgumentException in case {@code clazz == null} or the specified
     * class is not an indexed entity.
     * @since 7.0
+    * @deprecated Since 11.0, with no replacement.
     */
+   @Deprecated
    Analyzer getAnalyzer(Class<?> clazz);
 
    /**
     * Remove all entities of particular class from the index.
     *
     * @param entityType The class of the entity to remove.
+    * @deprecated Since 11.0, use {@link Indexer#remove()} obtained from {@link Search#getIndexer(Cache)}.
     */
+   @Deprecated
    void purge(Class<?> entityType);
 
    /**
@@ -80,6 +93,8 @@ public interface SearchManager {
     * @param cls the class of the desired internal component
     * @return the 'unwrapped' internal component
     * @throws IllegalArgumentException if the class of the requested internal component is not recognized
+    * @deprecated Since 11.0, with no replacement.
     */
+   @Deprecated
    <T> T unwrap(Class<T> cls);
 }

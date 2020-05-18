@@ -21,6 +21,7 @@ import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.spi.SearchManagerImplementor;
+import org.infinispan.util.concurrent.TimeoutException;
 
 /**
  * Class that is used to build a {@link org.infinispan.query.CacheQuery} based on a Lucene or an Ickle query, only for
@@ -54,7 +55,8 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       this.keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
       this.queryEngine = queryEngine;
-      this.massIndexer = ComponentRegistryUtils.getMassIndexer(cache);
+      this.massIndexer = (MassIndexer) ComponentRegistryUtils.getIndexer(cache);
+      this.timeoutExceptionFactory = (msg, q) -> new TimeoutException(msg + " \"" + q + '\"');
    }
 
    @Override

@@ -33,7 +33,9 @@ public interface SearchManagerImplementor extends SearchManager {
     * Define the timeout exception factory to customize the exception thrown when the query timeout is exceeded.
     *
     * @param timeoutExceptionFactory the timeout exception factory to use
+    * @deprecated Since 11.0, without replacement.
     */
+   @Deprecated
    void setTimeoutExceptionFactory(TimeoutExceptionFactory timeoutExceptionFactory);
 
    /**

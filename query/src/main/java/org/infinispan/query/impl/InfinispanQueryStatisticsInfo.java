@@ -8,7 +8,7 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.query.MassIndexer;
+import org.infinispan.query.Indexer;
 
 /**
  * This MBean exposes the query statistics from the Hibernate Search's SearchIntegrator Statistics object via
@@ -22,11 +22,11 @@ import org.infinispan.query.MassIndexer;
 public final class InfinispanQueryStatisticsInfo implements StatisticsInfoMBean {
 
    private final SearchIntegrator searchIntegrator;
-   private final MassIndexer massIndexer;
+   private final Indexer massIndexer;
    private final QueryStatistics queryStatistics = new QueryStatistics();
    private final IndexStatistics indexStatistics = new IndexStatistics();
 
-   InfinispanQueryStatisticsInfo(SearchIntegrator searchIntegrator, MassIndexer massIndexer) {
+   InfinispanQueryStatisticsInfo(SearchIntegrator searchIntegrator, Indexer massIndexer) {
       this.searchIntegrator = searchIntegrator;
       this.massIndexer = massIndexer;
    }

@@ -7,7 +7,7 @@ import java.util.concurrent.CompletionStage;
  *
  * @since 10.1
  */
-interface MassIndexLock {
+interface IndexLock {
 
    /**
     * Tries to acquire a lock to execute the MassIndexer, without waiting.
