@@ -17,6 +17,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.test.CustomKey3;
+import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -62,6 +64,8 @@ public class TestQueryHelperFactory {
       ConfigurationBuilder builder = AbstractCacheTest.getDefaultClusteredCacheConfig(cacheMode, transactional);
 
       builder.indexing().enable();
+
+      builder.indexing().enable().addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
 
       if (isRamDirectoryProvider) {
          builder.indexing()

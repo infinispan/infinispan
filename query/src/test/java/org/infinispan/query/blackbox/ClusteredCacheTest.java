@@ -33,7 +33,6 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
-import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
@@ -91,6 +90,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cacheCfg.indexing()
             .enable()
             .addIndexedEntity(Person.class)
+            .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT");
@@ -579,11 +579,6 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 //   }
 
    public void testSearchKeyTransformer() throws Exception {
-      caches().forEach(cache -> {
-         SearchManagerImplementor manager = Search.getSearchManager(cache).unwrap(SearchManagerImplementor.class);
-         manager.registerKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
-      });
-
       prepareTestedObjects();
 
       TransactionManager transactionManager = cache1.getAdvancedCache().getTransactionManager();
