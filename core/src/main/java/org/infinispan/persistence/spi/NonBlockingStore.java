@@ -100,7 +100,8 @@ public interface NonBlockingStore<K, V> {
    CompletionStage<Void> start(InitializationContext ctx);
 
    /**
-    *
+    * <p>
+    * This method is guaranteed to not be invoked concurrently with other operations.
     * @return a stage that when complete signals that this store has been stopped
     */
    CompletionStage<Void> stop();

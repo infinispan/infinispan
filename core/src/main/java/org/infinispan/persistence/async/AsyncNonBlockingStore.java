@@ -109,13 +109,38 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
 
    @Override
    public CompletionStage<Void> stop() {
+      CompletionStage<Void> asyncStage;
       if (submissionFlowable != null) {
-         // TODO: need to submit and wait for the last batch
-         startSub.dispose();
+         if (trace) {
+            log.tracef("Stopping async store containing store %s", actual);
+         }
          submissionFlowable = null;
+         startSub.dispose();
          startSub = null;
+         asyncStage = waitUntilStop();
+      } else {
+         asyncStage = CompletableFutures.completedNull();
       }
-      return actual.stop();
+      return asyncStage.thenCompose(ignore -> {
+         if (trace) {
+            log.tracef("Stopping store %s from async store", actual);
+         }
+         return actual.stop();
+      });
+   }
+
+   private CompletionStage<Void> waitUntilStop() {
+      CompletionStage<Void> stage;
+      boolean pendingChanges;
+      synchronized (this) {
+         stage = batchFuture;
+         pendingChanges = !modificationMap.isEmpty() || hasClear ||
+               (modificationsToReplicate != null && !modificationsToReplicate.isEmpty()) || clearToReplicate;
+      }
+      if (stage == null) {
+         return CompletableFutures.completedNull();
+      }
+      return batchFuture.thenCompose(ignore -> waitUntilStop());
    }
 
    @Override
@@ -154,7 +179,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
          if (!modificationsToReplicate.isEmpty()) {
             asyncBatchStage = asyncBatchStage.thenCompose(ignore -> {
                if (trace) {
-                  log.tracef("Sending batch write/remove operations to underlying store %s with id %s", modificationsToReplicate.values(),
+                  log.tracef("Sending batch write/remove operations %s to underlying store with id %s", modificationsToReplicate.values(),
                         System.identityHashCode(modificationsToReplicate));
                }
                return retry(() -> replicateModifications(modificationsToReplicate), persistenceConfiguration.connectionAttempts()).whenComplete((ignore2, t) -> {
@@ -240,13 +265,16 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
       ConnectableFlowable<Modification> connectableModifications = Flowable.fromIterable(modifications.values())
             .publish();
 
-      CompletionStage<Void> removeStage = actual.bulkDelete(segmentCount, connectableModifications.ofType(RemoveModification.class)
-            .groupBy(Modification::getSegment, RemoveModification::getKey)
-            .map(SegmentPublisherWrapper::new));
-      CompletionStage<Void> putStage = actual.bulkWrite(segmentCount, connectableModifications.ofType(PutModification.class)
+      // The below two methods may lazily subscribe to the Flowable, thus we must auto connect after both are
+      // subscribed to (e.g. NonBlockingStoreAdapter subscribes on a blocking thread)
+      Flowable<Modification> modificationFlowable = connectableModifications.autoConnect(2);
+
+      CompletionStage<Void> putStage = actual.bulkWrite(segmentCount, modificationFlowable.ofType(PutModification.class)
             .groupBy(Modification::getSegment, PutModification::<K, V>getEntry)
             .map(SegmentPublisherWrapper::new));
-      connectableModifications.connect();
+      CompletionStage<Void> removeStage = actual.bulkDelete(segmentCount, modificationFlowable.ofType(RemoveModification.class)
+            .groupBy(Modification::getSegment, RemoveModification::getKey)
+            .map(SegmentPublisherWrapper::new));
 
       return CompletionStages.allOf(removeStage, putStage);
    }
@@ -447,6 +475,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    public CompletionStage<Void> clear() {
       assertNotStopped();
       submissionFlowable.onNext(ClearModification.INSTANCE);
+      submitBatchIfNecessary();
       return CompletableFutures.completedNull();
    }
 

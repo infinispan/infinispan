@@ -5,6 +5,7 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import javax.transaction.Transaction;
@@ -27,7 +28,6 @@ import org.infinispan.persistence.spi.TransactionalCacheWriter;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -263,7 +263,8 @@ public class NonBlockingStoreAdapter<K, V> implements NonBlockingStore<K, V> {
             .flatMap(RxJavaInterop.identityFunction(), false, publisherCount);
       // While bulkUpdate appears to be non blocking - there was no mandate that the operation actually be so.
       // Thus we run it on a blocking thread just in case
-      return blockingManager.runBlocking(() -> CompletionStages.join(writer().bulkUpdate(meFlowable)), nextTraceId());
+      return blockingManager.supplyBlocking(() -> writer().bulkUpdate(meFlowable), nextTraceId())
+            .thenCompose(Function.identity());
    }
 
    @Override
