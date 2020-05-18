@@ -13,7 +13,6 @@ import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.eviction.impl.EvictionWithConcurrentOperationsTest;
 import org.infinispan.notifications.cachelistener.CacheListenerVisibilityTest;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
-import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestBlocking;
 import org.infinispan.test.TestingUtil;
@@ -33,13 +32,6 @@ import reactor.blockhound.integration.BlockHoundIntegration;
 public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
    @Override
    public void applyTo(BlockHound.Builder builder) {
-
-      builder.addDynamicThreadPredicate(t -> true);
-
-      builder.nonBlockingThreadPredicate(threadPredicate -> threadPredicate.or(t -> {
-         return AbstractInfinispanTest.currentThreadRequiresNonBlocking();
-      }));
-
       try {
          allowTestsToBlock(builder);
       } catch (ClassNotFoundException e) {

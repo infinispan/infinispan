@@ -110,6 +110,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    @Override
    public CompletionStage<Void> stop() {
       if (submissionFlowable != null) {
+         // TODO: need to submit and wait for the last batch
          startSub.dispose();
          submissionFlowable = null;
          startSub = null;
