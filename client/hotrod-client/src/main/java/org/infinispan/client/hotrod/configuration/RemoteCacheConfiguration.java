@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.configuration;
 
+import javax.transaction.TransactionManager;
+
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
@@ -18,9 +20,10 @@ public class RemoteCacheConfiguration {
    public static final AttributeDefinition<Integer> NEAR_CACHE_MAX_ENTRIES = AttributeDefinition.builder("near-cache-max-entries", -1).build();
    public static final AttributeDefinition<String> TEMPLATE_NAME = AttributeDefinition.builder("template-name", null, String.class).build();
    public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder("transaction-mode", TransactionMode.NONE).build();
+   public static final AttributeDefinition<TransactionManager> TRANSACTION_MANAGER = AttributeDefinition.builder("transaction-manager", null, TransactionManager.class).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(RemoteCacheConfiguration.class, CONFIGURATION, FORCE_RETURN_VALUES, NAME, NEAR_CACHE_MODE, NEAR_CACHE_MAX_ENTRIES, TEMPLATE_NAME, TRANSACTION_MODE);
+      return new AttributeSet(RemoteCacheConfiguration.class, CONFIGURATION, FORCE_RETURN_VALUES, NAME, NEAR_CACHE_MODE, NEAR_CACHE_MAX_ENTRIES, TEMPLATE_NAME, TRANSACTION_MODE, TRANSACTION_MANAGER);
    }
 
    private final Attribute<String> configuration;
@@ -30,6 +33,7 @@ public class RemoteCacheConfiguration {
    private final Attribute<Integer> nearCacheMaxEntries;
    private final Attribute<String> templateName;
    private final Attribute<TransactionMode> transactionMode;
+   private final Attribute<TransactionManager> transactionManager;
    private final AttributeSet attributes;
 
    RemoteCacheConfiguration(AttributeSet attributes) {
@@ -41,6 +45,7 @@ public class RemoteCacheConfiguration {
       nearCacheMaxEntries = attributes.attribute(NEAR_CACHE_MAX_ENTRIES);
       templateName = attributes.attribute(TEMPLATE_NAME);
       transactionMode = attributes.attribute(TRANSACTION_MODE);
+      transactionManager = attributes.attribute(TRANSACTION_MANAGER);
    }
 
    public String configuration() {

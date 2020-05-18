@@ -341,4 +341,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid property format in URI: %s", id = 4096)
    IllegalArgumentException invalidPropertyFormat(String part);
+
+   @Message(value = "Illegal attempt to redefine an already existing cache configuration: %s", id = 4097)
+   IllegalArgumentException duplicateCacheConfiguration(String name);
 }
