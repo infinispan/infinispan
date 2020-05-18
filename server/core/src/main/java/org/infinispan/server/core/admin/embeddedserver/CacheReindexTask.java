@@ -1,5 +1,7 @@
 package org.infinispan.server.core.admin.embeddedserver;
 
+import static org.infinispan.util.concurrent.CompletionStages.join;
+
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -48,7 +50,7 @@ public class CacheReindexTask extends AdminServerTask<Void> {
 
       String name = requireParameter(parameters, "name");
       Cache<Object, Object> cache = cacheManager.getCache(name);
-      Search.getSearchManager(cache).getMassIndexer().start();
+      join(Search.getIndexer(cache).run());
 
       return null;
    }

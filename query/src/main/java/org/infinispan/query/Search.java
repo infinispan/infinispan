@@ -1,6 +1,7 @@
 package org.infinispan.query;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -82,7 +83,9 @@ public final class Search {
 
    /**
     * Obtain the {@link SearchManager} object for a cache.
+    * @deprecated Since 11.0 with no replacement.
     */
+   @Deprecated
    public static SearchManager getSearchManager(Cache<?, ?> cache) {
       if (cache == null) {
          throw new IllegalArgumentException("cache parameter must not be null");
@@ -93,6 +96,16 @@ public final class Search {
       }
       checkBulkReadPermission(advancedCache);
       return new SearchManagerImpl(advancedCache);
+   }
+
+   /**
+    * @return Obtain the {@link Indexer} instance for the cache.
+    * @since 11.0
+    */
+   public static <K, V> Indexer getIndexer(Cache<K, V> cache) {
+      Cache<K, V> validCache = Objects.requireNonNull(cache, "cache parameter must not be null");
+      AdvancedCache<K, V> advancedCache = validCache.getAdvancedCache();
+      return ComponentRegistryUtils.getIndexer(advancedCache);
    }
 
    private static void checkBulkReadPermission(AdvancedCache<?, ?> cache) {

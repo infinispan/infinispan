@@ -33,8 +33,8 @@ The ```index()``` (index mode) configuration is no longer necessary, is deprecat
 It is forbidden to use both the `.indexing().enabled( )` and the deprecated `.indexing().index( )` configuration.
 
 
-* Many `SearchManager` changes:
-** `.getQuery()` methods that take a Lucene Query have been removed. The alternative methods that take an Ickle query string should be used instead.
+* The `SearchManager` has been deprecated and no longer supports Lucene and Hibernate Search native objects:
+** `.getQuery()` methods that take a Lucene Query have been removed. The alternative methods that take an Ickle query from the `org.infinispan.query.Search` entry point should be used instead.
 ** `.buildQueryBuilderForClass()`, that allows to build Hibernate Search queries directly has been removed. Ickle queries should be used instead.
 ** It is not possible anymore to specify multiple target entity(ies) class(es) when calling `.getQuery()`. The entity will come from the Ickle query string, so multi-entity queries are not supported anymore.
 

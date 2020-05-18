@@ -6,10 +6,10 @@ import java.util.concurrent.Semaphore;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
- * A lock to prevent multiple {@link org.infinispan.query.MassIndexer} in non-clustered environments.
+ * A lock to prevent multiple {@link org.infinispan.query.Indexer} in non-clustered environments.
  * @since 10.1
  */
-final class LocalMassIndexerLock implements MassIndexLock {
+final class LocalIndexerLock implements IndexLock {
 
    private final Semaphore lock = new Semaphore(1);
 

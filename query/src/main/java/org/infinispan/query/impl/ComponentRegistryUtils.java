@@ -7,7 +7,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.query.MassIndexer;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.core.impl.QueryCache;
@@ -74,8 +74,8 @@ public final class ComponentRegistryUtils {
       return SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()).getComponent(QueryCache.class);
    }
 
-   public static MassIndexer getMassIndexer(AdvancedCache<?, ?> cache) {
-      return getRequiredComponent(cache, MassIndexer.class);
+   public static Indexer getIndexer(AdvancedCache<?, ?> cache) {
+      return getRequiredComponent(cache, Indexer.class);
    }
 
    public static InfinispanQueryStatisticsInfo getQueryStatistics(AdvancedCache<?, ?> cache) {

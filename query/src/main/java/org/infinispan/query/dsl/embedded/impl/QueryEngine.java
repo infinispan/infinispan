@@ -60,7 +60,9 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.QueryStringCreator;
 import org.infinispan.query.impl.CacheQueryImpl;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.QueryDefinition;
+import org.infinispan.query.impl.SearchManagerImpl;
 import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.util.function.SerializableFunction;
@@ -122,13 +124,13 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    }
 
    protected SearchManagerImplementor createSearchManager() {
-      return SecurityActions.getCacheSearchManager(cache).unwrap(SearchManagerImplementor.class);
+      return new SearchManagerImpl(cache);
    }
 
 
    protected SearchIntegrator getSearchFactory() {
       if (searchFactory == null) {
-         searchFactory = getSearchManager().unwrap(SearchIntegrator.class);
+         searchFactory = ComponentRegistryUtils.getSearchIntegrator(cache);
       }
       return searchFactory;
    }
