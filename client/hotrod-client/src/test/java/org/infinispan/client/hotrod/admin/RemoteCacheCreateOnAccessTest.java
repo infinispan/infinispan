@@ -8,7 +8,6 @@ import java.util.Properties;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
@@ -80,7 +79,6 @@ public class RemoteCacheCreateOnAccessTest extends MultiHotRodServersTest {
             .socketTimeout(3000)
             .remoteCache(cacheName)
                .templateName("template");
-      Configuration configuration = clientBuilder.build();
       try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build())) {
          RemoteCache<String, String> cache = remoteCacheManager.getCache(cacheName);
          cache.put("a", "a");
@@ -98,7 +96,6 @@ public class RemoteCacheCreateOnAccessTest extends MultiHotRodServersTest {
             .host(server(0).getHost())
             .port(server(0).getPort())
             .withProperties(properties);
-      Configuration configuration = clientBuilder.build();
       try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build())) {
          RemoteCache<String, String> cache = remoteCacheManager.getCache(cacheName);
          cache.put("a", "a");
@@ -116,7 +113,6 @@ public class RemoteCacheCreateOnAccessTest extends MultiHotRodServersTest {
             .socketTimeout(3000)
             .remoteCache(cacheName)
             .configuration(xml);
-      Configuration configuration = clientBuilder.build();
       try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build())) {
          RemoteCache<String, String> cache = remoteCacheManager.getCache(cacheName);
          cache.put("a", "a");
@@ -135,8 +131,23 @@ public class RemoteCacheCreateOnAccessTest extends MultiHotRodServersTest {
             .host(server(0).getHost())
             .port(server(0).getPort())
             .withProperties(properties);
-      Configuration configuration = clientBuilder.build();
       try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build())) {
+         RemoteCache<String, String> cache = remoteCacheManager.getCache(cacheName);
+         cache.put("a", "a");
+      }
+   }
+
+   public void createOnAccessConfigurationProgrammaticAfterConstruction() throws Throwable {
+      String cacheName = "cache-from-config-declarative";
+      String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"/></cache-container></infinispan>", cacheName);
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      clientBuilder
+            .addServer()
+            .host(server(0).getHost())
+            .port(server(0).getPort())
+            .socketTimeout(3000);
+      try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build())) {
+         remoteCacheManager.getConfiguration().addRemoteCache(cacheName, c -> c.configuration(xml));
          RemoteCache<String, String> cache = remoteCacheManager.getCache(cacheName);
          cache.put("a", "a");
       }

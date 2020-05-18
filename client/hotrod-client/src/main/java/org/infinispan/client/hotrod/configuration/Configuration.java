@@ -55,12 +55,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.Marshaller;
@@ -250,7 +252,38 @@ public class Configuration {
    }
 
    public Map<String, RemoteCacheConfiguration> remoteCaches() {
-      return remoteCaches;
+      return Collections.unmodifiableMap(remoteCaches);
+   }
+
+   /**
+    * Create a new {@link RemoteCacheConfiguration}. This can be used to create additional configurations after a {@link org.infinispan.client.hotrod.RemoteCacheManager} has been initialized.
+    *
+    * @param name the name of the cache configuration to create
+    * @param builderConsumer a {@link Consumer} which receives a {@link RemoteCacheConfigurationBuilder} and can apply the necessary configurations on it.
+    * @return the {@link RemoteCacheConfiguration}
+    * @throws IllegalArgumentException if a cache configuration with the same name already exists
+    */
+   public RemoteCacheConfiguration addRemoteCache(String name, Consumer<RemoteCacheConfigurationBuilder> builderConsumer) {
+      synchronized (remoteCaches) {
+         if (remoteCaches.containsKey(name)) {
+            throw Log.HOTROD.duplicateCacheConfiguration(name);
+         } else {
+            RemoteCacheConfigurationBuilder builder = new RemoteCacheConfigurationBuilder(null, name);
+            builderConsumer.accept(builder);
+            builder.validate();
+            RemoteCacheConfiguration configuration = builder.create();
+            remoteCaches.put(name, configuration);
+            return configuration;
+         }
+      }
+   }
+
+   /**
+    * Remove a {@link RemoteCacheConfiguration} from this {@link Configuration}. If the cache configuration doesn't exist, this method has no effect.
+    * @param name the name of the {@link RemoteCacheConfiguration} to remove.
+    */
+   public void removeRemoteCache(String name) {
+      remoteCaches.remove(name);
    }
 
    public StatisticsConfiguration statistics() {
