@@ -6,6 +6,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
+import org.infinispan.query.test.CustomKey3;
+import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -28,6 +30,7 @@ public class ObjectStorageLocalCacheTest extends LocalCacheTest {
             .enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
+            .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
             .addProperty("lucene_version", "LUCENE_CURRENT");

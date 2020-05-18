@@ -5,6 +5,8 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
+import org.infinispan.query.test.CustomKey3;
+import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -44,6 +46,7 @@ public class LocalCacheStorageTypeTest extends LocalCacheTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.indexing()
             .enable()
+            .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
             .addProperty("default.directory_provider", "local-heap")

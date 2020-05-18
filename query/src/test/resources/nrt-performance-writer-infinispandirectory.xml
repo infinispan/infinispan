@@ -21,6 +21,9 @@
             <object size="200"/>
          </memory>
          <indexing>
+            <key-transformers>
+               <key-transformer key="org.infinispan.query.test.CustomKey3" transformer="org.infinispan.query.test.CustomKey3Transformer"/>
+            </key-transformers>
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>

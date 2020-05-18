@@ -25,7 +25,6 @@ import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
-import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
@@ -387,9 +386,6 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    }
 
    public void testSearchKeyTransformer() {
-      SearchManagerImplementor manager = Search.getSearchManager(cache).unwrap(SearchManagerImplementor.class);
-      manager.registerKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
-
       loadTestingDataWithCustomKey();
 
       CacheQuery<?> cacheQuery = createQuery("blurb:'Eats'", Person.class);
@@ -499,6 +495,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       cfg
          .indexing()
             .enable()
+            .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
             .addProperty("default.directory_provider", "local-heap")

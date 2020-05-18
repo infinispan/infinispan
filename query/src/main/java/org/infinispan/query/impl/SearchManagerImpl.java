@@ -15,7 +15,6 @@ import org.hibernate.search.stat.Statistics;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.MassIndexer;
-import org.infinispan.query.Transformer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.IndexedQueryMode;
@@ -83,11 +82,6 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
    public <E> CacheQuery<E> getQuery(QueryDefinition queryDefinition, IndexedQueryMode indexedQueryMode, IndexedTypeMap<CustomTypeMetadata> indexedTypeMap) {
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
       return queryEngine.buildCacheQuery(queryDefinition, indexedQueryMode, keyTransformationHandler, asyncExecutor, indexedTypeMap);
-   }
-
-   @Override
-   public void registerKeyTransformer(Class<?> keyClass, Class<? extends Transformer> transformerClass) {
-      keyTransformationHandler.registerTransformer(keyClass, transformerClass);
    }
 
    @Override
