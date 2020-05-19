@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.infinispan.commons.test.skip.StringLogAppender;
 import org.infinispan.server.hotrod.HotRodSingleNodeTest;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**
@@ -15,12 +16,14 @@ import org.testng.annotations.Test;
 public class HotRodAccessLoggingTest extends HotRodSingleNodeTest {
    public static final String LOG_FORMAT = "%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss Z}] \"%X{method} %m %X{protocol}\" %X{status} %X{requestSize} %X{responseSize} %X{duration}";
    StringLogAppender logAppender;
+   private String testShortName;
 
    @Override
    protected void setup() throws Exception {
+      testShortName = TestResourceTracker.getCurrentTestShortName();
       logAppender = new StringLogAppender("org.infinispan.HOTROD_ACCESS_LOG",
                                           Level.TRACE,
-            t -> t.getName().startsWith("non-blocking-thread"),
+            t -> t.getName().startsWith("HotRod-" + testShortName + "-ServerIO"),
                                           PatternLayout.newBuilder().withPattern(LOG_FORMAT).build());
       logAppender.install();
       super.setup();
