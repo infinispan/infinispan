@@ -10,9 +10,12 @@ import java.lang.annotation.Target;
  *
  * @author Ryan Emerson
  * @since 9.0
+ * @deprecated since 11.0. To be removed in 14.0 ISPN-11866. Stores should utilise
+ * {@link org.infinispan.persistence.spi.NonBlockingStore.Characteristic}s to specify a store's capabilities.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
+@Deprecated
 public @interface Store {
    /**
     * Whether the store can be shared amongst nodes in a distributed/replicated cache
