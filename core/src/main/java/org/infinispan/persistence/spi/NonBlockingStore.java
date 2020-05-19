@@ -8,7 +8,6 @@ import java.util.function.Predicate;
 
 import javax.transaction.Transaction;
 
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.persistence.support.BatchModification;
@@ -93,7 +92,9 @@ public interface NonBlockingStore<K, V> {
    }
 
    /**
-    *
+    * <p>
+    * This method is guaranteed to not be invoked concurrently with other operations. This also means another method
+    * will not be invoked on this store until after the returned Stage completes.
     * @param ctx initialization context used to initialize this store
     * @return a stage that when complete signals that this store has been successfully started
     */
@@ -101,7 +102,8 @@ public interface NonBlockingStore<K, V> {
 
    /**
     * <p>
-    * This method is guaranteed to not be invoked concurrently with other operations.
+    * This method is guaranteed to not be invoked concurrently with other operations. This also means another method
+    * will not be invoked on this store until after the returned Stage completes.
     * @return a stage that when complete signals that this store has been stopped
     */
    CompletionStage<Void> stop();
@@ -112,44 +114,6 @@ public interface NonBlockingStore<K, V> {
     */
    default Set<Characteristic> characteristics() {
       return EnumSet.noneOf(Characteristic.class);
-   }
-
-   /**
-    * Provides a way for the store to communicate which media type it requires for its key arguments. Infinispan
-    * will invoke this method immediately after the store is started providing the media type that in memory objects are
-    * stored via {@code storageMediaType} as well as all the media types this running instance can support converting
-    * to. The store then must choose from any of the provided media types. Any methods that are invoked after that
-    * accept a key argument will be guaranteed to have this key be in the desired media type. Also any return values
-    * from this store should be in this media type
-    * <p>
-    * Note that choosing a media type other than the storage media type will incur the cost of converting the key
-    * to and from the storage media type for input and output parameters.
-    * <p>
-    * TODO: update once this detection is more explicit
-    * Note that if the returned MediaType is binary, that the provided and returned values will/must be raw unwrapped
-    * byte[] instances. Due to this the users should not rely upon the equality of such instances as each instance
-    * will possibly be different objects.
-    * <p>
-    * The {@link MediaType#MATCH_ALL} is a special media type that if returned will signal that the store should
-    * receive all values
-    * @implSpec
-    * The default implementation just returns the storageMediaType
-    * @param storageMediaType how the key is stored in memory
-    * @param supportedMediaTypes what media types Infinispan can convert to automatically on behalf of the store
-    * @return the media type the store desires for keys to be in when invoked and will return in
-    */
-   default MediaType getKeyMediaType(MediaType storageMediaType, Set<MediaType> supportedMediaTypes) {
-      return storageMediaType;
-   }
-
-   /**
-    *
-    * @param storageMediaType
-    * @param supportedMediaTypes
-    * @return
-    */
-   default MediaType getValueMediaType(MediaType storageMediaType, Set<MediaType> supportedMediaTypes) {
-      return storageMediaType;
    }
 
    /**
@@ -344,7 +308,7 @@ public interface NonBlockingStore<K, V> {
     * @param batchModification an object containing the write/remove operations required for this transaction.
     */
    default CompletionStage<Void> prepareWithModifications(Transaction transaction, BatchModification batchModification) {
-      throw new UnsupportedOperationException("Store characteristic included " + Characteristic.TRANSACTIONAL + ", but it does not implement rollback");
+      throw new UnsupportedOperationException("Store characteristic included " + Characteristic.TRANSACTIONAL + ", but it does not implement prepareWithModifications");
    }
 
    /**
@@ -353,7 +317,7 @@ public interface NonBlockingStore<K, V> {
     * @param transaction the current transactional context.
     */
    default CompletionStage<Void> commit(Transaction transaction) {
-      throw new UnsupportedOperationException("Store characteristic included " + Characteristic.TRANSACTIONAL + ", but it does not implement rollback");
+      throw new UnsupportedOperationException("Store characteristic included " + Characteristic.TRANSACTIONAL + ", but it does not implement commit");
    }
 
    /**

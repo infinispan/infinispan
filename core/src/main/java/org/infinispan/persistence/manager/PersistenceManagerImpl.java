@@ -187,7 +187,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                         .toSingle(() -> new StoreStatus(nonBlockingStore, processedConfiguration,
                               updateCharacteristics(nonBlockingStore, nonBlockingStore.characteristics(), storeConfiguration)));
                })
-               // This relies upon visibility guarnatees of reactive streams for publishing map values
+               // This relies upon visibility guarantees of reactive streams for publishing map values
                .doOnNext(status -> stores.put(status.store, status))
                .delay(status -> {
                   if (status.config.purgeOnStartup()) {
@@ -208,6 +208,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                .blockingAwait();
       } catch (Throwable t) {
          lock.unlockWrite(stamp);
+         log.debug("PersistenceManagerImpl encountered an exception during startup of stores", t);
          throw t;
       }
    }
@@ -351,8 +352,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    public CompletionStage<Void> preload() {
       long stamp = acquireReadLock();
-      NonBlockingStore<Object, Object> nonBlockingStore = getStoreLocked(storeStatus ->
-            storeStatus.config.preload());
+      NonBlockingStore<Object, Object> nonBlockingStore = getStoreLocked(status -> status.config.preload());
       if (nonBlockingStore == null) {
          releaseReadLock(stamp);
          return CompletableFutures.completedNull();
@@ -371,7 +371,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return Flowable.fromPublisher(publisher)
             .doFinally(() -> releaseReadLock(stamp))
             .take(maxEntries)
-            .concatMapSingle(me -> preloadKey(flags, me, keyDataConversion, valueDataConversion))
+            .concatMapSingle(me -> preloadEntry(flags, me, keyDataConversion, valueDataConversion))
             .count()
             .toCompletionStage()
             .thenAccept(insertAmount -> {
@@ -380,7 +380,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             });
    }
 
-   private Single<?> preloadKey(long flags, MarshallableEntry me, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+   private Single<Object> preloadEntry(long flags, MarshallableEntry<Object, Object> me, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       // CallInterceptor will preserve the timestamps if the metadata is an InternalMetadataImpl instance
       InternalMetadataImpl metadata = new InternalMetadataImpl(me.getMetadata(), me.created(), me.lastUsed());
       Object key = keyDataConversion.toStorage(me.getKey());
@@ -405,6 +405,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          } catch (Exception e) {
             throw new PersistenceException("Unable to preload!", e);
          }
+         //noinspection unchecked
          stage = (CompletionStage) blockingManager.whenCompleteBlocking(putStage, (pendingTransaction, t) -> {
             try {
                transactionManager.resume(pendingTransaction);
@@ -472,6 +473,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return Long.MAX_VALUE;
    }
 
+   @GuardedBy("lock#readLock")
    private long getFlagsForStateInsertion() {
       long flags = FlagBitSets.CACHE_MODE_LOCAL |
             FlagBitSets.SKIP_OWNERSHIP_CHECK |
@@ -481,7 +483,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             FlagBitSets.SKIP_XSITE_BACKUP |
             FlagBitSets.IRAC_STATE;
 
-      boolean hasSharedStore  = getStoreLocked(storeStatus -> storeStatus.config.shared()) != null;
+      boolean hasSharedStore = getStoreLocked(storeStatus -> storeStatus.config.shared()) != null;
 
       if (!hasSharedStore  || !configuration.indexing().isVolatile()) {
          flags = EnumUtil.mergeBitSets(flags, FlagBitSets.SKIP_INDEXING);
@@ -578,7 +580,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          return stores.keySet().stream()
                .map(this::unwrapStore)
                .map(this::unwrapOldSPI)
-               .filter(store -> storeClass.isInstance(store))
+               .filter(storeClass::isInstance)
                .map(store -> (T) store)
                .collect(Collectors.toCollection(HashSet::new));
       } finally {
@@ -730,9 +732,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   log.tracef("Loading entry for key %s with segment %d", key, segment);
                }
                return Flowable.fromIterable(stores.entrySet())
-                     .filter(entry ->
-                           !entry.getValue().characteristics.contains(Characteristic.WRITE_ONLY)
-                                 && allowLoad(entry.getValue(), localInvocation, includeStores))
+                     .filter(entry -> allowLoad(entry.getValue(), localInvocation, includeStores))
                      // Only do 1 request at a time
                      .concatMapMaybe(entry -> Maybe.fromCompletionStage(
                            PersistenceManagerImpl.<K, V>storeForEntry(entry).load(segment, key)), 1)
@@ -743,7 +743,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private boolean allowLoad(StoreStatus storeStatus, boolean localInvocation, boolean includeStores) {
-      return (localInvocation || !isLocalOnlyLoader(storeStatus.store)) &&
+      return !storeStatus.characteristics.contains(Characteristic.WRITE_ONLY) && (localInvocation || !isLocalOnlyLoader(storeStatus.store)) &&
             (includeStores || storeStatus.characteristics.contains(Characteristic.READ_ONLY) || storeStatus.config.ignoreModifications());
    }
 

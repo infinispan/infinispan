@@ -51,7 +51,6 @@ import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Key;
 import org.infinispan.test.data.Person;
-import org.infinispan.test.fwk.NonBlockingTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.ControlledTimeService;
@@ -68,9 +67,7 @@ import io.reactivex.rxjava3.core.Flowable;
  * need to add Cache/CacheManager tests that need to be run for each cache store/loader implementation, then use
  * BaseStoreFunctionalTest.
  */
-// this needs to be here for the test to run in an IDE
 @Test(groups = "unit", testName = "persistence.BaseNonBlockingStoreTest")
-@NonBlockingTest
 public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
    protected static final int WRITE_DELETE_BATCH_MIN_ENTRIES = 80;

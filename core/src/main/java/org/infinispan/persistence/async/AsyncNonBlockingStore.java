@@ -93,7 +93,6 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
 
    @Override
    public CompletionStage<Void> start(InitializationContext ctx) {
-      // TODO: worry if segmented
       segmentCount = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
       persistenceConfiguration = ctx.getCache().getCacheConfiguration().persistence();
       scheduler = ctx.getCache().getCacheManager().getGlobalComponentRegistry().getComponent(
@@ -131,11 +130,8 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
 
    private CompletionStage<Void> waitUntilStop() {
       CompletionStage<Void> stage;
-      boolean pendingChanges;
       synchronized (this) {
          stage = batchFuture;
-         pendingChanges = !modificationMap.isEmpty() || hasClear ||
-               (modificationsToReplicate != null && !modificationsToReplicate.isEmpty()) || clearToReplicate;
       }
       if (stage == null) {
          return CompletableFutures.completedNull();

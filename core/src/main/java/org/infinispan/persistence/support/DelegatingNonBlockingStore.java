@@ -6,7 +6,6 @@ import java.util.function.Predicate;
 
 import javax.transaction.Transaction;
 
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -29,16 +28,6 @@ public abstract class DelegatingNonBlockingStore<K, V> implements NonBlockingSto
    @Override
    public Set<Characteristic> characteristics() {
       return delegate().characteristics();
-   }
-
-   @Override
-   public MediaType getKeyMediaType(MediaType storageMediaType, Set<MediaType> supportedMediaTypes) {
-      return delegate().getKeyMediaType(storageMediaType, supportedMediaTypes);
-   }
-
-   @Override
-   public MediaType getValueMediaType(MediaType storageMediaType, Set<MediaType> supportedMediaTypes) {
-      return delegate().getValueMediaType(storageMediaType, supportedMediaTypes);
    }
 
    @Override

@@ -11,7 +11,6 @@ import java.util.function.Predicate;
 import javax.transaction.Transaction;
 
 import org.infinispan.commons.api.Lifecycle;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
@@ -93,8 +92,6 @@ public class NonBlockingStoreAdapter<K, V> implements NonBlockingStore<K, V> {
       return characteristics;
    }
 
-
-
    @Override
    public CompletionStage<Void> start(InitializationContext ctx) {
       blockingManager = ctx.getBlockingManager();
@@ -117,16 +114,6 @@ public class NonBlockingStoreAdapter<K, V> implements NonBlockingStore<K, V> {
    @Override
    public Set<Characteristic> characteristics() {
       return characteristics;
-   }
-
-   @Override
-   public MediaType getKeyMediaType(MediaType storageMediaType, Set<MediaType> supportedMediaTypes) {
-      return MediaType.MATCH_ALL;
-   }
-
-   @Override
-   public MediaType getValueMediaType(MediaType storageMediaType, Set<MediaType> supportedMediaTypes) {
-      return MediaType.MATCH_ALL;
    }
 
    @Override
