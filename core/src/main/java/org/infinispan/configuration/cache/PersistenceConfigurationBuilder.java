@@ -181,7 +181,9 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
 
    /**
     * Adds a cluster cache loader.
+    * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
     */
+   @Deprecated
    public ClusterLoaderConfigurationBuilder addClusterLoader() {
       ClusterLoaderConfigurationBuilder builder = new ClusterLoaderConfigurationBuilder(this);
       this.stores.add(builder);

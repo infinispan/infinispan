@@ -50,6 +50,13 @@ consistent.
 The `<file-store relative-to=""">` attribute has been removed. This attribute will be ignored in pre 11.0 schemas with
 only the `path` attribute being taking into account when configuring the stores location.
 
+=== ClusterLoader
+The `ClusterLoader` has been deprecated and will be removed in a future release with no direct replacement.
+
+== HotRod
+The `LAZY_RETRIEVAL` option utilises the now deprecated `ClusterLoader` and consequently has also been deprecated. It will be removed in a
+future release with no direct replacement.
+
 == Memory configuration changes
 
 * The `BINARY` storage has been deprecated, and will no longer store primitives and String mixed with `byte[]`, but only `byte[]`.

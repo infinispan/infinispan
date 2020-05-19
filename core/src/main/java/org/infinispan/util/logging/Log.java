@@ -2019,4 +2019,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "At most one store can be set to 'preload'!", id = 594)
    CacheConfigurationException onlyOnePreloadStoreAllowed();
+
+   @LogMessage(level = WARN)
+   @Message(value = "ClusterLoader has been deprecated and will be removed in a future version with no direct replacement", id = 595)
+   void warnUsingDeprecatedClusterLoader();
 }

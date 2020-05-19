@@ -2350,6 +2350,7 @@ public class Parser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case CLUSTER_LOADER:
+               CONFIG.warnUsingDeprecatedClusterLoader();
                parseClusterLoader(reader, holder);
                break;
             case FILE_STORE:

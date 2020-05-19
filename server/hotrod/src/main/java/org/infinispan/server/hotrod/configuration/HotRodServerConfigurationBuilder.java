@@ -98,8 +98,10 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
     * Configures whether to enable state transfer for the topology cache. If disabled, a {@link
     * org.infinispan.persistence.cluster.ClusterLoader} will be used to lazily retrieve topology information from the
     * other nodes. Defaults to true.
+    * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
     */
    @Override
+   @Deprecated
    public HotRodServerConfigurationBuilder topologyStateTransfer(boolean topologyStateTransfer) {
       topologyCache.lazyRetrieval(!topologyStateTransfer);
       return this;

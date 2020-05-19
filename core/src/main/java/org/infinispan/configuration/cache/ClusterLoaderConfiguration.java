@@ -19,9 +19,11 @@ import org.infinispan.persistence.cluster.ClusterLoader;
  *
  * @author Tristan Tarrant
  * @since 5.2
+ * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
  */
 @BuiltBy(ClusterLoaderConfigurationBuilder.class)
 @ConfigurationFor(ClusterLoader.class)
+@Deprecated
 public class ClusterLoaderConfiguration extends AbstractStoreConfiguration implements ConfigurationInfo {
 
    static final AttributeDefinition<Long> REMOTE_CALL_TIMEOUT = AttributeDefinition.builder("remoteCallTimeout", TimeUnit.SECONDS.toMillis(15)).immutable().xmlName("remote-timeout").build();

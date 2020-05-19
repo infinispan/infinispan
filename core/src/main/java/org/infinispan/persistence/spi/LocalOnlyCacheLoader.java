@@ -6,6 +6,8 @@ package org.infinispan.persistence.spi;
  *
  * @author Dan Berindei
  * @since 7.0
+ * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
  */
+@Deprecated
 public interface LocalOnlyCacheLoader {
 }
