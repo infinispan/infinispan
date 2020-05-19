@@ -1,8 +1,11 @@
 package org.infinispan.server.test.core;
 
 import static org.infinispan.commons.test.Eventually.eventually;
+import static org.infinispan.server.Server.DEFAULT_SERVER_CONFIG;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_LOG_FILE;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -105,8 +108,25 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          args.add("-Dcom.sun.management.jmxremote.authenticate=false");
          args.add("-Dcom.sun.management.jmxremote.ssl=false");
       }
+
+      String logFile = System.getProperty(INFINISPAN_TEST_SERVER_LOG_FILE);
+      if (logFile != null) {
+         Path logPath = Paths.get(logFile);
+         String logFileName = logPath.getFileName().toString();
+         if (logPath.isAbsolute()) {
+            try {
+               // we need to copy the log file to the conf dir because the withFileFromPath("test"..) will overwrite
+               // everything
+               Files.copy(logPath, new File(getConfDir(), logFileName).toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+               throw new IllegalStateException("Cannot copy the log file", e);
+            }
+         }
+         args.add("-l");
+         args.add(logFileName);
+      }
       Properties properties = new Properties();
-      properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, Paths.get(INFINISPAN_SERVER_HOME, Server.DEFAULT_SERVER_CONFIG).toString());
+      properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, Paths.get(INFINISPAN_SERVER_HOME, DEFAULT_SERVER_CONFIG).toString());
       properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, name);
       properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
       configuration.properties().forEach((k, v) -> args.add("-D" + k + "=" + StringPropertyReplacer.replaceProperties((String) v, properties)));
