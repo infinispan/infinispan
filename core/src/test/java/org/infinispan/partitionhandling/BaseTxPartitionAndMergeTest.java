@@ -107,7 +107,7 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
    }
 
    protected void assertNoLocks(String cacheName) {
-      eventually("Expected no locks acquired in all nodes.", () -> {
+      eventually("Expected no locks acquired in all nodes", () -> {
          for (Cache<?, ?> cache : caches(cacheName)) {
             LockManager lockManager = extractLockManager(cache);
             getLog().tracef("Locks info=%s", lockManager.printLockInfo());
@@ -117,7 +117,7 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
             }
          }
          return true;
-      }, 30000, 500, TimeUnit.MILLISECONDS);
+      }, 30000, TimeUnit.MILLISECONDS);
    }
 
    protected void assertValue(Object key, String value, Collection<Cache<Object, String>> caches) {

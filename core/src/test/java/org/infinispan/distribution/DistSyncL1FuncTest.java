@@ -259,7 +259,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          backupOwnerWriteBarrier.await(5, TimeUnit.SECONDS);
 
          // Wait until the L1 is cleared out from the owners L1 invalidation
-         eventually(() -> !isInL1(nonOwnerCache, key), 5000, 50, TimeUnit.MILLISECONDS);
+         eventually(() -> !isInL1(nonOwnerCache, key), 5000, TimeUnit.MILLISECONDS);
 
          // This should come back from the backup owner, since the primary owner is blocked
          assertEquals(firstValue, nonOwnerCache.get(key));
@@ -273,7 +273,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          future.get(5, TimeUnit.SECONDS);
 
          // The Last chance interceptor is async so wait to make sure it was invalidated
-         eventually(() -> !isInL1(nonOwnerCache, key), 5000, 50, TimeUnit.MILLISECONDS);
+         eventually(() -> !isInL1(nonOwnerCache, key), 5000, TimeUnit.MILLISECONDS);
          // The L1 value shouldn't be present
          assertIsNotInL1(nonOwnerCache, key);
 
@@ -328,8 +328,8 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          assertEquals(1, pendingIds.size());
          eventually(() -> !collector.hasPendingBackupAcks(pendingIds.get(0)));
 
-         assertEquals(firstValue, ownerCache.getAdvancedCache().getDataContainer().get(key).getValue());
-         assertEquals(secondValue, backupOwnerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+         assertEquals(firstValue, ownerCache.getAdvancedCache().getDataContainer().peek(key).getValue());
+         assertEquals(secondValue, backupOwnerCache.getAdvancedCache().getDataContainer().peek(key).getValue());
 
          assertEquals(firstValue, nonOwnerCache.get(key));
 
@@ -350,7 +350,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
 
          assertIsNotInL1(nonOwnerCache, key);
 
-         assertEquals(secondValue, ownerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+         assertEquals(secondValue, ownerCache.getAdvancedCache().getDataContainer().peek(key).getValue());
       } finally {
          removeAllBlockingInterceptorsFromCache(ownerCache);
          removeAllBlockingInterceptorsFromCache(backupOwnerCache);
