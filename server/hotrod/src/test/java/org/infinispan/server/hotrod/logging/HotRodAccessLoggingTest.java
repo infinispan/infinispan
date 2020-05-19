@@ -20,7 +20,7 @@ public class HotRodAccessLoggingTest extends HotRodSingleNodeTest {
    protected void setup() throws Exception {
       logAppender = new StringLogAppender("org.infinispan.HOTROD_ACCESS_LOG",
                                           Level.TRACE,
-            t -> t.getName().startsWith("non-blocking-thread"),
+            t -> t.getName().startsWith("HotRod"),
                                           PatternLayout.newBuilder().withPattern(LOG_FORMAT).build());
       logAppender.install();
       super.setup();
