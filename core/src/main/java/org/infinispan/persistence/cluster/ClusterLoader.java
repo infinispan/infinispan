@@ -28,37 +28,31 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
-import org.infinispan.util.ByteString;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Cache loader that consults other members in the cluster for values. A <code>remoteCallTimeout</code> property is
  * required, a <code>long</code> that specifies in milliseconds how long to wait for results before returning a null.
  *
  * @author Mircea.Markus@jboss.com
+ * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
  */
 @ConfiguredBy(ClusterLoaderConfiguration.class)
+@Deprecated
 public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
-   private static final Log log = LogFactory.getLog(ClusterLoader.class);
 
    private RpcManager rpcManager;
    private AdvancedCache<?, ?> cache;
    private CommandsFactory commandsFactory;
    private KeyPartitioner keyPartitioner;
 
-   private ClusterLoaderConfiguration configuration;
    private InitializationContext ctx;
-   private ByteString cacheName;
 
    @Override
    public void init(InitializationContext ctx) {
       this.ctx = ctx;
       cache = ctx.getCache().getAdvancedCache();
       commandsFactory = cache.getComponentRegistry().getCommandsFactory();
-      cacheName = ByteString.fromString(cache.getName());
       rpcManager = cache.getRpcManager();
-      this.configuration = ctx.getConfiguration();
       keyPartitioner = cache.getComponentRegistry().getComponent(KeyPartitioner.class);
    }
 

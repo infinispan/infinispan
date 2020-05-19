@@ -95,6 +95,10 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
       return topologyCache.awaitInitialTransfer();
    }
 
+   /**
+    * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
+    */
+   @Deprecated
    public boolean topologyStateTransfer() {
       return !topologyCache.lazyRetrieval();
    }

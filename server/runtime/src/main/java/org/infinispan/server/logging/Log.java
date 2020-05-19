@@ -169,4 +169,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot generate the server report on %s", id = 80043)
    IllegalStateException serverReportUnavailable(OS os);
+
+   @LogMessage(level = Logger.Level.WARN)
+   @Message(value = "HotRod lazy-retrieval has been deprecated and will be removed in a future version with no direct replacement", id = 80044)
+   void warnHotRodLazyRetrievalDeprecated();
 }
