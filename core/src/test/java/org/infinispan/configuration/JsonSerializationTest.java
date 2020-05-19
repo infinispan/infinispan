@@ -339,7 +339,8 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertEquals("mping", mping.at("name").asString());
 
       Json tcp = mping.at("TCP");
-      assertEquals(9, tcp.asMap().size());
+      assertEquals(10, tcp.asMap().size());
+      assertEquals("127.0.0.1", tcp.at("bind_addr").asString());
       assertEquals("7800", tcp.at("bind_port").asString());
       assertEquals("30", tcp.at("port_range").asString());
       assertEquals("20000000", tcp.at("recv_buf_size").asString());

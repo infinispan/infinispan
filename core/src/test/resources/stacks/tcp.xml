@@ -3,8 +3,8 @@
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd">
    <!-- Disable the regular thread pool queue for tests so we can set a lower min_threads -->
    <TCP_NIO2
-         bind_addr="${jgroups.tcp.address:127.0.0.1}"
-         bind_port="${jgroups.tcp.port:7800}"
+         bind_addr="${jgroups.bind.address,jgroups.tcp.address:127.0.0.1}"
+         bind_port="${jgroups.bind.port,jgroups.tcp.port:7800}"
          port_range="30"
          recv_buf_size="20m"
          send_buf_size="640k"
@@ -27,7 +27,7 @@
             <!--ergonomics="false"-->
 	<!--/>-->
 
-   <!--<MPING bind_addr="127.0.0.1" break_on_coord_rsp="true"-->
+   <!--<MPING break_on_coord_rsp="true"-->
    <!--mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"-->
    <!--mcast_port="${jgroups.mping.mcast_port:43366}"-->
    <!--ip_ttl="2" num_initial_members="3"/>-->

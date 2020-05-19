@@ -4,8 +4,7 @@
          xmlns="urn:infinispan:config:12.0"
          xmlns:ispn="urn:infinispan:config:12.0">
    <stack name="test-tcp" extends="tcp">
-      <MPING bind_addr="${jgroups.bind.address,jgroups.tcp.address:127.0.0.1}"
-             mcast_addr="${jgroups.mcast_addr:228.6.7.8}"
+      <MPING mcast_addr="${jgroups.mcast_addr:228.6.7.8}"
              mcast_port="${jgroups.cluster.mcast_port}"
              num_discovery_runs="3"
              ip_ttl="${jgroups.udp.ip_ttl:2}"

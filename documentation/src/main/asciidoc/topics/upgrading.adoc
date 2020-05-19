@@ -71,6 +71,11 @@ all the components are now in a single `org.infinispan` module.
 
 Total Order transaction protocol was deprecated in 10.0 and now it is removed.
 
+== JGroups configuration system property changes
+
+The default stacks now now use system property `jgroups.bind.address` to configure the bind address.
+System properties `jgroups.tcp.address` and `jgroups.udp.address` still work, but they are considered deprecated and will be removed.
+
 == OSGi
 
 OSGi support has been deprecated and will be removed in a future release.
