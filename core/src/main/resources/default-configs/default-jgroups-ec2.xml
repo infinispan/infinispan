@@ -5,6 +5,7 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd">
+   <!-- jgroups.tcp.address is deprecated and will be removed, see ISPN-11867 -->
    <TCP bind_addr="${jgroups.bind.address,jgroups.tcp.address:SITE_LOCAL}"
         bind_port="${jgroups.bind.port,jgroups.tcp.port:7800}"
         enable_diagnostics="false"
@@ -25,7 +26,7 @@
    <MERGE3 min_interval="10000"
            max_interval="30000"
    />
-   <FD_SOCK />
+   <FD_SOCK/>
    <!-- Suspect node `timeout` to `timeout + timeout_check_interval` millis after the last heartbeat -->
    <FD_ALL timeout="10000"
            interval="2000"

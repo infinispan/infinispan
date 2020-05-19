@@ -22,7 +22,7 @@
          <LOCAL_PING/>
          <MERGE3 max_interval="5000"
                  min_interval="3000"/>
-         <FD_SOCK bind_addr="127.0.0.1"/>
+         <FD_SOCK/>
          <FD_ALL3 timeout="3000"
                   interval="1000"
          />

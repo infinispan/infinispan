@@ -2,8 +2,8 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd">
    <UDP
-         bind_addr="${jgroups.udp.address:SITE_LOCAL}"
-         bind_port="${jgroups.udp.port:0}"
+         bind_addr="${jgroups.bind.address,jgroups.udp.address:SITE_LOCAL}"
+         bind_port="${jgroups.bind.port,jgroups.udp.port:0}"
          mcast_addr="${jgroups.udp.mcast_addr:228.6.7.8}"
          mcast_port="${jgroups.udp.mcast_port:46655}"
          tos="0"
