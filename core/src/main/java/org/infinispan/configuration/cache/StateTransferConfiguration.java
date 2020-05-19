@@ -14,7 +14,7 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * Configures how state is retrieved when a new cache joins the cluster.
- * Used with invalidation and replication clustered modes.
+ * Used with distribution, replication and scattered clustered modes.
  *
  * @since 5.1
  */
