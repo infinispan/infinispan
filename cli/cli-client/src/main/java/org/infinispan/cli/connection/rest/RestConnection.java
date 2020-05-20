@@ -44,6 +44,7 @@ import org.infinispan.cli.commands.Get;
 import org.infinispan.cli.commands.Grant;
 import org.infinispan.cli.commands.Logging;
 import org.infinispan.cli.commands.Ls;
+import org.infinispan.cli.commands.Migrate;
 import org.infinispan.cli.commands.Put;
 import org.infinispan.cli.commands.Query;
 import org.infinispan.cli.commands.Remove;
@@ -57,7 +58,6 @@ import org.infinispan.cli.commands.Site;
 import org.infinispan.cli.commands.Start;
 import org.infinispan.cli.commands.Stats;
 import org.infinispan.cli.commands.Task;
-import org.infinispan.cli.commands.Upgrade;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.resources.CacheKeyResource;
 import org.infinispan.cli.resources.CacheResource;
@@ -356,12 +356,7 @@ public class RestConnection implements Connection, Closeable {
                break;
             }
             case Get.CMD: {
-               RestCacheClient cache;
-               if (command.hasArg(CliCommand.CACHE)) {
-                  cache = client.cache(command.arg(CliCommand.CACHE));
-               } else {
-                  cache = client.cache(activeResource.findAncestor(CacheResource.class).getName());
-               }
+               RestCacheClient cache = getRestCacheClient(command.arg(CliCommand.CACHE));
                response = cache.get(command.arg(CliCommand.KEY));
                break;
             }
@@ -377,12 +372,7 @@ public class RestConnection implements Connection, Closeable {
                return j.toString();
             }
             case Query.CMD: {
-               RestCacheClient cache;
-               if (command.hasArg(CliCommand.CACHE)) {
-                  cache = client.cache(command.arg(CliCommand.CACHE));
-               } else {
-                  cache = client.cache(activeResource.findAncestor(CacheResource.class).getName());
-               }
+               RestCacheClient cache = getRestCacheClient(command.arg(CliCommand.CACHE));
                response = cache.query(
                      command.arg(Query.QUERY),
                      command.intOption(Query.MAX_RESULTS),
@@ -392,12 +382,7 @@ public class RestConnection implements Connection, Closeable {
                break;
             }
             case Put.CMD: {
-               RestCacheClient cache;
-               if (command.hasOption(CliCommand.CACHE)) {
-                  cache = client.cache(command.option(CliCommand.CACHE));
-               } else {
-                  cache = client.cache(activeResource.findAncestor(CacheResource.class).getName());
-               }
+               RestCacheClient cache = getRestCacheClient(command.option(CliCommand.CACHE));
                RestEntity value;
                MediaType putEncoding = command.hasOption(Put.ENCODING) ? MediaType.fromString(command.option(Put.ENCODING)) : encoding;
                if (command.hasOption(CliCommand.FILE)) {
@@ -413,12 +398,7 @@ public class RestConnection implements Connection, Closeable {
                break;
             }
             case Remove.CMD: {
-               RestCacheClient cache;
-               if (command.hasArg(CliCommand.CACHE)) {
-                  cache = client.cache(command.arg(CliCommand.CACHE));
-               } else {
-                  cache = client.cache(activeResource.findAncestor(CacheResource.class).getName());
-               }
+               RestCacheClient cache = getRestCacheClient(command.arg(CliCommand.CACHE));
                response = cache.remove(command.arg(CliCommand.KEY));
                break;
             }
@@ -565,6 +545,28 @@ public class RestConnection implements Connection, Closeable {
                }
                break;
             }
+            case Migrate.CMD: {
+               RestCacheClient cache = getRestCacheClient(command.option(CliCommand.CACHE));
+               switch (command.arg(Migrate.TYPE)) {
+                  case Migrate.Cluster.CMD: {
+                     switch (command.arg(Migrate.SUBTYPE)) {
+                        case Migrate.ClusterConnect.CMD:
+                           // TODO: ISPN-11870
+                           break;
+                        case Migrate.ClusterSynchronize.CMD: {
+                           response = cache.synchronizeData(command.intOption(Migrate.ClusterSynchronize.READ_BATCH), command.intOption(Migrate.ClusterSynchronize.THREADS));
+                           break;
+                        }
+                        case Migrate.ClusterDisconnect.CMD: {
+                           response = cache.disconnectSource();
+                           break;
+                        }
+                     }
+                     break;
+                  }
+               }
+               break;
+            }
             case Abort.CMD:
             case Begin.CMD:
             case End.CMD:
@@ -573,7 +575,6 @@ public class RestConnection implements Connection, Closeable {
             case Revoke.CMD:
             case Rollback.CMD:
             case Start.CMD:
-            case Upgrade.CMD:
             default:
                break;
          }
@@ -609,6 +610,14 @@ public class RestConnection implements Connection, Closeable {
 
       refreshServerInfo();
       return sb.toString();
+   }
+
+   private RestCacheClient getRestCacheClient(String name) {
+      if (name != null) {
+         return client.cache(name);
+      } else {
+         return client.cache(activeResource.findAncestor(CacheResource.class).getName());
+      }
    }
 
    @Override

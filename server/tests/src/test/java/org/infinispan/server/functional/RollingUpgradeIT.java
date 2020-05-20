@@ -38,7 +38,7 @@ import org.junit.Test;
  * @since 11.0
  */
 public class RollingUpgradeIT {
-   private static final String CACHE_NAME = "rolling";
+   protected static final String CACHE_NAME = "rolling";
    private static final int ENTRIES = 50;
    public static final JsonWriter JSON_WRITER = new JsonWriter();
    public static final ObjectMapper MAPPER = new ObjectMapper();
@@ -103,12 +103,12 @@ public class RollingUpgradeIT {
       return Integer.parseInt(join(cache.size()).getBody());
    }
 
-   private void disconnectSource(RestClient client) {
+   protected void disconnectSource(RestClient client) {
       RestResponse response = join(client.cache(CACHE_NAME).disconnectSource());
       assertEquals(200, response.getStatus());
    }
 
-   private void doRollingUpgrade(RestClient client) {
+   protected void doRollingUpgrade(RestClient client) {
       RestResponse response = join(client.cache(CACHE_NAME).synchronizeData());
       assertEquals(response.getBody(), 200, response.getStatus());
    }

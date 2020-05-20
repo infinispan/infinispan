@@ -86,12 +86,12 @@ public class ContextImpl implements Context, AeshContext {
             String password = null;
             if (shell != null) {
                username = shell.readLine(Messages.MSG.username());
-               password = username.isEmpty() ? null : shell.readLine(new Prompt(Messages.MSG.password(), '*'));
+               password = username.isEmpty() ? "" : shell.readLine(new Prompt(Messages.MSG.password(), '*'));
             } else {
                java.io.Console sysConsole = System.console();
                if (sysConsole != null) {
                   username = sysConsole.readLine(Messages.MSG.username());
-                  password = username.isEmpty() ? null : new String(sysConsole.readPassword(Messages.MSG.password()));
+                  password = username.isEmpty() ? "" : new String(sysConsole.readPassword(Messages.MSG.password()));
                } else {
                }
             }

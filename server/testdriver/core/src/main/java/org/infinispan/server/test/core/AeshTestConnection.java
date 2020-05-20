@@ -20,7 +20,7 @@ import org.junit.ComparisonFailure;
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
  */
-public class AeshTestConnection implements Connection {
+public class AeshTestConnection implements Connection, AutoCloseable {
 
    private Consumer<Size> sizeHandler;
    private Consumer<Signal> signalHandler;

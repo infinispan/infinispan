@@ -93,4 +93,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Error executing MassIndexer", id = 12022)
    void errorExecutingMassIndexer(@Cause Throwable e);
+
+   @Message(value = "Argument '%s' has illegal value '%s'", id = 12023)
+   IllegalArgumentException illegalArgument(String name, Object value);
+
+   @Message(value = "Synchronized %d entries", id = 12024)
+   String synchronizedEntries(long hotrod);
 }

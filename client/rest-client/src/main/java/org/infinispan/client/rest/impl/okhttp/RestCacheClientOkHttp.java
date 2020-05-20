@@ -53,10 +53,22 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> synchronizeData() {
+   public CompletionStage<RestResponse> synchronizeData(Integer readBatch, Integer threads) {
       Request.Builder builder = new Request.Builder();
-      builder.url(cacheUrl + "?action=sync-data").get();
+      StringBuilder sb = new StringBuilder(cacheUrl + "?action=sync-data");
+      if (readBatch != null) {
+         sb.append("&read-batch=").append(readBatch);
+      }
+      if (threads != null) {
+         sb.append("&threads=").append(threads);
+      }
+      builder.url(sb.toString()).get();
       return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> synchronizeData() {
+      return synchronizeData(null, null);
    }
 
    @Override

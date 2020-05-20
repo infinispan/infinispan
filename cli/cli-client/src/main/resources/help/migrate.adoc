@@ -1,0 +1,61 @@
+MIGRATE(1)
+==========
+:doctype: manpage
+
+
+NAME
+----
+migrate - migrates data from one version of ${infinispan.brand.name} to another.
+
+
+SYNOPSIS
+--------
+*migrate cluster synchronize*
+
+*migrate cluster disconnect*
+
+
+DESCRIPTION
+-----------
+Use the `migrate` command to migrate data from one version of ${infinispan.brand.name} to another.
+
+
+COMMAND SYNOPSIS
+----------------
+
+Migrate clusters
+
+*migrate cluster synchronize*::
+Synchronize data between the source cluster and the target cluster.
+
+*migrate cluster disconnect*::
+Disconnects the target cluster from the source cluster.
+
+
+COMMON OPTIONS
+--------------
+
+These options apply to all commands:
+
+*-h, --help*::
+Displays a help page for the command or sub-command.
+
+
+CLUSTER SYNCHRONIZE OPTIONS
+---------------------------
+
+*-c, --cache*='name'::
+The name of the cache to synchronize.
+
+*-b, --read-batch*='num'::
+The amount of entries to process in a batch. Defaults to 10000.
+
+*-t, --threads*='num'::
+The number of threads to use. Defaults to the number of cores on the server.
+
+
+CLUSTER DISCONNECT OPTIONS
+--------------------------
+
+*-c, --cache*='name'::
+The name of the cache to disconnect from the source.
