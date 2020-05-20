@@ -1,6 +1,7 @@
 package org.infinispan.server.core;
 
 import org.infinispan.commons.internal.CommonsBlockHoundIntegration;
+import org.infinispan.server.core.utils.SslUtils;
 import org.kohsuke.MetaInfServices;
 
 import io.netty.util.concurrent.GlobalEventExecutor;
@@ -19,7 +20,13 @@ public class ServerCoreBlockHoundIntegration implements BlockHoundIntegration {
       // Nashorn prints to stderr in its constructor
       builder.allowBlockingCallsInside("jdk.nashorn.api.scripting.NashornScriptEngineFactory", "getScriptEngine");
 
+      questionableBlockingMethod(builder);
       methodsToBeRemoved(builder);
+   }
+
+   private static void questionableBlockingMethod(BlockHound.Builder builder) {
+      // Loads a file on ssl connect to read the key store
+      builder.allowBlockingCallsInside(SslUtils.class.getName(), "createNettySslContext");
    }
 
    /**
