@@ -2,8 +2,8 @@ package org.infinispan.reactive;
 
 import static org.testng.AssertJUnit.fail;
 
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.util.concurrent.CacheBackpressureFullException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
@@ -16,12 +16,13 @@ public class RxJavaPublisherTest extends AbstractInfinispanTest {
       try {
          Flowable.just(new Object())
                .subscribeOn(Schedulers.from(task -> {
-                  throw new CacheBackpressureFullException();
+                  // Our undelivered handler ignores lifecycle exceptions - so piggy back on that
+                  throw new IllegalLifecycleStateException();
                }))
                .subscribe();
          fail("The error should have been thrown from subscribe!");
       } catch (NullPointerException e) {
-         Exceptions.assertException(CacheBackpressureFullException.class, e.getCause());
+         Exceptions.assertException(IllegalLifecycleStateException.class, e.getCause());
       }
    }
 }
