@@ -1,5 +1,6 @@
 package org.infinispan.rest.resources;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
@@ -46,6 +47,7 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.rest.logging.Log;
 import org.infinispan.stats.Stats;
 import org.infinispan.upgrade.RollingUpgradeManager;
 
@@ -127,7 +129,13 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       String threadsReq = request.getParameter("threads");
 
       int readBatch = readBatchReq == null ? 10_000 : Integer.parseInt(readBatchReq);
+      if (readBatch < 1) {
+         return CompletableFuture.completedFuture(builder.status(BAD_REQUEST).entity(Log.REST.illegalArgument("read-batch", readBatch).getMessage()).build());
+      }
       int threads = request.getParameter("threads") == null ? ProcessorInfo.availableProcessors() : Integer.parseInt(threadsReq);
+      if (threads < 1) {
+         return CompletableFuture.completedFuture(builder.status(BAD_REQUEST).entity(Log.REST.illegalArgument("threads", threads).getMessage()).build());
+      }
 
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
@@ -135,7 +143,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return CompletableFuture.supplyAsync(() -> {
          try {
             long hotrod = upgradeManager.synchronizeData("hotrod", readBatch, threads);
-            builder.entity(String.valueOf(hotrod));
+            builder.entity(Log.REST.synchronizedEntries(hotrod));
          } catch (Exception e) {
             Throwable rootCause = Util.getRootCause(e);
             builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(rootCause.getMessage());

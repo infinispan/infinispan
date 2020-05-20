@@ -69,15 +69,15 @@ public class CommandInputLine {
       return (String) options.get(option);
    }
 
-   public int intOption(String option) {
+   public Integer intOption(String option) {
       return (Integer) options.get(option);
    }
 
-   public long longOption(String option) {
+   public Long longOption(String option) {
       return (Long) options.get(option);
    }
 
-   public boolean boolOption(String option) {
+   public Boolean boolOption(String option) {
       return (Boolean) options.get(option);
    }
 

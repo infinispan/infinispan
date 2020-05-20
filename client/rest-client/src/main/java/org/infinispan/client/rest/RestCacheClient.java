@@ -245,6 +245,11 @@ public interface RestCacheClient {
    /**
     * Execute a Rolling Upgrade processing
     */
+   CompletionStage<RestResponse> synchronizeData(Integer readBatch, Integer threads);
+
+   /**
+    * Execute a Rolling Upgrade processing using defaults.
+    */
    CompletionStage<RestResponse> synchronizeData();
 
    /**

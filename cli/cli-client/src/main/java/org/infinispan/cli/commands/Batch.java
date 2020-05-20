@@ -29,6 +29,7 @@ import org.aesh.command.invocation.CommandInvocation;
             Encoding.class,
             Get.class,
             Ls.class,
+            Migrate.class,
             Patch.class,
             Put.class,
             Query.class,
@@ -39,7 +40,10 @@ import org.aesh.command.invocation.CommandInvocation;
             Schema.class,
             Server.class,
             Shutdown.class,
+            Stats.class,
             Site.class,
+            Task.class,
+            User.class,
             Version.class
       })
 public class Batch implements Command {
