@@ -2,9 +2,11 @@ PATCH(1)
 ========
 :doctype: manpage
 
+
 NAME
 ----
 patch - manages server patches.
+
 
 DESCRIPTION
 -----------
@@ -13,6 +15,7 @@ List, describe, install, rollback, and create server patches.
 Patches are zip archive files that contain artifacts to upgrade servers and
 resolve issues or add new features. Patches can apply target versions to
 multiple server installations with different versions.
+
 
 SYNOPSIS
 --------
