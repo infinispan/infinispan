@@ -638,7 +638,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       boolean isLocalNodePrimaryOwner = isLocalNodePrimaryOwner(key);
 
       AggregateCompletionStage<Void> aggregateCompletionStage = null;
-      Object batchIdentifier = (ctx == null || ctx.isInTxScope()) ? null : Thread.currentThread();
+      Object batchIdentifier = (ctx != null && ctx.isInTxScope()) ? null : Thread.currentThread();
       try {
          for (CacheEntryListenerInvocation<K, V> listener : cacheEntryExpiredListeners) {
             // Need a wrapper per invocation since converter could modify the entry in it
