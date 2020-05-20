@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.internal.CommonsBlockHoundIntegration;
 import org.infinispan.commons.test.PolarionJUnitXMLWriter;
 import org.infinispan.commons.test.TestResourceTracker;
@@ -24,6 +25,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
 import io.reactivex.rxjava3.exceptions.UndeliverableException;
+import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
@@ -54,6 +56,24 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
          // RxJava propagates via this and we don't want to worry about it
          if (!(t instanceof UndeliverableException)) {
             writeJUnitReport(TestResourceTracker.getCurrentTestName(), t, "Uncaught");
+         }
+      });
+
+      RxJavaPlugins.setErrorHandler(t -> {
+         // Ignore lifecycle exceptions as this can happen when shutting down executors etc.
+         boolean containsIllegalState = false;
+         Throwable cause = t;
+         while (cause != null) {
+            if (cause instanceof IllegalLifecycleStateException) {
+               containsIllegalState = true;
+               break;
+            }
+            cause = cause.getCause();
+         }
+
+         if (!containsIllegalState) {
+            Throwable throwable = t instanceof UndeliverableException ? t.getCause() : t;
+            writeJUnitReport(TestResourceTracker.getCurrentTestName(), throwable, "Undelivered");
          }
       });
    }
