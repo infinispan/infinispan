@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod;
 
 import org.infinispan.commons.util.SaslUtils;
-import org.infinispan.server.core.utils.SslUtils;
 import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.kohsuke.MetaInfServices;
 
@@ -24,9 +23,6 @@ public class ServerHotRodBlockHoundIntegration implements BlockHoundIntegration 
 
       // Stream method is blocking
       builder.allowBlockingCallsInside(Encoder2x.class.getName(), "generateTopologyResponse");
-
-      // Loads a file on ssl connect to read the key store
-      builder.allowBlockingCallsInside(SslUtils.class.getName(), "createNettySslContext");
 
       // Wildfly open ssl reads a properties file
       builder.allowBlockingCallsInside("org.wildfly.openssl.OpenSSLEngine", "unwrap");
