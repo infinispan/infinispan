@@ -19,8 +19,10 @@ import net.jcip.annotations.ThreadSafe;
  * can occur or not.
  * @author wburns
  * @since 9.4
+ * @deprecated since 11.0 replaced by {@link NonBlockingStore}
  */
 @ThreadSafe
+@Deprecated
 public interface SegmentedAdvancedLoadWriteStore<K, V> extends AdvancedLoadWriteStore<K, V>, AdvancedCacheExpirationWriter<K, V> {
    // CacheLoader methods
 

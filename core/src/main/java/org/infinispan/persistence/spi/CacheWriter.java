@@ -13,8 +13,10 @@ import net.jcip.annotations.ThreadSafe;
  *
  * @author Mircea Markus
  * @since 6.0
+ * @deprecated since 11.0 replaced by {@link NonBlockingStore}
  */
 @ThreadSafe
+@Deprecated
 public interface CacheWriter<K, V> extends Lifecycle {
 
    /**
