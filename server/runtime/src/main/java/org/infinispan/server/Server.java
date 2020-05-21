@@ -402,7 +402,7 @@ public class Server implements ServerManagement, AutoCloseable {
          loginConfiguration.put("mode", "OIDC");
          loginConfiguration.put("url", realmConfiguration.authServerUrl());
          loginConfiguration.put("realm", realmConfiguration.name());
-         loginConfiguration.put("clientId", realmConfiguration.oauth2Configuration().clientId());
+         loginConfiguration.put("clientId", realmConfiguration.clientId());
       } else {
          loginConfiguration.put("mode", "HTTP");
       }
