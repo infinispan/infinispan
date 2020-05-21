@@ -251,7 +251,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * @param batchSize   The number of entries transferred from the server at a time.
     * @return {@link CloseableIterator}
     */
-   CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize);
+   CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query<?> filterQuery, Set<Integer> segments, int batchSize);
 
    /**
     * Publish entries from the server matching a query.

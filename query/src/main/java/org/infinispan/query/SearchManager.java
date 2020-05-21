@@ -31,6 +31,7 @@ public interface SearchManager {
     * query all data in the cluster
     * @param queryString the Ickle query
     * @return
+    * @deprecated since 11.0, all search operations should be done with the {@link Search} entry point.
     */
    <E> CacheQuery<E> getQuery(String queryString);
 

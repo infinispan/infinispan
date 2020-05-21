@@ -571,12 +571,12 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
+   public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query<?> filterQuery, Set<Integer> segments, int batchSize) {
       return delegate.retrieveEntriesByQuery(filterQuery, segments, batchSize);
    }
 
    @Override
-   public <E> Publisher<Entry<K, E>> publishEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
+   public <E> Publisher<Entry<K, E>> publishEntriesByQuery(Query<?> filterQuery, Set<Integer> segments, int batchSize) {
       return delegate.publishEntriesByQuery(filterQuery, segments, batchSize);
    }
 
