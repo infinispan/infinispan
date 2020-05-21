@@ -5,8 +5,7 @@ they remove old, unused entries. Although eviction and expiration are similar,
 they have some important differences that you should take into account when
 planning your configuration.
 
-* [*] Eviction prevents {brandname} from exceeding the maximum size of the data
-container. {brandname} performs eviction when you add entries to the cache.
+* [*] Eviction lets {brandname} control the size of the data container by removing entries when the container becomes larger than a configured threshold.
 
 * [*] Expiration limits the amount of time entries can exist. {brandname} uses
 a scheduler to periodically remove expired entries. Entries that are expired
@@ -24,8 +23,3 @@ calls for expired entries return "null" values.
 * [*] You can explicitly define expiration settings for specific entries but you cannot define eviction on a per-entry basis.
 
 * [*] You can manually evict entries and manually trigger expiration.
-
-.Data containers
-
-In the context of eviction and expiration, the term "data container" refers to
-where in-memory data is stored, which is either on or off the JVM heap.
