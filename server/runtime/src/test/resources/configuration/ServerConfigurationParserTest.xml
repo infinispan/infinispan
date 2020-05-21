@@ -63,7 +63,7 @@
                   <group-properties path="ServerConfigurationParserTest-group.properties"
                                     relative-to="infinispan.server.config.path"/>
                </properties-realm>
-               <token-realm name="token-test" principal-claim="username-claim" auth-server-url="http://${org.infinispan.test.host.address}:14567/auth/">
+               <token-realm name="token-test" principal-claim="username-claim" auth-server-url="http://${org.infinispan.test.host.address}:14567/auth/" client-id="infinispan-console">
                   <oauth2-introspection host-name-verification-policy="ANY"
                                         introspection-url="http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect"
                                         client-id="infinispan-server"
