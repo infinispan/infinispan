@@ -148,12 +148,6 @@ if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true
     copyXMLs _ $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
     addNamespace $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
 
-    # Update the distribution configurations
-    CONFIGS=$(find distribution/src/main/release/common/configs/config-samples -name '*.xml')
-    for CONFIG in $CONFIGS; do
-         rewriteXML $CONFIG $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
-    done
-
     # Update the server test configurations
     CONFIGS=$(find server/tests/ -regex '.*/src/test/resources/[^0-9]*xml')
     for CONFIG in $CONFIGS; do
