@@ -23,8 +23,7 @@ import org.infinispan.commons.util.Util;
  **/
 public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver {
    private static final Log log = org.infinispan.commons.logging.LogFactory.getLog(ForkedInfinispanServerDriver.class);
-   private List<ForkedServer> forkedServers = new ArrayList<>();
-
+   private final List<ForkedServer> forkedServers = new ArrayList<>();
 
    protected ForkedInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(configuration, InetAddress.getLoopbackAddress());
@@ -37,7 +36,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
 
    @Override
    protected void start(String name, File rootDir, File configurationFile) {
-      String allServerHomes = System.getProperty(TestSystemPropertyNames.INFINISPAN_SERVER_HOME);
+      String allServerHomes = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_SERVER_HOME);
       if (allServerHomes == null) {
          throw new IllegalArgumentException("You must specify a " + TestSystemPropertyNames.INFINISPAN_SERVER_HOME + " property pointing to a comma-separated list of server homes.");
       }
@@ -52,14 +51,14 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
                .setPortsOffset(i);
          copyArtifactsToUserLibDir(server.getServerLib());
          forkedServers.add(server.start());
-         forkedServers.get(0).printServerLog(s -> log.info(s));
+         forkedServers.get(0).printServerLog(log::info);
       }
    }
 
-   @Override
    /**
     * Stop all cluster
     */
+   @Override
    protected void stop() {
       try {
          sync(getRestClient(0).cluster().stop());
@@ -72,10 +71,10 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
       }
    }
 
-   @Override
    /**
     * Stop a specific server
     */
+   @Override
    public void stop(int server) {
       sync(getRestClient(server).server().stop());
    }
