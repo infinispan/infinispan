@@ -74,16 +74,16 @@ the `-j` argument:
 
 <HOME>\bin\server.bat -j udp    (Windows)
 ```
-The above commands will use the `udp` stack which uses UDP to communicate between the nodes. 
+The above commands will use the `udp` stack which uses UDP to communicate between the nodes.
 
 Security
 --------
-The default server configuration requires client authentication. Create a user with the `user-tool` as follows:
+The default server configuration requires client authentication. Create a user with the `cli` as follows:
 
 ```
-<HOME>/bin/user-tool.sh -b -u username -p password     (Unix / Linux)
+<HOME>/bin/cli.sh user create username -p "qwer1234!"     (Unix / Linux)
 
-<HOME>\bin\user-tool.bat -b -u username -p password    (Windows)
+<HOME>\bin\cli.bat user create username -p "qwer1234!"    (Windows)
 ```
 
 Stopping the Server

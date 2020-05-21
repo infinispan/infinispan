@@ -2,8 +2,28 @@
 Launch {brandname} server with the startup script.
 
 .Procedure
+
 . Open a terminal in `{server_home}`.
-. Run the `server` script.
+. Add credentials with the {brandname} CLI **user create** command.
++
+{brandname} server requires authentication by default so you should define
+credentials before you start the server.
++
+Linux::
++
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/user_tool_nix.adoc[]
+----
++
+Microsoft Windows::
++
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/user_tool_win.adoc[]
+----
++
+. Start {brandname} with the `server` script.
 +
 Linux::
 +
@@ -26,25 +46,6 @@ Server logs display the following messages:
 ISPN080004: Protocol SINGLE_PORT listening on 127.0.0.1:11222
 ISPN080034: Server '...' listening on http://127.0.0.1:11222
 ISPN080001: {brandname} Server <$version> started in <mm>ms
-----
-+
-{brandname} server endpoints require authentication by default. If you access
-`http://127.0.0.1:11222`, {brandname} prompts you to enter credentials.
-+
-. Add credentials with the `user-tool`.
-+
-Linux::
-+
-[source,options="nowrap",subs=attributes+]
-----
-include::cmd_examples/user_tool_nix.adoc[]
-----
-+
-Microsoft Windows::
-+
-[source,options="nowrap",subs=attributes+]
-----
-include::cmd_examples/user_tool_win.adoc[]
 ----
 
 _Hello {brandname}!_
