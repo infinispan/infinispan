@@ -8,8 +8,10 @@ import org.infinispan.commons.util.Experimental;
  * Defines functionality for advanced expiration techniques.  Note this interface allows for providing not just the key
  * when an entry is expired.  This is important so that proper cluster wide expiration can be performed.
  * @since 8.0
+ * @deprecated since 11.0 replaced by {@link NonBlockingStore}
  */
 @Experimental
+@Deprecated
 public interface AdvancedCacheExpirationWriter<K, V> extends AdvancedCacheWriter<K, V> {
    /**
     * Using the thread in the pool, removed all the expired data from the persistence storage. For each removed entry,
