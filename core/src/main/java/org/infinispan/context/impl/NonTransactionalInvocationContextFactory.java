@@ -2,7 +2,6 @@ package org.infinispan.context.impl;
 
 import javax.transaction.Transaction;
 
-import org.infinispan.context.AbstractInvocationContextFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
