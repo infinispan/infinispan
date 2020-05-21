@@ -40,10 +40,7 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
          CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, StateTransferLockImpl.class);
 
          // LimitedExecutor just submits a task to another thread pool
-         builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "execute");
-         builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "addPermit");
-         builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "removePermit");
-         builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "runTasks");
+         builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "acquireLock");
          // This invokes the actual runnable - we have to make sure it doesn't block as normal
          builder.disallowBlockingCallsInside(LimitedExecutor.class.getName(), "actualRun");
 

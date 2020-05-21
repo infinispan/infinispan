@@ -69,7 +69,7 @@ public class LimitedExecutor implements Executor {
    public void shutdownNow() {
       log.tracef("Stopping limited executor %s", name);
       running = false;
-      lock.lock();
+      acquireLock();
       try {
          queue.clear();
 
@@ -77,7 +77,7 @@ public class LimitedExecutor implements Executor {
             t.interrupt();
          }
       } finally {
-         lock.unlock();
+         unlockLock();
       }
    }
 
@@ -110,11 +110,11 @@ public class LimitedExecutor implements Executor {
    }
 
    private void executeInternal(Runnable command) {
-      lock.lock();
+      acquireLock();
       try {
          queue.add(command);
       } finally {
-         lock.unlock();
+         unlockLock();
       }
       tryExecute();
    }
@@ -139,14 +139,14 @@ public class LimitedExecutor implements Executor {
 
    private void tryExecute() {
       boolean addRunner = false;
-      lock.lock();
+      acquireLock();
       try {
          if (availablePermits > 0) {
             availablePermits--;
             addRunner = true;
          }
       } finally {
-         lock.unlock();
+         unlockLock();
       }
       if (addRunner) {
          executor.execute(runner);
@@ -157,7 +157,7 @@ public class LimitedExecutor implements Executor {
       runnerStarting();
       while (running) {
          Runnable runnable = null;
-         lock.lock();
+         acquireLock();
          try {
             // If the previous task was asynchronous, we can't execute a new one on the same thread
             if (availablePermits >= 0) {
@@ -168,7 +168,7 @@ public class LimitedExecutor implements Executor {
                break;
             }
          } finally {
-            lock.unlock();
+            unlockLock();
          }
 
          try {
@@ -193,41 +193,41 @@ public class LimitedExecutor implements Executor {
    }
 
    private void runnerStarting() {
-      lock.lock();
+      acquireLock();
       try {
          Thread thread = Thread.currentThread();
          threads.put(thread, thread);
       } finally {
-         lock.unlock();
+         unlockLock();
       }
    }
 
    private void runnerFinished() {
-      lock.lock();
+      acquireLock();
       try {
          Thread thread = Thread.currentThread();
          threads.remove(thread);
          taskFinishedCondition.signalAll();
       } finally {
-         lock.unlock();
+         unlockLock();
       }
    }
 
    private void removePermit() {
-      lock.lock();
+      acquireLock();
       try {
          availablePermits--;
       } finally {
-         lock.unlock();
+         unlockLock();
       }
    }
 
    private void addPermit() {
-      lock.lock();
+      acquireLock();
       try {
          availablePermits++;
       } finally {
-         lock.unlock();
+         unlockLock();
       }
    }
 
@@ -242,5 +242,15 @@ public class LimitedExecutor implements Executor {
          addPermit();
          tryExecute();
       }
+   }
+
+   // Here for instrumentation of blockhound
+   private void acquireLock() {
+      lock.lock();
+   }
+
+   // Here for symmetry of acquireLock
+   private void unlockLock() {
+      lock.unlock();
    }
 }
