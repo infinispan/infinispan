@@ -1,0 +1,282 @@
+OpenJDK 64-Bit Server VM warning: Ignoring option MaxPermSize; support was removed in 8.0
+[INFO] Scanning for projects...
+[INFO] Inspecting build with total of 1 modules...
+[INFO] Installing Nexus Staging features:
+[INFO]   ... total of 1 executions of maven-deploy-plugin replaced with nexus-staging-maven-plugin
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.version: 5.6
+[INFO] os.detected.version.major: 5
+[INFO] os.detected.version.minor: 6
+[INFO] os.detected.release: fedora
+[INFO] os.detected.release.version: 32
+[INFO] os.detected.release.like.fedora: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] ------------< org.infinispan:infinispan-cachestore-rocksdb >------------
+[INFO] Building Infinispan RocksDB CacheStore 11.0.0-SNAPSHOT
+[INFO] -------------------------------[ bundle ]-------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:2.6.1:clean (default-clean) @ infinispan-cachestore-rocksdb ---
+[INFO] Deleting /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/target
+[INFO] 
+[INFO] --- maven-enforcer-plugin:3.0.0-M1:enforce (enforce-java) @ infinispan-cachestore-rocksdb ---
+[INFO] 
+[INFO] --- build-helper-maven-plugin:3.1.0:timestamp-property (timestamp-property) @ infinispan-cachestore-rocksdb ---
+[INFO] 
+[INFO] --- buildnumber-maven-plugin:1.4:create (default) @ infinispan-cachestore-rocksdb ---
+[INFO] Executing: /bin/sh -c cd '/home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb' && 'git' 'rev-parse' '--verify' 'HEAD'
+[INFO] Working directory: /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb
+[INFO] Storing buildNumber: 4c3f2f5b35004ef72a0be2acd8245a357656576d at timestamp: 1590058085570
+[INFO] Storing buildScmBranch: ISPN-11845
+[INFO] 
+[INFO] --- maven-checkstyle-plugin:3.1.1:check (checkstyle) @ infinispan-cachestore-rocksdb ---
+[INFO] Starting audit...
+Audit done.
+[INFO] You have 0 Checkstyle violations.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.1.0:resources (default-resources) @ infinispan-cachestore-rocksdb ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 1 resource
+[INFO] Copying 1 resource
+[INFO] Copying 1 resource
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.1:compile (default-compile) @ infinispan-cachestore-rocksdb ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 12 source files to /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/target/classes
+ERROR StatusLogger Log4j2 could not find a logging implementation. Please add log4j-core to the classpath. Using SimpleLogger to log to the console...
+[INFO] /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/src/main/java/org/infinispan/persistence/rocksdb/RocksDBStore.java: /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/src/main/java/org/infinispan/persistence/rocksdb/RocksDBStore.java uses or overrides a deprecated API.
+[INFO] /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/src/main/java/org/infinispan/persistence/rocksdb/RocksDBStore.java: Recompile with -Xlint:deprecation for details.
+[INFO] /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/src/main/java/org/infinispan/persistence/rocksdb/RocksDBStore.java: /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/src/main/java/org/infinispan/persistence/rocksdb/RocksDBStore.java uses unchecked or unsafe operations.
+[INFO] /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/src/main/java/org/infinispan/persistence/rocksdb/RocksDBStore.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- infinispan-defaults-maven-plugin:11.0.0-SNAPSHOT:extract-defaults (extract-defaults) @ infinispan-cachestore-rocksdb ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 1 resource to /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/target/classes/schema
+[INFO] 
+[INFO] --- maven-resources-plugin:3.1.0:testResources (default-testResources) @ infinispan-cachestore-rocksdb ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 15 resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.1:testCompile (default-testCompile) @ infinispan-cachestore-rocksdb ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 8 source files to /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/target/test-classes
+[INFO] /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/src/test/java/org/infinispan/persistence/rocksdb/RocksDBStoreTest.java: /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/src/test/java/org/infinispan/persistence/rocksdb/RocksDBStoreTest.java uses or overrides a deprecated API.
+[INFO] /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/src/test/java/org/infinispan/persistence/rocksdb/RocksDBStoreTest.java: Recompile with -Xlint:deprecation for details.
+[INFO] /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/src/test/java/org/infinispan/persistence/rocksdb/RocksDBStoreTest.java: /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/src/test/java/org/infinispan/persistence/rocksdb/RocksDBStoreTest.java uses unchecked or unsafe operations.
+[INFO] /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/src/test/java/org/infinispan/persistence/rocksdb/RocksDBStoreTest.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.0.0-M4:test (default-test) @ infinispan-cachestore-rocksdb ---
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running TestSuite
+[OK:     0, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.config.ConfigurationTest.testConfigBuilder
+[OK:     0, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.config.ConfigurationSerializerTest.configurationSerializationTest([config/rocksdb-config.xml])
+[OK:     0, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBMultiCacheStoreFunctionalTest.testStartStopOfBackupDoesntRewriteValue
+[OK:     1, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.config.ConfigurationSerializerTest.configurationSerializationTest([rocksdb-config.xml])
+[OK:     1, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.config.ConfigurationSerializerTest.jsonSerializationTest([config/rocksdb-config.xml])
+[OK:     2, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.config.ConfigurationSerializerTest.jsonSerializationTest([rocksdb-config.xml])
+Transport protocol stack used = udp
+[OK:     2, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testLoadEntrySet
+[OK:     2, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreCompatibilityTest.testReadWriteFrom101
+[OK:     3, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreCompatibilityTest.testReadWriteFrom101
+[OK:     3, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testEmptyWriteAndDeleteBatchIterable[true]
+[OK:     4, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testEmptyWriteAndDeleteBatchIterable[true]
+[OK:     4, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testIsAvailable[true]
+[OK:     5, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testIsAvailable[true]
+[OK:     5, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAll[true]
+[OK:     6, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAll[true]
+[OK:     6, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreBytesValues[true]
+[OK:     7, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreBytesValues[true]
+[OK:     7, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreImmortal[true]
+[OK:     8, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreImmortal[true]
+[OK:     8, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithIdle[true]
+[OK:     9, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithIdle[true]
+[OK:     9, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithLifespan[true]
+[OK:    10, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithLifespan[true]
+[OK:    10, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithLifespanAndIdle[true]
+[OK:    11, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithLifespanAndIdle[true]
+[OK:    11, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithLifespanAndIdle2[true]
+[OK:    12, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithLifespanAndIdle2[true]
+[OK:    12, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testPreload[true]
+[OK:    13, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testPreload[true]
+[OK:    13, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testPurgeExpired[true]
+[OK:    14, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testPurgeExpired[true]
+[OK:    14, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testReplaceEntry[true]
+[OK:    15, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testReplaceEntry[true]
+[OK:    15, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testReplaceExpiredEntry[true]
+[OK:    16, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testReplaceExpiredEntry[true]
+[OK:    16, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testStopStartDoesNotNukeValues[true]
+[OK:    17, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testStopStartDoesNotNukeValues[true]
+[OK:    17, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testStoreAndRemove[true]
+[OK:    18, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testStoreAndRemove[true]
+[OK:    18, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testWriteAndDeleteBatch[true]
+[OK:    19, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testWriteAndDeleteBatch[true]
+[OK:    19, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testWriteAndDeleteBatchIterable[true]
+[OK:    20, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testWriteAndDeleteBatchIterable[true]
+[OK:    20, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testSegmentsRemovedAndAdded[true]
+[OK:    21, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testSegmentsRemovedAndAdded[true]
+[OK:    21, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testEmptyWriteAndDeleteBatchIterable[false]
+[OK:    22, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testEmptyWriteAndDeleteBatchIterable[false]
+[OK:    22, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testIsAvailable[false]
+[OK:    23, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testIsAvailable[false]
+[OK:    23, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAll[false]
+[OK:    24, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAll[false]
+[OK:    24, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreBytesValues[false]
+[OK:    25, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreBytesValues[false]
+[OK:    25, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreImmortal[false]
+[OK:    26, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreImmortal[false]
+[OK:    26, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBParallelIterationTest.testParallelIterationWithValue
+[OK:    26, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithIdle[false]
+[OK:    27, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithIdle[false]
+[OK:    28, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBParallelIterationTest.testParallelIterationWithValue
+[OK:    28, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithLifespan[false]
+[OK:    29, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithLifespan[false]
+[OK:    29, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithLifespanAndIdle[false]
+[OK:    30, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithLifespanAndIdle[false]
+[OK:    30, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithLifespanAndIdle2[false]
+[OK:    31, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testLoadAndStoreWithLifespanAndIdle2[false]
+[OK:    31, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testPreload[false]
+[OK:    32, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testPreload[false]
+[OK:    33, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testLoadEntrySet
+[OK:    33, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testPurgeExpired[false]
+[OK:    34, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testPurgeExpired[false]
+[OK:    34, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testPreloadAndExpiry
+[OK:    34, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testReplaceEntry[false]
+[OK:    35, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testReplaceEntry[false]
+[OK:    35, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testReplaceExpiredEntry[false]
+[OK:    36, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testReplaceExpiredEntry[false]
+[OK:    36, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.IracRocksDBStoreTest.testWriteAndLoad
+[OK:    37, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.IracRocksDBStoreTest.testWriteAndLoad
+[OK:    37, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.IracRocksDBStoreTest.testWriteAndPublisher
+[OK:    38, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.IracRocksDBStoreTest.testWriteAndPublisher
+[OK:    38, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testStopStartDoesNotNukeValues[false]
+[OK:    39, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testStopStartDoesNotNukeValues[false]
+[OK:    39, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testStoreAndRemove[false]
+[OK:    40, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testStoreAndRemove[false]
+[OK:    40, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testWriteAndDeleteBatch[false]
+[OK:    41, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testWriteAndDeleteBatch[false]
+[OK:    41, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBParallelIterationTest.testParallelIterationWithoutValue
+[OK:    41, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testWriteAndDeleteBatchIterable[false]
+[OK:    42, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testWriteAndDeleteBatchIterable[false]
+[OK:    43, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBParallelIterationTest.testParallelIterationWithoutValue
+[OK:    43, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testSegmentsRemovedAndAdded[false]
+[OK:    44, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreTest.testSegmentsRemovedAndAdded[false]
+[OK:    44, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBParallelIterationTest.testSequentialIterationWithValue
+[OK:    45, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBParallelIterationTest.testSequentialIterationWithValue
+[OK:    46, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.config.ConfigurationTest.testConfigBuilder
+[OK:    46, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.config.ConfigurationTest.testXmlConfig
+[OK:    47, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.config.ConfigurationTest.testXmlConfig
+[OK:    47, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBParallelIterationTest.testSequentialIterationWithoutValue
+[OK:    48, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBParallelIterationTest.testSequentialIterationWithoutValue
+[OK:    49, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testPreloadAndExpiry
+[OK:    49, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testPreloadStoredAsBinary
+[OK:    50, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBMultiCacheStoreFunctionalTest.testStartStopOfBackupDoesntRewriteValue
+[OK:    50, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBMultiCacheStoreFunctionalTest.testStartStopOfBackupResurrectsDeletedKey
+[OK:    51, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testPreloadStoredAsBinary
+[OK:    51, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testPutAllBatch
+[OK:    52, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testPutAllBatch
+[OK:    52, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testReloadWithEviction
+[OK:    53, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBMultiCacheStoreFunctionalTest.testStartStopOfBackupResurrectsDeletedKey
+[OK:    54, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testReloadWithEviction
+[OK:    54, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testRemoveCache
+[OK:    55, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testRemoveCache
+[OK:    55, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testRemoveCacheWithPassivation
+[OK:    56, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testRemoveCacheWithPassivation
+[OK:    56, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testStoreByteArrays
+[OK:    57, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testStoreByteArrays
+[OK:    57, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testTwoCachesSameCacheStore
+[OK:    58, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testTwoCachesSameCacheStore
+[OK:    58, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testKnownProperties
+[OK:    59, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testKnownProperties
+[OK:    59, KO:     0, SKIP:     0] Test starting: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testUnknownProperties
+[OK:    60, KO:     0, SKIP:     0] Test succeeded: org.infinispan.persistence.rocksdb.RocksDBStoreFunctionalTest.testUnknownProperties
+[INFO] Tests run: 60, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 55.844 s - in TestSuite
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 60, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- licenses-plugin:2.1.0.Final:insert-versions (update-licenses-xml) @ infinispan-cachestore-rocksdb ---
+[INFO] Sort licenses true
+[INFO] 
+[INFO] --- maven-antrun-plugin:3.0.0:run (generate-blueprint) @ infinispan-cachestore-rocksdb ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO] 
+[INFO] --- maven-bundle-plugin:4.2.1:bundle (default-bundle) @ infinispan-cachestore-rocksdb ---
+[INFO] 
+[INFO] --- build-helper-maven-plugin:3.1.0:attach-artifact (attach-artifacts) @ infinispan-cachestore-rocksdb ---
+[INFO] 
+[INFO] --- maven-jar-plugin:3.2.0:test-jar (build-test-jar) @ infinispan-cachestore-rocksdb ---
+[INFO] Building jar: /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/target/infinispan-cachestore-rocksdb-11.0.0-SNAPSHOT-tests.jar
+[INFO] 
+[INFO] --- proto-schema-compatibility:1.0.2.Final:proto-schema-compatibility-check (default) @ infinispan-cachestore-rocksdb ---
+[INFO] Backwards compatibility check passed.
+[INFO] 
+[INFO] >>> maven-source-plugin:3.2.0:jar (attach-sources) > generate-sources @ infinispan-cachestore-rocksdb >>>
+[INFO] 
+[INFO] --- maven-enforcer-plugin:3.0.0-M1:enforce (enforce-java) @ infinispan-cachestore-rocksdb ---
+[INFO] 
+[INFO] --- build-helper-maven-plugin:3.1.0:timestamp-property (timestamp-property) @ infinispan-cachestore-rocksdb ---
+[INFO] 
+[INFO] --- buildnumber-maven-plugin:1.4:create (default) @ infinispan-cachestore-rocksdb ---
+[INFO] 
+[INFO] --- maven-checkstyle-plugin:3.1.1:check (checkstyle) @ infinispan-cachestore-rocksdb ---
+[INFO] Starting audit...
+Audit done.
+[INFO] You have 0 Checkstyle violations.
+[INFO] 
+[INFO] <<< maven-source-plugin:3.2.0:jar (attach-sources) < generate-sources @ infinispan-cachestore-rocksdb <<<
+[INFO] 
+[INFO] 
+[INFO] --- maven-source-plugin:3.2.0:jar (attach-sources) @ infinispan-cachestore-rocksdb ---
+[INFO] Building jar: /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/target/infinispan-cachestore-rocksdb-11.0.0-SNAPSHOT-sources.jar
+[INFO] 
+[INFO] >>> maven-source-plugin:3.2.0:test-jar (attach-sources) > generate-sources @ infinispan-cachestore-rocksdb >>>
+[INFO] 
+[INFO] --- maven-enforcer-plugin:3.0.0-M1:enforce (enforce-java) @ infinispan-cachestore-rocksdb ---
+[INFO] 
+[INFO] --- build-helper-maven-plugin:3.1.0:timestamp-property (timestamp-property) @ infinispan-cachestore-rocksdb ---
+[INFO] 
+[INFO] --- buildnumber-maven-plugin:1.4:create (default) @ infinispan-cachestore-rocksdb ---
+[INFO] 
+[INFO] --- maven-checkstyle-plugin:3.1.1:check (checkstyle) @ infinispan-cachestore-rocksdb ---
+[INFO] Starting audit...
+Audit done.
+[INFO] You have 0 Checkstyle violations.
+[INFO] 
+[INFO] <<< maven-source-plugin:3.2.0:test-jar (attach-sources) < generate-sources @ infinispan-cachestore-rocksdb <<<
+[INFO] 
+[INFO] 
+[INFO] --- maven-source-plugin:3.2.0:test-jar (attach-sources) @ infinispan-cachestore-rocksdb ---
+[INFO] Building jar: /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/target/infinispan-cachestore-rocksdb-11.0.0-SNAPSHOT-test-sources.jar
+[INFO] 
+[INFO] --- maven-install-plugin:2.5.2:install (default-install) @ infinispan-cachestore-rocksdb ---
+[INFO] Installing /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/target/infinispan-cachestore-rocksdb-11.0.0-SNAPSHOT.jar to /home/remerson/.m2/repository/org/infinispan/infinispan-cachestore-rocksdb/11.0.0-SNAPSHOT/infinispan-cachestore-rocksdb-11.0.0-SNAPSHOT.jar
+[INFO] Installing /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/pom.xml to /home/remerson/.m2/repository/org/infinispan/infinispan-cachestore-rocksdb/11.0.0-SNAPSHOT/infinispan-cachestore-rocksdb-11.0.0-SNAPSHOT.pom
+[INFO] Installing /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/target/classes/features.xml to /home/remerson/.m2/repository/org/infinispan/infinispan-cachestore-rocksdb/11.0.0-SNAPSHOT/infinispan-cachestore-rocksdb-11.0.0-SNAPSHOT-features.xml
+[INFO] Installing /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/target/infinispan-cachestore-rocksdb-11.0.0-SNAPSHOT-tests.jar to /home/remerson/.m2/repository/org/infinispan/infinispan-cachestore-rocksdb/11.0.0-SNAPSHOT/infinispan-cachestore-rocksdb-11.0.0-SNAPSHOT-tests.jar
+[INFO] Installing /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/target/infinispan-cachestore-rocksdb-11.0.0-SNAPSHOT-sources.jar to /home/remerson/.m2/repository/org/infinispan/infinispan-cachestore-rocksdb/11.0.0-SNAPSHOT/infinispan-cachestore-rocksdb-11.0.0-SNAPSHOT-sources.jar
+[INFO] Installing /home/remerson/workspace/RedHat/infinispan/infinispan/persistence/rocksdb/target/infinispan-cachestore-rocksdb-11.0.0-SNAPSHOT-test-sources.jar to /home/remerson/.m2/repository/org/infinispan/infinispan-cachestore-rocksdb/11.0.0-SNAPSHOT/infinispan-cachestore-rocksdb-11.0.0-SNAPSHOT-test-sources.jar
+[INFO] 
+[INFO] --- maven-bundle-plugin:4.2.1:install (default-install) @ infinispan-cachestore-rocksdb ---
+[INFO] Installing org/infinispan/infinispan-cachestore-rocksdb/11.0.0-SNAPSHOT/infinispan-cachestore-rocksdb-11.0.0-SNAPSHOT.jar
+[INFO] Writing OBR metadata
+[INFO] 
+[INFO] --- karaf-maven-plugin:4.2.8:verify (validate) @ infinispan-cachestore-rocksdb ---
+[INFO] Using repositories: https://repo.maven.apache.org/maven2/@id=central,https://repository.jboss.org/nexus/content/groups/public-jboss@id=jboss-public-repository-group@snapshots,https://maven.repository.redhat.com/ga/@id=redhat@snapshots
+[INFO] Verification of feature infinispan-cachestore-rocksdb/11.0.0.SNAPSHOT succeeded
+[INFO] Features verified: 1, failures: 0, ignored: 0, skipped: 0
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:12 min
+[INFO] Finished at: 2020-05-21T11:49:16+01:00
+[INFO] ------------------------------------------------------------------------

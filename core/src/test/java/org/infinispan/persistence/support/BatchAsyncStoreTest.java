@@ -35,7 +35,7 @@ public class BatchAsyncStoreTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalBuilder.globalState().persistentLocation(tmpDirectory);
+      globalBuilder.globalState().enable().persistentLocation(tmpDirectory);
 
       ConfigurationBuilder configuration = new ConfigurationBuilder();
       configuration.invocationBatching().enable();

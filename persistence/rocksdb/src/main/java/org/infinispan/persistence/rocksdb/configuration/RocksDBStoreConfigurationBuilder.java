@@ -1,5 +1,6 @@
 package org.infinispan.persistence.rocksdb.configuration;
 
+import static org.infinispan.persistence.rocksdb.configuration.RocksDBExpirationConfiguration.EXPIRED_LOCATION;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.BLOCK_SIZE;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.CACHE_SIZE;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.CLEAR_THRESHOLD;
@@ -15,6 +16,8 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.persistence.PersistenceUtil;
 
 /**
  *
@@ -93,6 +96,15 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
       // how do you validate required attributes?
       super.validate();
       expiration.validate();
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      PersistenceUtil.validateGlobalStateStoreLocation(globalConfig, RocksDBStoreConfiguration.class.getSimpleName(),
+            attributes.attribute(LOCATION),
+            expiration.attributes().attribute(EXPIRED_LOCATION));
+
+      super.validate(globalConfig);
    }
 
    @Override

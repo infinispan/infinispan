@@ -39,7 +39,9 @@ public class HotRodNonIndexedSingleFileStoreQueryTest extends HotRodNonIndexedQu
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.persistence().addStore(SingleFileStoreConfigurationBuilder.class);
+      builder.persistence()
+            .addStore(SingleFileStoreConfigurationBuilder.class)
+            .location(tmpDirectory);
 
       // ensure the data container contains minimal data so the store will need to be accessed to get the rest
       builder.locking().concurrencyLevel(1).memory().size(1);

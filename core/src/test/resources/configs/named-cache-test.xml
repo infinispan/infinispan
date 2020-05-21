@@ -78,7 +78,7 @@
       </local-cache>
       <local-cache name="withEmptyStore">
          <persistence>
-            <file-store/>
+            <file-store path="/tmp/FileCacheStore-Location"/>
          </persistence>
       </local-cache>
       <local-cache name="withClusterLoader">

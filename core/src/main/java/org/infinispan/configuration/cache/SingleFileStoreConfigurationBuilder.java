@@ -11,6 +11,7 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.util.logging.Log;
 
@@ -103,6 +104,7 @@ public class SingleFileStoreConfigurationBuilder
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
+      PersistenceUtil.validateGlobalStateStoreLocation(globalConfig, SingleFileStore.class.getSimpleName(), attributes.attribute(LOCATION));
       super.validate(globalConfig);
    }
 

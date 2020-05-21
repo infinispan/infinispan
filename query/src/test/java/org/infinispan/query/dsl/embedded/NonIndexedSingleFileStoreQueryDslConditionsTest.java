@@ -35,7 +35,7 @@ public class NonIndexedSingleFileStoreQueryDslConditionsTest extends NonIndexedQ
       Util.recursiveFileRemove(tmpDirectory);
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalBuilder.serialization().addContextInitializer(DslSCI.INSTANCE);
-      globalBuilder.globalState().persistentLocation(tmpDirectory);
+      globalBuilder.globalState().enable().persistentLocation(tmpDirectory);
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.persistence().addStore(SingleFileStoreConfigurationBuilder.class);
 

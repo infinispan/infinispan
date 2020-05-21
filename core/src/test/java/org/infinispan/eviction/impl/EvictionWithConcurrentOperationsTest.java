@@ -513,7 +513,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       configureEviction(builder);
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalBuilder.serialization().addContextInitializer(new EvictionWithConcurrentOperationsSCIImpl());
-      globalBuilder.globalState().persistentLocation(PERSISTENT_LOCATION);
+      globalBuilder.globalState().enable().persistentLocation(PERSISTENT_LOCATION);
       return TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
    }
 
