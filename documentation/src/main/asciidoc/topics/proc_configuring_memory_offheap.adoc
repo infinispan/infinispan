@@ -1,0 +1,43 @@
+[id='configure_off_heap-{context}']
+= Configuring {brandname} to Store Cache Entries Off Heap
+{brandname} can use either JVM heap memory or off-heap native memory as the
+data container for cache entries. By default {brandname} stores cache entries
+in JVM heap memory.
+
+{brandname} can use off-heap storage with eviction based on the total number of
+entries or maximum amount of memory. When using off-heap, {brandname} stores
+cache entries in Protobuf format with the `application/x-protostream` encoding.
+
+.Procedure
+
+To store cache entries in off-heap memory, configure {brandname} in one of the
+following ways:
+
+* Declaratively: Set the `storage="OFF_HEAP"` attribute to the `memory` element.
+* Programmatically: Call the `storage(OFF_HEAP)` method in the `MemoryConfigurationBuilder` class.
+
+.Declarative example
+
+[source,xml,options="nowrap"]
+----
+<local-cache name="off_heap_binary">
+  <memory storage="OFF_HEAP" max-size="1.5GB" when-full="REMOVE"/>
+</local-cache>
+----
+
+.Programmatic example
+
+[source,java,options="nowrap"]
+----
+ConfigurationBuilder cfg = new ConfigurationBuilder();
+
+cfg
+  .memory()
+    .storage(StorageType.OFF_HEAP)
+    .maxCount(500)
+    .whenFull(EvictionStrategy.REMOVE)
+  .build());
+----
+
+* link:{configdocroot}[{brandname} Configuration Schema Reference]
+* link:{javadocroot}/org/infinispan/configuration/cache/MemoryConfigurationBuilder.html[org.infinispan.configuration.cache.MemoryConfigurationBuilder]

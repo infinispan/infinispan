@@ -1,12 +1,74 @@
 [id='eviction-{context}']
 = Eviction
-Eviction provides a way to manage how much memory {brandname} uses.
+Eviction lets you control the size of the data container by removing cache
+entries to make space when adding new entries.
 
-{brandname} lets you configure the maximum size of the data container. Eviction
-removes entries from the cache to ensure that {brandname} does not exceed that
+[IMPORTANT]
+====
+Eviction removes entries from memory but not from persistent cache stores. To
+prevent data loss, you should always configure a persistent cache store if you
+enable eviction.
+====
+
+{brandname} eviction relies on two configurations:
+
+* Maximum size of the data container.
+* Strategy for removing entries.
+
+.Data container size
+
+{brandname} lets you store entries either in the Java heap or in native memory
+(off-heap) and set a maximum size for the data container.
+
+You configure the maximum size of the data container in one of two ways:
+
+* Total number of entries (`max-count`).
+* Maximum amount of memory (`max-size`).
++
+To perform eviction based on the amount of memory, you define a maximum size in
+bytes. For this reason, you must encode entries with a binary storage format
+such as `application/x-protostream`.
+
+.Evicting cache entries
+
+When you configure `memory`, {brandname} approximates the current memory usage
+of the data container. When entries are added or modified, {brandname} compares
+the current memory usage of the data container to the maximum size. If the size
+exceeds the maximum, {brandname} performs eviction.
+
+Eviction happens immediately in the thread that adds an entry that exceeds the
 maximum size.
+
+Consider the following configuration as an example:
+
+----
+<memory max-count="50"/>
+----
+
+In this case, the cache can have a total of 50 entries. After the cache reaches
+the total number of entries, write operations trigger {brandname} to perform
+eviction.
+
+.Eviction strategies
+
+Strategies control how {brandname} performs eviction. You can either perform
+eviction manually or configure {brandname} to do one of the following:
+
+* Remove old entries to make space for new ones.
+* Throw `ContainerFullException` and prevent new entries from being created.
++
+The exception eviction strategy works only with transactional caches that use 2
+phase commits; not with 1 phase commits or synchronization optimizations.
 
 [NOTE]
 ====
-Eviction removes entries from memory but not from persistent cache stores.
+{brandname} includes the Caffeine caching library that implements a variation
+of the Least Frequently Used (LFU) cache replacement algorithm known as
+TinyLFU. For off-heap storage, {brandname} uses a custom implementation of the
+Least Recently Used (LRU) algorithm.
 ====
+
+.References
+
+* link:https://github.com/ben-manes/caffeine[Caffeine]
+* link:#persistence[Setting Up Persistent Storage]

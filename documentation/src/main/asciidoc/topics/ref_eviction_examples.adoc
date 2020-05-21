@@ -1,71 +1,48 @@
 [id='eviction_example-{context}']
 = Eviction Examples
 
-You configure eviction in `infinispan.xml` as part of your cache definition.
+You configure eviction as part of your cache definition.
 
 .Default memory configuration
 
 Eviction is not enabled, which is the default configuration. {brandname} stores
-cache entries as objects in the data container.
+cache entries as objects in the JVM heap.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
 <memory />
 ----
 
-.Passivation with eviction
+.Eviction based on the total number of entries
 
-Passivation persists data to cache stores when {brandname} evicts entries. You
-should always enable eviction if you enable passivation.
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-<persistence passivation="true">
-  ...
-</persistence>
-
-<memory />
-----
-
-.Manual eviction
-
-{brandname} stores cache entries as objects. Eviction is not enabled but
-performed manually using the `evict()` method.
+{brandname} stores cache entries as objects in the JVM heap. Eviction happens
+when there are 100 entries in the data container and {brandname} gets a request
+to create a new entry:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<memory>
-  <object strategy="MANUAL" />
-</memory>
+<memory max-count="100"/>
 ----
 
-.Object storage with eviction
+.Eviction based maximum size in bytes
 
-{brandname} stores cache entries as objects. Eviction happens when there are
-100 entries in the data container and {brandname} gets a request to create a
-new entry:
+{brandname} stores cache entries as `byte[]` arrays if you encode entries with
+binary storage formats, for example: `application/x-protostream` format.
+
+In the following example, {brandname} performs eviction when the size of the
+data container reaches 500 MB (megabytes) in size and it gets a request to
+create a new entry:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<memory>
-  <object size="100" />
-</memory>
+<encoding media-type="application/x-protostream"/> <1>
+<memory max-size="500 MB"/> <2>
 ----
 
-.Binary storage with memory-based eviction
+<1> Specifies a binary format for entries in the cache.
+<2> Defines the maximum size of the data container as MB (megabytes).
 
-{brandname} stores cache entries as bytes. Eviction happens when the size of
-the data container reaches 100 bytes and {brandname} gets a request to create a
-new entry:
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-<memory>
-  <binary size="100" eviction="MEMORY"/>
-</memory>
-----
-
-.Off-heap storage with count-based eviction
+.Off-heap storage
 
 {brandname} stores cache entries as bytes in native memory. Eviction happens
 when there are 100 entries in the data container and {brandname} gets a request
@@ -73,9 +50,7 @@ to create a new entry:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<memory>
-  <off-heap size="100" />
-</memory>
+<memory storage="OFF_HEAP" max-count="100"/>
 ----
 
 .Off-heap storage with the exception strategy
@@ -86,7 +61,41 @@ entry, it throws an exception and does not allow the new entry:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<memory>
-  <off-heap size="100" strategy="EXCEPTION" />
-</memory>
+<transaction mode="NONE"/>
+
+<memory storage="OFF_HEAP" max-count="100" when-full="EXCEPTION"/>
 ----
+
+.Manual eviction
+
+{brandname} stores cache entries as objects in the JVM heap. Eviction is not
+enabled but performed manually using the `evict()` method.
+
+[TIP]
+====
+This configuration prevents a warning message when you enable passivation but
+do not configure eviction.
+====
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<memory when-full="MANUAL"/>
+----
+
+.Passivation with eviction
+
+Passivation persists data to cache stores when {brandname} evicts entries. You
+should always enable eviction if you enable passivation, for example:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<persistence passivation="true">
+  ...
+</persistence>
+
+<memory max-count="100"/>
+----
+
+.References
+
+* link:#passivation[Passivation]
