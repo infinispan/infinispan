@@ -3,7 +3,10 @@ package org.infinispan.query.dsl;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.commons.util.CloseableIterator;
+
 //todo [anistor] We need to deprecate the 'always caching' behaviour and provide a clearCachedResults method
+
 /**
  * An immutable object representing both the query and the result. The result is obtained lazily when one of the methods
  * in this interface is executed first time. The query is executed only once. Further calls will just return the
@@ -13,7 +16,7 @@ import java.util.Map;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public interface Query extends PaginationContext<Query>, ParameterContext<Query> {
+public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, ParameterContext<Query<T>> {
 
    /**
     * Returns the Ickle query string.
@@ -24,8 +27,18 @@ public interface Query extends PaginationContext<Query>, ParameterContext<Query>
     * Returns the results of a search as a list.
     *
     * @return list of objects that were found from the search.
+    * @deprecated since 11.0, use {@link QueryResult#list()} instead.
     */
-   <T> List<T> list();
+   @Deprecated
+   List<T> list();
+
+   /**
+    *  Executes the query. Subsequent invocations cause the query to be re-executed.
+    *
+    * @return {@link QueryResult} with the results.
+    * @since 11.0
+    */
+   QueryResult<T> execute();
 
    /**
     * Gets the total number of results matching the query, ignoring pagination (firstResult, maxResult).
@@ -43,11 +56,11 @@ public interface Query extends PaginationContext<Query>, ParameterContext<Query>
 
    long getStartOffset();
 
-   Query startOffset(long startOffset);
+   Query<T> startOffset(long startOffset);
 
    int getMaxResults();
 
-   Query maxResults(int maxResults);
+   Query<T> maxResults(int maxResults);
 
    /**
     * Returns the named parameters Map.
@@ -63,7 +76,7 @@ public interface Query extends PaginationContext<Query>, ParameterContext<Query>
     * @param paramValue a non-null value
     * @return itself
     */
-   Query setParameter(String paramName, Object paramValue);
+   Query<T> setParameter(String paramName, Object paramValue);
 
    /**
     * Sets multiple named parameters at once. Parameters names cannot be empty or {@code null}. Parameter values must
@@ -72,5 +85,10 @@ public interface Query extends PaginationContext<Query>, ParameterContext<Query>
     * @param paramValues a Map of parameters
     * @return itself
     */
-   Query setParameters(Map<String, Object> paramValues);
+   Query<T> setParameters(Map<String, Object> paramValues);
+
+   /**
+    * @return the results of the query as an iterator.
+    */
+   CloseableIterator<T> iterator();
 }

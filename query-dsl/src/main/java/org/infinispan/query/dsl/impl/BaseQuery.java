@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.logging.Log;
@@ -15,7 +16,7 @@ import org.jboss.logging.Logger;
  * @author anistor@redhat.com
  * @since 7.2
  */
-public abstract class BaseQuery implements Query {
+public abstract class BaseQuery<T> implements Query<T> {
 
    private static final Log log = Logger.getMessageLogger(Log.class, BaseQuery.class.getName());
 
@@ -54,6 +55,8 @@ public abstract class BaseQuery implements Query {
       this.maxResults = -1;
    }
 
+   public abstract CloseableIterator<T> iterator();
+
    /**
     * Returns the Ickle query string.
     *
@@ -70,7 +73,7 @@ public abstract class BaseQuery implements Query {
    }
 
    @Override
-   public Query setParameter(String paramName, Object paramValue) {
+   public Query<T> setParameter(String paramName, Object paramValue) {
       if (paramName == null || paramName.isEmpty()) {
          throw log.parameterNameCannotBeNulOrEmpty();
       }
@@ -94,7 +97,7 @@ public abstract class BaseQuery implements Query {
    }
 
    @Override
-   public Query setParameters(Map<String, Object> paramValues) {
+   public Query<T> setParameters(Map<String, Object> paramValues) {
       if (paramValues == null) {
          throw log.argumentCannotBeNull("paramValues");
       }
@@ -163,14 +166,14 @@ public abstract class BaseQuery implements Query {
    }
 
    @Override
-   public Query startOffset(long startOffset) {
+   public Query<T> startOffset(long startOffset) {
       this.startOffset = (int) startOffset;    //todo [anistor] why int?
       resetQuery();
       return this;
    }
 
    @Override
-   public Query maxResults(int maxResults) {
+   public Query<T> maxResults(int maxResults) {
       this.maxResults = maxResults;
       resetQuery();
       return this;

@@ -121,7 +121,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    }
 
    public void getOrCreateWithoutTemplateTest() {
-      client(0).administration().getOrCreateCache("default", (String)null);
+      client(0).administration().getOrCreateCache("default", (String) null);
    }
 
    public void cacheCreateWithXMLConfigurationTest(Method m) {
@@ -177,7 +177,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    }
 
    private void verifyQuery(RemoteCache<String, Transaction> cache, int count) {
-      List<User> users = Search.getQueryFactory(cache).create("from sample_bank_account.Transaction where longDescription:'RENT'").list();
+      List<User> users = Search.getQueryFactory(cache).<User>create("from sample_bank_account.Transaction where longDescription:'RENT'").execute().list();
       assertEquals(count, users.size());
    }
 

@@ -10,15 +10,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 class BaseJsonQueryResult extends JsonQueryResponse {
 
-   private int totalResults;
+   private long totalResults;
 
    @JsonCreator
-   BaseJsonQueryResult(@JsonProperty(TOTAL_RESULTS) int totalResults) {
+   BaseJsonQueryResult(@JsonProperty(TOTAL_RESULTS) long totalResults) {
       this.totalResults = totalResults;
    }
 
    @JsonProperty(TOTAL_RESULTS)
-   public int getTotalResults() {
+   public long getTotalResults() {
       return totalResults;
    }
 }

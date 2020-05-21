@@ -3,12 +3,14 @@ package org.infinispan.objectfilter.test;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.BaseQueryBuilder;
 import org.infinispan.query.dsl.impl.BaseQueryFactory;
@@ -32,13 +34,13 @@ final class FilterQueryFactory extends BaseQueryFactory {
    }
 
    @Override
-   public Query create(String queryString) {
-      return new FilterQuery(this, queryString, null, null, -1, -1);
+   public <T> Query<T> create(String queryString) {
+      return new FilterQuery<>(this, queryString, null, null, -1, -1);
    }
 
    @Override
-   public Query create(String queryString, IndexedQueryMode queryMode) {
-      return new FilterQuery(this, queryString, null, null, -1, -1);
+   public <T> Query<T> create(String queryString, IndexedQueryMode queryMode) {
+      return new FilterQuery<>(this, queryString, null, null, -1, -1);
    }
 
    @Override
@@ -76,19 +78,30 @@ final class FilterQueryFactory extends BaseQueryFactory {
       }
    }
 
-   private static final class FilterQuery extends BaseQuery {
+   private static final class FilterQuery<T> extends BaseQuery<T> {
 
       FilterQuery(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
          super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
       }
 
       @Override
+      public CloseableIterator<T> iterator() {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
       public void resetQuery() {
       }
 
+      @Override
+      public QueryResult<T> execute() {
+         throw new UnsupportedOperationException();
+      }
+
+
       // TODO [anistor] need to rethink the dsl Query/QueryBuilder interfaces to accommodate the filtering scenario ...
       @Override
-      public <T> List<T> list() {
+      public List<T> list() {
          throw new UnsupportedOperationException();
       }
 

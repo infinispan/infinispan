@@ -18,7 +18,7 @@ public class ProjectedJsonResult extends BaseJsonQueryResult {
 
    private final List<JsonProjection> hits;
 
-   public ProjectedJsonResult(int totalResults, String[] projections, List<Object> values) {
+   public ProjectedJsonResult(long totalResults, String[] projections, List<Object> values) {
       super(totalResults);
       hits = new ArrayList<>(projections.length);
       for (Object v : values) {

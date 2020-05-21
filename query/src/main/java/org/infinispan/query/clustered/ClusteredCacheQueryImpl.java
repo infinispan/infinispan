@@ -12,11 +12,11 @@ import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.spi.CustomTypeMetadata;
 import org.hibernate.search.spi.IndexedTypeMap;
 import org.infinispan.AdvancedCache;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.CacheQueryImpl;
+import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.QueryDefinition;
 import org.infinispan.remoting.transport.Address;
 
@@ -49,13 +49,13 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
    }
 
    @Override
-   public CacheQuery<E> maxResults(int maxResults) {
+   public IndexedQuery<E> maxResults(int maxResults) {
       this.maxResults = maxResults;
       return super.maxResults(maxResults);
    }
 
    @Override
-   public CacheQuery<E> firstResult(int firstResult) {
+   public IndexedQuery<E> firstResult(int firstResult) {
       this.firstResult = firstResult;
       return super.firstResult(firstResult);
    }
@@ -136,7 +136,7 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
    }
 
    @Override
-   public CacheQuery<E> timeout(long timeout, TimeUnit timeUnit) {
+   public IndexedQuery<E> timeout(long timeout, TimeUnit timeUnit) {
       // TODO [anistor] see https://issues.jboss.org/browse/ISPN-9469
       throw new UnsupportedOperationException("Clustered queries do not support timeouts yet.");
    }

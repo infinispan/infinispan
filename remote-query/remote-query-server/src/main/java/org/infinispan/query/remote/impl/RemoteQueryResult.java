@@ -4,10 +4,10 @@ import java.util.List;
 
 public class RemoteQueryResult {
    private final String[] projections;
-   private final int totalResults;
+   private final long totalResults;
    private final List<Object> results;
 
-   RemoteQueryResult(String[] projections, int totalResults, List<Object> results) {
+   RemoteQueryResult(String[] projections, long totalResults, List<Object> results) {
       this.projections = projections;
       this.totalResults = totalResults;
       this.results = results;
@@ -17,7 +17,7 @@ public class RemoteQueryResult {
       return projections;
    }
 
-   public int getTotalResults() {
+   public long getTotalResults() {
       return totalResults;
    }
 

@@ -15,8 +15,10 @@ import net.jcip.annotations.NotThreadSafe;
  * @author Navin Surtani
  * @author Marko Luksa
  * @author Ales Justin
+ * @deprecated Since 11.0, with no replacement.
  */
 @NotThreadSafe
+@Deprecated
 final class LazyIterator<E> extends AbstractIterator<E> {
 
    private final DocumentExtractor extractor;
