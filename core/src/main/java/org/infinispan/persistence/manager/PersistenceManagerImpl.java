@@ -61,6 +61,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.async.AsyncNonBlockingStore;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
+import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
@@ -73,6 +74,7 @@ import org.infinispan.persistence.support.ComposedSegmentedLoadWriteStore;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.NonBlockingStoreAdapter;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -86,6 +88,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Function;
 import net.jcip.annotations.GuardedBy;
 
 @Scope(Scopes.NAMED_CACHE)
@@ -224,6 +227,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   Characteristic.READ_ONLY);
          }
          characteristics.add(Characteristic.READ_ONLY);
+         characteristics.remove(Characteristic.TRANSACTIONAL);
       }
       if (storeConfiguration.writeOnly()) {
          if (characteristics.contains(Characteristic.READ_ONLY)) {
@@ -231,6 +235,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   Characteristic.WRITE_ONLY);
          }
          characteristics.add(Characteristic.WRITE_ONLY);
+         characteristics.remove(Characteristic.BULK_READ);
+      }
+      if (!storeConfiguration.segmented()) {
+         characteristics.remove(Characteristic.SEGMENTABLE);
       }
       return characteristics;
    }
@@ -690,16 +698,27 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public <K, V> Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
+   public <K, V> Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter,
+         boolean fetchValue, boolean fetchMetadata, Predicate<? super StoreConfiguration> predicate) {
       return Flowable.using(this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
                if (trace) {
                   log.tracef("Publishing entries for segments %s", segments);
                }
-               NonBlockingStore<K, V> nonBlockingStore = getStoreLocked(storeStatus ->
-                     storeStatus.characteristics.contains(Characteristic.BULK_READ) && predicate.test(storeStatus.config));
-               return nonBlockingStore == null ? Flowable.empty() : nonBlockingStore.publishEntries(segments, filter, fetchValue);
+               for (StoreStatus storeStatus : stores) {
+                  Set<Characteristic> characteristics = storeStatus.characteristics;
+                  if (characteristics.contains(Characteristic.BULK_READ) &&  predicate.test(storeStatus.config)) {
+                     Predicate<? super K> filterToUse;
+                     if (!characteristics.contains(Characteristic.SEGMENTABLE)) {
+                        filterToUse = PersistenceUtil.combinePredicate(segments, keyPartitioner, filter);
+                     } else {
+                        filterToUse = filter;
+                     }
+                     return storeStatus.<K, V>store().publishEntries(segments, filterToUse, fetchValue);
+                  }
+               }
+               return Flowable.empty();
             },
             this::releaseReadLock);
    }
@@ -717,9 +736,19 @@ public class PersistenceManagerImpl implements PersistenceManager {
                if (trace) {
                   log.tracef("Publishing keys for segments %s", segments);
                }
-               NonBlockingStore<K, ?> nonBlockingStore = getStoreLocked(storeStatus ->
-                     storeStatus.characteristics.contains(Characteristic.BULK_READ) && predicate.test(storeStatus.config));
-               return nonBlockingStore == null ? Flowable.empty() : nonBlockingStore.publishKeys(segments, filter);
+               for (StoreStatus storeStatus : stores) {
+                  Set<Characteristic> characteristics = storeStatus.characteristics;
+                  if (characteristics.contains(Characteristic.BULK_READ) &&  predicate.test(storeStatus.config)) {
+                     Predicate<? super K> filterToUse;
+                     if (!characteristics.contains(Characteristic.SEGMENTABLE)) {
+                        filterToUse = PersistenceUtil.combinePredicate(segments, keyPartitioner, filter);
+                     } else {
+                        filterToUse = filter;
+                     }
+                     return storeStatus.<K, Object>store().publishKeys(segments, filterToUse);
+                  }
+               }
+               return Flowable.empty();
             },
             this::releaseReadLock);
    }
@@ -744,7 +773,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      .filter(storeStatus -> allowLoad(storeStatus, localInvocation, includeStores))
                      // Only do 1 request at a time
                      .concatMapMaybe(storeStatus -> Maybe.fromCompletionStage(
-                           storeStatus.<K, V>store().load(segment, key)), 1)
+                           storeStatus.<K, V>store().load(segmentOrZero(storeStatus, segment), key)), 1)
                      .firstElement();
             },
             this::releaseReadLock
@@ -835,10 +864,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
                return Flowable.fromIterable(stores)
                      .filter(storeStatus -> shouldWrite(storeStatus, predicate, flags))
                      // Let the write work in parallel across the stores
-                     .flatMapCompletable(storeStatus -> Completable.fromCompletionStage(storeStatus.store.write(segment, marshalledEntry)));
+                     .flatMapCompletable(storeStatus -> Completable.fromCompletionStage(storeStatus.store.write(segmentOrZero(storeStatus, segment), marshalledEntry)));
             },
             this::releaseReadLock
       ).toCompletionStage(null);
+   }
+
+   private int segmentOrZero(StoreStatus storeStatus, int segment) {
+      return storeStatus.characteristics.contains(Characteristic.SEGMENTABLE) ? segment : 0;
    }
 
    private boolean shouldWrite(StoreStatus storeStatus, Predicate<? super StoreConfiguration> userPredicate) {
@@ -862,9 +895,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   log.tracef("Preparing batch for store: %s on transaction %s", batchModification, transaction);
                }
                return Flowable.fromIterable(stores)
-                     .filter(storeStatus ->
-                           !storeStatus.characteristics.contains(Characteristic.READ_ONLY)
-                                 && predicate.test(storeStatus.config))
+                     .filter(storeStatus -> shouldPerformTransactionOperation(storeStatus, predicate))
                      // Let the prepare work in parallel across the stores
                      .flatMapCompletable(storeStatus -> Completable.fromCompletionStage(storeStatus.store.prepareWithModifications(transaction, batchModification)));
             },
@@ -882,9 +913,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   log.tracef("Committing transaction %s to stores", transaction);
                }
                return Flowable.fromIterable(stores)
-                     .filter(storeStatus ->
-                           !storeStatus.characteristics.contains(Characteristic.READ_ONLY)
-                                 && predicate.test(storeStatus.config))
+                     .filter(storeStatus -> shouldPerformTransactionOperation(storeStatus, predicate))
                      // Let the commit work in parallel across the stores
                      .flatMapCompletable(storeStatus -> Completable.fromCompletionStage(storeStatus.store.commit(transaction)));
             },
@@ -902,9 +931,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   log.tracef("Rolling back transaction %s for stores", transaction);
                }
                return Flowable.fromIterable(stores)
-                     .filter(storeStatus ->
-                           !storeStatus.characteristics.contains(Characteristic.READ_ONLY)
-                                 && predicate.test(storeStatus.config))
+                     .filter(storeStatus -> shouldPerformTransactionOperation(storeStatus, predicate))
                      // Let the rollback work in parallel across the stores
                      .flatMapCompletable(storeStatus -> Completable.fromCompletionStage(storeStatus.store.commit(transaction)));
             },
@@ -912,11 +939,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
       ).toCompletionStage(null);
    }
 
+   private boolean shouldPerformTransactionOperation(StoreStatus storeStatus, Predicate<? super StoreConfiguration> predicate) {
+      return storeStatus.characteristics.contains(Characteristic.TRANSACTIONAL)
+            && predicate.test(storeStatus.config);
+   }
+
    @Override
    public <K, V> CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry<K, V>> entries, Predicate<? super StoreConfiguration> predicate, long flags) {
-      Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> flowable = Flowable.fromIterable(entries)
-            .groupBy(me -> keyPartitioner.getSegment(me.getKey()))
-            .map(SegmentPublisherWrapper::new);
       return Completable.using(
             this::acquireReadLock,
             ignore -> {
@@ -927,8 +956,15 @@ public class PersistenceManagerImpl implements PersistenceManager {
                return Flowable.fromIterable(stores)
                      .filter(storeStatus -> shouldWrite(storeStatus, predicate, flags))
                      // Let the rollback work in parallel across the stores
-                     .flatMapCompletable(storeStatus -> Completable.fromCompletionStage(
-                           storeStatus.<K, V>store().bulkWrite(segmentCount, flowable)));
+                     .flatMapCompletable(storeStatus -> {
+                        boolean segmented = storeStatus.characteristics.contains(Characteristic.SEGMENTABLE);
+                        Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> flowable =
+                              Flowable.fromIterable(entries)
+                                 .groupBy(groupingFunction(MarshallableEntry::getKey, segmented))
+                                 .map(SegmentPublisherWrapper::new);
+                        return Completable.fromCompletionStage(
+                              storeStatus.<K, V>store().bulkWrite(segmentCount(segmented), flowable));
+                     });
             },
             this::releaseReadLock
       ).toCompletionStage(null);
@@ -936,9 +972,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public CompletionStage<Void> deleteBatchFromAllNonTxStores(Iterable<Object> keys, Predicate<? super StoreConfiguration> predicate, long flags) {
-      Flowable<NonBlockingStore.SegmentedPublisher<Object>> flowable = Flowable.fromIterable(keys)
-            .groupBy(keyPartitioner::getSegment)
-            .map(SegmentPublisherWrapper::new);
       return Completable.using(
             this::acquireReadLock,
             ignore -> {
@@ -949,11 +982,36 @@ public class PersistenceManagerImpl implements PersistenceManager {
                return Flowable.fromIterable(stores)
                      .filter(storeStatus -> shouldWrite(storeStatus, predicate))
                      // Let the delete batch work in parallel across the stores
-                     .flatMapCompletable(storeStatus -> Completable.fromCompletionStage(
-                           storeStatus.store.bulkDelete(segmentCount, flowable)));
+                     .flatMapCompletable(storeStatus -> {
+                        boolean segmented = storeStatus.characteristics.contains(Characteristic.SEGMENTABLE);
+                        Flowable<NonBlockingStore.SegmentedPublisher<Object>> flowable =
+                              Flowable.fromIterable(keys)
+                                    .groupBy(groupingFunction(RxJavaInterop.identityFunction(), segmented))
+                                    .map(SegmentPublisherWrapper::new);
+                        return Completable.fromCompletionStage(
+                              storeStatus.store.bulkDelete(segmentCount(segmented), flowable));
+                     });
             },
             this::releaseReadLock
       ).toCompletionStage(null);
+   }
+
+   /**
+    * Provides a grouping function that will group entries by their segment (via keyPartitioner) when the store
+    * supports segmentation or always 0 if it doesn't
+    */
+   private <E> Function<E, Integer> groupingFunction(Function<E, Object> toKeyFunction, boolean segmented) {
+      return segmented ? value -> keyPartitioner.getSegment(toKeyFunction.apply(value)) : value -> 0;
+   }
+
+   /**
+    * Returns how many segments the user must worry about when segment or not. To be used with
+    * {@link #groupingFunction(Function, boolean)} to keep symmetry.
+    * @param segmented whether the store is segmented
+    * @return how many segments this store must worry about
+    */
+   private int segmentCount(boolean segmented) {
+      return segmented ? segmentCount : 1;
    }
 
    @Override

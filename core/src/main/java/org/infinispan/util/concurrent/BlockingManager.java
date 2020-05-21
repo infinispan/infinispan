@@ -14,6 +14,10 @@ import org.reactivestreams.Publisher;
  * <p>
  * If the current thread is blocking, it blocks until the task may run, runs the task in the current thread, and returns a
  * completed {@code CompletionStage}, so it <em>does not</em> continue the execution on the non-blocking executor.
+ * <p>
+ * Many of the methods on {@code BlockingManager} allow an id to be passed when performing the operation. This id will
+ * be printed to the TRACE log. It is therefore advised to provide something unique so that
+ * if a log is needed it will be easier to track the stream of operations across threads.
  */
 public interface BlockingManager {
    /**
