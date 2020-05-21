@@ -1,1 +1,1 @@
-$ bin\user-tool.bat -b -u myuser -p "qwer1234!" -g supervisor,reader,writer
+$ bin\cli.bat user create myuser -p "qwer1234!" -g supervisor,reader,writer
