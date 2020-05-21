@@ -72,7 +72,7 @@ public class LoopingWriterTest extends AbstractInfinispanTest {
 
    private void countElementsViaQuery(Cache<Object, Object> cache, int expectedElements) {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
-      int resultSize = queryFactory.create("FROM " + Person.class.getName()).getResultSize();
+      long resultSize = queryFactory.create("FROM " + Person.class.getName()).execute().hitCount().orElse(-1);
       Assert.assertEquals(resultSize, expectedElements);
       System.out.println("Query OK! found (as expected) " + resultSize + " elements");
    }

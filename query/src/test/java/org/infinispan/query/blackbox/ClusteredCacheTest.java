@@ -20,18 +20,18 @@ import java.util.function.Predicate;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.Ownership;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.query.CacheQuery;
-import org.infinispan.query.FetchOptions;
-import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
@@ -55,7 +55,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    private Person person2;
    private Person person3;
    private Person person4;
-   private CacheQuery<Person> cacheQuery;
+   private Query<Person> cacheQuery;
    private final String key1 = "Navin";
    private final String key2 = "BigGoat";
    private final String key3 = "MiniGoat";
@@ -119,15 +119,15 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       person3.setAge(15);
    }
 
-   protected CacheQuery<Person> createQuery(Cache<?, ?> cache, String predicate) {
-      SearchManager searchManager = Search.getSearchManager(cache);
+   protected Query<Person> createQuery(Cache<?, ?> cache, String predicate) {
+      QueryFactory queryFactory = Search.getQueryFactory(cache);
       String query = String.format("FROM %s WHERE %s", Person.class.getName(), predicate);
-      return searchManager.getQuery(query);
+      return queryFactory.create(query);
    }
 
-   protected CacheQuery<Person> createSelectAllQuery(Cache<?, ?> cache) {
-      SearchManager searchManager = Search.getSearchManager(cache);
-      return searchManager.getQuery("FROM " + Person.class.getName());
+   protected Query<Person> createSelectAllQuery(Cache<?, ?> cache) {
+      QueryFactory queryFactory = Search.getQueryFactory(cache);
+      return queryFactory.create("FROM " + Person.class.getName());
    }
 
    protected void prepareTestData() throws Exception {
@@ -153,7 +153,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       prepareTestData();
       cacheQuery = createQuery(cache1, "blurb:'playing'");
 
-      List<Person> found = cacheQuery.list();
+      List<Person> found = cacheQuery.execute().list();
 
       assertEquals(1, found.size());
 
@@ -183,7 +183,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cacheQuery = createQuery(cache2, "blurb:'playing'");
 
-      List<Person> found = cacheQuery.list();
+      List<Person> found = cacheQuery.execute().list();
 
       assert found.size() == 1 : "Expected list of size 1, was of size " + found.size();
       assert found.get(0).equals(person1);
@@ -193,7 +193,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cacheQuery = createQuery(cache2, "blurb:'pizza'");
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assert found.size() == 1;
       assert found.get(0).equals(person1);
@@ -205,7 +205,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cacheQuery = createQuery(cache2, "blurb:'eats'");
 
-      List<Person> found = cacheQuery.list();
+      List<Person> found = cacheQuery.execute().list();
 
       assertEquals(2, found.size());
       assertTrue(found.contains(person2));
@@ -220,7 +220,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cacheQuery = createQuery(cache2, "blurb:'eats'");
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assertEquals(3, found.size());
       assertTrue(found.contains(person2));
@@ -232,7 +232,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    public void testRemoved() throws Exception {
       prepareTestData();
       cacheQuery = createQuery(cache2, "blurb:'eats'");
-      List<Person> found = cacheQuery.list();
+      List<Person> found = cacheQuery.execute().list();
 
       assert found.size() == 2;
       assert found.contains(person2);
@@ -242,7 +242,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cacheQuery = createQuery(cache2, "blurb:'eats'");
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
       assert found.size() == 1;
       assert found.contains(person2);
       assert !found.contains(person3) : "This should not contain object person3 anymore";
@@ -250,8 +250,9 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
    }
 
-   protected int countIndex(Cache<?, ?> cache) {
-      return Search.getSearchManager(cache).getQuery("FROM " + Person.class.getName()).getResultSize();
+   protected long countIndex(Cache<?, ?> cache) {
+      Query<?> query = Search.getQueryFactory(cache).create("FROM " + Person.class.getName());
+      return query.execute().hitCount().orElse(-1);
    }
 
    private Optional<Cache<Object, Person>> findCache(Ownership ownership, Object key) {
@@ -304,13 +305,13 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       Cache<Object, Person> cache = findCache(memberType, key1).orElse(cache2);
 
-      assertEquals(createQuery(cache2, "blurb:'wow'").list().size(), 1);
+      assertEquals(createQuery(cache2, "blurb:'wow'").execute().list().size(), 1);
 
       boolean replaced = cache.replace(key1, person1, person2);
 
       assertTrue(replaced);
-      assertEquals(createQuery(cache1, "blurb:'wow'").list().size(), 0);
-      assertEquals(createQuery(cache, "blurb:'wow'").getResultSize(), 0);
+      assertEquals(createQuery(cache1, "blurb:'wow'").execute().list().size(), 0);
+      assertEquals(createQuery(cache, "blurb:'wow'").execute().hitCount().orElse(-1), 0);
    }
 
    private void testConditionalRemoveFrom(Ownership owneship) throws Exception {
@@ -320,19 +321,19 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cache.remove(key1, person1);
 
-      assertEquals(createSelectAllQuery(cache2).list().size(), 2);
+      assertEquals(createSelectAllQuery(cache2).execute().list().size(), 2);
       assertEquals(countIndex(cache), 2);
 
       cache.remove(key1, person1);
 
-      assertEquals(createSelectAllQuery(cache2).list().size(), 2);
+      assertEquals(createSelectAllQuery(cache2).execute().list().size(), 2);
       assertEquals(countIndex(cache), 2);
 
       cache = findCache(owneship, key3).orElse(cache2);
 
       cache.remove(key3);
 
-      assertEquals(createSelectAllQuery(cache2).list().size(), 1);
+      assertEquals(createSelectAllQuery(cache2).execute().list().size(), 1);
       assertEquals(countIndex(cache), 1);
 
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
@@ -341,7 +342,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    public void testGetResultSize() throws Exception {
       prepareTestData();
       cacheQuery = createQuery(cache2, "blurb:'playing'");
-      List<Person> found = cacheQuery.list();
+      List<Person> found = cacheQuery.execute().list();
 
       assertEquals(1, found.size());
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
@@ -349,7 +350,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    public void testPutMap() throws Exception {
       prepareTestData();
-      assertEquals(3, createSelectAllQuery(cache2).list().size());
+      assertEquals(3, createSelectAllQuery(cache2).execute().list().size());
 
       Map<String, Person> allWrites = new HashMap<>();
       allWrites.put(key1, person1);
@@ -357,18 +358,18 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       allWrites.put(key3, person3);
 
       cache2.putAll(allWrites);
-      List<Person> found = createSelectAllQuery(cache2).list();
+      List<Person> found = createSelectAllQuery(cache2).execute().list();
       assertEquals(3, found.size());
 
       cache2.putAll(allWrites);
-      found = createSelectAllQuery(cache2).list();
+      found = createSelectAllQuery(cache2).execute().list();
       assertEquals(3, found.size());
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
    }
 
    public void testPutMapAsync() throws Exception {
       prepareTestData();
-      assert createSelectAllQuery(cache2).list().size() == 3;
+      assert createSelectAllQuery(cache2).execute().list().size() == 3;
 
       person4 = new Person();
       person4.setName("New Goat");
@@ -380,17 +381,17 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       allWrites.put(key3, person3);
       allWrites.put("newGoat", person4);
 
-      Future futureTask = cache2.putAllAsync(allWrites);
+      Future<Void> futureTask = cache2.putAllAsync(allWrites);
       futureTask.get();
       assert futureTask.isDone();
-      List<Person> found = createSelectAllQuery(cache2).list();
+      List<Person> found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
       assert found.contains(person4);
 
       futureTask = cache1.putAllAsync(allWrites);
       futureTask.get();
       assert futureTask.isDone();
-      found = createSelectAllQuery(cache2).list();
+      found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
       assert found.contains(person4);
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
@@ -398,7 +399,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    public void testPutForExternalRead() throws Exception {
       prepareTestData();
-      assertEquals(3, createSelectAllQuery(cache2).list().size());
+      assertEquals(3, createSelectAllQuery(cache2).execute().list().size());
 
       person4 = new Person();
       person4.setName("New Goat");
@@ -406,7 +407,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cache2.putForExternalRead("newGoat", person4);
       eventually(() -> cache2.get("newGoat") != null);
-      List<Person> found = createSelectAllQuery(cache2).list();
+      List<Person> found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
 
       assertTrue(found.contains(person4));
@@ -416,8 +417,10 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       person5.setBlurb("Plays with grass.");
       cache2.putForExternalRead("newGoat", person5);
 
-      found = createSelectAllQuery(cache2).list();
+      QueryResult<Person> result = createSelectAllQuery(cache2).execute();
+      found = result.list();
       assertEquals(4, found.size());
+      assertEquals(4, result.hitCount().orElse(-1));
 
       assertFalse(found.contains(person5));
       assertTrue(found.contains(person4));
@@ -426,7 +429,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    public void testPutIfAbsent() throws Exception {
       prepareTestData();
-      assert createSelectAllQuery(cache2).list().size() == 3;
+      assert createSelectAllQuery(cache2).execute().list().size() == 3;
 
       person4 = new Person();
       person4.setName("New Goat");
@@ -434,7 +437,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cache2.putIfAbsent("newGoat", person4);
 
-      List<Person> found = createSelectAllQuery(cache2).list();
+      List<Person> found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
 
       assert found.contains(person4);
@@ -444,7 +447,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       person5.setBlurb("Plays with grass.");
       cache2.putIfAbsent("newGoat", person5);
 
-      found = createSelectAllQuery(cache2).list();
+      found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
 
       assertFalse(found.contains(person5));
@@ -454,16 +457,16 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    public void testPutIfAbsentAsync() throws Exception {
       prepareTestData();
-      assertEquals(3, createSelectAllQuery(cache2).list().size());
+      assertEquals(3, createSelectAllQuery(cache2).execute().list().size());
 
       person4 = new Person();
       person4.setName("New Goat");
       person4.setBlurb("Also eats grass");
 
-      Future futureTask = cache2.putIfAbsentAsync("newGoat", person4);
+      Future<Person> futureTask = cache2.putIfAbsentAsync("newGoat", person4);
       futureTask.get();
       assertTrue(futureTask.isDone());
-      List<Person> found = createSelectAllQuery(cache2).list();
+      List<Person> found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
       assertTrue(found.contains(person4));
 
@@ -473,7 +476,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       futureTask = cache2.putIfAbsentAsync("newGoat", person5);
       futureTask.get();
       assertTrue(futureTask.isDone());
-      found = createSelectAllQuery(cache2).list();
+      found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
       assertFalse(found.contains(person5));
       assertTrue(found.contains(person4));
@@ -482,16 +485,16 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    public void testPutAsync() throws Exception {
       prepareTestData();
-      assertEquals(3, createSelectAllQuery(cache2).list().size());
+      assertEquals(3, createSelectAllQuery(cache2).execute().list().size());
 
       person4 = new Person();
       person4.setName("New Goat");
       person4.setBlurb("Also eats grass");
 
-      Future f = cache2.putAsync("newGoat", person4);
+      Future<Person> f = cache2.putAsync("newGoat", person4);
       f.get();
       assertTrue(f.isDone());
-      List<Person> found = createSelectAllQuery(cache2).list();
+      List<Person> found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
       assertTrue(found.contains(person4));
 
@@ -501,7 +504,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       f = cache2.putAsync("newGoat", person5);
       f.get();
       assertTrue(f.isDone());
-      found = createSelectAllQuery(cache2).list();
+      found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
       assertFalse(found.contains(person4));
       assertTrue(found.contains(person5));
@@ -512,71 +515,19 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       prepareTestData();
 
       String predicate = "blurb:'eats' OR blurb:'playing'";
-      CacheQuery<?> cacheQuery1 = createQuery(cache1, predicate);
-      CacheQuery<?> cacheQuery2 = createQuery(cache2, predicate);
+      Query<Person> cacheQuery1 = createQuery(cache1, predicate);
+      Query<Person> cacheQuery2 = createQuery(cache2, predicate);
 
-      assertEquals(3, cacheQuery1.getResultSize());
-      assertEquals(3, cacheQuery2.getResultSize());
+      assertEquals(3, cacheQuery1.execute().hitCount().orElse(-1));
+      assertEquals(3, cacheQuery2.execute().hitCount().orElse(-1));
 
       cache2.clear();
 
-      assertEquals(0, cacheQuery1.list().size());
-      assertEquals(0, cacheQuery2.list().size());
+      assertEquals(0, cacheQuery1.execute().list().size());
+      assertEquals(0, cacheQuery2.execute().list().size());
 
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
    }
-
-//   public void testFullTextFilterOnOff() throws Exception {
-//      prepareTestData();
-//
-//      CacheQuery<Person> query = createQuery(cache1, "blurb:'eats'");
-//      FullTextFilter filter = query.enableFullTextFilter("personFilter");
-//      filter.setParameter("blurbText", "cheese");
-//
-//      assertEquals(1, query.getResultSize());
-//      List<Person> result = query.list();
-//
-//      Person person = result.get(0);
-//      assertEquals("MiniGoat", person.getName());
-//      assertEquals("Eats cheese", person.getBlurb());
-//
-//      //Disabling the fullTextFilter.
-//      query.disableFullTextFilter("personFilter");
-//      assertEquals(2, query.getResultSize());
-//      StaticTestingErrorHandler.assertAllGood(cache1, cache2);
-//   }
-
-//   public void testCombinationOfFilters() throws Exception {
-//      prepareTestData();
-//
-//      person4 = new Person();
-//      person4.setName("ExtraGoat");
-//      person4.setBlurb("Eats grass and is retired");
-//      person4.setAge(70);
-//      cache1.put("ExtraGoat", person4);
-//
-//      CacheQuery<Person> query = createQuery(cache1, "blurb:'eats'");
-//      FullTextFilter filter = query.enableFullTextFilter("personFilter");
-//      filter.setParameter("blurbText", "grass");
-//
-//      assertEquals(2, query.getResultSize());
-//
-//      FullTextFilter ageFilter = query.enableFullTextFilter("personAgeFilter");
-//      ageFilter.setParameter("age", 70);
-//
-//      assertEquals(1, query.getResultSize());
-//      List<Person> result = query.list();
-//
-//      Person person = result.get(0);
-//      assertEquals("ExtraGoat", person.getName());
-//      assertEquals(70, person.getAge());
-//
-//      //Disabling the fullTextFilter.
-//      query.disableFullTextFilter("personFilter");
-//      query.disableFullTextFilter("personAgeFilter");
-//      assertEquals(3, query.getResultSize());
-//      StaticTestingErrorHandler.assertAllGood(cache1, cache2);
-//   }
 
    public void testSearchKeyTransformer() throws Exception {
       prepareTestedObjects();
@@ -594,10 +545,10 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cache1.put(customKey3, person3);
       if (transactionsEnabled()) transactionManager.commit();
 
-      CacheQuery<Person> cacheQuery = createQuery(cache1, "blurb:'Eats'");
+      Query<Person> cacheQuery = createQuery(cache1, "blurb:'Eats'");
 
       int counter = 0;
-      try (ResultIterator<Person> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))) {
+      try (CloseableIterator<Person> found = cacheQuery.iterator()) {
          while (found.hasNext()) {
             found.next();
             counter++;
@@ -611,43 +562,45 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    public void testCompute() throws Exception {
       prepareTestData();
       TransactionManager transactionManager = cache2.getAdvancedCache().getTransactionManager();
-      assertEquals(3, createSelectAllQuery(cache2).list().size());
+      assertEquals(3, createSelectAllQuery(cache2).execute().list().size());
 
       String key = "newGoat";
       person4 = new Person(key, "eats something", 42);
 
       // compute a new key
-      BiFunction remappingFunction = (BiFunction<String, Person, Person> & Serializable) (k, v) -> new Person(k, "eats something", 42);
+      BiFunction<Object, Person, Person> remappingFunction =
+            (BiFunction<Object, Person, Person> & Serializable) (k, v) -> new Person(k.toString(), "eats something", 42);
       if (transactionsEnabled()) transactionManager.begin();
       cache2.compute(key, remappingFunction);
       if (transactionsEnabled()) transactionManager.commit();
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
 
-      List<Person> found = createSelectAllQuery(cache2).list();
+      List<Person> found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
       assertTrue(found.contains(person4));
 
       // compute and replace existing key
-      BiFunction remappingExisting = (BiFunction<String, Person, Person> & Serializable) (k, v) -> new Person(k, "eats other things", 42);
+      BiFunction<Object, Person, Person> remappingExisting =
+            (BiFunction<Object, Person, Person> & Serializable) (k, v) -> new Person(k.toString(), "eats other things", 42);
 
       if (transactionsEnabled()) transactionManager.begin();
       cache2.compute(key, remappingExisting);
       if (transactionsEnabled()) transactionManager.commit();
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
 
-      found = createSelectAllQuery(cache2).list();
+      found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
       assertFalse(found.contains(person4));
       assertTrue(found.contains(new Person(key, "eats other things", 42)));
 
       // remove if compute result is null
-      BiFunction remappingToNull = (BiFunction<String, Person, Person> & Serializable) (k, v) -> null;
+      BiFunction<Object, Person, Person> remappingToNull = (BiFunction<Object, Person, Person> & Serializable) (k, v) -> null;
       if (transactionsEnabled()) transactionManager.begin();
       cache2.compute(key, remappingToNull);
       if (transactionsEnabled()) transactionManager.commit();
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
 
-      found = createSelectAllQuery(cache2).list();
+      found = createSelectAllQuery(cache2).execute().list();
       assertEquals(3, found.size());
       assertFalse(found.contains(person4));
       assertFalse(found.contains(new Person(key, "eats other things", 42)));
@@ -656,10 +609,11 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    public void testComputeIfPresent() throws Exception {
       prepareTestData();
       TransactionManager transactionManager = cache2.getAdvancedCache().getTransactionManager();
-      assertEquals(3, createSelectAllQuery(cache2).list().size());
+      assertEquals(3, createSelectAllQuery(cache2).execute().list().size());
 
       // compute and replace existing key
-      BiFunction remappingExisting = (BiFunction<String, Person, Person> & Serializable) (k, v) -> new Person("replaced", "personOneChanged", 42);
+      BiFunction<Object, Person, Person> remappingExisting =
+            (BiFunction<Object, Person, Person> & Serializable) (k, v) -> new Person("replaced", "personOneChanged", 42);
 
       if (transactionsEnabled()) transactionManager.begin();
       cache2.computeIfPresent(key1, remappingExisting);
@@ -667,7 +621,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       if (transactionsEnabled()) transactionManager.commit();
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
 
-      List<Person> found = createSelectAllQuery(cache2).list();
+      List<Person> found = createSelectAllQuery(cache2).execute().list();
       assertEquals(3, found.size());
       assertFalse(found.contains(person1));
       assertTrue(found.contains(new Person("replaced", "personOneChanged", 42)));
@@ -676,44 +630,46 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       person4 = new Person(newKey, "eats something", 42);
 
       // do nothing for non existing keys
-      BiFunction remappingFunction = (BiFunction<String, Person, Person> & Serializable) (k, v) -> new Person(k, "eats something", 42);
+      BiFunction<Object, Person, Person> remappingFunction =
+            (BiFunction<Object, Person, Person> & Serializable) (k, v) -> new Person(k.toString(), "eats something", 42);
 
       if (transactionsEnabled()) transactionManager.begin();
       cache2.computeIfPresent(newKey, remappingFunction);
       if (transactionsEnabled()) transactionManager.commit();
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
 
-      found = createSelectAllQuery(cache2).list();
+      found = createSelectAllQuery(cache2).execute().list();
       assertEquals(3, found.size());
       assertFalse(found.contains(person4));
 
       // remove if compute result is null
-      BiFunction remappingToNull = (BiFunction<String, Person, Person> & Serializable) (k, v) -> null;
+      BiFunction<Object, Person, Person> remappingToNull =
+            (BiFunction<Object, Person, Person> & Serializable) (k, v) -> null;
       if (transactionsEnabled()) transactionManager.begin();
       cache2.computeIfPresent(key2, remappingToNull);
       if (transactionsEnabled()) transactionManager.commit();
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
 
-      found = createSelectAllQuery(cache2).list();
+      found = createSelectAllQuery(cache2).execute().list();
       assertFalse(found.contains(person2));
    }
 
    public void testComputeIfAbsent() throws Exception {
       prepareTestData();
       TransactionManager transactionManager = cache2.getAdvancedCache().getTransactionManager();
-      assertEquals(3, createSelectAllQuery(cache2).list().size());
+      assertEquals(3, createSelectAllQuery(cache2).execute().list().size());
 
       String key = "newGoat";
       person4 = new Person(key, "eats something", 42);
 
       // compute a new key
-      Function mappingFunction = (Function<String, Person> & Serializable) k -> new Person(k, "eats something", 42);
+      Function<Object, Person> mappingFunction = (Function<Object, Person> & Serializable) k -> new Person(k.toString(), "eats something", 42);
       if (transactionsEnabled()) transactionManager.begin();
       cache2.computeIfAbsent(key, mappingFunction);
       if (transactionsEnabled()) transactionManager.commit();
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
 
-      List<Person> found = createSelectAllQuery(cache2).list();
+      List<Person> found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
       assertTrue(found.contains(person4));
 
@@ -723,19 +679,19 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       if (transactionsEnabled()) transactionManager.commit();
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
 
-      found = createSelectAllQuery(cache2).list();
+      found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
       assertFalse(found.contains(new Person(key1, "eats something", 42)));
       assertTrue(found.contains(person1));
 
       // do nothing if null
-      Function mappingToNull = (Function<String, Person> & Serializable) k -> null;
+      Function<Object, Person> mappingToNull = (Function<Object, Person> & Serializable) k -> null;
       if (transactionsEnabled()) transactionManager.begin();
       cache2.computeIfAbsent("anotherKey", mappingToNull);
       if (transactionsEnabled()) transactionManager.commit();
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
 
-      found = createSelectAllQuery(cache2).list();
+      found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
       assertFalse(found.contains(null));
    }
@@ -743,7 +699,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    public void testMerge() throws Exception {
       prepareTestData();
       TransactionManager transactionManager = cache2.getAdvancedCache().getTransactionManager();
-      assertEquals(3, createSelectAllQuery(cache2).list().size());
+      assertEquals(3, createSelectAllQuery(cache2).execute().list().size());
 
       String key = "newGoat";
       person4 = new Person(key, "eats something", 42);
@@ -754,7 +710,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       if (transactionsEnabled()) transactionManager.commit();
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
 
-      List<Person> found = createSelectAllQuery(cache2).list();
+      List<Person> found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
       assertTrue(found.contains(person4));
 
@@ -765,7 +721,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       if (transactionsEnabled()) transactionManager.commit();
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
 
-      found = createSelectAllQuery(cache2).list();
+      found = createSelectAllQuery(cache2).execute().list();
       assertEquals(4, found.size());
       assertFalse(found.contains(person4));
       assertTrue(found.contains(new Person("newGoat_newGoat", "eats something_hola", 84)));
@@ -776,7 +732,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       if (transactionsEnabled()) transactionManager.commit();
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
 
-      found = createSelectAllQuery(cache2).list();
+      found = createSelectAllQuery(cache2).execute().list();
       assertEquals(3, found.size());
       assertFalse(found.contains(person4));
       assertFalse(found.contains(new Person("newGoat_newGoat", "eats something_hola", 84)));

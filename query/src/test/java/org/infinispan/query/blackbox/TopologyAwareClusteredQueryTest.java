@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.Search;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.Test;
 
@@ -27,7 +28,8 @@ public class TopologyAwareClusteredQueryTest extends ClusteredQueryTest {
 
       cacheAMachine1 = cache(0);
       cacheAMachine2 = cache(1);
-
+      queryFactory1 = Search.getQueryFactory(cacheAMachine1);
+      queryFactory2 = Search.getQueryFactory(cacheAMachine2);
       waitForClusterToForm();
       populateCache();
    }

@@ -4,26 +4,21 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.apache.lucene.search.Explanation;
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
-import org.hibernate.search.filter.FullTextFilter;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
-import org.infinispan.query.FetchOptions;
-import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.CustomKey3;
@@ -50,16 +45,16 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   private CacheQuery<Person> createQuery(String predicate, Class<?> entity) {
-      SearchManager searchManager = Search.getSearchManager(cache);
-      return searchManager.getQuery(String.format("FROM %s WHERE %s", entity.getName(), predicate));
+   private <T> Query<T> createQuery(String predicate, Class<T> entity) {
+      QueryFactory queryFactory = Search.getQueryFactory(cache);
+      return queryFactory.create(String.format("FROM %s WHERE %s", entity.getName(), predicate));
    }
 
    public void testSimple() {
       loadTestingData();
-      CacheQuery<Person> cacheQuery = createQuery("blurb:'playing'", Person.class);
+      Query<Person> cacheQuery = createQuery("blurb:'playing'", Person.class);
 
-      List<Person> found = cacheQuery.list();
+      List<Person> found = cacheQuery.execute().list();
 
       int elems = found.size();
       assert elems == 1 : "Expected 1 but was " + elems;
@@ -71,11 +66,28 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
    public void testEagerIterator() {
       loadTestingData();
-      CacheQuery<?> cacheQuery = createQuery("blurb:'playing'", Person.class);
+      Query<Person> cacheQuery = createQuery("blurb:'playing'", Person.class);
 
-      try (ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER))) {
+      try (CloseableIterator<Person> found = cacheQuery.iterator()) {
          assertTrue(found.hasNext());
          found.next();
+         assertFalse(found.hasNext());
+      }
+      StaticTestingErrorHandler.assertAllGood(cache);
+   }
+
+   public void testIteratorWithProjections() {
+      loadTestingData();
+
+      QueryFactory queryFactory = Search.getQueryFactory(cache);
+      String q = String.format("SELECT name, blurb from %s p where name:'navin'", Person.class.getName());
+      Query<Object[]> query = queryFactory.create(q);
+
+      try (CloseableIterator<Object[]> found = query.iterator()) {
+         assertTrue(found.hasNext());
+         Object[] next = found.next();
+         assertEquals("Navin Surtani", next[0]);
+         assertEquals("Likes playing WoW", next[1]);
          assertFalse(found.hasNext());
       }
       StaticTestingErrorHandler.assertAllGood(cache);
@@ -84,9 +96,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = UnsupportedOperationException.class)
    public void testEagerIteratorRemove() {
       loadTestingData();
-      CacheQuery<?> cacheQuery = createQuery("blurb:'playing'", Person.class);
+      Query<?> cacheQuery = createQuery("blurb:'playing'", Person.class);
 
-      try (ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER))) {
+      try (CloseableIterator<?> found = cacheQuery.iterator()) {
          assertTrue(found.hasNext());
          found.remove();
       }
@@ -95,9 +107,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = NoSuchElementException.class)
    public void testEagerIteratorExCase() {
       loadTestingData();
-      CacheQuery<?> cacheQuery = createQuery("blurb:'playing'", Person.class);
+      Query<?> cacheQuery = createQuery("blurb:'playing'", Person.class);
 
-      try (ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER))) {
+      try (CloseableIterator<?> found = cacheQuery.iterator()) {
          assertTrue(found.hasNext());
          found.next();
          assertFalse(found.hasNext());
@@ -108,10 +120,12 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    public void testMultipleResults() {
       loadTestingData();
 
-      CacheQuery<Person> cacheQuery = createQuery("name:'goat'", Person.class);
-      List<Person> found = cacheQuery.list();
+      Query<Person> cacheQuery = createQuery("name:'goat'", Person.class);
+      QueryResult<Person> result = cacheQuery.execute();
+      List<Person> found = result.list();
 
       assert found.size() == 2;
+      assertEquals(2, getNumberOfHits(result));
       assertTrue(found.contains(person2));
       assertTrue(found.contains(person3));
       StaticTestingErrorHandler.assertAllGood(cache);
@@ -119,9 +133,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
    public void testModified() {
       loadTestingData();
-      CacheQuery<Person> cacheQuery = createQuery("blurb:'playing'", Person.class);
+      Query<Person> cacheQuery = createQuery("blurb:'playing'", Person.class);
 
-      List<Person> found = cacheQuery.list();
+      List<Person> found = cacheQuery.execute().list();
 
       assert found.size() == 1;
       assert found.get(0).equals(person1);
@@ -131,7 +145,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       cacheQuery = createQuery("blurb:'pizza'", Person.class);
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assert found.size() == 1;
       assert found.get(0).equals(person1);
@@ -140,13 +154,15 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
    public void testAdded() {
       loadTestingData();
-      CacheQuery<Person> cacheQuery = createQuery("name:'Goat'", Person.class);
-      List<Person> found = cacheQuery.list();
+      Query<Person> cacheQuery = createQuery("name:'Goat'", Person.class);
+      QueryResult<Person> result = cacheQuery.execute();
+      List<Person> found = result.list();
 
-      assert found.size() == 2 : "Size of list should be 2";
-      assert found.contains(person2);
-      assert found.contains(person3);
-      assert !found.contains(person4) : "This should not contain object person4";
+      assertEquals(2, found.size());
+      assertEquals(2, getNumberOfHits(result));
+      assertTrue(found.contains(person2));
+      assertTrue(found.contains(person3));
+      assertFalse(found.contains(person4));
 
       person4 = new Person();
       person4.setName("Mighty Goat");
@@ -155,7 +171,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       cache.put("mighty", person4);
 
       cacheQuery = createQuery("name:'Goat'", Person.class);
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assert found.size() == 3 : "Size of list should be 3";
       assert found.contains(person2);
@@ -167,60 +183,63 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    public void testRemoved() {
       loadTestingData();
 
-      CacheQuery<Person> cacheQuery = createQuery("name:'Goat'", Person.class);
-      List<Person> found = cacheQuery.list();
+      Query<Person> cacheQuery = createQuery("name:'Goat'", Person.class);
+      QueryResult<Person> result = cacheQuery.execute();
+      List<Person> found = result.list();
 
-      assert found.size() == 2;
-      assert found.contains(person2);
-      assert found.contains(person3) : "This should still contain object person3";
+      assertEquals(2, found.size());
+      assertEquals(2, getNumberOfHits(result));
+      assertTrue(found.contains(person2));
+      assertTrue(found.contains(person3));
 
       cache.remove(key3);
 
       cacheQuery = createQuery("name:'Goat'", Person.class);
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
-      assert found.size() == 1;
-      assert found.contains(person2);
-      assert !found.contains(person3) : "The search should not return person3";
+      assertEquals(1, found.size());
+      assertTrue(found.contains(person2));
+      assertFalse(found.contains(person3));
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testUpdated() {
       loadTestingData();
-      CacheQuery<Person> cacheQuery = createQuery("name:'Goat'", Person.class);
-      List<Person> found = cacheQuery.list();
+      Query<Person> cacheQuery = createQuery("name:'Goat'", Person.class);
+      QueryResult<Person> result = cacheQuery.execute();
+      List<Person> found = result.list();
 
-      assert found.size() == 2 : "Size of list should be 2";
-      assert found.contains(person2) : "The search should have person2";
+      assertEquals(2, found.size());
+      assertEquals(2, getNumberOfHits(result));
+      assertTrue(found.contains(person2));
 
       cache.put(key2, person1);
 
       cacheQuery = createQuery("name:'Goat'", Person.class);
-      found = cacheQuery.list();
+      result = cacheQuery.execute();
+      found = result.list();
 
-      assert found.size() == 1 : "Size of list should be 1";
-      assert !found.contains(person2) : "Person 2 should not be found now";
-      assert !found.contains(person1) : "Person 1 should not be found because it does not meet the search criteria";
+      assertEquals(1, found.size());
+      assertEquals(1, getNumberOfHits(result));
+      assertFalse(found.contains(person2));
+      assertFalse(found.contains(person1));
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testSetSort() {
       loadTestingData();
+      String queryString = String.format("FROM %s p WHERE p.name:'Goat' ORDER BY p.age", Person.class.getName());
+      Query<Person> cacheQuery = Search.<Person>getQueryFactory(cache).create(queryString);
+      QueryResult<Person> result = cacheQuery.execute();
+      List<Person> found = result.list();
 
-      Sort sort = new Sort(new SortField("age", SortField.Type.INT));
+      assertEquals(2, found.size());
 
-      CacheQuery<Person> cacheQuery = createQuery("name:'Goat'", Person.class);
-      List<Person> found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
-      assert found.size() == 2;
-
-      cacheQuery.sort(sort);
-
-      found = cacheQuery.list();
-
-      assert found.size() == 2;
-      assert found.get(0).equals(person3); // person3 is 25 and named Goat
-      assert found.get(1).equals(person2); // person2 is 30 and named Goat
+      assertEquals(2, found.size());
+      assertEquals(person3, found.get(0)); // person3 is 25 and named Goat
+      assertEquals(person2, found.get(1)); // person2 is 30 and named Goat
 
       StaticTestingErrorHandler.assertAllGood(cache);
 
@@ -228,18 +247,15 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       person2.setAge(10);
       cache.put(key2, person2);
 
-      cacheQuery = createQuery("name:'Goat'", Person.class);
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
-      assert found.size() == 2;
+      assertEquals(2, found.size());
 
-      cacheQuery.sort(sort);
+      found = cacheQuery.execute().list();
 
-      found = cacheQuery.list();
-
-      assert found.size() == 2;
-      assert found.get(0).equals(person2); // person2 is 10 and named Goat
-      assert found.get(1).equals(person3); // person3 is 25 and named Goat
+      assertEquals(2, found.size());
+      assertEquals(person2, found.get(0)); // person2 is 10 and named Goat
+      assertEquals(person3, found.get(1)); // person3 is 25 and named Goat
 
       StaticTestingErrorHandler.assertAllGood(cache);
    }
@@ -247,84 +263,59 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    public void testSetFilter() {
       loadTestingData();
 
-      CacheQuery<?> cacheQuery = createQuery("name:'goat'", Person.class);
-      List<?> found = cacheQuery.list();
+      Query<?> cacheQuery = createQuery("name:'goat'", Person.class);
+      List<?> found = cacheQuery.execute().list();
 
-      assert found.size() == 2;
+      assertEquals(2, found.size());
 
       cacheQuery = createQuery("name:'goat' AND blurb:'cheese'", Person.class);
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
-      assert found.size() == 1;
+      assertEquals(1, found.size());
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testLazyIterator() {
       loadTestingData();
-      CacheQuery<?> cacheQuery = createQuery("blurb:'playing'", Person.class);
+      Query<?> cacheQuery = createQuery("blurb:'playing'", Person.class);
 
-      try (ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))) {
+      try (CloseableIterator<?> found = cacheQuery.iterator()) {
          assertTrue(found.hasNext());
          found.next();
          assertFalse(found.hasNext());
       }
       StaticTestingErrorHandler.assertAllGood(cache);
-   }
-
-   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unknown FetchMode null")
-   public void testUnknownFetchModeIterator() {
-      loadTestingData();
-      CacheQuery<?> cacheQuery = createQuery("blurb:'playing'", Person.class);
-
-      try (ResultIterator<?> found = cacheQuery.iterator(new FetchOptions() {
-         public FetchMode getFetchMode() {
-            return null;
-         }
-      })) {
-         assertTrue(found.hasNext());
-         found.next();
-         assertFalse(found.hasNext());
-      }
    }
 
    public void testIteratorWithDefaultOptions() {
       loadTestingData();
-      CacheQuery<?> cacheQuery = createQuery("blurb:'playing'", Person.class);
+      Query<?> cacheQuery = createQuery("blurb:'playing'", Person.class);
 
-      try (ResultIterator<?> found = cacheQuery.iterator()) {
+      try (CloseableIterator<?> found = cacheQuery.iterator()) {
          assertTrue(found.hasNext());
          found.next();
          assertFalse(found.hasNext());
       }
-      StaticTestingErrorHandler.assertAllGood(cache);
-   }
-
-   public void testExplain() {
-      loadTestingData();
-      CacheQuery<?> cacheQuery = createQuery("blurb:'Eats'", Person.class);
-      Explanation found = cacheQuery.explain(0);
-      assertNotNull(found);
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testFullTextFilterOnOff() {
       loadTestingData();
 
-      CacheQuery<Person> query = createQuery("blurb:'Eats'", Person.class);
-      FullTextFilter filter = query.enableFullTextFilter("personFilter");
-      filter.setParameter("blurbText", "cheese");
+      Query<Person> query = createQuery("blurb:'Eats' AND blurb:'cheese'", Person.class);
 
-      assertEquals(1, query.getResultSize());
-      List<Person> result = query.list();
+      assertEquals(1, getNumberOfHits(query.execute()));
+      List<Person> result = query.execute().list();
 
       Person person = result.get(0);
       assertEquals("Mini Goat", person.getName());
       assertEquals("Eats cheese", person.getBlurb());
 
       //Disabling the fullTextFilter.
-      query.disableFullTextFilter("personFilter");
-      assertEquals(2, query.getResultSize());
+      query = createQuery("blurb:'Eats'", Person.class);
+
+      assertEquals(2, getNumberOfHits(query.execute()));
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
@@ -332,8 +323,8 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    public void testIteratorRemove() {
       loadTestingData();
 
-      CacheQuery<?> cacheQuery = createQuery("blurb:'Eats'", Person.class);
-      try (ResultIterator<?> iterator = cacheQuery.iterator()) {
+      Query<?> cacheQuery = createQuery("blurb:'Eats'", Person.class);
+      try (CloseableIterator<?> iterator = cacheQuery.iterator()) {
          if (iterator.hasNext()) {
             iterator.next();
             iterator.remove();
@@ -344,9 +335,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
    public void testLazyIteratorWithOffset() {
       loadTestingData();
-      CacheQuery<?> cacheQuery = createQuery("blurb:'Eats'", Person.class).firstResult(1);
+      Query<?> cacheQuery = createQuery("blurb:'Eats'", Person.class).startOffset(1);
 
-      try (ResultIterator<?> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))) {
+      try (CloseableIterator<?> iterator = cacheQuery.iterator()) {
          assertEquals(1, countElements(iterator));
       }
       StaticTestingErrorHandler.assertAllGood(cache);
@@ -354,33 +345,24 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testSearchManagerWithNullCache() {
-      Search.getSearchManager(null);
+      Search.getQueryFactory(null);
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class)
-   public void testLazyIteratorWithInvalidFetchSize() {
-      loadTestingData();
-      CacheQuery<?> cacheQuery = createQuery("blurb:'Eats'", Person.class).firstResult(1);
-
-      cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY).fetchSize(0));
-   }
+// TODO: Allow to specify the fetch size
+//   @Test(expectedExceptions = IllegalArgumentException.class)
+//   public void testLazyIteratorWithInvalidFetchSize() {
+//      loadTestingData();
+//      CacheQuery<?> cacheQuery = createQuery("blurb:'Eats'", Person.class).firstResult(1);
+//
+//      cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY).fetchSize(0));
+//   }
 
    @Test(expectedExceptions = NoSuchElementException.class)
    public void testLazyIteratorWithNoElementsFound() {
       loadTestingData();
-      CacheQuery<?> cacheQuery = createQuery("blurb:'fish'", Person.class).firstResult(1);
+      Query<?> cacheQuery = createQuery("blurb:'fish'", Person.class).startOffset(1);
 
-      try (ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))) {
-         found.next();
-      }
-   }
-
-   @Test(expectedExceptions = IllegalArgumentException.class)
-   public void testIteratorWithNullFetchMode() {
-      loadTestingData();
-      CacheQuery<?> cacheQuery = createQuery("blurb:'Eats'", Person.class).firstResult(1);
-
-      try (ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(null))) {
+      try (CloseableIterator<?> found = cacheQuery.iterator()) {
          found.next();
       }
    }
@@ -388,9 +370,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    public void testSearchKeyTransformer() {
       loadTestingDataWithCustomKey();
 
-      CacheQuery<?> cacheQuery = createQuery("blurb:'Eats'", Person.class);
+      Query<Person> cacheQuery = createQuery("blurb:'Eats'", Person.class);
 
-      try (ResultIterator<?> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))) {
+      try (CloseableIterator<Person> iterator = cacheQuery.iterator()) {
          assertEquals(2, countElements(iterator));
       }
       StaticTestingErrorHandler.assertAllGood(cache);
@@ -401,7 +383,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       Cache<?, ?> cache = mock(CacheImpl.class);
       when(cache.getAdvancedCache()).thenReturn(null);
 
-      Search.getSearchManager(cache);
+      Search.getQueryFactory(cache);
    }
 
    //Another test just for covering Search.java instantiation, although it is unnecessary. As well as covering the
@@ -409,9 +391,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    public void testSearchManagerWithInstantiation() {
       loadTestingData();
 
-      CacheQuery<?> cacheQuery = createQuery("blurb:'playing'", Person.class);
+      Query<?> cacheQuery = createQuery("blurb:'playing'", Person.class);
 
-      try (ResultIterator<?> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.valueOf("LAZY")))) {
+      try (CloseableIterator<?> found = cacheQuery.iterator()) {
          assertTrue(found.hasNext());
          found.next();
          assertFalse(found.hasNext());
@@ -420,27 +402,22 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
    public void testGetResultSize() {
       loadTestingData();
-      CacheQuery<?> cacheQuery = createQuery("blurb:'playing'", Person.class);
+      Query<?> cacheQuery = createQuery("blurb:'playing'", Person.class);
 
-      assert cacheQuery.getResultSize() == 1;
+      assertEquals(1, getNumberOfHits(cacheQuery.execute()));
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testMaxResults() {
       loadTestingData();
 
-      CacheQuery<?> cacheQuery = createQuery("blurb:'eats'", Person.class).maxResults(1);
+      Query<Person> cacheQuery = createQuery("blurb:'eats'", Person.class).maxResults(1);
 
-      assertEquals(2, cacheQuery.getResultSize());   // NOTE: getResultSize() ignores pagination (maxResults, firstResult)
-      assertEquals(1, cacheQuery.list().size());
-      try (ResultIterator<?> eagerIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER))) {
+      QueryResult<Person> result = cacheQuery.execute();
+      assertEquals(2, getNumberOfHits(result));   // NOTE: getResultSize() ignores pagination (maxResults, firstResult)
+      assertEquals(1, result.list().size());
+      try (CloseableIterator<?> eagerIterator = cacheQuery.iterator()) {
          assertEquals(1, countElements(eagerIterator));
-      }
-      try (ResultIterator<?> lazyIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))) {
-         assertEquals(1, countElements(lazyIterator));
-      }
-      try (ResultIterator<?> defaultIterator = cacheQuery.iterator()) {
-         assertEquals(1, countElements(defaultIterator));
       }
       StaticTestingErrorHandler.assertAllGood(cache);
    }
@@ -458,34 +435,34 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       loadTestingData();
 
       String predicate = "name:'navin' OR name:'goat'";
-      CacheQuery<Person> cacheQuery = createQuery(predicate, Person.class);
+      Query<Person> cacheQuery = createQuery(predicate, Person.class);
 
       // We know that we've got all 3 hits.
-      assert cacheQuery.getResultSize() == 3 : "Expected 3, got " + cacheQuery.getResultSize();
+      assertEquals(3, getNumberOfHits(cacheQuery.execute()));
 
       cache.clear();
 
       cacheQuery = createQuery(predicate, Person.class);
 
-      assert cacheQuery.getResultSize() == 0;
+      assertEquals(0, getNumberOfHits(cacheQuery.execute()));
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testTypeFiltering() {
       loadTestingData();
-      CacheQuery<?> cacheQuery = createQuery("blurb:'grass'", Person.class);
+      Query<?> cacheQuery = createQuery("blurb:'grass'", Person.class);
 
-      List<?> found = cacheQuery.list();
+      List<?> found = cacheQuery.execute().list();
 
-      assert found.size() == 1;
-      assert found.contains(person2);
+      assertEquals(1, found.size());
+      assertTrue(found.contains(person2));
 
       cacheQuery = createQuery("blurb:'grass'", AnotherGrassEater.class);
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
-      assert found.size() == 1;
-      assert found.get(0).equals(anotherGrassEater);
+      assertEquals(1, found.size());
+      assertEquals(found.get(0), anotherGrassEater);
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
@@ -493,7 +470,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
-         .indexing()
+            .indexing()
             .enable()
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
             .addIndexedEntity(Person.class)
@@ -575,5 +552,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
    protected void enhanceConfig(ConfigurationBuilder c) {
       // no op, meant to be overridden
+   }
+
+   private long getNumberOfHits(QueryResult<?> queryResult) {
+      return queryResult.hitCount().orElse(-1);
    }
 }

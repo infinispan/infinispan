@@ -12,7 +12,7 @@ import org.infinispan.commons.util.CloseableIterator;
  * @param <S> Type of the original iterator
  * @param <T> Resulting type
  */
-class MappingIterator<S, T> implements CloseableIterator<T> {
+public class MappingIterator<S, T> implements CloseableIterator<T> {
    private final CloseableIterator<S> iterator;
    private final Function<? super S, ? extends T> mapper;
 

@@ -9,7 +9,6 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.test.Person;
@@ -37,12 +36,12 @@ public class OffHeapQueryTest extends SingleCacheManagerTest {
 
       assertEquals(getIndexDocs(), 1);
 
-      CacheQuery<Object> queryFromLucene = createCacheQuery(Person.class, cache, "name", "Donald");
-      assertEquals(1, queryFromLucene.list().size());
+      Query<Object> queryFromLucene = createCacheQuery(Person.class, cache, "name", "Donald");
+      assertEquals(1, queryFromLucene.execute().list().size());
 
-      Query queryFromIckle = Search.getQueryFactory(cache)
+      Query<Object> queryFromIckle = Search.getQueryFactory(cache)
             .create("From org.infinispan.query.test.Person p where p.name:'Donald'");
-      assertEquals(1, queryFromIckle.list().size());
+      assertEquals(1, queryFromIckle.execute().list().size());
    }
 
    private int getIndexDocs() {

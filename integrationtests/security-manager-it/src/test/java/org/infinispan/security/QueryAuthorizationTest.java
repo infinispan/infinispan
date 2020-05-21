@@ -93,7 +93,7 @@ public class QueryAuthorizationTest extends SingleCacheManagerTest {
       cache.put("hyde", new TestEntity("Edward", "Hyde", 2, "dissociate identity disorder"));
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       Query q = queryFactory.create(String.format("FROM %s where name = 'Henry'", TestEntity.class.getName()));
-      assertEquals(1, q.getResultSize());
+      assertEquals(1, q.execute().hitCount().orElse(-1));
       assertEquals(TestEntity.class, q.list().get(0).getClass());
    }
 

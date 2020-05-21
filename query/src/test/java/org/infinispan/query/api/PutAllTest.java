@@ -70,9 +70,9 @@ public class PutAllTest extends SingleCacheManagerTest {
       map.put(id, new TestEntity("name2", "surname2", id, "note"));
       cache.putAll(map);
 
-      Query q1 = queryByNameField("name2", AnotherTestEntity.class);
-      Query q2 = queryByNameField("name2", TestEntity.class);
-      assertEquals(1, q1.getResultSize() + q2.getResultSize());
+      Query<AnotherTestEntity> q1 = queryByNameField("name2", AnotherTestEntity.class);
+      Query<TestEntity> q2 = queryByNameField("name2", TestEntity.class);
+      assertEquals(1, q1.execute().hitCount().orElse(-1) + q2.execute().hitCount().orElse(-1));
       assertEquals(TestEntity.class, q2.list().get(0).getClass());
       StaticTestingErrorHandler.assertAllGood(cache);
    }
@@ -84,12 +84,12 @@ public class PutAllTest extends SingleCacheManagerTest {
 
       Map<Object, Object> map = new HashMap<>();
       map.put(id, new TestEntity("name2", "surname2", id, "note"));
-      Future futureTask = cache.putAllAsync(map);
+      Future<?> futureTask = cache.putAllAsync(map);
       futureTask.get();
       assertTrue(futureTask.isDone());
-      Query q1 = queryByNameField("name2", TestEntity.class);
-      Query q2 = queryByNameField("name2", AnotherTestEntity.class);
-      assertEquals(1, q1.getResultSize() + q2.getResultSize());
+      Query<TestEntity> q1 = queryByNameField("name2", TestEntity.class);
+      Query<AnotherTestEntity> q2 = queryByNameField("name2", AnotherTestEntity.class);
+      assertEquals(1, q1.execute().hitCount().orElse(-1) + q2.execute().hitCount().orElse(-1));
       assertEquals(TestEntity.class, q1.list().get(0).getClass());
       StaticTestingErrorHandler.assertAllGood(cache);
    }
@@ -98,9 +98,9 @@ public class PutAllTest extends SingleCacheManagerTest {
       final long id = 10;
 
       cache.put(id, new TestEntity("name1", "surname1", id, "note"));
-      Query q1 = queryByNameField("name1", TestEntity.class);
-      Query q2 = queryByNameField("name1", AnotherTestEntity.class);
-      assertEquals(1, q1.getResultSize() + q2.getResultSize());
+      Query<TestEntity> q1 = queryByNameField("name1", TestEntity.class);
+      Query<?> q2 = queryByNameField("name1", AnotherTestEntity.class);
+      assertEquals(1, q1.execute().hitCount().orElse(-1) + q2.execute().hitCount().orElse(-1));
       assertEquals(TestEntity.class, q1.list().get(0).getClass());
 
       Map<Object, Object> map = new HashMap<>();
@@ -108,10 +108,10 @@ public class PutAllTest extends SingleCacheManagerTest {
       cache.putAll(map);
 
       q2 = queryByNameField("name1", TestEntity.class);
-      assertEquals(0, q2.getResultSize());
+      assertEquals(0, q2.execute().hitCount().orElse(-1));
 
-      Query q3 = queryByNameField("name2", TestEntity.class);
-      assertEquals(0, q3.getResultSize());
+      Query<?> q3 = queryByNameField("name2", TestEntity.class);
+      assertEquals(0, q3.execute().hitCount().orElse(-1));
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
@@ -119,20 +119,20 @@ public class PutAllTest extends SingleCacheManagerTest {
       final long id = 10;
 
       cache.put(id, new TestEntity("name1", "surname1", id, "note"));
-      Query q1 = queryByNameField("name1", TestEntity.class);
-      assertEquals(1, q1.getResultSize());
+      Query<?> q1 = queryByNameField("name1", TestEntity.class);
+      assertEquals(1, q1.execute().hitCount().orElse(-1));
       assertEquals(TestEntity.class, q1.list().get(0).getClass());
 
       Map<Object, Object> map = new HashMap<>();
       map.put(id, new NotIndexedType("name2"));
-      Future futureTask = cache.putAllAsync(map);
+      Future<?> futureTask = cache.putAllAsync(map);
       futureTask.get();
       assertTrue(futureTask.isDone());
-      Query q2 = queryByNameField("name1", TestEntity.class);
-      assertEquals(0, q2.getResultSize());
+      Query<TestEntity> q2 = queryByNameField("name1", TestEntity.class);
+      assertEquals(0, q2.execute().hitCount().orElse(-1));
 
-      Query q3 = queryByNameField("name2", TestEntity.class);
-      assertEquals(0, q3.getResultSize());
+      Query<TestEntity> q3 = queryByNameField("name2", TestEntity.class);
+      assertEquals(0, q3.execute().hitCount().orElse(-1));
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
@@ -141,24 +141,24 @@ public class PutAllTest extends SingleCacheManagerTest {
 
       cache.put(id, new TestEntity("name1", "surname1", id, "note"));
 
-      Query q1 = queryByNameField("name1", TestEntity.class);
-      assertEquals(1, q1.getResultSize());
+      Query<TestEntity> q1 = queryByNameField("name1", TestEntity.class);
+      assertEquals(1, q1.execute().hitCount().orElse(-1));
       assertEquals(TestEntity.class, q1.list().get(0).getClass());
 
       Map<Object, Object> map = new HashMap<>();
       map.put(id, new AnotherTestEntity("name2"));
       cache.putAll(map);
 
-      Query q2 = queryByNameField("name1", TestEntity.class);
-      assertEquals(0, q2.getResultSize());
+      Query<TestEntity> q2 = queryByNameField("name1", TestEntity.class);
+      assertEquals(0, q2.execute().hitCount().orElse(-1));
 
-      Query q3 = queryByNameField("name2", AnotherTestEntity.class);
-      assertEquals(1, q3.getResultSize());
+      Query<AnotherTestEntity> q3 = queryByNameField("name2", AnotherTestEntity.class);
+      assertEquals(1, q3.execute().hitCount().orElse(-1));
       assertEquals(AnotherTestEntity.class, q3.list().get(0).getClass());
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
-   private <T> Query queryByNameField(String name, Class<T> entity) {
+   private <T> Query<T> queryByNameField(String name, Class<T> entity) {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       return queryFactory.create(String.format("FROM %s WHERE name = '%s'", entity.getName(), name));
    }

@@ -1,12 +1,8 @@
 package org.infinispan.query.nulls;
 
-import static org.infinispan.query.FetchOptions.FetchMode.EAGER;
-import static org.infinispan.query.FetchOptions.FetchMode.LAZY;
 import static org.infinispan.test.TestingUtil.withTx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.List;
@@ -16,14 +12,12 @@ import java.util.concurrent.Callable;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
-import org.infinispan.query.FetchOptions;
-import org.infinispan.query.ProjectionConstants;
-import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -36,7 +30,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.nulls.NullCollectionElementsTest")
 public class NullCollectionElementsTest extends SingleCacheManagerTest {
 
-   private SearchManager searchManager;
+   private QueryFactory queryFactory;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -53,7 +47,7 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
    @Override
    protected void setup() throws Exception {
       super.setup();
-      searchManager = Search.getSearchManager(cache);
+      queryFactory = Search.getQueryFactory(cache);
    }
 
    @BeforeMethod
@@ -64,9 +58,9 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
       });
    }
 
-   CacheQuery<?> createCacheQuery() {
+   Query<?> createCacheQuery() {
       String q = String.format("FROM %s WHERE bar:1", Foo.class.getName());
-      return searchManager.getQuery(q);
+      return queryFactory.create(q);
    }
 
    @Test
@@ -83,7 +77,7 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
    public void testQuerySkipsNullsInEagerIterator() throws Exception {
       withTx(tm(), (Callable<Void>) () -> {
          cache.remove("1");   // cache will now be out of sync with the index
-         ResultIterator<?> iterator = createCacheQuery().iterator(new FetchOptions().fetchMode(EAGER));
+         CloseableIterator<?> iterator = createCacheQuery().iterator();
          assertFalse(iterator.hasNext());
          try {
             iterator.next();
@@ -99,9 +93,9 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
    public void testQuerySkipsNullsInDefaultIterator() throws Exception {
       withTx(tm(), (Callable<Void>) () -> {
          cache.remove("1");   // cache will now be out of sync with the index
-         CacheQuery<?> cacheQuery = createCacheQuery();
+         Query<?> cacheQuery = createCacheQuery();
          assertEquals(1, cacheQuery.getResultSize());
-         ResultIterator<?> iterator = cacheQuery.iterator();
+         CloseableIterator<?> iterator = cacheQuery.iterator();
          assertFalse(iterator.hasNext());
          try {
             iterator.next();
@@ -117,7 +111,7 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
    public void testQuerySkipsNullsInLazyIterator() throws Exception {
       withTx(tm(), (Callable<Void>) () -> {
          cache.remove("1");   // cache will now be out of sync with the index
-         ResultIterator<?> iterator = createCacheQuery().iterator(new FetchOptions().fetchMode(LAZY));
+         CloseableIterator<?> iterator = createCacheQuery().iterator();
          assertFalse(iterator.hasNext());
          try {
             iterator.next();
@@ -125,19 +119,6 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
          } catch (NoSuchElementException e) {
             // pass
          }
-         return null;
-      });
-   }
-
-   @Test
-   public void testQueryReturnsNullWhenProjectingCacheValue() throws Exception {
-      withTx(tm(), (Callable<Void>) () -> {
-         cache.remove("1");   // cache will now be out of sync with the index
-         ResultIterator<Object[]> iterator = createCacheQuery().projection(ProjectionConstants.VALUE, "bar").iterator(new FetchOptions().fetchMode(LAZY));
-         assertTrue(iterator.hasNext());
-         Object[] projection = iterator.next();
-         assertNull(projection[0]);
-         assertEquals("1", projection[1]);
          return null;
       });
    }

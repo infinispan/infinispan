@@ -7,9 +7,8 @@ import java.util.concurrent.Callable;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -44,15 +43,15 @@ public class NonLocalIndexingTest extends MultipleCacheManagersTest {
    }
 
    public void testQueryAfterAddingNewNode() throws Exception {
-      store("Astronaut", new Person("Astronaut","is asking his timezone", 32), cache(0));
+      store("Astronaut", new Person("Astronaut", "is asking his timezone", 32), cache(0));
       assertFind("timezone", 1);
       assertFind("asking", 1);
       assertFind("cat", 0);
-      store("Webdeveloper", new Person("Webdeveloper","is confused by the timezone concept", 32), cache(1));
+      store("Webdeveloper", new Person("Webdeveloper", "is confused by the timezone concept", 32), cache(1));
       assertFind("cat", 0);
       assertFind("timezone", 2);
       //We're using the name as a key so this is an update in practice of the Astronaut record:
-      store("Astronaut", new Person("Astronaut","thinks about his cat", 32), cache(1));
+      store("Astronaut", new Person("Astronaut", "thinks about his cat", 32), cache(1));
       assertFind("cat", 1);
       assertFind("timezone", 1);
       store("Astronaut", new AnotherGrassEater("Astronaut", "is having a hard time to find grass"), cache(1));
@@ -67,10 +66,9 @@ public class NonLocalIndexingTest extends MultipleCacheManagersTest {
    }
 
    private static void assertFind(Cache cache, String keyword, int expectedCount) {
-      SearchManager queryFactory = Search.getSearchManager(cache);
       String q = String.format("FROM %s WHERE blurb:'%s'", Person.class.getName(), keyword);
-      CacheQuery<Object> cacheQuery = queryFactory.getQuery(q);
-      int resultSize = cacheQuery.getResultSize();
+      Query<Object> cacheQuery = Search.getQueryFactory(cache).create(q);
+      long resultSize = cacheQuery.execute().hitCount().orElse(-1);
       Assert.assertEquals(resultSize, expectedCount);
    }
 
@@ -82,8 +80,7 @@ public class NonLocalIndexingTest extends MultipleCacheManagersTest {
 
       if (transactionsEnabled()) {
          withTx(cache.getAdvancedCache().getTransactionManager(), callable);
-      }
-      else {
+      } else {
          callable.call();
       }
    }

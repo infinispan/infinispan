@@ -21,7 +21,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -68,22 +68,22 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
    private void testDuringTransaction(String key) throws Exception {
       cache(0).put(key, RADIM);
 
-      SearchManager sm0 = Search.getSearchManager(cache(0));
-      assertEquals(Collections.singletonList(RADIM), getYoungerThan(sm0, 30));
+      QueryFactory qf0 = Search.getQueryFactory(cache(0));
+      assertEquals(Collections.singletonList(RADIM), getYoungerThan(qf0, 30));
 
       TestingUtil.withTx(tm(0), () -> {
          cache(0).put(key, TRISTAN);
          // here we could do the check but indexed query does not reflect changes in tx context
          Transaction suspended = tm(0).suspend();
 
-         assertEquals(Collections.singletonList(RADIM), getYoungerThan(sm0, 30));
+         assertEquals(Collections.singletonList(RADIM), getYoungerThan(qf0, 30));
 
          tm(0).resume(suspended);
          return null;
       });
 
-      assertEquals(Collections.emptyList(), getYoungerThan(sm0, 30));
-      assertEquals(Collections.singletonList(TRISTAN), getYoungerThan(sm0, 100));
+      assertEquals(Collections.emptyList(), getYoungerThan(qf0, 30));
+      assertEquals(Collections.singletonList(TRISTAN), getYoungerThan(qf0, 100));
    }
 
    public void testPrepareFailurePrimary() throws Exception {
@@ -97,8 +97,8 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
    private void testPrepareFailure(String key) throws Exception {
       cache(0).put(key, RADIM);
 
-      SearchManager sm0 = Search.getSearchManager(cache(0));
-      assertEquals(Collections.singletonList(RADIM), getYoungerThan(sm0, 30));
+      QueryFactory qf0 = Search.getQueryFactory(cache(0));
+      assertEquals(Collections.singletonList(RADIM), getYoungerThan(qf0, 30));
 
       cache(0).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new FailPrepare(), 0);
 
@@ -123,7 +123,7 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
       // so the result should be empty
       List<Person> expectedResult = lockingMode == LockingMode.OPTIMISTIC ?
             Collections.singletonList(RADIM) : Collections.emptyList();
-      assertEquals(expectedResult, getYoungerThan(sm0, 30));
+      assertEquals(expectedResult, getYoungerThan(qf0, 30));
    }
 
    @AfterMethod
@@ -131,9 +131,9 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
       cache(0).getAdvancedCache().getAsyncInterceptorChain().removeInterceptor(FailPrepare.class);
    }
 
-   private List<Object> getYoungerThan(SearchManager sm, int age) {
+   private List<Object> getYoungerThan(QueryFactory queryFactory, int age) {
       String q = String.format("FROM %s where age:[* to %s]", Person.class.getName(), age);
-      return sm.getQuery(q).list();
+      return queryFactory.create(q).execute().list();
    }
 
    private String getStringKeyForCache(Cache cache) {
