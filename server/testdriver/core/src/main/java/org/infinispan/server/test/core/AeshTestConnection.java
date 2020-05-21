@@ -149,6 +149,10 @@ public class AeshTestConnection implements Connection, AutoCloseable {
 
    @Override
    public void close() {
+      if (reading) { //close() can be invoked multiple times.
+         //send a disconnect just in case the connection was left open
+         readln("disconnect");
+      }
       reading = false;
       if (closeHandler != null)
          closeHandler.accept(null);
