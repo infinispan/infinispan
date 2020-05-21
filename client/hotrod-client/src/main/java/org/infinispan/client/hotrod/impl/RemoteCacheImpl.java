@@ -218,14 +218,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    }
 
    @Override
-   public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
+   public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query<?> filterQuery, Set<Integer> segments, int batchSize) {
       Publisher<Entry<K, Object>> remotePublisher = publishEntriesByQuery(filterQuery, segments, batchSize);
       //noinspection unchecked
       return Closeables.iterator((Publisher) remotePublisher, batchSize);
    }
 
    @Override
-   public <E> Publisher<Entry<K, E>> publishEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
+   public <E> Publisher<Entry<K, E>> publishEntriesByQuery(Query<?> filterQuery, Set<Integer> segments, int batchSize) {
       Object[] factoryParams = makeFactoryParams(filterQuery);
       return publishEntries(Filters.ITERATION_QUERY_FILTER_CONVERTER_FACTORY_NAME, factoryParams, segments, batchSize);
    }
