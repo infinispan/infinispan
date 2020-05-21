@@ -18,10 +18,10 @@ import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.protostream.descriptors.Descriptor;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
+import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.QueryDefinition;
 import org.infinispan.query.impl.SearchManagerImpl;
 import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
@@ -97,7 +97,7 @@ final class RemoteQueryEngine extends ObjectRemoteQueryEngine {
    }
 
    @Override
-   protected CacheQuery<?> makeCacheQuery(IckleParsingResult<Descriptor> ickleParsingResult, Query luceneQuery, IndexedQueryMode queryMode, Map<String, Object> namedParameters) {
+   protected IndexedQuery<?> makeCacheQuery(IckleParsingResult<Descriptor> ickleParsingResult, Query luceneQuery, IndexedQueryMode queryMode, Map<String, Object> namedParameters) {
       IndexingMetadata indexingMetadata = ickleParsingResult.getTargetEntityMetadata().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
       Set<String> sortableFields = indexingMetadata != null ? indexingMetadata.getSortableFields() : Collections.emptySet();
       IndexedTypeMap<CustomTypeMetadata> queryMetadata = IndexedTypeMaps.singletonMapping(ProtobufValueWrapper.INDEXING_TYPE, () -> sortableFields);
@@ -108,7 +108,7 @@ final class RemoteQueryEngine extends ObjectRemoteQueryEngine {
          queryDefinition = new QueryDefinition(getSearchFactory().createHSQuery(luceneQuery, queryMetadata));
       }
       queryDefinition.setNamedParameters(namedParameters);
-      return getSearchManager().getQuery(queryDefinition, queryMode, queryMetadata);
+      return (IndexedQuery<?>) getSearchManager().getQuery(queryDefinition, queryMode, queryMetadata);
    }
 
 

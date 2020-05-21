@@ -6,10 +6,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.logging.Log;
 import org.jboss.logging.Logger;
@@ -18,7 +20,7 @@ import org.jboss.logging.Logger;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public final class DelegatingQuery<TypeMetadata> extends BaseQuery {
+public final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
 
    private static final Log log = Logger.getMessageLogger(Log.class, DelegatingQuery.class.getName());
 
@@ -31,7 +33,7 @@ public final class DelegatingQuery<TypeMetadata> extends BaseQuery {
    /**
     * The actual query object to which execution will be delegated.
     */
-   private BaseQuery query;
+   private BaseQuery<T> query;
 
    protected DelegatingQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory, String queryString, IndexedQueryMode queryMode) {
       super(queryFactory, queryString);
@@ -84,13 +86,10 @@ public final class DelegatingQuery<TypeMetadata> extends BaseQuery {
 
    @Override
    public void resetQuery() {
-      if (query != null) {
-         // reset the delegate but do not discard it!
-         query.resetQuery();
-      }
+     query = null;
    }
 
-   private Query createQuery() {
+   private Query<T> createQuery() {
       // the query is created first time only
       if (query == null) {
          query = queryEngine.buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults, queryMode);
@@ -99,8 +98,17 @@ public final class DelegatingQuery<TypeMetadata> extends BaseQuery {
    }
 
    @Override
-   public <T> List<T> list() {
+   public List<T> list() {
       return createQuery().list();
+   }
+
+   @Override
+   public QueryResult<T> execute() {
+      return createQuery().execute();
+   }
+
+   public CloseableIterator<T> iterator() {
+      return createQuery().iterator();
    }
 
    @Override

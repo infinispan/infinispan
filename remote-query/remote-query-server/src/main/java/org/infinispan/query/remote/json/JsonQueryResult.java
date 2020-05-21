@@ -15,7 +15,7 @@ public class JsonQueryResult extends BaseJsonQueryResult {
 
    private final List<Hit> hits;
 
-   public JsonQueryResult(List<Hit> hits, int total) {
+   public JsonQueryResult(List<Hit> hits, long total) {
       super(total);
       this.hits = hits;
    }

@@ -16,7 +16,6 @@ import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.FetchOptions.FetchMode;
 import org.infinispan.query.ResultIterator;
@@ -31,7 +30,7 @@ import org.infinispan.query.core.impl.PartitionHandlingSupport;
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author Marko Luksa
  */
-public class CacheQueryImpl<E> implements CacheQuery<E> {
+public class CacheQueryImpl<E> implements IndexedQuery<E> {
 
    /**
     * Since CacheQuery extends {@link Iterable} it is possible to implicitly invoke
@@ -80,7 +79,7 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
     * @param filter - lucene filter
     */
    @Override
-   public CacheQuery<E> filter(Filter filter) {
+   public IndexedQuery<E> filter(Filter filter) {
       queryDefinition.filter(filter);
       return this;
    }
@@ -95,7 +94,7 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
    }
 
    @Override
-   public CacheQuery<E> sort(Sort sort) {
+   public IndexedQuery<E> sort(Sort sort) {
       queryDefinition.setSort(sort);
       return this;
    }
@@ -117,7 +116,7 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
     * @param name of filter.
     */
    @Override
-   public CacheQuery<E> disableFullTextFilter(String name) {
+   public IndexedQuery<E> disableFullTextFilter(String name) {
       queryDefinition.disableFullTextFilter(name);
       return this;
    }
@@ -129,13 +128,13 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
     * @throws IllegalArgumentException if the index given is less than zero.
     */
    @Override
-   public CacheQuery<E> firstResult(int firstResult) {
+   public IndexedQuery<E> firstResult(int firstResult) {
       queryDefinition.setFirstResult(firstResult);
       return this;
    }
 
    @Override
-   public CacheQuery<E> maxResults(int maxResults) {
+   public IndexedQuery<E> maxResults(int maxResults) {
       queryDefinition.setMaxResults(maxResults);
       return this;
    }
@@ -190,14 +189,14 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
    }
 
    @Override
-   public CacheQuery<Object[]> projection(String... fields) {
+   public IndexedQuery<Object[]> projection(String... fields) {
       projectionConverter = new ProjectionConverter(fields, keyTransformationHandler);
       queryDefinition.getHsQuery().projection(projectionConverter.getHSearchProjection());
-      return (CacheQuery<Object[]>) this;
+      return (IndexedQuery<Object[]>) this;
    }
 
    @Override
-   public CacheQuery<E> timeout(long timeout, TimeUnit timeUnit) {
+   public IndexedQuery<E> timeout(long timeout, TimeUnit timeUnit) {
       queryDefinition.getHsQuery().getTimeoutManager().setTimeout(timeout, timeUnit);
       return this;
    }

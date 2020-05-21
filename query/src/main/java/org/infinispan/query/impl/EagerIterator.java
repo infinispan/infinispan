@@ -14,8 +14,10 @@ import net.jcip.annotations.NotThreadSafe;
  *
  * @author Navin Surtani
  * @author Marko Luksa
+ * @deprecated Since 11.0 with no replacement.
  */
 @NotThreadSafe
+@Deprecated
 final class EagerIterator<E> extends AbstractIterator<E> {
 
    private final List<EntityInfo> entityInfos;

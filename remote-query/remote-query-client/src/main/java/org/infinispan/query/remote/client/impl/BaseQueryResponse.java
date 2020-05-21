@@ -8,9 +8,9 @@ import org.infinispan.protostream.SerializationContext;
 /**
  * @since 9.4
  */
-public interface BaseQueryResponse {
+public interface BaseQueryResponse<T> {
 
-   List<?> extractResults(SerializationContext serializationContext) throws IOException;
+   List<T> extractResults(SerializationContext serializationContext) throws IOException;
 
    long getTotalResults();
 }

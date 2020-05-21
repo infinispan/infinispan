@@ -1,19 +1,15 @@
 package org.infinispan.query;
 
 import java.io.Closeable;
-import java.util.Iterator;
+
+import org.infinispan.commons.util.CloseableIterator;
 
 /**
  * Iterates over query results. Must be closed when done with it.
  *
  * @author Marko Luksa
+ * @deprecated Since 11.0 with no replacement.
  */
-public interface ResultIterator<E> extends Iterator<E>, Closeable {
-
-   /**
-    * This method must be called on your iterator once you have finished so that any local or remote resources can be
-    * freed up.
-    */
-   @Override
-   void close();
+@Deprecated
+public interface ResultIterator<E> extends CloseableIterator<E>, Closeable {
 }

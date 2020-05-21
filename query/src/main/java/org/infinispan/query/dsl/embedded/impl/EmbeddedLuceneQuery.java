@@ -3,13 +3,17 @@ package org.infinispan.query.dsl.embedded.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
-import org.infinispan.query.CacheQuery;
+import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.impl.BaseQuery;
+import org.infinispan.query.impl.IndexedQuery;
 
 
 /**
@@ -18,7 +22,7 @@ import org.infinispan.query.dsl.impl.BaseQuery;
  * @author anistor@redhat.com
  * @since 6.0
  */
-final class EmbeddedLuceneQuery<TypeMetadata> extends BaseQuery {
+final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
 
    private final QueryEngine<TypeMetadata> queryEngine;
 
@@ -36,12 +40,7 @@ final class EmbeddedLuceneQuery<TypeMetadata> extends BaseQuery {
     * An Infinispan Cache query that wraps an actual Lucene query object. This is built lazily when the query is
     * executed first time.
     */
-   private CacheQuery<?> cacheQuery;
-
-   /**
-    * The cached results, lazily evaluated.
-    */
-   private List<?> results;
+   private IndexedQuery<T> cacheQuery;
 
    private final IndexedQueryMode queryMode;
 
@@ -61,11 +60,10 @@ final class EmbeddedLuceneQuery<TypeMetadata> extends BaseQuery {
 
    @Override
    public void resetQuery() {
-      results = null;
       cacheQuery = null;
    }
 
-   private CacheQuery<?> createCacheQuery() {
+   private IndexedQuery<T> createCacheQuery() {
       // query is created first time only
       if (cacheQuery == null) {
          validateNamedParameters();
@@ -76,13 +74,24 @@ final class EmbeddedLuceneQuery<TypeMetadata> extends BaseQuery {
 
    @Override
    @SuppressWarnings("unchecked")
-   public <T> List<T> list() {
-      if (results == null) {
-         List<?> list = createCacheQuery().list();
-         results = rowProcessor == null ? list : ((List<Object[]>) list).stream().map(rowProcessor)
-               .collect(Collectors.toCollection(() -> new ArrayList<>(list.size())));
-      }
-      return (List<T>) results;
+   public List<T> list() {
+      return execute().list();
+   }
+
+   @Override
+   public QueryResult<T> execute() {
+      IndexedQuery<T> cacheQuery = createCacheQuery();
+      List<T> list = cacheQuery.list();
+      int hits = cacheQuery.getResultSize();
+      List<?> results = rowProcessor == null ? list : ((List<Object[]>) list).stream().map(rowProcessor)
+            .collect(Collectors.toCollection(() -> new ArrayList<>(list.size())));
+
+      return new QueryResultImpl<>(OptionalLong.of(hits), (List<T>) results);
+   }
+
+   @Override
+   public CloseableIterator<T> iterator() {
+      return createCacheQuery().iterator();
    }
 
    @Override

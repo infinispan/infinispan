@@ -5,14 +5,17 @@ import static org.infinispan.client.hotrod.impl.Util.await;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.operations.QueryOperation;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.impl.BaseQueryResponse;
 
@@ -20,14 +23,11 @@ import org.infinispan.query.remote.client.impl.BaseQueryResponse;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public final class RemoteQuery extends BaseQuery {
+public final class RemoteQuery<T> extends BaseQuery<T> {
 
    private final InternalRemoteCache<?, ?> cache;
    private final SerializationContext serializationContext;
    private final IndexedQueryMode indexedQueryMode;
-
-   private List<?> results = null;
-   private int totalResults;
 
    RemoteQuery(QueryFactory queryFactory, InternalRemoteCache<?, ?> cache, SerializationContext serializationContext,
                String queryString, IndexedQueryMode indexQueryMode) {
@@ -47,34 +47,49 @@ public final class RemoteQuery extends BaseQuery {
 
    @Override
    public void resetQuery() {
-      results = null;
    }
 
    @Override
-   @SuppressWarnings("unchecked")
-   public <T> List<T> list() {
-      executeQuery();
-      return (List<T>) results;
+   public List<T> list() {
+      return execute().list();
+   }
+
+   @Override
+   public QueryResult<T> execute() {
+      BaseQueryResponse<T> response = executeQuery();
+      return new QueryResult<T>() {
+         @Override
+         public OptionalLong hitCount() {
+            long totalResults = response.getTotalResults();
+            return totalResults == -1 ? OptionalLong.empty() : OptionalLong.of(totalResults);
+         }
+
+         @Override
+         public List<T> list() {
+            try {
+               return response.extractResults(serializationContext);
+            } catch (IOException e) {
+               throw new HotRodClientException(e);
+            }
+         }
+      };
+   }
+
+   @Override
+   public CloseableIterator<T> iterator() {
+      throw new UnsupportedOperationException();
    }
 
    @Override
    public int getResultSize() {
-      executeQuery();
-      return totalResults;
+      BaseQueryResponse<?> response = executeQuery();
+      return (int) response.getTotalResults();
    }
 
-   private void executeQuery() {
-      if (results == null) {
-         validateNamedParameters();
-         QueryOperation op = cache.getOperationsFactory().newQueryOperation(this, cache.getDataFormat());
-         BaseQueryResponse response = (BaseQueryResponse) await(op.execute());
-         totalResults = (int) response.getTotalResults();
-         try {
-            results = response.extractResults(serializationContext);
-         } catch (IOException e) {
-            throw new HotRodClientException(e);
-         }
-      }
+   private BaseQueryResponse<T> executeQuery() {
+      validateNamedParameters();
+      QueryOperation op = cache.getOperationsFactory().newQueryOperation(this, cache.getDataFormat());
+      return (BaseQueryResponse) await(op.execute());
    }
 
    /**

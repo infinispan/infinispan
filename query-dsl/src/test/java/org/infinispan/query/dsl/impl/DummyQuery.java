@@ -3,14 +3,18 @@ package org.infinispan.query.dsl.impl;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.OptionalLong;
 
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryResult;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
-class DummyQuery implements Query {
+class DummyQuery<T> implements Query<T> {
 
    @Override
    public Map<String, Object> getParameters() {
@@ -18,13 +22,33 @@ class DummyQuery implements Query {
    }
 
    @Override
-   public Query setParameter(String paramName, Object paramValue) {
+   public Query<T> setParameter(String paramName, Object paramValue) {
       return this;
    }
 
    @Override
-   public Query setParameters(Map<String, Object> paramValues) {
+   public Query<T> setParameters(Map<String, Object> paramValues) {
       return null;
+   }
+
+   @Override
+   public CloseableIterator<T> iterator() {
+      return new CloseableIterator<T>() {
+
+         @Override
+         public void close() {
+         }
+
+         @Override
+         public boolean hasNext() {
+            return false;
+         }
+
+         @Override
+         public T next() {
+            throw new NoSuchElementException();
+         }
+      };
    }
 
    @Override
@@ -33,8 +57,23 @@ class DummyQuery implements Query {
    }
 
    @Override
-   public <T> List<T> list() {
+   public List<T> list() {
       return Collections.emptyList();
+   }
+
+   @Override
+   public QueryResult<T> execute() {
+      return new QueryResult<T>() {
+         @Override
+         public OptionalLong hitCount() {
+            return OptionalLong.empty();
+         }
+
+         @Override
+         public List<T> list() {
+            return Collections.emptyList();
+         }
+      };
    }
 
    @Override
@@ -53,7 +92,7 @@ class DummyQuery implements Query {
    }
 
    @Override
-   public Query startOffset(long startOffset) {
+   public Query<T> startOffset(long startOffset) {
       return this;
    }
 
@@ -63,7 +102,7 @@ class DummyQuery implements Query {
    }
 
    @Override
-   public Query maxResults(int maxResults) {
+   public Query<T> maxResults(int maxResults) {
       return this;
    }
 }

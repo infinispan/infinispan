@@ -1,18 +1,24 @@
 package org.infinispan.query.core.impl;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.PriorityQueue;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.commons.util.Closeables;
+import org.infinispan.objectfilter.ObjectFilter.FilterResult;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.impl.BaseQuery;
+import org.infinispan.query.dsl.impl.logging.Log;
+import org.jboss.logging.Logger;
 
 /**
  * Base class for embedded-mode query implementations. Subclasses need to implement {@link #getIterator()} and {@link
@@ -21,7 +27,9 @@ import org.infinispan.query.dsl.impl.BaseQuery;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public abstract class BaseEmbeddedQuery extends BaseQuery {
+public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, BaseEmbeddedQuery.class.getName());
 
    /**
     * Initial capacity of the collection used for collecting results when performing internal sorting.
@@ -32,16 +40,6 @@ public abstract class BaseEmbeddedQuery extends BaseQuery {
 
    protected final PartitionHandlingSupport partitionHandlingSupport;
 
-   /**
-    * The cached results, lazily evaluated.
-    */
-   private List<Object> results;
-
-   /**
-    * The total number of results matching the query, ignoring pagination. This is lazily evaluated.
-    */
-   private int resultSize;
-
    protected BaseEmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString, Map<String, Object> namedParameters,
                                String[] projection, long startOffset, int maxResults) {
       super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
@@ -51,56 +49,59 @@ public abstract class BaseEmbeddedQuery extends BaseQuery {
 
    @Override
    public void resetQuery() {
-      results = null;
    }
 
    @Override
-   public <T> List<T> list() {
-      partitionHandlingSupport.checkCacheAvailable();
-      if (results == null) {
-         results = listInternal();
-      }
-      return (List<T>) results;
+   public List<T> list() {
+      return execute().list();
    }
 
-   private List<Object> listInternal() {
-      List<Object> results;
+   @Override
+   public QueryResult<T> execute() {
+      partitionHandlingSupport.checkCacheAvailable();
+      return listInternal();
+   }
 
-      try (CloseableIterator<ObjectFilter.FilterResult> iterator = getIterator()) {
+   @SuppressWarnings("unchecked")
+   @Override
+   public CloseableIterator<T> iterator() {
+      if (getComparator() == null) {
+         MappingIterator<FilterResult, Object> iterator = new MappingIterator<>(getIterator(), this::mapFilterResult)
+               .limit(maxResults).skip(startOffset);
+         return (CloseableIterator<T>) iterator;
+      }
+      List<T> results = (List<T>) listInternal();
+      return Closeables.iterator(results.iterator());
+   }
+
+   private QueryResult<T> listInternal() {
+      List<Object> results;
+      try (CloseableIterator<FilterResult> iterator = getIterator()) {
          if (!iterator.hasNext()) {
             results = Collections.emptyList();
          } else {
-            Comparator<Comparable[]> comparator = getComparator();
+            Comparator<Comparable<FilterResult>[]> comparator = getComparator();
             if (comparator == null) {
-               // collect unsorted results and get the requested page if any was specified
-               results = new ArrayList<>(INITIAL_CAPACITY);
-               while (iterator.hasNext()) {
-                  ObjectFilter.FilterResult entry = iterator.next();
-                  resultSize++;
-                  if (resultSize > startOffset && (maxResults == -1 || results.size() < maxResults)) {
-                     results.add(projection != null ? entry.getProjection() : entry.getInstance());
-                  }
-               }
+               results = StreamSupport.stream(spliterator(), false).collect(Collectors.toList());
             } else {
+               log.warnPerfSortedNonIndexed(queryString);
                // collect and sort results, in reverse order for now
-               PriorityQueue<ObjectFilter.FilterResult> filterResults = new PriorityQueue<>(INITIAL_CAPACITY, new ReverseFilterResultComparator(comparator));
+               PriorityQueue<FilterResult> filterResults = new PriorityQueue<>(INITIAL_CAPACITY, new ReverseFilterResultComparator(comparator));
                while (iterator.hasNext()) {
-                  ObjectFilter.FilterResult entry = iterator.next();
-                  resultSize++;
+                  FilterResult entry = iterator.next();
                   filterResults.add(entry);
                   if (maxResults != -1 && filterResults.size() > startOffset + maxResults) {
                      // remove the head, which is actually the highest result
                      filterResults.remove();
                   }
                }
-
                // collect and reverse
                if (filterResults.size() > startOffset) {
                   Object[] res = new Object[filterResults.size() - startOffset];
                   int i = filterResults.size();
                   while (i-- > startOffset) {
-                     ObjectFilter.FilterResult r = filterResults.remove();
-                     res[i - startOffset] = projection != null ? r.getProjection() : r.getInstance();
+                     FilterResult r = filterResults.remove();
+                     res[i - startOffset] = mapFilterResult(r);
                   }
                   results = Arrays.asList(res);
                } else {
@@ -110,7 +111,7 @@ public abstract class BaseEmbeddedQuery extends BaseQuery {
          }
       }
 
-      return results;
+      return new QueryResultImpl<>(OptionalLong.empty(), (List<T>) results);
    }
 
    /**
@@ -118,18 +119,31 @@ public abstract class BaseEmbeddedQuery extends BaseQuery {
     *
     * @return the comparator or {@code null} if no sorting needs to be applied
     */
-   protected abstract Comparator<Comparable[]> getComparator();
+   protected abstract Comparator<Comparable<FilterResult>[]> getComparator();
 
    /**
     * Create an iterator over the results of the query, in no particular order. Ordering will be provided if {@link
     * #getComparator()} returns a non-null {@link Comparator}.
     */
-   protected abstract CloseableIterator<ObjectFilter.FilterResult> getIterator();
+   protected abstract CloseableIterator<FilterResult> getIterator();
 
    @Override
    public int getResultSize() {
-      list();
-      return resultSize;
+      int count = 0;
+      try (CloseableIterator<?> iterator = getIterator()) {
+         while (iterator.hasNext()) {
+            iterator.next();
+            count++;
+         }
+      }
+      return count;
+   }
+
+   private Object mapFilterResult(FilterResult result) {
+      if (projection != null) {
+         return result.getProjection();
+      }
+      return result.getInstance();
    }
 
    @Override
@@ -144,19 +158,19 @@ public abstract class BaseEmbeddedQuery extends BaseQuery {
    }
 
    /**
-    * Compares two {@link ObjectFilter.FilterResult} objects based on a given {@link Comparator} and reverses the
+    * Compares two {@link FilterResult} objects based on a given {@link Comparator} and reverses the
     * result.
     */
-   private static final class ReverseFilterResultComparator implements Comparator<ObjectFilter.FilterResult> {
+   private static final class ReverseFilterResultComparator implements Comparator<FilterResult> {
 
-      private final Comparator<Comparable[]> comparator;
+      private final Comparator<Comparable<FilterResult>[]> comparator;
 
-      private ReverseFilterResultComparator(Comparator<Comparable[]> comparator) {
+      private ReverseFilterResultComparator(Comparator<Comparable<FilterResult>[]> comparator) {
          this.comparator = comparator;
       }
 
       @Override
-      public int compare(ObjectFilter.FilterResult o1, ObjectFilter.FilterResult o2) {
+      public int compare(FilterResult o1, FilterResult o2) {
          return -comparator.compare(o1.getSortProjection(), o2.getSortProjection());
       }
    }

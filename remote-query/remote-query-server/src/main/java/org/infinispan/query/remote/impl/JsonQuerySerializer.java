@@ -39,7 +39,7 @@ class JsonQuerySerializer implements QuerySerializer<JsonQueryResponse> {
 
    @Override
    public JsonQueryResponse createQueryResponse(RemoteQueryResult remoteQueryResult) {
-      int totalResults = remoteQueryResult.getTotalResults();
+      long totalResults = remoteQueryResult.getTotalResults();
       String[] projections = remoteQueryResult.getProjections();
       JsonQueryResponse response;
       if (projections == null) {

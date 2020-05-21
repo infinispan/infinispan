@@ -38,6 +38,11 @@ It is forbidden to use both the `.indexing().enabled( )` and the deprecated `.in
 ** `.buildQueryBuilderForClass()`, that allows to build Hibernate Search queries directly has been removed. Ickle queries should be used instead.
 ** It is not possible anymore to specify multiple target entity(ies) class(es) when calling `.getQuery()`. The entity will come from the Ickle query string, so multi-entity queries are not supported anymore.
 
+* `CacheQuery` has been deprecated and `org.infinispan.query.dsl.Query` obtained from `Search.getQueryFactory()` should be used instead.
+
+* Instances of `org.infinispan.query.dsl.Query` don't cache query results anymore and allow queries to be re-executed when
+calling methods such as `list()`.
+
 == ThreadFactoryConfiguration changes
 
 The ThreadGroup configuration setting has been removed and only thread group name is allowed now.

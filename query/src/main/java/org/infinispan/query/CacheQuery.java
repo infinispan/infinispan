@@ -19,7 +19,10 @@ import org.hibernate.search.query.engine.spi.FacetManager;
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author Marko Luksa
  * @see org.infinispan.query.impl.SearchManagerImpl#getQuery(String)
+ * @deprecated Since 11.0, replaced by {@link org.infinispan.query.dsl.Query} in the Query API and
+ * {@link org.infinispan.query.impl.IndexedQuery} internally.
  */
+@Deprecated
 public interface CacheQuery<E> extends Iterable<E> {
 
    /**
