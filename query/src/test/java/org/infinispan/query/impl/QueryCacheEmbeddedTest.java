@@ -52,13 +52,16 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       user.setName("John");
       cache.put("user_" + user.getId(), user);
 
-      // obtain the query cache
+      // obtain the query cache component
       QueryCache queryCache = ComponentRegistryUtils.getQueryCache(cache);
 
       // force creation of the lazy internal cache and ensure it is empty
+      queryCache.get("someCacheName", "someQueryString", null, "typeDiscriminator", (queryString, acc) -> queryString);
+
+      // ensure internal cache is empty
       queryCache.clear();
 
-      // obtain the internal query cache
+      // obtain a reference to the internal query cache via reflection
       Cache<?, ?> internalCache = (Cache<?, ?>) TestingUtil.extractField(QueryCache.class, queryCache, "lazyCache");
 
       String queryString = "from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS u where u.name = 'John'";

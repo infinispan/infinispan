@@ -2,6 +2,7 @@ package org.infinispan.query.core.impl;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -72,37 +73,35 @@ public final class QueryCache {
     */
    public <T> T get(String cacheName, String queryString, List<FieldAccumulator> accumulators, Object queryTypeDiscriminator, QueryCreator<T> queryCreator) {
       QueryCacheKey key = new QueryCacheKey(cacheName, queryString, accumulators, queryTypeDiscriminator);
-      return (T) getCache().computeIfAbsent(key, (k) -> queryCreator.create(k.queryString, k.accumulators));
+      return (T) getOptionalCache(true).map(c -> c.computeIfAbsent(key, (k) -> queryCreator.create(k.queryString, k.accumulators))).orElse(null);
    }
 
    public void clear() {
       log.debug("Clearing all");
-      getCache().clear();
+      getOptionalCache(false).ifPresent(Cache::clear);
    }
 
    public void clear(String cacheName) {
       log.debugf("Clearing %s", cacheName);
-      getCache().keySet().removeIf(k -> k.cacheName.equals(cacheName));
+      getOptionalCache(false).ifPresent(c -> c.keySet().removeIf(k -> k.cacheName.equals(cacheName)));
    }
 
    /**
-    * Obtain the cache. Start it lazily when needed.
+    * Obtain and return the cache, starting it lazily if needed.
     */
-   private Cache<QueryCacheKey, Object> getCache() {
-      final Cache<QueryCacheKey, Object> cache = lazyCache;
-
-      //Most likely branch first:
-      if (cache != null) {
-         return cache;
-      }
-      synchronized (this) {
-         if (lazyCache == null) {
-            // define the query cache configuration if it does not already exist (from a previous call or manually defined by the user)
-            internalCacheRegistry.registerInternalCache(QUERY_CACHE_NAME, getQueryCacheConfig().build(), EnumSet.noneOf(InternalCacheRegistry.Flag.class));
-            lazyCache = cacheManager.getCache(QUERY_CACHE_NAME);
+   private Optional<Cache<QueryCacheKey, Object>> getOptionalCache(boolean createIfAbsent) {
+      Cache<QueryCacheKey, Object> cache = lazyCache;
+      if (createIfAbsent && cache == null) {
+         synchronized (this) {
+            if (lazyCache == null) {
+               // define the query cache configuration if it does not already exist (from a previous call or manually defined by the user)
+               internalCacheRegistry.registerInternalCache(QUERY_CACHE_NAME, getQueryCacheConfig().build(), EnumSet.noneOf(InternalCacheRegistry.Flag.class));
+               lazyCache = cacheManager.getCache(QUERY_CACHE_NAME);
+            }
+            cache = lazyCache;
          }
-         return lazyCache;
       }
+      return Optional.ofNullable(cache);
    }
 
    /**
