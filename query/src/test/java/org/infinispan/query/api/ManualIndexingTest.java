@@ -11,6 +11,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -51,9 +52,10 @@ public class ManualIndexingTest extends MultipleCacheManagersTest {
    private void assertNumberOfCars(int expectedCount, String carMake) {
       for (Cache<?, ?> cache : caches) {
          QueryFactory queryFactory = Search.getQueryFactory(cache);
-         Query query = queryFactory.create(String.format("FROM %s where make:'%s'", Car.class.getName(), carMake));
-         assertEquals("Expected count not met on cache " + cache, expectedCount, query.getResultSize());
-         assertEquals("Expected count not met on cache " + cache, expectedCount, query.list().size());
+         Query<Car> query = queryFactory.create(String.format("FROM %s where make:'%s'", Car.class.getName(), carMake));
+         QueryResult<Car> queryResult = query.execute();
+         assertEquals("Expected count not met on cache " + cache, expectedCount, queryResult.hitCount().orElse(-1));
+         assertEquals("Expected count not met on cache " + cache, expectedCount, queryResult.list().size());
       }
    }
 }

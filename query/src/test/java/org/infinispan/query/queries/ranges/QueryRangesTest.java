@@ -11,9 +11,9 @@ import java.util.TimeZone;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -43,10 +43,10 @@ public class QueryRangesTest extends SingleCacheManagerTest {
       DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
    }
 
-   protected CacheQuery<Person> createQuery(String predicate) {
-      SearchManager searchManager = Search.getSearchManager(cache);
+   protected Query<Person> createQuery(String predicate) {
+      QueryFactory searchManager = Search.getQueryFactory(cache);
       String query = String.format("FROM %s WHERE %s", Person.class.getName(), predicate);
-      return searchManager.getQuery(query);
+      return searchManager.create(query);
    }
 
    @Override
@@ -64,8 +64,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
    public void testQueryingRangeBelowExcludingLimit() throws ParseException {
       loadTestingData();
 
-      CacheQuery<?> cacheQuery = createQuery("age:[* TO 29]");
-      List<?> found = cacheQuery.list();
+      Query<?> cacheQuery = createQuery("age:[* TO 29]");
+      List<?> found = cacheQuery.execute().list();
 
       assertEquals(2, found.size());
       assert found.contains(person1);
@@ -79,7 +79,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
 
       cache.put("mighty", person4);
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assert found.size() == 3 : "Size of list should be 3";
       assert found.contains(person1);
@@ -90,8 +90,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
    public void testQueryingRangeBelowWithLimit() throws ParseException {
       loadTestingData();
 
-      CacheQuery<?> cacheQuery = createQuery("age:[* to 30]");
-      List<?> found = cacheQuery.list();
+      Query<?> cacheQuery = createQuery("age:[* to 30]");
+      List<?> found = cacheQuery.execute().list();
 
       assertEquals(3, found.size());
       assert found.contains(person1);
@@ -106,7 +106,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
 
       cache.put("mighty", person4);
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assert found.size() == 4 : "Size of list should be 4";
       assert found.contains(person1);
@@ -118,13 +118,13 @@ public class QueryRangesTest extends SingleCacheManagerTest {
    public void testQueryingRangeAboveExcludingLimit() throws ParseException {
       loadTestingData();
 
-      CacheQuery<?> cacheQuery = createQuery("age:[31 to *]");
-      List<?> found = cacheQuery.list();
+      Query<?> cacheQuery = createQuery("age:[31 to *]");
+      List<?> found = cacheQuery.execute().list();
 
       assertEquals(0, found.size());
 
       cacheQuery = createQuery("age:[21 to *]");
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assertEquals(2, found.size());
       assert found.contains(person2);
@@ -138,7 +138,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
 
       cache.put("mighty", person4);
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assert found.size() == 3 : "Size of list should be 3";
       assert found.contains(person2);
@@ -149,13 +149,13 @@ public class QueryRangesTest extends SingleCacheManagerTest {
    public void testQueryingRangeAboveWithLimit() throws ParseException {
       loadTestingData();
 
-      CacheQuery<?> cacheQuery = createQuery("age:[31 to *]");
-      List<?> found = cacheQuery.list();
+      Query<?> cacheQuery = createQuery("age:[31 to *]");
+      List<?> found = cacheQuery.execute().list();
 
       assertEquals(0, found.size());
 
       cacheQuery = createQuery("age:[20 to *]");
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assertEquals(3, found.size());
       assert found.contains(person1);
@@ -170,7 +170,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
 
       cache.put("mighty", person4);
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assert found.size() == 4 : "Size of list should be 3";
       assert found.contains(person1);
@@ -182,8 +182,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
    public void testQueryingRange() throws ParseException {
       loadTestingData();
 
-      CacheQuery<?> cacheQuery = createQuery("age:[21 TO 29]");
-      List<?> found = cacheQuery.list();
+      Query<?> cacheQuery = createQuery("age:[21 TO 29]");
+      List<?> found = cacheQuery.execute().list();
 
       assertEquals(1, found.size());
       assert found.contains(person3);
@@ -196,7 +196,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
 
       cache.put("mighty", person4);
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assert found.size() == 2 : "Size of list should be 3";
       assert found.contains(person3);
@@ -206,8 +206,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
    public void testQueryingRangeWithLimits() throws ParseException {
       loadTestingData();
 
-      CacheQuery<?> cacheQuery = createQuery("age:[20 to 30]");
-      List<?> found = cacheQuery.list();
+      Query<?> cacheQuery = createQuery("age:[20 to 30]");
+      List<?> found = cacheQuery.execute().list();
 
       assertEquals(3, found.size());
       assert found.contains(person1);
@@ -222,7 +222,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
 
       cache.put("mighty", person4);
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assert found.size() == 4 : "Size of list should be 3";
       assert found.contains(person1);
@@ -237,7 +237,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
 
       cache.put("anotherGoat", person5);
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assert found.size() == 4 : "Size of list should be 3";
       assert found.contains(person1);
@@ -249,8 +249,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
    public void testQueryingRangeWithLimitsAndExclusions() throws ParseException {
       loadTestingData();
 
-      CacheQuery<?> cacheQuery = createQuery("age:[21 to 30]");
-      List<?> found = cacheQuery.list();
+      Query<?> cacheQuery = createQuery("age:[21 to 30]");
+      List<?> found = cacheQuery.execute().list();
 
       assertEquals(2, found.size());
       assert found.contains(person2);
@@ -264,7 +264,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
 
       cache.put("mighty", person4);
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assertEquals(3, found.size());
       assert found.contains(person2);
@@ -278,7 +278,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
 
       cache.put("anotherGoat", person5);
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assertEquals(3, found.size());
       assert found.contains(person2);
@@ -286,7 +286,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
       assert found.contains(person4) : "This should now contain object person4";
 
       cacheQuery = createQuery("age:[20 to 29]");
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assertEquals(3, found.size());
       assert found.contains(person1);
@@ -297,8 +297,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
    public void testQueryingRangeForDatesWithLimitsAndExclusions() throws ParseException {
       loadTestingData();
 
-      CacheQuery<?> cacheQuery = createQuery("dateOfGraduation:['20020506' to '20120630']");
-      List<?> found = cacheQuery.list();
+      Query<?> cacheQuery = createQuery("dateOfGraduation:['20020506' to '20120630']");
+      List<?> found = cacheQuery.execute().list();
 
       assertEquals(2, found.size());
       assert found.contains(person1);
@@ -307,7 +307,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
       person4 = new Person("Mighty Goat", "Mighty Goat also eats grass", 28, makeDate("2007-06-15")); //date in ranges
       cache.put("mighty", person4);
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assertEquals(3, found.size());
       assert found.contains(person1);
@@ -317,7 +317,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
       Person person5 = new Person("Another Goat", "Some other goat should eat grass.", 31, makeDate("2012-07-05")); //date out of ranges
       cache.put("anotherGoat", person5);
 
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
 
       assertEquals(3, found.size());
       assert found.contains(person1);
@@ -325,7 +325,7 @@ public class QueryRangesTest extends SingleCacheManagerTest {
       assert found.contains(person4);
 
       cacheQuery = createQuery("dateOfGraduation:['20020505' to '20120609']");
-      found = cacheQuery.list();
+      found = cacheQuery.execute().list();
       assertEquals(3, found.size());
       assert found.contains(person2);
       assert found.contains(person3);

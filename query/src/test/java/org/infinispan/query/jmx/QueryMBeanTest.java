@@ -21,9 +21,9 @@ import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.test.AnotherGrassEater;
@@ -90,7 +90,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          Cache<String, Object> cache = cacheManager.getCache(CACHE_NAME);
 
          // check that our settings are not ignored
-         SearchManager searchManager = Search.getSearchManager(cache);
+         QueryFactory queryFactory = Search.getQueryFactory(cache);
          Statistics statistics = ComponentRegistryUtils.getSearchIntegrator(cache).getStatistics();
          assertTrue(statistics.isStatisticsEnabled());
 
@@ -111,8 +111,8 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          assertEquals(0L, mBeanServer.getAttribute(name, "SearchQueryExecutionCount"));
 
          String q = String.format("FROM %s WHERE blurb:'value'", Person.class.getName());
-         CacheQuery<?> cacheQuery = searchManager.getQuery(q);
-         List<?> found = cacheQuery.list(); //Executing first query
+         Query<?> cacheQuery = queryFactory.create(q);
+         List<?> found = cacheQuery.execute().list(); //Executing first query
 
          assertEquals(1L, mBeanServer.getAttribute(name, "SearchQueryExecutionCount"));
 
@@ -127,7 +127,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          AnotherGrassEater anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
          cache.put("key101", anotherGrassEater);
 
-         found = cacheQuery.list(); //Executing second query
+         found = cacheQuery.execute().list(); //Executing second query
          assertEquals(numberOfEntries, found.size());
 
          assertEquals(1, mBeanServer.invoke(name, "getNumberOfIndexedEntities",

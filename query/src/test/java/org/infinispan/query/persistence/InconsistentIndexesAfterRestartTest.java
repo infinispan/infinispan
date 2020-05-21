@@ -101,8 +101,8 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
 
     private List searchByName(String name, Cache c) {
         QueryFactory queryFactory = Search.getQueryFactory(c);
-        Query q = queryFactory.create(SEntity.searchByName(name));
-        int resultSize = q.getResultSize();
+        Query<?> q = queryFactory.create(SEntity.searchByName(name));
+        long resultSize = q.execute().hitCount().orElse(-1);
         List<?> l = q.list();
         assert l.size() == resultSize;
         return q.list();

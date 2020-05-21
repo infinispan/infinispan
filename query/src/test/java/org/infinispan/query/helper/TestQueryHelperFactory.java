@@ -14,10 +14,9 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.QueryTestSCI;
@@ -33,15 +32,15 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
  */
 public class TestQueryHelperFactory {
 
-   public static <E> CacheQuery<E> createCacheQuery(Class<?> entity, Cache<?, ?> cache, String fieldName, String searchString) {
-      SearchManager queryFactory = Search.getSearchManager(cache);
+   public static <E> Query<E> createCacheQuery(Class<?> entity, Cache<?, ?> cache, String fieldName, String searchString) {
+      QueryFactory queryFactory = Search.getQueryFactory(cache);
       String q = String.format("FROM %s WHERE %s:'%s'", entity.getName(), fieldName, searchString);
-      return queryFactory.getQuery(q);
+      return queryFactory.create(q);
    }
 
    public static <T> List<T> queryAll(Cache<?, ?> cache, Class<T> entityType) {
-      Query query = Search.getQueryFactory(cache).create("FROM " + entityType.getName());
-      return query.list();
+      Query<T> query = Search.getQueryFactory(cache).create("FROM " + entityType.getName());
+      return query.execute().list();
    }
 
    public static SearchIntegrator extractSearchFactory(Cache<?, ?> cache) {

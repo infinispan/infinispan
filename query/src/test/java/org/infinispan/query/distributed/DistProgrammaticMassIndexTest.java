@@ -42,7 +42,7 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
       String q = String.format("FROM %s where make:'%s'", Car.class.getName(), carMake);
       Query cacheQuery = Search.getQueryFactory(cache).create(q);
 
-      assertEquals(count, cacheQuery.getResultSize());
+      assertEquals(count, cacheQuery.execute().hitCount().orElse(-1));
 
       StaticTestingErrorHandler.assertAllGood(cache);
    }

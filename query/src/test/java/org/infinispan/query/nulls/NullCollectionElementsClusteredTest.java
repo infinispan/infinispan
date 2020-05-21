@@ -1,7 +1,5 @@
 package org.infinispan.query.nulls;
 
-import static org.infinispan.query.FetchOptions.FetchMode.EAGER;
-import static org.infinispan.query.FetchOptions.FetchMode.LAZY;
 import static org.infinispan.test.TestingUtil.withTx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -9,6 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
@@ -17,6 +16,7 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.DistributionInfo;
@@ -25,12 +25,10 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.query.CacheQuery;
-import org.infinispan.query.FetchOptions;
-import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.IndexedQueryMode;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -43,7 +41,6 @@ import org.testng.annotations.Test;
 public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTest {
 
    private Cache<String, Foo> cache1, cache2;
-   private SearchManager searchManager;
 
    public void testQuerySkipsNullsInList() throws Exception {
       prepareData();
@@ -51,9 +48,9 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
          cache2.remove("2");   // cache will now be out of sync with the index
 
          // Query a cache where key "2" is not present in the index
-         Cache queryCache = getNonOwner("2");
+         Cache<String, Foo> queryCache = getNonOwner("2");
 
-         List list = createLocalCacheQuery(queryCache, "2").list();
+         List<?> list = createLocalCacheQuery(queryCache, "2").execute().list();
          assertEquals("Wrong list size.", 0, list.size());
          return null;
       });
@@ -65,7 +62,7 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       withTx(tm(0), (Callable<Void>) () -> {
          cache1.remove("1");   // cache will now be out of sync with the index
 
-         ResultIterator<?> iterator = createLocalCacheQuery(cache1, "1").iterator(new FetchOptions().fetchMode(EAGER));
+         CloseableIterator<?> iterator = createLocalCacheQuery(cache1, "1").iterator();
          assertFalse("Iterator should not have elements.", iterator.hasNext());
          try {
             iterator.next();
@@ -85,7 +82,7 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
          Cache<String, Foo> cache = getKeyLocation("1");
          cache.remove("1");   // cache will now be out of sync with the index
 
-         ResultIterator<?> iterator = createLocalCacheQuery(cache, "1").iterator();
+         CloseableIterator<?> iterator = createLocalCacheQuery(cache, "1").iterator();
          assertFalse(iterator.hasNext());
          try {
             iterator.next();
@@ -105,9 +102,9 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
          Cache<String, Foo> cache = getKeyLocation("1");
          cache.remove("1");   // cache will now be out of sync with the index
 
-         CacheQuery<?> cacheQuery = createLocalCacheQuery(cache, "1");
+         Query<?> cacheQuery = createLocalCacheQuery(cache, "1");
          //pruivo: the result size includes the null elements...
-         assertEquals("Wrong result size.", 1, cacheQuery.getResultSize());
+         assertEquals("Wrong result size.", 1, cacheQuery.execute().hitCount().orElse(-1));
 
          for (Object obj : cacheQuery) {
             fail("The iterator should not contain any data but it contains " + obj);
@@ -123,10 +120,9 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       withTx(tm(1), (Callable<Void>) () -> {
          cache2.remove("2");   // cache will now be out of sync with the index
          // Query a cache where key "2" is present in the index
-         Cache queryCache = getKeyLocation("2").equals(cache1) ? cache2 : cache1;
-         searchManager = Search.getSearchManager(queryCache);
+         Cache<?, ?> queryCache = getKeyLocation("2").equals(cache1) ? cache2 : cache1;
 
-         ResultIterator<?> iterator = createLocalCacheQuery(queryCache, "2").iterator(new FetchOptions().fetchMode(LAZY));
+         Iterator<?> iterator = createLocalCacheQuery(queryCache, "2").iterator();
          assertFalse(iterator.hasNext());
          try {
             iterator.next();
@@ -144,12 +140,12 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       withTx(tm(0), (Callable<Void>) () -> {
          Cache<String, Foo> cache = getKeyLocation("1");
          cache.remove("1");   // cache will now be out of sync with the index
-         searchManager = Search.getSearchManager(cache);
+         QueryFactory queryFactory = Search.getQueryFactory(cache);
 
          String q = String.format("SELECT bar FROM %s where bar:'1'", Foo.class.getName());
-         CacheQuery<Object[]> cacheQuery = searchManager.getQuery(q);
+         Query<Object[]> cacheQuery = queryFactory.create(q);
 
-         ResultIterator<Object[]> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(LAZY));
+         CloseableIterator<Object[]> iterator = cacheQuery.iterator();
          assertTrue("Expected an element in iterator.", iterator.hasNext());
          Object[] projection = iterator.next();
          assertEquals("1", projection[0]);
@@ -185,10 +181,10 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       });
    }
 
-   private CacheQuery<Foo> createLocalCacheQuery(Cache<?, ?> cache, String value) {
-      SearchManager searchManager = Search.getSearchManager(cache);
+   private Query<Foo> createLocalCacheQuery(Cache<?, ?> cache, String value) {
+      QueryFactory queryFactory = Search.getQueryFactory(cache);
       String q = String.format("FROM %s where bar:'%s'", Foo.class.getName(), value);
-      return searchManager.getQuery(q, IndexedQueryMode.FETCH);
+      return queryFactory.create(q, IndexedQueryMode.FETCH);
    }
 
    private Cache<String, Foo> getKeyLocation(String key) {

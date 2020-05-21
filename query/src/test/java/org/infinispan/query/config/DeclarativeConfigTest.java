@@ -15,7 +15,7 @@ import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.store.impl.RAMDirectoryProvider;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -51,9 +51,9 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
 
    public void simpleIndexTest() {
       cache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
-      CacheQuery<Person> cq = TestQueryHelperFactory.createCacheQuery(Person.class, cache, "name", "Name");
-      assertEquals(1, cq.getResultSize());
-      List<Person> l = cq.list();
+      Query<Person> cq = TestQueryHelperFactory.createCacheQuery(Person.class, cache, "name", "Name");
+      assertEquals(1, cq.execute().hitCount().orElse(-1));
+      List<Person> l = cq.execute().list();
       assertEquals(1, l.size());
       Person p = l.get(0);
       assertEquals("A Person's Name", p.getName());

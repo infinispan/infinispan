@@ -126,7 +126,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
     */
    private void waitForIndexSize(final int expected) {
       eventually(() -> {
-         int idxCount = countIndex();
+         long idxCount = countIndex();
          System.out.printf("\rWaiting for indexing completion (%d): %d indexed so far", expected, +idxCount);
          return idxCount == expected;
       });
@@ -191,9 +191,9 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
       }
    }
 
-   protected int countIndex() {
-      Query q = Search.getQueryFactory(cache1).create("FROM " + Transaction.class.getName());
-      return q.getResultSize();
+   protected long countIndex() {
+      Query<?> q = Search.getQueryFactory(cache1).create("FROM " + Transaction.class.getName());
+      return q.execute().hitCount().orElse(-1);
    }
 
    protected void clearIndex() {

@@ -74,7 +74,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
 
       // Going to search the 'blurb' field for 'owns'
       Query cacheQuery = Search.getQueryFactory(cache).create(getQuery());
-      assertEquals(9, cacheQuery.getResultSize());
+      assertEquals(9, cacheQuery.execute().hitCount().orElse(-1));
 
       List<Person> found = cacheQuery.list();
       for (int i = 0; i < 9; i++) {
@@ -96,6 +96,6 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       cache.put(key3, person1);
 
       Query cacheQuery = Search.getQueryFactory(cache).create(getQuery());
-      assertEquals(3, cacheQuery.getResultSize());
+      assertEquals(3, cacheQuery.execute().hitCount().orElse(-1));
    }
 }

@@ -2,14 +2,12 @@ package org.infinispan.query.searchmanager;
 
 import static org.testng.Assert.fail;
 
-import java.util.concurrent.TimeUnit;
-
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -33,11 +31,11 @@ public class TimeoutTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
-   @Test
+   @Test(enabled = false, description = "ISPN-9469")
    public void timeoutExceptionIsThrown() {
       String q = String.format("FROM %s WHERE bar:'1'", Foo.class.getName());
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(q);
-      cacheQuery.timeout(1, TimeUnit.NANOSECONDS);
+      Query<?> cacheQuery = Search.getQueryFactory(cache).create(q);
+//      cacheQuery.timeout(1, TimeUnit.NANOSECONDS);
 
       try {
          cacheQuery.list();

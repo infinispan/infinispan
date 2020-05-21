@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.logging.Log;
@@ -54,8 +53,6 @@ public abstract class BaseQuery<T> implements Query<T> {
       this.startOffset = 0;
       this.maxResults = -1;
    }
-
-   public abstract CloseableIterator<T> iterator();
 
    /**
     * Returns the Ickle query string.

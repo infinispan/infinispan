@@ -246,8 +246,8 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, b);
    }
 
-   private int countIndex(Class<?> entityType, Cache<?, ?> cache) {
-      return Search.getQueryFactory(cache).create("FROM " + entityType.getName()).getResultSize();
+   private long countIndex(Class<?> entityType, Cache<?, ?> cache) {
+      return Search.getQueryFactory(cache).create("FROM " + entityType.getName()).execute().hitCount().orElse(-1);
    }
 
    private static final class LuceneIndexTracker {

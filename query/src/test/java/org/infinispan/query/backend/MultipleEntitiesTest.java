@@ -62,15 +62,15 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
       cache.put(223456, new Bond(new Date(System.currentTimeMillis()), 550L));
       assertEfficientIndexingUsed(searchIntegrator, Bond.class);
 
-      Query query = queryFactory.create("FROM " + Bond.class.getName());
-      Query query2 = queryFactory.create("FROM " + Debenture.class.getName());
+      Query<?> query = queryFactory.create("FROM " + Bond.class.getName());
+      Query<?> query2 = queryFactory.create("FROM " + Debenture.class.getName());
       assertEquals(query.list().size() + query2.list().size(), 3);
 
-      Query queryBond = queryFactory.create("FROM " + Bond.class.getName());
-      assertEquals(queryBond.getResultSize(), 2);
+      Query<?> queryBond = queryFactory.create("FROM " + Bond.class.getName());
+      assertEquals(queryBond.execute().hitCount().orElse(-1), 2);
 
-      Query queryDeb = queryFactory.create("FROM " + Debenture.class.getName());
-      assertEquals(queryDeb.getResultSize(), 1);
+      Query<?> queryDeb = queryFactory.create("FROM " + Debenture.class.getName());
+      assertEquals(queryDeb.execute().hitCount().orElse(-1), 1);
    }
 
    private void assertEfficientIndexingUsed(SearchIntegrator searchIntegrator, Class<?> clazz) {

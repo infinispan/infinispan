@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.Search;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryResult;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -42,8 +43,9 @@ public class HotRodQueryIspnDirectoryTest extends HotRodQueryTest {
       assertEquals("Tom", user1.get("name").asText());
       assertEquals("Cat", user1.get("surname").asText());
 
-      Query query = Search.getQueryFactory(jsonCache).create("FROM sample_bank_account.User where name = 'Tom'");
-      List<String> results = query.list();
+      Query<String> query = Search.getQueryFactory(jsonCache).create("FROM sample_bank_account.User where name = 'Tom'");
+      QueryResult<String> result = query.execute();
+      List<String> results = result.list();
 
       assertEquals(1, query.getResultSize());
       assertNull(query.getProjection());

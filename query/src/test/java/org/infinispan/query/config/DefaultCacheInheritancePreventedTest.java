@@ -4,9 +4,8 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 
 import java.io.IOException;
 
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
-import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -60,17 +59,17 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
     * @param cache the cache to extract indexing from
     */
    private void assertIndexingEnabled(Cache<Object, Object> cache, boolean expected) {
-      SearchManager searchManager = null;
+      SearchIntegrator searchIntegrator = null;
       try {
-         searchManager = Search.getSearchManager(cache);
+         searchIntegrator = ComponentRegistryUtils.getSearchIntegrator(cache);
       } catch (IllegalStateException e) {
          // ignored here, we deal with it later
       }
-      if (expected && searchManager == null) {
-         Assert.fail("SearchManager not found but expected for cache " + cache.getName());
+      if (expected && searchIntegrator == null) {
+         Assert.fail("SearchIntegrator not found but expected for cache " + cache.getName());
       }
-      if (!expected && searchManager != null) {
-         Assert.fail("SearchManager not expected but found for cache " + cache.getName());
+      if (!expected && searchIntegrator != null) {
+         Assert.fail("SearchIntegrator not expected but found for cache " + cache.getName());
       }
       //verify as well that the indexing interceptor is (not) there:
       QueryInterceptor queryInterceptor = null;

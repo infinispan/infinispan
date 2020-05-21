@@ -1,13 +1,14 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.query.core.impl.MappingIterator;
 import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.QueryFactory;
@@ -73,7 +74,6 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public List<T> list() {
       return execute().list();
    }
@@ -81,17 +81,15 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
    @Override
    public QueryResult<T> execute() {
       IndexedQuery<T> cacheQuery = createCacheQuery();
-      List<T> list = cacheQuery.list();
+      List<T> results = StreamSupport.stream(spliterator(), false).collect(Collectors.toList());
       int hits = cacheQuery.getResultSize();
-      List<?> results = rowProcessor == null ? list : ((List<Object[]>) list).stream().map(rowProcessor)
-            .collect(Collectors.toCollection(() -> new ArrayList<>(list.size())));
-
-      return new QueryResultImpl<>(OptionalLong.of(hits), (List<T>) results);
+      return new QueryResultImpl<>(OptionalLong.of(hits), results);
    }
 
    @Override
    public CloseableIterator<T> iterator() {
-      return createCacheQuery().iterator();
+      IndexedQuery<T> cacheQuery = createCacheQuery();
+      return new MappingIterator(cacheQuery.iterator(), t -> rowProcessor == null ? t : rowProcessor.apply((Object[]) t));
    }
 
    @Override

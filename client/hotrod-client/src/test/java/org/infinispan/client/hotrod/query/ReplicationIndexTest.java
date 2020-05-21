@@ -123,8 +123,8 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
 
    }
 
-   private int queryCount(String query, RemoteCache<?, ?> remoteCache) {
-      return Search.getQueryFactory(remoteCache).create(query).getResultSize();
+   private long queryCount(String query, RemoteCache<?, ?> remoteCache) {
+      return Search.getQueryFactory(remoteCache).create(query).execute().hitCount().orElse(-1);
    }
 
    @Test

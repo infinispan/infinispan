@@ -10,7 +10,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.CacheManagerCallable;
@@ -51,8 +51,8 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
    }
 
    protected void executeSimpleQuery(Cache<String, Person> cache) {
-      CacheQuery<?> cacheQuery = createCacheQuery(Person.class, cache, "blurb", "playing");
-      List<?> found = cacheQuery.list();
+      Query<?> cacheQuery = createCacheQuery(Person.class, cache, "blurb", "playing");
+      List<?> found = cacheQuery.execute().list();
       int elems = found.size();
       assertEquals(1, elems);
       Object val = found.get(0);
@@ -93,7 +93,7 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
    protected void addNodeCheckingContentsAndQuery() {
       withCacheManager(new CacheManagerCallable(createCacheManager()) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             // New node joining
             Cache<String, Person> newCache = cm.getCache();
             TestingUtil.waitForNoRebalance(caches().get(0), caches().get(1), newCache);
