@@ -4,7 +4,6 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
 
@@ -29,9 +28,5 @@ final class SecurityActions {
 
    static AuthorizationManager getCacheAuthorizationManager(AdvancedCache<?, ?> cache) {
       return doPrivileged(cache::getAuthorizationManager);
-   }
-
-   static ComponentRegistry getCacheComponentRegistry(AdvancedCache<?, ?> cache) {
-      return doPrivileged(cache::getComponentRegistry);
    }
 }
