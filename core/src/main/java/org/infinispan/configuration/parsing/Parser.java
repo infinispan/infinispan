@@ -1277,8 +1277,9 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case ENABLED: {
-               CONFIG.partitionHandlingConfigurationEnabledDeprecated();
-               ph.enabled(Boolean.valueOf(value));
+               if (reader.getSchema().since(11, 0))
+                  throw ParseUtils.unexpectedElement(reader);
+               ignoreAttribute(reader, attribute);
                break;
             }
             case WHEN_SPLIT: {

@@ -23,9 +23,6 @@ import org.infinispan.partitionhandling.PartitionHandling;
  */
 public class PartitionHandlingConfiguration implements Matchable<PartitionHandlingConfiguration>, ConfigurationInfo {
 
-   @Deprecated
-   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable()
-         .build();
    public static final AttributeDefinition<PartitionHandling> WHEN_SPLIT = AttributeDefinition.builder("whenSplit", PartitionHandling.ALLOW_READ_WRITES)
          .immutable().build();
    public static final AttributeDefinition<EntryMergePolicy> MERGE_POLICY = AttributeDefinition.builder("mergePolicy", MergePolicy.NONE, EntryMergePolicy.class)
@@ -43,21 +40,13 @@ public class PartitionHandlingConfiguration implements Matchable<PartitionHandli
    public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(PARTITION_HANDLING.getLocalName());
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(PartitionHandlingConfiguration.class, ENABLED, WHEN_SPLIT, MERGE_POLICY);
+      return new AttributeSet(PartitionHandlingConfiguration.class, WHEN_SPLIT, MERGE_POLICY);
    }
 
    private final AttributeSet attributes;
 
    public PartitionHandlingConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
-   }
-
-   /**
-    * @deprecated Since 9.2, replaced with {@link #whenSplit()}.
-    */
-   @Deprecated
-   public boolean enabled() {
-      return whenSplit() != PartitionHandling.ALLOW_READ_WRITES;
    }
 
    public PartitionHandling whenSplit() {

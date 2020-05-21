@@ -226,12 +226,10 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void check(ConfigurationBuilderHolder holder) {
             PartitionHandlingConfiguration ph = getConfiguration(holder, "dist").clustering().partitionHandling();
-            assertTrue(ph.enabled());
             assertEquals(PartitionHandling.ALLOW_READS, ph.whenSplit());
             assertEquals(MergePolicy.PREFERRED_NON_NULL, ph.mergePolicy());
 
             ph = getConfiguration(holder, "repl").clustering().partitionHandling();
-            assertFalse(ph.enabled());
             assertEquals(PartitionHandling.ALLOW_READ_WRITES, ph.whenSplit());
             assertEquals(MergePolicy.NONE, ph.mergePolicy());
          }
@@ -275,12 +273,10 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(MediaType.APPLICATION_OBJECT, encoding.valueDataType().mediaType());
 
             PartitionHandlingConfiguration ph = getConfiguration(holder, "dist").clustering().partitionHandling();
-            assertTrue(ph.enabled());
             assertEquals(PartitionHandling.ALLOW_READS, ph.whenSplit());
             assertEquals(MergePolicy.PREFERRED_NON_NULL, ph.mergePolicy());
 
             ph = getConfiguration(holder, "repl").clustering().partitionHandling();
-            assertFalse(ph.enabled());
             assertEquals(PartitionHandling.ALLOW_READ_WRITES, ph.whenSplit());
             assertEquals(MergePolicy.NONE, ph.mergePolicy());
 
@@ -515,7 +511,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(35000, c.clustering().remoteTimeout());
             assertEquals(2, c.clustering().hash().numSegments());
             assertTrue(c.clustering().hash().consistentHashFactory() instanceof SyncConsistentHashFactory);
-            assertTrue(c.clustering().partitionHandling().enabled());
             assertTrue(c.statistics().enabled());
             assertEquals(31500, c.locking().lockAcquisitionTimeout());
             assertEquals(3500, c.locking().concurrencyLevel());
