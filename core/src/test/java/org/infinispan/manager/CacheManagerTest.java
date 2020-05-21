@@ -46,7 +46,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -141,6 +140,21 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
    }
 
+   public void testWildcardTemplateNameMatchingInternalCache() {
+      ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+      holder.newConfigurationBuilder("*")
+            .template(true)
+            .clustering().cacheMode(CacheMode.LOCAL)
+            .memory().maxSize("1");
+      EmbeddedCacheManager cm = createClusteredCacheManager(holder);
+      try {
+         Cache<Object, Object> aCache = cm.getCache("a");
+         assertEquals("1", aCache.getCacheConfiguration().memory().maxSize());
+      } finally {
+         killCacheManagers(cm);
+      }
+   }
+
    public void testStartAndStop() {
       EmbeddedCacheManager cm = createCacheManager(false);
       try {
@@ -176,20 +190,6 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
       expectException(NullPointerException.class,
                       () -> cm.defineConfiguration(null, new ConfigurationBuilder().build()));
-   }
-
-   public void testDefiningConfigurationOverridingBooleans() {
-      EmbeddedCacheManager cm = createCacheManager(false);
-      ConfigurationBuilder c = new ConfigurationBuilder();
-      c.memory().storageType(StorageType.BINARY);
-      Configuration lazy = cm.defineConfiguration("storeAsBinary", c.build());
-      assertEquals(StorageType.BINARY, lazy.memory().storageType());
-
-      c = new ConfigurationBuilder().read(lazy);
-      c.memory().storageType(StorageType.OFF_HEAP).size(1);
-      Configuration lazyOffHeap = cm.defineConfiguration("lazyDeserializationWithOffHeap", c.build());
-      assertEquals(StorageType.OFF_HEAP, lazyOffHeap.memory().storageType());
-      assertEquals(1, lazyOffHeap.memory().size());
    }
 
    public void testDefineConfigurationTwice() {
@@ -346,7 +346,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          cache.put(k(m, 2), v(m, 2));
          cache.put(k(m, 3), v(m, 3));
          DummyInMemoryStore store = getDummyStore(cache);
-         DataContainer data = getDataContainer(cache);
+         DataContainer<?, ?> data = getDataContainer(cache);
          assertFalse(store.isEmpty());
          assertTrue(0 != data.size());
          manager.administration().removeCache("cache");
@@ -464,7 +464,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
             String ourCacheName = "my-cache";
             cm.defineConfiguration(ourCacheName, templateName, overrideConfiguration);
 
-            Cache cache = cm.getCache(ourCacheName);
+            Cache<?, ?> cache = cm.getCache(ourCacheName);
             // We expect the override to take precedence
             assertEquals(overrideCacheMode, cache.getCacheConfiguration().clustering().cacheMode());
          }
@@ -512,9 +512,9 @@ public class CacheManagerTest extends AbstractInfinispanTest {
             cache2.put(k(m, 4), v(m, 4));
             cache2.put(k(m, 5), v(m, 5));
             DummyInMemoryStore store1 = getDummyStore(cache1);
-            DataContainer data1 = getDataContainer(cache1);
+            DataContainer<?, ?> data1 = getDataContainer(cache1);
             DummyInMemoryStore store2 = getDummyStore(cache2);
-            DataContainer data2 = getDataContainer(cache2);
+            DataContainer<?, ?> data2 = getDataContainer(cache2);
             assertFalse(store1.isEmpty());
             assertEquals(5, data1.size());
             assertFalse(store2.isEmpty());
@@ -537,15 +537,15 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       return (DummyInMemoryStore) getFirstStore(cache1);
    }
 
-   private DataContainer getDataContainer(Cache<String, String> cache) {
+   private DataContainer<?, ?> getDataContainer(Cache<String, String> cache) {
       return extractComponent(cache, InternalDataContainer.class);
    }
 
-   public static class UnreliableCacheStore implements ExternalStore {
+   public static class UnreliableCacheStore implements ExternalStore<Object, Object> {
       @Override public void init(InitializationContext ctx) {}
-      @Override public void write(MarshallableEntry entry) {}
+      @Override public void write(MarshallableEntry<?, ?> entry) {}
       @Override public boolean delete(Object key) { return false; }
-      @Override public MarshallableEntry loadEntry(Object key) { return null; }
+      @Override public MarshallableEntry<Object, Object> loadEntry(Object key) { return null; }
       @Override public boolean contains(Object key) { return false; }
       @Override public void start() {}
       @Override public void stop() {
