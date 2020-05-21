@@ -3,9 +3,6 @@ package org.infinispan.context;
 import java.util.Collection;
 import java.util.Set;
 
-import org.infinispan.container.impl.EntryFactory;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -58,24 +55,6 @@ public interface InvocationContext extends EntryLookup, Cloneable {
    void clearLockedKeys();
 
    /**
-    * Returns the class loader associated with this invocation
-    *
-    * @return a class loader instance or null if no class loader was
-    *         specifically associated
-    * @deprecated Not in use any more, implementations might return null.
-    */
-   @Deprecated
-   ClassLoader getClassLoader();
-
-   /**
-    * Sets the class loader associated for this invocation
-    *
-    * @deprecated Not in use any more.
-    */
-   @Deprecated
-   void setClassLoader(ClassLoader classLoader);
-
-   /**
     * Tracks the given key as locked by this invocation context.
     */
    void addLockedKey(Object key);
@@ -94,12 +73,7 @@ public interface InvocationContext extends EntryLookup, Cloneable {
    boolean hasLockedKey(Object key);
 
    /**
-    * @deprecated Since 8.1, use {@link EntryFactory#wrapExternalEntry(InvocationContext, Object, CacheEntry, boolean, boolean)} instead.
+    * @deprecated Since 11, to be removed in 14 with no replacement
     */
-   @Deprecated
-   default boolean replaceValue(Object key, InternalCacheEntry cacheEntry) {
-      return false;
-   }
-
    boolean isEntryRemovedInContext(Object key);
 }

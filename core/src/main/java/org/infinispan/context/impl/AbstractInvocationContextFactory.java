@@ -1,4 +1,4 @@
-package org.infinispan.context;
+package org.infinispan.context.impl;
 
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -6,9 +6,8 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.context.impl.ClearInvocationContext;
-import org.infinispan.context.impl.NonTxInvocationContext;
-import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -19,9 +18,7 @@ import org.infinispan.remoting.transport.Address;
  *
  * @author Mircea Markus
  * @author Dan Berindei
- * @deprecated Since 9.0, this class is going to be moved to an internal package.
  */
-@Deprecated
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractInvocationContextFactory implements InvocationContextFactory {
 

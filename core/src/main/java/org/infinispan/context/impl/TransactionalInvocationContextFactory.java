@@ -6,7 +6,6 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.CacheException;
-import org.infinispan.context.AbstractInvocationContextFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;

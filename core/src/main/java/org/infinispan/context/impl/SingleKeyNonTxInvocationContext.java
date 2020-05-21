@@ -151,16 +151,6 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    }
 
    @Override
-   public ClassLoader getClassLoader() {
-      return null;
-   }
-
-   @Override
-   public void setClassLoader(ClassLoader classLoader) {
-      // No-op
-   }
-
-   @Override
    public boolean hasLockedKey(final Object key) {
       return isLocked && isKeyEquals(key);
    }

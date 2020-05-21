@@ -1,7 +1,6 @@
 package org.infinispan.context.impl;
 
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
 
@@ -35,26 +34,9 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    }
 
    @Override
-   public final ClassLoader getClassLoader() {
-      return null;
-   }
-
-   @Override
-   public final void setClassLoader(final ClassLoader classLoader) {
-      // No-op
-   }
-
-   @Override
    public boolean isEntryRemovedInContext(final Object key) {
       CacheEntry ce = lookupEntry(key);
       return ce != null && ce.isRemoved() && ce.isChanged();
-   }
-
-   /**
-    * @deprecated Since 8.1, no longer used.
-    */
-   @Deprecated
-   protected void onEntryValueReplaced(final Object key, final InternalCacheEntry cacheEntry) {
    }
 
    @Override
