@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.distributed.MassIndexingTest")
 public class MassIndexingTest extends DistributedMassIndexingTest {
 
-   public void testReindexing() throws Exception {
+   public void testReindexing() {
       for (int i = 0; i < 10; i++) {
          cache(i % 2).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F" + i + "NUM"),
                new Car((i % 2 == 0 ? "megane" : "bmw"), "blue", 300 + i));
@@ -72,7 +72,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
 
       latch.countDown();
 
-      assertTrue((isSuccess(first) && isError(second)) || (isError(first) && isSuccess(second)));
+      assertTrue(isSuccess(first) && isError(second) || isError(first) && isSuccess(second));
       assertFalse(massIndexer.isRunning());
 
       CompletionStage<Void> third = massIndexer.run();
