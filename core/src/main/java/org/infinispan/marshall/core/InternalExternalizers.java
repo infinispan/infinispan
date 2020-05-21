@@ -14,7 +14,6 @@ import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AdminFlagExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.marshall.exts.EquivalenceExternalizer;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.Immutables;
@@ -161,7 +160,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new EntryViews.ReadWriteSnapshotViewExternalizer(), exts);
       addInternalExternalizer(new EntryViews.ReadOnlySnapshotViewExternalizer(), exts);
       addInternalExternalizer(new EnumSetExternalizer(), exts);
-      addInternalExternalizer(new EquivalenceExternalizer(), exts);
       addInternalExternalizer(new ExceptionResponse.Externalizer(), exts);
       addInternalExternalizer(new Flag.Externalizer(), exts);
       addInternalExternalizer(new FunctionMapper.Externalizer(), exts);
