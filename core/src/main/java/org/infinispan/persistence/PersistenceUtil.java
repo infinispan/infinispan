@@ -13,9 +13,11 @@ import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
@@ -25,6 +27,7 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
+import org.infinispan.util.logging.Log;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -171,11 +174,20 @@ public class PersistenceUtil {
    }
 
    public static Path getLocation(GlobalConfiguration globalConfiguration, String location) {
-      Path persistentLocation = Paths.get(globalConfiguration.globalState().persistentLocation());
-      if (location == null)
-         return persistentLocation;
+      GlobalStateConfiguration globalState = globalConfiguration.globalState();
+      Path persistentLocation = Paths.get(globalState.persistentLocation());
+      if (location == null) {
+          if (!globalState.enabled()) {
+             // Should never be reached as store builders should ensure that the locations are not null during validation.
+             throw PERSISTENCE.storeLocationRequired();
+          }
+          return persistentLocation;
+      }
 
       Path path = Paths.get(location);
+      if (!globalState.enabled()) {
+          return path;
+      }
       if (path.isAbsolute()) {
          // Ensure that the path lives under the global persistent location
          if (path.startsWith(persistentLocation)) {
@@ -185,5 +197,13 @@ public class PersistenceUtil {
          }
       }
       return persistentLocation.resolve(path);
+   }
+
+   public static void validateGlobalStateStoreLocation(GlobalConfiguration globalConfiguration, String storeType, Attribute<?>... attributes) {
+      if (!globalConfiguration.globalState().enabled()) {
+         for (Attribute<?> attr : attributes)
+            if (attr.isNull())
+               throw Log.CONFIG.storeLocationRequired(storeType, attr.name());
+      }
    }
 }

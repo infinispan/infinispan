@@ -220,7 +220,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
 
    protected EmbeddedCacheManager createCacheManager(int maxEntries) throws Exception {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalBuilder.globalState().persistentLocation(storeDir.getAbsolutePath());
+      globalBuilder.globalState().enable().persistentLocation(storeDir.getAbsolutePath());
       globalBuilder.serialization().addContextInitializer(QueryTestSCI.INSTANCE);
 
       ConfigurationBuilder b = new ConfigurationBuilder();

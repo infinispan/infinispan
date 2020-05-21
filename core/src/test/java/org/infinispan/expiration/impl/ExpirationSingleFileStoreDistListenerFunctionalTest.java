@@ -78,7 +78,7 @@ public class ExpirationSingleFileStoreDistListenerFunctionalTest extends Expirat
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
 
       // Make sure each cache writes to a different location
-      globalBuilder.globalState().persistentLocation(EXTRA_MANAGER_LOCATION);
+      globalBuilder.globalState().enable().persistentLocation(EXTRA_MANAGER_LOCATION);
 
       extraManager = createClusteredCacheManager(false, globalBuilder, builder, new TransportFlags());
       // Inject our time service into the new CacheManager as well
@@ -87,7 +87,7 @@ public class ExpirationSingleFileStoreDistListenerFunctionalTest extends Expirat
 
       globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       // Make sure each cache writes to a different location
-      globalBuilder.globalState().persistentLocation(PERSISTENT_LOCATION);
+      globalBuilder.globalState().enable().persistentLocation(PERSISTENT_LOCATION);
       EmbeddedCacheManager returned = createClusteredCacheManager(false, globalBuilder, builder, new TransportFlags());
 
       // Unfortunately we can't reinject timeservice once a cache has been started, thus we have to inject

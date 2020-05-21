@@ -2026,4 +2026,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Store %s cannot be configured to be transactional as it does not contain the TRANSACTIONAL characteristic", id = 597)
    CacheConfigurationException storeConfiguredTransactionalButCharacteristicNotPresent(String storeClassName);
+
+   @Message(value = "Store must specify a location when global state is disabled", id = 598)
+   CacheConfigurationException storeLocationRequired();
+
+   @Message(value = "Store '%s' must specify the '%s' attribute when global state is disabled", id = 598)
+   CacheConfigurationException storeLocationRequired(String storeType, String attributeName);
 }

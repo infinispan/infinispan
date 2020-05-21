@@ -15,7 +15,9 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
+import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.sifs.Log;
 import org.infinispan.persistence.sifs.SoftIndexFileStore;
 import org.infinispan.util.logging.LogFactory;
@@ -185,6 +187,15 @@ public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigu
       if (compactionThreshold <= 0 || compactionThreshold > 1) {
          throw log.invalidCompactionThreshold(compactionThreshold);
       }
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      PersistenceUtil.validateGlobalStateStoreLocation(globalConfig, SoftIndexFileStore.class.getSimpleName(),
+            data.attributes().attribute(DataConfiguration.DATA_LOCATION),
+            index.attributes().attribute(IndexConfiguration.INDEX_LOCATION));
+
+      super.validate(globalConfig);
    }
 
    @Override

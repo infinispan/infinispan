@@ -12,7 +12,7 @@ share data between multiple instances, use a shared persistent location.
 {brandname} servers use the `{server_home}/server/data` directory as the global
 persistent location.
 
-If you are using {brandname} as a library embedded in custom applications, the
+If you are using {brandname} as a library embedded in custom applications and global-state is enabled, the
 global persistent location defaults to the `user.dir` system property. This
 system property typically uses the directory where your application starts. You
 should configure a global persistent location to use a suitable location.
@@ -31,10 +31,7 @@ should configure a global persistent location to use a suitable location.
 
 [source,java,options="nowrap",subs=attributes+]
 ----
-public GlobalStateConfigurationBuilder persistentLocation(String path, String relativeTo) {
-   persistentLocation.location(example, my.data);
-   return this;
-}
+new GlobalConfigurationBuilder().globalState().enable().persistentLocation("example", "my.data");
 ----
 
 .File-Based Cache Stores and Global Persistent Location
@@ -63,7 +60,7 @@ You then configure a Single File cache store that uses a path named
 In this case, the configuration results in a Single File cache store in `/tmp/example/myDataStore/myCache.dat`
 
 If you attempt to set an absolute path that resides outside the global
-persistent location, {brandname} throws the following exception:
+persistent location and global-state is enabled, {brandname} throws the following exception:
 
 ----
 ISPN000558: "The store location 'foo' is not a child of the global persistent location 'bar'"
