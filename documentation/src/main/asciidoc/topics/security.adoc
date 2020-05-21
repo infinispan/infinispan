@@ -99,7 +99,7 @@ There are two levels of configuration: global and per-cache. The global configur
   GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
   global
      .security()
-        .authorization().enable()
+        .authorization()
            .principalRoleMapper(new IdentityRoleMapper())
            .role("admin")
               .permission(AuthorizationPermission.ALL)
@@ -131,7 +131,6 @@ By default, all roles defined at the global configuration level apply to caches.
   config
      .security()
         .authorization()
-           .enable()
            .role("admin")
            .role("supervisor")
            .role("reader");

@@ -59,23 +59,30 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
     * that is faster than the underlying cache store can process this queue, then the async store
     * behaves like a synchronous store for that period, blocking until the queue can accept more
     * elements.
+    * <p>
+    * Calls to this method automatically enables the Async store via {@link #enable()}
     */
    public AsyncStoreConfigurationBuilder<S> modificationQueueSize(int i) {
       attributes.attribute(MODIFICATION_QUEUE_SIZE).set(i);
-      return this;
+      return enable();
    }
 
    /**
     * Configures the number of threads in the thread pool that is responsible for applying modifications.
+    * <p>
+    * Calls to this method automatically enables the Async store via {@link #enable()}
+    *
     * @deprecated since 11.0 with no replacement as the thread pool is no longer used
     */
    @Deprecated
    public AsyncStoreConfigurationBuilder<S> threadPoolSize(int i) {
       attributes.attribute(THREAD_POOL_SIZE).set(i);
-      return this;
+      return enable();
    }
 
    /**
+    * Calls to this method automatically enables the Async store via {@link #enable()}
+    *
     * @param failSilently If true, the async store attempts to perform write operations only
     *           as many times as configured with `connection-attempts` in the PersistenceConfiguration.
     *           If all attempts fail, the errors are ignored and the write operations are not executed
@@ -89,7 +96,7 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
     */
    public AsyncStoreConfigurationBuilder<S> failSilently(boolean failSilently) {
       attributes.attribute(FAIL_SILENTLY).set(failSilently);
-      return this;
+      return enable();
    }
 
    @Override

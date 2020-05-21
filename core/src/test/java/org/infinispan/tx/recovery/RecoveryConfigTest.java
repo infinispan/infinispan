@@ -68,6 +68,6 @@ public class RecoveryConfigTest extends SingleCacheManagerTest {
       Configuration noRecovery = cacheManager.getCache("noRecovery").getCacheConfiguration();
       assertFalse(noRecovery.transaction().recovery().enabled(), "Recovery is supposed to be disabled");
       assertNull(rm(cacheManager.getCache("noRecovery")), "RecoveryManager should be null when recovery is disabled");
-      assertEquals(noRecovery.transaction().recovery().recoveryInfoCacheName(), "someName", "Wrong recovery cache name.");
+      assertEquals(noRecovery.transaction().recovery().recoveryInfoCacheName(), DEFAULT_RECOVERY_INFO_CACHE, "Wrong recovery cache name.");
    }
 }

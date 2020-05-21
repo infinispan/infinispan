@@ -185,7 +185,7 @@ public class ServerEventLoggerTest {
 
    private static GlobalConfigurationBuilder amendGlobalConfiguration(GlobalConfigurationBuilder global) {
       String stateDirectory = tmpDirectory(TestResourceTracker.getCurrentTestName());
-      global.globalState().persistentLocation(stateDirectory).sharedPersistentLocation(stateDirectory);
+      global.globalState().persistentLocation(stateDirectory).sharedPersistentLocation(stateDirectory).disable();
       return global;
    }
 

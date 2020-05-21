@@ -45,7 +45,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
       Util.recursiveFileRemove(tmpDir);
 
       globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalBuilder.globalState().persistentLocation(tmpDir.getPath());
+      globalBuilder.globalState().persistentLocation(tmpDir.getPath()).disable();
 
       // reproduce the MODE-1754 config as closely as possible
       builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true, true);

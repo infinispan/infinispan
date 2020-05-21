@@ -62,15 +62,20 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
     * location is specific to the node that owns it, this path <b>MUST NOT</b> be shared among multiple instances.
     * Defaults to the user.dir system property which usually is where the application was started.
     * This value should be overridden to a more appropriate location.
+    * <p>
+    * Calls to this method automatically set the GlobalState to enabled via {@link #enable()}.
     */
    public GlobalStateConfigurationBuilder persistentLocation(String location) {
       persistentLocation.location(location, null);
-      return this;
+      return enable();
    }
 
+   /**
+    * Calls to this method automatically set the GlobalState to enabled via {@link #enable()}.
+    */
    public GlobalStateConfigurationBuilder persistentLocation(String path, String relativeTo) {
       persistentLocation.location(path, relativeTo);
-      return this;
+      return enable();
    }
 
    /**
@@ -80,46 +85,60 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
     * This path <b>MAY</b> be safely shared among multiple instances.
     * If not set, this will use the {@link #persistentLocation} value.
     * This value should be overridden to a more appropriate location.
+    * <p>
+    * Calls to this method automatically set the GlobalState to enabled via {@link #enable()}.
     */
    public GlobalStateConfigurationBuilder sharedPersistentLocation(String location) {
       sharedPersistentLocation.location(location, null);
-      return this;
+      return enable();
    }
 
+   /**
+    * Calls to this method automatically set the GlobalState to enabled via {@link #enable()}.
+    */
    public GlobalStateConfigurationBuilder sharedPersistentLocation(String path, String relativeTo) {
       sharedPersistentLocation.location(path, relativeTo);
-      return this;
+      return enable();
    }
 
    /**
     * Defines the filesystem path where temporary state should be stored. Defaults to the value of the
     * java.io.tmpdir system property.
+    * <p>
+    * Calls to this method automatically set the GlobalState to enabled via {@link #enable()}.
     */
    public GlobalStateConfigurationBuilder temporaryLocation(String location) {
       temporaryLocation.location(location, null);
-      return this;
+      return enable();
    }
 
+   /**
+    * Calls to this method automatically set the GlobalState to enabled via {@link #enable()}.
+    */
    public GlobalStateConfigurationBuilder temporaryLocation(String path, String relativeTo) {
       temporaryLocation.location(path, relativeTo);
-      return this;
+      return enable();
    }
 
    /**
     * Defines the {@link ConfigurationStorage} strategy to use. If using {@link ConfigurationStorage#CUSTOM}, then
     * the actual implementation must be passed by invoking {@link #configurationStorageSupplier(Supplier)}
+    * <p>
+    * Calls to this method automatically set the GlobalState to enabled via {@link #enable()}.
     */
    public GlobalStateConfigurationBuilder configurationStorage(ConfigurationStorage storage) {
       storageConfiguration.configurationStorage(storage);
-      return this;
+      return enable();
    }
 
    /**
     * Defines the @{@link LocalConfigurationStorage}. Defaults to @{@link org.infinispan.globalstate.impl.VolatileLocalConfigurationStorage}
+    * <p>
+    * Calls to this method automatically set the GlobalState to enabled via {@link #enable()}.
     */
    public GlobalStateConfigurationBuilder configurationStorageSupplier(Supplier<? extends LocalConfigurationStorage> configurationStorageSupplier) {
       storageConfiguration.supplier(configurationStorageSupplier);
-      return this;
+      return enable();
    }
 
    @Override

@@ -52,24 +52,28 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
     * 0, then multicast will be always be used.
     * </p>
     *
-    * @param invalidationThreshold the threshold over which to use a multicast
+    * Calls to this method automatically enables L1 caching via {@link #enable()}.
     *
+    * @param invalidationThreshold the threshold over which to use a multicast
     */
    public L1ConfigurationBuilder invalidationThreshold(int invalidationThreshold) {
       attributes.attribute(INVALIDATION_THRESHOLD).set(invalidationThreshold);
-      return this;
+      return enable();
    }
 
    /**
     * Maximum lifespan of an entry placed in the L1 cache.
+    * <p>
+    * Calls to this method automatically enables L1 caching via {@link #enable()}.
     */
    public L1ConfigurationBuilder lifespan(long lifespan) {
       attributes.attribute(LIFESPAN).set(lifespan);
-      return this;
+      return enable();
    }
 
    /**
     * Maximum lifespan of an entry placed in the L1 cache.
+    * @see #lifespan(long)
     */
    public L1ConfigurationBuilder lifespan(long lifespan, TimeUnit unit) {
       return lifespan(unit.toMillis(lifespan));
@@ -77,14 +81,17 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
 
    /**
     * How often the L1 requestors map is cleaned up of stale items
+    * <p>
+    * Calls to this method automatically enables L1 caching via {@link #enable()}.
     */
    public L1ConfigurationBuilder cleanupTaskFrequency(long frequencyMillis) {
       attributes.attribute(CLEANUP_TASK_FREQUENCY).set(frequencyMillis);
-      return this;
+      return enable();
    }
 
    /**
     * How often the L1 requestors map is cleaned up of stale items
+    * @see #cleanupTaskFrequency(long)
     */
    public L1ConfigurationBuilder cleanupTaskFrequency(long frequencyMillis, TimeUnit unit) {
       return cleanupTaskFrequency(unit.toMillis(frequencyMillis));

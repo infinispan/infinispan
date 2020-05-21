@@ -209,7 +209,7 @@ Programmatic:
 import org.infinispan.configuration.cache.*;
 
 ConfigurationBuilder cacheCfg = ...
-cacheCfg.indexing().enable()
+cacheCfg.indexing()
       .addProperty("property name", "propery value")
 ----
 
@@ -228,7 +228,6 @@ include::config_examples/indexing_property.xml[]
 [source,java]
 ----
 cacheCfg.indexing()
-   .enable()
       .addProperty("org.infinispan.sample.Car.directory_provider", "local-heap")
 
 ----
@@ -276,7 +275,6 @@ or programmatically:
 [source,java]
 ----
  cacheCfg.indexing()
-      .enable()
        .addIndexedEntity(Car.class)
        .addIndexedEntity(Truck.class)
 

@@ -29,30 +29,34 @@ public class GlobalJmxConfigurationBuilder extends GlobalJmxStatisticsConfigurat
 
    /**
     * Sets properties which are then passed to the MBean Server Lookup implementation specified.
-    *
+    * Calls to this method with a non-empty properties object automatically enables JMX via {@link #enable()}.
     * @param properties properties to pass to the MBean Server Lookup
     */
    public GlobalJmxConfigurationBuilder withProperties(Properties properties) {
       attributes.attribute(PROPERTIES).set(new TypedProperties(properties));
-      return this;
+      return properties.isEmpty() ? this : enable();
    }
 
+   /**
+    * Calls to this method automatically enables JMX via {@link #enable()}.
+    */
    public GlobalJmxConfigurationBuilder addProperty(String key, String value) {
       TypedProperties properties = attributes.attribute(PROPERTIES).get();
       properties.put(key, value);
       attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(properties));
-      return this;
+      return enable();
    }
 
    /**
     * If JMX is enabled then all 'published' JMX objects will appear under this name. This is optional, if not specified
     * a default domain name will be set by default.
-    *
+    * <p>
+    * Calls to this method automatically enables JMX via {@link #enable()}.
     * @param domain
     */
    public GlobalJmxConfigurationBuilder domain(String domain) {
       attributes.attribute(DOMAIN).set(domain);
-      return this;
+      return enable();
    }
 
    /**
@@ -71,28 +75,28 @@ public class GlobalJmxConfigurationBuilder extends GlobalJmxStatisticsConfigurat
    /**
     * Sets the instance of the {@link org.infinispan.commons.jmx.MBeanServerLookup} class to be used to bound JMX MBeans
     * to.
+    * <p>
+    * Calls to this method automatically enables JMX via {@link #enable()}.
     *
     * @param mBeanServerLookupInstance An instance of {@link org.infinispan.commons.jmx.MBeanServerLookup}
     */
    public GlobalJmxConfigurationBuilder mBeanServerLookup(MBeanServerLookup mBeanServerLookupInstance) {
       attributes.attribute(MBEAN_SERVER_LOOKUP).set(mBeanServerLookupInstance);
-      return this;
+      return enable();
    }
 
    /**
     * Disables JMX in the cache manager.
     */
    public GlobalJmxConfigurationBuilder disable() {
-      enabled(false);
-      return this;
+      return enabled(false);
    }
 
    /**
     * Enables JMX in the cache manager.
     */
    public GlobalJmxConfigurationBuilder enable() {
-      enabled(true);
-      return this;
+      return enabled(true);
    }
 
    /**

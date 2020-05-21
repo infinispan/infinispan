@@ -53,7 +53,8 @@ public abstract class MultiStoresFunctionalTest<TStoreConfigurationBuilder exten
 
    private GlobalConfigurationBuilder globalConfig() {
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
+      // TODO remove persistentLocation with ISPN-11845
+      global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass())).disable();
       return global;
    }
 

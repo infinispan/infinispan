@@ -54,24 +54,31 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
    /**
     * The instance of an {@link AuditLogger} to be used to track operations performed on caches and cachemanagers. The default logger is
     * the {@link NullAuditLogger}. You can also use the {@link LoggingAuditLogger} which will send audit messages to the log.
+    * <p>
+    * Calls to this method automatically enables Authorization via {@link #enable()}.
     * @param auditLogger
     */
    public GlobalAuthorizationConfigurationBuilder auditLogger(AuditLogger auditLogger) {
       attributes.attribute(AUDIT_LOGGER).set(auditLogger);
-      return this;
+      return enable();
    }
 
    /**
     * The class of a mapper which converts the {@link Principal}s associated with a {@link Subject} into a set of roles
-    *
+    * <p>
+    * Calls to this method automatically enables Authorization via {@link #enable()}.
     * @param principalRoleMapper
     */
    public GlobalAuthorizationConfigurationBuilder principalRoleMapper(PrincipalRoleMapper principalRoleMapper) {
       roleMapper.mapper(principalRoleMapper);
-      return this;
+      return enable();
    }
 
+   /**
+    * Calls to this method automatically enables Authorization via {@link #enable()}.
+    */
    public GlobalRoleConfigurationBuilder role(String name) {
+      enable();
       GlobalRoleConfigurationBuilder role = new GlobalRoleConfigurationBuilder(name, this);
       roles.put(name, role);
       return role;

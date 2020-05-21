@@ -17,7 +17,7 @@ public class CacheManagerAdminImmutableTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < 2; i++) {
          GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
-         global.globalState().configurationStorage(ConfigurationStorage.IMMUTABLE);
+         global.globalState().configurationStorage(ConfigurationStorage.IMMUTABLE).disable();
          ConfigurationBuilder builder = new ConfigurationBuilder();
          builder.clustering().cacheMode(CacheMode.DIST_SYNC);
          addClusterEnabledCacheManager(global, builder);

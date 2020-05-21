@@ -2,7 +2,6 @@ org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb
       = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
 cb.marshaller(new org.infinispan.commons.marshall.ProtoStreamMarshaller())
   .statistics()
-      .enable()
       .jmxDomain("org.example")
   .addServer()
       .host("127.0.0.1")

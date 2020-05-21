@@ -62,13 +62,16 @@ public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigura
 
    /**
     * Adds a role that can work with this cache. Roles must be declared in the {@link org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder}.
+    * <p>
+    * Calls to this method automatically enables Authorization via {@link #enable()}
+    *
     * @param name the name of the role
     */
    public AuthorizationConfigurationBuilder role(String name) {
       Set<String> roles = attributes.attribute(ROLES).get();
       roles.add(name);
       attributes.attribute(ROLES).set(roles);
-      return this;
+      return enable();
    }
 
    /**

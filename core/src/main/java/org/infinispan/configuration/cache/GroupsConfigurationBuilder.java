@@ -65,10 +65,12 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
 
    /**
     * Set the groupers to use
+    * <p>
+    * Calls to this method automatically enables Groups via {@link #enabled()}.
     */
    public GroupsConfigurationBuilder withGroupers(List<Grouper<?>> groupers) {
       attributes.attribute(GROUPERS).set(groupers);
-      return this;
+      return enabled();
    }
 
    /**
@@ -83,12 +85,14 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
 
    /**
     * Add a grouper
+    * <p>
+    * Calls to this method automatically enables Groups via {@link #enabled()}
     */
    public GroupsConfigurationBuilder addGrouper(Grouper<?> grouper) {
       List<Grouper<?>> groupers = attributes.attribute(GROUPERS).get();
       groupers.add(grouper);
       attributes.attribute(GROUPERS).set(groupers);
-      return this;
+      return enabled();
    }
 
    @Override

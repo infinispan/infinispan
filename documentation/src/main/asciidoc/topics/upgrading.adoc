@@ -1,5 +1,28 @@
 = Upgrading from 10.1 to 11.0
 
+== Embedded Programmatic Configuration
+The various builders used for programmatically configuring an embedded cache have been updated so that it's no longer
+necessary to call `enable()` or `enable(true)` on a configuration element if one or more if it's attributes have been
+configured. For example:
+
+10.1
+[source,java]
+----
+new GlobalConfigurationBuilder().globalState()
+   .enable()
+   .persistentLocation("some-location")
+   .build();
+----
+
+11.0
+[source,java]
+----
+new GlobalConfigurationBuilder().globalState()
+   .persistentLocation("some-location")
+   .build();
+----
+
+
 == Wildfly modules
 
 The Wildfly modules are now deprecated. The `jgroups`, `infinispan` and `endpoint` extensions have been removed and

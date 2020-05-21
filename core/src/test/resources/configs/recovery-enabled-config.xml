@@ -10,7 +10,7 @@
          <transaction mode="NON_DURABLE_XA"/>
       </local-cache>
       <local-cache name="noRecovery">
-         <transaction transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" mode="NONE" recovery-cache="someName"/>
+         <transaction transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" mode="NONE"/>
       </local-cache>
       <local-cache name="withRecoveryDefaultCache">
          <transaction mode="FULL_XA" />

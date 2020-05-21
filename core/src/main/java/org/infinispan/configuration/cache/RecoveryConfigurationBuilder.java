@@ -66,10 +66,12 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
    /**
     * Sets the name of the cache where recovery related information is held. If not specified
     * defaults to a cache named {@link RecoveryConfiguration#DEFAULT_RECOVERY_INFO_CACHE}
+    * <p>
+    * Calls to this method automatically enables Transaction recovery via {@link #enable()}.
     */
    public RecoveryConfigurationBuilder recoveryInfoCacheName(String recoveryInfoName) {
       attributes.attribute(RECOVERY_INFO_CACHE_NAME).set(recoveryInfoName);
-      return this;
+      return enable();
    }
 
    @Override

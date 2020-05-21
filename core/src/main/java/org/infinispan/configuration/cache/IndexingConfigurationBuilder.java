@@ -80,7 +80,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    /**
     * Registers a transformer for a key class.
-    *
+    * <p>
+    * Calls to this method automatically enables Indexing via {@link #enable()}.
     * @param keyClass the class of the key
     * @param keyTransformerClass the class of the org.infinispan.query.Transformer that handles this key type
     * @return <code>this</code>, for method chaining
@@ -89,7 +90,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       Map<Class<?>, Class<?>> indexedEntities = keyTransformers();
       indexedEntities.put(keyClass, keyTransformerClass);
       attributes.attribute(KEY_TRANSFORMERS).set(indexedEntities);
-      return this;
+      return enable();
    }
 
    /**
@@ -125,6 +126,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * These properties are passed directly to the embedded Hibernate Search engine, so for the
     * complete and up to date documentation about available properties refer to the the Hibernate Search
     * reference of the version used by Infinispan Query.
+    * <p>
+    * Calls to this method automatically enables Indexing via {@link #enable()}.
     *
     * @see <a href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate Search</a>
     * @param key Property key
@@ -135,7 +138,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       TypedProperties properties = attributes.attribute(PROPERTIES).get();
       properties.put(key, value);
       attributes.attribute(PROPERTIES).set(properties);
-      return this;
+      return enable();
    }
 
    /**
@@ -151,7 +154,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     */
    public IndexingConfigurationBuilder withProperties(Properties props) {
       attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
-      return this;
+      return props.isEmpty() ? this : enable();
    }
 
    /**
@@ -189,18 +192,24 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return attributes.attribute(AUTO_CONFIG).get();
    }
 
+   /**
+    * Calls to this method automatically enables Indexing via {@link #enable()}.
+    */
    public IndexingConfigurationBuilder addIndexedEntity(Class<?> indexedEntity) {
       Set<Class<?>> indexedEntitySet = indexedEntities();
       indexedEntitySet.add(indexedEntity);
       attributes.attribute(INDEXED_ENTITIES).set(indexedEntitySet);
-      return this;
+      return enable();
    }
 
+   /**
+    * Calls to this method automatically enables Indexing via {@link #enable()}.
+    */
    public IndexingConfigurationBuilder addIndexedEntities(Class<?>... indexedEntities) {
       Set<Class<?>> indexedEntitySet = indexedEntities();
       Collections.addAll(indexedEntitySet, indexedEntities);
       attributes.attribute(INDEXED_ENTITIES).set(indexedEntitySet);
-      return this;
+      return enable();
    }
 
    private Set<Class<?>> indexedEntities() {

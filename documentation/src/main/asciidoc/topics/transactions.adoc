@@ -73,7 +73,6 @@ builder.transaction()
     .cacheStopTimeout(30000)
     .transactionManagerLookup(new GenericTransactionManagerLookup())
     .recovery()
-    .enabled(false)
     .recoveryInfoCacheName("__recoveryInfoCacheName__");
 ----
 

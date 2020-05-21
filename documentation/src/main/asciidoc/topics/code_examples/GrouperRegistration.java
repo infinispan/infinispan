@@ -1,3 +1,3 @@
 Configuration c = new ConfigurationBuilder()
-   .clustering().hash().groups().enabled().addGrouper(new KXGrouper())
+   .clustering().hash().groups().addGrouper(new KXGrouper())
    .build();
