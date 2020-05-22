@@ -1,5 +1,8 @@
 package org.infinispan.query.core.impl;
 
+import static java.util.Spliterators.spliteratorUnknownSize;
+import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -7,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.PriorityQueue;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -82,19 +86,15 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
          } else {
             Comparator<Comparable<FilterResult>[]> comparator = getComparator();
             if (comparator == null) {
-               results = StreamSupport.stream(spliterator(), false).collect(Collectors.toList());
+               results = StreamSupport.stream(spliterator(), false).collect(new TimedCollector<>(Collectors.toList(), timeout));
             } else {
                log.warnPerfSortedNonIndexed(queryString);
                // collect and sort results, in reverse order for now
-               PriorityQueue<FilterResult> filterResults = new PriorityQueue<>(INITIAL_CAPACITY, new ReverseFilterResultComparator(comparator));
-               while (iterator.hasNext()) {
-                  FilterResult entry = iterator.next();
-                  filterResults.add(entry);
-                  if (maxResults != -1 && filterResults.size() > startOffset + maxResults) {
-                     // remove the head, which is actually the highest result
-                     filterResults.remove();
-                  }
-               }
+               PriorityQueue<FilterResult> queue = new PriorityQueue<>(INITIAL_CAPACITY, new ReverseFilterResultComparator(comparator));
+               PriorityQueue<FilterResult> filterResults = StreamSupport
+                     .stream(spliteratorUnknownSize(iterator, 0), false)
+                     .collect(new TimedCollector<>(Collector.of(() -> queue, this::addToPriorityQueue, (q1, q2) -> q1, IDENTITY_FINISH), timeout));
+
                // collect and reverse
                if (filterResults.size() > startOffset) {
                   Object[] res = new Object[filterResults.size() - startOffset];
@@ -112,6 +112,13 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
       }
 
       return new QueryResultImpl<>(OptionalLong.empty(), (List<T>) results);
+   }
+
+   private void addToPriorityQueue(PriorityQueue<FilterResult> queue, FilterResult filterResult) {
+      queue.add(filterResult);
+      if (maxResults != -1 && queue.size() > startOffset + maxResults) {
+         queue.remove();
+      }
    }
 
    /**

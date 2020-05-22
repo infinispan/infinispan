@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 
 import org.hibernate.search.exception.SearchException;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.Util;
+import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -105,6 +107,10 @@ final class ClusteredQueryInvoker {
       } catch (InterruptedException e) {
          throw new SearchException("Interrupted while searching locally", e);
       } catch (ExecutionException e) {
+         Throwable rootCause = Util.getRootCause(e);
+         if (rootCause instanceof SearchTimeoutException) {
+            throw (SearchTimeoutException) rootCause;
+         }
          throw new SearchException("Exception while searching locally", e);
       }
       return results;

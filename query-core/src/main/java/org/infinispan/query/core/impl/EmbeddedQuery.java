@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheStream;
@@ -65,6 +66,9 @@ public final class EmbeddedQuery extends BaseEmbeddedQuery {
       IckleFilterAndConverter<Object, Object> ickleFilter = (IckleFilterAndConverter<Object, Object>) createFilter();
       CacheStream<CacheEntry<Object, Object>> entryStream = ((AdvancedCache<Object, Object>) cache).cacheEntrySet().stream();
       CacheStream<ObjectFilter.FilterResult> resultStream = CacheFilters.filterAndConvertToValue(entryStream, ickleFilter);
+      if(timeout > 0) {
+         resultStream = resultStream.timeout(timeout, TimeUnit.NANOSECONDS);
+      }
       return Closeables.iterator(resultStream);
    }
 
