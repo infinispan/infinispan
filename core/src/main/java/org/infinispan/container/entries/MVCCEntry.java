@@ -71,6 +71,13 @@ public interface MVCCEntry<K, V> extends CacheEntry<K, V> {
    default void setLoaded(boolean loaded) {
    }
 
+   /**
+    * @return True if this entry should non be written to shared persistence
+    */
+   boolean isSkipSharedStore();
+
+   void setSkipSharedStore();
+
    @Override
    MVCCEntry<K, V> clone();
 }

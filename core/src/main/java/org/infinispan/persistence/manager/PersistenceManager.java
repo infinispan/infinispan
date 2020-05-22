@@ -3,17 +3,18 @@ package org.infinispan.persistence.manager;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
-import javax.transaction.Transaction;
-
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.support.BatchModification;
+import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
 
@@ -264,29 +265,30 @@ public interface PersistenceManager extends Lifecycle {
    /**
     * Perform the prepare phase of 2PC on all Tx stores.
     *
-    * @param transaction the current transactional context.
-    * @param batchModification an object containing the write/remove operations required for this transaction.
+    * @param txInvocationContext the tx invocation containing the modifications
     * @param predicate should we prepare on a given store
     * @throws PersistenceException if an error is encountered at any of the underlying stores.
     */
-   CompletionStage<Void> prepareAllTxStores(Transaction transaction, BatchModification batchModification,
+   CompletionStage<Void> prepareAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext,
                            Predicate<? super StoreConfiguration> predicate) throws PersistenceException;
 
    /**
     * Perform the commit operation for the provided transaction on all Tx stores.
     *
-    * @param transaction the transactional context to be committed.
+    * @param txInvocationContext the transactional context to be committed.
     * @param predicate should we commit each store
     */
-   CompletionStage<Void> commitAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate);
+   CompletionStage<Void> commitAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext,
+         Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Perform the rollback operation for the provided transaction on all Tx stores.
     *
-    * @param transaction the transactional context to be rolledback.
+    * @param txInvocationContext the transactional context to be rolledback.
     * @param predicate should we rollback each store
     */
-   CompletionStage<Void> rollbackAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate);
+   CompletionStage<Void> rollbackAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext,
+         Predicate<? super StoreConfiguration> predicate);
 
    /**
     * Write all entries to the underlying non-transactional stores as a single batch.
@@ -298,14 +300,12 @@ public interface PersistenceManager extends Lifecycle {
    <K, V> CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry<K, V>> entries, Predicate<? super StoreConfiguration> predicate, long flags);
 
    /**
-    * Remove all entries from the underlying non-transactional stores as a single batch.
     *
-    * @param keys a List of Keys to be removed from the store.
-    * @param predicate whether a given store should delete the entries
-    * @param flags Flags used during command invocation
+    * @param modifications
+    * @return
     */
-   CompletionStage<Void> deleteBatchFromAllNonTxStores(Iterable<Object> keys, Predicate<? super StoreConfiguration> predicate, long flags);
-
+   CompletionStage<Long> performBatch(TxInvocationContext<AbstractCacheTransaction> invocationContext,
+         BiPredicate<WriteCommand, Object> commandKeyPredicate);
 
    /**
     * @return true if all configured stores are available and ready for read/write operations.

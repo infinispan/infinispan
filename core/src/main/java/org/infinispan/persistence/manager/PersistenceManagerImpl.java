@@ -13,7 +13,10 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.StampedLock;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -26,7 +29,9 @@ import javax.transaction.TransactionManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.time.TimeService;
@@ -38,7 +43,12 @@ import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.impl.InternalExpirationManager;
@@ -69,12 +79,12 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.NonBlockingStore.Characteristic;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.StoreUnavailableException;
-import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.persistence.support.ComposedSegmentedLoadWriteStore;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.NonBlockingStoreAdapter;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
-import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.persistence.support.SingleSegmentPublisher;
+import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -88,6 +98,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.flowables.ConnectableFlowable;
 import io.reactivex.rxjava3.functions.Function;
 import net.jcip.annotations.GuardedBy;
 
@@ -108,7 +119,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    PersistenceMarshaller persistenceMarshaller;
    @Inject ByteBufferFactory byteBufferFactory;
    @Inject CacheNotifier<Object, Object> cacheNotifier;
-   @Inject MarshallableEntryFactory marshallableEntryFactory;
+   @Inject InternalEntryFactory internalEntryFactory;
+   @Inject MarshallableEntryFactory<?, ?> marshallableEntryFactory;
    @Inject ComponentRef<CommandsFactory> commandsFactory;
    @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    @Inject Executor nonBlockingExecutor;
@@ -885,55 +897,47 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public CompletionStage<Void> prepareAllTxStores(Transaction transaction, BatchModification batchModification,
+   public CompletionStage<Void> prepareAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext,
          Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
-      return Completable.using(
-            this::acquireReadLock,
-            ignore -> {
-               checkStoreAvailability();
-               if (trace) {
-                  log.tracef("Preparing batch for store: %s on transaction %s", batchModification, transaction);
-               }
-               return Flowable.fromIterable(stores)
-                     .filter(storeStatus -> shouldPerformTransactionOperation(storeStatus, predicate))
-                     // Let the prepare work in parallel across the stores
-                     .flatMapCompletable(storeStatus -> Completable.fromCompletionStage(storeStatus.store.prepareWithModifications(transaction, batchModification)));
-            },
-            this::releaseReadLock
-      ).toCompletionStage(null);
+      //noinspection unchecked
+      return batchOperation(txInvocationContext, null, (stores, segmentCount, removeFlowable,
+            putFlowable) -> stores.prepareWithModifications(txInvocationContext.getTransaction(), segmentCount, removeFlowable, putFlowable))
+            .thenApply(CompletableFutures.toNullFunction());
    }
 
    @Override
-   public CompletionStage<Void> commitAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
+   public CompletionStage<Void> commitAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext,
+         Predicate<? super StoreConfiguration> predicate) {
       return Completable.using(
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
                if (trace) {
-                  log.tracef("Committing transaction %s to stores", transaction);
+                  log.tracef("Committing transaction %s to stores", txInvocationContext);
                }
                return Flowable.fromIterable(stores)
                      .filter(storeStatus -> shouldPerformTransactionOperation(storeStatus, predicate))
                      // Let the commit work in parallel across the stores
-                     .flatMapCompletable(storeStatus -> Completable.fromCompletionStage(storeStatus.store.commit(transaction)));
+                     .flatMapCompletable(storeStatus -> Completable.fromCompletionStage(storeStatus.store.commit(txInvocationContext.getTransaction())));
             },
             this::releaseReadLock
       ).toCompletionStage(null);
    }
 
    @Override
-   public CompletionStage<Void> rollbackAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
+   public CompletionStage<Void> rollbackAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext,
+         Predicate<? super StoreConfiguration> predicate) {
       return Completable.using(
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
                if (trace) {
-                  log.tracef("Rolling back transaction %s for stores", transaction);
+                  log.tracef("Rolling back transaction %s for stores", txInvocationContext);
                }
                return Flowable.fromIterable(stores)
                      .filter(storeStatus -> shouldPerformTransactionOperation(storeStatus, predicate))
                      // Let the rollback work in parallel across the stores
-                     .flatMapCompletable(storeStatus -> Completable.fromCompletionStage(storeStatus.store.commit(transaction)));
+                     .flatMapCompletable(storeStatus -> Completable.fromCompletionStage(storeStatus.store.rollback(txInvocationContext.getTransaction())));
             },
             this::releaseReadLock
       ).toCompletionStage(null);
@@ -951,19 +955,24 @@ public class PersistenceManagerImpl implements PersistenceManager {
             ignore -> {
                checkStoreAvailability();
                if (trace) {
-                  log.trace("Writing batch to stores");
+                  log.trace("Writing batch iterable to stores");
                }
                return Flowable.fromIterable(stores)
                      .filter(storeStatus -> shouldWrite(storeStatus, predicate, flags))
                      // Let the rollback work in parallel across the stores
                      .flatMapCompletable(storeStatus -> {
                         boolean segmented = storeStatus.characteristics.contains(Characteristic.SEGMENTABLE);
-                        Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> flowable =
-                              Flowable.fromIterable(entries)
-                                 .groupBy(groupingFunction(MarshallableEntry::getKey, segmented))
-                                 .map(SegmentPublisherWrapper::new);
+                        Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> flowable;
+                        if (segmented) {
+                           flowable = Flowable.fromIterable(entries)
+                                 .groupBy(groupingFunction(MarshallableEntry::getKey))
+                                 .map(SegmentPublisherWrapper::wrap);
+                        } else {
+                           flowable = Flowable.just(SingleSegmentPublisher.singleSegment(Flowable.fromIterable(entries)));
+                        }
+
                         return Completable.fromCompletionStage(
-                              storeStatus.<K, V>store().bulkWrite(segmentCount(segmented), flowable));
+                              storeStatus.<K, V>store().batch(segmentCount(segmented), Flowable.empty(), flowable));
                      });
             },
             this::releaseReadLock
@@ -971,45 +980,195 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public CompletionStage<Void> deleteBatchFromAllNonTxStores(Iterable<Object> keys, Predicate<? super StoreConfiguration> predicate, long flags) {
-      return Completable.using(
+   public CompletionStage<Long> performBatch(TxInvocationContext<AbstractCacheTransaction> ctx,
+         BiPredicate<WriteCommand, Object> commandKeyPredicate) {
+      return batchOperation(ctx, commandKeyPredicate, NonBlockingStore::batch);
+   }
+
+   /**
+    * Takes all the modifications from the transaction in the provided context and streams those values as remove or
+    * put modifications to the underlying store(s).
+    * <p>
+    * This method ensures only a single subscription to the underlying modifications that is shared with all of the
+    * stores, by using a {@link ConnectableFlowable} to broadcast the values to each. We also then use another
+    * {@code ConnectableFlowable} for each store when broadcasting the values for the put and removed entries.
+    * Note that due to this if a store doesn't subscribe to either of the put or remove flowable that the operation will
+    * not complete.
+    * <p>
+    * The {@link HandleFlowables} is provided for the sole reason of allowing reuse of this method by different callers.
+    * @param ctx the transactional context with modifications
+    * @param commandKeyPredicate predicate to test if a key/command combination should be written
+    * @param flowableHandler callback handler that actually should subscribe to the underlying store
+    * @param <K> key type
+    * @param <V> value type
+    * @return a stage that when complete will contain how many write operations were done
+    */
+   private <K, V> CompletionStage<Long> batchOperation(TxInvocationContext<AbstractCacheTransaction> ctx,
+         BiPredicate<WriteCommand, Object> commandKeyPredicate, HandleFlowables<K, V> flowableHandler) {
+      return Single.using(
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
                if (trace) {
-                  log.trace("Deleting batch of entries from stores");
+                  log.trace("Writing batch to stores");
                }
-               return Flowable.fromIterable(stores)
-                     .filter(storeStatus -> shouldWrite(storeStatus, predicate))
-                     // Let the delete batch work in parallel across the stores
-                     .flatMapCompletable(storeStatus -> {
-                        boolean segmented = storeStatus.characteristics.contains(Characteristic.SEGMENTABLE);
-                        Flowable<NonBlockingStore.SegmentedPublisher<Object>> flowable =
-                              Flowable.fromIterable(keys)
-                                    .groupBy(groupingFunction(RxJavaInterop.identityFunction(), segmented))
-                                    .map(SegmentPublisherWrapper::new);
-                        return Completable.fromCompletionStage(
-                              storeStatus.store.bulkDelete(segmentCount(segmented), flowable));
+               int size = stores.size();
+               if (size == 0) {
+                  return Single.just(0L);
+               }
+
+               Flowable<MVCCEntry<K, V>> mvccEntryFlowable = Flowable.fromIterable(ctx.getCacheTransaction().getAllModifications())
+                     .filter(writeCommand -> !writeCommand.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE))
+                     .concatMap(writeCommand -> {
+                        if (writeCommand instanceof DataWriteCommand) {
+                           Object key = ((DataWriteCommand) writeCommand).getKey();
+                           MVCCEntry<K, V> entry = acquireKeyFromContext(ctx, writeCommand, key, commandKeyPredicate);
+                           return entry != null ? Flowable.just(entry) : Flowable.empty();
+                        } else {
+                           // Assume multiple key command
+                           return Flowable.fromIterable(writeCommand.getAffectedKeys())
+                                 .concatMapMaybe(key -> {
+                                    MVCCEntry<K, V> entry = acquireKeyFromContext(ctx, writeCommand, key, commandKeyPredicate);
+                                    // We use an empty Flowable to symbolize a miss - which is filtered by ofType just below
+                                    return entry != null ? Maybe.just(entry) : Maybe.empty();
+                                 });
+                        }
                      });
+               // We split the original source into possibly multiple, depending upon how many stores there are
+               ConnectableFlowable<MVCCEntry<K, V>> connectableFlowable = mvccEntryFlowable.publish();
+
+               // We may have multiple stores - don't publish anything until this value goes back to 0
+               AtomicInteger pendingConnects = new AtomicInteger(size);
+               if (trace) {
+                  log.tracef("Will wait for %s subscriptions of stores", size);
+               }
+
+               return Flowable.fromIterable(stores)
+                     .filter(storeStatus -> {
+                        if (storeStatus.characteristics.contains(Characteristic.READ_ONLY)) {
+                           int pendingCount = pendingConnects.decrementAndGet();
+                           if (trace) {
+                              log.tracef("Store %s was read only, decrementing pending count is now %s",
+                                    storeStatus.store, pendingCount);
+                           }
+                           if (pendingCount == 0) {
+                              connectableFlowable.connect();
+                           }
+                           return false;
+                        }
+                        return true;
+                     })
+                     .flatMapSingle(storeStatus -> {
+                        Flowable<MVCCEntry<K, V>> flowableToUse;
+                        if (storeStatus.config.shared()) {
+                           flowableToUse = connectableFlowable.filter(mvccEntry -> !mvccEntry.isSkipSharedStore());
+                        } else {
+                           flowableToUse = connectableFlowable;
+                        }
+                        flowableToUse = flowableToUse.doOnSubscribe(sub -> {
+                           int pendingCount = pendingConnects.decrementAndGet();
+                           if (trace) {
+                              log.tracef("Store %s has fully subscribed, decrementing pending count is now %s",
+                                    storeStatus.store, pendingCount);
+                           }
+                           if (pendingCount == 0) {
+                              connectableFlowable.connect();
+                           }
+                        });
+
+                        boolean segmented = storeStatus.config.segmented();
+
+                        // Now we have to split this stores' flowable into two (one for remove and one for put)
+                        flowableToUse = flowableToUse.publish().autoConnect(2);
+
+                        Flowable<K> keyRemoveFlowable = flowableToUse
+                              .filter(MVCCEntry::isRemoved)
+                              .map(MVCCEntry::getKey);
+
+                        Flowable<NonBlockingStore.SegmentedPublisher<Object>> removeFlowable;
+                        if (segmented) {
+                           removeFlowable = keyRemoveFlowable
+                                 .groupBy(keyPartitioner::getSegment)
+                                 .map(SegmentPublisherWrapper::wrap);
+                        } else {
+                           removeFlowable = Flowable.just(SingleSegmentPublisher.singleSegment(keyRemoveFlowable));
+                        }
+
+                        if (trace) {
+                           removeFlowable = removeFlowable.doOnSubscribe(sub ->
+                              log.tracef("Store %s has subscribed to remove batch", storeStatus.store));
+                        }
+
+                        Flowable<MarshallableEntry<K, V>> entryWriteFlowable = flowableToUse
+                              .filter(mvccEntry -> !mvccEntry.isRemoved())
+                              .map(mvcEntry -> {
+                                 K key = mvcEntry.getKey();
+                                 InternalCacheValue<V> sv = internalEntryFactory.getValueFromCtx(key, ctx);
+                                 //noinspection unchecked
+                                 return (MarshallableEntry<K, V>) marshallableEntryFactory.create(key, (InternalCacheValue) sv);
+                              });
+
+                        AtomicLong writeCount = new AtomicLong();
+                        entryWriteFlowable = entryWriteFlowable.doOnNext(me -> writeCount.incrementAndGet());
+
+                        Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> writeFlowable;
+
+                        if (segmented) {
+                           writeFlowable = entryWriteFlowable
+                                 .groupBy(me -> keyPartitioner.getSegment(me.getKey()))
+                                 .map(SegmentPublisherWrapper::wrap);
+                        } else {
+                           writeFlowable = Flowable.just(SingleSegmentPublisher.singleSegment(entryWriteFlowable));
+                        }
+
+                        if (trace) {
+                           removeFlowable = removeFlowable.doOnSubscribe(sub ->
+                              log.tracef("Store %s has subscribed to write batch", storeStatus.store));
+                        }
+
+                        return Single.fromCompletionStage(flowableHandler.handleFlowables(storeStatus.store(),
+                              segmentCount(segmented), removeFlowable, writeFlowable)
+                              .thenApply(ignore2 -> writeCount.get()));
+                     }).first(0L);
+
             },
             this::releaseReadLock
-      ).toCompletionStage(null);
+      ).toCompletionStage();
    }
+
+   private <K, V> MVCCEntry<K, V> acquireKeyFromContext(InvocationContext ctx, WriteCommand command, Object key,
+         BiPredicate<WriteCommand, Object> commandKeyPredicate) {
+      if (commandKeyPredicate.test(command, key)) {
+         //noinspection unchecked
+         MVCCEntry<K, V> entry = (MVCCEntry<K, V>) ctx.lookupEntry(key);
+         if (entry.isChanged()) {
+            return entry;
+         }
+      }
+      return null;
+   }
+
+   /**
+    * Here just to create a lambda for method reuse of
+    * {@link #batchOperation(TxInvocationContext, BiPredicate, HandleFlowables)}
+    */
+   interface HandleFlowables<K, V> {
+      CompletionStage<Void> handleFlowables(NonBlockingStore<K, V> store, int publisherCount,
+            Flowable<NonBlockingStore.SegmentedPublisher<Object>> removeFlowable,
+            Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> putFlowable);
+   };
 
    /**
     * Provides a function that groups entries by their segments (via keyPartitioner).
-    * Returns the segment if the cache store supports segmentation.
-    * Returns 0 if the cache store does support segmentation.
     */
-   private <E> Function<E, Integer> groupingFunction(Function<E, Object> toKeyFunction, boolean segmented) {
-      return segmented ? value -> keyPartitioner.getSegment(toKeyFunction.apply(value)) : value -> 0;
+   private <E> Function<E, Integer> groupingFunction(Function<E, Object> toKeyFunction) {
+      return value -> keyPartitioner.getSegment(toKeyFunction.apply(value));
    }
 
    /**
-    * Returns how many segments the user must worry about when segment or not. To be used with
-    * {@link #groupingFunction(Function, boolean)} to keep symmetry.
+    * Returns how many segments the user must worry about when segmented or not.
     * @param segmented whether the store is segmented
-    * @return how many segments this store must worry about
+    * @return how many segments the store must worry about
     */
    private int segmentCount(boolean segmented) {
       return segmented ? segmentCount : 1;

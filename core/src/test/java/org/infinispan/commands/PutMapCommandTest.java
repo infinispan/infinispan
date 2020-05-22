@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.TransactionMode;
@@ -17,14 +18,40 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "commands.PutMapCommandTest")
 public class PutMapCommandTest extends MultipleCacheManagersTest {
    protected int numberOfKeys = 10;
+   protected boolean includePersistence;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       dcc.clustering().hash().numOwners(1).l1().disable();
       dcc.locking().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      dcc.persistence()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class);
       createCluster(TestDataSCI.INSTANCE, dcc, 4);
       waitForClusterToForm();
+   }
+
+   PutMapCommandTest includePersistence(boolean includePersistence) {
+      this.includePersistence = includePersistence;
+      return this;
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return new Object[] { includePersistence };
+   }
+
+   @Override
+   protected String[] parameterNames() {
+      return new String[] {"persistance" };
+   }
+
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+            new PutMapCommandTest().includePersistence(false),
+            new PutMapCommandTest().includePersistence(true),
+      };
    }
 
    public void testPutOnNonOwner() {  //todo [anistor] this does not test putAll !

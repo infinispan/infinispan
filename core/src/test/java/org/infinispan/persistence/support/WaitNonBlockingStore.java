@@ -37,17 +37,9 @@ public interface WaitNonBlockingStore<K, V> extends NonBlockingStore<K, V> {
       join(write(segment, entry));
    }
 
-   default void bulkUpdate(int numSegments, Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
-      Publisher<MarshallableEntry<K, V>> castPublisher = (Publisher) publisher;
-      join(bulkWrite(numSegments, Flowable.fromPublisher(castPublisher)
-            .groupBy(me -> getKeyPartitioner().getSegment(me.getKey()))
-            .map(SegmentPublisherWrapper::new)));
-   }
-
-   default void deleteBatch(int numSegments, Iterable<Object> keys) {
-      join(bulkDelete(numSegments, Flowable.fromIterable(keys)
-            .groupBy(getKeyPartitioner()::getSegment)
-            .map(SegmentPublisherWrapper::new)));
+   default void batchUpdate(int publisherCount, Publisher<SegmentedPublisher<Object>> removePublisher,
+         Publisher<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
+      join(batch(publisherCount, removePublisher, writePublisher));
    }
 
    default boolean checkAvailable() {

@@ -15,7 +15,6 @@ import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -90,7 +89,7 @@ public interface NonBlockingStore<K, V> {
       /**
        * If this store supports only being read from. Write-based operations are never invoked on this store.
        * No optional methods map to this characteristic. The {@link #write(int, MarshallableEntry)},
-       * {@link #delete(int, Object)}, {@link #bulkWrite(int, Publisher)}, and {@link #bulkDelete(int, Publisher)} methods
+       * {@link #delete(int, Object)}, and {@link #batch(int, Publisher, Publisher)}  methods
        * are not invoked on stores with this characteristic.
        */
       READ_ONLY,
@@ -115,7 +114,7 @@ public interface NonBlockingStore<K, V> {
        * Stores of this type can participate in the actual transaction, if present.
        * <p>
        * Stores that have this characteristic must override the
-       * {@link #prepareWithModifications(Transaction, BatchModification)}, {@link #commit(Transaction)} and
+       * {@link #prepareWithModifications(Transaction, int, Publisher, Publisher)} , {@link #commit(Transaction)} and
        * {@link #rollback(Transaction)} methods.
        * <p>
        * This characteristic is ignored if the store also contains {@link #READ_ONLY}.
@@ -444,14 +443,18 @@ public interface NonBlockingStore<K, V> {
    CompletionStage<Void> clear();
 
    /**
-    * Writes the entries provided by the publisher into the underlying store. The Publisher will provide a
-    * {@link SegmentedPublisher} for every segment in the batch, which contains at least one entry that maps to
-    * the segment for the SegmentPublisher.
+    * Writes and removes the entries provided by the Publishers into the store. Both are provided in the same method
+    * so that a batch may be performed as a single atomic operation if desired, although it is up to the store to
+    * manage its batching. If needed a store may generate batches of a configured size by using the
+    * {@link StoreConfiguration#maxBatchSize()} setting.
     * <p>
-    * The publisher may publish up to {@code publisherCount} publishers where each publisher is separated by the segment
-    * each entry maps to. Failure to request at least {@code publisherCount} publishers from the Publisher may cause a
+    * Each of the {@code Publisher}s may publish up to {@code publisherCount} publishers where each
+    * publisher is separated by the segment each entry maps to. Failure to request at least {@code publisherCount} publishers from the Publisher may cause a
     * deadlock. Many reactive tools have methods such as {@code flatMap} that take an argument of how many concurrent
     * subscriptions it manages, which is perfectly matched with this argument.
+    * <p>
+    * WARNING: For performance reasons neither Publisher will emit any {@link SegmentedPublisher}s until both the write
+    * and remove Publisher are subscribed to. These Publishers should also be only subscribed to once.
     * <p>
     * <h4>Summary of Characteristics Effects</h4>
     * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
@@ -474,65 +477,33 @@ public interface NonBlockingStore<K, V> {
     * {@link PersistenceException} and the stage be completed exceptionally.
     * <p>
     * @implSpec
-    * The default implementation subscribes to the Publisher and simply invokes {@link #write(int, MarshallableEntry)}
-    * for each entry in the publishers encountered passing the segment it maps to.
-    * @param publisherCount how many SegmentedPublishers the provided Publisher may publish.
-    * @param publisher the publisher that provides a {@code SegmentedPublisher} for each segment containing entries.
-    * @return a stage that, when complete, indicates that the store has written the values.
+    * The default implementation subscribes to both Publishers but requests values from the write publisher invoking
+    * {@link #write(int, MarshallableEntry)} for each of the entries in a non overlapping sequential fashion. Once all
+    * of the writes are complete it does the same for the remove key Publisher but invokes {@link #delete(int, Object)}
+    * for each key.
+    * @param publisherCount the maximum number of {@code SegmentPublisher}s either publisher will publish
+    * @param removePublisher publishes what keys should be removed from the store
+    * @param writePublisher publishes the entries to write to the store
+    * @return a stage that when complete signals that the store has written the values
     */
-   default CompletionStage<Void> bulkWrite(int publisherCount, Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> publisher) {
-      return Flowable.fromPublisher(publisher)
-            .concatMapCompletable(sp ->
+   default CompletionStage<Void> batch(int publisherCount, Publisher<SegmentedPublisher<Object>> removePublisher,
+         Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
+      Flowable<Void> entriesWritten = Flowable.fromPublisher(writePublisher)
+            .concatMapEager(sp ->
                         Flowable.fromPublisher(sp)
                               .concatMapCompletable(me -> Completable.fromCompletionStage(write(sp.getSegment(), me)))
-                  , publisherCount)
-            .toCompletionStage(null);
-   }
-
-   /**
-    * Removes the entries for the keys provided by the publisher into the underlying store. The Publisher will provide a
-    * {@link SegmentedPublisher}, for every segment in the batch, which contains at least one key that maps to
-    * the segment for the SegmentPublisher.
-    * <p>
-    * The publisher may publish up to {@code publisherCount} publishers where each publisher is separated by the segment
-    * each entry maps to. Failure to request at least {@code publisherCount} publishers from the Publisher may cause a
-    * deadlock. Many reactive tools have methods such as {@code flatMap} that take an argument of how many concurrent
-    * subscriptions it manages, which is perfectly matched with this argument.
-    * <p>
-    * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
-    *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
-    *    </tr>
-    *    <tr>
-    *       <td valign="top">{@link Characteristic#READ_ONLY}</td>
-    *       <td valign="top">This method will never be invoked.</td>
-    *    </tr>
-    *    <tr>
-    *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">If not set, the provided {@code publisherCount} parameter has a value of 1,
-    *          which means there is only be one {@code SegmentedPublisher} to subscribe to.</td>
-    *    </tr>
-    * </table>
-    * <p>
-    * If a problem is encountered, it is recommended to wrap any created/caught Throwable in a
-    * {@link PersistenceException} and the stage be completed exceptionally.
-    * <p>
-    * @implSpec
-    * The default implementation subscribes to the Publisher and simply invokes {@link #delete(int, Object)}
-    * for each entry in the publishers encountered passing the segment it maps to.
-    * @param publisherCount how many SegmentedPublishers the provided Publisher may publish.
-    * @param publisher the publisher that provides a {@code SegmentedPublisher} for each segment containing entries.
-    * @return a stage that, when complete, indicates that the store has deleted the values.
-    */
-   default CompletionStage<Void> bulkDelete(int publisherCount, Publisher<SegmentedPublisher<Object>> publisher) {
-      return Flowable.fromPublisher(publisher)
-            .concatMapCompletable(sp ->
+                              .toFlowable()
+                  , publisherCount, publisherCount);
+      Flowable<Void> removedKeys = Flowable.fromPublisher(removePublisher)
+            .concatMapEager(sp ->
                         Flowable.fromPublisher(sp)
-                              .concatMapCompletable(obj -> Completable.fromCompletionStage(delete(sp.getSegment(), obj)))
-                  , publisherCount)
-            .toCompletionStage(null);
+                              .concatMapCompletable(key -> Completable.fromCompletionStage(delete(sp.getSegment(), key)))
+                              .toFlowable()
+                  , publisherCount, publisherCount);
+      // Note that removed is done after write has completed, but is subscribed eagerly. This makes sure there is only
+      // one pending write or remove.
+      return Flowable.concatArrayEager(entriesWritten, removedKeys)
+            .firstStage(null);
    }
 
    /**
@@ -713,9 +684,17 @@ public interface NonBlockingStore<K, V> {
    }
 
    /**
-    * Write modifications to the store in the prepare phase, which are not yet persisted until the same transaction
-    * is committed via {@link #commit(Transaction)} or they are discarded if the transaction is rolled back via
+    * Write remove and put modifications to the store in the prepare phase, which should not yet persisted until the
+    * same transaction is committed via {@link #commit(Transaction)} or they are discarded if the transaction is rolled back via
     * {@link #rollback(Transaction)}.
+    * <p>
+    * Each of the {@code Publisher}s may publish up to {@code publisherCount} publishers where each
+    * publisher is separated by the segment each entry maps to. Failure to request at least {@code publisherCount} publishers from the Publisher may cause a
+    * deadlock. Many reactive tools have methods such as {@code flatMap} that take an argument of how many concurrent
+    * subscriptions it manages, which is perfectly matched with this argument.
+    * <p>
+    * WARNING: For performance reasons neither Publisher will emit any {@link SegmentedPublisher}s until both the write
+    * and remove Publisher are subscribed to. These Publishers should also be only subscribed to once.
     * <p>
     * <h4>Summary of Characteristics Effects</h4>
     * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
@@ -731,14 +710,15 @@ public interface NonBlockingStore<K, V> {
     * <p>
     * If a problem is encountered, it is recommended to wrap any created/caught Throwable in a
     * {@link PersistenceException} and the stage be completed exceptionally.
-    * <p>
-    * This method will most likely change as the {@link BatchModification} does not contain the segment information
-    * required for the store to map the entries to.
     * @param transaction the current transactional context.
-    * @param batchModification an object that contains the write/remove operations required for this transaction.
+    * @param publisherCount the maximum number of {@code SegmentPublisher}s either publisher will publish
+    * @param removePublisher publishes what keys should be removed from the store
+    * @param writePublisher publishes the entries to write to the store
+    * @return a stage that when complete signals that the store has written the values
     */
-   @Experimental
-   default CompletionStage<Void> prepareWithModifications(Transaction transaction, BatchModification batchModification) {
+   default CompletionStage<Void> prepareWithModifications(Transaction transaction, int publisherCount,
+         Publisher<SegmentedPublisher<Object>> removePublisher,
+         Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
       throw new UnsupportedOperationException("Store characteristic included " + Characteristic.TRANSACTIONAL + ", but it does not implement prepareWithModifications");
    }
 

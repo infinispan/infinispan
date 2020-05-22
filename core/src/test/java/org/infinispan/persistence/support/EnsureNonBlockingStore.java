@@ -9,6 +9,7 @@ import org.infinispan.commons.test.BlockHoundHelper;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -66,13 +67,9 @@ public abstract class EnsureNonBlockingStore<K, V> extends DelegatingNonBlocking
    }
 
    @Override
-   public CompletionStage<Void> bulkWrite(int publisherCount, Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> publisher) {
-      return BlockHoundHelper.ensureNonBlocking(() -> delegate().bulkWrite(publisherCount, publisher));
-   }
-
-   @Override
-   public CompletionStage<Void> bulkDelete(int publisherCount, Publisher<SegmentedPublisher<Object>> publisher) {
-      return BlockHoundHelper.ensureNonBlocking(() -> delegate().bulkDelete(publisherCount, publisher));
+   public CompletionStage<Void> batch(int publisherCount, Publisher<NonBlockingStore.SegmentedPublisher<Object>> removePublisher,
+         Publisher<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
+      return BlockHoundHelper.ensureNonBlocking(() -> delegate().batch(publisherCount, removePublisher, writePublisher));
    }
 
    @Override
@@ -107,8 +104,11 @@ public abstract class EnsureNonBlockingStore<K, V> extends DelegatingNonBlocking
    }
 
    @Override
-   public CompletionStage<Void> prepareWithModifications(Transaction transaction, BatchModification batchModification) {
-      return BlockHoundHelper.ensureNonBlocking(() -> delegate().prepareWithModifications(transaction, batchModification));
+   public CompletionStage<Void> prepareWithModifications(Transaction transaction, int publisherCount,
+         Publisher<SegmentedPublisher<Object>> removePublisher,
+         Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
+      return BlockHoundHelper.ensureNonBlocking(() -> delegate().prepareWithModifications(transaction, publisherCount,
+            removePublisher, writePublisher));
    }
 
    @Override

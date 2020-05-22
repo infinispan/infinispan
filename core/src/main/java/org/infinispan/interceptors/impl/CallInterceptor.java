@@ -234,6 +234,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          o = null;
       }
       e.setChanged(true);
+      updateStoreFlags(command, e);
       // Return the expected value when retrying a putIfAbsent command (i.e. null)
       return delayedValue(stage, valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW ? o : null);
    }
@@ -264,6 +265,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
                e.setEvicted(true);
             }
             e.setValue(null);
+            updateStoreFlags(command, e);
             return command.isConditional() ? true : null;
          } else {
             log.trace("Nothing to remove since the entry doesn't exist in the context or it is null");
@@ -307,6 +309,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          returnValue = command.isConditional() ? true : optionalValue;
       }
 
+      updateStoreFlags(command, e);
+
       return delayedValue(stage, returnValue);
    }
 
@@ -336,6 +340,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
                expectedValue == null ? prevValue : expectedValue, prevMetadata, true, ctx, command);
 
          Metadatas.updateMetadata(e, newMetadata);
+
+         updateStoreFlags(command, e);
 
          return delayedValue(stage, expectedValue == null ? prevValue : true);
       }
@@ -401,6 +407,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
             e.setRemoved(false);
          }
       }
+      updateStoreFlags(command, e);
       return delayedValue(stage, newValue);
    }
 
@@ -439,6 +446,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
             }
             e.setChanged(true);
          }
+         updateStoreFlags(command, e);
       } else {
          command.fail();
       }
@@ -499,6 +507,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
             contextEntry.setValue(newValue);
             Metadatas.updateMetadata(contextEntry, metadata);
             contextEntry.setChanged(true);
+
+            updateStoreFlags(command, contextEntry);
          }
       }
 
@@ -888,7 +898,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
-      CacheEntry e = ctx.lookupEntry(command.getKey());
+      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(command.getKey());
 
       // Could be that the key is not local
       if (e == null) return null;
@@ -900,6 +910,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       if (!e.isChanged() && !command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.fail();
       }
+      updateStoreFlags(command, e);
       return Param.StatisticsMode.isSkip(command.getParams()) ? null : StatsEnvelope.create(null, e, exists, false);
    }
 
@@ -954,6 +965,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       if (!e.isChanged() && !hasCommandRetry) {
          command.fail();
       }
+      updateStoreFlags(command, e);
       return Param.StatisticsMode.isSkip(command.getParams()) ? ret : StatsEnvelope.create(ret, e, prevValue != null, view.isRead());
    }
 
@@ -979,6 +991,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       if (!e.isChanged() && !command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.fail();
       }
+      updateStoreFlags(command, e);
       return Param.StatisticsMode.isSkip(command.getParams()) ? ret : StatsEnvelope.create(ret, e, exists, view.isRead());
    }
 
@@ -987,12 +1000,13 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       Map<Object, Object> arguments = command.getArguments();
       DataConversion valueDataConversion = command.getValueDataConversion();
       for (Map.Entry entry : arguments.entrySet()) {
-         CacheEntry cacheEntry = ctx.lookupEntry(entry.getKey());
+         MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(entry.getKey());
 
          // Could be that the key is not local, 'null' is how this is signalled
          if (cacheEntry == null) {
             throw new IllegalStateException();
          }
+         updateStoreFlags(command, cacheEntry);
          Object decodedValue = valueDataConversion.fromStorage(entry.getValue());
          command.getBiConsumer().accept(decodedValue, EntryViews.writeOnly(cacheEntry, valueDataConversion));
       }
@@ -1001,7 +1015,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
-      CacheEntry e = ctx.lookupEntry(command.getKey());
+      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(command.getKey());
 
       // Could be that the key is not local
       if (e == null) return null;
@@ -1014,6 +1028,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       if (!e.isChanged() && !command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.fail();
       }
+      updateStoreFlags(command, e);
       return Param.StatisticsMode.isSkip(command.getParams()) ? null : StatsEnvelope.create(null, e, exists, false);
    }
 
@@ -1022,10 +1037,11 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       Consumer consumer = command.getConsumer();
       DataConversion valueDataConversion = command.getValueDataConversion();
       for (Object k : command.getAffectedKeys()) {
-         CacheEntry cacheEntry = ctx.lookupEntry(k);
+         MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(k);
          if (cacheEntry == null) {
             throw new IllegalStateException();
          }
+         updateStoreFlags(command, cacheEntry);
          consumer.accept(EntryViews.writeOnly(cacheEntry, valueDataConversion));
       }
       return null;
@@ -1050,6 +1066,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          EntryViews.AccessLoggingReadWriteView view = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
          Object r = snapshot(function.apply(view));
          returns.add(skipStats ? r : StatsEnvelope.create(r, entry, exists, view.isRead()));
+         updateStoreFlags(command, entry);
       });
       return returns;
    }
@@ -1073,8 +1090,15 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          EntryViews.AccessLoggingReadWriteView view = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
          Object r = snapshot(biFunction.apply(decodedArgument, view));
          returns.add(skipStats ? r : StatsEnvelope.create(r, entry, exists, view.isRead()));
+         updateStoreFlags(command, entry);
       });
       return returns;
+   }
+
+   private void updateStoreFlags(FlagAffectedCommand command, MVCCEntry e) {
+      if (command.hasAnyFlag(FlagBitSets.SKIP_SHARED_CACHE_STORE)) {
+         e.setSkipSharedStore();
+      }
    }
 
    static class BackingEntrySet<K, V> extends AbstractCollection<CacheEntry<K, V>> implements CacheSet<CacheEntry<K, V>> {
