@@ -143,7 +143,7 @@
       </xs:attribute>
       <xs:attribute name="new-connection-sql" type="xs:token">
          <xs:annotation>
-            <xs:documentation>SQL statement to be executed on a connection after creation,]]></xs:documentation>
+            <xs:documentation>SQL statement to be executed on a connection after creation</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="username" type="xs:token">
