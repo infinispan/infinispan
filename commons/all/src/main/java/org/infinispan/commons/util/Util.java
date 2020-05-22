@@ -665,14 +665,12 @@ public final class Util {
       if (input == null)
          return "null";
 
-      int length = limit - offset;
+      int length = Math.min(limit - offset, input.length - offset);
       char[] result = new char[length * 2];
 
-      int i = 0;
-      while ((i + offset) < limit && (i + offset) < input.length) {
+      for (int i = 0; i < length; ++i) {
          result[2*i] = HEX_VALUES.charAt((input[i + offset] >> 4) & 0x0F);
          result[2*i+1] = HEX_VALUES.charAt((input[i + offset] & 0x0F));
-         i++;
       }
       return String.valueOf(result);
    }
