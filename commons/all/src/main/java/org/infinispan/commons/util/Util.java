@@ -1053,7 +1053,7 @@ public final class Util {
          public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
             try {
                if (!source.equals(dir)) {
-                  Path relativize = source.relativize(dir);
+                  String relativize = source.relativize(dir).toString();
                   Path resolve = target.resolve(relativize);
                   Files.copy(dir, resolve);
                }
@@ -1067,7 +1067,7 @@ public final class Util {
 
          @Override
          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            Files.copy(file, target.resolve(source.relativize(file)));
+            Files.copy(file, target.resolve(source.relativize(file).toString()));
             return FileVisitResult.CONTINUE;
          }
 

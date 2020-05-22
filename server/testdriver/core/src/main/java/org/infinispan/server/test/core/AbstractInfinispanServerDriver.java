@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,6 +22,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -123,23 +128,35 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    }
 
    private void copyProvidedServerConfigurationFile() {
-      URL configurationFileURL;
-      if (new File(configuration.configurationFile()).isAbsolute()) {
-         configurationFileURL = Exceptions.unchecked(() -> new File(configuration.configurationFile()).toURI().toURL());
-      } else {
-         configurationFileURL = getClass().getClassLoader().getResource(configuration.configurationFile());
+      ClassLoader classLoader = getClass().getClassLoader();
+      File configFile = new File(configuration.configurationFile());
+      if (configFile.isAbsolute()) {
+         Path source = Paths.get(configFile.getParentFile().getAbsolutePath());
+         Exceptions.unchecked(() -> Util.recursiveDirectoryCopy(source, confDir.toPath()));
+         return;
       }
-      if (configurationFileURL == null) {
+
+      URL resourceUrl = classLoader.getResource(configuration.configurationFile());
+      if (resourceUrl == null) {
          throw new RuntimeException("Cannot find test configuration file: " + configuration.configurationFile());
       }
-      Path configurationFilePath;
-      try {
-         configurationFilePath = Paths.get(configurationFileURL.toURI());
-         // Recursively copy the contents of the directory containing the configuration file to the test target
-         Util.recursiveDirectoryCopy(configurationFilePath.getParent(), confDir.toPath());
-      } catch (Exception e) {
-         throw new RuntimeException(e);
-      }
+      Exceptions.unchecked(() -> {
+         if (resourceUrl.getProtocol().equals("jar")) {
+            Map<String, String> env = new HashMap<>();
+            env.put("create", "true");
+            // If the resourceUrl is a path in a JAR, we must create a filesystem to avoid a FileSystemNotFoundException
+            String[] parts = resourceUrl.toString().split("!");
+            URI jarUri = new URI(parts[0]);
+            try (FileSystem fs = FileSystems.newFileSystem(jarUri, env)) {
+               String configJarPath  = new File(parts[1]).getParentFile().toString();
+               Path source = fs.getPath(configJarPath);
+               Util.recursiveDirectoryCopy(source, confDir.toPath());
+            }
+         } else {
+            Path source = Paths.get(resourceUrl.toURI().resolve("."));
+            Util.recursiveDirectoryCopy(source, confDir.toPath());
+         }
+      });
    }
 
    protected static File createServerHierarchy(File baseDir) {
