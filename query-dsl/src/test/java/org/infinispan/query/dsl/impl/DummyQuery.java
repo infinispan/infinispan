@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.OptionalLong;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.Query;
@@ -49,6 +50,11 @@ class DummyQuery<T> implements Query<T> {
             throw new NoSuchElementException();
          }
       };
+   }
+
+   @Override
+   public Query<T> timeout(long timeout, TimeUnit timeUnit) {
+      return this;
    }
 
    @Override

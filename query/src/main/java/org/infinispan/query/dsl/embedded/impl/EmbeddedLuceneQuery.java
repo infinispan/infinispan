@@ -3,6 +3,7 @@ package org.infinispan.query.dsl.embedded.impl;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -69,6 +70,8 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
       if (cacheQuery == null) {
          validateNamedParameters();
          cacheQuery = queryEngine.buildLuceneQuery(parsingResult, namedParameters, startOffset, maxResults, queryMode);
+         if (timeout > 0)
+            cacheQuery.timeout(timeout, TimeUnit.NANOSECONDS);
       }
       return cacheQuery;
    }

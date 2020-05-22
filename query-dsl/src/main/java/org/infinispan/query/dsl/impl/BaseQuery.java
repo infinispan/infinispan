@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -32,6 +33,8 @@ public abstract class BaseQuery<T> implements Query<T> {
    protected int startOffset;
 
    protected int maxResults;
+
+   protected long timeout = -1;
 
    //todo [anistor] can startOffset really be a long or it really has to be int due to limitations in query module?
    protected BaseQuery(QueryFactory queryFactory, String queryString,
@@ -173,6 +176,12 @@ public abstract class BaseQuery<T> implements Query<T> {
    public Query<T> maxResults(int maxResults) {
       this.maxResults = maxResults;
       resetQuery();
+      return this;
+   }
+
+   @Override
+   public Query<T> timeout(long timeout, TimeUnit timeUnit) {
+      this.timeout = timeUnit.toNanos(timeout);
       return this;
    }
 }

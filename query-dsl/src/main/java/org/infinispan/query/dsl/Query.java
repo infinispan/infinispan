@@ -2,8 +2,10 @@ package org.infinispan.query.dsl;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.query.SearchTimeoutException;
 
 //todo [anistor] We need to deprecate the 'always caching' behaviour and provide a clearCachedResults method
 
@@ -91,4 +93,10 @@ public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, Para
     * @return the results of the query as an iterator.
     */
    CloseableIterator<T> iterator();
+
+   /**
+    *  Set the timeout for this query. If the query hasn't finished processing before the timeout,
+    *  a {@link SearchTimeoutException} will be thrown.
+    */
+   Query<T> timeout(long timeout, TimeUnit timeUnit);
 }

@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -93,6 +94,9 @@ public final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
       // the query is created first time only
       if (query == null) {
          query = queryEngine.buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults, queryMode);
+         if (timeout > 0) {
+            query.timeout(timeout, TimeUnit.NANOSECONDS);
+         }
       }
       return query;
    }

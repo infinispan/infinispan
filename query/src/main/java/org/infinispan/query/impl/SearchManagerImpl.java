@@ -15,12 +15,12 @@ import org.hibernate.search.stat.Statistics;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.MassIndexer;
+import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.spi.SearchManagerImplementor;
-import org.infinispan.util.concurrent.TimeoutException;
 
 /**
  * Class that is used to build a {@link org.infinispan.query.CacheQuery} based on a Lucene or an Ickle query, only for
@@ -55,7 +55,7 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
       this.keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
       this.queryEngine = queryEngine;
       this.massIndexer = (MassIndexer) ComponentRegistryUtils.getIndexer(cache);
-      this.timeoutExceptionFactory = (msg, q) -> new TimeoutException(msg + " \"" + q + '\"');
+      this.timeoutExceptionFactory = (msg, q) -> new SearchTimeoutException(msg + " \"" + q + '\"');
    }
 
    @Override
