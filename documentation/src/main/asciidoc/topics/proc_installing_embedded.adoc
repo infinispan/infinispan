@@ -1,5 +1,4 @@
 [id='install_library']
-//Community
 = Installing {brandname} in Library Mode
 Add {brandname} as an embedded library in your project.
 

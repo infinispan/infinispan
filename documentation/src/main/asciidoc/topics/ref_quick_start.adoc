@@ -1,0 +1,40 @@
+[id='quick_start']
+= Get Up and Running with {brandname}
+It's easy to get started with {brandname}. All you need is Java, dependency
+management tooling, and either the {brandname} server or core libraries.
+
+== Software Requirements
+
+To run {brandname}, you'll need:
+
+* Java 1.8 JDK at a minimum. {brandname} recommends JDK 11 but also works with JDK 14.
+* Maven 3.2 or later. {brandname} also works with Gradle and Ivy.
+
+== JDK
+Choose your Java runtime and follow their installation instructions. For example, you could choose:
+
+*  link:http://openjdk.java.net/install/[OpenJDK]
+*  link:http://www.java.com/en/download/manual.jsp[Oracle Java SE]
+
+== Maven
+Run `mvn --version` to check your current Maven version. If you have Maven 3.2
+or later, you are ready to go.
+
+If you need to install Maven, visit link:https://maven.apache.org/install.html[https://maven.apache.org/install.html].
+
+== Getting {brandname}
+To start using {brandname}, you can:
+
+* Download the {brandname} server distribution. Visit the link:https://infinispan.org/download/[Download {brandname}] page to get a stable or development version.
+* Pull the link:https://quay.io/repository/infinispan/server?tab=tags[{brandname} server image].
+* Add the `infinispan-core` artifact to your `pom.xml` and use {brandname} directly in your project. See link:{library_docs}[Embedding {brandname}] for more information.
+
+== {brandname} Tutorials
+{brandname} provides a set of tutorials that demonstrate various capabilities
+in a few easy steps.
+
+Clone the tutorial repository as follows:
+
+----
+$ git clone git@github.com:infinispan/infinispan-simple-tutorials.git
+----
