@@ -40,6 +40,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.container.DataContainer;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.manager.CacheContainer;
@@ -763,6 +764,14 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected LockManager lockManager(int i, String cacheName) {
       return TestingUtil.extractLockManager(getCache(i, cacheName));
+   }
+
+   protected LocalizedCacheTopology cacheTopology(int i) {
+      return TestingUtil.extractCacheTopology(cache(i));
+   }
+
+   protected LocalizedCacheTopology cacheTopology(int i, String cacheName) {
+      return TestingUtil.extractCacheTopology(cache(i, cacheName));
    }
 
    public List<EmbeddedCacheManager> getCacheManagers() {

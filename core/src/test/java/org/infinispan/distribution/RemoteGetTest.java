@@ -1,5 +1,7 @@
 package org.infinispan.distribution;
 
+import static org.infinispan.test.TestingUtil.extractCacheTopology;
+
 import java.util.List;
 
 import org.infinispan.Cache;
@@ -41,7 +43,7 @@ public class RemoteGetTest extends MultipleCacheManagersTest {
       Cache<MagicKey, String> c3 = cache(2);
       MagicKey k = new MagicKey(c1, c2);
 
-      List<Address> owners = c1.getAdvancedCache().getDistributionManager().locate(k);
+      List<Address> owners = extractCacheTopology(c1).getDistribution(k).writeOwners();
 
       assert owners.size() == 2: "Key should have 2 owners";
 

@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -72,8 +73,8 @@ public abstract class AbstractClusterListenerNonTxTest extends AbstractClusterLi
       // Since the first event was generated properly it is a create without retry
       checkEvent(clusterListener.events.get(0), key, true, false);
 
-      Address cache0primary = cache0.getAdvancedCache().getDistributionManager().getPrimaryLocation(key);
-      Address cache2primary = cache2.getAdvancedCache().getDistributionManager().getPrimaryLocation(key);
+      Address cache0primary = extractCacheTopology(cache0).getDistribution(key).primary();
+      Address cache2primary = extractCacheTopology(cache2).getDistribution(key).primary();
       // we expect that now both nodes have the same topology
       assertEquals(cache0primary, cache2primary);
 

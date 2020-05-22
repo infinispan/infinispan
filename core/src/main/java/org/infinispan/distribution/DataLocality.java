@@ -7,6 +7,7 @@ package org.infinispan.distribution;
  * @author Manik Surtani
  * @author Mircea Markus
  * @since 4.2.1
+ * @deprecated Since 11.0. Will be removed in 14.0, no longer used.
  */
 public enum DataLocality {
    LOCAL(true,false),
@@ -19,7 +20,7 @@ public enum DataLocality {
 
    private final boolean local, uncertain;
 
-   private DataLocality(boolean local, boolean uncertain) {
+   DataLocality(boolean local, boolean uncertain) {
       this.local = local;
       this.uncertain = uncertain;
    }

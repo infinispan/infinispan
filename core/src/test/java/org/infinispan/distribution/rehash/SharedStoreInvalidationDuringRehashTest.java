@@ -158,7 +158,7 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
 
          for (int j = 0; j < NUM_KEYS; j++) {
             String key = "key" + j;
-            if (!dm.getLocality(key).isLocal()) {
+            if (!dm.getCacheTopology().isReadOwner(key)) {
                if (!cacheMode.isScattered()) {
                   assertFalse("Key '" + key + "' is not owned by node " + address(i) + " but it still appears there",
                         dataContainer.containsKey(key));

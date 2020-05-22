@@ -45,8 +45,8 @@ public class SinglePhaseCommitForPessimisticCachesTest extends MultipleCacheMana
       final Object k0_2 = getKeyForCache(0);
 
       final List<Address> members = advancedCache(0).getRpcManager().getTransport().getMembers();
-      assert advancedCache(0).getDistributionManager().locate(k0_1).containsAll(members);
-      assert advancedCache(0).getDistributionManager().locate(k0_2).containsAll(members);
+      assert cacheTopology(0).getDistribution(k0_1).writeOwners().containsAll(members);
+      assert cacheTopology(0).getDistribution(k0_2).writeOwners().containsAll(members);
       TxCountInterceptor interceptor0 = new TxCountInterceptor();
       TxCountInterceptor interceptor1 = new TxCountInterceptor();
       extractInterceptorChain(advancedCache(0)).addInterceptor(interceptor0, 1);

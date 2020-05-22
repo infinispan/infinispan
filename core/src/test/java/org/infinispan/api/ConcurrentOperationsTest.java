@@ -124,7 +124,7 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
                   log.tracef("Checking correctness for iteration %s", i);
                   print("Checking correctness");
 
-                  List<Address> owners = advancedCache(0).getDistributionManager().locate("k");
+                  List<Address> owners = cacheTopology(0).getDistribution("k").writeOwners();
                   if (!checkOwners(owners)) {
                      correctness.set(false);
                   }

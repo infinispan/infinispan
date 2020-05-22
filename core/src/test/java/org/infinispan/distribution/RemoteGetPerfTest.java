@@ -20,7 +20,7 @@ public class RemoteGetPerfTest extends MultipleCacheManagersTest {
 
    public void testRepeatedRemoteGet() {
       String key = "key";
-      List<Address> owners = cache(0).getAdvancedCache().getDistributionManager().locate(key);
+      List<Address> owners = cacheTopology(0).getDistribution(key).writeOwners();
       Cache<Object, Object> nonOwnerCache = caches().stream()
                                                     .filter(c -> !owners.contains(address(c)))
                                                     .findAny()

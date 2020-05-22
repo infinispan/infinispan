@@ -105,7 +105,7 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
          for (int j = 0; j < NUM_KEYS; j++) {
             String key = "key" + j;
             // each key must only occur once (numOwners is one)
-            if (dm.getLocality(key).isLocal()) {
+            if (dm.getCacheTopology().isReadOwner(key)) {
                assertTrue("Key '" + key + "' is owned by node " + address(i) + " but it doesn't appear there",
                      dataContainer.containsKey(key));
             } else {

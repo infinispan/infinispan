@@ -13,22 +13,17 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.Group;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.remoting.transport.Address;
 
 @Scope(Scopes.NAMED_CACHE)
 public class GroupManagerImpl implements GroupManager {
 
    @Inject ComponentRegistry componentRegistry;
-   // This can't be injected due to circular dependency with DistributionManager when using a GroupingPartitioner
-   private DistributionManager distributionManager;
 
    private final ConcurrentMap<Class<?>, GroupMetadata> groupMetadataCache;
    private final List<Grouper<?>> groupers;
@@ -41,11 +36,6 @@ public class GroupManagerImpl implements GroupManager {
          this.groupers = Collections.emptyList();
    }
 
-   @Start
-   public void start() {
-      distributionManager = componentRegistry.getDistributionManager();
-   }
-
    @Override
    public Object getGroup(Object key) {
       GroupMetadata metadata = getMetadata(key);
@@ -53,21 +43,6 @@ public class GroupManagerImpl implements GroupManager {
          return applyGroupers(metadata.getGroup(key), key);
       } else
          return applyGroupers(null, key);
-   }
-
-   @Override
-   public boolean isOwner(Object group) {
-      return distributionManager.getCacheTopology().isWriteOwner(group);
-   }
-
-   @Override
-   public Address getPrimaryOwner(Object group) {
-      return distributionManager.getCacheTopology().getDistribution(group).primary();
-   }
-
-   @Override
-   public boolean isPrimaryOwner(Object group) {
-      return distributionManager.getCacheTopology().getDistribution(group).isPrimary();
    }
 
    private interface GroupMetadata {

@@ -2,8 +2,6 @@ package org.infinispan.interceptors.locking;
 
 import static org.infinispan.transaction.impl.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -82,8 +80,8 @@ public interface ClusteringDependentLogic {
        */
       COMMIT_LOCAL(true, true);
 
-      private boolean commit;
-      private boolean local;
+      private final boolean commit;
+      private final boolean local;
 
       Commit(boolean commit, boolean local) {
          this.commit = commit;
@@ -110,30 +108,6 @@ public interface ClusteringDependentLogic {
    LocalizedCacheTopology getCacheTopology();
 
    /**
-    * @deprecated Since 9.0, please use {@code getCacheTopology().isWriteOwner(key)} instead.
-    */
-   @Deprecated
-   default boolean localNodeIsOwner(Object key) {
-      return getCacheTopology().isWriteOwner(key);
-   }
-
-   /**
-    * @deprecated Since 9.0, please use {@code getCacheTopology().getDistribution(key).isPrimary()} instead.
-    */
-   @Deprecated
-   default boolean localNodeIsPrimaryOwner(Object key) {
-      return getCacheTopology().getDistribution(key).isPrimary();
-   }
-
-   /**
-    * @deprecated Since 9.0, please use {@code getCacheTopology().getDistributionInfo(key).primary()} instead.
-    */
-   @Deprecated
-   default Address getPrimaryOwner(Object key) {
-      return getCacheTopology().getDistribution(key).primary();
-   }
-
-   /**
     * Commits the entry to the data container. The commit operation is always done synchronously in the current thread.
     * However notifications for said operations can be performed asynchronously and the returned CompletionStage will
     * complete when the notifications if any are completed.
@@ -156,22 +130,6 @@ public interface ClusteringDependentLogic {
     * @return
     */
    Commit commitType(FlagAffectedCommand command, InvocationContext ctx, int segment, boolean removed);
-
-   /**
-    * @deprecated Since 9.0, please use {@code getCacheTopology().getWriteOwners(keys)} instead.
-    */
-   @Deprecated
-   default Collection<Address> getOwners(Collection<Object> keys) {
-      return getCacheTopology().getWriteOwners(keys);
-   }
-
-   /**
-    * @deprecated Since 9.0, please use {@code getCacheTopology().getWriteOwners(key)} instead.
-    */
-   @Deprecated
-   default Collection<Address> getOwners(Object key) {
-      return getCacheTopology().getWriteOwners(key);
-   }
 
 
    CompletionStage<Map<Object, IncrementableEntryVersion>> createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand);
@@ -441,19 +399,6 @@ public interface ClusteringDependentLogic {
 
       private final WriteSkewHelper.KeySpecificLogic localNodeIsPrimaryOwner =
             segment -> getCacheTopology().getSegmentDistribution(segment).isPrimary();
-
-      @Override
-      public Collection<Address> getOwners(Object key) {
-         return null;
-      }
-
-      @Override
-      public Collection<Address> getOwners(Collection<Object> keys) {
-         if (keys.isEmpty())
-            return Collections.emptyList();
-
-         return null;
-      }
 
       @Override
       public Commit commitType(FlagAffectedCommand command, InvocationContext ctx, int segment, boolean removed) {

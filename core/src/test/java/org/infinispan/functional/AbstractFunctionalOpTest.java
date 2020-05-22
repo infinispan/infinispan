@@ -154,7 +154,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
          // this is more complicated: we need a key that is *not* local to the originating node
          key = IntStream.iterate(0, i -> i + 1)
                .mapToObj(i -> "key" + i)
-               .filter(k -> !cache(0, cacheName).getAdvancedCache().getDistributionManager().getLocality(k).isLocal())
+               .filter(k -> !advancedCache(0, cacheName).getDistributionManager().getCacheTopology().isReadOwner(k))
                .findAny()
                .get();
       }
@@ -315,7 +315,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
    }
 
    protected static class CommandCachingInterceptor extends BaseCustomAsyncInterceptor {
-      private static ThreadLocal<VisitableCommand> current = new ThreadLocal<>();
+      private static final ThreadLocal<VisitableCommand> current = new ThreadLocal<>();
 
       public static VisitableCommand getCurrent() {
          return current.get();

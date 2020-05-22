@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "functional.FunctionalTxInMemoryTest")
 public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
    private static final int NUM_KEYS = 2;
-   private static final Integer[] INT_KEYS = IntStream.range(0, NUM_KEYS).mapToObj(Integer::valueOf).toArray(Integer[]::new);
+   private static final Integer[] INT_KEYS = IntStream.range(0, NUM_KEYS).boxed().toArray(Integer[]::new);
    TransactionManager tm;
 
    @Override
@@ -211,7 +211,7 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
    private Object[] getKeys(boolean isOwner, int num) {
       return IntStream.iterate(0, i -> i + 1)
             .mapToObj(i -> "key" + i)
-            .filter(k -> cache(0, DIST).getAdvancedCache().getDistributionManager().getLocality(k).isLocal() == isOwner)
+            .filter(k -> cache(0, DIST).getAdvancedCache().getDistributionManager().getCacheTopology().isReadOwner(k) == isOwner)
             .limit(num).toArray(Object[]::new);
    }
 }

@@ -81,6 +81,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -154,7 +155,7 @@ public class TestingUtil {
    private static final Log log = LogFactory.getLog(TestingUtil.class);
    private static final Random random = new Random();
    private static final int SHORT_TIMEOUT_MILLIS = Integer.getInteger("infinispan.test.shortTimeoutMillis", 500);
-   private static ScheduledExecutorService timeoutExecutor;
+   private static final ScheduledExecutorService timeoutExecutor;
 
    static {
       ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, r -> {
@@ -1063,6 +1064,10 @@ public class TestingUtil {
       return extractComponent(cache, AsyncInterceptorChain.class);
    }
 
+   public static <K> LocalizedCacheTopology extractCacheTopology(Cache<K, ?> cache) {
+      return cache.getAdvancedCache().getDistributionManager().getCacheTopology();
+   }
+
    /**
     * Add a hook to cache startup sequence that will allow to replace existing component with a mock.
     */
@@ -1777,11 +1782,8 @@ public class TestingUtil {
             return false;
          TestPrincipal other = (TestPrincipal) obj;
          if (name == null) {
-            if (other.name != null)
-               return false;
-         } else if (!name.equals(other.name))
-            return false;
-         return true;
+            return other.name == null;
+         } else return name.equals(other.name);
       }
    }
 
