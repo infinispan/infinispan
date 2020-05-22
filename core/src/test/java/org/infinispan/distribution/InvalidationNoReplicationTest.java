@@ -36,8 +36,8 @@ public class InvalidationNoReplicationTest extends MultipleCacheManagersTest {
 
    public void testInvalidation() throws Exception {
 
-      assertEquals(Collections.singletonList(address(0)), advancedCache(0).getDistributionManager().locate(k0));
-      assertEquals(Collections.singletonList(address(0)), advancedCache(1).getDistributionManager().locate(k0));
+      assertEquals(Collections.singletonList(address(0)), cacheTopology(0).getDistribution(k0).writeOwners());
+      assertEquals(Collections.singletonList(address(0)), cacheTopology(1).getDistribution(k0).writeOwners());
 
       advancedCache(1).put(k0, "k1");
       assertTrue(advancedCache(1).getDataContainer().containsKey(k0));

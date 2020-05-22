@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.infinispan.Cache;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 /**
@@ -37,7 +38,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
       Object key = getKey(isSourceOwner, DIST);
 
       List<Cache<Object, Object>> owners = caches(DIST).stream()
-            .filter(cache -> cache.getAdvancedCache().getDistributionManager().getLocality(key).isLocal())
+            .filter(cache -> cache.getAdvancedCache().getDistributionManager().getCacheTopology().isReadOwner(key))
             .collect(Collectors.toList());
 
       method.eval(key, wo, rw,
@@ -74,7 +75,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
    }
 
    public DummyInMemoryStore getStore(Cache cache) {
-      Set<DummyInMemoryStore> stores = cache.getAdvancedCache().getComponentRegistry().getComponent(PersistenceManager.class).getStores(DummyInMemoryStore.class);
+      Set<DummyInMemoryStore> stores = TestingUtil.extractComponent(cache, PersistenceManager.class).getStores(DummyInMemoryStore.class);
       return stores.iterator().next();
    }
 
@@ -111,7 +112,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
    public void testReadLoad(boolean isSourceOwner, ReadMethod method) {
       Object key = getKey(isSourceOwner, DIST);
       List<Cache<Object, Object>> owners = caches(DIST).stream()
-            .filter(cache -> cache.getAdvancedCache().getDistributionManager().getLocality(key).isLocal())
+            .filter(cache -> cache.getAdvancedCache().getDistributionManager().getCacheTopology().isReadOwner(key))
             .collect(Collectors.toList());
 
       assertTrue(method.eval(key, ro, view -> { assertFalse(view.find().isPresent()); return true; }));

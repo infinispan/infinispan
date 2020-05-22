@@ -6,6 +6,11 @@
  */
 package org.infinispan.test.hibernate.cache.commons;
 
+import static org.infinispan.test.TestingUtil.extractCacheTopology;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,32 +27,26 @@ import org.hibernate.Transaction;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform;
 import org.hibernate.cache.spi.QueryResultsRegion;
 import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cfg.AvailableSettings;
-
+import org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform;
+import org.infinispan.AdvancedCache;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.hibernate.cache.commons.util.BatchModeJtaPlatform;
 import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
 import org.infinispan.test.hibernate.cache.commons.util.ExpectingInterceptor;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess.TestRegion;
 import org.junit.Assume;
 import org.junit.Test;
-
-import org.infinispan.AdvancedCache;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Base class for tests of QueryResultsRegion and TimestampsRegion.
@@ -129,14 +128,14 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
          TestRegion testRemoteRegion = TEST_SESSION_ACCESS.fromRegion(remoteRegion);
          Object localSession = sessionFactories.get(0).openSession();
          Object remoteSession = sessionFactories.get(1).openSession();
-			AdvancedCache localCache = localRegion.getCache();
-			AdvancedCache remoteCache = remoteRegion.getCache();
+			AdvancedCache<?, ?> localCache = localRegion.getCache();
+			AdvancedCache<?, ?> remoteCache = remoteRegion.getCache();
 			try {
 				assertNull("local is clean", testLocalRegion.get(localSession, KEY));
 				assertNull("remote is clean", testRemoteRegion.get(remoteSession, KEY));
 
 				// If this node is backup owner, it will see the update once as originator and then when getting the value from primary
-				boolean isLocalNodeBackupOwner = localCache.getDistributionManager().locate(KEY).indexOf(localCache.getCacheManager().getAddress()) > 0;
+				boolean isLocalNodeBackupOwner = extractCacheTopology(localCache).getDistribution(KEY).writeOwners().indexOf(localCache.getCacheManager().getAddress()) > 0;
 				CountDownLatch insertLatch = new CountDownLatch(isLocalNodeBackupOwner ? 3 : 2);
 				ExpectingInterceptor.get(localCache).when((ctx, cmd) -> cmd instanceof PutKeyValueCommand).countDown(insertLatch);
 				ExpectingInterceptor.get(remoteCache).when((ctx, cmd) -> cmd instanceof PutKeyValueCommand).countDown(insertLatch);

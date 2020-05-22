@@ -21,7 +21,7 @@ public abstract class AbstractTopKeyTest extends MultipleCacheManagersTest {
 
    private static boolean isOwner(Cache<?, ?> cache, Object key) {
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-      return dm == null || dm.locate(key).contains(addressOf(cache));
+      return dm == null || dm.getCacheTopology().isWriteOwner(key);
    }
 
    protected CacheUsageInterceptor getTopKey(Cache<?, ?> cache) {

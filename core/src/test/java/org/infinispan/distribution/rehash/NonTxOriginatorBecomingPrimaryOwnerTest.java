@@ -1,5 +1,6 @@
 package org.infinispan.distribution.rehash;
 
+import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -87,7 +88,7 @@ public class NonTxOriginatorBecomingPrimaryOwnerTest extends MultipleCacheManage
          distInterceptorBarrier.await(10, TimeUnit.SECONDS);
          distInterceptorBarrier.await(10, TimeUnit.SECONDS);
 
-         if (cache2.getAdvancedCache().getDistributionManager().getPrimaryLocation(key).equals(address(2))) {
+         if (extractCacheTopology(cache2).getDistribution(key).isPrimary()) {
             // cache2 forwards the command back to cache0, blocking again
             distInterceptorBarrier.await(10, TimeUnit.SECONDS);
             distInterceptorBarrier.await(10, TimeUnit.SECONDS);

@@ -86,7 +86,7 @@ public class PrepareTimeoutTest extends MultipleCacheManagersTest {
             .after("backup:after_rollback");
 
 
-      assertEquals(Arrays.asList(address(1), address(2)), advancedCache(0).getDistributionManager().locate(TEST_KEY));
+      assertEquals(Arrays.asList(address(1), address(2)), cacheTopology(0).getDistribution(TEST_KEY));
       sequencer.advance("main:start");
 
       tm(0).begin();

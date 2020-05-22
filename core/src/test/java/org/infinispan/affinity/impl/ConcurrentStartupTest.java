@@ -2,7 +2,6 @@ package org.infinispan.affinity.impl;
 
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -12,7 +11,6 @@ import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -74,13 +72,12 @@ public class ConcurrentStartupTest extends AbstractCacheTest {
       log.trace("Test keys for cache2.");
       for (int i = 0; i < KEY_QUEUE_SIZE; i++) {
          Object keyForAddress = keyAffinityService2.getKeyForAddress(manager2.getAddress());
-         assertTrue(cache1.getDistributionManager().locate(keyForAddress).contains(manager2.getAddress()));
+         assertTrue(cache2.getDistributionManager().getCacheTopology().isWriteOwner(keyForAddress));
       }
       log.trace("Test keys for cache1.");
       for (int i = 0; i < KEY_QUEUE_SIZE; i++) {
          Object keyForAddress = keyAffinityService1.getKeyForAddress(manager1.getAddress());
-         List<Address> locate = cache1.getDistributionManager().locate(keyForAddress);
-         assertTrue("For key " + keyForAddress + " Locate " + locate + " should contain " + manager1.getAddress(), locate.contains(manager1.getAddress()));
+         assertTrue(cache1.getDistributionManager().getCacheTopology().isWriteOwner(keyForAddress));
       }
    }
 }

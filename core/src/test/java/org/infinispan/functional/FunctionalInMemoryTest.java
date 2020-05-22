@@ -56,7 +56,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
 
       caches(DIST).forEach(cache -> assertEquals(cache.get(key), "value", getAddress(cache).toString()));
       caches(DIST).forEach(cache -> {
-         if (cache.getAdvancedCache().getDistributionManager().getLocality(key).isLocal()) {
+         if (cache.getAdvancedCache().getDistributionManager().getCacheTopology().isReadOwner(key)) {
             assertTrue(cacheContainsKey(key, cache), getAddress(cache).toString());
          } else {
             assertFalse(cacheContainsKey(key, cache), getAddress(cache).toString());
@@ -165,7 +165,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
 
       caches(DIST).forEach(cache -> assertEquals(cache.get(key), "value", getAddress(cache).toString()));
       caches(DIST).forEach(cache -> {
-         if (cache.getAdvancedCache().getDistributionManager().getLocality(key).isLocal()) {
+         if (cache.getAdvancedCache().getDistributionManager().getCacheTopology().isReadOwner(key)) {
             assertTrue(cacheContainsKey(key, cache), getAddress(cache).toString());
          } else {
             assertFalse(cacheContainsKey(key, cache), getAddress(cache).toString());
@@ -184,7 +184,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
    public void testReadLoadLocal(ReadMethod method) {
       Integer key = 1;
 
-      assertTrue((Boolean) method.eval(key, lro,
+      assertTrue(method.eval(key, lro,
             view -> { assertFalse(view.find().isPresent()); return true; }));
 
       // we can't add from read-only cache, so we put manually:

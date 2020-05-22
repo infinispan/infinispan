@@ -39,7 +39,7 @@ public class DistListenerTest extends MultipleCacheManagersTest {
    public void testRemoteGet() {
       final String key1 = this.getClass().getName() + "K1";
 
-      List<Address> owners = cache(0).getAdvancedCache().getDistributionManager().locate(key1);
+      List<Address> owners = cacheTopology(0).getDistribution(key1).writeOwners();
 
       assert owners.size() == 2: "Key should have 2 owners";
 

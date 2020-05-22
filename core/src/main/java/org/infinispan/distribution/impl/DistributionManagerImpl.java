@@ -1,16 +1,12 @@
 package org.infinispan.distribution.impl;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -71,38 +67,6 @@ public class DistributionManagerImpl implements DistributionManager {
 
    private Address getAddress() {
       return transport.getAddress();
-   }
-
-   @Override
-   public DataLocality getLocality(Object key) {
-      LocalizedCacheTopology info = this.extendedTopology;
-      if (info == null) {
-         return DataLocality.NOT_LOCAL;
-      }
-      DistributionInfo segmentInfo = info.getDistribution(key);
-      if (segmentInfo.isReadOwner()) {
-         return DataLocality.LOCAL;
-      } else if (segmentInfo.isWriteOwner()) {
-         return DataLocality.LOCAL_UNCERTAIN;
-      } else {
-         return DataLocality.NOT_LOCAL;
-      }
-   }
-
-   @Override
-   public List<Address> locate(Object key) {
-      return extendedTopology.getDistribution(key).writeOwners();
-   }
-
-   @Override
-   public Address getPrimaryLocation(Object key) {
-      return extendedTopology.getDistribution(key).primary();
-   }
-
-   @Override
-   public Set<Address> locateAll(Collection<Object> keys) {
-      Collection<Address> owners = extendedTopology.getWriteOwners(keys);
-      return new HashSet<>(owners);
    }
 
    @Override

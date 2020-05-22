@@ -1,6 +1,5 @@
 package org.infinispan.extendedstats;
 
-import static org.infinispan.distribution.DistributionTestHelper.addressOf;
 import static org.infinispan.test.TestingUtil.k;
 
 import java.lang.reflect.Method;
@@ -226,7 +225,7 @@ public abstract class BaseClusterTopKeyTest extends AbstractTopKeyTest {
 
    protected boolean isPrimaryOwner(Cache<?, ?> cache, Object key) {
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-      return dm.getPrimaryLocation(key).equals(addressOf(cache));
+      return dm.getCacheTopology().getDistribution(key).isPrimary();
    }
 
    private void assertNoLocks(String key) {

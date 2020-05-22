@@ -65,7 +65,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       sequencer.order("sim:after_extra_commit", "tx:mark_tx_completed");
 
       final Object key = "key";
-      assertEquals(Arrays.asList(address(0), address(1), address(2)), advancedCache(0).getDistributionManager().locate(key));
+      assertEquals(Arrays.asList(address(0), address(1), address(2)), cacheTopology(0).getDistribution(key).writeOwners());
       Cache<Object, Object> primaryOwnerCache = cache(0);
       final Cache<Object, Object> newBackupOwnerCache = cache(3);
       final CountingInterceptor newBackupCounter = CountingInterceptor.inject(newBackupOwnerCache);
@@ -168,7 +168,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
    }
 
    static class CountingInterceptor extends DDAsyncInterceptor {
-      private static Log log = LogFactory.getLog(CountingInterceptor.class);
+      private static final Log log = LogFactory.getLog(CountingInterceptor.class);
 
       //counters
       private final AtomicInteger numberPrepares = new AtomicInteger(0);
