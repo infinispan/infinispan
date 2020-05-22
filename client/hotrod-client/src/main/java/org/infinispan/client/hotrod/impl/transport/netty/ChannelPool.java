@@ -173,16 +173,18 @@ class ChannelPool {
     * Release a channel back into the pool after an operation has finished.
     */
    public void release(Channel channel, ChannelRecord record) {
-      int currentActive;
-
       // The channel can be closed when it's idle (due to idle timeout or closed connection)
       if (record.isIdle()) {
          HOTROD.warnf("Cannot release channel %s because it is idle", channel);
          return;
       }
 
-      record.setIdle();
-      currentActive = active.decrementAndGet();
+      if (record.setIdleAndIsClosed()) {
+         if (trace) log.tracef("Attempt to release already closed channel %s, active = %d", channel, active.get());
+         return;
+      }
+
+      int currentActive = active.decrementAndGet();
       if (trace) log.tracef("Released channel %s, active = %d", channel, currentActive);
       if (currentActive < 0) {
          HOTROD.warnf("Invalid active count after releasing channel %s", channel);
@@ -213,8 +215,9 @@ class ChannelPool {
          return;
       }
 
+      boolean idle = channelRecord.closeAndWasIdle();
+
       int currentCreated = created.decrementAndGet();
-      boolean idle = channelRecord.isIdle();
       int currentActive = !idle ? active.decrementAndGet() : active.get();
       if (trace) log.tracef("Closed channel %s, created = %s, idle = %b, active = %d",
                             channel, currentCreated, idle, currentActive);
