@@ -2109,11 +2109,19 @@ public class Parser implements ConfigurationParser {
             break;
          }
          case QUEUE_SIZE: {
-            CONFIG.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
+            if (reader.getSchema().since(11, 0)) {
+               throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+            } else {
+               CONFIG.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
+            }
             break;
          }
          case QUEUE_FLUSH_INTERVAL: {
-            CONFIG.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
+            if (reader.getSchema().since(11, 0)) {
+               throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+            } else {
+               CONFIG.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
+            }
             break;
          }
          case REMOTE_TIMEOUT: {
