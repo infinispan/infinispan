@@ -3,11 +3,11 @@ package org.infinispan.server.core.factories;
 import static org.infinispan.server.core.transport.NettyTransport.buildEventLoop;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.factories.AbstractComponentFactory;
 import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.server.core.transport.NonRecursiveEventLoopGroup;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
 
 import io.netty.channel.EventLoopGroup;
@@ -28,10 +28,12 @@ public class NettyIOFactory extends AbstractComponentFactory implements AutoInst
          return new BlockingTaskAwareExecutorServiceImpl(globalComponentRegistry.getComponent(EventLoopGroup.class), globalComponentRegistry.getTimeService());
       } else if (componentName.equals(EventLoopGroup.class.getName())) {
          String nodeName = globalConfiguration.transport().nodeName();
-         // The NON_BLOCKING_EXECUTOR component will stop this EventLoopGroup upon shutdown
-         return buildEventLoop(ProcessorInfo.availableProcessors() * 2, new DefaultThreadFactory("non-blocking-thread-netty" + (nodeName != null ? "-" + nodeName : "")));
+         // TODO: revert to ProcessorInfo.availableProcessors() * 2
+         return new NonRecursiveEventLoopGroup(buildEventLoop(2,
+               new DefaultThreadFactory("non-blocking-thread-netty" + (nodeName != null ? "-" + nodeName : ""))));
       } else {
          throw new CacheConfigurationException("Unknown named executor " + componentName);
       }
    }
+
 }
