@@ -481,7 +481,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    /**
     * Retrieves the default cache associated with this cache manager. Note that the default cache does not need to be
-    * explicitly created with {@link #createCache(String, String)} (String)} since it is automatically created lazily
+    * explicitly created with {@link #createCache(String)} (String)} since it is automatically created lazily
     * when first used.
     * <p/>
     * As such, this method is always guaranteed to return the default cache.
@@ -493,7 +493,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       if (defaultCacheName == null) {
          throw CONFIG.noDefaultCache();
       }
-      return internalGetCache(defaultCacheName, defaultCacheName);
+      return internalGetCache(defaultCacheName);
    }
 
    /**
@@ -510,17 +510,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     */
    @Override
    public <K, V> Cache<K, V> getCache(String cacheName) {
-      return getCache(cacheName, cacheName);
+      return internalGetCache(cacheName);
    }
 
-   @Override
-   public <K, V> Cache<K, V> getCache(String cacheName, String configurationName) {
-      if (cacheName == null || configurationName == null)
+   private <K, V> Cache<K, V> internalGetCache(String cacheName) {
+      if (cacheName == null)
          throw new NullPointerException("Null arguments not allowed");
-      return internalGetCache(cacheName, configurationName);
-   }
 
-   private <K, V> Cache<K, V> internalGetCache(String cacheName, String configurationName) {
       assertIsNotTerminated();
       // No need to block if another thread (or even the current thread) is starting the global components
       // Because each cache component will wait for the global components it depends on
@@ -536,7 +532,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          }
       }
 
-      return createCache(cacheName, configurationName);
+      return createCache(cacheName);
    }
 
    @Override
@@ -546,16 +542,12 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public <K, V> Cache<K, V> getCache(String cacheName, boolean createIfAbsent) {
-      return getCache(cacheName, cacheName, createIfAbsent);
-   }
-
-   @Override
-   public <K, V> Cache<K, V> getCache(String cacheName, String configurationTemplate, boolean createIfAbsent) {
       boolean cacheExists = cacheExists(cacheName);
       if (!cacheExists && !createIfAbsent)
          return null;
-      else
-         return getCache(cacheName, configurationTemplate);
+      else {
+         return internalGetCache(cacheName);
+      }
    }
 
    @Override
@@ -573,7 +565,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
                @Override
                public void run() {
                   try {
-                     createCache(cacheName, cacheName);
+                     createCache(cacheName);
                   } catch (RuntimeException e) {
                      exception.set(e);
                   } catch (Throwable t) {
@@ -647,11 +639,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       return cacheManagerInfo.isCoordinator();
    }
 
-   private <K, V> Cache<K, V> createCache(String cacheName, String configurationName) {
+   private <K, V> Cache<K, V> createCache(String cacheName) {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
-         return wireAndStartCache(cacheName, configurationName);
+         return wireAndStartCache(cacheName);
       } finally {
          LogFactory.popNDC(trace);
       }
@@ -660,24 +652,17 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    /**
     * @return a null return value means the cache was created by someone else before we got the lock
     */
-   private <K, V> Cache<K, V> wireAndStartCache(String cacheName, String configurationName) {
-      boolean sameCache = cacheName.equals(configurationName);
-      Configuration c = configurationManager.getConfiguration(configurationName);
+   private <K, V> Cache<K, V> wireAndStartCache(String cacheName) {
+      Configuration c = configurationManager.getConfiguration(cacheName);
       if (c == null) {
-         throw CONFIG.noSuchCacheConfiguration(configurationName);
-      } else if (!sameCache) {
-         Configuration definedConfig = configurationManager.getConfiguration(cacheName, true);
-         if (definedConfig != null) {
-            CONFIG.warnAttemptToOverrideExistingConfiguration(cacheName);
-            c = definedConfig;
-         }
+         throw CONFIG.noSuchCacheConfiguration(cacheName);
       }
 
       if (c.security().authorization().enabled()) {
          // Don't even attempt to wire anything if we don't have LIFECYCLE privileges
          authzHelper.checkPermission(c.security().authorization(), getSubject(), AuthorizationPermission.LIFECYCLE, null);
       }
-      if (c.isTemplate() && sameCache) {
+      if (c.isTemplate()) {
          throw CONFIG.templateConfigurationStartAttempt(cacheName);
       }
 
@@ -1043,7 +1028,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          }
       }
 
-      createCache(cacheName, cacheName);
+      createCache(cacheName);
    }
 
    @ManagedAttribute(description = "The network address associated with this instance", displayName = "Network address", dataType = DataType.TRAIT)

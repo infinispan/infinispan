@@ -1562,10 +1562,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Attempt to define configuration for cache %s which already exists", id = 453)
    CacheConfigurationException configAlreadyDefined(String cacheName);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Calling getCache with a cache override is no longer supported. Please invoke createCache first and then getCache. Cache name was %s", id = 454)
-   void warnAttemptToOverrideExistingConfiguration(String cacheName);
-
    @LogMessage(level = ERROR)
    @Message(value = "Failure during leaver transactions cleanup", id = 455)
    void transactionCleanupError(@Cause Throwable e);
