@@ -31,12 +31,12 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
-import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -202,7 +202,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       }
       if (entry!= null) {
          Map<Object, byte[]> map = mapForSegment(segment);
-         if (trace) log.tracef("Store %s in dummy map store@%s", entry, Util.hexIdHashCode(store));
+         if (trace) log.tracef("Store %s for segment %s in dummy map store@%s", entry, segment, Util.hexIdHashCode(store));
          map.put(entry.getKey(), serialize(entry));
       }
 
@@ -229,7 +229,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       record("delete");
       Map<Object, byte[]> map = mapForSegment(segment);
       if (map.remove(key) != null) {
-         if (trace) log.tracef("Removed %s from dummy store", key);
+         if (trace) log.tracef("Removed %s from dummy store for segment %s", key, segment);
          return CompletableFutures.completedTrue();
       }
 
@@ -512,6 +512,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       assertRunning();
       record("addSegments");
       if (configuration.segmented() && storeName == null) {
+         if (trace) log.tracef("Adding segments %s", segments);
          segments.forEach((int segment) -> {
             if (store.get(segment) == null) {
                store.set(segment, new ConcurrentHashMap<>());
@@ -526,6 +527,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       assertRunning();
       record("removeSegments");
       if (configuration.segmented() && storeName == null) {
+         if (trace) log.tracef("Removing segments %s", segments);
          segments.forEach((int segment) -> store.getAndSet(segment, null));
       }
       return CompletableFutures.completedNull();

@@ -117,7 +117,7 @@ public class TxStoreTest extends AbstractInfinispanTest {
       PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
       PersistenceManager mockPM = mock(PersistenceManager.class);
       when(mockPM.loadFromAllStores(any(), anyInt(), anyBoolean(), anyBoolean())).thenReturn(CompletableFutures.completedNull());
-      doThrow(new PersistenceException()).when(mockPM).prepareAllTxStores(any(), any(), any());
+      doThrow(new PersistenceException()).when(mockPM).prepareAllTxStores(any(), any());
       TestingUtil.replaceComponent(cache, PersistenceManager.class, mockPM, true);
 
       try {

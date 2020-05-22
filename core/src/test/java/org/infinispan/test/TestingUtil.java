@@ -115,6 +115,7 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.DelegatingPersistenceManager;
 import org.infinispan.persistence.support.NonBlockingStoreAdapter;
+import org.infinispan.persistence.support.SingleSegmentPublisher;
 import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.protostream.ProtobufUtil;
@@ -147,6 +148,7 @@ import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.ProtocolStack;
+import org.reactivestreams.Publisher;
 import org.testng.AssertJUnit;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -1923,5 +1925,9 @@ public class TestingUtil {
       sci.registerSchema(ctx);
       sci.registerMarshallers(ctx);
       return new ProtoStreamMarshaller(ctx);
+   }
+
+   public static <E> Publisher<NonBlockingStore.SegmentedPublisher<E>> singleSegmentPublisher(Publisher<E> flowable) {
+      return Flowable.just(SingleSegmentPublisher.singleSegment(flowable));
    }
 }

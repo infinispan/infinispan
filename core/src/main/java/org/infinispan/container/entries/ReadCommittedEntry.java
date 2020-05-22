@@ -8,6 +8,7 @@ import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EVICTED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EXPIRED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.LOADED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.REMOVED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.SKIP_SHARED_STORE;
 
 import java.util.concurrent.CompletionStage;
 
@@ -57,6 +58,8 @@ public class ReadCommittedEntry implements MVCCEntry {
       SKIP_LOOKUP(1 << 6),
       READ(1 << 7),
       LOADED(1 << 8),
+      // Set if this write should not be persisted into any underlying shared stores
+      SKIP_SHARED_STORE(1 << 9),
       ;
 
       final short mask;
@@ -252,6 +255,11 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
+   public boolean isSkipSharedStore() {
+      return isFlagSet(SKIP_SHARED_STORE);
+   }
+
+   @Override
    public void setLoaded(boolean loaded) {
       setFlag(loaded, LOADED);
    }
@@ -279,6 +287,11 @@ public class ReadCommittedEntry implements MVCCEntry {
    @Override
    public void setExpired(boolean expired) {
       setFlag(expired, EXPIRED);
+   }
+
+   @Override
+   public void setSkipSharedStore() {
+      setFlag(true, SKIP_SHARED_STORE);
    }
 
    final void setFlag(boolean enable, Flags flag) {

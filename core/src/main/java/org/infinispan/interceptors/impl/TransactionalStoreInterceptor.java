@@ -2,14 +2,9 @@ package org.infinispan.interceptors.impl;
 
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
 
-import java.util.List;
-
-import javax.transaction.Transaction;
-
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -30,33 +25,25 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
    @Inject MarshallableEntryFactory marshalledEntryFactory;
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
       if (ctx.isOriginLocal()) {
-         Transaction tx = ctx.getTransaction();
-         TxBatchUpdater modBuilder = TxBatchUpdater.createTxStoreUpdater(persistenceManager, entryFactory,
-               marshalledEntryFactory, ctx.getCacheTransaction().getAffectedKeys());
-
-         List<WriteCommand> modifications = ctx.getCacheTransaction().getAllModifications();
-         for (WriteCommand writeCommand : modifications) {
-            writeCommand.acceptVisitor(ctx, modBuilder);
-         }
-         return asyncInvokeNext(ctx, command, persistenceManager.prepareAllTxStores(tx, modBuilder.getModifications(), SHARED));
+         return asyncInvokeNext(ctx, command, persistenceManager.prepareAllTxStores(ctx, SHARED));
       }
       return invokeNext(ctx, command);
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) {
       if (ctx.isOriginLocal()) {
-         return asyncInvokeNext(ctx, command, persistenceManager.commitAllTxStores(ctx.getTransaction(), SHARED));
+         return asyncInvokeNext(ctx, command, persistenceManager.commitAllTxStores(ctx, SHARED));
       }
       return invokeNext(ctx, command);
    }
 
    @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) {
       if (ctx.isOriginLocal()) {
-         return asyncInvokeNext(ctx, command, persistenceManager.rollbackAllTxStores(ctx.getTransaction(), SHARED));
+         return asyncInvokeNext(ctx, command, persistenceManager.rollbackAllTxStores(ctx, SHARED));
       }
       return invokeNext(ctx, command);
    }

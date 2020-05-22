@@ -5,12 +5,13 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
-import javax.transaction.Transaction;
-
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -18,7 +19,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.support.BatchModification;
+import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
 
@@ -141,17 +142,17 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public CompletionStage<Void> prepareAllTxStores(Transaction transaction, BatchModification batchModification, Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
+   public CompletionStage<Void> prepareAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext, Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
       return CompletableFutures.completedNull();
    }
 
    @Override
-   public CompletionStage<Void> commitAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
+   public CompletionStage<Void> commitAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext, Predicate<? super StoreConfiguration> predicate) {
       return CompletableFutures.completedNull();
    }
 
    @Override
-   public CompletionStage<Void> rollbackAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
+   public CompletionStage<Void> rollbackAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext, Predicate<? super StoreConfiguration> predicate) {
       return CompletableFutures.completedNull();
    }
 
@@ -161,7 +162,7 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public CompletionStage<Void> deleteBatchFromAllNonTxStores(Iterable<Object> keys, Predicate<? super StoreConfiguration> predicate, long flags) {
+   public CompletionStage<Long> performBatch(TxInvocationContext<AbstractCacheTransaction> invocationContext, BiPredicate<WriteCommand, Object> commandKeyPredicate) {
       return CompletableFutures.completedNull();
    }
 

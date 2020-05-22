@@ -577,22 +577,22 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    public void testWriteAndDeleteBatch() {
       // Number of entries is randomized to even numbers between 80 and 120
       int numberOfEntries = 2 * ThreadLocalRandom.current().nextInt(WRITE_DELETE_BATCH_MIN_ENTRIES / 2, WRITE_DELETE_BATCH_MAX_ENTRIES / 2 + 1);
-      testBatch(numberOfEntries, () -> store.bulkUpdate(1, Flowable.range(0, numberOfEntries).map(i -> marshalledEntry(i.toString(), "Val" + i))));
+      testBatch(numberOfEntries, () -> store.batchUpdate(1, Flowable.empty(),
+            TestingUtil.singleSegmentPublisher(Flowable.range(0, numberOfEntries).map(i -> marshalledEntry(i.toString(), "Val" + i)))));
    }
 
    public void testWriteAndDeleteBatchIterable() {
       // Number of entries is randomized to even numbers between 80 and 120
       int numberOfEntries = 2 * ThreadLocalRandom.current().nextInt(WRITE_DELETE_BATCH_MIN_ENTRIES / 2, WRITE_DELETE_BATCH_MAX_ENTRIES / 2 + 1);
-      testBatch(numberOfEntries, () -> store.bulkUpdate(1, Flowable.range(0, numberOfEntries).map(i -> marshalledEntry(i.toString(), "Val" + i))));
+      testBatch(numberOfEntries, () -> store.batchUpdate(1, Flowable.empty(),
+            TestingUtil.singleSegmentPublisher(Flowable.range(0, numberOfEntries).map(i -> marshalledEntry(i.toString(), "Val" + i)))));
    }
 
    public void testEmptyWriteAndDeleteBatchIterable() {
       assertIsEmpty();
       assertNull("should not be present in the store", store.loadEntry(0));
-      store.bulkUpdate(1, Flowable.empty());
+      store.batchUpdate(1, Flowable.empty(), Flowable.empty());
 
-      assertEquals(0, store.sizeWait(segments));
-      store.deleteBatch(1, Collections.emptyList());
       assertEquals(0, store.sizeWait(segments));
    }
 
@@ -608,7 +608,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
       int batchSize = numberOfEntries / 2;
       List<Object> keys = IntStream.range(0, batchSize).mapToObj(Integer::toString).collect(Collectors.toList());
-      store.deleteBatch(1, keys);
+      store.batchUpdate(1, TestingUtil.singleSegmentPublisher(Flowable.fromIterable(keys)), Flowable.empty());
       set = TestingUtil.allEntries(store);
       assertSize(set, batchSize);
       assertNull(store.loadEntry("20"));
