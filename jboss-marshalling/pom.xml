@@ -22,6 +22,11 @@
 
         <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-component-processor</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-commons</artifactId>
         </dependency>
 
@@ -104,6 +109,7 @@
                         </Import-package>
                         <Include-Resource>
                             {maven-resources},
+                            /META-INF/services=${project.build.outputDirectory}/META-INF/services,
                             /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
                         </Include-Resource>
                     </instructions>

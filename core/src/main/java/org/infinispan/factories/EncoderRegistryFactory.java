@@ -54,6 +54,7 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
 
       encoderRegistry.registerEncoder(IdentityEncoder.INSTANCE);
       encoderRegistry.registerEncoder(UTF8Encoder.INSTANCE);
+
       encoderRegistry.registerEncoder(new JavaSerializationEncoder(classWhiteList));
       encoderRegistry.registerEncoder(new GlobalMarshallerEncoder(globalMarshaller.wired()));
 
@@ -64,6 +65,7 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       encoderRegistry.registerTranscoder(new ProtostreamTranscoder(ctxRegistry, classLoader));
       encoderRegistry.registerTranscoder(new JavaSerializationTranscoder(classWhiteList));
       // Wraps the GlobalMarshaller so that it can be used as a transcoder
+      // Keeps application/x-infinispan-marshalling available for backwards compatibility
       encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(globalMarshaller.wired()));
       // Make the user marshaller's media type available as well
       // As custom marshaller modules like Kryo and Protostuff do not define their own transcoder
