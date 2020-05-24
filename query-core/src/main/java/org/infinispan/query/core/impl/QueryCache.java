@@ -56,7 +56,7 @@ public final class QueryCache {
    /**
     * Cache entry lifespan in seconds.
     */
-   private static final long ENTRY_LIFESPAN = 300;  // seconds
+   private static final long ENTRY_LIFESPAN = 300;
 
    @Inject
    EmbeddedCacheManager cacheManager;
@@ -77,12 +77,12 @@ public final class QueryCache {
    }
 
    public void clear() {
-      log.debug("Clearing all");
+      log.debug("Clearing query cache for all caches");
       getOptionalCache(false).ifPresent(Cache::clear);
    }
 
    public void clear(String cacheName) {
-      log.debugf("Clearing %s", cacheName);
+      log.debugf("Clearing query cache for cache %s", cacheName);
       getOptionalCache(false).ifPresent(c -> c.keySet().removeIf(k -> k.cacheName.equals(cacheName)));
    }
 
