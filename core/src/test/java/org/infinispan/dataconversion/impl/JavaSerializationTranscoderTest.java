@@ -1,4 +1,4 @@
-package org.infinispan.server.core.dataconversion;
+package org.infinispan.dataconversion.impl;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -7,6 +7,7 @@ import java.util.Collections;
 
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.encoding.impl.JavaSerializationTranscoder;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;

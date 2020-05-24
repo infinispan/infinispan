@@ -12,6 +12,7 @@ import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.encoding.ProtostreamTranscoder;
+import org.infinispan.encoding.impl.JavaSerializationTranscoder;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
@@ -57,6 +58,7 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       // Wraps the GlobalMarshaller so that it can be used as a transcoder
       encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(globalMarshaller.wired()));
       encoderRegistry.registerTranscoder(new ProtostreamTranscoder(ctxRegistry, classLoader));
+      encoderRegistry.registerTranscoder(new JavaSerializationTranscoder(classWhiteList));
 
       encoderRegistry.registerWrapper(ByteArrayWrapper.INSTANCE);
       encoderRegistry.registerWrapper(IdentityWrapper.INSTANCE);
