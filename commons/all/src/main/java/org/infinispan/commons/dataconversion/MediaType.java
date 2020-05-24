@@ -56,7 +56,15 @@ public final class MediaType {
    public static final String TEXT_CSV_TYPE = "text/csv";
    public static final String TEXT_PLAIN_TYPE = "text/plain";
    public static final String TEXT_HTML_TYPE = "text/html";
+   /**
+    * @deprecated Since 11.0, will be removed with ISPN-9622
+    */
+   @Deprecated
    public static final String APPLICATION_INFINISPAN_MARSHALLING_TYPE = "application/x-infinispan-marshalling";
+   /**
+    * @deprecated Since 11.0, will be removed in 14.0. No longer used for BINARY storage.
+    */
+   @Deprecated
    public static final String APPLICATION_INFINISPAN_BINARY_TYPE = "application/x-infinispan-binary";
    public static final String APPLICATION_PROTOSTUFF_TYPE = "application/x-protostuff";
    public static final String APPLICATION_KRYO_TYPE = "application/x-kryo";
@@ -72,6 +80,10 @@ public final class MediaType {
    public static final MediaType APPLICATION_XML = fromString(APPLICATION_XML_TYPE);
    public static final MediaType APPLICATION_PROTOSTREAM = fromString(APPLICATION_PROTOSTREAM_TYPE);
    public static final MediaType APPLICATION_JBOSS_MARSHALLING = fromString(APPLICATION_JBOSS_MARSHALLING_TYPE);
+   /**
+    * @deprecated Since 11.0, will be removed with ISPN-9622
+    */
+   @Deprecated
    public static final MediaType APPLICATION_INFINISPAN_MARSHALLED = fromString(APPLICATION_INFINISPAN_MARSHALLING_TYPE);
    public static final MediaType APPLICATION_WWW_FORM_URLENCODED = fromString(WWW_FORM_URLENCODED_TYPE);
    public static final MediaType IMAGE_PNG = fromString(IMAGE_PNG_TYPE);
@@ -83,10 +95,18 @@ public final class MediaType {
    public static final MediaType IMAGE_JPEG = fromString(IMAGE_JPEG_TYPE);
    public static final MediaType APPLICATION_PROTOSTUFF = fromString(APPLICATION_PROTOSTUFF_TYPE);
    public static final MediaType APPLICATION_KRYO = fromString(APPLICATION_KRYO_TYPE);
+   /**
+    * @deprecated Since 11.0, will be removed in 14.0. No longer used for BINARY storage.
+    */
+   @Deprecated
    public static final MediaType APPLICATION_INFINISPAN_BINARY = fromString(APPLICATION_INFINISPAN_BINARY_TYPE);
    public static final MediaType APPLICATION_PDF = fromString(APPLICATION_PDF_TYPE);
    public static final MediaType APPLICATION_RTF = fromString(APPLICATION_RTF_TYPE);
    public static final MediaType APPLICATION_ZIP = fromString(APPLICATION_ZIP_TYPE);
+   /**
+    * @deprecated Since 11.0, will be removed with ISPN-9622
+    */
+   @Deprecated
    public static final MediaType APPLICATION_INFINISPAN_MARSHALLING = fromString(APPLICATION_INFINISPAN_MARSHALLING_TYPE);
    public static final MediaType APPLICATION_UNKNOWN = fromString(APPLICATION_UNKNOWN_TYPE);
    public static final MediaType MATCH_ALL = fromString(MATCH_ALL_TYPE);
