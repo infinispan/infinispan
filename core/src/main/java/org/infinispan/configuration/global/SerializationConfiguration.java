@@ -64,6 +64,10 @@ public class SerializationConfiguration implements ConfigurationInfo {
       return marshaller.get();
    }
 
+   /**
+    * @deprecated since 10.0, {@link AdvancedExternalizer}'s will be removed in a future release.
+    */
+   @Deprecated
    public Map<Integer, AdvancedExternalizer<?>> advancedExternalizers() {
       return advancedExternalizers.get();
    }
