@@ -33,7 +33,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.ModuleRepository;
-import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metrics.impl.CacheManagerMetricsRegistration;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
@@ -148,7 +147,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          basicComponentRegistry.getComponent(EventLogManager.class);
          basicComponentRegistry.getComponent(Transport.class);
          basicComponentRegistry.getComponent(ClusterContainerStats.class);
-         basicComponentRegistry.getComponent(EncoderRegistry.class);
          basicComponentRegistry.getComponent(GlobalConfigurationManager.class);
          basicComponentRegistry.getComponent(CacheManagerJmxRegistration.class);
          basicComponentRegistry.getComponent(CacheManagerMetricsRegistration.class);

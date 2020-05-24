@@ -6,7 +6,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Method;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
@@ -14,8 +13,6 @@ import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
-import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.SerializationConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -92,16 +89,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
       SerializationConfiguration serializationConfig = globalConfig.serialization();
       Marshaller marshaller = serializationConfig.marshaller();
       if (marshaller != null) {
-         Class<?> clazz = marshaller.getClass();
-         if (clazz.getName().equals(Util.JBOSS_USER_MARSHALLER_CLASS)) {
-            // If the user has specified to use jboss-marshalling, we must initialize the instance with the GlobalComponentRegistry
-            // So that any user Externalizer implementations can be loaded.
-            Method method = ReflectionUtil.findMethod(clazz, "initialize", GlobalComponentRegistry.class);
-            ReflectionUtil.invokeAccessibly(marshaller, method, gcr);
-            PERSISTENCE.jbossMarshallingDetected();
-         } else {
-            marshaller.initialize(gcr.getCacheManager().getClassWhiteList());
-         }
+         marshaller.initialize(gcr.getCacheManager().getClassWhiteList());
          return marshaller;
       }
       return null;

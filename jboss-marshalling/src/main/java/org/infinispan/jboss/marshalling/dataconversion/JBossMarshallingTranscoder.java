@@ -1,7 +1,6 @@
-package org.infinispan.server.core.dataconversion;
+package org.infinispan.jboss.marshalling.dataconversion;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_MARSHALLING;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
@@ -15,7 +14,6 @@ import java.io.IOException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
-import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.util.logging.Log;
@@ -29,12 +27,10 @@ import org.infinispan.util.logging.LogFactory;
 public class JBossMarshallingTranscoder extends OneToManyTranscoder {
 
    protected final static Log logger = LogFactory.getLog(JBossMarshallingTranscoder.class, Log.class);
-   private final Transcoder jsonObjectTranscoder;
    private final Marshaller marshaller;
 
-   public JBossMarshallingTranscoder(JsonTranscoder jsonObjectTranscoder, Marshaller marshaller) {
-      super(APPLICATION_JBOSS_MARSHALLING, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_OBJECT, APPLICATION_JSON, APPLICATION_UNKNOWN);
-      this.jsonObjectTranscoder = jsonObjectTranscoder;
+   public JBossMarshallingTranscoder(Marshaller marshaller) {
+      super(APPLICATION_JBOSS_MARSHALLING, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_OBJECT, APPLICATION_UNKNOWN);
       if (!marshaller.mediaType().match(APPLICATION_JBOSS_MARSHALLING)) {
          throw new IllegalArgumentException("Provided Marshaller " + marshaller + " cannot handle: " + APPLICATION_JBOSS_MARSHALLING);
       }
@@ -53,9 +49,6 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
          }
          if (contentType.match(TEXT_PLAIN)) {
             decoded = convertTextToObject(content, contentType);
-         }
-         if (contentType.match(APPLICATION_JSON)) {
-            decoded = jsonObjectTranscoder.transcode(content, contentType, MediaType.APPLICATION_OBJECT);
          }
          if (contentType.match(APPLICATION_UNKNOWN) || contentType.match(APPLICATION_JBOSS_MARSHALLING)) {
             return content;
@@ -79,13 +72,6 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
       }
       if (destinationType.match(MediaType.APPLICATION_OBJECT)) {
          return unmarshall(content);
-      }
-      if (destinationType.match(MediaType.APPLICATION_JSON)) {
-         // A more efficient way would be to read the jboss marshalling binary payload and convert it directly to json
-         // For now it will unmarshall as Java Object first.
-         Object unmarshalled = unmarshall(content);
-         Object result = jsonObjectTranscoder.transcode(unmarshalled, MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_JSON);
-         return StandardConversions.convertTextToOctetStream(result, MediaType.APPLICATION_JSON);
       }
       if (destinationType.equals(APPLICATION_UNKNOWN)) {
          try {
