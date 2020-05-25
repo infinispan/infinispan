@@ -1,0 +1,8 @@
+<cache-container xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="urn:infinispan:config:11.0 https://infinispan.org/schemas/infinispan-config-fragment-11.0.xsd"
+                 xmlns="urn:infinispan:config:11.0"
+                 name="default" statistics="true">
+   <transport cluster="${infinispan.cluster.name}" stack="${org.infinispan.test.server.cluster.stack:test-tcp}"/>
+   <metrics gauges="true" histograms="true"/>
+   <jmx enabled="true" />
+</cache-container>
