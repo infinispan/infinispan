@@ -14,7 +14,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 /**
- * Implements the {@link Publisher<KeyValueEntry<K, V>>} using RXJava and Flowable API.
+ * Implements the {@link Publisher&lt;KeyValueEntry&lt;K, V&gt;&gt;} using RXJava and Flowable API.
  *
  * @author Katia Aresti, karesti@redhat.com
  * @since 10.0
@@ -26,11 +26,11 @@ public class ContinuousQueryPublisherImpl<K, V> implements Publisher<KeyValueEnt
    private final boolean created;
    private final boolean updated;
    private final boolean deleted;
-   private final Query query;
+   private final Query<?> query;
    private Flowable<KeyValueEntry<K, V>> flowable;
    private ContinuousQueryListener<K, V> continuousQueryListener;
 
-   public ContinuousQueryPublisherImpl(Query query, ContinuousQuery<K, V> continuousQuery, boolean created, boolean updated, boolean deleted) {
+   public ContinuousQueryPublisherImpl(Query<?> query, ContinuousQuery<K, V> continuousQuery, boolean created, boolean updated, boolean deleted) {
       this.query = query;
       this.continuousQuery = continuousQuery;
       this.created = created;

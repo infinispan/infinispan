@@ -122,9 +122,9 @@ public class RemoteQueryDisableIndexingTest extends AbstractQueryDslTest {
    }
 
    public void testEqNonIndexedType() {
-      Query q = getQueryFactory().create("from sample_bank_account.NotIndexed where notIndexedField = 'testing 123'");
+      Query<NotIndexed> q = getQueryFactory().create("from sample_bank_account.NotIndexed where notIndexedField = 'testing 123'");
 
-      List<NotIndexed> list = q.list();
+      List<NotIndexed> list = q.execute().list();
       assertEquals(1, list.size());
       assertEquals("testing 123", list.get(0).notIndexedField);
    }

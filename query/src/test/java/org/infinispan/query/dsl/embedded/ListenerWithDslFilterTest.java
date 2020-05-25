@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -34,7 +35,7 @@ import org.testng.annotations.Test;
 public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, getConfigurationBuilder());
    }
 
@@ -58,7 +59,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
       assertEquals(10, cache.size());
 
       QueryFactory qf = Search.getQueryFactory(cache());
-      Query query = qf.create("FROM " + Person.class.getName() + " WHERE age <= :ageParam")
+      Query<Person> query = qf.<Person>create("FROM " + Person.class.getName() + " WHERE age <= :ageParam")
                       .setParameter("ageParam", 31);
 
       EntryListener listener = new EntryListener();
@@ -111,7 +112,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
       assertEquals(10, cache.size());
 
       QueryFactory qf = Search.getQueryFactory(cache());
-      Query query = qf.create("FROM " + Person.class.getName() + " WHERE age <= :ageParam")
+      Query<Person> query = qf.<Person>create("FROM " + Person.class.getName() + " WHERE age <= :ageParam")
                       .setParameter("ageParam", 31);
 
       EntryListener listener = new EntryListener();
@@ -170,7 +171,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
 
    public void testEventFilterAndConverter() {
       QueryFactory qf = Search.getQueryFactory(cache());
-      Query query = qf.create("SELECT name, age FROM " + Person.class.getName() + " WHERE age <= 31");
+      Query<Object[]> query = qf.create("SELECT name, age FROM " + Person.class.getName() + " WHERE age <= 31");
 
       EntryListener listener = new EntryListener();
 
@@ -201,7 +202,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028523: Filters cannot use full-text searches")
    public void testDisallowFullTextQuery() {
       QueryFactory qf = Search.getQueryFactory(cache());
-      Query query = qf.create("FROM " + Person.class.getName() + " WHERE name : 'john'");
+      Query<Person> query = qf.create("FROM " + Person.class.getName() + " WHERE name : 'john'");
 
       cache().addListener(new EntryListener(), Search.makeFilter(query), null);
    }
@@ -212,7 +213,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
       QueryFactory qf = Search.getQueryFactory(cache());
-      Query query = qf.create("SELECT MAX(age) FROM " + Person.class.getName() + " WHERE age >= 20");
+      Query<Object[]> query = qf.create("SELECT MAX(age) FROM " + Person.class.getName() + " WHERE age >= 20");
 
       cache().addListener(new EntryListener(), Search.makeFilter(query), null);
    }
@@ -221,9 +222,9 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
    private static class EntryListener {
 
       // this is where we accumulate matches
-      public final List<ObjectFilter.FilterResult> createEvents = new ArrayList<>();
+      public final List<ObjectFilter.FilterResult> createEvents = Collections.synchronizedList(new ArrayList<>());
 
-      public final List<ObjectFilter.FilterResult> modifyEvents = new ArrayList<>();
+      public final List<ObjectFilter.FilterResult> modifyEvents = Collections.synchronizedList(new ArrayList<>());
 
       @CacheEntryCreated
       public void handleEvent(CacheEntryCreatedEvent<?, ObjectFilter.FilterResult> event) {

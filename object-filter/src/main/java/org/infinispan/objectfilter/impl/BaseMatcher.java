@@ -121,7 +121,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    }
 
    @Override
-   public ObjectFilter getObjectFilter(Query query) {
+   public ObjectFilter getObjectFilter(Query<?> query) {
       return getObjectFilter(query.getQueryString(), null);
    }
 
@@ -161,12 +161,12 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    }
 
    @Override
-   public FilterSubscription registerFilter(Query query, FilterCallback callback, Object... eventType) {
+   public FilterSubscription registerFilter(Query<?> query, FilterCallback callback, Object... eventType) {
       return registerFilter(query, callback, false, eventType);
    }
 
    @Override
-   public FilterSubscription registerFilter(Query query, FilterCallback callback, boolean isDeltaFilter, Object... eventType) {
+   public FilterSubscription registerFilter(Query<?> query, FilterCallback callback, boolean isDeltaFilter, Object... eventType) {
       return registerFilter(query.getQueryString(), query.getParameters(), callback, isDeltaFilter, eventType);
    }
 

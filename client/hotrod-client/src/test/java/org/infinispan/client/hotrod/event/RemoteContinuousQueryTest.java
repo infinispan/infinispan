@@ -91,7 +91,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.create("SELECT MAX(age) FROM sample_bank_account.User WHERE age >= 20");
+      Query<User> query = qf.create("SELECT MAX(age) FROM sample_bank_account.User WHERE age >= 20");
 
       ContinuousQuery<String, User> continuousQuery = Search.getContinuousQuery(remoteCache);
 
@@ -133,7 +133,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
-      Query query = qf.create("FROM sample_bank_account.User WHERE age <= :ageParam")
+      Query<User> query = qf.<User>create("FROM sample_bank_account.User WHERE age <= :ageParam")
                       .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, User>> joined = new LinkedBlockingQueue<>();
@@ -247,8 +247,8 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       assertEquals(3, remoteCache.size());
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
-                      .setParameter("ageParam", 32);
+      Query<Object[]> query = qf.<Object[]>create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
+            .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, Object[]>> joined = new LinkedBlockingQueue<>();
       final BlockingQueue<KeyValuePair<String, Object[]>> updated = new LinkedBlockingQueue<>();
@@ -361,8 +361,8 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       assertEquals(3, remoteCache.size());
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
-                      .setParameter("ageParam", 32);
+      Query<Object[]> query = qf.<Object[]>create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
+            .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, Object[]>> joined = new LinkedBlockingQueue<>();
       final BlockingQueue<KeyValuePair<String, Object[]>> updated = new LinkedBlockingQueue<>();

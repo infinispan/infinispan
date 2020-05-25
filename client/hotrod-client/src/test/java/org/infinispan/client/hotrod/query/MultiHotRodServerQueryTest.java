@@ -113,8 +113,8 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache1);
-      Query query = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
-      List<User> list = query.list();
+      Query<User> query = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
+      List<User> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
       assertEquals(UserPB.class, list.get(0).getClass());
@@ -129,8 +129,8 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache0);
-      Query query = qf.create("SELECT name, COUNT(age) FROM sample_bank_account.User WHERE age >= 5 GROUP BY name ORDER BY name ASC");
-      List<Object[]> list = query.list();
+      Query<Object[]> query = qf.create("SELECT name, COUNT(age) FROM sample_bank_account.User WHERE age >= 5 GROUP BY name ORDER BY name ASC");
+      List<Object[]> list = query.execute().list();
       assertNotNull(list);
       assertEquals(2, list.size());
       assertEquals(Object[].class, list.get(0).getClass());
@@ -142,8 +142,8 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    public void testEmbeddedAttributeQuery() {
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache1);
-      Query query = qf.create("FROM sample_bank_account.User u WHERE u.addresses.postCode = '1234'");
-      List<User> list = query.list();
+      Query<User> query = qf.create("FROM sample_bank_account.User u WHERE u.addresses.postCode = '1234'");
+      List<User> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
       assertEquals(UserPB.class, list.get(0).getClass());
@@ -153,8 +153,8 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028503: Property addresses can not be selected from type sample_bank_account.User since it is an embedded entity.")
    public void testInvalidEmbeddedAttributeQuery() {
       QueryFactory qf = Search.getQueryFactory(remoteCache1);
-      Query q = qf.create("SELECT addresses FROM sample_bank_account.User");
-      q.list();  // exception expected
+      Query<Object[]> q = qf.create("SELECT addresses FROM sample_bank_account.User");
+      q.execute();  // exception expected
    }
 
    public void testProjections() {
@@ -164,9 +164,9 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache1);
-      Query query = qf.create("SELECT name, surname FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<Object[]> query = qf.create("SELECT name, surname FROM sample_bank_account.User WHERE name = 'Tom'");
 
-      List<Object[]> list = query.list();
+      List<Object[]> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
       assertEquals(Object[].class, list.get(0).getClass());

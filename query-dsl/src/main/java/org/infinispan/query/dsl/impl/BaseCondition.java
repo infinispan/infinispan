@@ -194,7 +194,7 @@ abstract class BaseCondition implements FilterConditionContextQueryBuilder, Visi
    }
 
    @Override
-   public Query build() {
+   public <T> Query<T> build() {
       return getQueryBuilder().build();
    }
 }

@@ -22,7 +22,7 @@ final class EmbeddedQueryBuilder extends BaseQueryBuilder {
    }
 
    @Override
-   public Query build() {
+   public <T> Query<T> build() {
       QueryStringCreator generator = new QueryStringCreator();
       String queryString = accept(generator);
       if (trace) {

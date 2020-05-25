@@ -67,8 +67,8 @@ public class ProtobufJsonScriptTest extends MultiHotRodServersTest {
       cache.put(1, user1);
       cache.put(2, user2);
 
-      Query q = Search.getQueryFactory(cache).create("From sample_bank_account.User where name = 'Jane'");
-      User user = (User) q.list().iterator().next();
+      Query<User> q = Search.getQueryFactory(cache).create("FROM sample_bank_account.User WHERE name = 'Jane'");
+      User user = q.execute().list().iterator().next();
       assertEquals("Jane", user.getName());
 
       registerScript(remoteCacheManager, SCRIPT_NAME);

@@ -116,8 +116,8 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
 
       final long startTs = System.nanoTime();
       for (int i = 0; i < QUERY_LOOPS; i++) {
-         Query q = qf.create(queryString);
-         List<User> list = q.list();
+         Query<User> q = qf.create(queryString);
+         List<User> list = q.execute().list();
          assertEquals(1, list.size());
          assertEquals("John1", list.get(0).getName());
       }
@@ -133,8 +133,8 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
 
       final long startTs = System.nanoTime();
       for (int i = 0; i < QUERY_LOOPS; i++) {
-         Query q = qf.create(queryString);
-         List<User> list = q.list();
+         Query<User> q = qf.create(queryString);
+         List<User> list = q.execute().list();
          assertEquals(1, list.size());
          assertEquals("John1", list.get(0).getName());
       }

@@ -128,7 +128,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
 
    @Listener(clustered = true)
    protected class ClusterListener {
-      List<CacheEntryEvent> events = Collections.synchronizedList(new ArrayList<CacheEntryEvent>());
+      List<CacheEntryEvent> events = Collections.synchronizedList(new ArrayList<>());
 
       @CacheEntryCreated
       public void onCreatedEvent(CacheEntryCreatedEvent event) {

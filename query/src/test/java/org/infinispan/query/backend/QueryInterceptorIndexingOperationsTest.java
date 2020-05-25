@@ -10,6 +10,7 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -35,8 +36,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   @Test
-   public void testAvoidUnnecessaryRemoveForSimpleUpdate() throws IOException {
+   public void testAvoidUnnecessaryRemoveForSimpleUpdate() throws Exception {
       Directory directory = initializeAndExtractDirectory(cache);
 
       Entity1 entity1 = new Entity1("e1");
@@ -49,8 +49,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
       assertEquals(0, countIndexedDocuments(Entity2.class));
    }
 
-   @Test
-   public void testOverrideNonIndexedByIndexed() throws IOException {
+   public void testOverrideNonIndexedByIndexed() throws Exception {
       Directory directory = initializeAndExtractDirectory(cache);
 
       cache.put(1, "string value");
@@ -62,8 +61,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
       assertEquals(0, countIndexedDocuments(Entity2.class));
    }
 
-   @Test
-   public void testOverrideIndexedByNonIndexed() throws IOException {
+   public void testOverrideIndexedByNonIndexed() throws Exception {
       Directory directory = initializeAndExtractDirectory(cache);
 
       final Entity1 entity1 = new Entity1("title");
@@ -76,8 +74,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
       assertEquals(0, countIndexedDocuments(Entity2.class));
    }
 
-   @Test
-   public void testOverrideIndexedByOtherIndexed() throws IOException {
+   public void testOverrideIndexedByOtherIndexed() throws Exception {
       Directory directory = initializeAndExtractDirectory(cache);
 
       final Entity1 entity1 = new Entity1("title");
@@ -98,7 +95,6 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
             .addIndexedEntity(Entity2.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      ConfigurationBuilder nonIndexed = nonIndexed();
 
       ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
       holder.getGlobalConfigurationBuilder()
@@ -108,13 +104,6 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
 
       holder.getNamedConfigurationBuilders().put(TestCacheManagerFactory.DEFAULT_CACHE_NAME, builder);
       return TestCacheManagerFactory.newDefaultCacheManager(true, holder);
-   }
-
-   private ConfigurationBuilder nonIndexed() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.indexing().enabled(false)
-            .addProperty("lucene_version", "LUCENE_CURRENT");
-      return builder;
    }
 
    interface Operation {
@@ -127,20 +116,19 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
       return SegmentInfos.getLastCommitGeneration(directory) - initialGen;
    }
 
-   private Directory initializeAndExtractDirectory(Cache cache) {
+   private Directory initializeAndExtractDirectory(Cache<?, ?> cache) {
       SearchIntegrator searchFactory = ComponentRegistryUtils.getSearchIntegrator(cache);
-      DirectoryBasedIndexManager indexManager = (DirectoryBasedIndexManager) searchFactory.getIndexBindings().get(Entity1.class)
+      DirectoryBasedIndexManager indexManager = (DirectoryBasedIndexManager) searchFactory.getIndexBindings().get(PojoIndexedTypeIdentifier.convertFromLegacy(Entity1.class))
             .getIndexManagerSelector().all().iterator().next();
       return indexManager.getDirectoryProvider().getDirectory();
    }
 
-   private int countIndexedDocuments(Class<?> clazz) {
-      Query query = Search.getQueryFactory(cache).create("FROM " + clazz.getName());
-      return query.list().size();
+   private long countIndexedDocuments(Class<?> clazz) {
+      Query<?> query = Search.getQueryFactory(cache).create("FROM " + clazz.getName());
+      return query.execute().hitCount().orElse(-1);
    }
 
    @Indexed(index = "theIndex")
-   @SuppressWarnings("unused")
    static class Entity1 {
 
       @Field
@@ -149,10 +137,13 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
       public Entity1(String attribute) {
          this.attribute = attribute;
       }
+
+      public String getAttribute() {
+         return attribute;
+      }
    }
 
    @Indexed(index = "theIndex")
-   @SuppressWarnings("unused")
    static class Entity2 {
 
       @Field
@@ -160,6 +151,10 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
 
       public Entity2(String attribute) {
          this.attribute = attribute;
+      }
+
+      public String getAttribute() {
+         return attribute;
       }
    }
 }

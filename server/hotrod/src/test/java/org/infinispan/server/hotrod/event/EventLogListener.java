@@ -29,12 +29,10 @@ import org.infinispan.test.TestException;
  * @author Galder Zamarreño
  */
 public class EventLogListener extends TestClientListener {
-   private ArrayBlockingQueue<TestKeyWithVersionEvent>
-         createdEvents = new ArrayBlockingQueue<>(128);
-   private ArrayBlockingQueue<TestKeyWithVersionEvent>
-         modifiedEvents = new ArrayBlockingQueue<>(128);
-   private ArrayBlockingQueue<TestKeyEvent> removedEvents = new ArrayBlockingQueue<>(128);
-   private ArrayBlockingQueue<TestCustomEvent> customEvents = new ArrayBlockingQueue<>(128);
+   private final ArrayBlockingQueue<TestKeyWithVersionEvent> createdEvents = new ArrayBlockingQueue<>(128);
+   private final ArrayBlockingQueue<TestKeyWithVersionEvent> modifiedEvents = new ArrayBlockingQueue<>(128);
+   private final ArrayBlockingQueue<TestKeyEvent> removedEvents = new ArrayBlockingQueue<>(128);
+   private final ArrayBlockingQueue<TestCustomEvent> customEvents = new ArrayBlockingQueue<>(128);
 
    @Override
    public int queueSize(Event.Type eventType) {
@@ -201,5 +199,4 @@ public class EventLogListener extends TestClientListener {
       EntryVersion version = metadata.version();
       return ((NumericVersion) version).getVersion();
    }
-
 }

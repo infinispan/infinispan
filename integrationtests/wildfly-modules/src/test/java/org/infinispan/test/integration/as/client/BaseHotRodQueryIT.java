@@ -67,10 +67,10 @@ public class BaseHotRodQueryIT {
       assertTrue(cache.containsKey("Adrian"));
 
       QueryFactory qf = Search.getQueryFactory(cache);
-      Query query = qf.from(Person.class)
+      Query<Person> query = qf.from(Person.class)
             .having("name").eq("Adrian")
             .build();
-      List<Person> list = query.list();
+      List<Person> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
       assertEquals(Person.class, list.get(0).getClass());
@@ -100,10 +100,10 @@ public class BaseHotRodQueryIT {
       cache.clear();
 
       QueryFactory qf = Search.getQueryFactory(cache);
-      Query query = qf.from(Person.class)
+      Query<Person> query = qf.from(Person.class)
             .having("name").eq("John")
             .orderBy("id")
             .build();
-      assertEquals(0, query.list().size());
+      assertEquals(0, query.execute().list().size());
    }
 }

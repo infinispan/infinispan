@@ -17,6 +17,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.embedded.testdomain.Account;
+import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.testng.annotations.Test;
 
 /**
@@ -75,8 +77,8 @@ public class TwoCachesSharedIndexTest extends MultiHotRodServersTest {
       RemoteCache<Integer, UserPB> userCache = client(0).getCache(USER_CACHE);
       userCache.put(1, getUserPB());
 
-      Query query = Search.getQueryFactory(userCache).create("FROM sample_bank_account.User WHERE name = 'John'");
-      List<UserPB> users = query.list();
+      Query<User> query = Search.getQueryFactory(userCache).create("FROM sample_bank_account.User WHERE name = 'John'");
+      List<User> users = query.execute().list();
 
       assertEquals("John", users.iterator().next().getName());
    }
@@ -86,8 +88,8 @@ public class TwoCachesSharedIndexTest extends MultiHotRodServersTest {
       RemoteCache<Integer, AccountPB> accountCache = client(0).getCache(ACCOUNT_CACHE);
       accountCache.put(1, getAccountPB());
 
-      Query query = Search.getQueryFactory(accountCache).create("FROM sample_bank_account.Account WHERE description = 'account1'");
-      List<AccountPB> accounts = query.list();
+      Query<Account> query = Search.getQueryFactory(accountCache).create("FROM sample_bank_account.Account WHERE description = 'account1'");
+      List<Account> accounts = query.execute().list();
 
       assertEquals(accounts.iterator().next().getDescription(), "account1");
    }

@@ -27,6 +27,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.testng.annotations.Test;
 
 /**
@@ -105,7 +106,7 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
 
       int lowerId = 5;
       int higherId = 8;
-      Query simpleQuery = queryFactory.create("FROM sample_bank_account.Account WHERE id BETWEEN :lowerId AND :higherId")
+      Query<Account> simpleQuery = queryFactory.<Account>create("FROM sample_bank_account.Account WHERE id BETWEEN :lowerId AND :higherId")
                                       .setParameter("lowerId", lowerId)
                                       .setParameter("higherId", higherId);
       Set<Entry<Object, Object>> entries = extractEntries(remoteCache.retrieveEntriesByQuery(simpleQuery, null, 10));
@@ -115,7 +116,7 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
       assertForAll(keys, key -> key >= lowerId && key <= higherId);
       assertForAll(entries, e -> e.getValue() instanceof AccountPB);
 
-      Query projectionsQuery = queryFactory.create("SELECT id, description FROM sample_bank_account.Account WHERE id BETWEEN :lowerId AND :higherId")
+      Query<Object[]> projectionsQuery = queryFactory.<Object[]>create("SELECT id, description FROM sample_bank_account.Account WHERE id BETWEEN :lowerId AND :higherId")
                                            .setParameter("lowerId", lowerId)
                                            .setParameter("higherId", higherId);
       Set<Entry<Integer, Object[]>> entriesWithProjection = extractEntries(remoteCache.retrieveEntriesByQuery(projectionsQuery, null, 10));

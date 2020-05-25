@@ -30,5 +30,5 @@ public interface QueryBuilder extends FilterConditionBeginContext, PaginationCon
     *
     * @return the Query
     */
-   Query build();
+   <T> Query<T> build();
 }
