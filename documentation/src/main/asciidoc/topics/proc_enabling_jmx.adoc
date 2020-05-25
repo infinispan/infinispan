@@ -3,6 +3,8 @@
 You can enable JMX with {brandname} servers to collect statistics and perform
 administrative operations.
 
+Start the server with the following properties: `-Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false`
+
 [NOTE]
 ====
 You can enable JMX without enabling statistics if you want to use management
@@ -33,6 +35,17 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
 ----
 
 <1> registers {brandname} JMX MBeans.
+
+.JMX Java Client
+In order to retrieve or do operations in the server you can create your own Java Client:
+[source,java]
+----
+String host = "127.0.0.1";
+Integer jmxPort = 9999;
+JMXServiceURL url = new JMXServiceURL(String.format("service:jmx:rmi:///jndi/rmi://%s:%d/jmxrmi", host, jmxPort));
+JMXConnector jmxConnector = JMXConnectorFactory.connect(url);
+MBeanServerConnection connection =  jmxConnector.getMBeanServerConnection();
+----
 
 .Reference
 
