@@ -110,7 +110,7 @@ public class RemoteContinuousQueryLeavingRemoteCacheManagerTest extends MultiHot
    private Listener applyContinuousQuery(RemoteCache<String, User> cacheToUse) {
       QueryFactory qf = Search.getQueryFactory(cacheToUse);
 
-      Query query = qf.create("FROM sample_bank_account.User WHERE age <= :ageParam")
+      Query<User> query = qf.<User>create("FROM sample_bank_account.User WHERE age <= :ageParam")
                       .setParameter("ageParam", 32);
 
       ContinuousQuery<String, User> continuousQuery = Search.getContinuousQuery(cacheToUse);

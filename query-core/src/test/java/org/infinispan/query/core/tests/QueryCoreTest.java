@@ -68,8 +68,8 @@ public class QueryCoreTest extends SingleCacheManagerTest {
 
       QueryFactory queryFactory = Search.getQueryFactory(cache);
 
-      Query query = queryFactory.create("from " + Person.class.getName() + " where name='Hombre'");
-      List<Person> results = query.list();
+      Query<Person> query = queryFactory.create("from " + Person.class.getName() + " where name='Hombre'");
+      List<Person> results = query.execute().list();
 
       assertEquals("Araña", results.get(0).getSurname());
    }

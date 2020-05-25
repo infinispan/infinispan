@@ -2,8 +2,6 @@ package org.infinispan.query.distributed;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.IOException;
-
 import javax.transaction.TransactionManager;
 
 import org.infinispan.configuration.cache.CacheMode;
@@ -27,7 +25,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.distributed.IndexManagerLocalTest")
 public class IndexManagerLocalTest extends SingleCacheManagerTest {
 
-   protected EmbeddedCacheManager createCacheManager() throws IOException {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder
             .clustering()
@@ -66,9 +64,8 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
    }
 
    protected void assertIndexSize(int expectedIndexSize) {
-      Query query = Search.getQueryFactory(cache).create("FROM " + Person.class.getName());
-      assertEquals(expectedIndexSize, query.list().size());
+      Query<Person> query = Search.getQueryFactory(cache).create("FROM " + Person.class.getName());
+      assertEquals(expectedIndexSize, query.execute().list().size());
       StaticTestingErrorHandler.assertAllGood(cache);
    }
-
 }

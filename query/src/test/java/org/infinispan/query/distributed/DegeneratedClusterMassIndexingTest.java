@@ -35,23 +35,22 @@ public class DegeneratedClusterMassIndexingTest extends MultipleCacheManagersTes
    }
 
    public void testReindexing() {
-      Cache cache = cache(0).getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
-
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-
+      Cache<String, Car> cache = this.<String, Car>cache(0).getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
       cache.put("car1", new Car("ford", "white", 300));
       cache.put("car2", new Car("ford", "blue", 300));
       cache.put("car3", new Car("ford", "red", 300));
 
+      QueryFactory queryFactory = Search.getQueryFactory(cache);
+
       // ensure these were not indexed
       String q = String.format("FROM %s where make:'ford'", Car.class.getName());
-      Query query = queryFactory.create(q);
+      Query<Car> query = queryFactory.create(q);
       assertEquals(0, query.execute().hitCount().orElse(-1));
 
       //reindex
       join(Search.getIndexer(cache).run());
 
       // check that the indexing is complete immediately
-      assertEquals(3, queryFactory.create(q).execute().hitCount().orElse(-1));
+      assertEquals(3, query.execute().hitCount().orElse(-1));
    }
 }

@@ -48,7 +48,7 @@ public class ClusteredListenerWithDslFilterProfilingTest extends MultipleCacheMa
    private long testEventFilterPerformance(boolean doRegisterListener) {
       List<NoOpEntryListener> listeners = new ArrayList<>(NUM_LISTENERS);
       if (doRegisterListener) {
-         Query query = makeQuery(cache(0));
+         Query<Person> query = makeQuery(cache(0));
          for (int i = 0; i < NUM_LISTENERS; i++) {
             NoOpEntryListener listener = new NoOpEntryListener();
             listeners.add(listener);
@@ -84,7 +84,7 @@ public class ClusteredListenerWithDslFilterProfilingTest extends MultipleCacheMa
       return endTs - startTs;
    }
 
-   private Query makeQuery(Cache<?, ?> c) {
+   private Query<Person> makeQuery(Cache<?, ?> c) {
       QueryFactory qf = Search.getQueryFactory(c);
       return qf.create("FROM org.infinispan.query.test.Person WHERE age >= 18");
    }

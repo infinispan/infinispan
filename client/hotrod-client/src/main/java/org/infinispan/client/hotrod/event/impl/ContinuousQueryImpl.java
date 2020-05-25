@@ -23,7 +23,7 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.remote.client.impl.ContinuousQueryResult;
 
 /**
- * A container of continuous query listeners for a cache.
+ * A container of continuous query listeners for a remote cache.
  * <p>This class is not threadsafe.
  *
  * @author anistor@redhat.com
@@ -65,13 +65,13 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
     * @param listener the continuous query listener instance
     * @param query    the query to be used for determining the matching set
     */
-   public <C> void addContinuousQueryListener(Query query, ContinuousQueryListener<K, C> listener) {
+   public <C> void addContinuousQueryListener(Query<?> query, ContinuousQueryListener<K, C> listener) {
       addContinuousQueryListener(query.getQueryString(), query.getParameters(), listener);
    }
 
    public void removeContinuousQueryListener(ContinuousQueryListener<K, ?> listener) {
       for (Iterator<ClientEntryListener<K, ?>> it = listeners.iterator(); it.hasNext(); ) {
-         ClientEntryListener l = it.next();
+         ClientEntryListener<?, ?> l = it.next();
          if (l.listener == listener) {
             cache.removeClientListener(l);
             it.remove();
@@ -89,7 +89,7 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
    }
 
    public void removeAllListeners() {
-      for (ClientEntryListener l : listeners) {
+      for (ClientEntryListener<?, ?> l : listeners) {
          cache.removeClientListener(l);
       }
       listeners.clear();

@@ -36,7 +36,7 @@ public class ClientEvents {
     * @param listener    the listener instance
     * @param query       the query to be used for filtering and conversion (if projections are used)
     */
-   public static void addClientQueryListener(RemoteCache<?, ?> remoteCache, Object listener, Query query) {
+   public static void addClientQueryListener(RemoteCache<?, ?> remoteCache, Object listener, Query<?> query) {
       ClientListener l = ReflectionUtil.getAnnotation(listener.getClass(), ClientListener.class);
       if (l == null) {
          throw HOTROD.missingClientListenerAnnotation(listener.getClass().getName());

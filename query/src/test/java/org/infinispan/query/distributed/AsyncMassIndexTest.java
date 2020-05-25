@@ -30,7 +30,6 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
    protected CleanupPhase cleanup = CleanupPhase.AFTER_METHOD;
 
    @Override
-   @SuppressWarnings("unchecked")
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cacheCfg
@@ -45,8 +44,7 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
       waitForClusterToForm(getDefaultCacheName());
    }
 
-
-   private void populate(int elements) throws Exception {
+   private void populate(int elements) {
       Cache<Integer, Transaction> cache = cache(0);
       for (int i = 0; i < elements; i++) {
          cache.put(i, new Transaction(i + 200, "bytes"));
@@ -70,9 +68,8 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
 
    protected void checkIndex(int expectedNumber) {
       Cache<Integer, Transaction> c = cache(0);
-      Query q = Search.getQueryFactory(c).create("FROM " + Transaction.class.getName());
+      Query<Transaction> q = Search.getQueryFactory(c).create("FROM " + Transaction.class.getName());
       long resultSize = q.execute().hitCount().orElse(-1);
       assertEquals(expectedNumber, resultSize);
    }
-
 }

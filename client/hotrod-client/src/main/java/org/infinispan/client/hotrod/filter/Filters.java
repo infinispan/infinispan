@@ -37,7 +37,7 @@ public final class Filters {
       return factoryParams;
    }
 
-   public static Object[] makeFactoryParams(Query query) {
+   public static Object[] makeFactoryParams(Query<?> query) {
       return makeFactoryParams(query.getQueryString(), query.getParameters());
    }
 }

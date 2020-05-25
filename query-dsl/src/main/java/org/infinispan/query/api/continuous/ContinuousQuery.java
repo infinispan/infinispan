@@ -38,7 +38,7 @@ public interface ContinuousQuery<K, V> {
     * @param query    the query object
     * @param listener the listener
     */
-   <C> void addContinuousQueryListener(Query query, ContinuousQueryListener<K, C> listener);
+   <C> void addContinuousQueryListener(Query<?> query, ContinuousQueryListener<K, C> listener);
 
    /**
     * Remove a continuous query listener.

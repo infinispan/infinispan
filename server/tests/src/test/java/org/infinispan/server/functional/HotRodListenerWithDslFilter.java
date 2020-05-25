@@ -106,7 +106,7 @@ public class HotRodListenerWithDslFilter {
       SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCache.getRemoteCacheManager());
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
-      Query query = qf.create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
+      Query<User> query = qf.<User>create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
             .setParameter("ageParam", 32);
 
       ClientEntryListener listener = new ClientEntryListener(serCtx);

@@ -68,13 +68,13 @@ final class FilterQueryFactory extends BaseQueryFactory {
       }
 
       @Override
-      public Query build() {
+      public <T> Query<T> build() {
          QueryStringCreator generator = new QueryStringCreator();
          String queryString = accept(generator);
          if (log.isTraceEnabled()) {
             log.tracef("Query string : %s", queryString);
          }
-         return new FilterQuery(queryFactory, queryString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
+         return new FilterQuery<>(queryFactory, queryString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
       }
    }
 
@@ -97,7 +97,6 @@ final class FilterQueryFactory extends BaseQueryFactory {
       public QueryResult<T> execute() {
          throw new UnsupportedOperationException();
       }
-
 
       // TODO [anistor] need to rethink the dsl Query/QueryBuilder interfaces to accommodate the filtering scenario ...
       @Override

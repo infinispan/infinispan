@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.Cache;
@@ -42,7 +43,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
 
    public void testEventFilter() {
       QueryFactory qf = Search.getQueryFactory(cache(0));
-      Query query = qf.create("FROM " + Person.class.getName() + " WHERE age <= 31");
+      Query<Person> query = qf.create("FROM " + Person.class.getName() + " WHERE age <= 31");
 
       EntryListener listener = new EntryListener();
 
@@ -90,7 +91,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
 
    public void testEventFilterAndConverter() {
       QueryFactory qf = Search.getQueryFactory(cache(0));
-      Query query = qf.create("SELECT name, age FROM " + Person.class.getName() + " WHERE age <= 31");
+      Query<Object[]> query = qf.create("SELECT name, age FROM " + Person.class.getName() + " WHERE age <= 31");
 
       EntryListener listener = new EntryListener();
 
@@ -131,7 +132,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
       QueryFactory qf = Search.getQueryFactory(cache(0));
-      Query query = qf.create("SELECT MAX(age) FROM " + Person.class.getName() + " WHERE age >= 20");
+      Query<Object[]> query = qf.create("SELECT MAX(age) FROM " + Person.class.getName() + " WHERE age >= 20");
 
       cache(0).addListener(new EntryListener(), Search.makeFilter(query), null);
    }
@@ -140,7 +141,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
    private static class EntryListener {
 
       // this is where we accumulate matches
-      public final List<ObjectFilter.FilterResult> results = new ArrayList<>();
+      public final List<ObjectFilter.FilterResult> results = Collections.synchronizedList(new ArrayList<>());
 
       @CacheEntryCreated
       public void handleEvent(CacheEntryCreatedEvent<?, ObjectFilter.FilterResult> event) {

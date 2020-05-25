@@ -18,7 +18,7 @@ public interface EndpointITSCI extends SerializationContextInitializer {
    String PACKAGE_NAME = "org.infinispan.test.endpoint.it";
    EndpointITSCI INSTANCE = new EndpointITSCIImpl();
 
-   static String getFQMessageName(String message) {
-      return String.format("%s.%s", PACKAGE_NAME, message);
+   static String getFQN(Class<?> messageClass) {
+      return PACKAGE_NAME + "." + messageClass.getSimpleName();
    }
 }

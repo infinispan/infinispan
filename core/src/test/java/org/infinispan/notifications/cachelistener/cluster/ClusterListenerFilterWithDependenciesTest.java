@@ -3,6 +3,7 @@ package org.infinispan.notifications.cachelistener.cluster;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.Cache;
@@ -74,7 +75,7 @@ public class ClusterListenerFilterWithDependenciesTest extends MultipleCacheMana
    @Listener(clustered = true, includeCurrentState = true)
    public static class EntryListener {
 
-      public final List<CacheEntryCreatedEvent> createEvents = new ArrayList<CacheEntryCreatedEvent>();
+      public final List<CacheEntryCreatedEvent> createEvents = Collections.synchronizedList(new ArrayList<>());
 
       @CacheEntryCreated
       public void handleEvent(CacheEntryCreatedEvent event) {

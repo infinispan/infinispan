@@ -23,13 +23,13 @@ import org.infinispan.query.dsl.Query;
  */
 public interface Matcher {
 
-   FilterSubscription registerFilter(Query query, FilterCallback callback, Object... eventType);
+   FilterSubscription registerFilter(Query<?> query, FilterCallback callback, Object... eventType);
 
    FilterSubscription registerFilter(String queryString, Map<String, Object> namedParameters, FilterCallback callback, Object... eventType);
 
    FilterSubscription registerFilter(String queryString, FilterCallback callback, Object... eventType);
 
-   FilterSubscription registerFilter(Query query, FilterCallback callback, boolean isDeltaFilter, Object... eventType);
+   FilterSubscription registerFilter(Query<?> query, FilterCallback callback, boolean isDeltaFilter, Object... eventType);
 
    FilterSubscription registerFilter(String queryString, Map<String, Object> namedParameters, FilterCallback callback, boolean isDeltaFilter, Object... eventType);
 
@@ -75,7 +75,7 @@ public interface Matcher {
     */
    ObjectFilter getObjectFilter(FilterSubscription filterSubscription);
 
-   ObjectFilter getObjectFilter(Query query);
+   ObjectFilter getObjectFilter(Query<?> query);
 
    ObjectFilter getObjectFilter(String queryString);
 

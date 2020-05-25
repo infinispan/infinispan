@@ -46,11 +46,11 @@ public class ContinuousQueryProfilingTest extends MultipleCacheManagersTest {
    }
 
    private long testContinuousQueryPerformance(boolean doRegisterListener) {
-      ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache(0));
+      ContinuousQuery<String, Person> cq = Search.getContinuousQuery(cache(0));
       if (doRegisterListener) {
-         Query query = makeQuery(cache(0));
+         Query<Person> query = makeQuery(cache(0));
          for (int i = 0; i < NUM_LISTENERS; i++) {
-            cq.addContinuousQueryListener(query, new ContinuousQueryListener<Object, Object>() {
+            cq.addContinuousQueryListener(query, new ContinuousQueryListener<String, Person>() {
             });
          }
       }
@@ -62,7 +62,7 @@ public class ContinuousQueryProfilingTest extends MultipleCacheManagersTest {
          value.setName("John");
          value.setAge(i + 25);
 
-         Cache<Object, Person> cache = cache(i % NUM_NODES);
+         Cache<String, Person> cache = cache(i % NUM_NODES);
          cache.put(value.getName(), value);
       }
       // update entries (with same value)
@@ -71,7 +71,7 @@ public class ContinuousQueryProfilingTest extends MultipleCacheManagersTest {
          value.setName("John");
          value.setAge(i + 25);
 
-         Cache<Object, Person> cache = cache(i % NUM_NODES);
+         Cache<String, Person> cache = cache(i % NUM_NODES);
          cache.put(value.getName(), value);
       }
       long endTs = System.nanoTime();
@@ -81,7 +81,7 @@ public class ContinuousQueryProfilingTest extends MultipleCacheManagersTest {
       return endTs - startTs;
    }
 
-   private Query makeQuery(Cache<?, ?> c) {
+   private Query<Person> makeQuery(Cache<?, ?> c) {
       QueryFactory qf = Search.getQueryFactory(c);
       return qf.create("FROM org.infinispan.query.test.Person WHERE age >= 18");
    }

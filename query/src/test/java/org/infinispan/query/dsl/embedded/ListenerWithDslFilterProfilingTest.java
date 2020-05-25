@@ -30,14 +30,14 @@ public class ListenerWithDslFilterProfilingTest extends SingleCacheManagerTest {
    private static final int NUM_LISTENERS = 1000;
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE);
    }
 
    public void testEventFilterPerformance() {
       QueryFactory qf = Search.getQueryFactory(cache());
 
-      Query query = qf.create("FROM org.infinispan.query.test.Person WHERE age <= 31");
+      Query<Person> query = qf.create("FROM org.infinispan.query.test.Person WHERE age <= 31");
 
       List<NoOpEntryListener> listeners = new ArrayList<>(NUM_LISTENERS);
       for (int i = 0; i < NUM_LISTENERS; i++) {

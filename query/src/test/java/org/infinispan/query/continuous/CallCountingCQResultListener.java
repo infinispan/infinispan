@@ -1,5 +1,6 @@
 package org.infinispan.query.continuous;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,9 +17,9 @@ import org.infinispan.util.logging.LogFactory;
 public class CallCountingCQResultListener<K, V> implements ContinuousQueryListener<K, V> {
    private static final Log log = LogFactory.getLog(CallCountingCQResultListener.class);
 
-   private final Map<K, Integer> joined = new HashMap<>();
-   private final Map<K, Integer> updated = new HashMap<>();
-   private final Map<K, Integer> left = new HashMap<>();
+   private final Map<K, Integer> joined = Collections.synchronizedMap(new HashMap<>());
+   private final Map<K, Integer> updated = Collections.synchronizedMap(new HashMap<>());
+   private final Map<K, Integer> left = Collections.synchronizedMap(new HashMap<>());
 
    @Override
    public void resultJoining(K key, V value) {

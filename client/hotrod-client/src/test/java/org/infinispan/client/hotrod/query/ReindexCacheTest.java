@@ -4,10 +4,6 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createServerModeCacheManager;
 import static org.testng.Assert.assertEquals;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
@@ -21,6 +17,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -79,7 +76,14 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
    @Test
    public void testMassIndexing() {
       RemoteCache<Integer, UserPB> userCache = remoteCacheManager.getCache(USER_CACHE);
-      getUsersPB().forEach(u -> userCache.put(u.getId(), u));
+
+      for (int i = 0; i < NUM_ENTRIES; i++) {
+         UserPB user = new UserPB();
+         user.setId(i);
+         user.setName("name" + i);
+         user.setSurname("surname" + i);
+         userCache.put(user.getId(), user);
+      }
 
       assertEquals(query(userCache), NUM_ENTRIES);
 
@@ -106,19 +110,9 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
       CompletionStages.join(indexer.run());
    }
 
-   private int query(RemoteCache<?, ?> cache) {
+   private long query(RemoteCache<?, ?> cache) {
       QueryFactory qf = Search.getQueryFactory(cache);
-      Query q = qf.create("FROM sample_bank_account.User");
-      return q.list().size();
-   }
-
-   private List<UserPB> getUsersPB() {
-      return IntStream.range(0, NUM_ENTRIES).boxed().map(i -> {
-         UserPB userPB = new UserPB();
-         userPB.setId(i);
-         userPB.setName("name" + i);
-         userPB.setSurname("surname" + i);
-         return userPB;
-      }).collect(Collectors.toList());
+      Query<User> q = qf.create("FROM sample_bank_account.User");
+      return q.execute().hitCount().orElse(-1);
    }
 }

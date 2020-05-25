@@ -264,7 +264,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * @param batchSize   The number of entries transferred from the server at a time.
     * @return Publisher containing matching entries
     */
-   <E> Publisher<Entry<K, E>> publishEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize);
+   <E> Publisher<Entry<K, E>> publishEntriesByQuery(Query<?> filterQuery, Set<Integer> segments, int batchSize);
 
    /**
     * Retrieve entries with metadata information

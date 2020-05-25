@@ -27,8 +27,10 @@ import org.testng.annotations.Test;
 @Test(groups = "profiling", testName = "query.dsl.embedded.NamedParamsPerfTest")
 public class NamedParamsPerfTest extends AbstractQueryDslTest {
 
+   private static final int ITERATIONS = 1000;
+
    @Indexed
-   public static class Person {
+   static class Person {
 
       @Field(store = Store.YES, analyze = Analyze.NO)
       @SortableField
@@ -42,18 +44,10 @@ public class NamedParamsPerfTest extends AbstractQueryDslTest {
       @SortableField
       final String lastName;
 
-      public Person(int id, String firstName, String lastName) {
+      Person(int id, String firstName, String lastName) {
          this.id = id;
          this.firstName = firstName;
          this.lastName = lastName;
-      }
-
-      public String getFirstName() {
-         return firstName;
-      }
-
-      public String getLastName() {
-         return lastName;
       }
    }
 
@@ -84,14 +78,13 @@ public class NamedParamsPerfTest extends AbstractQueryDslTest {
       QueryCache queryCache = manager(0).getGlobalComponentRegistry().getComponent(QueryCache.class);
       assertNotNull(queryCache);
 
-      Query query = factory.create("FROM " + Person.class.getName() + " WHERE firstName = :nameParam1 OR lastName = :nameParam2 OR id >= :idParam1 OR id < :idParam2");
+      Query<Person> query = factory.create("FROM " + Person.class.getName() + " WHERE firstName = :nameParam1 OR lastName = :nameParam2 OR id >= :idParam1 OR id < :idParam2");
 
-      final int iterations = 1000;
       long t1 = 0;
       long t2 = 0;
       long t3 = 0;
 
-      for (int i = 0; i < iterations; i++) {
+      for (int i = 0; i < ITERATIONS; i++) {
          queryCache.clear();
 
          long start = System.nanoTime();
@@ -99,34 +92,31 @@ public class NamedParamsPerfTest extends AbstractQueryDslTest {
                .setParameter("nameParam2", "ww")
                .setParameter("idParam1", 1000)
                .setParameter("idParam2", 0);
-         List<Object> list = query.list();
-         long duration = System.nanoTime() - start;  // first run is expected to take much longer than subsequent runs
+         List<Person> list = query.execute().list();
+         t1 += (System.nanoTime() - start);  // first run is expected to take much longer than subsequent runs
          assertEquals(1, list.size());
-         t1 += duration;
 
          start = System.nanoTime();
          query.setParameter("nameParam1", "Unnamed")
                .setParameter("nameParam2", "zz")
                .setParameter("idParam1", 2000)
                .setParameter("idParam2", -1000);
-         list = query.list();
-         duration = System.nanoTime() - start;
+         list = query.execute().list();
+         t2 += (System.nanoTime() - start);
          assertEquals(1, list.size());
-         t2 += duration;
 
          start = System.nanoTime();
          query.setParameter("nameParam1", "Unnamed")
                .setParameter("nameParam2", "bb")
                .setParameter("idParam1", 5000)
                .setParameter("idParam2", -3000);
-         list = query.list();
-         duration = System.nanoTime() - start;
+         list = query.execute().list();
+         t3 += (System.nanoTime() - start);
          assertEquals(1, list.size());
-         t3 += duration;
       }
 
-      System.out.println("NamedParamsPerfTest.testNamedParamPerfComparison t1 (avg, us) = " + (t1 / 1000.0 / iterations));
-      System.out.println("NamedParamsPerfTest.testNamedParamPerfComparison t2 (avg, us) = " + (t2 / 1000.0 / iterations));
-      System.out.println("NamedParamsPerfTest.testNamedParamPerfComparison t3 (avg, us) = " + (t3 / 1000.0 / iterations));
+      System.out.println("NamedParamsPerfTest.testNamedParamPerfComparison t1 (avg, us) = " + (t1 / 1000.0 / ITERATIONS));
+      System.out.println("NamedParamsPerfTest.testNamedParamPerfComparison t2 (avg, us) = " + (t2 / 1000.0 / ITERATIONS));
+      System.out.println("NamedParamsPerfTest.testNamedParamPerfComparison t3 (avg, us) = " + (t3 / 1000.0 / ITERATIONS));
    }
 }
