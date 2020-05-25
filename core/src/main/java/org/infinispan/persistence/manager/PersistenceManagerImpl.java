@@ -997,8 +997,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    /**
-    * Provides a grouping function that will group entries by their segment (via keyPartitioner) when the store
-    * supports segmentation or always 0 if it doesn't
+    * Provides a function that groups entries by their segments (via keyPartitioner).
+    * Returns the segment if the cache store supports segmentation.
+    * Returns 0 if the cache store does support segmentation.
     */
    private <E> Function<E, Integer> groupingFunction(Function<E, Object> toKeyFunction, boolean segmented) {
       return segmented ? value -> keyPartitioner.getSegment(toKeyFunction.apply(value)) : value -> 0;
