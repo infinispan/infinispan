@@ -51,17 +51,17 @@ public interface InitializationContext {
    ExecutorService getExecutor();
 
    /**
-    * Returns an executor that Infinispan uses internally for non blocking tasks. The user must guarantee tasks
-    * submitted to this executor will not block the thread it is ran on. Failure to do so can slow down Infinispan's
-    * handling of operations as these threads are limited to the number of cores and are used extensively.
-    * @return an executor that can be used to submit tasks that will not block the thread it runs on
+    * Returns an executor for non-blocking tasks. Users must guarantee that the tasks they submit to this executor
+    * do not block the thread in which the executor runs. Doing so can cause Infinispan to handle operations
+    * more slowly, reducing performance, because threads are limited to the number of cores and are used extensively.
+    * @return an executor that can submit non-blocking tasks.
     */
    Executor getNonBlockingExecutor();
 
    /**
-    * Returns a manager that is designed to execute tasks that may block. This manager ensures that only the blocking
-    * portion is ran on a blocking thread and any stage is continued on a non blocking thread.
-    * @return a manager that should be used to execute blocking operations
+    * Returns a manager that is designed to execute tasks that might block. This manager ensures that only the blocking
+    * code is run on a blocking thread and any stage continues on a non-blocking thread.
+    * @return a manager that should be used to execute blocking operations.
     */
    BlockingManager getBlockingManager();
 
