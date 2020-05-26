@@ -20,6 +20,7 @@
       <defaultExcludedTestGroup/>
       <org.infinispan.test.server.dir>${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
       <org.infinispan.test.server.lib.dir>${project.build.directory}/testlibs</org.infinispan.test.server.lib.dir>
+      <version.infinispan.backward.compatibility.test>9.4.19.Final</version.infinispan.backward.compatibility.test>
    </properties>
 
    <dependencies>
@@ -144,6 +145,37 @@
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
                      <argLine>${container.argLine}</argLine>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+      <profile>
+         <id>backward-compatibility</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <dependencies>
+            <dependency>
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-client-hotrod</artifactId>
+               <version>${version.infinispan.backward.compatibility.test}</version>
+            </dependency>
+            <dependency>
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-commons</artifactId>
+               <version>${version.infinispan.backward.compatibility.test}</version>
+            </dependency>
+         </dependencies>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-compiler-plugin</artifactId>
+                  <configuration>
+                     <testIncludes>
+                        <testInclude>org/infinispan/server/backwardcompatibility/**</testInclude>
+                     </testIncludes>
                   </configuration>
                </plugin>
             </plugins>
