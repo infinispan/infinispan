@@ -1,11 +1,17 @@
 package org.infinispan.server.test.core;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
@@ -14,6 +20,7 @@ import javax.management.MBeanServerConnection;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 
@@ -37,17 +44,34 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
 
    @Override
    protected void start(String name, File rootDir, File configurationFile) {
-      String allServerHomes = System.getProperty(TestSystemPropertyNames.INFINISPAN_SERVER_HOME);
-      if (allServerHomes == null) {
-         throw new IllegalArgumentException("You must specify a " + TestSystemPropertyNames.INFINISPAN_SERVER_HOME + " property pointing to a comma-separated list of server homes.");
+      if (configuration.isParallelStartup()) {
+         throw new IllegalStateException("Forked mode doesn't support parallel startup");
       }
-      String[] serverHomes = allServerHomes.replaceAll("\\s+", "").split(",");
-      if (serverHomes.length != configuration.numServers()) {
+      String globalServerHome = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR);
+      if (globalServerHome == null) {
+         throw new IllegalArgumentException("You must specify a " + TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR + " property.");
+      }
+
+      List<Path> serverHomes = new ArrayList<>();
+      Path src = Paths.get(globalServerHome).normalize();
+      for (int i = 0; i < configuration.numServers(); i++) {
+         Path dest = Paths.get(CommonsTestingUtil.tmpDirectory(), UUID.randomUUID().toString());
+         try {
+            Files.createDirectory(dest);
+            Files.walkFileTree(src, new CommonsTestingUtil.CopyFileVisitor(dest, true));
+         } catch (IOException e) {
+            throw new UncheckedIOException("Cannot copy the server to temp folder", e);
+         }
+         serverHomes.add(dest);
+      }
+
+      if (serverHomes.size() != configuration.numServers()) {
          throw new IllegalArgumentException("configuration.numServers should be the same " +
                "as the number of servers declared on org.infinispan.test.server");
       }
       for (int i = 0; i < configuration.numServers(); i++) {
-         ForkedServer server = new ForkedServer(serverHomes[i])
+         String serverHome = serverHomes.get(i).toString();
+         ForkedServer server = new ForkedServer(serverHome)
                .setServerConfiguration(configurationFile.getPath())
                .setPortsOffset(i);
          copyArtifactsToUserLibDir(server.getServerLib());
