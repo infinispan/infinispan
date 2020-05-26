@@ -147,7 +147,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer, Indexer {
             try {
                indexUpdater.flush(toFlush);
             } finally {
-               lock.unlock();
+               CompletionStages.join(lock.unlock());
                isRunning = false;
             }
          };

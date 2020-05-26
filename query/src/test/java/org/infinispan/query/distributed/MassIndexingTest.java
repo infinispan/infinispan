@@ -58,7 +58,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
       verifyFindsCar(0, "test2");
    }
 
-   @Test(enabled = false, description = "ISPN-11891")
+   @Test
    public void testOverlappingMassIndexers() {
       Cache<Integer, Car> cache = cache(0);
       IntStream.range(0, 10).forEach(i -> cache.put(i, new Car("whatever", "whatever", 0)));
