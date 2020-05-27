@@ -1,0 +1,26 @@
+[id='install_ispn_modules']
+= Installing {brandname} Modules
+Download and install {brandname} modules for {wildflybrandname}.
+
+.Prerequisites
+
+. JDK 8 or later.
+. An existing {wildflybrandname} installation.
+
+.Procedure
+
+//Product
+ifdef::productized[]
+. Log in to the {portal}.
+endif::productized[]
+. Download the ZIP archive for the  modules from the link:{download_url}[{brandname} software downloads].
+. Extract the ZIP archive and copy the contents of `modules` to the `modules` directory of your {wildflybrandname} installation so that you get the resulting structure:
++
+//Community
+ifndef::productized[]
+`$WILDFLY_HOME/modules/system/add-ons/{moduleprefix}/org/infinispan/{infinispanslot}`
+endif::productized[]
+//Product
+ifdef::productized[]
+`$EAP_HOME/modules/system/add-ons/{moduleprefix}/org/infinispan/{infinispanslot}`
+endif::productized[]
