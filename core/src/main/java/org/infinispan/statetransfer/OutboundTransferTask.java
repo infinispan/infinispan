@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
@@ -167,11 +168,14 @@ public class OutboundTransferTask implements Runnable {
       try {
          // TODO: need to change to SDC.forEachSegment
          // send data container entries
-         for (InternalCacheEntry ice : dataContainer) {
+         for (InternalCacheEntry<?, ?> ice : dataContainer) {
+            if (isCancelled())
+               break;
+
             Object key = ice.getKey();  //todo [anistor] should we check for expired entries?
             int segmentId = keyPartitioner.getSegment(key);
             if (segments.contains(segmentId) && !ice.isL1Entry()) {
-               InternalCacheEntry entry = mapEntryFromDataContainer.apply(ice, entryFactory);
+               InternalCacheEntry<?, ?> entry = mapEntryFromDataContainer.apply(ice, entryFactory);
                if (entry != null) {
                   sendEntry(entry, segmentId);
                }
@@ -181,11 +185,15 @@ public class OutboundTransferTask implements Runnable {
          AdvancedCacheLoader<Object, Object> stProvider = persistenceManager.getStateTransferProvider();
          if (stProvider != null) {
             try {
-               AdvancedCacheLoader.CacheLoaderTask task = (me, taskContext) -> {
+               Consumer<MarshalledEntry<?, ?>> task = (me) -> {
+                  if (isCancelled()) {
+                     // Hack to stop the iteration without implementing a full Subscriber
+                     throw new IllegalLifecycleStateException("State transfer cancelled");
+                  }
                   int segmentId = keyPartitioner.getSegment(me.getKey());
                   if (segments.contains(segmentId)) {
                      try {
-                        InternalCacheEntry entry = mapEntryFromStore.apply(me, entryFactory);
+                        InternalCacheEntry<?, ?> entry = mapEntryFromStore.apply(me, entryFactory);
                         if (entry != null) {
                            sendEntry(entry, segmentId);
                         }
@@ -195,7 +203,7 @@ public class OutboundTransferTask implements Runnable {
                   }
                };
                Flowable.fromPublisher(stProvider.publishEntries(k -> !dataContainer.containsKey(k), true, true))
-                     .blockingForEach(me -> task.processEntry(me, null));
+                     .blockingForEach(task::accept);
             } catch (CacheException e) {
                log.failedLoadingKeysFromCacheStore(e);
             }
@@ -302,7 +310,7 @@ public class OutboundTransferTask implements Runnable {
    public void cancel() {
       if (runnableFuture != null && !runnableFuture.isCancelled()) {
          log.debugf("Cancelling outbound transfer to node %s, segments %s", destination, segments);
-         runnableFuture.cancel(true);
+         runnableFuture.cancel(false);
       }
    }
 
