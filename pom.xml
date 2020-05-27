@@ -1538,11 +1538,6 @@
             <version>${versionx.org.reactivestreams.reactive-streams}</version>
          </dependency>
          <dependency>
-            <groupId>org.reactivestreams</groupId>
-            <artifactId>reactive-streams-flow-adapters</artifactId>
-            <version>${versionx.org.reactivestreams.reactive-streams}</version>
-         </dependency>
-         <dependency>
             <groupId>org.rocksdb</groupId>
             <artifactId>rocksdbjni</artifactId>
             <version>${versionx.org.rocksdb.rocksdbjni}</version>
