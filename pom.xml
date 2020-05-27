@@ -305,6 +305,7 @@
       <versionx.org.apache.lucene.lucene-core>${version.lucene}</versionx.org.apache.lucene.lucene-core>
       <versionx.org.apache.lucene.lucene-facet>${version.lucene}</versionx.org.apache.lucene.lucene-facet>
       <versionx.org.apache.lucene.lucene-grouping>${version.lucene}</versionx.org.apache.lucene.lucene-grouping>
+      <versionx.org.apache.lucene.lucene-misc>${version.lucene}</versionx.org.apache.lucene.lucene-misc>
       <versionx.org.apache.lucene.lucene-queryparser>${version.lucene}</versionx.org.apache.lucene.lucene-queryparser>
       <versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>3.5.1</versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>
       <versionx.org.aspectj.aspectjweaver>1.8.1</versionx.org.aspectj.aspectjweaver>
@@ -890,6 +891,11 @@
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-grouping</artifactId>
             <version>${versionx.org.apache.lucene.lucene-grouping}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-misc</artifactId>
+            <version>${versionx.org.apache.lucene.lucene-misc}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.lucene</groupId>
