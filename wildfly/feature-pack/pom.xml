@@ -46,7 +46,7 @@
         <dependency>
             <groupId>${appserver.groupId}</groupId>
             <artifactId>wildfly-feature-pack</artifactId>
-            <version>19.1.0.Final</version>
+            <version>${appserver.version}</version>
             <type>zip</type>
             <exclusions>
                 <exclusion>
@@ -279,7 +279,7 @@
             <plugin>
                 <groupId>org.wildfly.build</groupId>
                 <artifactId>wildfly-feature-pack-build-maven-plugin</artifactId>
-                <version>1.2.13.Final</version>
+                <version>${version.org.wildfly.build-tools}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
