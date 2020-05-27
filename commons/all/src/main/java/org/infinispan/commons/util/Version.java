@@ -89,6 +89,10 @@ public class Version {
       return brandName;
    }
 
+   public String brandVersion() {
+      return brandVersion;
+   }
+
    /*
     * The following methods use a singleton instance
     */

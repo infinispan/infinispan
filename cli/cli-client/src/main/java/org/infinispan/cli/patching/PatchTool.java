@@ -108,7 +108,7 @@ public class PatchTool {
    public void installPatch(Path patch, Path target, boolean dryRun) throws IOException {
       // Obtain the target version
       Version targetVersion = getVersion(target);
-      String version = targetVersion.version();
+      String version = targetVersion.brandVersion();
       String brandName = targetVersion.brandName();
       List<PatchInfo> installedPatches = getInstalledPatches(target);
       // Open the patch file
@@ -336,11 +336,11 @@ public class PatchTool {
          throw MSG.patchIncompatibleProduct(sourceBrand, targetBrand);
       }
 
-      if (sourceVersion.version().equals(targetVersion.version())) {
-         throw MSG.patchServerAndTargetMustBeDifferent(sourceVersion.version());
+      if (sourceVersion.brandVersion().equals(targetVersion.brandVersion())) {
+         throw MSG.patchServerAndTargetMustBeDifferent(sourceVersion.brandVersion());
       }
 
-      PatchInfo patchInfo = new PatchInfo(sourceBrand, sourceVersion.version(), targetVersion.version(), qualifier);
+      PatchInfo patchInfo = new PatchInfo(sourceBrand, sourceVersion.brandVersion(), targetVersion.brandVersion(), qualifier);
 
       // Build a list of files in the old version
       Map<Path, ServerFile> v1Files = getServerFiles(source);
