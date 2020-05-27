@@ -183,9 +183,9 @@
       <version.picketlink>2.5.5.SP12</version.picketlink>
       <version.protostream>4.3.2.Final</version.protostream>
       <version.protostuff>1.6.2</version.protostuff>
-      <version.reactivestreams>1.0.2</version.reactivestreams>
+      <version.reactivestreams>1.0.3</version.reactivestreams>
       <version.rocksdb>6.5.3</version.rocksdb>
-      <version.rxjava>3.0.2</version.rxjava>
+      <version.rxjava>3.0.4</version.rxjava>
       <version.smallrye-config>1.6.2</version.smallrye-config>
       <version.smallrye-metrics>2.4.0</version.smallrye-metrics>
       <version.microprofile-config-api>1.4</version.microprofile-config-api>
