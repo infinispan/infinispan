@@ -7,7 +7,7 @@ which prevents unnecessary and potentially expensive writes to persistent
 storage.
 
 Activation is the process of restoring entries to memory from the cache store
-when threads attempt to access passivated entries. For this reason, when you
+when there is an attempt to access passivated entries. For this reason, when you
 enable passivation, you must configure cache stores that implement both
 `CacheWriter` and `CacheLoader` interfaces so they can write and load entries
 from persistent storage.

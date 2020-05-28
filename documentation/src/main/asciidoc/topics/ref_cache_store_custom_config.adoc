@@ -1,6 +1,7 @@
 [id='configure_custom_cache_store']
-= Custom Cache Store Configuration
-After you implement your custom cache store, configure {brandname} to use it.
+= Configuring {brandname} to Use Custom Stores
+After you create your custom cache store implementation, configure {brandname}
+to use it.
 
 .Declarative configuration
 

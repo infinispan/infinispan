@@ -30,7 +30,7 @@ Calculating memory requirements for Distributed mode is slightly more complicate
 [stem]
 .Required memory in Distributed mode
 ++++
-Required Memo ry = Total Data Set*(Node Failures + 2)/(Nodes - Node Failures)
+Required Memory = Total Data Set*(Node Failures + 2)/(Nodes - Node Failures)
 ++++
 
 Where:
@@ -119,19 +119,11 @@ The recommended values are:
 * send window size - 640 KB
 * receive window size - 25 MB
 
-= Number of threads
+= Number of threads for Hot Rod connectors
 
-{brandname} tunes its thread pools according to the available CPU cores. Under Linux this
-will also take into consideration taskset / CGroup quotas. It is possible to override the
-detected value by specifying the system property ``infinispan.activeprocessorcount``.
-
-NOTE: Java 10 and later can limit the number of active processor using the VM flag
-``-XX:ActiveProcessorCount=xx``.
-
-= Number of threads (Server mode only)
-
-Hot Rod Server uses worker threads which are activated by a client's requests.
-It's important to match the number of worker threads to the number of concurrent client requests:
+The Hot Rod connector for {brandname} server uses worker threads that are
+activated by clients requests. It is important to match the number of worker
+threads to the number of concurrent client requests:
 
 [source,xml,options="nowrap",subs=attributes+]
 .Hot Rod Server worker thread pool size

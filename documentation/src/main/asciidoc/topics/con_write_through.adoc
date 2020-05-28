@@ -1,6 +1,6 @@
 [id='write_through']
 = Write-Through
-Write-Through is an cache writing mode where writes to memory and writes to
+Write-Through is a cache writing mode where writes to memory and writes to
 cache stores are synchronous. When a client application updates a cache entry,
 in most cases by invoking `Cache.put()`, {brandname} does not return the call
 until it updates the cache store. This cache writing mode results in updates to
