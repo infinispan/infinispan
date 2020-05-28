@@ -503,7 +503,7 @@ public interface NonBlockingStore<K, V> {
       // Note that removed is done after write has completed, but is subscribed eagerly. This makes sure there is only
       // one pending write or remove.
       return Flowable.concatArrayEager(entriesWritten, removedKeys)
-            .firstStage(null);
+            .lastStage(null);
    }
 
    /**
@@ -662,6 +662,12 @@ public interface NonBlockingStore<K, V> {
     * <p>
     * When the Publisher is subscribed to, it is expected to do point-in-time expiration and should
     * not return a Publisher that has infinite entries or never completes.
+    * <p>
+    * Subscribing to the returned {@link Publisher} should not block the invoking thread. It is the responsibility of
+    * the store implementation to ensure this occurs. If however the store must block to perform an operation it
+    * is recommended to wrap your Publisher before returning with the
+    * {@link org.infinispan.util.concurrent.BlockingManager#blockingPublisher(Publisher)} method and it will handle
+    * subscription and observation on the blocking and non blocking executors respectively.
     * <p>
     * <h4>Summary of Characteristics Effects</h4>
     * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
