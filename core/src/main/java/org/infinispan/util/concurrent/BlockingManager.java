@@ -3,8 +3,10 @@ package org.infinispan.util.concurrent;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
 
 import org.reactivestreams.Publisher;
 
@@ -33,6 +35,45 @@ public interface BlockingManager {
     * @return a stage that is completed after the runnable is done or throws an exception.
     */
    CompletionStage<Void> runBlocking(Runnable runnable, Object traceId);
+
+   /**
+    * Subscribes to the provided publisher on the invoking thread. Published values are observed on a blocking thread
+    * one a time passed to the provided consumer. The returned stage if not complete will resume any chained stage
+    * on the non blocking executor.
+    * <p>
+    * If no values are published the returned stage will be completed upon return of this method and require no
+    * thread context switches
+    * <p>
+    * Note that if the current thread is blocking everything including subscription, publication and consumption of
+    * values will be done on the current thread.
+    * @param publisher publisher of values to consume
+    * @param consumer consumer to handle the values
+    * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads
+    * @param <E> the type of entries
+    * @return a stage that is completed after all values are consumed
+    */
+   <E> CompletionStage<Void> subscribeBlockingConsumer(Publisher<E> publisher, Consumer<E> consumer, Object traceId);
+
+   /**
+    * Subscribes to the provided publisher on the invoking thread. Published values are observed on a blocking thread
+    * one a time passed to the provided collector. The returned stage if not complete will resume any chained stage
+    * on the non blocking executor.
+    * <p>
+    * If no values are published the returned stage will be completed upon return of this method and require no
+    * thread context switches
+    * <p>
+    * Note that if the current thread is blocking everything including subscription, publication and collection of
+    * values will be done on the current thread.
+    * @param publisher publisher of values to collect
+    * @param collector collector of the values
+    * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads
+    * @param <T> the type of entries
+    * @param <A> accumulator type of the entries
+    * @param <R> final value type
+    * @return a stage that when complete contains the collected values as a single value
+    */
+   <T, A, R> CompletionStage<R> subscribeBlockingCollector(Publisher<T> publisher, Collector<? super T, A, R> collector,
+         Object traceId);
 
    /**
     * Replacement for {@code CompletionStage.supplyAsync()} that invokes the {@code Supplier} in a blocking thread

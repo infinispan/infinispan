@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -50,8 +51,16 @@ public interface WaitNonBlockingStore<K, V> extends NonBlockingStore<K, V> {
       return join(size(segments));
    }
 
+   default long approximateSizeWait(IntSet segments) {
+      return join(approximateSize(segments));
+   }
+
    default void clearAndWait() {
       join(clear());
+   }
+
+   default void startAndWait(InitializationContext ctx) {
+      join(start(ctx));
    }
 
    default void stopAndWait() {

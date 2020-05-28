@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -55,7 +56,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.PersistenceMockUtil;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -76,8 +76,12 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
    protected WaitNonBlockingStore<Object, Object> store;
    protected ControlledTimeService timeService;
-   private InternalEntryFactory factory;
-   private final IntSet segments = IntSets.immutableSet(0);
+   protected InternalEntryFactory factory;
+   protected Configuration configuration;
+   protected int segmentCount;
+   protected InitializationContext initializationContext;
+   protected KeyPartitioner keyPartitioner = k -> Math.abs(k.hashCode() % segmentCount);
+   private IntSet segments;
 
    protected static <K, V> NonBlockingStore<K, V> asNonBlockingStore(CacheLoader<K, V> loader) {
       return new NonBlockingStoreAdapter<>(loader);
@@ -108,7 +112,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
             @Override
             public KeyPartitioner getKeyPartitioner() {
-               return k -> 0;
+               return keyPartitioner;
             }
          };
 
@@ -119,10 +123,16 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       }
    }
 
-   private void startStore(NonBlockingStore<?, ?> store) {
+   private void startStore(WaitNonBlockingStore<?, ?> store) {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      Configuration config = buildConfig(builder);
-      CompletionStages.join(store.start(createContext(config)));
+      setConfiguration(buildConfig(builder));
+      store.startAndWait(createContext(configuration));
+   }
+
+   protected void setConfiguration(Configuration configuration) {
+      this.configuration = configuration;
+      this.segmentCount = configuration.clustering().hash().numSegments();
+      segments = IntSets.immutableRangeSet(segmentCount);
    }
 
    //alwaysRun = true otherwise, when we run unstable tests, this method is not invoked (because it belongs to the unit group)
@@ -198,7 +208,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
       assertContains("k", true);
       assertCorrectExpiry(store.loadEntry("k"), "v", lifespan, -1, false);
-      assertCorrectExpiry(TestingUtil.allEntries(store, IntSets.immutableSet(0), null).iterator().next(), "v", lifespan, -1, false);
+      assertCorrectExpiry(TestingUtil.allEntries(store, segments).iterator().next(), "v", lifespan, -1, false);
       timeService.advance(lifespan + 1);
 
       lifespan = 2000;
@@ -243,7 +253,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
       assertContains("k", true);
       assertCorrectExpiry(store.loadEntry("k"), "v", -1, idle, false);
-      assertCorrectExpiry(TestingUtil.allEntries(store).iterator().next(), "v", -1, idle, false);
+      assertCorrectExpiry(TestingUtil.allEntries(store, segments).iterator().next(), "v", -1, idle, false);
       timeService.advance(idle + 1);
 
       idle = 1000;
@@ -259,7 +269,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    }
 
    private void assertIsEmpty() {
-      assertEmpty(TestingUtil.allEntries(store), true);
+      assertEmpty(TestingUtil.allEntries(store, segments), true);
    }
 
    protected void assertEventuallyExpires(final String key) throws Exception {
@@ -278,7 +288,9 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       expiredList.removeIf(me -> expired.remove(me.getKey()));
 
       assertEmpty(expiredList, true);
-      assertTrue(expired.isEmpty() || !storePurgesAllExpired());
+      if (storePurgesAllExpired()) {
+         assertEmpty(expired, true);
+      }
       assertEquals(Collections.emptyList(), expiredList);
    }
 
@@ -296,7 +308,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
       assertContains("k", true);
       assertCorrectExpiry(store.loadEntry("k"), "v", lifespan, idle, false);
-      assertCorrectExpiry(TestingUtil.allEntries(store).iterator().next(), "v", lifespan, idle, false);
+      assertCorrectExpiry(TestingUtil.allEntries(store, segments).iterator().next(), "v", lifespan, idle, false);
       timeService.advance(idle + 1);
 
       idle = 1000;
@@ -326,7 +338,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
       assertContains("k", true);
       assertCorrectExpiry(store.loadEntry("k"), "v", lifespan, idle, false);
-      assertCorrectExpiry(TestingUtil.allEntries(store).iterator().next(), "v", lifespan, idle, false);
+      assertCorrectExpiry(TestingUtil.allEntries(store, segments).iterator().next(), "v", lifespan, idle, false);
 
       idle = 4000;
       lifespan = 2000;
@@ -396,7 +408,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       store.write(marshalledEntry("k2", "v2"));
       store.write(marshalledEntry("k3", "v3"));
 
-      Set<MarshallableEntry<Object, Object>> set = TestingUtil.allEntries(store);
+      Set<MarshallableEntry<Object, Object>> set = TestingUtil.allEntries(store, segments);
 
       assertSize(set, 3);
       Set<String> expected = new HashSet<>(Arrays.asList("k1", "k2", "k3"));
@@ -416,7 +428,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       store.write(marshalledEntry("k4", "v4"));
 
 
-      Set<MarshallableEntry<Object, Object>> set = TestingUtil.allEntries(store);
+      Set<MarshallableEntry<Object, Object>> set = TestingUtil.allEntries(store, segments);
 
       assertSize(set, 4);
 
@@ -432,11 +444,22 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       store.delete("k2");
       store.delete("k3");
 
-      set = TestingUtil.allEntries(store);
+      set = TestingUtil.allEntries(store, segments);
       assertSize(set, 1);
       assertEquals("k4", set.iterator().next().getKey());
 
       assertEquals(1, store.publishKeysWait(segments, null).size());
+   }
+
+   public void testSizeApproximation() {
+      assertIsEmpty();
+
+      store.write(marshalledEntry("k1", "v1"));
+      store.write(marshalledEntry("k2", "v2"));
+      store.write(marshalledEntry("k3", "v3"));
+      store.write(marshalledEntry("k4", "v4"));
+
+      assertEquals(4, store.approximateSizeWait(segments));
    }
 
    public void testPurgeExpired() throws Exception {
@@ -497,13 +520,13 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       store.write(marshalledEntry("k4", "v4"));
       store.write(marshalledEntry("k5", "v5"));
 
-      Set<MarshallableEntry<Object, Object>> s = TestingUtil.allEntries(store);
+      Set<MarshallableEntry<Object, Object>> s = allEntries(store, segments);
       assertSize(s, 5);
 
-      s = allEntries(store, k -> true);
+      s = allEntries(store, segments, k -> true);
       assertSize(s, 5);
 
-      s = allEntries(store, k -> !"k3".equals(k));
+      s = allEntries(store, segments, k -> !"k3".equals(k));
       assertSize(s, 4);
 
       for (MarshallableEntry me : s) {
@@ -577,15 +600,17 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    public void testWriteAndDeleteBatch() {
       // Number of entries is randomized to even numbers between 80 and 120
       int numberOfEntries = 2 * ThreadLocalRandom.current().nextInt(WRITE_DELETE_BATCH_MIN_ENTRIES / 2, WRITE_DELETE_BATCH_MAX_ENTRIES / 2 + 1);
-      testBatch(numberOfEntries, () -> store.batchUpdate(1, Flowable.empty(),
-            TestingUtil.singleSegmentPublisher(Flowable.range(0, numberOfEntries).map(i -> marshalledEntry(i.toString(), "Val" + i)))));
+      testBatch(numberOfEntries, () -> store.batchUpdate(segmentCount, Flowable.empty(),
+            TestingUtil.multipleSegmentPublisher(Flowable.range(0, numberOfEntries).map(i -> marshalledEntry(i.toString(), "Val" + i)),
+            MarshallableEntry::getKey, keyPartitioner)));
    }
 
    public void testWriteAndDeleteBatchIterable() {
       // Number of entries is randomized to even numbers between 80 and 120
       int numberOfEntries = 2 * ThreadLocalRandom.current().nextInt(WRITE_DELETE_BATCH_MIN_ENTRIES / 2, WRITE_DELETE_BATCH_MAX_ENTRIES / 2 + 1);
-      testBatch(numberOfEntries, () -> store.batchUpdate(1, Flowable.empty(),
-            TestingUtil.singleSegmentPublisher(Flowable.range(0, numberOfEntries).map(i -> marshalledEntry(i.toString(), "Val" + i)))));
+      testBatch(numberOfEntries, () -> store.batchUpdate(segmentCount, Flowable.empty(),
+            TestingUtil.multipleSegmentPublisher(Flowable.range(0, numberOfEntries).map(i -> marshalledEntry(i.toString(), "Val" + i)),
+            MarshallableEntry::getKey, keyPartitioner)));
    }
 
    public void testEmptyWriteAndDeleteBatchIterable() {
@@ -602,14 +627,15 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
       createBatch.run();
 
-      Set<MarshallableEntry<Object, Object>> set = TestingUtil.allEntries(store);
+      Set<MarshallableEntry<Object, Object>> set = TestingUtil.allEntries(store, segments);
       assertSize(set, numberOfEntries);
       assertNotNull(store.loadEntry("56"));
 
       int batchSize = numberOfEntries / 2;
       List<Object> keys = IntStream.range(0, batchSize).mapToObj(Integer::toString).collect(Collectors.toList());
-      store.batchUpdate(1, TestingUtil.singleSegmentPublisher(Flowable.fromIterable(keys)), Flowable.empty());
-      set = TestingUtil.allEntries(store);
+      store.batchUpdate(segmentCount, TestingUtil.multipleSegmentPublisher(Flowable.fromIterable(keys),
+            Function.identity(), keyPartitioner), Flowable.empty());
+      set = TestingUtil.allEntries(store, segments);
       assertSize(set, batchSize);
       assertNull(store.loadEntry("20"));
    }
@@ -619,7 +645,11 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    }
 
    protected final InitializationContext createContext(Configuration configuration) {
-      return PersistenceMockUtil.createContext(getClass(), configuration, getMarshaller(), timeService);
+      initializationContext = new PersistenceMockUtil.InvocationContextBuilder(getClass(), configuration, getMarshaller())
+            .setTimeService(timeService)
+            .setKeyPartitioner(keyPartitioner)
+            .build();
+      return initializationContext;
    }
 
    protected final void assertContains(Object k, boolean expected) {

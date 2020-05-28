@@ -10,8 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.Cache;
-import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
@@ -19,29 +17,22 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
-import org.infinispan.persistence.BaseStoreTest;
+import org.infinispan.persistence.BaseNonBlockingStoreTest;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.util.PersistenceMockUtil;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.rocksdb.RocksDBStoreTest")
-public class RocksDBStoreTest extends BaseStoreTest {
+public class RocksDBStoreTest extends BaseNonBlockingStoreTest {
 
    private String tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
-   private Configuration configuration;
-   private KeyPartitioner keyPartitioner;
    private boolean segmented;
 
    @AfterClass(alwaysRun = true)
@@ -67,6 +58,14 @@ public class RocksDBStoreTest extends BaseStoreTest {
       return "[" + segmented + "]";
    }
 
+   @Override
+   protected Configuration buildConfig(ConfigurationBuilder cb) {
+      // Lower number of segments as it takes much longer to start up store otherwise (makes test take a long time otherwise)
+      cb.clustering().hash().numSegments(16);
+      createCacheStoreConfig(cb.persistence());
+      return cb.build();
+   }
+
    protected RocksDBStoreConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder lcb) {
       RocksDBStoreConfigurationBuilder cfg = lcb.addStore(RocksDBStoreConfigurationBuilder.class);
       cfg.segmented(segmented);
@@ -78,42 +77,16 @@ public class RocksDBStoreTest extends BaseStoreTest {
 
 
    @Override
-   protected AdvancedLoadWriteStore createStore() {
+   protected NonBlockingStore createStore() {
       clearTempDir();
-      RocksDBStore fcs = new RocksDBStore();
-      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      // Lower number of segments as it takes much longer to start up store otherwise (makes test take a long time otherwise)
-      cb.clustering().hash().numSegments(16);
-      createCacheStoreConfig(cb.persistence());
-
-      configuration = cb.build();
-      ClassWhiteList whiteList = marshaller.getWhiteList();
-      InitializationContext ctx = PersistenceMockUtil.createContext(getClass(), configuration, getMarshaller(), timeService, whiteList);
-      Cache cache = ctx.getCache();
-      HashFunctionPartitioner partitioner = new HashFunctionPartitioner();
-      partitioner.init(cache.getCacheConfiguration().clustering().hash());
-      keyPartitioner = partitioner;
-      cache.getAdvancedCache().getComponentRegistry().registerComponent(partitioner, KeyPartitioner.class);
-      fcs.init(ctx);
-      return fcs;
+      return new RocksDBStore();
    }
 
-   @Test(groups = "stress", timeOut = 15*60*1000)
-   public void testConcurrentWriteAndRestart() {
-      concurrentWriteAndRestart(true);
-   }
-
-   @Test(groups = "stress", timeOut = 15*60*1000)
-   public void testConcurrentWriteAndStop() {
-      concurrentWriteAndRestart(true);
-   }
-
-   private void concurrentWriteAndRestart(boolean start) {
-      final int THREADS = 4;
+   @Test(groups = "stress")
+   public void testConcurrentWrite() throws InterruptedException {
+      final int THREADS = 8;
       final AtomicBoolean run = new AtomicBoolean(true);
-      final AtomicInteger writtenPre = new AtomicInteger();
-      final AtomicInteger writtenPost = new AtomicInteger();
-      final AtomicBoolean post = new AtomicBoolean(false);
+      final AtomicInteger written = new AtomicInteger();
       final CountDownLatch started = new CountDownLatch(THREADS);
       final CountDownLatch finished = new CountDownLatch(THREADS);
       for (int i = 0; i < THREADS; ++i) {
@@ -126,14 +99,13 @@ public class RocksDBStoreTest extends BaseStoreTest {
                   InternalCacheEntry entry = TestInternalCacheEntryFactory.create("k" + i1, "v" + i1);
                   MarshallableEntry me = MarshalledEntryUtil.create(entry, getMarshaller());
                   try {
-                     AtomicInteger record = post.get() ? writtenPost : writtenPre;
-                     cl.write(me);
+                     store.write(me);
                      ++i1;
                      int prev;
                      do {
-                        prev = record.get();
+                        prev = written.get();
                         if ((prev & (1 << thread)) != 0) break;
-                     } while (record.compareAndSet(prev, prev | (1 << thread)));
+                     } while (written.compareAndSet(prev, prev | (1 << thread)));
                   } catch (PersistenceException e) {
                      // when the store is stopped, exceptions are thrown
                   }
@@ -146,36 +118,14 @@ public class RocksDBStoreTest extends BaseStoreTest {
             }
          });
       }
-      try {
-         if (!started.await(30, TimeUnit.SECONDS)) {
-            fail();
-         }
-         Thread.sleep(1000);
-         cl.stop();
-         post.set(true);
-         Thread.sleep(1000);
-         if (start) {
-            cl.start();
-            Thread.sleep(1000);
-         }
-      } catch (InterruptedException e) {
-         fail();
-      } finally {
-         run.set(false);
+      if (finished.await(1, TimeUnit.SECONDS)) {
+         fail("Test shouldn't have finished yet");
       }
-      try {
-         if (!finished.await(30, TimeUnit.SECONDS)) {
-            fail();
-         }
-      } catch (InterruptedException e) {
-         fail();
+      run.set(false);
+      if (!finished.await(30, TimeUnit.SECONDS)) {
+         fail("Test should have finished!");
       }
-      assertEquals(writtenPre.get(), (1 << THREADS) - 1, "pre");
-      if (start) {
-         assertEquals(writtenPost.get(), (1 << THREADS) - 1, "post");
-      } else {
-         assertEquals(writtenPost.get(), 0, "post");
-      }
+      assertEquals(written.get(), (1 << THREADS) - 1, "pre");
    }
 
    /**
@@ -189,21 +139,20 @@ public class RocksDBStoreTest extends BaseStoreTest {
       InternalCacheEntry entry = TestInternalCacheEntryFactory.create(key, value);
       MarshallableEntry me = MarshalledEntryUtil.create(entry, getMarshaller());
 
-      cl.write(me);
+      store.write(me);
 
-      assertTrue(cl.contains(key));
+      assertTrue(store.contains(key));
 
-      SegmentedAdvancedLoadWriteStore salws = (SegmentedAdvancedLoadWriteStore) cl;
       // Now remove the segment that held our key
-      salws.removeSegments(IntSets.immutableSet(segment));
+      CompletionStages.join(store.removeSegments(IntSets.immutableSet(segment)));
 
-      assertFalse(cl.contains(key));
+      assertFalse(store.contains(key));
 
       // Now add the segment back
-      salws.addSegments(IntSets.immutableSet(segment));
+      CompletionStages.join(store.addSegments(IntSets.immutableSet(segment)));
 
-      cl.write(me);
+      store.write(me);
 
-      assertTrue(cl.contains(key));
+      assertTrue(store.contains(key));
    }
 }

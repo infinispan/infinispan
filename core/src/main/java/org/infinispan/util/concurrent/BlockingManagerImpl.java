@@ -6,8 +6,10 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
 
 import org.infinispan.commons.executors.BlockingResource;
 import org.infinispan.executors.LimitedExecutor;
@@ -49,6 +51,50 @@ public class BlockingManagerImpl implements BlockingManager {
    @Override
    public CompletionStage<Void> runBlocking(Runnable runnable, Object traceId) {
       return runBlockingOperation(runnable, traceId, blockingExecutor);
+   }
+
+   @Override
+   public <E> CompletionStage<Void> subscribeBlockingConsumer(Publisher<E> publisher, Consumer<E> consumer,
+         Object traceId) {
+      Flowable<E> valuePublisher = Flowable.fromPublisher(publisher);
+      if (!isCurrentThreadBlocking()) {
+         valuePublisher = valuePublisher.observeOn(blockingScheduler);
+         if (trace) {
+            log.tracef("Subscribing to publisher for %s observing on blocking thread", traceId);
+         }
+      } else if (trace) {
+         log.tracef("Subscribing to publisher for %s observing on invoking blocking thread", traceId);
+      }
+
+      if (trace) {
+         valuePublisher = valuePublisher.doOnNext(value -> log.tracef("Invoking blocking consumer for %s with value %s", traceId, value));
+      }
+      return continueOnNonBlockingThread(valuePublisher
+            .doOnNext(consumer::accept)
+            .ignoreElements()
+            .toCompletionStage(null), traceId);
+   }
+
+   @Override
+   public <T, A, R> CompletionStage<R> subscribeBlockingCollector(Publisher<T> publisher, Collector<? super T, A, R> collector,
+         Object traceId) {
+      Flowable<T> valuePublisher = Flowable.fromPublisher(publisher);
+      if (!isCurrentThreadBlocking()) {
+         valuePublisher = valuePublisher.observeOn(blockingScheduler);
+         if (trace) {
+            log.tracef("Subscribing to publisher for %s observing on blocking thread", traceId);
+         }
+      } else if (trace) {
+         log.tracef("Subscribing to publisher for %s observing on invoking blocking thread", traceId);
+      }
+
+      if (trace) {
+         valuePublisher = valuePublisher.doOnNext(value -> log.tracef("Invoking blocking collector for %s with value %s", traceId, value));
+      }
+      return continueOnNonBlockingThread(Flowable.fromPublisher(valuePublisher)
+            // Unfortunately rxjava doesn't have the generics as they should :(
+            .collect((Collector<T, A, R>) collector)
+            .toCompletionStage(), traceId);
    }
 
    private CompletionStage<Void> runBlockingOperation(Runnable runnable, Object traceId, Executor executor) {
@@ -173,7 +219,7 @@ public class BlockingManagerImpl implements BlockingManager {
    public <V> CompletionStage<V> continueOnNonBlockingThread(CompletionStage<V> delay, Object traceId) {
       if (CompletionStages.isCompletedSuccessfully(delay)) {
          if (trace) {
-            log.tracef("Stage for %s was already completed, returning in same non blocking thread", traceId);
+            log.tracef("Stage for %s was already completed, returning in same thread", traceId);
          }
          return delay;
       }

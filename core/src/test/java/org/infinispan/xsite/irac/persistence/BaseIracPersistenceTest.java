@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -21,9 +22,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.KeyValueWrapper;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
+import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
@@ -50,7 +51,8 @@ public abstract class BaseIracPersistenceTest<V> extends SingleCacheManagerTest 
    private static final String SITE = "LON";
    private final KeyValueWrapper<String, String, V> keyValueWrapper;
    protected String tmpDirectory;
-   protected AdvancedLoadWriteStore<String, V> cacheStore;
+   protected WaitNonBlockingStore<String, V> cacheStore;
+   protected int segmentCount;
    protected MarshallableEntryFactory<String, V> entryFactory;
 
    protected BaseIracPersistenceTest(
@@ -66,7 +68,7 @@ public abstract class BaseIracPersistenceTest<V> extends SingleCacheManagerTest 
       cacheStore.write(createEntry(key, value, metadata));
 
       MarshallableEntrySubscriber<V> subscriber = new MarshallableEntrySubscriber<>();
-      cacheStore.entryPublisher(key::equals, true, true).subscribe(subscriber);
+      cacheStore.publishEntries(IntSets.immutableRangeSet(segmentCount), key::equals, true).subscribe(subscriber);
 
       List<MarshallableEntry<String, V>> entries = subscriber.cf.join();
       assertEquals(1, entries.size());
@@ -79,7 +81,8 @@ public abstract class BaseIracPersistenceTest<V> extends SingleCacheManagerTest 
       ConfigurationBuilder cBuilder = new ConfigurationBuilder();
       configure(cBuilder);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(gBuilder, cBuilder);
-      cacheStore = TestingUtil.getFirstLoader(cm.getCache());
+      cacheStore = TestingUtil.getFirstStore(cm.getCache());
+      segmentCount = cm.getCache().getCacheConfiguration().clustering().hash().numSegments();
       //noinspection unchecked
       entryFactory = TestingUtil.extractComponent(cm.getCache(), MarshallableEntryFactory.class);
       return cm;

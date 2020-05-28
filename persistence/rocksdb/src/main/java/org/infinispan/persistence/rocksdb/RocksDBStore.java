@@ -4,31 +4,32 @@ import static org.infinispan.persistence.PersistenceUtil.getQualifiedLocation;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.PrimitiveIterator;
 import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.IntSet;
@@ -44,12 +45,13 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.MarshalledValue;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.reactive.RxJavaInterop;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 import org.rocksdb.BuiltinComparator;
@@ -67,11 +69,15 @@ import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
 
-@Store
 @ConfiguredBy(RocksDBStoreConfiguration.class)
-public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V> {
-   private static final Log log = LogFactory.getLog(RocksDBStore.class, Log.class);
+public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final boolean trace = log.isTraceEnabled();
+
    static final String DATABASE_PROPERTY_NAME_WITH_SUFFIX = "database.";
    static final String COLUMN_FAMILY_PROPERTY_NAME_WITH_SUFFIX = "data.";
 
@@ -80,34 +86,30 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
    private RocksDB expiredDb;
    private InitializationContext ctx;
    private TimeService timeService;
-   private Semaphore semaphore;
    private WriteOptions dataWriteOptions;
    private RocksDBHandler handler;
    private Properties databaseProperties;
    private Properties columnFamilyProperties;
    private Marshaller marshaller;
+   private KeyPartitioner keyPartitioner;
    private MarshallableEntryFactory<K, V> entryFactory;
-   private volatile boolean stopped = true;
+   private BlockingManager blockingManager;
 
    @Override
-   public void init(InitializationContext ctx) {
+   public CompletionStage<Void> start(InitializationContext ctx) {
       this.configuration = ctx.getConfiguration();
       this.ctx = ctx;
       this.timeService = ctx.getTimeService();
       this.marshaller = ctx.getPersistenceMarshaller();
-      this.semaphore = new Semaphore(Integer.MAX_VALUE, true);
       this.entryFactory = ctx.getMarshallableEntryFactory();
-      ctx.getPersistenceMarshaller().register(new PersistenceContextInitializerImpl());
-   }
+      this.blockingManager = ctx.getBlockingManager();
+      this.keyPartitioner = ctx.getKeyPartitioner();
 
-   @Override
-   public void start() {
+      ctx.getPersistenceMarshaller().register(new PersistenceContextInitializerImpl());
 
       AdvancedCache cache = ctx.getCache().getAdvancedCache();
-      KeyPartitioner keyPartitioner = cache.getComponentRegistry().getComponent(KeyPartitioner.class);
       if (configuration.segmented()) {
-         handler = new SegmentedRocksDBHandler(cache.getCacheConfiguration().clustering().hash().numSegments(),
-               keyPartitioner);
+         handler = new SegmentedRocksDBHandler(cache.getCacheConfiguration().clustering().hash().numSegments());
       } else {
          handler = new NonSegmentedRocksDBHandler(keyPartitioner);
       }
@@ -129,13 +131,14 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
          }
       }
 
-      try {
-         db = handler.open(getLocation(), dataDbOptions());
-         expiredDb = openDatabase(getExpirationLocation(), expiredDbOptions());
-         stopped = false;
-      } catch (Exception e) {
-         throw new CacheConfigurationException("Unable to open database", e);
-      }
+      return blockingManager.runBlocking(() -> {
+         try {
+            db = handler.open(getLocation(), dataDbOptions());
+            expiredDb = openDatabase(getExpirationLocation(), expiredDbOptions());
+         } catch (Exception e) {
+            throw new CacheConfigurationException("Unable to open database", e);
+         }
+      }, "rocksdb-open");
    }
 
    private Path getLocation() {
@@ -187,258 +190,259 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
    }
 
    @Override
-   public void stop() {
-      try {
-         semaphore.acquire(Integer.MAX_VALUE);
-      } catch (InterruptedException e) {
-         throw new PersistenceException("Cannot acquire semaphore", e);
-      }
-      try {
+   public CompletionStage<Void> stop() {
+      return blockingManager.runBlocking(() -> {
          handler.close();
          expiredDb.close();
-      } finally {
-         stopped = true;
-         semaphore.release(Integer.MAX_VALUE);
-      }
+      }, "rocksdb-stop");
    }
 
    @Override
-   public void destroy() {
-      stop();
-      Util.recursiveFileRemove(getLocation().toFile());
-      Util.recursiveFileRemove(getExpirationLocation().toFile());
+   public Set<Characteristic> characteristics() {
+      return EnumSet.of(Characteristic.BULK_READ, Characteristic.EXPIRATION, Characteristic.SEGMENTABLE);
    }
 
    @Override
-   public boolean isAvailable() {
-      return getLocation().toFile().exists() && getExpirationLocation().toFile().exists();
+   public CompletionStage<Boolean> isAvailable() {
+      return blockingManager.supplyBlocking(() -> getLocation().toFile().exists() && getExpirationLocation().toFile().exists(),
+            "rocksdb-available");
    }
 
    @Override
-   public void clear() {
-      handler.clear(null);
+   public CompletionStage<Void> clear() {
+      return handler.clear();
    }
 
    @Override
-   public void clear(IntSet segments) {
-      handler.clear(segments);
-   }
-
-   @Override
-   public int size() {
-      return handler.size(null);
-   }
-
-   @Override
-   public int size(IntSet segments) {
+   public CompletionStage<Long> size(IntSet segments) {
       return handler.size(segments);
    }
 
    @Override
-   public boolean contains(Object key) {
-      return handler.contains(-1, key);
+   public CompletionStage<Long> approximateSize(IntSet segments) {
+      return handler.approximateSize(segments);
    }
 
    @Override
-   public boolean contains(int segment, Object key) {
-      return handler.contains(segment, key);
-   }
-
-   @Override
-   public Publisher<K> publishKeys(Predicate<? super K> filter) {
-      return handler.publishKeys(null, filter);
+   public CompletionStage<Boolean> containsKey(int segment, Object key) {
+      // This might be able to use RocksDB#keyMayExist - but API is a bit flaky
+      return load(segment, key)
+            .thenApply(Objects::nonNull);
    }
 
    @Override
    public Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
-      return handler.publishKeys(segments, filter);
+      return Flowable.fromPublisher(handler.publishEntries(segments, filter, false))
+            .map(MarshallableEntry::getKey);
    }
 
    @Override
-   public Publisher<MarshallableEntry<K, V>> entryPublisher(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
-      return handler.publishEntries(null, filter, fetchValue, fetchMetadata);
+   public Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean includeValues) {
+      return handler.publishEntries(segments, filter, includeValues);
    }
 
    @Override
-   public Publisher<MarshallableEntry<K, V>> entryPublisher(IntSet segments, Predicate<? super K> filter,
-         boolean fetchValue, boolean fetchMetadata) {
-      return handler.publishEntries(segments, filter, fetchValue, fetchMetadata);
-   }
-
-   @Override
-   public boolean delete(Object key) {
-      return handler.delete(-1, key);
-   }
-
-   @Override
-   public boolean delete(int segment, Object key) {
+   public CompletionStage<Boolean> delete(int segment, Object key) {
       return handler.delete(segment, key);
    }
 
    @Override
-   public void write(MarshallableEntry entry) {
-      handler.write(-1, entry);
+   public CompletionStage<Void> write(int segment, MarshallableEntry<? extends K, ? extends V> entry) {
+      return handler.write(segment, entry);
    }
 
    @Override
-   public void write(int segment, MarshallableEntry<? extends K, ? extends V> entry) {
-      handler.write(segment, entry);
-   }
-
-   @Override
-   public MarshallableEntry loadEntry(Object key) {
-      return handler.load(-1, key);
-   }
-
-   @Override
-   public MarshallableEntry<K, V> get(int segment, Object key) {
+   public CompletionStage<MarshallableEntry<K, V>> load(int segment, Object key) {
       return handler.load(segment, key);
    }
 
    @Override
-   public CompletionStage<Void> bulkUpdate(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
-      return handler.writeBatch(publisher);
-   }
-
-   @Override
-   public void deleteBatch(Iterable<Object> keys) {
-      handler.deleteBatch(keys);
-   }
-
-   private void putExpireDbData(ExpiryEntry entry) throws InterruptedException, RocksDBException, IOException,
-         ClassNotFoundException {
-      final byte[] expiryBytes = marshall(entry.expiry);
-      final byte[] existingBytes = expiredDb.get(expiryBytes);
-
-      if (existingBytes != null) {
-         // in the case of collision make the value a List ...
-         final Object existing = unmarshall(existingBytes);
-         if (existing instanceof ExpiryBucket) {
-            ((ExpiryBucket) existing).entries.add(entry.keyBytes);
-            expiredDb.put(expiryBytes, marshall(existing));
-         } else {
-            ExpiryBucket bucket = new ExpiryBucket(existingBytes, entry.keyBytes);
-            expiredDb.put(expiryBytes, marshall(bucket));
-         }
-      } else {
-         expiredDb.put(expiryBytes, entry.keyBytes);
+   public CompletionStage<Void> batch(int publisherCount, Publisher<SegmentedPublisher<Object>> removePublisher,
+         Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
+      WriteBatch batch = new WriteBatch();
+      Set<MarshallableEntry<K, V>> expirableEntries = new HashSet<>();
+      Flowable.fromPublisher(removePublisher)
+            .subscribe(sp -> {
+               ColumnFamilyHandle handle = handler.getHandle(sp.getSegment());
+               Flowable.fromPublisher(sp)
+                     .subscribe(removed -> batch.delete(handle, marshall(removed)));
+            });
+      Flowable.fromPublisher(writePublisher)
+            .subscribe(sp -> {
+               ColumnFamilyHandle handle = handler.getHandle(sp.getSegment());
+               Flowable.fromPublisher(sp)
+                     .subscribe(me -> {
+                        batch.put(handle, marshall(me.getKey()), marshall(me.getMarshalledValue()));
+                        if (me.expiryTime() > -1) {
+                           expirableEntries.add(me);
+                        }
+                     });
+            });
+      if (batch.count() <= 0) {
+         batch.close();
+         return CompletableFutures.completedNull();
       }
-   }
-
-   @SuppressWarnings("unchecked")
-   @Override
-   public void purge(Executor executor, PurgeListener purgeListener) {
-      try {
-         semaphore.acquire();
-      } catch (InterruptedException e) {
-         throw new PersistenceException("Cannot acquire semaphore: CacheStore is likely stopped.", e);
-      }
-      try (ReadOptions readOptions = new ReadOptions().setFillCache(false)) {
-         if (stopped) {
-            throw new PersistenceException("RocksDB is stopped");
-         }
-         long now = ctx.getTimeService().wallClockTime();
-         RocksIterator iterator = expiredDb.newIterator(readOptions);
-         if (iterator != null) {
-            try (RocksIterator it = iterator) {
-               List<Long> times = new ArrayList<>();
-               List<Object> keys = new ArrayList<>();
-               List<byte[]> marshalledKeys = new ArrayList<>();
-
-               for (it.seekToFirst(); it.isValid(); it.next()) {
-                  Long time = (Long) unmarshall(it.key());
-                  if (time > now)
-                     break;
-                  times.add(time);
-                  byte[] marshalledKey = it.value();
-                  Object key = unmarshall(marshalledKey);
-                  if (key instanceof ExpiryBucket) {
-                     for (byte[] bytes : ((ExpiryBucket) key).entries) {
-                        marshalledKeys.add(bytes);
-                        keys.add(unmarshall(bytes));
-                     }
-                  } else {
-                     keys.add(key);
-                     marshalledKeys.add(marshalledKey);
-                  }
-               }
-
-               for (Long time : times) {
-                  expiredDb.delete(marshall(time));
-               }
-
-               if (!keys.isEmpty())
-                  log.debugf("purge (up to) %d entries", keys.size());
-               int count = 0;
-               for (int i = 0; i < keys.size(); i++) {
-                  Object key = keys.get(i);
-                  byte[] keyBytes = marshalledKeys.get(i);
-                  int segment = handler.calculateSegment(key);
-
-                  ColumnFamilyHandle handle = handler.getHandle(segment);
-                  byte[] valueBytes = db.get(handle, keyBytes);
-                  if (valueBytes == null)
-                     continue;
-
-                  MarshalledValue mv = (MarshalledValue) unmarshall(valueBytes);
-                  if (mv != null) {
-                     // TODO race condition: the entry could be updated between the get and delete!
-                     Metadata metadata = (Metadata) unmarshall(MarshallUtil.toByteArray(mv.getMetadataBytes()));
-                     if (MarshallableEntryImpl.isExpired(metadata, now, mv.getCreated(), mv.getLastUsed())) {
-                        // somewhat inefficient to FIND then REMOVE...
-                        db.delete(handle, keyBytes);
-                        purgeListener.entryPurged(key);
-                        count++;
-                     }
-                  }
-               }
-               if (count != 0)
-                  log.debugf("purged %d entries", count);
-            } catch (Exception e) {
-               throw new PersistenceException(e);
-            } finally {
-               readOptions.close();
+      return blockingManager.runBlocking(() -> {
+         try {
+            db.write(dataWriteOptions(), batch);
+            for (MarshallableEntry<K, V> me : expirableEntries) {
+               addNewExpiry(me);
             }
+         } catch (RocksDBException e) {
+            throw new PersistenceException(e);
          }
-      } catch (PersistenceException e) {
-         throw e;
-      } catch (Exception e) {
+      }, "rocksdb-batch").whenComplete((ignore, t) -> batch.close());
+   }
+
+   @Override
+   public Publisher<MarshallableEntry<K, V>> purgeExpired() {
+      Publisher<List<MarshallableEntry<K, V>>> purgedBatches = blockingManager.blockingPublisher(Flowable.defer(() -> {
+         // We check expiration based on time of subscription only
+         long now = timeService.wallClockTime();
+         return actualPurgeExpired(now)
+               // We return a buffer of expired entries emitted to the non blocking thread
+               // This prevents waking up the non blocking thread for every entry as they will most likely be
+               // consumed much faster than emission (since each emission performs a get and remove)
+               .buffer(16);
+      }));
+
+      return Flowable.fromPublisher(purgedBatches)
+            .concatMap(Flowable::fromIterable);
+   }
+
+   private Flowable<MarshallableEntry<K, V>> actualPurgeExpired(long now) {
+      // The following flowable is responsible for emitting entries that have expired from expiredDb and removing the
+      // given entries
+      Flowable<byte[]> expiredFlowable = Flowable.using(() -> {
+         ReadOptions readOptions = new ReadOptions().setFillCache(false);
+         return new AbstractMap.SimpleImmutableEntry<>(readOptions, expiredDb.newIterator(readOptions));
+      }, entry -> {
+         if (entry.getValue() == null) {
+            return Flowable.empty();
+         }
+         RocksIterator iterator = entry.getValue();
+         iterator.seekToFirst();
+
+         return Flowable.fromIterable(() ->
+               new AbstractIterator<byte[]>() {
+                  @Override
+                  protected byte[] getNext() {
+                     if (!iterator.isValid()) {
+                        return null;
+                     }
+                     byte[] keyBytes = iterator.key();
+                     Long time = unmarshall(keyBytes);
+                     if (time > now)
+                        return null;
+                     try {
+                        expiredDb.delete(keyBytes);
+                     } catch (RocksDBException e) {
+                        throw new PersistenceException(e);
+                     }
+                     byte[] value = iterator.value();
+                     iterator.next();
+                     return value;
+                  }
+               });
+      }, entry -> {
+         entry.getKey().close();
+         RocksIterator rocksIterator = entry.getValue();
+         if (rocksIterator != null) {
+            rocksIterator.close();
+         }
+      });
+
+      Flowable<MarshallableEntry<K, V>> expiredEntryFlowable = expiredFlowable.flatMap(expiredBytes -> {
+         Object bucketKey = unmarshall(expiredBytes);
+         if (bucketKey instanceof ExpiryBucket) {
+            return Flowable.fromIterable(((ExpiryBucket) bucketKey).entries)
+                  .flatMapMaybe(marshalledKey -> {
+                     ColumnFamilyHandle columnFamilyHandle = handler.getHandleForMarshalledKey(marshalledKey);
+                     MarshalledValue mv = handlePossiblyExpiredKey(columnFamilyHandle, marshalledKey, now);
+                     return mv == null ? Maybe.empty() : Maybe.just(entryFactory.create(unmarshall(marshalledKey), mv));
+                  });
+         } else {
+            // The bucketKey is an actual key
+            ColumnFamilyHandle columnFamilyHandle = handler.getHandle(bucketKey);
+            MarshalledValue mv = handlePossiblyExpiredKey(columnFamilyHandle, marshall(bucketKey), now);
+            return mv == null ? Flowable.empty() : Flowable.just(entryFactory.create(bucketKey, mv));
+         }
+      });
+
+      if (trace) {
+         // Note this tracing only works properly for one subscriber
+         FlowableProcessor<MarshallableEntry<K, V>> mirrorEntries = UnicastProcessor.create();
+         expiredEntryFlowable = expiredEntryFlowable
+               .doOnEach(mirrorEntries)
+               .doOnSubscribe(subscription -> log.tracef("Purging entries from RocksDBStore"));
+         mirrorEntries.count()
+               .subscribe(count -> log.tracef("Purged %d entries from RocksDBStore"));
+      }
+
+      return expiredEntryFlowable;
+   }
+
+   private MarshalledValue handlePossiblyExpiredKey(ColumnFamilyHandle columnFamilyHandle, byte[] marshalledKey,
+         long now) throws RocksDBException {
+      byte[] valueBytes = db.get(columnFamilyHandle, marshalledKey);
+      if (valueBytes == null) {
+         return null;
+      }
+      MarshalledValue mv = unmarshall(valueBytes);
+      if (mv != null) {
+         // TODO race condition: the entry could be updated between the get and delete!
+         Metadata metadata = unmarshall(MarshallUtil.toByteArray(mv.getMetadataBytes()));
+         if (MarshallableEntryImpl.isExpired(metadata, now, mv.getCreated(), mv.getLastUsed())) {
+            // somewhat inefficient to FIND then REMOVE... but required if the value is updated
+            db.delete(columnFamilyHandle, marshalledKey);
+            return mv;
+         }
+      }
+      return null;
+   }
+
+   @Override
+   public CompletionStage<Void> addSegments(IntSet segments) {
+      return handler.addSegments(segments);
+   }
+
+   @Override
+   public CompletionStage<Void> removeSegments(IntSet segments) {
+      return handler.removeSegments(segments);
+   }
+
+   private byte[] marshall(Object entry) {
+      try {
+         return marshaller.objectToByteBuffer(entry);
+      } catch (IOException e) {
          throw new PersistenceException(e);
-      } finally {
-         semaphore.release();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new PersistenceException(e);
       }
    }
 
-   @Override
-   public void addSegments(IntSet segments) {
-      handler.addSegments(segments);
-   }
-
-   @Override
-   public void removeSegments(IntSet segments) {
-      handler.removeSegments(segments);
-   }
-
-   private byte[] marshall(Object entry) throws IOException, InterruptedException {
-      return marshaller.objectToByteBuffer(entry);
-   }
-
-   private Object unmarshall(byte[] bytes) throws IOException, ClassNotFoundException {
+   private <E> E unmarshall(byte[] bytes) {
       if (bytes == null)
          return null;
 
-      return marshaller.objectFromByteBuffer(bytes);
+      try {
+         //noinspection unchecked
+         return (E) marshaller.objectFromByteBuffer(bytes);
+      } catch (IOException | ClassNotFoundException e) {
+         throw new PersistenceException(e);
+      }
    }
 
-   private MarshallableEntry<K, V> valueToMarshallableEntry(Object key, byte[] valueBytes, boolean fetchMeta) throws IOException, ClassNotFoundException {
-      MarshalledValue value = (MarshalledValue) unmarshall(valueBytes);
+   private MarshallableEntry<K, V> unmarshallEntry(Object key, byte[] valueBytes) {
+      MarshalledValue value = unmarshall(valueBytes);
       if (value == null) return null;
 
-      ByteBuffer metadataBytes = fetchMeta ? value.getMetadataBytes() : null;
-      return entryFactory.create(key, value.getValueBytes(), metadataBytes, value.getInternalMetadataBytes(), value.getCreated(), value.getLastUsed());
+      return entryFactory.create(key, value.getValueBytes(), value.getMetadataBytes(), value.getInternalMetadataBytes(),
+            value.getCreated(), value.getLastUsed());
    }
 
-   private void addNewExpiry(MarshallableEntry entry) throws RocksDBException, IOException, ClassNotFoundException {
+   private void addNewExpiry(MarshallableEntry entry) throws RocksDBException {
       long expiry = entry.expiryTime();
       long maxIdle = entry.getMetadata().maxIdle();
       if (maxIdle > 0) {
@@ -446,12 +450,8 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
          // which could lead to unexpected results, hence, InternalCacheEntry calls are required
          expiry = maxIdle + ctx.getTimeService().wallClockTime();
       }
-      try {
-         byte[] keyBytes = entry.getKeyBytes().copy().getBuf();
-         putExpireDbData(new ExpiryEntry(expiry, keyBytes));
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt(); // Restore interruption status
-      }
+      byte[] keyBytes = entry.getKeyBytes().copy().getBuf();
+      putExpireDbData(new ExpiryEntry(expiry, keyBytes));
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.ROCKSDB_EXPIRY_BUCKET)
@@ -459,8 +459,7 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
       @ProtoField(number = 1, collectionImplementation = ArrayList.class)
       List<byte[]> entries;
 
-      ExpiryBucket() {
-      }
+      ExpiryBucket(){}
 
       ExpiryBucket(byte[] existingKey, byte[] newKey) {
          entries = new ArrayList<>(2);
@@ -496,69 +495,29 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
       }
    }
 
-   private class RocksKeyIterator extends AbstractIterator<K> {
-      private final RocksIterator it;
-      private final Predicate<? super K> filter;
-
-      public RocksKeyIterator(RocksIterator it, Predicate<? super K> filter) {
-         this.it = it;
-         this.filter = filter;
-      }
-
-      @Override
-      protected K getNext() {
-         K key = null;
-         try {
-            while (key == null && it.isValid()) {
-               K testKey = (K) unmarshall(it.key());
-               if (filter == null || filter.test(testKey)) {
-                  key = testKey;
-               }
-               it.next();
-            }
-         } catch (IOException | ClassNotFoundException e) {
-            throw new CacheException(e);
-         }
-         return key;
-      }
-   }
-
    private class RocksEntryIterator extends AbstractIterator<MarshallableEntry<K, V>> {
       private final RocksIterator it;
       private final Predicate<? super K> filter;
-      private final boolean fetchValue;
-      private final boolean fetchMetadata;
       private final long now;
 
-      public RocksEntryIterator(RocksIterator it, Predicate<? super K> filter, boolean fetchValue,
-            boolean fetchMetadata, long now) {
+      RocksEntryIterator(RocksIterator it, Predicate<? super K> filter, long now) {
          this.it = it;
          this.filter = filter;
-         this.fetchValue = fetchValue;
-         this.fetchMetadata = fetchMetadata;
          this.now = now;
       }
 
       @Override
       protected MarshallableEntry<K, V> getNext() {
          MarshallableEntry<K, V> entry = null;
-         try {
-            while (entry == null && it.isValid()) {
-               K key = (K) unmarshall(it.key());
-               if (filter == null || filter.test(key)) {
-                  if (fetchValue || fetchMetadata) {
-                     MarshallableEntry<K, V> me = valueToMarshallableEntry(key, it.value(), fetchMetadata);
-                     if (me != null && !me.isExpired(now)) {
-                        entry = me;
-                     }
-                  } else {
-                     entry = entryFactory.create(key);
-                  }
+         while (entry == null && it.isValid()) {
+            K key = unmarshall(it.key());
+            if (filter == null || filter.test(key)) {
+               MarshallableEntry<K, V> me = unmarshallEntry(key, it.value());
+               if (me != null && !me.isExpired(now)) {
+                  entry = me;
                }
-               it.next();
             }
-         } catch (IOException | ClassNotFoundException e) {
-            throw new CacheException(e);
+            it.next();
          }
          return entry;
       }
@@ -572,14 +531,9 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
 
       abstract ColumnFamilyHandle getHandle(int segment);
 
-      final ColumnFamilyHandle getHandle(int segment, Object key) {
-         if (segment < 0) {
-            segment = calculateSegment(key);
-         }
-         return getHandle(segment);
-      }
+      abstract ColumnFamilyHandle getHandle(Object key);
 
-      abstract int calculateSegment(Object key);
+      abstract ColumnFamilyHandle getHandleForMarshalledKey(byte[] marshalledKey);
 
       ColumnFamilyDescriptor newDescriptor(byte[] name) {
          ColumnFamilyOptions columnFamilyOptions;
@@ -595,161 +549,92 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
                columnFamilyOptions.setCompressionType(CompressionType.getCompressionType(configuration.compressionType().toString())));
       }
 
-      boolean contains(int segment, Object key) {
-         // This might be able to use RocksDB#keyMayExist - but API is a bit flaky
-         return load(segment, key) != null;
-      }
-
-      MarshallableEntry<K, V> load(int segment, Object key) {
-         ColumnFamilyHandle handle = getHandle(segment, key);
+      CompletionStage<MarshallableEntry<K, V>> load(int segment, Object key) {
+         ColumnFamilyHandle handle = getHandle(segment);
          if (handle == null) {
             log.trace("Ignoring load as handle is not currently configured");
-            return null;
+            return CompletableFutures.completedNull();
          }
          try {
-            byte[] entryBytes;
-            semaphore.acquire();
-            try {
-               if (stopped) {
-                  throw new PersistenceException("RocksDB is stopped");
+            CompletionStage<byte[]> entryByteStage = blockingManager.supplyBlocking(() -> {
+               try {
+                  return db.get(handle, marshall(key));
+               } catch (RocksDBException e) {
+                  throw new CompletionException(e);
                }
-
-               entryBytes = db.get(handle, marshall(key));
-            } finally {
-               semaphore.release();
-            }
-            MarshallableEntry<K, V> me = valueToMarshallableEntry(key, entryBytes, true);
-            if (me == null || me.isExpired(timeService.wallClockTime())) {
-               return null;
-            }
-            return me;
+            }, "rocksdb-load");
+            return entryByteStage.thenApply(entryBytes -> {
+               MarshallableEntry<K, V> me = unmarshallEntry(key, entryBytes);
+               if (me == null || me.isExpired(timeService.wallClockTime())) {
+                  return null;
+               }
+               return me;
+            });
          } catch (Exception e) {
             throw new PersistenceException(e);
          }
       }
 
-      void write(int segment, MarshallableEntry<? extends K, ? extends V> me) {
-         Object key = me.getKey();
-         ColumnFamilyHandle handle = getHandle(segment, key);
+      CompletionStage<Void> write(int segment, MarshallableEntry<? extends K, ? extends V> me) {
+         ColumnFamilyHandle handle = getHandle(segment);
          if (handle == null) {
             log.trace("Ignoring write as handle is not currently configured");
-            return;
+            return CompletableFutures.completedNull();
          }
          try {
             byte[] marshalledKey = MarshallUtil.toByteArray(me.getKeyBytes());
             byte[] marshalledValue = marshall(me.getMarshalledValue());
-            semaphore.acquire();
-            try {
-               if (stopped) {
-                  throw new PersistenceException("RocksDB is stopped");
+            return blockingManager.runBlocking(() -> {
+               try {
+                  db.put(handle, marshalledKey, marshalledValue);
+                  if (me.expiryTime() > -1) {
+                     addNewExpiry(me);
+                  }
+               } catch (RocksDBException e) {
+                  throw new PersistenceException(e);
                }
-               db.put(handle, marshalledKey, marshalledValue);
-            } finally {
-               semaphore.release();
-            }
-            if (me.expiryTime() > -1) {
-               addNewExpiry(me);
-            }
+            }, "rocksdb-write");
+
          } catch (Exception e) {
             throw new PersistenceException(e);
          }
       }
 
-      boolean delete(int segment, Object key) {
+      CompletionStage<Boolean> delete(int segment, Object key) {
          try {
             byte[] keyBytes = marshall(key);
-            semaphore.acquire();
-            try {
-               if (stopped) {
-                  throw new PersistenceException("RocksDB is stopped");
-               }
-               if (db.get(getHandle(segment, key), keyBytes) == null) {
-                  return false;
-               }
-               db.delete(getHandle(segment, key), keyBytes);
-            } finally {
-               semaphore.release();
-            }
-            return true;
-         } catch (Exception e) {
-            throw new PersistenceException(e);
-         }
-      }
-
-      CompletionStage<Void> writeBatch(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
-         return Flowable.fromPublisher(publisher)
-               .buffer(configuration.maxBatchSize())
-               .doOnNext(entries -> {
-                  WriteBatch batch = new WriteBatch();
-                  for (MarshallableEntry<? extends K, ? extends V> entry : entries) {
-                     int segment = calculateSegment(entry.getKey());
-                     byte[] keyBytes = MarshallUtil.toByteArray(entry.getKeyBytes());
-                     batch.put(getHandle(segment), keyBytes, marshall(entry.getMarshalledValue()));
+            ColumnFamilyHandle handle = getHandle(segment);
+            return blockingManager.supplyBlocking(() -> {
+               try {
+                  if (db.get(handle, keyBytes) == null) {
+                     return Boolean.FALSE;
                   }
-                  writeBatch(batch);
-
-                  // Add metadata only after batch has been written
-                  for (MarshallableEntry entry : entries) {
-                     if (entry.expiryTime() > -1)
-                        addNewExpiry(entry);
-                  }
-               })
-               .doOnError(e -> {
+                  db.delete(handle, keyBytes);
+                  return Boolean.TRUE;
+               } catch (RocksDBException e) {
                   throw new PersistenceException(e);
-               })
-               .ignoreElements()
-               .toCompletionStage(null);
-      }
-
-      void deleteBatch(Iterable<Object> keys) {
-         try {
-            int batchSize = 0;
-            WriteBatch batch = new WriteBatch();
-            for (Object key : keys) {
-               batch.remove(getHandle(calculateSegment(key)), marshall(key));
-               batchSize++;
-
-               if (batchSize == configuration.maxBatchSize()) {
-                  batchSize = 0;
-                  writeBatch(batch);
-                  batch = new WriteBatch();
                }
-            }
-
-            if (batchSize != 0)
-               writeBatch(batch);
+            }, "rocksdb-delete");
          } catch (Exception e) {
             throw new PersistenceException(e);
          }
       }
 
-      abstract void clear(IntSet segments);
-
-      abstract Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter);
+      abstract CompletionStage<Void> clear();
 
       abstract Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter,
-            boolean fetchValue, boolean fetchMetadata);
+            boolean fetchValue);
 
-      int size(IntSet segments) {
-         CompletionStage<Long> stage = Flowable.fromPublisher(publishKeys(segments, null))
+      CompletionStage<Long> size(IntSet segments) {
+         return Flowable.fromPublisher(publishKeys(segments, null))
                .count().toCompletionStage();
-
-         long count = CompletionStages.join(stage);
-         if (count > Integer.MAX_VALUE) {
-            return Integer.MAX_VALUE;
-         }
-         return (int) count;
       }
 
-      <P> Flowable<P> publish(int segment, Function<RocksIterator, Flowable<P>> function) {
+      abstract CompletionStage<Long> approximateSize(IntSet segments);
+
+      <P> Publisher<P> publish(int segment, Function<RocksIterator, Flowable<P>> function) {
          ReadOptions readOptions = new ReadOptions().setFillCache(false);
-         return Flowable.using(() -> {
-            semaphore.acquire();
-            if (stopped) {
-               throw new PersistenceException("RocksDB is stopped");
-            }
-            return wrapIterator(db, readOptions, segment);
-         }, iterator -> {
+         return blockingManager.blockingPublisher(Flowable.using(() -> wrapIterator(db, readOptions, segment), iterator -> {
             if (iterator == null) {
                return Flowable.empty();
             }
@@ -760,35 +645,22 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
                iterator.close();
             }
             readOptions.close();
-            semaphore.release();
-         });
+         }));
       }
 
       abstract RocksIterator wrapIterator(RocksDB db, ReadOptions readOptions, int segment);
 
-      private void writeBatch(WriteBatch batch) throws InterruptedException, RocksDBException {
-         semaphore.acquire();
-         try {
-            if (stopped)
-               throw new PersistenceException("RocksDB is stopped");
+      abstract CompletionStage<Void> addSegments(IntSet segments);
 
-            db.write(dataWriteOptions(), batch);
-         } finally {
-            batch.close();
-            semaphore.release();
-         }
-      }
-
-      abstract void addSegments(IntSet segments);
-
-      abstract void removeSegments(IntSet segments);
+      abstract CompletionStage<Void> removeSegments(IntSet segments);
    }
 
    private final class NonSegmentedRocksDBHandler extends RocksDBHandler {
       private final KeyPartitioner keyPartitioner;
+
       private ColumnFamilyHandle defaultColumnFamilyHandle;
 
-      public NonSegmentedRocksDBHandler(KeyPartitioner keyPartitioner) {
+      private NonSegmentedRocksDBHandler(KeyPartitioner keyPartitioner) {
          this.keyPartitioner = keyPartitioner;
       }
 
@@ -798,9 +670,13 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
       }
 
       @Override
-      int calculateSegment(Object key) {
-         // Segment not used
-         return 0;
+      ColumnFamilyHandle getHandle(Object key) {
+         return defaultColumnFamilyHandle;
+      }
+
+      @Override
+      ColumnFamilyHandle getHandleForMarshalledKey(byte[] marshalledKey) {
+         return defaultColumnFamilyHandle;
       }
 
       @Override
@@ -816,62 +692,59 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
       }
 
       @Override
-      void clear(IntSet segments) {
-         long count = 0;
-         boolean destroyDatabase = false;
-         try {
-            semaphore.acquire();
-         } catch (InterruptedException e) {
-            throw new PersistenceException("Cannot acquire semaphore", e);
-         }
-         try (ReadOptions readOptions = new ReadOptions().setFillCache(false)) {
-            if (stopped) {
-               throw new PersistenceException("RocksDB is stopped");
-            }
-            RocksIterator optionalIterator = wrapIterator(db, readOptions, -1);
-            if (optionalIterator != null && (configuration.clearThreshold() > 0 || segments == null)) {
-               try (RocksIterator it = optionalIterator) {
-                  for (it.seekToFirst(); it.isValid(); it.next()) {
-                     byte[] keyBytes = it.key();
-                     if (segments != null) {
-                        Object key = unmarshall(keyBytes);
-                        if (segments.contains(keyPartitioner.getSegment(key))) {
-                           db.delete(defaultColumnFamilyHandle, keyBytes);
-                        }
-                     } else {
-                        db.delete(defaultColumnFamilyHandle, keyBytes);
-                        count++;
+      CompletionStage<Void> clear() {
+         return clear(null);
+      }
 
-                        if (count > configuration.clearThreshold()) {
-                           destroyDatabase = true;
-                           break;
+      CompletionStage<Void> clear(IntSet segments) {
+         return blockingManager.runBlocking(() -> {
+            long count = 0;
+            boolean destroyDatabase = false;
+            try (ReadOptions readOptions = new ReadOptions().setFillCache(false)) {
+               RocksIterator optionalIterator = wrapIterator(db, readOptions, -1);
+               if (optionalIterator != null && (configuration.clearThreshold() > 0 || segments == null)) {
+                  try (RocksIterator it = optionalIterator) {
+                     for (it.seekToFirst(); it.isValid(); it.next()) {
+                        byte[] keyBytes = it.key();
+                        if (segments != null) {
+                           Object key = unmarshall(keyBytes);
+                           int segment = keyPartitioner.getSegment(key);
+                           if (segments.contains(segment)) {
+                              db.delete(defaultColumnFamilyHandle, keyBytes);
+                           }
+                        } else {
+                           db.delete(defaultColumnFamilyHandle, keyBytes);
+                           count++;
+
+                           if (count > configuration.clearThreshold()) {
+                              destroyDatabase = true;
+                              break;
+                           }
                         }
                      }
+                  } catch (RocksDBException e) {
+                     if (segments != null) {
+                        // Have to propagate error to user
+                        throw e;
+                     }
+                     // If was error and no segment specific just delete entire thing
+                     destroyDatabase = true;
                   }
-               } catch (RocksDBException e) {
-                  if (segments != null) {
-                     // Have to propagate error to user
-                     throw e;
-                  }
-                  // If was error and no segment specific just delete entire thing
+               } else {
                   destroyDatabase = true;
                }
-            } else {
-               destroyDatabase = true;
-            }
-         } catch (Exception e) {
-            throw new PersistenceException(e);
-         } finally {
-            semaphore.release();
-         }
-
-         if (destroyDatabase) {
-            try {
-               reinitAllDatabases();
             } catch (Exception e) {
                throw new PersistenceException(e);
             }
-         }
+
+            if (destroyDatabase) {
+               try {
+                  reinitAllDatabases();
+               } catch (Exception e) {
+                  throw new PersistenceException(e);
+               }
+            }
+         }, "rocksdb-clear");
       }
 
       @Override
@@ -882,31 +755,19 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
       }
 
       protected void reinitAllDatabases() throws RocksDBException {
-         try {
-            semaphore.acquire(Integer.MAX_VALUE);
-         } catch (InterruptedException e) {
-            throw new PersistenceException("Cannot acquire semaphore", e);
+         db.close();
+         expiredDb.close();
+         if (System.getProperty("os.name").startsWith("Windows")) {
+            // Force a GC to ensure that open file handles are released in Windows.
+            System.gc();
          }
-         try {
-            if (stopped) {
-               throw new PersistenceException("RocksDB is stopped");
-            }
-            db.close();
-            expiredDb.close();
-            if (System.getProperty("os.name").startsWith("Windows")) {
-               // Force a GC to ensure that open file handles are released in Windows.
-               System.gc();
-            }
-            Path dataLocation = getLocation();
-            Util.recursiveFileRemove(dataLocation.toFile());
-            db = open(getLocation(), dataDbOptions());
+         Path dataLocation = getLocation();
+         Util.recursiveFileRemove(dataLocation.toFile());
+         db = open(getLocation(), dataDbOptions());
 
-            Path expirationLocation = getExpirationLocation();
-            Util.recursiveFileRemove(expirationLocation.toFile());
-            expiredDb = openDatabase(expirationLocation, expiredDbOptions());
-         } finally {
-            semaphore.release(Integer.MAX_VALUE);
-         }
+         Path expirationLocation = getExpirationLocation();
+         Util.recursiveFileRemove(expirationLocation.toFile());
+         expiredDb = openDatabase(expirationLocation, expiredDbOptions());
       }
 
       protected RocksIterator wrapIterator(RocksDB db, ReadOptions readOptions, int segment) {
@@ -917,44 +778,43 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
       }
 
       @Override
-      Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
-         Predicate<? super K> combinedFilter = PersistenceUtil.combinePredicate(segments, keyPartitioner, filter);
-         return publish(-1, it -> Flowable.fromIterable(() -> new RocksKeyIterator(it, combinedFilter)));
-      }
-
-      @Override
-      Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue,
-            boolean fetchMetadata) {
+      Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue) {
          Predicate<? super K> combinedFilter = PersistenceUtil.combinePredicate(segments, keyPartitioner, filter);
          return publish(-1, it -> Flowable.fromIterable(() -> {
             // Make sure this is taken when the iterator is created
             long now = timeService.wallClockTime();
-            return new RocksEntryIterator(it, combinedFilter, fetchValue, fetchMetadata, now);
+            return new RocksEntryIterator(it, combinedFilter, now);
          }));
       }
 
       @Override
-      void addSegments(IntSet segments) {
-         // Do nothing
+      CompletionStage<Long> approximateSize(IntSet segments) {
+         return size(segments);
       }
 
       @Override
-      void removeSegments(IntSet segments) {
-         clear(segments);
+      CompletionStage<Void> addSegments(IntSet segments) {
+         // Do nothing
+         return CompletableFutures.completedNull();
+      }
+
+      @Override
+      CompletionStage<Void> removeSegments(IntSet segments) {
+         // Unfortunately we have to clear all entries that map to each entry, which requires a full iteration and
+         // segment check on every entry
+         return clear(segments);
       }
    }
 
    private class SegmentedRocksDBHandler extends RocksDBHandler {
-      private final KeyPartitioner keyPartitioner;
       private final AtomicReferenceArray<ColumnFamilyHandle> handles;
 
-      private SegmentedRocksDBHandler(int segmentCount, KeyPartitioner keyPartitioner) {
-         this.keyPartitioner = keyPartitioner;
+      private SegmentedRocksDBHandler(int segmentCount) {
          this.handles = new AtomicReferenceArray<>(segmentCount);
       }
 
       byte[] byteArrayFromInt(int val) {
-         return new byte[]{
+         return new byte[] {
                (byte) (val >>> 24),
                (byte) (val >>> 16),
                (byte) (val >>> 8),
@@ -968,8 +828,13 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
       }
 
       @Override
-      int calculateSegment(Object key) {
-         return keyPartitioner.getSegment(key);
+      ColumnFamilyHandle getHandle(Object key) {
+         return handles.get(keyPartitioner.getSegment(key));
+      }
+
+      @Override
+      ColumnFamilyHandle getHandleForMarshalledKey(byte[] marshalledKey) {
+         return getHandle(unmarshall(marshalledKey));
       }
 
       @Override
@@ -993,28 +858,20 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
       }
 
       @Override
-      void clear(IntSet segments) {
-         if (segments != null) {
-            for (PrimitiveIterator.OfInt segmentIterator = segments.iterator(); segmentIterator.hasNext(); ) {
-               int segment = segmentIterator.nextInt();
-               if (!clearForSegment(segment)) {
-                  recreateColumnFamily(segment);
-               }
-            }
-         } else {
+      CompletionStage<Void> clear() {
+         return blockingManager.runBlocking(() -> {
             for (int i = 0; i < handles.length(); ++i) {
                if (!clearForSegment(i)) {
                   recreateColumnFamily(i);
                }
             }
-         }
+         }, "rocksdb-clear");
       }
 
       /**
-       * Attempts to clear out the entries for a segment by using an iterator and deleting. If however an iterator goes
-       * above the clear threshold it will immediately stop and return false. If it was able to remove all the entries
-       * it will instead return true
-       *
+       * Attempts to clear out the entries for a segment by using an iterator and deleting. If however an iterator
+       * goes above the clear threshold it will immediately stop and return false. If it was able to remove all
+       * the entries it will instead return true
        * @param segment the segment to clear out
        * @return whether it was able to clear all entries for the segment
        */
@@ -1024,15 +881,7 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
          if (clearThreshold <= 0) {
             return false;
          }
-         try {
-            semaphore.acquire();
-         } catch (InterruptedException e) {
-            throw new PersistenceException("Cannot acquire semaphore", e);
-         }
          try (ReadOptions readOptions = new ReadOptions().setFillCache(false)) {
-            if (stopped) {
-               throw new PersistenceException("RocksDB is stopped");
-            }
             RocksIterator optionalIterator = wrapIterator(db, readOptions, segment);
             if (optionalIterator != null) {
                ColumnFamilyHandle handle = handles.get(segment);
@@ -1057,8 +906,6 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
             }
          } catch (Exception e) {
             throw new PersistenceException(e);
-         } finally {
-            semaphore.release();
          }
       }
 
@@ -1088,18 +935,24 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
       }
 
       @Override
-      Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
-         Function<RocksIterator, Flowable<K>> function = it -> Flowable.fromIterable(() -> new RocksKeyIterator(it, filter));
+      Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue) {
+         Function<RocksIterator, Flowable<MarshallableEntry<K, V>>> function = it -> Flowable.fromIterable(() -> {
+            long now = timeService.wallClockTime();
+            return new RocksEntryIterator(it, filter, now);
+         });
          return handleIteratorFunction(function, segments);
       }
 
       @Override
-      Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
-         Function<RocksIterator, Flowable<MarshallableEntry<K, V>>> function = it -> Flowable.fromIterable(() -> {
-            long now = timeService.wallClockTime();
-            return new RocksEntryIterator(it, filter, fetchValue, fetchMetadata, now);
-         });
-         return handleIteratorFunction(function, segments);
+      CompletionStage<Long> approximateSize(IntSet segments) {
+         return blockingManager.subscribeBlockingCollector(Flowable.fromIterable(segments), Collectors.summingLong(segment -> {
+            ColumnFamilyHandle handle = getHandle(segment);
+            try {
+               return Long.parseLong(db.getProperty(handle, "rocksdb.estimate-num-keys"));
+            } catch (RocksDBException e) {
+               throw new PersistenceException(e);
+            }
+         }), "rocksdb-approximateSize");
       }
 
       <R> Publisher<R> handleIteratorFunction(Function<RocksIterator, Flowable<R>> function, IntSet segments) {
@@ -1122,38 +975,62 @@ public class RocksDBStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>
       }
 
       @Override
-      void addSegments(IntSet segments) {
-         for (PrimitiveIterator.OfInt segmentIterator = segments.iterator(); segmentIterator.hasNext(); ) {
-            int segment = segmentIterator.nextInt();
-            ColumnFamilyHandle handle = handles.get(segment);
-            if (handle == null) {
+      CompletionStage<Void> addSegments(IntSet segments) {
+         Flowable<Integer> segmentFlowable = Flowable.fromIterable(segments)
+               .filter(segment -> handles.get(segment) == null);
+
+         return blockingManager.subscribeBlockingConsumer(segmentFlowable, segment -> {
+            if (trace) {
                log.tracef("Creating column family for segment %d", segment);
-               byte[] cfName = byteArrayFromInt(segment);
-               try {
-                  handle = db.createColumnFamily(newDescriptor(cfName));
-                  handles.set(segment, handle);
-               } catch (RocksDBException e) {
-                  throw new PersistenceException(e);
-               }
             }
-         }
+            byte[] cfName = byteArrayFromInt(segment);
+            try {
+               ColumnFamilyHandle handle = db.createColumnFamily(newDescriptor(cfName));
+               handles.set(segment, handle);
+            } catch (RocksDBException e) {
+               throw new PersistenceException(e);
+            }
+         }, "testng-addSegments");
       }
 
       @Override
-      void removeSegments(IntSet segments) {
-         for (PrimitiveIterator.OfInt segmentIterator = segments.iterator(); segmentIterator.hasNext(); ) {
-            int segment = segmentIterator.nextInt();
-            ColumnFamilyHandle handle = handles.getAndSet(segment, null);
-            if (handle != null) {
-               log.tracef("Dropping column family for segment %d", segment);
-               try {
-                  db.dropColumnFamily(handle);
-               } catch (RocksDBException e) {
-                  throw new PersistenceException(e);
-               }
-               handle.close();
+      CompletionStage<Void> removeSegments(IntSet segments) {
+         Flowable<ColumnFamilyHandle> handleFlowable = Flowable.fromIterable(segments)
+               .map(segment -> {
+                  ColumnFamilyHandle cf = handles.getAndSet(segment, null);
+                  return cf != null ? cf : this;
+               }).ofType(ColumnFamilyHandle.class);
+
+         return blockingManager.subscribeBlockingConsumer(handleFlowable, handle -> {
+            if (trace) {
+               log.tracef("Dropping column family %s", handle);
             }
+            try {
+               db.dropColumnFamily(handle);
+            } catch (RocksDBException e) {
+               throw new PersistenceException(e);
+            }
+            handle.close();
+         }, "testng-removeSegments");
+      }
+   }
+
+   private void putExpireDbData(ExpiryEntry entry) throws RocksDBException {
+      final byte[] expiryBytes = marshall(entry.expiry);
+      final byte[] existingBytes = expiredDb.get(expiryBytes);
+
+      if (existingBytes != null) {
+         // in the case of collision make the value a List ...
+         final Object existing = unmarshall(existingBytes);
+         if (existing instanceof ExpiryBucket) {
+            ((ExpiryBucket) existing).entries.add(entry.keyBytes);
+            expiredDb.put(expiryBytes, marshall(existing));
+         } else {
+            ExpiryBucket bucket = new ExpiryBucket(existingBytes, entry.keyBytes);
+            expiredDb.put(expiryBytes, marshall(bucket));
          }
+      } else {
+         expiredDb.put(expiryBytes, entry.keyBytes);
       }
    }
 }

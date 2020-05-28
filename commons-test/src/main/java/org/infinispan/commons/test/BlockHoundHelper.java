@@ -55,8 +55,16 @@ public class BlockHoundHelper {
     * found the invoking test will fail.
     */
    public static void ensureNonBlocking(Runnable runnable) {
+      allowBlocking(runnable, Boolean.TRUE);
+   }
+
+   public static void allowBlocking(Runnable runnable) {
+      allowBlocking(runnable, Boolean.FALSE);
+   }
+
+   private static void allowBlocking(Runnable runnable, Boolean blockingSetting) {
       Boolean previousSetting = isNonBlocking.get();
-      isNonBlocking.set(Boolean.TRUE);
+      isNonBlocking.set(blockingSetting);
       try {
          runnable.run();
       } finally {
@@ -69,6 +77,14 @@ public class BlockHoundHelper {
     * task does block it will fail the invoking test.
     */
    public static Executor ensureNonBlockingExecutor() {
+      return BlockHoundHelper::ensureNonBlocking;
+   }
+
+   /**
+    * Returns an Executor that when supplied a task, will allow it to invoke blocking calls, even if the invoking
+    * context was already registered as non blocking. Useful to mock submission to a blocking executor.
+    */
+   public static Executor allowBlockingExecutor() {
       return BlockHoundHelper::ensureNonBlocking;
    }
 }
