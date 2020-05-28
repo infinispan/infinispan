@@ -490,26 +490,36 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       List<ClusterConfiguration> serverClusterConfigs = clusters.stream()
             .map(ClusterConfigurationBuilder::create).collect(Collectors.toList());
-      if (marshaller == null && marshallerClass == null) {
-         handleNullMarshaller();
+
+      Marshaller buildMarshaller = this.marshaller;
+      if (buildMarshaller == null && marshallerClass == null) {
+         buildMarshaller = handleNullMarshaller();
+      }
+      Class<? extends Marshaller> buildMarshallerClass = this.marshallerClass;
+      if (buildMarshallerClass == null) {
+         // Populate the marshaller class as well, so it can be exported to properties
+         buildMarshallerClass = buildMarshaller.getClass();
+      } else {
+         if (buildMarshaller != null && !buildMarshallerClass.isInstance(buildMarshaller))
+            throw new IllegalArgumentException("Both marshaller and marshallerClass attributes are present, but marshaller is not an instance of marshallerClass");
       }
 
       Map<String, RemoteCacheConfiguration> remoteCaches = remoteCacheBuilders.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().create()));
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
-            consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
-            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create(), statistics.create(), features, contextInitializers, remoteCaches);
+                               consistentHashImpl, forceReturnValues, keySizeEstimate, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
+                               valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create(), statistics.create(), features, contextInitializers, remoteCaches);
    }
 
    // Method that handles default marshaller - needed as a placeholder
-   private void handleNullMarshaller() {
+   private Marshaller handleNullMarshaller() {
       // First see if infinispan-jboss-marshalling is in the class path - if so we can use the generic marshaller
-      marshaller = Util.getJBossMarshaller(ConfigurationBuilder.class.getClassLoader(), null);
-      if (marshaller == null) {
+      Marshaller buildMarshaller = Util.getJBossMarshaller(ConfigurationBuilder.class.getClassLoader(), null);
+      if (buildMarshaller == null) {
          // Otherwise we use the protostream marshaller
-         marshaller = new ProtoStreamMarshaller();
+         buildMarshaller = new ProtoStreamMarshaller();
       }
-      marshallerClass = marshaller.getClass();
+      return buildMarshaller;
    }
 
    @Override
