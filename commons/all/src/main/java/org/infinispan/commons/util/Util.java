@@ -10,11 +10,6 @@ import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
-import java.lang.management.LockInfo;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MonitorInfo;
-import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -687,96 +682,25 @@ public final class Util {
    private final static String INDENT = "    ";
 
    public static String threadDump() {
-      StringBuilder threadDump = new StringBuilder();
-      ThreadMXBean threadMx = ManagementFactory.getThreadMXBean();
-      // Print lock info if, and only if, both object monitor usage and synchronizer usage are supported.
-      dumpThreadInfo(threadDump, threadMx.isObjectMonitorUsageSupported() && threadMx.isSynchronizerUsageSupported(), threadMx);
-      return threadDump.toString();
-   }
-
-   private static void dumpThreadInfo(StringBuilder threadDump, boolean withLocks, ThreadMXBean threadMx) {
       SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
       String timestamp = dateFormat.format(new Date());
+
+      StringBuilder threadDump = new StringBuilder();
       threadDump.append(timestamp);
       threadDump.append("\nFull thread dump ");
       threadDump.append("\n");
 
-      if (withLocks) {
-         ThreadInfo[] threadInfos = threadMx.dumpAllThreads(true, true);
-         for (ThreadInfo threadInfo : threadInfos) {
-            printThreadInfo(threadInfo, threadDump);
-            LockInfo[] syncs = threadInfo.getLockedSynchronizers();
-            printLockInfo(syncs, threadDump);
+      Thread.getAllStackTraces().forEach((thread, elements) -> {
+         threadDump.append("\"").append(thread.getName())
+               .append("\" nid=").append(thread.getId())
+               .append(" state=").append(thread.getState())
+               .append("\n");
+
+         for (StackTraceElement e : elements) {
+            threadDump.append(INDENT).append("at ").append(e.toString()).append("\n");
          }
-         threadDump.append("\n");
-      } else {
-         long[] threadIds= threadMx.getAllThreadIds();
-         ThreadInfo[] threadInfos = threadMx.getThreadInfo(threadIds, Integer.MAX_VALUE);
-         for (ThreadInfo threadInfo : threadInfos)
-            printThreadInfo(threadInfo, threadDump);
-      }
-   }
-
-   private static void printThreadInfo(ThreadInfo threadInfo, StringBuilder threadDump) {
-      // Print thread information
-      printThread(threadInfo, threadDump);
-      // print stack trace with locks
-      StackTraceElement[] stacktrace = threadInfo.getStackTrace();
-      MonitorInfo[] monitors = threadInfo.getLockedMonitors();
-      for (int i = 0; i < stacktrace.length; i++) {
-          StackTraceElement ste = stacktrace[i];
-          threadDump.append(INDENT).append("at ").append(ste.toString());
-          threadDump.append("\n");
-          for (int j = 1; j < monitors.length; j++) {
-              MonitorInfo mi = monitors[j];
-              if (mi.getLockedStackDepth() == i) {
-                  threadDump.append(INDENT).append("  - locked ").append(mi);
-                  threadDump.append("\n");
-              }
-          }
-      }
-      threadDump.append("\n");
-   }
-
-   private static void printLockInfo(LockInfo[] locks, StringBuilder threadDump) {
-      threadDump.append(INDENT).append("Locked synchronizers: count = ").append(locks.length);
-      threadDump.append("\n");
-      for (LockInfo li : locks) {
-         threadDump.append(INDENT).append("  - ").append(li);
-         threadDump.append("\n");
-      }
-      threadDump.append("\n");
-   }
-
-   private static void printThread(ThreadInfo threadInfo, StringBuilder threadDump) {
-      StringBuilder sb = new StringBuilder(
-            "\"" + threadInfo.getThreadName() + "\"" +
-            " nid=" + threadInfo.getThreadId() + " state=" +
-            threadInfo.getThreadState());
-      if (threadInfo.getLockName() != null && threadInfo.getThreadState() != Thread.State.BLOCKED) {
-          String[] lockInfo = threadInfo.getLockName().split("@");
-          sb.append("\n").append(INDENT).append("- waiting on <0x").append(lockInfo[1]).append("> (a ")
-                .append(lockInfo[0]).append(")");
-          sb.append("\n").append(INDENT).append("- locked <0x").append(lockInfo[1]).append("> (a ").append(lockInfo[0])
-                .append(")");
-      } else if (threadInfo.getLockName() != null && threadInfo.getThreadState() == Thread.State.BLOCKED) {
-          String[] lockInfo = threadInfo.getLockName().split("@");
-          sb.append("\n").append(INDENT).append("- waiting to lock <0x").append(lockInfo[1]).append("> (a ")
-                .append(lockInfo[0]).append(")");
-      }
-      if (threadInfo.isSuspended())
-          sb.append(" (suspended)");
-
-      if (threadInfo.isInNative())
-          sb.append(" (running in native)");
-
-      threadDump.append(sb.toString());
-      threadDump.append("\n");
-      if (threadInfo.getLockOwnerName() != null) {
-           threadDump.append(INDENT).append(" owned by ").append(threadInfo.getLockOwnerName()).append(" id=")
-                 .append(threadInfo.getLockOwnerId());
-           threadDump.append("\n");
-      }
+      });
+      return threadDump.toString();
    }
 
    public static CacheException rewrapAsCacheException(Throwable t) {
