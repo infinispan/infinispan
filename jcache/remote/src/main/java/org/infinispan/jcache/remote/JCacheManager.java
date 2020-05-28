@@ -12,6 +12,7 @@ import javax.cache.CacheException;
 import javax.cache.configuration.Configuration;
 import javax.cache.spi.CachingProvider;
 
+import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -30,20 +31,17 @@ import org.infinispan.protostream.SerializationContext;
 public class JCacheManager extends AbstractJCacheManager {
    private static final Log log = LogFactory.getLog(JCacheManager.class, Log.class);
 
-   private RemoteCacheManager cm;
-   private RemoteCacheManager cmForceReturnValue;
+   private final RemoteCacheManager cm;
 
    public JCacheManager(URI uri, ClassLoader classLoader, CachingProvider provider, Properties userProperties) {
       super(uri, classLoader, provider, userProperties, false);
 
       ConfigurationBuilder builder = getConfigurationBuilder(uri, userProperties);
+      builder.forceReturnValues(true);
 
       org.infinispan.client.hotrod.configuration.Configuration configuration = builder.build();
       cm = new RemoteCacheManager(configuration, true);
       initializeProtoContext(cm.getMarshaller());
-
-      builder.forceReturnValues(true);
-      cmForceReturnValue = new RemoteCacheManager(builder.build(), true);
    }
 
    private void initializeProtoContext(Marshaller marshaller) {
@@ -112,8 +110,8 @@ public class JCacheManager extends AbstractJCacheManager {
 
    private <K, V> AbstractJCache<K, V> createJCache(String cacheName, ConfigurationAdapter<K, V> adapter) {
       RemoteCache<K, V> ispnCache = getRemoteCache(cm, cacheName);
-      RemoteCache<K, V> ispnCacheForceReturnValue = getRemoteCache(cmForceReturnValue, cacheName);
-      return new JCache<K, V>(ispnCache, ispnCacheForceReturnValue, this, adapter);
+      RemoteCache<K, V> ispnCacheForceReturnValue = ispnCache.withFlags(Flag.FORCE_RETURN_VALUE);
+      return new JCache<>(ispnCache, ispnCacheForceReturnValue, this, adapter);
    }
 
    private <K, V> RemoteCache<K, V> getRemoteCache(RemoteCacheManager cm, String cacheName) {
@@ -134,8 +132,8 @@ public class JCacheManager extends AbstractJCacheManager {
 
    public <K, V> Cache<K, V> createRegisterJCache(String cacheName) {
       RemoteCache<K, V> ispnCache = cm.getCache(cacheName);
-      RemoteCache<K, V> ispnCacheForceReturnValue = cmForceReturnValue.getCache(cacheName);
-      if (ispnCache != null && cmForceReturnValue != null) {
+      if (ispnCache != null) {
+         RemoteCache<K, V> ispnCacheForceReturnValue = ispnCache.withFlags(Flag.FORCE_RETURN_VALUE);
          ConfigurationAdapter<K, V> adapter = ConfigurationAdapter.create();
          JCache<K, V> jcache = new JCache<>(ispnCache, ispnCacheForceReturnValue, this, adapter);
          registerPredefinedCache(cacheName, jcache);
@@ -171,7 +169,6 @@ public class JCacheManager extends AbstractJCacheManager {
    @Override
    protected void delegateStop() {
       cm.stop();
-      cmForceReturnValue.stop();
    }
 
    @Override
