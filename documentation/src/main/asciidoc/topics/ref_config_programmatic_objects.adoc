@@ -1,53 +1,49 @@
 [id='programmatic_objects-{context}']
-= Configuration Objects
-{brandname} provides two abstractions for programmatic cache configuration:
-
-`GlobalConfigurationBuilder`::
-Constructs global configuration objects that apply to all cache definitions.
-`ConfigurationBuilder`::
-Constructs configuration objects specific to cache definitions.
+= {brandname} Configuration API
+Configure {brandname} programmatically.
 
 .Global configuration
-An example of global configuration is to enable statistics and export them via
-JMX or the `metrics` endpoint at the Cache Manager level, as follows:
+Use the `GlobalConfiguration` class to apply configuration to all caches
+under the Cache Manager.
 
 [source,java]
 ----
-include::code_examples/ConfigStats.java[]
+GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
+  .cacheContainer().statistics(true) <1>
+  .metrics().gauges(true).histograms(true) <2>
+  .jmx().enable() <3>
+  .build();
 ----
+
+<1> Enables Cache Manager statistics.
+<2> Exports statistics through the `metrics` endpoint.
+<3> Exports statistics via JMX MBeans.
+
+**References:**
+
+* link:{javadocroot}/org/infinispan/configuration/global/GlobalConfiguration.html[org.infinispan.configuration.global.GlobalConfiguration].
+* link:{javadocroot}/org/infinispan/configuration/global/package-summary.html[Global Configuration API].
 
 .Cache configuration
-The following examples show how you can programmatically configure different settings for {brandname} caches.
+Use the `ConfigurationBuilder` class to configure caches.
 
-* Configure a distributed, synchronous clustered cache mode:
-+
 [source,java]
 ----
-include::code_examples/ConfigClustering.java[]
+ConfigurationBuilder builder = new ConfigurationBuilder();
+     builder.clustering() <1>
+            .cacheMode(CacheMode.DIST_SYNC) <2>
+            .l1().lifespan(25000L) <3>
+            .hash().numOwners(3) <4>
+            .statistics().enable(); <5>
+     Configuration cfg = builder.build();
 ----
 
-* Configure eviction and expiration settings:
-+
-[source,java]
-----
-include::code_examples/ConfigExpiration.java[]
-----
+<1> Enables cache clustering.
+<2> Uses the distributed, synchronous cache mode.
+<3> Configures maximum lifespan for entries in the L1 cache.
+<4> Configures three cluster-wide replicas for each cache entry.
+<5> Enables cache statistics.
 
-* Configure persistent cache stores:
-+
-[source,java]
-----
-include::code_examples/ConfigCacheStores.java[]
-----
+**References:**
 
-* Configure transaction and locking:
-+
-[source,java]
-----
-include::code_examples/ConfigTransactionsLocking.java[]
-----
-
-.Reference
-
-* link:{javadocroot}/org/infinispan/configuration/global/GlobalConfiguration.html[org.infinispan.configuration.global.GlobalConfiguration]
-* link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[org.infinispan.configuration.cache.ConfigurationBuilder]
+* link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[org.infinispan.configuration.cache.ConfigurationBuilder].

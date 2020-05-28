@@ -1,15 +1,22 @@
 [id='write_behind']
 = Write-Behind
-Write-Behind is an cache writing mode where writes to memory are synchronous
-and writes to cache stores are asynchronous. When a client application
-updates a cache entry, {brandname} adds the update to a modification queue and
-then modifies the cache store in a different thread than the client thread.
+Write-Behind is a cache writing mode where writes to memory are synchronous
+and writes to cache stores are asynchronous.
 
-You can configure the number of threads that consume the modification queue and
-apply updates to the underlying cache store. The modification queue fills up if
-there are not enough threads to handle the updates or if the underlying cache
-store becomes unavailable. When this occurs, {brandname} uses Write-Through
-mode until the modification queue can accept new entries.
+When clients send write requests, {brandname} adds those operations to a
+modification queue. {brandname} processes operations as they join the queue so
+that the calling thread is not blocked and the operation completes immediately.
+
+If the number of write operations in the modification queue increases beyond
+the size of the queue, {brandname} adds those additional operations to the
+queue. However, those operations do not complete until {brandname} processes
+operations that are already in the queue.
+
+For example, calling `Cache.putAsync` returns immediately and the Stage also
+completes immediately if the modification queue is not full. If the
+modification queue is full, or if {brandname} is currently processing a batch
+of write operations, then `Cache.putAsync` returns immediately and the Stage
+completes later.
 
 Write-Behind mode provides a performance advantage over Write-Through mode
 because cache operations do not need to wait for updates to the underlying cache

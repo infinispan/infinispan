@@ -1,0 +1,13 @@
+[id='creating_stores']
+:context: custom
+= Implementing Custom Cache Stores
+You can create custom cache stores through the {brandname} persistent SPI.
+
+include::{topics}/con_persistence_spi.adoc[leveloffset=+1]
+include::{topics}/proc_creating_custom_cache_stores.adoc[leveloffset=+1]
+include::{topics}/ref_cache_store_custom_config.adoc[leveloffset=+1]
+include::{topics}/proc_deploying_custom_cache_stores.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

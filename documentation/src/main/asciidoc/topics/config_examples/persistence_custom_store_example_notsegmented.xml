@@ -5,7 +5,7 @@
          fetch-state="false" preload="true" shared="false"
          purge="true" read-only="false">
 
-         <write-behind modification-queue-size="123" thread-pool-size="23" />
+         <write-behind modification-queue-size="123" />
 
          <property name="myProp">${system.property}</property>
       </store>

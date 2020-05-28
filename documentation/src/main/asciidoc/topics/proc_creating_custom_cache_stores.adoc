@@ -1,7 +1,6 @@
-[id='create_custom_cache_store']
-= Implementing Custom Cache Stores
-Create custom cache stores that implement both `CacheWriter` and `CacheLoader`
-interfaces to fetch and persist data to external storage.
+[id='create_custom_store']
+= Creating Cache Stores
+Create custom cache stores by implementing the `NonBlockingStore` interface.
 
 . Implement the appropriate {brandname} persistent SPIs.
 . Annotate your store class with the `@ConfiguredBy` annotation if it has a custom configuration.

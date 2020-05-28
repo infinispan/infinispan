@@ -9,6 +9,3 @@ If a thread calls `cache.putAsync(k, v1); cache.putAsync(k, v2)`, the final valu
 may be either `v1` or `v2`.
 The advantage over using asynchronous communications is that the final value can't be
 `v1` on one node and `v2` on another.
-
-NOTE: Prior to version 9.0, the asynchronous API was emulated by borrowing a thread from
-an internal thread pool and running a blocking operation on that thread.
