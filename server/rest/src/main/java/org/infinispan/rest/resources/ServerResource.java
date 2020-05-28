@@ -11,7 +11,6 @@ import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 
-import java.lang.management.ManagementFactory;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Set;
@@ -112,7 +111,7 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> env(RestRequest restRequest) {
-      return serializeObject(ManagementFactory.getRuntimeMXBean().getSystemProperties());
+      return serializeObject(System.getProperties());
    }
 
    private CompletionStage<RestResponse> info(RestRequest restRequest) {
