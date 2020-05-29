@@ -50,7 +50,7 @@ public class WriteBehindFaultToleranceTest extends SingleCacheManagerTest {
       return cacheManager.getCache();
    }
 
-   @Test(invocationCount = 100)
+   @Test
    public void testBlockingOnStoreAvailabilityChange() throws InterruptedException, ExecutionException, TimeoutException {
       Cache<Object, Object> cache = createManagerAndGetCache(false, 1);
       PollingPersistenceManager pm = new PollingPersistenceManager();
