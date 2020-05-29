@@ -28,4 +28,11 @@ public class ScatteredSyncStoreSharedTest extends DistSyncStoreSharedTest<Scatte
    protected void assertOwnershipAndNonOwnership(Object key, boolean allowL1) {
       Utils.assertOwnershipAndNonOwnership(caches, key);
    }
+
+   @Override
+   protected int expectedWriteCount() {
+      // Scattered cache does not use bulk write and always assumes the write was successful even when store is shared
+      // https://issues.redhat.com/browse/ISPN-11963
+      return 8;
+   }
 }

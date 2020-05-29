@@ -8,9 +8,11 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -157,12 +159,17 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public <K, V> CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry<K, V>> entries, Predicate<? super StoreConfiguration> predicate, long flags) {
+   public CompletionStage<Long> performBatch(TxInvocationContext<AbstractCacheTransaction> invocationContext, BiPredicate<? super WriteCommand, Object> commandKeyPredicate) {
       return CompletableFutures.completedNull();
    }
 
    @Override
-   public CompletionStage<Long> performBatch(TxInvocationContext<AbstractCacheTransaction> invocationContext, BiPredicate<WriteCommand, Object> commandKeyPredicate) {
+   public <K, V> CompletionStage<Void> writeEntries(Iterable<MarshallableEntry<K, V>> iterable, Predicate<? super StoreConfiguration> predicate) {
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public CompletionStage<Long> writeMapCommand(PutMapCommand putMapCommand, InvocationContext ctx, BiPredicate<? super PutMapCommand, Object> commandKeyPredicate) {
       return CompletableFutures.completedNull();
    }
 

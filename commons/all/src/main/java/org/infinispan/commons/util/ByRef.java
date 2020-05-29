@@ -63,6 +63,33 @@ public class ByRef<T> {
       public void inc() {
          ref++;
       }
+
+      public void dec() {
+         ref--;
+      }
    }
 
+   public static class Long {
+      long ref;
+
+      public Long(int i) {
+         ref = i;
+      }
+
+      public long get() {
+         return ref;
+      }
+
+      public void set(long i) {
+         ref = i;
+      }
+
+      public void inc() {
+         ref++;
+      }
+
+      public void dec() {
+         ref--;
+      }
+   }
 }
