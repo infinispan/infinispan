@@ -52,7 +52,7 @@ public class AnchoredKeysIT {
    private void test(RemoteCache<String, String> cache) {
       assertNotNull(cache);
       cache.put("k1", "v1");
-      assertEquals(1, cache.size());
       assertEquals("v1", cache.get("k1"));
+      assertEquals(1, cache.size());
    }
 }

@@ -242,24 +242,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
-   private boolean shouldLoad(InvocationContext ctx, AbstractDataWriteCommand command, DistributionInfo info) {
-      if (!command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP)) {
-         VisitableCommand.LoadType loadType = command.loadType();
-         switch (loadType) {
-            case DONT_LOAD:
-               return false;
-            case OWNER:
-               return info.isPrimary() || (info.isWriteOwner() && !ctx.isOriginLocal());
-            case PRIMARY:
-               return info.isPrimary();
-            default:
-               throw new IllegalStateException();
-         }
-      } else {
-         return false;
-      }
-   }
-
    protected LocalizedCacheTopology checkTopologyId(TopologyAffectedCommand command) {
       LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
       int currentTopologyId = cacheTopology.getTopologyId();

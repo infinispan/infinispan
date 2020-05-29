@@ -148,8 +148,8 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject protected TriangleOrderManager triangleOrderManager;
    @Inject protected DistributionManager distributionManager;
    @Inject protected KeyPartitioner keyPartitioner;
-   @Inject InternalConflictManager<?, ?> conflictManager;
-   @Inject LocalPublisherManager<Object, Object> localPublisherManager;
+   @Inject protected InternalConflictManager<?, ?> conflictManager;
+   @Inject protected LocalPublisherManager<Object, Object> localPublisherManager;
    @Inject PerCacheInboundInvocationHandler inboundInvocationHandler;
 
    protected String cacheName;
@@ -1095,7 +1095,7 @@ public class StateConsumerImpl implements StateConsumer {
                      });
    }
 
-   private CompletionStage<Void> invalidateBatch(Collection<Object> keysToRemove) {
+   protected CompletionStage<Void> invalidateBatch(Collection<Object> keysToRemove) {
       InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateCommand(
             EnumUtil.bitSetOf(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove.toArray());
       InvocationContext ctx = icf.createNonTxInvocationContext();

@@ -155,6 +155,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
             if (nextStage != null) {
                return asyncInvokeNext(ctx, command, nextStage);
             }
+            break;
          case OWNED:
             break;
          default:

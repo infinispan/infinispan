@@ -1,10 +1,13 @@
 package org.infinispan.interceptors.impl;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -45,11 +48,7 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    }
 
    protected final boolean isLocalModeForced(FlagAffectedCommand command) {
-      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
-         if (trace) getLog().trace("LOCAL mode forced on invocation.  Suppressing clustered events.");
-         return true;
-      }
-      return false;
+      return command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL);
    }
 
    protected boolean shouldInvokeRemoteTxCommand(TxInvocationContext ctx) {
@@ -82,4 +81,20 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
       }
    }
 
+   protected boolean shouldLoad(InvocationContext ctx, FlagAffectedCommand command, DistributionInfo info) {
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP))
+         return false;
+
+      VisitableCommand.LoadType loadType = command.loadType();
+      switch (loadType) {
+         case DONT_LOAD:
+            return false;
+         case OWNER:
+            return info.isPrimary() || (info.isWriteOwner() && !ctx.isOriginLocal());
+         case PRIMARY:
+            return info.isPrimary();
+         default:
+            throw new IllegalStateException();
+      }
+   }
 }

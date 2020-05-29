@@ -1011,6 +1011,9 @@ public class JGroupsTransport implements Transport {
       boolean checkView = request.onNewView(clusterView.getMembersSet());
       try {
          for (Address target : targets) {
+            if (target.equals(excludedTarget))
+               continue;
+
             ReplicableCommand command = commandGenerator.apply(target);
             logRequest(requestId, command, target, "mixed");
             sendCommand(target, command, requestId, deliverOrder, true, checkView);

@@ -29,9 +29,9 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 9.0
  */
-@Test(groups = "functional", testName = "anchored.ConfigurationSerializerTest")
+@Test(groups = "functional", testName = "anchored.AnchoredConfigurationSerializerTest")
 @CleanupAfterMethod
-public class ConfigurationSerializerTest extends AbstractConfigurationSerializerTest {
+public class AnchoredConfigurationSerializerTest extends AbstractConfigurationSerializerTest {
 
    @DataProvider
    public static Object[][] configurationFiles() {

@@ -247,7 +247,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
 
       if (helper.shouldRegisterRemoteCallback(command)) {
-         return invokeNextThenApply(ctx, command, helper.remoteCallback);
+         return invokeNextThenApply(ctx, command, helper.getRemoteCallback());
       } else {
          return invokeNext(ctx, command);
       }
@@ -272,7 +272,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       return myItems;
    }
 
-   private <C extends WriteCommand, Container, Item> Object handleReadWriteManyCommand(
+   protected <C extends WriteCommand, Container, Item> Object handleReadWriteManyCommand(
          InvocationContext ctx, C command, WriteManyCommandHelper<C, Item, Container> helper) throws Exception {
       // TODO: due to possible repeating of the operation (after OutdatedTopologyException is thrown)
       //  it is possible that the function will be applied multiple times on some of the nodes.
@@ -421,7 +421,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          result = invokeNext(ctx, command);
       }
       if (helper.shouldRegisterRemoteCallback(command)) {
-         return makeStage(result).thenApply(ctx, command, helper.remoteCallback);
+         return makeStage(result).thenApply(ctx, command, helper.getRemoteCallback());
       } else {
          return result;
       }
@@ -440,7 +440,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             Map<Address, IntSet> backupOwners = backupOwnersOfSegments(ch, segments);
             for (Entry<Address, IntSet> backup : backupOwners.entrySet()) {
                // rCommand is the original command
-               C backupCopy = helper.copyForBackup(rCommand, topology, backup.getValue());
+               C backupCopy = helper.copyForBackup(rCommand, topology, backup.getKey(), backup.getValue());
                backupCopy.setTopologyId(rCommand.getTopologyId());
                if (helper.getItems(backupCopy).isEmpty()) continue;
                Address backupOwner = backup.getKey();
@@ -494,7 +494,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       CompletableFuture[] futures = isSync ? new CompletableFuture[backups.size()] : null;
       int future = 0;
       for (Entry<Address, IntSet> backup : backups.entrySet()) {
-         C copy = helper.copyForBackup(command, topology, backup.getValue());
+         C copy = helper.copyForBackup(command, topology, backup.getKey(), backup.getValue());
          copy.setTopologyId(command.getTopologyId());
          Address backupOwner = backup.getKey();
          if (isSync) {

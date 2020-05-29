@@ -90,16 +90,26 @@ public class RemoteMetadata implements Metadata {
       @Override
       public void writeObject(ObjectOutput output, RemoteMetadata entry) throws IOException {
          output.writeObject(entry.getAddress());
-         output.writeInt(entry.version.getTopologyId());
-         output.writeLong(entry.version.getVersion());
+         if (entry.version != null) {
+            output.writeInt(entry.version.getTopologyId());
+            output.writeLong(entry.version.getVersion());
+         } else {
+            output.writeInt(-1);
+         }
       }
 
       @Override
       public RemoteMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          JGroupsAddress address = (JGroupsAddress) input.readObject();
          int topologyId = input.readInt();
-         long version = input.readLong();
-         return new RemoteMetadata(address, new SimpleClusteredVersion(topologyId, version));
+         SimpleClusteredVersion clusteredVersion;
+         if (topologyId == -1) {
+            clusteredVersion = null;
+         } else {
+            long version = input.readLong();
+            clusteredVersion = new SimpleClusteredVersion(topologyId, version);
+         }
+         return new RemoteMetadata(address, clusteredVersion);
       }
    }
 }

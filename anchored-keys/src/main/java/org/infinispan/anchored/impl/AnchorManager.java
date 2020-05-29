@@ -5,6 +5,7 @@ import static org.infinispan.factories.scopes.Scopes.NAMED_CACHE;
 import java.util.List;
 
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.remoting.transport.Address;
@@ -46,7 +47,26 @@ public class AnchorManager {
 //   }
 
    public Address getCurrentWriter() {
-      List<Address> members = distributionManager.getReadConsistentHash().getMembers();
-      return members.get(members.size() - 1);
+      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
+      List<Address> members = cacheTopology.getReadConsistentHash().getMembers();
+      if (members.size() == 1)
+         return null;
+
+      Address newestMember = members.get(members.size() - 1);
+      if (newestMember.equals(cacheTopology.getLocalAddress()))
+         return null;
+
+      return newestMember;
+   }
+
+   public boolean isCurrentWriter() {
+      return getCurrentWriter() == null;
+   }
+
+   public Address updateLocation(Address address) {
+      if (address != null && distributionManager.getCacheTopology().getMembersSet().contains(address)) {
+         return address;
+      }
+      return getCurrentWriter();
    }
 }
