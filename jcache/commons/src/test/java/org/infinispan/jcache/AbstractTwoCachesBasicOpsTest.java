@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +34,7 @@ import javax.cache.processor.MutableEntry;
 
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 /**
@@ -283,20 +283,26 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache2 = getCache2(m);
 
       TestUpdatedListener listener = new TestUpdatedListener();
-      MutableCacheEntryListenerConfiguration conf = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener), null, false, true);
+      MutableCacheEntryListenerConfiguration<String, String> conf = new MutableCacheEntryListenerConfiguration<>(FactoryBuilder.factoryOf(listener), null, false, true);
       try {
          cache1.registerCacheEntryListener(conf);
          cache1.put(k(m), v(m, 2));
          cache2.put(k(m), v(m, 3));
 
-         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 1);
+         eventuallyEquals(1, listener::getInvocationCount);
+         CacheEntryEvent<?, ?> event = listener.getEvent(0);
+         assertEquals(k(m), event.getKey());
+         assertEquals(v(m, 3), event.getValue());
+         // TODO Previous value is missing, see ISPN-8652
+//         assertEquals(v(m, 2), event.getOldValue());
 
          cache1.deregisterCacheEntryListener(conf);
          listener.reset();
 
          cache2.put(k(m), v(m, 4));
 
-         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 0);
+         TestingUtil.sleepThread(50);
+         assertEquals(0, listener.getInvocationCount());
       } finally {
          cache1.deregisterCacheEntryListener(conf);
       }
@@ -308,12 +314,18 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache2 = getCache2(m);
 
       TestRemovedListener listener = new TestRemovedListener();
-      MutableCacheEntryListenerConfiguration conf = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener), null, false, true);
+      MutableCacheEntryListenerConfiguration<String, String> conf = new MutableCacheEntryListenerConfiguration<>(FactoryBuilder.factoryOf(listener), null, false, true);
       try {
          cache1.registerCacheEntryListener(conf);
          cache1.put(k(m), v(m, 3));
          cache2.remove(k(m));
-         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 1);
+
+         eventuallyEquals(1, listener::getInvocationCount);
+         CacheEntryEvent<?, ?> event = listener.getEvent(0);
+         assertEquals(k(m), event.getKey());
+         // TODO Previous value is missing, see ISPN-8652
+//         assertEquals(v(m, 3), event.getOldValue());
+         assertNull(event.getValue());
 
          cache1.deregisterCacheEntryListener(conf);
          listener.reset();
@@ -321,7 +333,8 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
          cache1.put(k(m, 2), v(m, 2));
          cache2.remove(k(m, 2));
 
-         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 0);
+         TestingUtil.sleepThread(50);
+         assertEquals(0, listener.getInvocationCount());
       } finally {
          cache1.deregisterCacheEntryListener(conf);
       }
@@ -333,17 +346,23 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache2 = getCache2(m);
 
       TestCreatedListener listener = new TestCreatedListener();
-      MutableCacheEntryListenerConfiguration conf = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener), null, false, true);
+      MutableCacheEntryListenerConfiguration<String, String> conf = new MutableCacheEntryListenerConfiguration<>(FactoryBuilder.factoryOf(listener), null, false, true);
       try {
          cache1.registerCacheEntryListener(conf);
          cache2.put(k(m), v(m, 3));
-         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 1);
+
+         eventuallyEquals(1, listener::getInvocationCount);
+         CacheEntryEvent<?, ?> event = listener.getEvent(0);
+         assertEquals(k(m), event.getKey());
+         assertEquals(v(m, 3), event.getValue());
+         assertNull(event.getOldValue());
 
          cache1.deregisterCacheEntryListener(conf);
          listener.reset();
 
          cache2.put(k(m, 2), v(m, 2));
-         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 0);
+         TestingUtil.sleepThread(50);
+         assertEquals(0, listener.getInvocationCount());
       } finally {
          cache1.deregisterCacheEntryListener(conf);
       }
@@ -357,100 +376,96 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       DiscardingCacheEntryEventFilter filter = new DiscardingCacheEntryEventFilter();
       TestCreatedListener listener1 = new TestCreatedListener();
       TestCreatedListener listener2 = new TestCreatedListener();
-      MutableCacheEntryListenerConfiguration conf1 = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener1), null, false, true);
-      MutableCacheEntryListenerConfiguration conf2 = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener2), FactoryBuilder.factoryOf(filter), false, true);
+      MutableCacheEntryListenerConfiguration<String, String> conf1 = new MutableCacheEntryListenerConfiguration<>(FactoryBuilder.factoryOf(listener1), null, false, true);
+      MutableCacheEntryListenerConfiguration<String, String> conf2 = new MutableCacheEntryListenerConfiguration<>(FactoryBuilder.factoryOf(listener2), FactoryBuilder.factoryOf(filter), false, true);
       try {
          cache1.registerCacheEntryListener(conf1);
          cache2.registerCacheEntryListener(conf2);
          cache2.put(k(m), v(m, 3));
-         eventually(() -> listener1.toString(), () -> listener1.getInvocationCount() == 1);
-         eventually(() -> listener2.toString(), () -> listener2.getInvocationCount() == 0);
+         eventuallyEquals(1, listener1::getInvocationCount);
+         assertEquals(0, listener2.getInvocationCount());
 
          cache1.deregisterCacheEntryListener(conf1);
          listener1.reset();
 
          cache2.put(k(m, 2), v(m, 2));
-         eventually(() -> listener1.toString(), () -> listener1.getInvocationCount() == 0);
+         TestingUtil.sleepThread(50);
+         assertEquals(0, listener1.getInvocationCount());
       } finally {
          cache1.deregisterCacheEntryListener(conf1);
          cache2.deregisterCacheEntryListener(conf2);
       }
    }
 
-   private static class DiscardingCacheEntryEventFilter implements CacheEntryEventFilter, Serializable {
+   private static class DiscardingCacheEntryEventFilter implements CacheEntryEventFilter<Object, Object>, Serializable {
 
       @Override
-      public boolean evaluate(CacheEntryEvent event) throws CacheEntryListenerException {
+      public boolean evaluate(CacheEntryEvent<?, ?> event) throws CacheEntryListenerException {
          return false;
       }
    }
 
-   private static class TestUpdatedListener extends InvocationAwareListener implements CacheEntryUpdatedListener, Serializable {
+   private static class TestUpdatedListener extends InvocationAwareListener implements CacheEntryUpdatedListener<Object, Object>, Serializable {
 
       @Override
-      public void onUpdated(Iterable iterable) throws CacheEntryListenerException {
-         Iterator iterator = iterable.iterator();
-         while (iterator.hasNext()) {
-            addObject(iterator.next());
-         }
+      public void onUpdated(Iterable<CacheEntryEvent<?, ?>> cacheEntryEvents) throws CacheEntryListenerException {
+         cacheEntryEvents.forEach(this::addEvent);
       }
    }
 
-   private static class TestCreatedListener extends InvocationAwareListener implements CacheEntryCreatedListener, Serializable {
+   private static class TestCreatedListener extends InvocationAwareListener implements CacheEntryCreatedListener<Object, Object>, Serializable {
 
       @Override
-      public void onCreated(Iterable iterable) throws CacheEntryListenerException {
-         Iterator iterator = iterable.iterator();
-         while (iterator.hasNext()) {
-            addObject(iterator.next());
-         }
+      public void onCreated(Iterable<CacheEntryEvent<?, ?>> cacheEntryEvents) throws CacheEntryListenerException {
+         cacheEntryEvents.forEach(this::addEvent);
       }
    }
 
-   private static class TestRemovedListener extends InvocationAwareListener implements CacheEntryRemovedListener, Serializable {
+   private static class TestRemovedListener extends InvocationAwareListener implements CacheEntryRemovedListener<Object, Object>, Serializable {
 
       @Override
-      public void onRemoved(Iterable iterable) throws CacheEntryListenerException {
-         Iterator iterator = iterable.iterator();
-         while (iterator.hasNext()) {
-            addObject(iterator.next());
-         }
+      public void onRemoved(Iterable<CacheEntryEvent<?, ?>> cacheEntryEvents) throws CacheEntryListenerException {
+         cacheEntryEvents.forEach(this::addEvent);
       }
    }
 
    private abstract static class InvocationAwareListener {
 
-      protected List<Object> objects = Collections.synchronizedList(new ArrayList<>());
+      protected List<CacheEntryEvent<?, ?>> events = Collections.synchronizedList(new ArrayList<>());
 
       public synchronized int getInvocationCount() {
-         return objects.size();
+         return events.size();
+      }
+
+      public synchronized CacheEntryEvent<?, ?> getEvent(int i) {
+         return events.get(i);
       }
 
       public synchronized void reset() {
-         objects.clear();
+         events.clear();
       }
 
-      public synchronized void addObject(Object o) {
-         this.objects.add(o);
+      public synchronized void addEvent(CacheEntryEvent<?, ?> e) {
+         this.events.add(e);
       }
 
       @Override
       public String toString() {
-         return "InvocationAwareListener{" +
-               "objects=" + objects +
-               '}';
+         return getClass().getSimpleName() + "{" +
+                "events=" + events +
+                '}';
       }
    }
 
    @ProtoName("CustomEntryProcessor")
-   public static class CustomEntryProcessor implements EntryProcessor {
+   public static class CustomEntryProcessor implements EntryProcessor<String, String, Object> {
       @Override
-      public Object process(MutableEntry entry, Object... arguments) throws EntryProcessorException {
+      public Object process(MutableEntry<String, String> entry, Object... arguments) throws EntryProcessorException {
          entry.setValue(entry.getValue() + "_processed");
          return entry;
       }
    }
 
-   public abstract Cache getCache1(Method m);
-   public abstract Cache getCache2(Method m);
+   public abstract Cache<String, String> getCache1(Method m);
+   public abstract Cache<String, String> getCache2(Method m);
 }

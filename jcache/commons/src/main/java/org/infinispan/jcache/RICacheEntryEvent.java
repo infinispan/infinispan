@@ -124,4 +124,14 @@ public class RICacheEntryEvent<K, V> extends CacheEntryEvent<K, V> {
     public boolean isOldValueAvailable() {
         return oldValueAvailable;
     }
+
+   @Override
+   public String toString() {
+      return "RICacheEntryEvent{" +
+             "key=" + key +
+             ", value=" + value +
+             ", oldValue=" + oldValue +
+             ", source=" + source +
+             '}';
+   }
 }
