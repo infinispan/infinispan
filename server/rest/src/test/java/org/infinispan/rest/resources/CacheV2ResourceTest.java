@@ -14,6 +14,7 @@ import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
 import static org.infinispan.context.Flag.SKIP_INDEXING;
 import static org.infinispan.globalstate.GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.net.URLEncoder;
@@ -28,6 +29,8 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpMethod;
 import org.infinispan.Cache;
+import org.infinispan.commons.configuration.JsonWriter;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -278,6 +281,45 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).containsReturnedText("has_remote_backup");
       ResponseAssertion.assertThat(response).containsReturnedText("secured");
       ResponseAssertion.assertThat(response).containsReturnedText("indexing_in_progress");
+      ResponseAssertion.assertThat(response).containsReturnedText("queryable");
+   }
+
+   public void testCacheQueryable() throws Exception {
+      // Default config
+      createCache(new ConfigurationBuilder(), "cacheNotQueryable");
+      JsonNode details = getCacheDetail("cacheNotQueryable");
+      assertFalse(details.get("queryable").asBoolean());
+
+      // Indexed
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.indexing().addProperty("default.directory_provider", "local-heap").enable();
+      builder.indexing().enable();
+      createCache(builder, "cacheIndexed");
+      details = getCacheDetail("cacheIndexed");
+      assertTrue(details.get("queryable").asBoolean());
+
+      // NonIndexed
+      ConfigurationBuilder proto = new ConfigurationBuilder();
+      proto.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
+      createCache(proto, "cacheQueryable");
+      details = getCacheDetail("cacheQueryable");
+      assertTrue(details.get("queryable").asBoolean());
+   }
+
+   private void createCache(ConfigurationBuilder builder, String name) throws Exception {
+      String json = new JsonWriter().toJSON(builder.build());
+      String url = String.format("http://localhost:%d/rest/v2/caches/%s", restServer().getPort(), name);
+      ContentResponse response = client.newRequest(url).header("Content-type", APPLICATION_JSON_TYPE)
+            .method(POST).content(new StringContentProvider(json)).send();
+      ResponseAssertion.assertThat(response).isOk();
+   }
+
+   private JsonNode getCacheDetail(String name) throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/%s", restServer().getPort(), name);
+      ContentResponse response = client.newRequest(url).header("Accept", APPLICATION_JSON_TYPE).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      return new ObjectMapper().readTree(response.getContentAsString());
    }
 
    @Test

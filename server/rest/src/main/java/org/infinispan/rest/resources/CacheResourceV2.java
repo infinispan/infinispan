@@ -31,6 +31,7 @@ import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.distribution.DistributionManager;
@@ -302,7 +303,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       InfinispanQueryStatisticsInfo.IndexStatistics indexStatistics = getIndexStatistics(cache);
       boolean rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
       boolean indexingInProgress = indexStatistics != null && indexStatistics.getReindexing();
-
+      boolean indexed =  configuration.indexing().enabled();
+      ContentTypeConfiguration valueDataType = cache.getCacheConfiguration().encoding().valueDataType();
+      boolean queryable = indexed || (valueDataType != null && valueDataType.mediaType()!= null &&
+            (valueDataType.mediaType().match(MediaType.APPLICATION_PROTOSTREAM)
+            || valueDataType.mediaType().match(MediaType.APPLICATION_OBJECT)));
       try {
          CacheFullDetail fullDetail = new CacheFullDetail();
          fullDetail.stats = stats;
@@ -312,11 +317,12 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          fullDetail.indexingInProgress = indexingInProgress;
          fullDetail.persistent = configuration.persistence().usingStores();
          fullDetail.bounded = configuration.memory().evictionStrategy().isEnabled();
-         fullDetail.indexed = configuration.indexing().enabled();
+         fullDetail.indexed = indexed;
          fullDetail.hasRemoteBackup = configuration.sites().hasEnabledBackups();
          fullDetail.secured = configuration.security().authorization().enabled();
          fullDetail.transactional = configuration.transaction().transactionMode().isTransactional();
          fullDetail.statistics = statistics;
+         fullDetail.queryable = queryable;
 
          byte[] detailsResponse = invocationHelper.getMapper().writeValueAsBytes(fullDetail);
          responseBuilder.contentType(APPLICATION_JSON)
@@ -404,5 +410,6 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       public boolean hasRemoteBackup;
       public boolean indexingInProgress;
       public boolean statistics;
+      public boolean queryable;
    }
 }
