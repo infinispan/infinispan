@@ -86,7 +86,11 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
-      return TestCacheManagerFactory.newDefaultCacheManager(false, global, new ConfigurationBuilder());
+      return createCacheManager(false, global, new ConfigurationBuilder());
+   }
+
+   protected EmbeddedCacheManager createCacheManager(boolean start, GlobalConfigurationBuilder global, ConfigurationBuilder cb) {
+      return TestCacheManagerFactory.newDefaultCacheManager(start, global, cb);
    }
 
    protected SerializationContextInitializer getSerializationContextInitializer() {
@@ -198,7 +202,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       createCacheStoreConfig(cb.persistence(), true);
-      EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(global, cb);
+      EmbeddedCacheManager local = createCacheManager(true, global, cb);
       try {
          final String cacheName = "to-be-removed";
          local.defineConfiguration(cacheName, local.getDefaultCacheConfiguration());
@@ -219,7 +223,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       createCacheStoreConfig(cb.persistence().passivation(true), true);
-      EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(global, cb);
+      EmbeddedCacheManager local = createCacheManager(true, global, cb);
       try {
          final String cacheName = "to-be-removed";
          local.defineConfiguration(cacheName, local.getDefaultCacheConfiguration());
@@ -298,7 +302,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       entriesMap.forEach((k, v) -> assertEquals(v, cache.get(k)));
    }
 
-   private ConfigurationBuilder configureCacheLoader(ConfigurationBuilder base, boolean purge) {
+   protected ConfigurationBuilder configureCacheLoader(ConfigurationBuilder base, boolean purge) {
       ConfigurationBuilder cfg = base == null ? getDefaultCacheConfiguration() : base;
       cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       createCacheStoreConfig(cfg.persistence(), false);

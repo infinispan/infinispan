@@ -252,6 +252,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
       if (!storeConfiguration.segmented()) {
          characteristics.remove(Characteristic.SEGMENTABLE);
       }
+      if (storeConfiguration.transactional()) {
+         if (!characteristics.contains(Characteristic.TRANSACTIONAL)) {
+            throw log.storeConfiguredTransactionalButCharacteristicNotPresent(store.getClass().getName());
+         }
+      } else {
+         characteristics.remove(Characteristic.TRANSACTIONAL);
+      }
       return characteristics;
    }
 
@@ -958,7 +965,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   log.trace("Writing batch iterable to stores");
                }
                return Flowable.fromIterable(stores)
-                     .filter(storeStatus -> shouldWrite(storeStatus, predicate, flags))
+                     .filter(storeStatus -> shouldWrite(storeStatus, predicate, flags) &&
+                           !storeStatus.characteristics.contains(Characteristic.TRANSACTIONAL))
                      // Let the rollback work in parallel across the stores
                      .flatMapCompletable(storeStatus -> {
                         boolean segmented = storeStatus.characteristics.contains(Characteristic.SEGMENTABLE);
@@ -1138,7 +1146,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    private <K, V> MVCCEntry<K, V> acquireKeyFromContext(InvocationContext ctx, WriteCommand command, Object key,
          BiPredicate<WriteCommand, Object> commandKeyPredicate) {
-      if (commandKeyPredicate.test(command, key)) {
+      if (commandKeyPredicate == null || commandKeyPredicate.test(command, key)) {
          //noinspection unchecked
          MVCCEntry<K, V> entry = (MVCCEntry<K, V>) ctx.lookupEntry(key);
          if (entry.isChanged()) {
