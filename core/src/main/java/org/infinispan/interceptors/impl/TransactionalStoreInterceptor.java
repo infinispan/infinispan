@@ -1,6 +1,6 @@
 package org.infinispan.interceptors.impl;
 
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -27,7 +27,7 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
       if (ctx.isOriginLocal()) {
-         return asyncInvokeNext(ctx, command, persistenceManager.prepareAllTxStores(ctx, SHARED));
+         return asyncInvokeNext(ctx, command, persistenceManager.prepareAllTxStores(ctx, BOTH));
       }
       return invokeNext(ctx, command);
    }
@@ -35,7 +35,7 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) {
       if (ctx.isOriginLocal()) {
-         return asyncInvokeNext(ctx, command, persistenceManager.commitAllTxStores(ctx, SHARED));
+         return asyncInvokeNext(ctx, command, persistenceManager.commitAllTxStores(ctx, BOTH));
       }
       return invokeNext(ctx, command);
    }
@@ -43,7 +43,7 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) {
       if (ctx.isOriginLocal()) {
-         return asyncInvokeNext(ctx, command, persistenceManager.rollbackAllTxStores(ctx, SHARED));
+         return asyncInvokeNext(ctx, command, persistenceManager.rollbackAllTxStores(ctx, BOTH));
       }
       return invokeNext(ctx, command);
    }
