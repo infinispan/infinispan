@@ -62,9 +62,9 @@ public class BlockHoundHelper {
       allowBlocking(runnable, Boolean.FALSE);
    }
 
-   private static void allowBlocking(Runnable runnable, Boolean blockingSetting) {
+   private static void allowBlocking(Runnable runnable, Boolean nonBlockingSetting) {
       Boolean previousSetting = isNonBlocking.get();
-      isNonBlocking.set(blockingSetting);
+      isNonBlocking.set(nonBlockingSetting);
       try {
          runnable.run();
       } finally {
@@ -85,6 +85,6 @@ public class BlockHoundHelper {
     * context was already registered as non blocking. Useful to mock submission to a blocking executor.
     */
    public static Executor allowBlockingExecutor() {
-      return BlockHoundHelper::ensureNonBlocking;
+      return BlockHoundHelper::allowBlocking;
    }
 }

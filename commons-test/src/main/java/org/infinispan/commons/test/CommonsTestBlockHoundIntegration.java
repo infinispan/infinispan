@@ -19,6 +19,8 @@ public class CommonsTestBlockHoundIntegration implements BlockHoundIntegration {
       // Allow for various threads to determine blocking dynamically - which means the below non blocking predicate
       // will be evaluated each time a blocking operation is found on these threads
       builder.addDynamicThreadPredicate(t ->
+            // TestNG may be started on main thread and load this before renaming to testng
+            t.getName().startsWith("main") ||
             // The threads our tests run on directly
             t.getName().startsWith("testng") ||
             // These threads are part of AbstractInfinispanTest#testExecutor and fork methods
