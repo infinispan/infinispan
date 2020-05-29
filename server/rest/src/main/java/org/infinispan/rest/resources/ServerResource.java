@@ -2,14 +2,14 @@ package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
-import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
 import java.util.Calendar;
 import java.util.Collections;
@@ -30,8 +30,6 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.server.core.ServerManagement;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -88,34 +86,27 @@ public class ServerResource implements ResourceHandler {
    private CompletionStage<RestResponse> listIgnored(RestRequest restRequest) {
       String cacheManagerName = restRequest.variables().get("cache-manager");
       DefaultCacheManager cacheManager = invocationHelper.getServer().getCacheManager(cacheManagerName);
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
 
-      if (cacheManager == null) return completedFuture(builder.status(NOT_FOUND).build());
+      if (cacheManager == null) return notFoundResponseFuture();
       CacheIgnoreManager ignoreManager = invocationHelper.getServer().getIgnoreManager(cacheManagerName);
       Set<String> ignored = ignoreManager.getIgnoredCaches();
-      try {
-         byte[] resultBytes = invocationHelper.getMapper().writeValueAsBytes(ignored);
-         builder.contentType(APPLICATION_JSON_TYPE).entity(resultBytes);
-      } catch (JsonProcessingException e) {
-         builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
-      }
-      return completedFuture(builder.build());
+      return asJsonResponseFuture(ignored, invocationHelper);
    }
 
    private CompletionStage<RestResponse> cacheManagers(RestRequest restRequest) {
-      return serializeObject(invocationHelper.getServer().cacheManagerNames());
+      return asJsonResponseFuture(invocationHelper.getServer().cacheManagerNames(), invocationHelper);
    }
 
    private CompletionStage<RestResponse> memory(RestRequest restRequest) {
-      return serializeObject(new JVMMemoryInfoInfo());
+      return asJsonResponseFuture(new JVMMemoryInfoInfo(), invocationHelper);
    }
 
    private CompletionStage<RestResponse> env(RestRequest restRequest) {
-      return serializeObject(System.getProperties());
+      return asJsonResponseFuture(System.getProperties(), invocationHelper);
    }
 
    private CompletionStage<RestResponse> info(RestRequest restRequest) {
-      return serializeObject(SERVER_INFO);
+      return asJsonResponseFuture(SERVER_INFO, invocationHelper);
    }
 
    private CompletionStage<RestResponse> threads(RestRequest restRequest) {
@@ -142,17 +133,6 @@ public class ServerResource implements ResourceHandler {
                   .entity(path.toFile()).build();
          }
       });
-   }
-
-   private CompletionStage<RestResponse> serializeObject(Object object) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-      try {
-         byte[] bytes = invocationHelper.getMapper().writeValueAsBytes(object);
-         responseBuilder.contentType(APPLICATION_JSON).entity(bytes).status(OK);
-      } catch (JsonProcessingException e) {
-         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
-      return completedFuture(responseBuilder.build());
    }
 
    private CompletionStage<RestResponse> stop(RestRequest restRequest) {

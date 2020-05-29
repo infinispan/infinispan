@@ -16,7 +16,12 @@ import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
+import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -52,7 +57,6 @@ import org.infinispan.stats.Stats;
 import org.infinispan.upgrade.RollingUpgradeManager;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -169,19 +173,18 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    }
 
    private CompletionStage<RestResponse> streamKeys(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String cacheName = request.variables().get("cacheName");
 
       List<String> values = request.parameters().get("batch");
       int batch = values == null || values.isEmpty() ? STREAM_BATCH_SIZE : Integer.parseInt(values.iterator().next());
 
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, APPLICATION_JSON, APPLICATION_JSON, request);
-      if (cache == null) {
-         responseBuilder.status(HttpResponseStatus.NOT_FOUND);
-         return CompletableFuture.completedFuture(responseBuilder.build());
-      }
+      if (cache == null)
+         return notFoundResponseFuture();
+
       // Streaming over the cache is blocking
       return CompletableFuture.supplyAsync(() -> {
+         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
          responseBuilder.entity(new CacheInputStream(cache.keySet().stream(), batch));
 
          responseBuilder.contentType(APPLICATION_JSON_TYPE);
@@ -191,18 +194,18 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    }
 
    private CompletionStage<RestResponse> removeCache(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder().status(NO_CONTENT);
       String cacheName = request.variables().get("cacheName");
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       Cache<?, ?> cache = restCacheManager.getCache(cacheName, request);
-      if (cache == null) {
-         responseBuilder.status(HttpResponseStatus.NOT_FOUND);
-         return CompletableFuture.completedFuture(responseBuilder.build());
-      }
+      if (cache == null)
+         return notFoundResponseFuture();
+
       return CompletableFuture.supplyAsync(() -> {
          restCacheManager.getCacheManagerAdmin(request).removeCache(cacheName);
-         responseBuilder.status(OK);
-         return responseBuilder.build();
+         return new NettyRestResponse.Builder()
+               .status(NO_CONTENT)
+               .status(OK)
+               .build();
       }, invocationHelper.getExecutor());
    }
 
@@ -266,34 +269,22 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    }
 
    private CompletionStage<RestResponse> getCacheStats(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String cacheName = request.variables().get("cacheName");
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       Stats stats = cache.getAdvancedCache().getStats();
-      try {
-         byte[] statsResponse = invocationHelper.getMapper().writeValueAsBytes(stats);
-         responseBuilder.contentType(APPLICATION_JSON)
-               .entity(statsResponse)
-               .status(OK);
-      } catch (JsonProcessingException e) {
-         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
-      return CompletableFuture.completedFuture(responseBuilder.build());
+      return asJsonResponseFuture(stats, invocationHelper);
    }
 
    private CompletionStage<RestResponse> getAllDetails(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String cacheName = request.variables().get("cacheName");
-
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      if (cache == null) {
-         responseBuilder.status(HttpResponseStatus.NOT_FOUND);
-         return CompletableFuture.completedFuture(responseBuilder.build());
-      }
-      return CompletableFuture.supplyAsync(() -> getDetailResponse(responseBuilder, cache), invocationHelper.getExecutor());
+      if (cache == null)
+         return notFoundResponseFuture();
+
+      return CompletableFuture.supplyAsync(() -> getDetailResponse(cache), invocationHelper.getExecutor());
    }
 
-   private RestResponse getDetailResponse(NettyRestResponse.Builder responseBuilder, Cache<?, ?> cache) {
+   private RestResponse getDetailResponse(Cache<?, ?> cache) {
       Stats stats = cache.getAdvancedCache().getStats();
       Configuration configuration = cache.getCacheConfiguration();
       boolean statistics = configuration.statistics().enabled();
@@ -304,30 +295,24 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       boolean indexingInProgress = indexStatistics != null && indexStatistics.getReindexing();
       boolean indexed = configuration.indexing().enabled();
       boolean queryable = invocationHelper.getRestCacheManager().isCacheQueryable(cache);
-      try {
-         CacheFullDetail fullDetail = new CacheFullDetail();
-         fullDetail.stats = stats;
-         fullDetail.configuration = invocationHelper.getJsonWriter().toJSON(configuration);
-         fullDetail.size = size;
-         fullDetail.rehashInProgress = rehashInProgress;
-         fullDetail.indexingInProgress = indexingInProgress;
-         fullDetail.persistent = configuration.persistence().usingStores();
-         fullDetail.bounded = configuration.memory().evictionStrategy().isEnabled();
-         fullDetail.indexed = indexed;
-         fullDetail.hasRemoteBackup = configuration.sites().hasEnabledBackups();
-         fullDetail.secured = configuration.security().authorization().enabled();
-         fullDetail.transactional = configuration.transaction().transactionMode().isTransactional();
-         fullDetail.statistics = statistics;
-         fullDetail.queryable = queryable;
 
-         byte[] detailsResponse = invocationHelper.getMapper().writeValueAsBytes(fullDetail);
-         responseBuilder.contentType(APPLICATION_JSON)
-               .entity(detailsResponse)
-               .status(OK);
-      } catch (JsonProcessingException e) {
-         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
-      return responseBuilder.build();
+      CacheFullDetail fullDetail = new CacheFullDetail();
+      fullDetail.stats = stats;
+      fullDetail.configuration = invocationHelper.getJsonWriter().toJSON(configuration);
+      fullDetail.size = size;
+      fullDetail.rehashInProgress = rehashInProgress;
+      fullDetail.indexingInProgress = indexingInProgress;
+      fullDetail.persistent = configuration.persistence().usingStores();
+      fullDetail.bounded = configuration.memory().evictionStrategy().isEnabled();
+      fullDetail.indexed = indexed;
+      fullDetail.hasRemoteBackup = configuration.sites().hasEnabledBackups();
+      fullDetail.secured = configuration.security().authorization().enabled();
+      fullDetail.transactional = configuration.transaction().transactionMode().isTransactional();
+      fullDetail.statistics = statistics;
+      fullDetail.queryable = queryable;
+
+      return addEntityAsJson(fullDetail, new NettyRestResponse.Builder(), invocationHelper)
+            .build();
    }
 
    private InfinispanQueryStatisticsInfo.IndexStatistics getIndexStatistics(Cache<?, ?> cache) {
@@ -349,7 +334,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       if (cache == null)
-         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build());
+         return notFoundResponseFuture();
 
       Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
 
@@ -367,29 +352,13 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
 
-      CompletableFuture<Long> cacheSize = cache.sizeAsync();
-
-      return cacheSize.thenApply(size -> {
-         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-         try {
-            responseBuilder.entity(invocationHelper.getMapper().writeValueAsBytes(size));
-         } catch (JsonProcessingException e) {
-            responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-         }
-
-         return responseBuilder.build();
-      });
+      return cache.sizeAsync()
+            .thenApply(size -> asJsonResponse(size, invocationHelper));
    }
 
    private CompletionStage<RestResponse> getCacheNames(RestRequest request) throws RestResponseException {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-      try {
-         byte[] bytes = invocationHelper.getMapper().writeValueAsBytes(invocationHelper.getRestCacheManager().getCacheNames());
-         responseBuilder.contentType(APPLICATION_JSON).entity(bytes).status(OK);
-      } catch (JsonProcessingException e) {
-         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
-      return completedFuture(responseBuilder.build());
+      Collection<String> cacheNames = invocationHelper.getRestCacheManager().getCacheNames();
+      return asJsonResponseFuture(cacheNames, invocationHelper);
    }
 
    static class CacheFullDetail {

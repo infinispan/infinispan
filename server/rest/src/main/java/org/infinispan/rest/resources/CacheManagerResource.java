@@ -11,6 +11,8 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
+import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
 import java.io.ByteArrayOutputStream;
 import java.security.PrivilegedAction;
@@ -53,8 +55,6 @@ import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.stats.CacheContainerStats;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.rxjava3.core.Flowable;
@@ -66,17 +66,17 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public class CacheManagerResource implements ResourceHandler {
 
+   private final InvocationHelper invocationHelper;
    private final EmbeddedCacheManager cacheManager;
    private final InternalCacheRegistry internalCacheRegistry;
    private final JsonWriter jsonWriter = new JsonWriter();
-   private final ObjectMapper objectMapper;
    private final ParserRegistry parserRegistry = new ParserRegistry();
    private final String cacheManagerName;
    private final RestCacheManager<Object> restCacheManager;
    private final CacheIgnoreManager cacheIgnoreManager;
 
    public CacheManagerResource(InvocationHelper invocationHelper) {
-      this.objectMapper = invocationHelper.getMapper();
+      this.invocationHelper = invocationHelper;
       this.cacheManager = invocationHelper.getRestCacheManager().getInstance();
       this.restCacheManager = invocationHelper.getRestCacheManager();
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
@@ -115,15 +115,8 @@ public class CacheManagerResource implements ResourceHandler {
    private CompletionStage<RestResponse> getInfo(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
-      try {
-         byte[] bytes = objectMapper.writeValueAsBytes(cacheManager.getCacheManagerInfo());
-         responseBuilder.contentType(APPLICATION_JSON)
-               .entity(bytes)
-               .status(OK);
-      } catch (JsonProcessingException e) {
-         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
-      return completedFuture(responseBuilder.build());
+
+      return asJsonResponseFuture(cacheManager.getCacheManagerInfo(), responseBuilder, invocationHelper);
    }
 
    private CompletionStage<RestResponse> getConfig(RestRequest request) {
@@ -158,16 +151,7 @@ public class CacheManagerResource implements ResourceHandler {
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
       CacheContainerStats stats = cacheManager.getStats();
-
-      try {
-         byte[] bytes = objectMapper.writeValueAsBytes(stats);
-         responseBuilder.contentType(APPLICATION_JSON)
-               .entity(bytes)
-               .status(OK);
-      } catch (JsonProcessingException e) {
-         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
-      return completedFuture(responseBuilder.build());
+      return asJsonResponseFuture(stats, responseBuilder, invocationHelper);
    }
 
 
@@ -185,23 +169,17 @@ public class CacheManagerResource implements ResourceHandler {
 
       if (restRequest.method() == HEAD) return completedFuture(new NettyRestResponse.Builder().status(OK).build());
 
-      try {
-         Health health = cacheManager.withSubject(restRequest.getSubject()).getHealth();
-         HealthInfo healthInfo = new HealthInfo(health.getClusterHealth(), health.getCacheHealth());
+      Health health = cacheManager.withSubject(restRequest.getSubject()).getHealth();
+      HealthInfo healthInfo = new HealthInfo(health.getClusterHealth(), health.getCacheHealth());
 
-         MediaType contentType = anon ? TEXT_PLAIN : APPLICATION_JSON;
-         Object payload = null;
-         if(anon) {
-            payload = Security.doAs(restRequest.getSubject(), (PrivilegedAction<String>)
-                  () -> healthInfo.clusterHealth.getHealthStatus().toString());
-         } else {
-            payload = objectMapper.writeValueAsBytes(healthInfo);
-         }
-         responseBuilder.contentType(contentType)
-               .entity(payload)
+      if (anon) {
+         responseBuilder
+               .contentType(TEXT_PLAIN)
+               .entity(Security.doAs(restRequest.getSubject(), (PrivilegedAction<String>)
+                     () -> healthInfo.clusterHealth.getHealthStatus().toString()))
                .status(OK);
-      } catch (JsonProcessingException e) {
-         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      } else {
+         addEntityAsJson(healthInfo, responseBuilder, invocationHelper);
       }
       return completedFuture(responseBuilder.build());
    }
@@ -254,16 +232,10 @@ public class CacheManagerResource implements ResourceHandler {
             })
             .collectInto(new HashSet<CacheInfo>(), Set::add)
             .map(cacheInfos -> {
-               try {
-                  List<CacheInfo> sortedCacheInfos = cacheInfos.stream()
-                        .sorted(Comparator.comparing(c -> c.name))
-                        .collect(Collectors.toList());
-                  byte[] bytes = objectMapper.writeValueAsBytes(sortedCacheInfos);
-                  responseBuilder.contentType(APPLICATION_JSON).entity(bytes);
-               } catch (JsonProcessingException e) {
-                  responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-               }
-               return (RestResponse) responseBuilder.build();
+               List<CacheInfo> sortedCacheInfos = cacheInfos.stream()
+                     .sorted(Comparator.comparing(c -> c.name))
+                     .collect(Collectors.toList());
+               return (RestResponse) addEntityAsJson(sortedCacheInfos, responseBuilder, invocationHelper).build();
             })
             .toCompletionStage();
    }
@@ -273,28 +245,21 @@ public class CacheManagerResource implements ResourceHandler {
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
       EmbeddedCacheManager subjectCacheManager = cacheManager.withSubject(request.getSubject());
 
-      try {
-         Set<String> cacheConfigurationNames = subjectCacheManager.getCacheConfigurationNames();
+      Set<String> cacheConfigurationNames = subjectCacheManager.getCacheConfigurationNames();
 
-         List<NamedCacheConfiguration> configurations = cacheConfigurationNames.stream()
-               .filter(n -> !internalCacheRegistry.isInternalCache(n))
-               .distinct()
-               .map(n -> {
-                  Configuration cacheConfiguration = SecurityActions
-                        .getCacheConfigurationFromManager(subjectCacheManager, n);
-                  String json = jsonWriter.toJSON(cacheConfiguration);
-                  return new NamedCacheConfiguration(n, json);
-               })
-               .sorted(Comparator.comparing(c -> c.name))
-               .collect(Collectors.toList());
+      List<NamedCacheConfiguration> configurations = cacheConfigurationNames.stream()
+            .filter(n -> !internalCacheRegistry.isInternalCache(n))
+            .distinct()
+            .map(n -> {
+               Configuration cacheConfiguration = SecurityActions
+                     .getCacheConfigurationFromManager(subjectCacheManager, n);
+               String json = jsonWriter.toJSON(cacheConfiguration);
+               return new NamedCacheConfiguration(n, json);
+            })
+            .sorted(Comparator.comparing(c -> c.name))
+            .collect(Collectors.toList());
 
-         byte[] bytes = objectMapper.writeValueAsBytes(configurations);
-         responseBuilder.contentType(APPLICATION_JSON).entity(bytes);
-      } catch (JsonProcessingException e) {
-         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
-
-      return completedFuture(responseBuilder.build());
+      return asJsonResponseFuture(configurations, responseBuilder, invocationHelper);
    }
 
    private CompletionStage<RestResponse> getAllCachesConfigurationTemplates(RestRequest request) {
@@ -302,27 +267,20 @@ public class CacheManagerResource implements ResourceHandler {
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
       EmbeddedCacheManager subjectCacheManager = cacheManager.withSubject(request.getSubject());
 
-      try {
-         Set<String> cacheConfigurationNames = subjectCacheManager.getCacheConfigurationNames();
+      Set<String> cacheConfigurationNames = subjectCacheManager.getCacheConfigurationNames();
 
-         List<NamedCacheConfiguration> configurations = cacheConfigurationNames.stream()
-               .filter(n -> !internalCacheRegistry.isInternalCache(n))
-               .filter(n -> SecurityActions.getCacheConfigurationFromManager(subjectCacheManager, n).isTemplate())
-               .distinct()
-               .map(n -> {
-                  Configuration config = SecurityActions.getCacheConfigurationFromManager(subjectCacheManager, n);
-                  return new NamedCacheConfiguration(n, jsonWriter.toJSON(config));
-               })
-               .sorted(Comparator.comparing(c -> c.name))
-               .collect(Collectors.toList());
+      List<NamedCacheConfiguration> configurations = cacheConfigurationNames.stream()
+            .filter(n -> !internalCacheRegistry.isInternalCache(n))
+            .filter(n -> SecurityActions.getCacheConfigurationFromManager(subjectCacheManager, n).isTemplate())
+            .distinct()
+            .map(n -> {
+               Configuration config = SecurityActions.getCacheConfigurationFromManager(subjectCacheManager, n);
+               return new NamedCacheConfiguration(n, jsonWriter.toJSON(config));
+            })
+            .sorted(Comparator.comparing(c -> c.name))
+            .collect(Collectors.toList());
 
-         byte[] bytes = objectMapper.writeValueAsBytes(configurations);
-         responseBuilder.contentType(APPLICATION_JSON).entity(bytes);
-      } catch (JsonProcessingException e) {
-         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
-
-      return completedFuture(responseBuilder.build());
+      return asJsonResponseFuture(configurations, responseBuilder, invocationHelper);
    }
 
 
