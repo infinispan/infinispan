@@ -24,8 +24,6 @@ or updates the value on the anchor owner for writes.
 
 == Implementation
 
-The implementation will live in a module named `anchored-keys`.
-
 Since we can't deterministically map keys to segments, we don't need a distributed cache.
 Instead we can use a `REPL_SYNC` cache, and the `ModuleLifecycle` implementation (`AnchoredKeysModule`)
 replaces/adds components as needed.
@@ -47,10 +45,13 @@ if the key does not yet exist in the cache or if the current anchor owner has le
 The state provider is also replaced with an `AnchoredStateProvider`, sending the anchor owner's address
 to the joiners instead of the actual values.
 
-=== Client and cluster listeners (in progress)
+=== Listeners
 `AnchoredReadCommittedEntry` also allows the primary owner to invoke the cluster listeners
 with the correct value and only store the anchor owner address in the `DataContainer`.
+This means cluster listeners and client listeners receive the correct notifications.
 
+Note: Non-clustered embedded listeners currently receive notifications on all the nodes, not just the node
+where the value is stored. This will change in the future.
 
 == Configuration
 

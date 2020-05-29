@@ -177,7 +177,6 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
          // TODO Group keys by anchor location and use ClusteredGetAllCommand
          DistributionInfo distributionInfo = distributionManager.getCacheTopology().getDistribution(key);
          CompletionStage<CacheEntry<K, V>> stage;
-         // Some writes don't need to fetch the previous value on the backup owners and/or the originator
          stage = fetchContextValue(ctx, command, (K) key, ctxEntry, distributionInfo.segmentId(), isWrite);
          stages.add(stage);
          if (stage != null) {

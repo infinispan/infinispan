@@ -4,6 +4,7 @@ import static org.infinispan.commons.logging.Log.CONFIG;
 
 import org.infinispan.anchored.configuration.AnchoredKeysConfiguration;
 import org.infinispan.anchored.impl.AnchorManager;
+import org.infinispan.anchored.impl.AnchoredCacheNotifier;
 import org.infinispan.anchored.impl.AnchoredDistributionInterceptor;
 import org.infinispan.anchored.impl.AnchoredEntryFactory;
 import org.infinispan.anchored.impl.AnchoredFetchInterceptor;
@@ -22,6 +23,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.ClusteringInterceptor;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.partitionhandling.PartitionHandling;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.statetransfer.StateProvider;
 
 /**
@@ -74,7 +76,7 @@ public final class AnchoredKeysModule implements ModuleLifecycle, DynamicModuleM
 
       // Add a separate interceptor to fetch the actual values
       // AnchoredDistributionInterceptor cannot do it because it extends NonTxDistributionInterceptor
-      AnchoredFetchInterceptor fetchInterceptor = new AnchoredFetchInterceptor();
+      AnchoredFetchInterceptor<?, ?> fetchInterceptor = new AnchoredFetchInterceptor<>();
       cr.registerComponent(fetchInterceptor, AnchoredFetchInterceptor.class);
       interceptorAdded = interceptorChain.addInterceptorAfter(fetchInterceptor, AnchoredDistributionInterceptor.class);
       assert interceptorAdded;
@@ -82,6 +84,8 @@ public final class AnchoredKeysModule implements ModuleLifecycle, DynamicModuleM
       BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
       bcr.replaceComponent(StateProvider.class.getName(), new AnchoredStateProvider(), true);
       bcr.replaceComponent(EntryFactory.class.getName(), new AnchoredEntryFactory(), true);
+      bcr.replaceComponent(CacheNotifier.class.getName(), new AnchoredCacheNotifier<>(), true);
+
       cr.rewire();
    }
 }

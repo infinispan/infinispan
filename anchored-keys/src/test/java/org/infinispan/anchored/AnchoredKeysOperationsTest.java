@@ -1,12 +1,18 @@
 package org.infinispan.anchored;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -19,6 +25,14 @@ import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.rehash.TestWriteOperation;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.util.ControlledConsistentHashFactory;
@@ -150,6 +164,61 @@ public class AnchoredKeysOperationsTest extends AbstractAnchoredKeysTest {
          assertEquals(data.size(), cache.size());
          assertEquals(data.size(), (long) CompletionStages.join(cache.sizeAsync()));
          cache.clear();
+      }
+   }
+
+   public void testClusteredListener() throws InterruptedException {
+      ClusteredListener listener = new ClusteredListener();
+      cache(0).addListener(listener);
+      for (Cache<Object, Object> originator : caches()) {
+         String key = "key_" + originator.getCacheManager().getAddress();
+         String value1 = "value-1";
+         String value2 = "value-2";
+         assertNull(originator.put(key, value1));
+         assertValue(key, value1);
+         assertTrue(originator.replace(key, value1, value2));
+         assertValue(key, value2);
+         assertEquals(value2, originator.remove(key));
+
+         CacheEntryEvent<Object, Object> createEvent = listener.pollEvent();
+         assertTrue(createEvent instanceof CacheEntryCreatedEvent);
+         assertEquals(key, createEvent.getKey());
+         assertEquals(value1, createEvent.getValue());
+
+         CacheEntryEvent<Object, Object> replaceEvent = listener.pollEvent();
+         assertTrue(replaceEvent instanceof CacheEntryModifiedEvent);
+         assertEquals(key, replaceEvent.getKey());
+         assertEquals(value2, replaceEvent.getValue());
+
+         CacheEntryEvent<Object, Object> removeEvent = listener.pollEvent();
+         assertTrue(removeEvent instanceof CacheEntryRemovedEvent);
+         assertEquals(key, removeEvent.getKey());
+         assertNull(removeEvent.getValue());
+         // TODO The previous value is not always populated, because it's not stored in the context (see ISPN-5665)
+         //  Instead ReplicationLogic.commitSingleEntry reads the previous value directly from the data container
+//         assertEquals(value2, ((CacheEntryRemovedEvent<Object, Object>) removeEvent).getOldValue());
+
+         assertFalse(listener.hasMoreEvents());
+      }
+
+   }
+
+   @Listener(clustered = true)
+   public class ClusteredListener {
+      private BlockingQueue<CacheEntryEvent<Object, Object>> events = new LinkedBlockingDeque<>();
+
+      @CacheEntryCreated @CacheEntryModified @CacheEntryRemoved
+      public void onEntryEvent(CacheEntryEvent<Object, Object> e) {
+         log.tracef("Received event %s", e);
+         events.add(e);
+      }
+
+      public boolean hasMoreEvents() throws InterruptedException {
+         return events.poll(10, TimeUnit.MILLISECONDS) != null;
+      }
+
+      public CacheEntryEvent<Object, Object> pollEvent() throws InterruptedException {
+         return events.poll(10, TimeUnit.SECONDS);
       }
    }
 }
