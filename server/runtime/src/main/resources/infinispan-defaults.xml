@@ -4,8 +4,8 @@
 <!-- This file supplies the internal configuration defaults per cache mode -->
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:10.1 https://infinispan.org/schemas/infinispan-config-10.1.xsd"
-        xmlns="urn:infinispan:config:10.1">
+        xsi:schemaLocation="urn:infinispan:config:11.0 https://infinispan.org/schemas/infinispan-config-11.0.xsd"
+        xmlns="urn:infinispan:config:11.0">
 
    <cache-container shutdown-hook="DONT_REGISTER">
       <global-state>
@@ -14,6 +14,7 @@
          <overlay-configuration-storage/>
       </global-state>
       <local-cache-configuration name="org.infinispan.LOCAL" statistics="true">
+         <encoding media-type="application/x-protostream"/>
          <locking acquire-timeout="15000" striping="false" concurrency-level="1000"/>
       </local-cache-configuration>
       <replicated-cache-configuration name="org.infinispan.REPL_SYNC" remote-timeout="17500" configuration="org.infinispan.LOCAL">
