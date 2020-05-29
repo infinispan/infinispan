@@ -950,6 +950,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public <K, V> CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry<K, V>> entries, Predicate<? super StoreConfiguration> predicate, long flags) {
+      if (!entries.iterator().hasNext())
+         return CompletableFutures.completedNull();
+
       return Completable.using(
             this::acquireReadLock,
             ignore -> {
