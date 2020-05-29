@@ -6,7 +6,6 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.P
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Predicate;
 
 import javax.transaction.InvalidTransactionException;
 import javax.transaction.SystemException;
@@ -55,7 +54,6 @@ import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
-import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
@@ -251,29 +249,20 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      if (!isStoreEnabled(command) || ctx.isInTxScope())
+         return invokeNext(ctx, command);
+
       return invokeNextThenApply(ctx, command, handlePutMapCommandReturn);
    }
 
    protected Object handlePutMapCommandReturn(InvocationContext rCtx, PutMapCommand putMapCommand, Object rv) {
-      if (!isStoreEnabled(putMapCommand) || rCtx.isInTxScope())
-         return rv;
+      CompletionStage<Long> putMapStage = persistenceManager.writeMapCommand(putMapCommand, rCtx,
+            ((writeCommand, o) -> isProperWriter(rCtx, writeCommand, o)));
+      if (getStatisticsEnabled()) {
+         putMapStage.thenAccept(cacheStores::getAndAdd);
+      }
 
-      CompletionStage<Void> writeStage = CompletionStages.allOf(
-            processIterableBatch(rCtx, putMapCommand, BOTH, key -> !skipSharedStores(rCtx, key, putMapCommand)),
-            processIterableBatch(rCtx, putMapCommand, PRIVATE, key -> skipSharedStores(rCtx, key, putMapCommand)));
-      return delayedValue(writeStage, rv);
-   }
-
-   protected CompletionStage<Void> processIterableBatch(InvocationContext ctx, PutMapCommand cmd, PersistenceManager.AccessMode mode, Predicate<Object> filter) {
-      if (getStatisticsEnabled())
-         cacheStores.addAndGet(cmd.getMap().size());
-
-      Iterable<MarshallableEntry<Object, Object>> iterable = () -> cmd.getMap().keySet().stream()
-            .filter(filter)
-            .map(key -> marshalledEntry(ctx, key))
-            .filter(StreamMarshalling.nonNullPredicate())
-            .iterator();
-      return persistenceManager.writeBatchToAllNonTxStores(iterable, mode, cmd.getFlagsBitSet());
+      return delayedValue(putMapStage, rv);
    }
 
    @Override

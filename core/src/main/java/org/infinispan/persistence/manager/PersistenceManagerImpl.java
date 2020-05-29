@@ -13,8 +13,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -31,10 +29,12 @@ import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -49,6 +49,7 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.impl.InternalExpirationManager;
@@ -98,7 +99,6 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.flowables.ConnectableFlowable;
 import io.reactivex.rxjava3.functions.Function;
 import net.jcip.annotations.GuardedBy;
 
@@ -128,6 +128,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Inject NonBlockingManager nonBlockingManager;
    @Inject ComponentRef<InvocationHelper> invocationHelper;
    @Inject ComponentRef<InternalExpirationManager<Object, Object>> expirationManager;
+   @Inject DistributionManager distributionManager;
 
    // We use stamped lock since we require releasing locks in threads that may be the same that acquired it
    private final StampedLock lock = new StampedLock();
@@ -906,8 +907,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    public CompletionStage<Void> prepareAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext,
          Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
+      Flowable<MVCCEntry<Object, Object>> mvccEntryFlowable = toMvccEntryFlowable(txInvocationContext, null);
       //noinspection unchecked
-      return batchOperation(txInvocationContext, null, (stores, segmentCount, removeFlowable,
+      return batchOperation(mvccEntryFlowable, txInvocationContext, (stores, segmentCount, removeFlowable,
             putFlowable) -> stores.prepareWithModifications(txInvocationContext.getTransaction(), segmentCount, removeFlowable, putFlowable))
             .thenApply(CompletableFutures.toNullFunction());
    }
@@ -956,31 +958,31 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public <K, V> CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry<K, V>> entries, Predicate<? super StoreConfiguration> predicate, long flags) {
+   public <K, V> CompletionStage<Void> writeEntries(Iterable<MarshallableEntry<K, V>> iterable,
+         Predicate<? super StoreConfiguration> predicate) {
       return Completable.using(
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
                if (trace) {
-                  log.trace("Writing batch iterable to stores");
+                  log.trace("Writing entries to stores");
                }
                return Flowable.fromIterable(stores)
-                     .filter(storeStatus -> shouldWrite(storeStatus, predicate, flags) &&
+                     .filter(storeStatus -> shouldWrite(storeStatus, predicate) &&
                            !storeStatus.characteristics.contains(Characteristic.TRANSACTIONAL))
-                     // Let the rollback work in parallel across the stores
+                     // Let the write work in parallel across the stores
                      .flatMapCompletable(storeStatus -> {
                         boolean segmented = storeStatus.characteristics.contains(Characteristic.SEGMENTABLE);
                         Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> flowable;
                         if (segmented) {
-                           flowable = Flowable.fromIterable(entries)
+                           flowable = Flowable.fromIterable(iterable)
                                  .groupBy(groupingFunction(MarshallableEntry::getKey))
                                  .map(SegmentPublisherWrapper::wrap);
                         } else {
-                           flowable = Flowable.just(SingleSegmentPublisher.singleSegment(Flowable.fromIterable(entries)));
+                           flowable = Flowable.just(SingleSegmentPublisher.singleSegment(Flowable.fromIterable(iterable)));
                         }
-
-                        return Completable.fromCompletionStage(
-                              storeStatus.<K, V>store().batch(segmentCount(segmented), Flowable.empty(), flowable));
+                        return Completable.fromCompletionStage(storeStatus.<K, V>store().batch(segmentCount(segmented),
+                              Flowable.empty(), flowable));
                      });
             },
             this::releaseReadLock
@@ -988,31 +990,33 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
+   public CompletionStage<Long> writeMapCommand(PutMapCommand putMapCommand, InvocationContext ctx,
+         BiPredicate<? super PutMapCommand, Object> commandKeyPredicate) {
+      Flowable<MVCCEntry<Object, Object>> mvccEntryFlowable = entriesFromCommand(putMapCommand, ctx, commandKeyPredicate);
+      return batchOperation(mvccEntryFlowable, ctx, NonBlockingStore::batch);
+   }
+
+   @Override
    public CompletionStage<Long> performBatch(TxInvocationContext<AbstractCacheTransaction> ctx,
-         BiPredicate<WriteCommand, Object> commandKeyPredicate) {
-      return batchOperation(ctx, commandKeyPredicate, NonBlockingStore::batch);
+         BiPredicate<? super WriteCommand, Object> commandKeyPredicate) {
+      Flowable<MVCCEntry<Object, Object>> mvccEntryFlowable = toMvccEntryFlowable(ctx, commandKeyPredicate);
+      return batchOperation(mvccEntryFlowable, ctx, NonBlockingStore::batch);
    }
 
    /**
-    * Takes all the modifications from the transaction in the provided context and streams those values as remove or
-    * put modifications to the underlying store(s).
-    * <p>
-    * This method ensures only a single subscription to the underlying modifications that is shared with all of the
-    * stores, by using a {@link ConnectableFlowable} to broadcast the values to each. We also then use another
-    * {@code ConnectableFlowable} for each store when broadcasting the values for the put and removed entries.
-    * Note that due to this if a store doesn't subscribe to either of the put or remove flowable that the operation will
-    * not complete.
+    * Takes all the modified entries in the flowable and writes or removes them from the stores in a single batch
+    * operation per store.
     * <p>
     * The {@link HandleFlowables} is provided for the sole reason of allowing reuse of this method by different callers.
-    * @param ctx the transactional context with modifications
-    * @param commandKeyPredicate predicate to test if a key/command combination should be written
+    * @param mvccEntryFlowable flowable containing modified entries
+    * @param ctx the context with modifications
     * @param flowableHandler callback handler that actually should subscribe to the underlying store
     * @param <K> key type
     * @param <V> value type
     * @return a stage that when complete will contain how many write operations were done
     */
-   private <K, V> CompletionStage<Long> batchOperation(TxInvocationContext<AbstractCacheTransaction> ctx,
-         BiPredicate<WriteCommand, Object> commandKeyPredicate, HandleFlowables<K, V> flowableHandler) {
+   private <K, V> CompletionStage<Long> batchOperation(Flowable<MVCCEntry<K, V>> mvccEntryFlowable, InvocationContext ctx,
+         HandleFlowables<K, V> flowableHandler) {
       return Single.using(
             this::acquireReadLock,
             ignore -> {
@@ -1020,132 +1024,185 @@ public class PersistenceManagerImpl implements PersistenceManager {
                if (trace) {
                   log.trace("Writing batch to stores");
                }
-               int size = stores.size();
-               if (size == 0) {
-                  return Single.just(0L);
-               }
-
-               Flowable<MVCCEntry<K, V>> mvccEntryFlowable = Flowable.fromIterable(ctx.getCacheTransaction().getAllModifications())
-                     .filter(writeCommand -> !writeCommand.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE))
-                     .concatMap(writeCommand -> {
-                        if (writeCommand instanceof DataWriteCommand) {
-                           Object key = ((DataWriteCommand) writeCommand).getKey();
-                           MVCCEntry<K, V> entry = acquireKeyFromContext(ctx, writeCommand, key, commandKeyPredicate);
-                           return entry != null ? Flowable.just(entry) : Flowable.empty();
-                        } else {
-                           // Assume multiple key command
-                           return Flowable.fromIterable(writeCommand.getAffectedKeys())
-                                 .concatMapMaybe(key -> {
-                                    MVCCEntry<K, V> entry = acquireKeyFromContext(ctx, writeCommand, key, commandKeyPredicate);
-                                    // We use an empty Flowable to symbolize a miss - which is filtered by ofType just below
-                                    return entry != null ? Maybe.just(entry) : Maybe.empty();
-                                 });
-                        }
-                     });
-               // We split the original source into possibly multiple, depending upon how many stores there are
-               ConnectableFlowable<MVCCEntry<K, V>> connectableFlowable = mvccEntryFlowable.publish();
-
-               // We may have multiple stores - don't publish anything until this value goes back to 0
-               AtomicInteger pendingConnects = new AtomicInteger(size);
-               if (trace) {
-                  log.tracef("Will wait for %s subscriptions of stores", size);
-               }
 
                return Flowable.fromIterable(stores)
-                     .filter(storeStatus -> {
-                        if (storeStatus.characteristics.contains(Characteristic.READ_ONLY)) {
-                           int pendingCount = pendingConnects.decrementAndGet();
-                           if (trace) {
-                              log.tracef("Store %s was read only, decrementing pending count is now %s",
-                                    storeStatus.store, pendingCount);
-                           }
-                           if (pendingCount == 0) {
-                              connectableFlowable.connect();
-                           }
-                           return false;
-                        }
-                        return true;
-                     })
+                     .filter(storeStatus -> !storeStatus.characteristics.contains(Characteristic.READ_ONLY))
                      .flatMapSingle(storeStatus -> {
                         Flowable<MVCCEntry<K, V>> flowableToUse;
-                        if (storeStatus.config.shared()) {
-                           flowableToUse = connectableFlowable.filter(mvccEntry -> !mvccEntry.isSkipSharedStore());
-                        } else {
-                           flowableToUse = connectableFlowable;
-                        }
-                        flowableToUse = flowableToUse.doOnSubscribe(sub -> {
-                           int pendingCount = pendingConnects.decrementAndGet();
+                        boolean shared = storeStatus.config.shared();
+                        if (shared) {
                            if (trace) {
-                              log.tracef("Store %s has fully subscribed, decrementing pending count is now %s",
-                                    storeStatus.store, pendingCount);
+                              log.tracef("Store %s is shared, checking skip shared stores and ignoring entries not" +
+                                    " primarily owned by this node", storeStatus.store);
                            }
-                           if (pendingCount == 0) {
-                              connectableFlowable.connect();
-                           }
-                        });
+                           flowableToUse = mvccEntryFlowable.filter(mvccEntry -> !mvccEntry.isSkipSharedStore());
+                        } else {
+                           flowableToUse = mvccEntryFlowable;
+                        }
 
                         boolean segmented = storeStatus.config.segmented();
 
                         // Now we have to split this stores' flowable into two (one for remove and one for put)
                         flowableToUse = flowableToUse.publish().autoConnect(2);
 
-                        Flowable<K> keyRemoveFlowable = flowableToUse
-                              .filter(MVCCEntry::isRemoved)
-                              .map(MVCCEntry::getKey);
+                        Flowable<NonBlockingStore.SegmentedPublisher<Object>> removeFlowable = createRemoveFlowable(
+                              flowableToUse, shared, segmented, storeStatus);
 
-                        Flowable<NonBlockingStore.SegmentedPublisher<Object>> removeFlowable;
-                        if (segmented) {
-                           removeFlowable = keyRemoveFlowable
-                                 .groupBy(keyPartitioner::getSegment)
-                                 .map(SegmentPublisherWrapper::wrap);
-                        } else {
-                           removeFlowable = Flowable.just(SingleSegmentPublisher.singleSegment(keyRemoveFlowable));
-                        }
+                        ByRef.Long writeCount = new ByRef.Long(0);
 
-                        if (trace) {
-                           removeFlowable = removeFlowable.doOnSubscribe(sub ->
-                              log.tracef("Store %s has subscribed to remove batch", storeStatus.store));
-                        }
+                        Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> writeFlowable =
+                              createWriteFlowable(flowableToUse, ctx, shared, segmented, writeCount, storeStatus);
 
-                        Flowable<MarshallableEntry<K, V>> entryWriteFlowable = flowableToUse
-                              .filter(mvccEntry -> !mvccEntry.isRemoved())
-                              .map(mvcEntry -> {
-                                 K key = mvcEntry.getKey();
-                                 InternalCacheValue<V> sv = internalEntryFactory.getValueFromCtx(key, ctx);
-                                 //noinspection unchecked
-                                 return (MarshallableEntry<K, V>) marshallableEntryFactory.create(key, (InternalCacheValue) sv);
-                              });
+                        CompletionStage<Void> storeBatchStage = flowableHandler.handleFlowables(storeStatus.store(),
+                              segmentCount(segmented), removeFlowable, writeFlowable);
 
-                        AtomicLong writeCount = new AtomicLong();
-                        entryWriteFlowable = entryWriteFlowable.doOnNext(me -> writeCount.incrementAndGet());
-
-                        Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> writeFlowable;
-
-                        if (segmented) {
-                           writeFlowable = entryWriteFlowable
-                                 .groupBy(me -> keyPartitioner.getSegment(me.getKey()))
-                                 .map(SegmentPublisherWrapper::wrap);
-                        } else {
-                           writeFlowable = Flowable.just(SingleSegmentPublisher.singleSegment(entryWriteFlowable));
-                        }
-
-                        if (trace) {
-                           removeFlowable = removeFlowable.doOnSubscribe(sub ->
-                              log.tracef("Store %s has subscribed to write batch", storeStatus.store));
-                        }
-
-                        return Single.fromCompletionStage(flowableHandler.handleFlowables(storeStatus.store(),
-                              segmentCount(segmented), removeFlowable, writeFlowable)
+                        return Single.fromCompletionStage(storeBatchStage
                               .thenApply(ignore2 -> writeCount.get()));
-                     }).first(0L);
+                        // Only take the last element for the count - ensures all stores are completed
+                     }).last(0L);
 
             },
             this::releaseReadLock
       ).toCompletionStage();
    }
 
-   private <K, V> MVCCEntry<K, V> acquireKeyFromContext(InvocationContext ctx, WriteCommand command, Object key,
-         BiPredicate<WriteCommand, Object> commandKeyPredicate) {
+   private <K, V> Flowable<NonBlockingStore.SegmentedPublisher<Object>> createRemoveFlowable(
+         Flowable<MVCCEntry<K, V>> flowableToUse, boolean shared, boolean segmented, StoreStatus storeStatus) {
+
+      Flowable<K> keyRemoveFlowable = flowableToUse
+            .filter(MVCCEntry::isRemoved)
+            .map(MVCCEntry::getKey);
+
+      Flowable<NonBlockingStore.SegmentedPublisher<Object>> flowable;
+      if (segmented) {
+         flowable = keyRemoveFlowable
+               .groupBy(keyPartitioner::getSegment)
+               .map(SegmentPublisherWrapper::wrap);
+         flowable = filterSharedSegments(flowable, null, shared);
+      } else {
+         if (shared) {
+            keyRemoveFlowable = keyRemoveFlowable.filter(k ->
+                  distributionManager.getCacheTopology().getDistribution(k).isPrimary());
+         }
+         flowable = Flowable.just(SingleSegmentPublisher.singleSegment(keyRemoveFlowable));
+      }
+
+      if (trace) {
+         flowable = flowable.doOnSubscribe(sub ->
+               log.tracef("Store %s has subscribed to remove batch", storeStatus.store));
+         flowable = flowable.map(sp -> {
+            int segment = sp.getSegment();
+            return SingleSegmentPublisher.singleSegment(segment, Flowable.fromPublisher(sp)
+                  .doOnNext(keyToRemove -> log.tracef("Emitting key %s for removal from segment %s",
+                        keyToRemove, segment)));
+         });
+      }
+
+      return flowable;
+   }
+
+   private <K, V> Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> createWriteFlowable(
+         Flowable<MVCCEntry<K, V>> flowableToUse, InvocationContext ctx, boolean shared, boolean segmented,
+         ByRef.Long writeCount, StoreStatus storeStatus) {
+
+      Flowable<MarshallableEntry<K, V>> entryWriteFlowable = flowableToUse
+            .filter(mvccEntry -> !mvccEntry.isRemoved())
+            .map(mvcEntry -> {
+               K key = mvcEntry.getKey();
+               InternalCacheValue<V> sv = internalEntryFactory.getValueFromCtx(key, ctx);
+               //noinspection unchecked
+               return (MarshallableEntry<K, V>) marshallableEntryFactory.create(key, (InternalCacheValue) sv);
+            });
+
+      Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> flowable;
+      if (segmented) {
+         // Note the writeCount includes entries that aren't written due to being shared
+         // at this point
+         entryWriteFlowable = entryWriteFlowable.doOnNext(obj -> writeCount.inc());
+         flowable = entryWriteFlowable
+               .groupBy(me -> keyPartitioner.getSegment(me.getKey()))
+               .map(SegmentPublisherWrapper::wrap);
+         // The writeCount will be decremented for each grouping of values ignored
+         flowable = filterSharedSegments(flowable, writeCount, shared);
+      } else {
+         if (shared) {
+            entryWriteFlowable = entryWriteFlowable.filter(me ->
+                  distributionManager.getCacheTopology().getDistribution(me.getKey()).isPrimary());
+         }
+         entryWriteFlowable = entryWriteFlowable.doOnNext(obj -> writeCount.inc());
+         flowable = Flowable.just(SingleSegmentPublisher.singleSegment(entryWriteFlowable));
+      }
+
+      if (trace) {
+         flowable = flowable.doOnSubscribe(sub ->
+               log.tracef("Store %s has subscribed to write batch", storeStatus.store));
+         flowable = flowable.map(sp -> {
+            int segment = sp.getSegment();
+            return SingleSegmentPublisher.singleSegment(segment, Flowable.fromPublisher(sp)
+                  .doOnNext(me -> log.tracef("Emitting entry %s for write to segment %s",
+                        me, segment)));
+         });
+      }
+      return flowable;
+   }
+
+   private <I> Flowable<NonBlockingStore.SegmentedPublisher<I>> filterSharedSegments(
+         Flowable<NonBlockingStore.SegmentedPublisher<I>> flowable, ByRef.Long writeCount, boolean shared) {
+      if (!shared) {
+         return flowable;
+      }
+      return flowable.map(sp -> {
+         if (distributionManager.getCacheTopology().getSegmentDistribution(sp.getSegment()).isPrimary()) {
+            return sp;
+         }
+         Flowable<I> emptyFlowable = Flowable.fromPublisher(sp);
+         if (writeCount != null) {
+            emptyFlowable = emptyFlowable.doOnNext(ignore -> writeCount.dec())
+                  .ignoreElements()
+                  .toFlowable();
+         } else {
+            emptyFlowable = emptyFlowable.take(0);
+         }
+         // Unfortunately we need to still need to subscribe to the publisher even though we don't want
+         // the store to use its values. Thus we just return them an empty SegmentPublisher.
+         return SingleSegmentPublisher.singleSegment(sp.getSegment(), emptyFlowable);
+      });
+   }
+
+   /**
+    * Creates a Flowable of MVCCEntry(s) that were modified due to the commands in the transactional context
+    * @param ctx the transactional context
+    * @param commandKeyPredicate predicate to test if a key/command combination should be written
+    * @param <K> key type
+    * @param <V> value type
+    * @return a Flowable containing MVCCEntry(s) for the modifications in the tx context
+    */
+   private <K, V> Flowable<MVCCEntry<K, V>> toMvccEntryFlowable(TxInvocationContext<AbstractCacheTransaction> ctx,
+         BiPredicate<? super WriteCommand, Object> commandKeyPredicate) {
+      return Flowable.fromIterable(ctx.getCacheTransaction().getAllModifications())
+            .filter(writeCommand -> !writeCommand.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE))
+            .concatMap(writeCommand -> entriesFromCommand(writeCommand, ctx, commandKeyPredicate));
+   }
+
+   private <K, V, WCT extends WriteCommand> Flowable<MVCCEntry<K, V>> entriesFromCommand(WCT writeCommand, InvocationContext ctx,
+         BiPredicate<? super WCT, Object> commandKeyPredicate) {
+      if (writeCommand instanceof DataWriteCommand) {
+         Object key = ((DataWriteCommand) writeCommand).getKey();
+         MVCCEntry<K, V> entry = acquireKeyFromContext(ctx, writeCommand, key, commandKeyPredicate);
+         return entry != null ? Flowable.just(entry) : Flowable.empty();
+      } else {
+         // Assume multiple key command
+         return Flowable.fromIterable(writeCommand.getAffectedKeys())
+               .concatMapMaybe(key -> {
+                  MVCCEntry<K, V> entry = acquireKeyFromContext(ctx, writeCommand, key, commandKeyPredicate);
+                  // We use an empty Flowable to symbolize a miss - which is filtered by ofType just below
+                  return entry != null ? Maybe.just(entry) : Maybe.empty();
+               });
+      }
+   }
+
+   private <K, V, WCT extends WriteCommand> MVCCEntry<K, V> acquireKeyFromContext(InvocationContext ctx, WCT command, Object key,
+         BiPredicate<? super WCT, Object> commandKeyPredicate) {
       if (commandKeyPredicate == null || commandKeyPredicate.test(command, key)) {
          //noinspection unchecked
          MVCCEntry<K, V> entry = (MVCCEntry<K, V>) ctx.lookupEntry(key);
@@ -1158,7 +1215,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    /**
     * Here just to create a lambda for method reuse of
-    * {@link #batchOperation(TxInvocationContext, BiPredicate, HandleFlowables)}
+    * {@link #batchOperation(Flowable, InvocationContext, HandleFlowables)}
     */
    interface HandleFlowables<K, V> {
       CompletionStage<Void> handleFlowables(NonBlockingStore<K, V> store, int publisherCount,

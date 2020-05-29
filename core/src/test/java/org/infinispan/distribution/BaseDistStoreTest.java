@@ -5,6 +5,9 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
+import org.infinispan.interceptors.impl.CacheWriterInterceptor;
+import org.infinispan.interceptors.impl.DistCacheWriterInterceptor;
+import org.infinispan.interceptors.impl.ScatteredCacheWriterInterceptor;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
@@ -74,5 +77,18 @@ public abstract class BaseDistStoreTest<K, V, C extends BaseDistStoreTest> exten
    protected void clearStats(Cache<?, ?> cache) {
       DummyInMemoryStore store = TestingUtil.getFirstStore(cache);
       store.clearStats();
+
+      CacheWriterInterceptor cacheWriterInterceptor = getCacheWriterInterceptor(cache);
+      if (cacheWriterInterceptor != null) {
+         cacheWriterInterceptor.resetStatistics();
+      }
+   }
+
+   protected CacheWriterInterceptor getCacheWriterInterceptor(Cache<?, ?> cache) {
+      CacheWriterInterceptor cacheWriterInterceptor = TestingUtil.extractComponent(cache, DistCacheWriterInterceptor.class);
+      if (cacheWriterInterceptor == null) {
+         cacheWriterInterceptor = TestingUtil.extractComponent(cache, ScatteredCacheWriterInterceptor.class);
+      }
+      return cacheWriterInterceptor;
    }
 }

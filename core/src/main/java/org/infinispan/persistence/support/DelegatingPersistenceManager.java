@@ -6,10 +6,12 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -172,14 +174,20 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    }
 
    @Override
-   public <K, V> CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry<K, V>> entries,
-                                                           Predicate<? super StoreConfiguration> predicate, long flags) {
-      return persistenceManager.writeBatchToAllNonTxStores(entries, predicate, flags);
+   public CompletionStage<Long> writeMapCommand(PutMapCommand putMapCommand, InvocationContext ctx,
+         BiPredicate<? super PutMapCommand, Object> commandKeyPredicate) {
+      return persistenceManager.writeMapCommand(putMapCommand, ctx, commandKeyPredicate);
+   }
+
+   @Override
+   public <K, V> CompletionStage<Void> writeEntries(Iterable<MarshallableEntry<K, V>> iterable,
+         Predicate<? super StoreConfiguration> predicate) {
+      return persistenceManager.writeEntries(iterable, predicate);
    }
 
    @Override
    public CompletionStage<Long> performBatch(TxInvocationContext<AbstractCacheTransaction> invocationContext,
-         BiPredicate<WriteCommand, Object> commandKeyPredicate) {
+         BiPredicate<? super WriteCommand, Object> commandKeyPredicate) {
       return persistenceManager.performBatch(invocationContext, commandKeyPredicate);
    }
 
