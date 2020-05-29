@@ -460,7 +460,20 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
             status = ComponentStatus.RUNNING;
          }
          for (ComponentWrapper wrapper : components.values()) {
-            invokeInjection(wrapper.instance, wrapper.accessor, false);
+            if (wrapper.isAlias()) {
+               // Duplicates the code in doWireWrapper(), but without the state change
+               ComponentAlias alias = (ComponentAlias) wrapper.instance;
+               String aliasTargetName = alias.getComponentName();
+               ComponentRef<Object> targetRef = getComponent(aliasTargetName, Object.class);
+               if (targetRef == null) {
+                  throw new CacheConfigurationException(
+                        "Alias " + wrapper.name + " target component is missing: " + aliasTargetName);
+               }
+               targetRef.wired();
+               wrapper.aliasTarget = targetRef;
+            } else {
+               invokeInjection(wrapper.instance, wrapper.accessor, false);
+            }
          }
       } finally {
          lock.unlock();

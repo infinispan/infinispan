@@ -1055,7 +1055,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
             throw CONTAINER.clusterListenerRegisteredWithOnlyPreEvents(listener.getClass());
          } else if (cacheMode.isInvalidation()) {
             throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
-         } else if (cacheMode.isDistributed() || cacheMode.isScattered()) {
+         } else if (clusterListenerOnPrimaryOnly(cacheMode)) {
             clusterListenerIDs.put(listener, generatedId);
             Address ourAddress;
             List<Address> members;
@@ -1292,7 +1292,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       return addFilteredListenerInternal(listenerHolder.getListener(), listenerHolder.getKeyDataConversion(), listenerHolder.getValueDataConversion(), filter, converter, filterAnnotations, listenerHolder.isFilterOnStorageFormat());
    }
 
-   private boolean isClusterListenerAvailable(CacheMode mode) {
+   protected boolean clusterListenerOnPrimaryOnly(CacheMode mode) {
       return mode.isDistributed() || mode.isScattered();
    }
 
@@ -1334,7 +1334,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
             throw CONTAINER.clusterListenerRegisteredWithOnlyPreEvents(listener.getClass());
          } else if (cacheMode.isInvalidation()) {
             throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
-         } else if (isClusterListenerAvailable(cacheMode)) {
+         } else if (clusterListenerOnPrimaryOnly(cacheMode)) {
             clusterListenerIDs.put(listener, generatedId);
             // This way we only retrieve members of the cache itself
             Address ourAddress = rpcManager.getAddress();
@@ -1457,7 +1457,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       builder
             .setIncludeCurrentState(l.includeCurrentState())
             .setClustered(l.clustered())
-            .setOnlyPrimary(l.clustered() ? isClusterListenerAvailable(cacheMode) : l.primaryOnly())
+            .setOnlyPrimary(l.clustered() ? clusterListenerOnPrimaryOnly(cacheMode) : l.primaryOnly())
             .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
             .setFilter(filter)
             .setConverter(converter)
@@ -1581,7 +1581,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
             if (clustered) {
                QueueingSegmentListener handler = segmentHandler.get(identifier);
                if (handler == null) {
-                  if (isClusterListenerAvailable(config.clustering().cacheMode())) {
+                  if (clusterListenerOnPrimaryOnly(config.clustering().cacheMode())) {
                      LocalizedCacheTopology cacheTopology = clusteringDependentLogic.running().getCacheTopology();
                      handler = new DistributedQueueingSegmentListener(entryFactory,
                            cacheTopology.getCurrentCH().getNumSegments(), cacheTopology::getSegment);
