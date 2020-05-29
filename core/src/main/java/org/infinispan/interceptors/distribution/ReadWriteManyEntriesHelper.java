@@ -11,6 +11,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.interceptors.InvocationSuccessFunction;
+import org.infinispan.remoting.transport.Address;
 
 class ReadWriteManyEntriesHelper extends WriteManyCommandHelper<ReadWriteManyEntriesCommand, Map<Object, Object>, Map.Entry<Object, Object>> {
    ReadWriteManyEntriesHelper(Function<WriteManyCommandHelper<ReadWriteManyEntriesCommand, ?, ?>, InvocationSuccessFunction<ReadWriteManyEntriesCommand>> createRemoteCallback) {
@@ -29,7 +30,8 @@ class ReadWriteManyEntriesHelper extends WriteManyCommandHelper<ReadWriteManyEnt
    }
 
    @Override
-   public ReadWriteManyEntriesCommand copyForBackup(ReadWriteManyEntriesCommand cmd, LocalizedCacheTopology topology, IntSet segments) {
+   public ReadWriteManyEntriesCommand copyForBackup(ReadWriteManyEntriesCommand cmd, LocalizedCacheTopology topology,
+                                                    Address target, IntSet segments) {
       ReadWriteManyEntriesCommand copy = new ReadWriteManyEntriesCommand(cmd)
             .withArguments(new ReadOnlySegmentAwareMap(cmd.getArguments(), topology, segments));
       copy.setForwarded(true);

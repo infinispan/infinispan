@@ -3,11 +3,13 @@ package org.infinispan.anchored;
 import org.infinispan.anchored.configuration.AnchoredKeysConfiguration;
 import org.infinispan.anchored.impl.AnchorManager;
 import org.infinispan.anchored.impl.AnchoredDistributionInterceptor;
+import org.infinispan.anchored.impl.AnchoredEntryFactory;
 import org.infinispan.anchored.impl.AnchoredFetchInterceptor;
 import org.infinispan.anchored.impl.AnchoredStateProvider;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
@@ -15,7 +17,6 @@ import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.DynamicModuleMetadataProvider;
 import org.infinispan.factories.impl.ModuleMetadataBuilder;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.interceptors.impl.ClusteringInterceptor;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.statetransfer.StateProvider;
@@ -27,7 +28,7 @@ import org.infinispan.statetransfer.StateProvider;
  * @since 11
  */
 @InfinispanModule(name = "anchored-keys", requiredModules = "core")
-public final class AnchoredKeysModuleLifecycle implements ModuleLifecycle, DynamicModuleMetadataProvider {
+public final class AnchoredKeysModule implements ModuleLifecycle, DynamicModuleMetadataProvider {
 
    public static final String ANCHORED_KEYS_FEATURE = "anchored-keys";
 
@@ -57,18 +58,25 @@ public final class AnchoredKeysModuleLifecycle implements ModuleLifecycle, Dynam
       cr.registerComponent(new AnchorManager(), AnchorManager.class);
 
       AsyncInterceptorChain interceptorChain = cr.getComponent(AsyncInterceptorChain.class);
-      interceptorChain.removeInterceptor(ClusteringInterceptor.class);
 
+      // Replace the clustering interceptor with our custom interceptor
+      ClusteringInterceptor oldDistInterceptor = interceptorChain.findInterceptorExtending(ClusteringInterceptor.class);
       AnchoredDistributionInterceptor distInterceptor = new AnchoredDistributionInterceptor();
       cr.registerComponent(distInterceptor, AnchoredDistributionInterceptor.class);
-      assert interceptorChain.addInterceptorBefore(distInterceptor, CallInterceptor.class);
+      boolean interceptorAdded = interceptorChain.addInterceptorBefore(distInterceptor, oldDistInterceptor.getClass());
+      assert interceptorAdded;
+      interceptorChain.removeInterceptor(oldDistInterceptor.getClass());
 
+      // Add a separate interceptor to fetch the actual values
+      // AnchoredDistributionInterceptor cannot do it because it extends NonTxDistributionInterceptor
       AnchoredFetchInterceptor fetchInterceptor = new AnchoredFetchInterceptor();
       cr.registerComponent(fetchInterceptor, AnchoredFetchInterceptor.class);
-      assert interceptorChain.addInterceptorBefore(fetchInterceptor, CallInterceptor.class);
+      interceptorAdded = interceptorChain.addInterceptorAfter(fetchInterceptor, AnchoredDistributionInterceptor.class);
+      assert interceptorAdded;
 
       BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
       bcr.replaceComponent(StateProvider.class.getName(), new AnchoredStateProvider(), true);
+      bcr.replaceComponent(EntryFactory.class.getName(), new AnchoredEntryFactory(), true);
       cr.rewire();
    }
 }

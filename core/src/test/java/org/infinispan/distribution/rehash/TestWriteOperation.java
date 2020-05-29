@@ -28,7 +28,7 @@ public enum TestWriteOperation {
    REPLACE_EXACT(ReplaceCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, "v0", true, true),
    REMOVE(RemoveCommand.class, BackupWriteCommand.class, null, ValueMatcher.MATCH_NON_NULL, "v0", "v0", null),
    REMOVE_EXACT(RemoveCommand.class, BackupWriteCommand.class, null, ValueMatcher.MATCH_EXPECTED, "v0", true, true),
-   PUT_MAP_CREATE(PutMapCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, false, false),
+   PUT_MAP_CREATE(PutMapCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, null, null),
 
    // Functional put create must return null even on retry (as opposed to non-functional)
    PUT_CREATE_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, null, null, null),

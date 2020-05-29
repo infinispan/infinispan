@@ -1,5 +1,6 @@
 package org.infinispan.util;
 
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
@@ -17,9 +18,11 @@ import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
+import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.distribution.ch.impl.ScatteredConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.ClusterTopologyManager;
 
 /**
@@ -63,9 +66,7 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
       } else {
          firstSegmentOwners = new int[backupOwnerIndexes.length + 1];
          firstSegmentOwners[0] = primaryOwnerIndex;
-         for (int i = 0; i < backupOwnerIndexes.length; i++) {
-            firstSegmentOwners[i + 1] = backupOwnerIndexes[i];
-         }
+         System.arraycopy(backupOwnerIndexes, 0, firstSegmentOwners, 1, backupOwnerIndexes.length);
       }
       return firstSegmentOwners;
    }
@@ -76,12 +77,12 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
                                 .toArray(int[][]::new);
    }
 
-   public void triggerRebalance(Cache<?, ?> cache) throws Exception {
+   public void triggerRebalance(Cache<?, ?> cache) {
       EmbeddedCacheManager cacheManager = cache.getCacheManager();
-      ClusterTopologyManager clusterTopologyManager = cacheManager
-            .getGlobalComponentRegistry().getComponent(ClusterTopologyManager.class);
       assertTrue("triggerRebalance must be called on the coordinator node",
-            cacheManager.getTransport().isCoordinator());
+            extractGlobalComponent(cacheManager, Transport.class).isCoordinator());
+      ClusterTopologyManager clusterTopologyManager =
+            extractGlobalComponent(cacheManager, ClusterTopologyManager.class);
       clusterTopologyManager.forceRebalance(cache.getName());
    }
 
@@ -156,16 +157,40 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
       }
    }
 
-   public static class Externalizer extends AbstractExternalizer<ControlledConsistentHashFactory> {
+   /**
+    * Ignores backup-owner part of the calls
+    */
+   @SerializeWith(Externalizer.class)
+   public static class Replicated extends ControlledConsistentHashFactory<ReplicatedConsistentHash> {
+      public Replicated(int primaryOwnerIndex) {
+         super(new ReplicatedTrait(), primaryOwnerIndex);
+      }
 
-      @Override
-      public Set<Class<? extends ControlledConsistentHashFactory>> getTypeClasses() {
-         return Util.asSet(Default.class, Scattered.class);
+      public Replicated(int[] segmentPrimaryOwners) {
+         super(new ReplicatedTrait(), Arrays.stream(segmentPrimaryOwners).mapToObj(o -> new int[]{o}).toArray(int[][]::new));
       }
 
       @Override
-      public void writeObject(ObjectOutput output, ControlledConsistentHashFactory object) throws IOException {
-         output.writeByte(object instanceof Default ? 0 : 1);
+      public void setOwnerIndexes(int primaryOwnerIndex, int... backupOwnerIndexes) {
+         super.setOwnerIndexes(primaryOwnerIndex);
+      }
+
+      @Override
+      public void setOwnerIndexes(int[][] segmentOwners) {
+         super.setOwnerIndexes(segmentOwners);
+      }
+   }
+
+   public static class Externalizer extends AbstractExternalizer<ControlledConsistentHashFactory<?>> {
+
+      @Override
+      public Set<Class<? extends ControlledConsistentHashFactory<?>>> getTypeClasses() {
+         return Util.asSet(Default.class, Scattered.class, Replicated.class);
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, ControlledConsistentHashFactory<?> object) throws IOException {
+         output.writeByte(object instanceof Default ? 0 : object instanceof Scattered ? 1 : 2);
          int numOwners = object.ownerIndexes.length;
          MarshallUtil.marshallSize(output, numOwners);
          for (int i = 0; i < numOwners; i++) {
@@ -178,7 +203,7 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
       }
 
       @Override
-      public ControlledConsistentHashFactory readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ControlledConsistentHashFactory<?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          byte type = input.readByte();
 
          int numOwners = MarshallUtil.unmarshallSize(input);
@@ -191,7 +216,20 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
             }
             indexes[i] = segments;
          }
-         ControlledConsistentHashFactory chf = type == 0 ? new Default(indexes) : new Scattered(indexes[0]);
+         ControlledConsistentHashFactory<?> chf;
+         switch (type) {
+            case 0:
+               chf = new Default(indexes);
+               break;
+            case 1:
+               chf = new Scattered(indexes[0]);
+               break;
+            case 2:
+               chf = new Replicated(indexes[0]);
+               break;
+            default:
+               throw new IllegalStateException();
+         }
          List<Address> membersToUse = (List<Address>) input.readObject();
          chf.setMembersToUse(membersToUse);
          return chf;

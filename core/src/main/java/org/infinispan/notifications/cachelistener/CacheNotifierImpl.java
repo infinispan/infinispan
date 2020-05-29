@@ -164,7 +164,7 @@ import io.reactivex.rxjava3.core.Flowable;
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, CacheEntryListenerInvocation<K, V>>
+public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, CacheEntryListenerInvocation<K, V>>
       implements ClusterCacheNotifier<K, V> {
 
    private static final Log log = LogFactory.getLog(CacheNotifierImpl.class);

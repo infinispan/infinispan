@@ -227,6 +227,9 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    private void notifyCacheStarting(Configuration configuration) {
       for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Invoking %s.cacheStarting()", l);
+         }
          l.cacheStarting(this, configuration, cacheName);
       }
    }

@@ -124,7 +124,7 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public final void commit(DataContainer container) {
+   public void commit(DataContainer container) {
       if (shouldCommit()) {
          if (isEvicted()) {
             container.evict(key);
@@ -139,7 +139,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       }
    }
 
-   public final CompletionStage<Void> commit(int segment, InternalDataContainer container) {
+   public CompletionStage<Void> commit(int segment, InternalDataContainer container) {
       if (segment < 0) {
          throw new IllegalArgumentException("Segment must be 0 or greater");
       }

@@ -11,6 +11,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.interceptors.InvocationSuccessFunction;
+import org.infinispan.remoting.transport.Address;
 
 class PutMapHelper extends WriteManyCommandHelper<PutMapCommand, Map<Object, Object>, Map.Entry<Object, Object>> {
    PutMapHelper(Function<WriteManyCommandHelper<PutMapCommand, ?, ?>, InvocationSuccessFunction<PutMapCommand>> createRemoteCallback) {
@@ -28,7 +29,8 @@ class PutMapHelper extends WriteManyCommandHelper<PutMapCommand, Map<Object, Obj
    }
 
    @Override
-   public PutMapCommand copyForBackup(PutMapCommand cmd, LocalizedCacheTopology topology, IntSet segments) {
+   public PutMapCommand copyForBackup(PutMapCommand cmd, LocalizedCacheTopology topology,
+                                      Address target, IntSet segments) {
       PutMapCommand copy = new PutMapCommand(cmd).withMap(new ReadOnlySegmentAwareMap(cmd.getMap(), topology, segments));
       copy.setForwarded(true);
       return copy;

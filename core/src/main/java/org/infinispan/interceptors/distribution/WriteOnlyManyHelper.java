@@ -10,6 +10,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareCollection;
 import org.infinispan.interceptors.InvocationSuccessFunction;
+import org.infinispan.remoting.transport.Address;
 
 class WriteOnlyManyHelper extends WriteManyCommandHelper<WriteOnlyManyCommand, Collection<Object>, Object> {
    WriteOnlyManyHelper(Function<WriteManyCommandHelper<WriteOnlyManyCommand, ?, ?>, InvocationSuccessFunction<WriteOnlyManyCommand>> createRemoteCallback) {
@@ -28,7 +29,8 @@ class WriteOnlyManyHelper extends WriteManyCommandHelper<WriteOnlyManyCommand, C
    }
 
    @Override
-   public WriteOnlyManyCommand copyForBackup(WriteOnlyManyCommand cmd, LocalizedCacheTopology topology, IntSet segments) {
+   public WriteOnlyManyCommand copyForBackup(WriteOnlyManyCommand cmd, LocalizedCacheTopology topology,
+                                             Address target, IntSet segments) {
       WriteOnlyManyCommand copy = new WriteOnlyManyCommand(cmd)
             .withKeys(new ReadOnlySegmentAwareCollection(cmd.getAffectedKeys(), topology, segments));
       copy.setForwarded(true);
