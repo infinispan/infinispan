@@ -84,7 +84,6 @@ public class RestServerResource {
       assertEquals(200, restResponse.getStatus());
       JsonNode infoNode = mapper.readTree(restResponse.getBody());
       JsonNode memory = infoNode.get("heap");
-      assertTrue(memory.get("init").asInt() > 0);
       assertTrue(memory.get("used").asInt() > 0);
       assertTrue(memory.get("committed").asInt() > 0);
    }
