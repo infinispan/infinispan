@@ -3,9 +3,9 @@
       <replicated-cache name="default">
          <indexing>
             <indexed-entities>
-               <indexed-entity>com.acme.Book</indexed-entity>
+                <indexed-entity>com.acme.query.test.Car</indexed-entity>
+                <indexed-entity>com.acme.query.test.Truck</indexed-entity>
             </indexed-entities>
-            <property name="property.name">some value</property>
          </indexing>
       </replicated-cache>
    </cache-container>

@@ -1,5 +1,10 @@
 <replicated-cache name="myCache">
    <indexing>
+      <indexed-entities>
+         <indexed-entity>com.acme.Book</indexed-entity>
+      </indexed-entities>
+      <!-- Optional: this is the default setting -->
+      <property name="default.directory_provider">filesystem</property>
       <!-- Optional: define base folder for indexes -->
       <property name="default.indexBase">${java.io.tmpdir}/baseDir</property>
    </indexing>
