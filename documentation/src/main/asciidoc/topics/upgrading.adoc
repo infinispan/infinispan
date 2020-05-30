@@ -22,6 +22,8 @@ OSGi support has been deprecated and will be removed in a future release.
 
 == Query
 
+=== Indexing
+
 * The AffinityIndexManager is removed. Indexes should be configured with the ```near-real-time``` index manager instead.
 
 * Starting with version 11 the system will automatically choose the best way to manage indexing once it is enabled.
@@ -32,6 +34,9 @@ The ```index()``` (index mode) configuration is no longer necessary, is deprecat
 
 It is forbidden to use both the `.indexing().enabled( )` and the deprecated `.indexing().index( )` configuration.
 
+* The `auto-config` attribute is deprecated and will be removed in a future version.
+
+=== Searching
 
 * The `SearchManager` has been deprecated and no longer supports Lucene and Hibernate Search native objects:
 ** `.getQuery()` methods that take a Lucene Query have been removed. The alternative methods that take an Ickle query from the `org.infinispan.query.Search` entry point should be used instead.

@@ -40,10 +40,13 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    static final ElementDefinition<IndexingConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(INDEXING.getLocalName());
 
    /**
-    * @deprecated since 11.
+    * @deprecated since 11.0
     */
    @Deprecated
    private final Attribute<Index> index;
+   /**
+    * @deprecated since 11.0
+    */
    private final Attribute<Boolean> autoConfig;
    private final Attribute<Map<Class<?>, Class<?>>> keyTransformers;
    private final Attribute<Set<Class<?>>> indexedEntities;
@@ -102,7 +105,9 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
 
    /**
     * Determines if autoconfig is enabled for this IndexingConfiguration.
+    * @deprecated Since 11.0, with no replacment.
     */
+   @Deprecated
    public boolean autoConfig() {
       return autoConfig.get();
    }
