@@ -934,7 +934,7 @@
           </xs:attribute>
           <xs:attribute name="auto-config" type="xs:boolean" default="${Indexing.autoConfig}">
             <xs:annotation>
-              <xs:documentation>Whether or not to apply automatic index configuration based on cache type</xs:documentation>
+              <xs:documentation>Deprecated since 11.0, with no replacement. Whether or not to apply automatic index configuration based on cache type</xs:documentation>
             </xs:annotation>
           </xs:attribute>
         </xs:complexType>

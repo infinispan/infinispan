@@ -176,7 +176,9 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     *
     * @param autoConfig boolean
     * @return <code>this</code>, for method chaining
+    * @deprecated Since 11.0 with no replacement.
     */
+   @Deprecated
    public IndexingConfigurationBuilder autoConfig(boolean autoConfig) {
       if (autoConfig && !attributes.attribute(ENABLED).isModified()) {
          enable();
@@ -185,6 +187,10 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return this;
    }
 
+   /**
+    * @deprecated Since 11.0, with no replacement.
+    */
+   @Deprecated
    public boolean autoConfig() {
       return attributes.attribute(AUTO_CONFIG).get();
    }

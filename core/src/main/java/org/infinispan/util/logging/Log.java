@@ -2023,4 +2023,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "ClusterLoader has been deprecated and will be removed in a future version with no direct replacement", id = 595)
    void warnUsingDeprecatedClusterLoader();
+
+   @LogMessage(level = WARN)
+   @Message(value = "auto-config attribute is deprecated. Please check the upgrade guide.", id = 596)
+   void autoConfigDeprecated();
 }

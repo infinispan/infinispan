@@ -2696,6 +2696,7 @@ public class Parser implements ConfigurationParser {
                selfEnable = false;
                break;
             case AUTO_CONFIG:
+               CONFIG.autoConfigDeprecated();
                builder.indexing().autoConfig(Boolean.parseBoolean(value));
                break;
             default:
