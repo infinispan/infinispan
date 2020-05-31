@@ -263,6 +263,22 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
+   public void testGetEntryExtended() throws Exception {
+      putInCache("default", "keyTest", "valueTest", APPLICATION_JSON_TYPE);
+
+      String URL = String.format("http://localhost:%d/rest/v2/caches/default/keyTest?action=extended", restServer().getPort());
+
+      ContentResponse response = client.newRequest(URL).send();
+
+      ResponseAssertion.assertThat(response).isOk();
+      ObjectMapper mapper = new ObjectMapper();
+//      JsonNode jsonNode = mapper.readTree(response.getContentAsString());
+      System.out.println(response.getContentAsString());
+      response = client.newRequest(String.format("http://localhost:%d/rest/v2/caches/default/keyTest", restServer().getPort())).send();
+      System.out.println(response.getContentAsString());
+   }
+
+   @Test
    public void testCacheFullDetail() throws Exception {
       String URL = String.format("http://localhost:%d/rest/v2/caches/default", restServer().getPort());
 

@@ -75,6 +75,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             // Key related operations
             .invocation().methods(PUT, POST).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::putValueToCache)
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::getCacheValue)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}/{cacheKey}").withAction("extended").handleWith(this::getCacheValueExtended)
             .invocation().method(DELETE).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::deleteCacheValue)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("keys").handleWith(this::streamKeys)
 

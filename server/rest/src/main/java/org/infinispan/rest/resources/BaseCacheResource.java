@@ -1,17 +1,7 @@
 package org.infinispan.rest.resources;
 
-import static org.infinispan.rest.NettyRestRequest.EXTENDED_HEADER;
-import static org.infinispan.rest.framework.Method.GET;
-import static org.infinispan.rest.framework.Method.POST;
-import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
-
-import java.util.Date;
-import java.util.List;
-import java.util.OptionalInt;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -32,7 +22,18 @@ import org.infinispan.rest.operations.CacheOperationsHelper;
 import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 import org.infinispan.rest.operations.exceptions.NoKeyException;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
+import java.util.Date;
+import java.util.List;
+import java.util.OptionalInt;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.rest.NettyRestRequest.EXTENDED_HEADER;
+import static org.infinispan.rest.framework.Method.GET;
+import static org.infinispan.rest.framework.Method.POST;
+import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
 
 /**
  * Handle basic cache operations.
@@ -200,6 +201,72 @@ public class BaseCacheResource {
          }
          return responseBuilder.build();
       });
+   }
+
+   CompletionStage<RestResponse> getCacheValueExtended(RestRequest request) throws RestResponseException {
+      String cacheName = request.variables().get("cacheName");
+
+      MediaType keyContentType = request.keyContentType();
+      AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+
+      MediaType requestedMediaType = negotiateMediaType(cache, request);
+
+      Object key = request.variables().get("cacheKey");
+      if (key == null)
+         throw new NoKeyException();
+
+      RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
+      return restCacheManager.getInternalEntry(cacheName, key, keyContentType, requestedMediaType, request)
+            .thenApply(entry -> {
+               NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+               responseBuilder.status(HttpResponseStatus.NOT_FOUND.code());
+
+               if (entry instanceof InternalCacheEntry) {
+                  InternalCacheEntry<Object, Object> ice = (InternalCacheEntry<Object, Object>) entry;
+                  Date expires = ice.canExpire() ? new Date(ice.getExpiryTime()) : null;
+                  CacheEntryBody cacheEntry = new CacheEntryBody();
+                  cacheEntry.value = ice.getValue();
+                  cacheEntry.maxIdle = ice.getMaxIdle();
+                  cacheEntry.timeToLive = ice.getLifespan();
+                  cacheEntry.created = ice.getCreated();
+                  cacheEntry.expires = ice.getExpiryTime();
+                  cacheEntry.lastUsed = ice.getLastUsed();
+                  cacheEntry.lastModified = CacheOperationsHelper.lastModified(ice);
+                  cacheEntry.primaryOwner = restCacheManager.getPrimaryOwner(cacheName, key, request);
+                  cacheEntry.backupOwner = restCacheManager.getBackupOwners(cacheName, key, request);
+                  cacheEntry.nodeName = restCacheManager.getNodeName();
+                  cacheEntry.serverAddress = restCacheManager.getServerAddress();
+
+                  MediaType configuredMediaType = restCacheManager.getValueConfiguredFormat(cacheName, request);
+                  try {
+                     byte[] cacheEntryByes = invocationHelper.getMapper().writeValueAsString(c)
+                     writeValue(cacheEntryByes, requestedMediaType, configuredMediaType, responseBuilder, true);
+                     responseBuilder.status(HttpResponseStatus.OK)
+                           .contentType(APPLICATION_JSON)
+                           .cacheControl(CacheOperationsHelper.calcCacheControl(expires));
+                  } catch (JsonProcessingException exception) {
+                     responseBuilder.entity(exception.getMessage());
+                     responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                  }
+               }
+
+               return responseBuilder.build();
+            });
+   }
+
+   static class CacheEntryBody {
+      public Object value;
+      public Long maxIdle;
+      public Long timeToLive;
+      public Long lastUsed;
+      public Long created;
+      public Long lastModified;
+      public Long expires;
+      public String primaryOwner;
+      public String backupOwner;
+      public String nodeName;
+      public String serverAddress;
+
    }
 
    private void writeValue(Object value, MediaType requested, MediaType configuredMediaType, NettyRestResponse.Builder
