@@ -8,6 +8,7 @@ import static io.netty.handler.codec.http.HttpHeaderNames.IF_UNMODIFIED_SINCE;
 import static io.netty.handler.codec.http.HttpHeaders.Names.ACCESS_CONTROL_ALLOW_HEADERS;
 import static io.netty.handler.codec.http.HttpHeaders.Names.ACCESS_CONTROL_ALLOW_METHODS;
 import static io.netty.handler.codec.http.HttpHeaders.Names.ACCESS_CONTROL_ALLOW_ORIGIN;
+import static io.netty.handler.codec.http.HttpHeaders.Names.ACCESS_CONTROL_EXPOSE_HEADERS;
 import static org.eclipse.jetty.http.HttpHeader.ACCEPT_ENCODING;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
@@ -48,6 +49,7 @@ import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.DateUtils;
+import org.infinispan.rest.ResponseHeader;
 import org.infinispan.rest.TestClass;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
@@ -345,6 +347,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
 
       assertThat(response).isOk();
       assertThat(response).containsAllHeaders("access-control-allow-origin");
+      assertThat(response).hasHeaderWithValues(ACCESS_CONTROL_EXPOSE_HEADERS, ResponseHeader.toArray());
    }
 
    @Test

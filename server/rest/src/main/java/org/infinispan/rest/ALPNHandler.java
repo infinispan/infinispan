@@ -153,6 +153,7 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
                   .allowedRequestHeaders(CACHE_CONTROL, CONTENT_TYPE, CREATED_HEADER, EXTENDED_HEADER, FLAGS_HEADER,
                         IF_MODIFIED_SINCE, IF_UNMODIFIED_SINCE, IF_NONE_MATCH, KEY_CONTENT_TYPE_HEADER,
                         MAX_TIME_IDLE_HEADER, LAST_USED_HEADER, TTL_SECONDS_HEADER)
+                  .exposeHeaders(ResponseHeader.toArray())
                   .build();
             configs.add(config);
          }
