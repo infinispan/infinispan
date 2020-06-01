@@ -119,7 +119,7 @@
       <version.arquillian>1.4.1.Final</version.arquillian>
       <version.blockhound>1.0.3.RELEASE</version.blockhound>
       <version.byteman>4.0.6</version.byteman>
-      <version.caffeine>2.8.0</version.caffeine>
+      <version.caffeine>2.8.4</version.caffeine>
       <version.cdi>2.0</version.cdi>
       <version.console>0.6.Final</version.console>
       <version.glassfish.jaxb>2.3.1</version.glassfish.jaxb>
