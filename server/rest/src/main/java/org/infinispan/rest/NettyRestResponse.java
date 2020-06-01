@@ -2,6 +2,22 @@ package org.infinispan.rest;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import static org.infinispan.rest.ResponseHeader.CLUSTER_BACKUP_OWNERS_HEADER;
+import static org.infinispan.rest.ResponseHeader.CLUSTER_NODE_NAME_HEADER;
+import static org.infinispan.rest.ResponseHeader.CLUSTER_PRIMARY_OWNER_HEADER;
+import static org.infinispan.rest.ResponseHeader.CLUSTER_SERVER_ADDRESS_HEADER;
+import static org.infinispan.rest.ResponseHeader.CONTENT_LENGTH_HEADER;
+import static org.infinispan.rest.ResponseHeader.CONTENT_TYPE_HEADER;
+import static org.infinispan.rest.ResponseHeader.CREATED_HEADER;
+import static org.infinispan.rest.ResponseHeader.DATE_HEADER;
+import static org.infinispan.rest.ResponseHeader.ETAG_HEADER;
+import static org.infinispan.rest.ResponseHeader.EXPIRES_HEADER;
+import static org.infinispan.rest.ResponseHeader.LAST_MODIFIED_HEADER;
+import static org.infinispan.rest.ResponseHeader.LAST_USED_HEADER;
+import static org.infinispan.rest.ResponseHeader.LOCATION;
+import static org.infinispan.rest.ResponseHeader.MAX_IDLE_TIME_HEADER;
+import static org.infinispan.rest.ResponseHeader.TIME_TO_LIVE_HEADER;
+import static org.infinispan.rest.ResponseHeader.WWW_AUTHENTICATE_HEADER;
 
 import java.io.File;
 import java.io.InputStream;
@@ -28,23 +44,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * @since 10.0
  */
 public class NettyRestResponse implements RestResponse {
-   private final static String CACHE_CONTROL_HEADER = "Cache-Control";
-   private final static String CLUSTER_PRIMARY_OWNER_HEADER = "Cluster-Primary-Owner";
-   private final static String CLUSTER_BACKUP_OWNERS_HEADER = "Cluster-Backup-Owners";
-   private final static String CLUSTER_NODE_NAME_HEADER = "Cluster-Node-Name";
-   private final static String CLUSTER_SERVER_ADDRESS_HEADER = "Cluster-Server-Address";
-   private final static String CONTENT_LENGTH_HEADER = "Content-Length";
-   private final static String CONTENT_TYPE_HEADER = "Content-Type";
-   private static final String CREATED_HEADER = "created";
-   private final static String DATE_HEADER = "Date";
-   private final static String ETAG_HEADER = "Etag";
-   private final static String EXPIRES_HEADER = "Expires";
-   private final static String LAST_MODIFIED_HEADER = "Last-Modified";
-   private static final String LAST_USED_HEADER = "lastUsed";
-   private static final String LOCATION = "location";
-   private final static String MAX_IDLE_TIME_HEADER = "maxIdleTimeSeconds";
-   private final static String TIME_TO_LIVE_HEADER = "timeToLiveSeconds";
-   private final static String WWW_AUTHENTICATE_HEADER = "WWW-Authenticate";
    private final HttpResponse response;
    private final Object entity;
 
@@ -110,7 +109,7 @@ public class NettyRestResponse implements RestResponse {
 
       @Override
       public Builder eTag(String tag) {
-         setHeader(ETAG_HEADER, tag);
+         setHeader(ETAG_HEADER.getValue(), tag);
          return this;
       }
 
@@ -134,47 +133,47 @@ public class NettyRestResponse implements RestResponse {
 
       @Override
       public Builder contentType(String mediaType) {
-         setHeader(CONTENT_TYPE_HEADER, mediaType);
+         setHeader(CONTENT_TYPE_HEADER.getValue(), mediaType);
          return this;
       }
 
       @Override
       public Builder contentLength(long length) {
-         setLongHeader(CONTENT_LENGTH_HEADER, length);
+         setLongHeader(CONTENT_LENGTH_HEADER.getValue(), length);
          return this;
       }
 
       @Override
       public Builder expires(Date expires) {
          if (expires != null) {
-            setDateHeader(EXPIRES_HEADER, expires.getTime());
+            setDateHeader(EXPIRES_HEADER.getValue(), expires.getTime());
          }
          return this;
       }
 
       public Builder authenticate(String authentication) {
          if (authentication != null) {
-            setHeader(WWW_AUTHENTICATE_HEADER, authentication);
+            setHeader(WWW_AUTHENTICATE_HEADER.getValue(), authentication);
          }
          return this;
       }
 
       @Override
       public Builder lastModified(Long epoch) {
-         setDateHeader(LAST_MODIFIED_HEADER, epoch);
+         setDateHeader(LAST_MODIFIED_HEADER.getValue(), epoch);
          return this;
       }
 
       @Override
       public Builder location(String location) {
-         setHeader(LOCATION, location);
+         setHeader(LOCATION.getValue(), location);
          return this;
       }
 
       @Override
       public Builder addProcessedDate(Date d) {
          if (d != null) {
-            setDateHeader(DATE_HEADER, d.getTime());
+            setDateHeader(DATE_HEADER.getValue(), d.getTime());
          }
          return this;
       }
@@ -182,7 +181,7 @@ public class NettyRestResponse implements RestResponse {
       @Override
       public Builder cacheControl(CacheControl cacheControl) {
          if (cacheControl != null) {
-            setHeader(CACHE_CONTROL_HEADER, cacheControl.toString());
+            setHeader(ResponseHeader.CACHE_CONTROL_HEADER.getValue(), cacheControl.toString());
          }
          return this;
       }
@@ -194,43 +193,43 @@ public class NettyRestResponse implements RestResponse {
 
       public Builder timeToLive(long timeToLive) {
          if (timeToLive > -1)
-            setLongHeader(TIME_TO_LIVE_HEADER, TimeUnit.MILLISECONDS.toSeconds(timeToLive));
+            setLongHeader(TIME_TO_LIVE_HEADER.getValue(), TimeUnit.MILLISECONDS.toSeconds(timeToLive));
          return this;
       }
 
       public Builder maxIdle(long maxIdle) {
          if (maxIdle > -1)
-            setLongHeader(MAX_IDLE_TIME_HEADER, TimeUnit.MILLISECONDS.toSeconds(maxIdle));
+            setLongHeader(MAX_IDLE_TIME_HEADER.getValue(), TimeUnit.MILLISECONDS.toSeconds(maxIdle));
          return this;
       }
 
       public Builder created(long created) {
-         if (created > -1) setHeader(CREATED_HEADER, String.valueOf(created));
+         if (created > -1) setHeader(CREATED_HEADER.getValue(), String.valueOf(created));
          return this;
       }
 
       public Builder lastUsed(long lastUsed) {
-         if (lastUsed > -1) setHeader(LAST_USED_HEADER, String.valueOf(lastUsed));
+         if (lastUsed > -1) setHeader(LAST_USED_HEADER.getValue(), String.valueOf(lastUsed));
          return this;
       }
 
       public Builder clusterPrimaryOwner(String primaryOwner) {
-         setHeader(CLUSTER_PRIMARY_OWNER_HEADER, primaryOwner);
+         setHeader(CLUSTER_PRIMARY_OWNER_HEADER.getValue(), primaryOwner);
          return this;
       }
 
       public Builder clusterBackupOwners(String primaryOwner) {
-         setHeader(CLUSTER_BACKUP_OWNERS_HEADER, primaryOwner);
+         setHeader(CLUSTER_BACKUP_OWNERS_HEADER.getValue(), primaryOwner);
          return this;
       }
 
       public Builder clusterNodeName(String nodeName) {
-         setHeader(CLUSTER_NODE_NAME_HEADER, nodeName);
+         setHeader(CLUSTER_NODE_NAME_HEADER.getValue(), nodeName);
          return this;
       }
 
       public Builder clusterServerAddress(String serverAddress) {
-         setHeader(CLUSTER_SERVER_ADDRESS_HEADER, serverAddress);
+         setHeader(CLUSTER_SERVER_ADDRESS_HEADER.getValue(), serverAddress);
          return this;
       }
 
