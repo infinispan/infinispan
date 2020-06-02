@@ -31,13 +31,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @since 10.0
  **/
 public class KeyCloakServerRule implements TestRule {
-   public static final String KEYCLOAK_IMAGE = "jboss/keycloak:8.0.1";
+   public static String KEYCLOAK_IMAGE;
    private final String realmJsonFile;
+   private final String realmSsoFile;
 
    private FixedHostPortGenericContainer container;
 
-   public KeyCloakServerRule(String realmJsonFile) {
+   public KeyCloakServerRule(String realmJsonFile,String realmSsoFile,String keycloak_image) {
       this.realmJsonFile = realmJsonFile;
+      this.realmSsoFile=realmSsoFile;
+      this.KEYCLOAK_IMAGE=keycloak_image;
    }
 
    @Override
@@ -59,24 +62,35 @@ public class KeyCloakServerRule implements TestRule {
       File keycloakDirectory = new File(tmpDirectory("keycloak"));
       keycloakDirectory.mkdirs();
       File keycloakImport = new File(keycloakDirectory, "keycloak.json");
-      try (InputStream is = getClass().getClassLoader().getResourceAsStream(realmJsonFile); OutputStream os = new FileOutputStream(keycloakImport)) {
+      File ssoImport = new File(keycloakDirectory, "sso-realm.sh");
+      try (InputStream is = getClass().getClassLoader().getResourceAsStream(realmJsonFile); InputStream is_sso = getClass().getClassLoader().getResourceAsStream(realmSsoFile); OutputStream os = new FileOutputStream(keycloakImport); OutputStream os_sso = new FileOutputStream(ssoImport)) {
          TestingUtil.copy(is, os);
+         TestingUtil.copy(is_sso, os_sso);
       } catch (IOException e) {
          throw new RuntimeException(e);
       }
 
       final Map<String, String> environment = new HashMap<>();
       environment.put("DB_VENDOR", "h2");
-      environment.put("KEYCLOAK_USER", "keycloak");
-      environment.put("KEYCLOAK_PASSWORD", "keycloak");
+      environment.put("SSO_ADMIN_USERNAME", "keycloak");
+      environment.put("SSO_ADMIN_PASSWORD", "keycloak");
       environment.put("KEYCLOAK_IMPORT", keycloakImport.getAbsolutePath());
+      environment.put("SSO_IMPORT", ssoImport.getAbsolutePath());
       container = new FixedHostPortGenericContainer(KEYCLOAK_IMAGE);
       container.withFixedExposedPort(14567, 8080)
             .withEnv(environment)
             .withCopyFileToContainer(MountableFile.forHostPath(keycloakImport.getAbsolutePath()), keycloakImport.getPath())
+            .withCopyFileToContainer(MountableFile.forHostPath(ssoImport.getAbsolutePath(),700), ssoImport.getPath())
             .withLogConsumer(new JBossLoggingConsumer(LogFactory.getLog(testClass)))
             .waitingFor(Wait.forHttp("/"));
       container.start();
+      try {
+         container.execInContainer(ssoImport.getPath());
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      } catch (InterruptedException e) {
+         e.printStackTrace();
+      }
    }
 
    public String getAccessTokenForCredentials(String realm, String client, String secret, String username, String password) {

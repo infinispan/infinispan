@@ -29,7 +29,7 @@ public class AuthenticationKeyCloakIT {
                                     .build();
 
    @ClassRule
-   public static KeyCloakServerRule KEYCLOAK = new KeyCloakServerRule("keycloak/infinispan-keycloak-realm.json");
+   public static KeyCloakServerRule KEYCLOAK = new KeyCloakServerRule("keycloak/infinispan-keycloak-realm.json","keycloak/sso-realm.sh","registry.redhat.io/rh-sso-7/sso74-openshift-rhel8:7.4-1");
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
