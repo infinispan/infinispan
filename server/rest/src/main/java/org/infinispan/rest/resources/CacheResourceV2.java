@@ -31,7 +31,6 @@ import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.distribution.DistributionManager;
@@ -303,11 +302,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       InfinispanQueryStatisticsInfo.IndexStatistics indexStatistics = getIndexStatistics(cache);
       boolean rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
       boolean indexingInProgress = indexStatistics != null && indexStatistics.getReindexing();
-      boolean indexed =  configuration.indexing().enabled();
-      ContentTypeConfiguration valueDataType = cache.getCacheConfiguration().encoding().valueDataType();
-      boolean queryable = indexed || (valueDataType != null && valueDataType.mediaType()!= null &&
-            (valueDataType.mediaType().match(MediaType.APPLICATION_PROTOSTREAM)
-            || valueDataType.mediaType().match(MediaType.APPLICATION_OBJECT)));
+      boolean indexed = configuration.indexing().enabled();
+      boolean queryable = invocationHelper.getRestCacheManager().isCacheQueryable(cache);
       try {
          CacheFullDetail fullDetail = new CacheFullDetail();
          fullDetail.stats = stats;

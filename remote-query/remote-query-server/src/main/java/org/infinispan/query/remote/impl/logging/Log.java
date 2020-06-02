@@ -1,8 +1,11 @@
 package org.infinispan.query.remote.impl.logging;
 
+import static org.jboss.logging.Logger.Level.WARN;
+
 import org.infinispan.commons.CacheException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
+import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
@@ -54,4 +57,13 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The '%s' cache does not support commands of type %s", id = 28014)
    CacheException cacheDoesNotSupportCommand(String cacheName, String commandType);
+
+   @Message(value = "Cache '%s' with storage type '%s' cannot be queried. Please configure the cache encoding as " +
+         "'application/x-protostream' or 'application/x-java-object'", id = 28015)
+   CacheException cacheNotQueryable(String cacheName, String storage);
+
+   @LogMessage(level = WARN)
+   @Message(id = 28016, value = "Query done in a cache ('%s') that has an unknown format configuration. " +
+         "Please configure the cache encoding as 'application/x-protostream' or 'application/x-java-object'")
+   void warnNoMediaType(String cacheName);
 }
