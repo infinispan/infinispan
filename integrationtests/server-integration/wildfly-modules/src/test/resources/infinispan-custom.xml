@@ -1,0 +1,39 @@
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:11.0 https://infinispan.org/schemas/infinispan-config-11.0.xsd
+                            urn:infinispan:server:11.0 https://infinispan.org/schemas/infinispan-server-11.0.xsd
+                            urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.1.xsd"
+        xmlns="urn:infinispan:config:11.0"
+        xmlns:ispn="urn:infinispan:config:11.0"
+        xmlns:server="urn:infinispan:server:11.0">
+
+    <jgroups>
+        <stack name="wildfly-modules-it" extends="tcp">
+            <LOCAL_PING ispn:stack.combine="REPLACE" ispn:stack.position="MPING" xmlns="urn:org:jgroups"/>
+        </stack>
+    </jgroups>
+
+    <cache-container default-cache="default" statistics="true">
+        <transport cluster="${infinispan.cluster.name}" stack="wildfly-modules-it"/>
+        <global-state />
+        <local-cache name="default" />
+    </cache-container>
+
+    <server xmlns="urn:infinispan:server:11.0">
+        <interfaces>
+            <interface name="public">
+                <inet-address value="${infinispan.bind.address:127.0.0.1}"/>
+            </interface>
+        </interfaces>
+
+        <socket-bindings default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
+            <socket-binding name="default" port="${infinispan.bind.port:11222}"/>
+            <socket-binding name="memcached" port="11221"/>
+        </socket-bindings>
+
+        <endpoints socket-binding="default">
+            <hotrod-connector name="hotrod"/>
+            <rest-connector name="rest"/>
+        </endpoints>
+    </server>
+</infinispan>

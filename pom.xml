@@ -146,7 +146,8 @@
       <module>integrationtests/security-manager-it</module>
       <module>integrationtests/cdi-weld-se-it</module>
       <module>integrationtests/spring-boot-it</module>
-      <module>integrationtests/wildfly-modules</module>
+      <module>integrationtests/server-integration</module>
+      <module>integrationtests/server-integration/wildfly-modules</module>
       <module>client/marshaller</module>
       <module>hibernate</module>
       <module>api</module>
