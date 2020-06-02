@@ -104,4 +104,12 @@ public class StorageConfigurationManager {
 
       return MediaType.APPLICATION_UNKNOWN;
    }
+
+   /**
+    * @return true if the storage type allows queries (indexed or non-indexed).
+    */
+   public boolean isQueryable() {
+      return valueStorageMediaType.match(MediaType.APPLICATION_PROTOSTREAM) ||
+            valueStorageMediaType.match(MediaType.APPLICATION_OBJECT);
+   }
 }

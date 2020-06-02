@@ -35,7 +35,7 @@ final class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
    private final ComponentRegistry cr;
 
    ObjectRemoteQueryManager(AdvancedCache<?, ?> cache, ComponentRegistry cr, QuerySerializers querySerializers) {
-      super(cache, querySerializers);
+      super(cache, querySerializers, cr);
       this.cr = cr;
       this.searchIntegrator = cr.getComponent(SearchIntegrator.class);
       this.serCtx = SecurityActions.getSerializationContext(cache.getCacheManager());

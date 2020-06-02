@@ -13,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.dsl.IndexedQueryMode;
@@ -73,8 +74,8 @@ class CacheResourceQueryAction {
                   finalQuery.getMaxResults(), finalQuery.getQueryMode(), cache, MediaType.APPLICATION_JSON);
             responseBuilder.entity(queryResultBytes);
             return responseBuilder.build();
-         } catch (IllegalArgumentException | ParsingException | IllegalStateException e) {
-            return queryError("Invalid search request", e.getMessage());
+         } catch (IllegalArgumentException | ParsingException | IllegalStateException | CacheException e) {
+            return queryError("Error executing search", e.getMessage());
          }
       }, invocationHelper.getExecutor());
    }

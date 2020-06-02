@@ -33,6 +33,7 @@ import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.globalstate.ConfigurationStorage;
@@ -341,7 +342,8 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testFlags() throws Exception {
-      registerSchema();
+      String proto = "/* @Indexed */ message Entity { /* @Field */ required int32 value=1; }";
+      registerSchema("sample.proto", proto);
       ContentResponse response = insertEntity(1, 1000);
       ResponseAssertion.assertThat(response).isOk();
       assertIndexed(1000);
@@ -352,6 +354,42 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       response = insertEntity(3, 1200, "Invalid");
       ResponseAssertion.assertThat(response).isBadRequest();
+   }
+
+   @Test
+   public void testValidateCacheQueryable() throws Exception {
+      registerSchema("simple.proto", "message Simple { required int32 value=1;}");
+      correctReportNotQueryableCache("jsonCache", new ConfigurationBuilder().encoding().mediaType(APPLICATION_JSON_TYPE).build());
+   }
+
+   private void correctReportNotQueryableCache(String name, Configuration configuration) throws Exception {
+      createAndWriteToCache(name, configuration);
+
+      ContentResponse response = queryCache(name);
+      ResponseAssertion.assertThat(response).isBadRequest();
+
+      JsonNode json = new ObjectMapper().readTree(response.getContentAsString());
+      assertTrue(json.get("error").get("cause").toString().matches(".*ISPN028015.*"));
+   }
+
+   private ContentResponse queryCache(String name) throws Exception {
+      String url = "http://localhost:%d/rest/v2/caches/%s?action=search&query=%s";
+      String query = URLEncoder.encode("FROM Simple", "UTF-8");
+      String queryURL = String.format(url, restServer().getPort(), name, query);
+      return client.newRequest(queryURL).send();
+   }
+
+   private void createAndWriteToCache(String name, Configuration configuration) throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/%s", restServer().getPort(), name);
+      String jsonConfig = new JsonWriter().toJSON(configuration);
+      ContentResponse response = client.newRequest(url).header("Content-type", APPLICATION_JSON_TYPE)
+            .method(POST).content(new StringContentProvider(jsonConfig)).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      response = client.newRequest(url + "/1")
+            .method(POST).content(new StringContentProvider("{\"_type\":\"Simple\",\"value\":1}")).send();
+
+      ResponseAssertion.assertThat(response).isOk();
    }
 
    @Test
@@ -446,10 +484,9 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       return response.getStatus();
    }
 
-   private void registerSchema() throws Exception {
-      String url = String.format("http://localhost:%d/rest/v2/caches/___protobuf_metadata/sample.proto", restServer().getPort());
-      String proto = "/* @Indexed */ message Entity { /* @Field */ required int32 value=1; }";
-      ContentResponse response = client.newRequest(url).method(HttpMethod.PUT).content(new StringContentProvider(proto)).send();
+   private void registerSchema(String name, String schema) throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/___protobuf_metadata/%s", restServer().getPort(), name);
+      ContentResponse response = client.newRequest(url).method(HttpMethod.PUT).content(new StringContentProvider(schema)).send();
       ResponseAssertion.assertThat(response).isOk();
    }
 
