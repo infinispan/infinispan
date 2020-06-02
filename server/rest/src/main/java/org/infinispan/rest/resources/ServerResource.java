@@ -11,6 +11,7 @@ import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Set;
@@ -31,6 +32,11 @@ import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.server.core.ServerManagement;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
@@ -42,6 +48,11 @@ public class ServerResource implements ResourceHandler {
 
    public ServerResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
+
+      // Register our custom serializers
+      SimpleModule module = new SimpleModule();
+      module.addSerializer(ServerInfo.class, new ServerInfoSerializer());
+      this.invocationHelper.getMapper().registerModule(module);
    }
 
    @Override
@@ -152,6 +163,24 @@ public class ServerResource implements ResourceHandler {
 
       public String getVersion() {
          return version;
+      }
+   }
+
+   static class ServerInfoSerializer extends StdSerializer<ServerInfo> {
+
+      public ServerInfoSerializer() {
+         this(null);
+      }
+
+      public ServerInfoSerializer(Class<ServerInfo> t) {
+         super(t);
+      }
+
+      @Override
+      public void serialize(ServerInfo serverInfo, JsonGenerator json, SerializerProvider serializerProvider) throws IOException {
+         json.writeStartObject();
+         json.writeStringField("version", serverInfo.getVersion());
+         json.writeEndObject();
       }
    }
 }
