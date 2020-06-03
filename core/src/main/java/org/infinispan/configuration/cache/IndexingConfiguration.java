@@ -22,6 +22,9 @@ import org.infinispan.commons.util.TypedProperties;
  * Configures indexing of entries in the cache for searching.
  */
 public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration implements Matchable<IndexingConfiguration>, ConfigurationInfo {
+   /**
+    * @deprecated since 11.0
+    */
    @Deprecated
    public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder("index", null, Index.class).immutable().build();
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
@@ -44,10 +47,13 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     */
    @Deprecated
    private final Attribute<Index> index;
+
    /**
     * @deprecated since 11.0
     */
+   @Deprecated
    private final Attribute<Boolean> autoConfig;
+
    private final Attribute<Map<Class<?>, Class<?>>> keyTransformers;
    private final Attribute<Set<Class<?>>> indexedEntities;
    private final Attribute<Boolean> enabled;
@@ -105,7 +111,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
 
    /**
     * Determines if autoconfig is enabled for this IndexingConfiguration.
-    * @deprecated Since 11.0, with no replacment.
+    * @deprecated Since 11.0, with no replacement.
     */
    @Deprecated
    public boolean autoConfig() {
