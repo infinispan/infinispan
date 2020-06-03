@@ -14,7 +14,7 @@ package org.infinispan.xsite;
  * @author Mircea Markus
  * @see BackupFailureException
  * @since 5.2
- * @deprecated since 11. Use {@link org.infinispan.configuration.cache.CustomFailurePolicy} instead.
+ * @deprecated since 11.0. Use {@link org.infinispan.configuration.cache.CustomFailurePolicy} instead.
  */
 @Deprecated
 public interface CustomFailurePolicy<K, V> extends org.infinispan.configuration.cache.CustomFailurePolicy<K, V> {

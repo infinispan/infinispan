@@ -157,7 +157,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    /**
     * Indicates indexing mode
     *
-    * @deprecated Since 11. This configuration will be removed in next major version as the index mode is calculated
+    * @deprecated Since 11.0. This configuration will be removed in next major version as the index mode is calculated
     * automatically.
     */
    @Deprecated
