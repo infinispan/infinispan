@@ -55,6 +55,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    // Match IPv4 (host:port) or IPv6 ([host]:port) addresses
    private static final Pattern ADDRESS_PATTERN = Pattern
          .compile("(\\[([0-9A-Fa-f:]+)\\]|([^:/?#]*))(?::(\\d*))?");
+   private static final int CACHE_PREFIX_LENGTH = ConfigurationProperties.CACHE_PREFIX.length();
 
    private WeakReference<ClassLoader> classLoader;
    private final ExecutorFactoryConfigurationBuilder asyncExecutorFactory;
@@ -445,9 +446,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       });
 
       Set<String> cachesNames = typed.keySet().stream()
-            .filter(k -> ((String) k).startsWith(ConfigurationProperties.CACHE_PREFIX))
-            .map(k -> ((String) k).substring(ConfigurationProperties.CACHE_PREFIX.length(), ((String) k).indexOf('.', ConfigurationProperties.CACHE_PREFIX.length())))
-            .collect(Collectors.toSet());
+            .map(k -> (String)k)
+            .filter(k -> k.startsWith(ConfigurationProperties.CACHE_PREFIX))
+            .map(k ->
+                  k.charAt(CACHE_PREFIX_LENGTH) =='[' ?
+                        k.substring(CACHE_PREFIX_LENGTH + 1, k.indexOf(']', CACHE_PREFIX_LENGTH)) :
+                        k.substring(CACHE_PREFIX_LENGTH, k.indexOf('.', CACHE_PREFIX_LENGTH + 1 ))
+            ).collect(Collectors.toSet());
 
       for(String cacheName : cachesNames) {
          this.remoteCache(cacheName).withProperties(typed);

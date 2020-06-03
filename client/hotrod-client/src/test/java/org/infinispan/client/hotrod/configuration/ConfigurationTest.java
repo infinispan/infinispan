@@ -588,7 +588,6 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEquals(TYPES.get(expected.getClass()).apply(expected), cfg.properties().get(propertyName));
    }
 
-   @Test
    public void testConfigurationViaURI() {
       Configuration configuration = HotRodURI.create("hotrod://host1").toConfigurationBuilder().build();
       assertEquals(1, configuration.servers().size());
@@ -635,6 +634,27 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertArrayEquals("password".toCharArray(), callbackHandler.getPassword());
       expectException(IllegalArgumentException.class, "ISPN004095:.*", () -> HotRodURI.create("http://host1"));
       expectException(IllegalArgumentException.class, "ISPN004096:.*", () -> HotRodURI.create("hotrod://host1?property"));
+   }
+
+   public void testCacheNames() throws IOException {
+      Properties properties = new Properties();
+      try(InputStream is = this.getClass().getResourceAsStream("/hotrod-client-percache.properties")) {
+         properties.load(is);
+      }
+      Configuration configuration = new ConfigurationBuilder().withProperties(properties).build();
+      assertEquals(3, configuration.remoteCaches().size());
+      assertTrue(configuration.remoteCaches().containsKey("mycache"));
+      RemoteCacheConfiguration cache = configuration.remoteCaches().get("mycache");
+      assertEquals("org.infinispan.DIST_SYNC", cache.templateName());
+      assertTrue(cache.forceReturnValues());
+      assertTrue(configuration.remoteCaches().containsKey("org.infinispan.yourcache"));
+      cache = configuration.remoteCaches().get("org.infinispan.yourcache");
+      assertEquals("org.infinispan.DIST_ASYNC", cache.templateName());
+      assertEquals(NearCacheMode.INVALIDATED, cache.nearCacheMode());
+      assertTrue(configuration.remoteCaches().containsKey("org.infinispan.*"));
+      cache = configuration.remoteCaches().get("org.infinispan.*");
+      assertEquals("org.infinispan.REPL_SYNC", cache.templateName());
+      assertEquals(TransactionMode.NON_XA, cache.transactionMode());
    }
 
 }

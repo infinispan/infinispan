@@ -426,10 +426,19 @@
  *           <th colspan="4">Per-cache properties</th>
  *        </tr>
  *        <tr>
+ *           <th colspan="4">In the following properties, <i>cachename</i> may use wildcard globbing (e.g. <code>cache-*</code>) and may be enclosed in square brackets if the name includes the <code>'.'</code> character (e.g. <code>[example.MyConfig])</code></th>
+ *        </tr>
+ *        <tr>
  *           <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.configuration</b></td>
  *           <td>XML</td>
  *           <td>N/A</td>
  *           <td>Provides a cache definition, in XML format, to use when clients request caches that do not exist.</td>
+ *        </tr>
+ *        <tr>
+ *           <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.configuration_uri</b></td>
+ *           <td>XML</td>
+ *           <td>N/A</td>
+ *           <td>Provides a URI pointing to a cache definition, in XML format, to use when clients request caches that do not exist.</td>
  *        </tr>
  *        <tr>
  *           <td><b>infinispan.client.hotrod.cache.<i>cachename</i>.template_name</b></td>

@@ -9,7 +9,11 @@ import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguratio
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TRANSACTION_MANAGER;
 import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TRANSACTION_MODE;
 
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
+import java.util.Scanner;
+import java.util.function.Consumer;
 
 import javax.transaction.TransactionManager;
 
@@ -17,6 +21,7 @@ import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
@@ -75,6 +80,19 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    public RemoteCacheConfigurationBuilder configuration(String configuration) {
       attributes.attribute(CONFIGURATION).set(configuration);
       return this;
+   }
+
+   /**
+    * Specifies a URI pointing to the declarative configuration to be used to create the cache if it doesn't already exist on the server.
+    * @param uri the URI of the configuration.
+    * @return an instance of the builder
+    */
+   public RemoteCacheConfigurationBuilder configurationURI(URI uri) {
+      try (Scanner scanner = new Scanner(uri.toURL().openStream(), StandardCharsets.UTF_8.toString()).useDelimiter("\\A")) {
+         return this.configuration(scanner.next());
+      } catch (Exception e) {
+         throw new CacheConfigurationException(e);
+      }
    }
 
    /**
@@ -137,26 +155,28 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
 
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
-      String prefix = ConfigurationProperties.CACHE_PREFIX + attributes.attribute(NAME).get();
-      if (typed.containsKey(prefix + ConfigurationProperties.CACHE_CONFIGURATION_SUFFIX)) {
-         this.configuration(typed.getProperty(prefix + ConfigurationProperties.CACHE_CONFIGURATION_SUFFIX));
-      }
-      if (typed.containsKey(prefix + ConfigurationProperties.CACHE_FORCE_RETURN_VALUES_SUFFIX)) {
-         this.forceReturnValues(typed.getBooleanProperty(prefix + ConfigurationProperties.CACHE_FORCE_RETURN_VALUES_SUFFIX, FORCE_RETURN_VALUES.getDefaultValue()));
-      }
-      if (typed.containsKey(prefix + ConfigurationProperties.CACHE_NEAR_CACHE_MAX_ENTRIES_SUFFIX)) {
-         this.nearCacheMaxEntries(typed.getIntProperty(prefix + ConfigurationProperties.CACHE_NEAR_CACHE_MAX_ENTRIES_SUFFIX, NEAR_CACHE_MAX_ENTRIES.getDefaultValue()));
-      }
-      if (typed.containsKey(prefix + ConfigurationProperties.CACHE_NEAR_CACHE_MODE_SUFFIX)) {
-         this.nearCacheMode(NearCacheMode.valueOf(typed.getProperty(prefix + ConfigurationProperties.CACHE_NEAR_CACHE_MODE_SUFFIX)));
-      }
-      if (typed.containsKey(prefix + ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX)) {
-         this.templateName(typed.getProperty(prefix + ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX));
-      }
-      if (typed.containsKey(prefix + ConfigurationProperties.CACHE_TRANSACTION_MODE_SUFFIX)) {
-         this.transactionMode(TransactionMode.valueOf(typed.getProperty(prefix + ConfigurationProperties.CACHE_TRANSACTION_MODE_SUFFIX)));
-      }
+
+      findCacheProperty(typed, ConfigurationProperties.CACHE_CONFIGURATION_SUFFIX, v -> this.configuration(v));
+      findCacheProperty(typed, ConfigurationProperties.CACHE_CONFIGURATION_URI_SUFFIX, v -> this.configurationURI(URI.create(v)));
+      findCacheProperty(typed, ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX, v -> this.templateName(v));
+      findCacheProperty(typed, ConfigurationProperties.CACHE_FORCE_RETURN_VALUES_SUFFIX, v -> this.forceReturnValues(Boolean.parseBoolean(v)));
+      findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_MODE_SUFFIX, v -> this.nearCacheMode(NearCacheMode.valueOf(v)));
+      findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_MAX_ENTRIES_SUFFIX, v -> this.nearCacheMaxEntries(Integer.parseInt(v)));
+      findCacheProperty(typed, ConfigurationProperties.CACHE_TRANSACTION_MODE_SUFFIX, v -> this.transactionMode(TransactionMode.valueOf(v)));
 
       return builder;
+   }
+
+   private void findCacheProperty(TypedProperties properties, String name, Consumer<String> consumer) {
+      String cacheName = attributes.attribute(NAME).get();
+      String value = null;
+      if (properties.containsKey(ConfigurationProperties.CACHE_PREFIX + cacheName + name)) {
+         value = properties.getProperty(ConfigurationProperties.CACHE_PREFIX + cacheName + name, true);
+      } else if (properties.containsKey(ConfigurationProperties.CACHE_PREFIX + '[' + cacheName + ']' + name)) {
+         value = properties.getProperty(ConfigurationProperties.CACHE_PREFIX + '[' + cacheName + ']' + name, true);
+      }
+      if (value != null) {
+         consumer.accept(value);
+      }
    }
 }

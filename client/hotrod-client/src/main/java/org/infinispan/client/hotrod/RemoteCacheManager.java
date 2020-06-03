@@ -72,6 +72,7 @@ import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.commons.time.DefaultTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.GlobUtils;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.counter.api.CounterManager;
@@ -444,9 +445,23 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       return properties;
    }
 
+   private RemoteCacheConfiguration findConfiguration(String cacheName) {
+      if (configuration.remoteCaches().containsKey(cacheName)) {
+         return configuration.remoteCaches().get(cacheName);
+      }
+      // Search for wildcard configurations
+      for (Map.Entry<String, RemoteCacheConfiguration> c : configuration.remoteCaches().entrySet()) {
+         String key = c.getKey();
+         if (GlobUtils.isGlob(key) && cacheName.matches(GlobUtils.globToRegex(key))) {
+            return c.getValue();
+         }
+      }
+      return null;
+   }
+
    private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName, boolean forceReturnValueOverride,
                                                       TransactionMode transactionModeOverride, TransactionManager transactionManagerOverride) {
-      RemoteCacheConfiguration cacheConfiguration = configuration.remoteCaches().get(cacheName);
+      RemoteCacheConfiguration cacheConfiguration = findConfiguration(cacheName);
       boolean forceReturnValue = forceReturnValueOverride ? true : (cacheConfiguration != null ? cacheConfiguration.forceReturnValues() : configuration.forceReturnValues());
       RemoteCacheKey key = new RemoteCacheKey(cacheName, forceReturnValue);
       if (cacheName2RemoteCache.containsKey(key)) {
