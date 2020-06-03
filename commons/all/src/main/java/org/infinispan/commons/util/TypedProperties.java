@@ -143,13 +143,28 @@ public class TypedProperties extends Properties {
     * @param   key               the hashtable key.
     * @param   defaultValue      a default value.
     * @param   doStringReplace   boolean indicating whether to apply string property replacement
-    * @return  the value in this property list with the specified key valu after optionally being inspected for String property replacement
+    * @return  the value in this property list with the specified key value after optionally being inspected for String property replacement
     */
    public synchronized String getProperty(String key, String defaultValue, boolean doStringReplace) {
       if (doStringReplace)
          return StringPropertyReplacer.replaceProperties(getProperty(key, defaultValue));
       else
          return getProperty(key, defaultValue);
+   }
+
+   /**
+    * Get the property associated with the key, optionally applying string property replacement as defined in
+    * {@link StringPropertyReplacer#replaceProperties} to the result.
+    *
+    * @param   key               the hashtable key.
+    * @param   doStringReplace   boolean indicating whether to apply string property replacement
+    * @return  the value in this property list with the specified key value after optionally being inspected for String property replacement
+    */
+   public synchronized String getProperty(String key, boolean doStringReplace) {
+      if (doStringReplace)
+         return StringPropertyReplacer.replaceProperties(getProperty(key));
+      else
+         return getProperty(key);
    }
 
    /**
