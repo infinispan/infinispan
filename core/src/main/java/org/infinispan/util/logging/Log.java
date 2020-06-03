@@ -1487,9 +1487,9 @@ public interface Log extends BasicLogger {
    @Message(value = "%s cannot be shared", id = 430)
    CacheConfigurationException nonSharedStoreConfiguredAsShared(String storeType);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to validate %s's configuration as the @Store annotation is missing", id = 431)
-   void warnStoreAnnotationMissing(String name);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Unable to validate %s's configuration as the @Store annotation is missing", id = 431)
+//   void warnStoreAnnotationMissing(String name);
 
    @Message(value = "Missing configuration for default cache '%s' declared on container", id = 432)
    CacheConfigurationException missingDefaultCacheDeclaration(String defaultCache);
