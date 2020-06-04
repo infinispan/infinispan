@@ -1,12 +1,20 @@
 package org.infinispan.persistence.internal;
 
+import static org.infinispan.util.logging.Log.CONFIG;
+import static org.infinispan.util.logging.Log.PERSISTENCE;
+
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.CustomStoreConfiguration;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -174,5 +182,32 @@ public class PersistenceUtil {
             .runOn(scheduler)
             .flatMap(RxJavaInterop.identityFunction())
             .sequential();
+   }
+
+   @SuppressWarnings("unchecked")
+   public static <T> T createStoreInstance(StoreConfiguration config) {
+      Class<?> classBasedOnConfigurationAnnotation = getClassBasedOnConfigurationAnnotation(config);
+      try {
+         Object instance = Util.getInstance(classBasedOnConfigurationAnnotation);
+         return (T) instance;
+      } catch (CacheConfigurationException unableToInstantiate) {
+         throw PERSISTENCE.unableToInstantiateClass(config.getClass());
+      }
+   }
+
+   private static Class<?> getClassBasedOnConfigurationAnnotation(StoreConfiguration cfg) {
+      ConfigurationFor annotation = cfg.getClass().getAnnotation(ConfigurationFor.class);
+      Class<?> classAnnotation = null;
+      if (annotation == null) {
+         if (cfg instanceof CustomStoreConfiguration) {
+            classAnnotation = ((CustomStoreConfiguration)cfg).customStoreClass();
+         }
+      } else {
+         classAnnotation = annotation.value();
+      }
+      if (classAnnotation == null) {
+         throw CONFIG.loaderConfigurationDoesNotSpecifyLoaderClass(cfg.getClass().getName());
+      }
+      return classAnnotation;
    }
 }
