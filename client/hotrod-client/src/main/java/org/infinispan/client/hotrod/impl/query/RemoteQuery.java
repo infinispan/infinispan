@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -89,7 +90,7 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
    private BaseQueryResponse<T> executeQuery() {
       validateNamedParameters();
       QueryOperation op = cache.getOperationsFactory().newQueryOperation(this, cache.getDataFormat());
-      return (BaseQueryResponse) await(op.execute());
+      return (BaseQueryResponse<T>) (timeout != -1 ? await(op.execute(), TimeUnit.NANOSECONDS.toMillis(timeout)) : await(op.execute()));
    }
 
    /**
@@ -114,6 +115,7 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
             ", namedParameters=" + namedParameters +
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +
+            ", timeout=" + timeout +
             '}';
    }
 }
