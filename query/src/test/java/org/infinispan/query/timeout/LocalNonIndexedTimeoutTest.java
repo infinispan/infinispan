@@ -8,7 +8,7 @@ import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "query.searchmanager.NonIndexedTimeoutTest")
+@Test(groups = "functional", testName = "query.timeout.LocalNonIndexedTimeoutTest")
 public class LocalNonIndexedTimeoutTest extends LocalIndexedTimeoutTest {
 
    @Override

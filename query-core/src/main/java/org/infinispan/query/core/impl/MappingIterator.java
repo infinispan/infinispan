@@ -8,11 +8,12 @@ import org.infinispan.commons.util.CloseableIterator;
 /**
  * A {@link CloseableIterator} decorator that can be sliced and have its elements transformed.
  *
- * @since 11.0
  * @param <S> Type of the original iterator
  * @param <T> Resulting type
+ * @since 11.0
  */
-public class MappingIterator<S, T> implements CloseableIterator<T> {
+public final class MappingIterator<S, T> implements CloseableIterator<T> {
+
    private final CloseableIterator<S> iterator;
    private final Function<? super S, ? extends T> mapper;
 
@@ -29,7 +30,7 @@ public class MappingIterator<S, T> implements CloseableIterator<T> {
 
    @Override
    public boolean hasNext() {
-      advance();
+      updateNext();
       return current != null && (max == -1 || index <= skip + max);
    }
 
@@ -44,7 +45,7 @@ public class MappingIterator<S, T> implements CloseableIterator<T> {
       }
    }
 
-   private void advance() {
+   private void updateNext() {
       if (current == null) {
          while (index < skip && iterator.hasNext()) {
             iterator.next();
@@ -57,8 +58,8 @@ public class MappingIterator<S, T> implements CloseableIterator<T> {
       }
    }
 
-   public MappingIterator<S, T> skip(long n) {
-      this.skip = n;
+   public MappingIterator<S, T> skip(long skip) {
+      this.skip = skip;
       return this;
    }
 
@@ -70,10 +71,5 @@ public class MappingIterator<S, T> implements CloseableIterator<T> {
    @Override
    public void close() {
       iterator.close();
-   }
-
-   @Override
-   public void remove() {
-      iterator.remove();
    }
 }
