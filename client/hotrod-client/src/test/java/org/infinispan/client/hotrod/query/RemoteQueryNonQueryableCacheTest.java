@@ -1,17 +1,15 @@
 package org.infinispan.client.hotrod.query;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -32,8 +30,6 @@ public class RemoteQueryNonQueryableCacheTest extends SingleHotRodServerTest {
    private static final String POJO_CACHE = "object";
    private static final String JSON_CACHE = "json";
 
-   private RemoteCacheManager remoteCacheManager;
-
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createServerModeCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder());
@@ -43,13 +39,12 @@ public class RemoteQueryNonQueryableCacheTest extends SingleHotRodServerTest {
       cm.defineConfiguration(PROTOBUF_CACHE, createCache(MediaType.APPLICATION_PROTOSTREAM_TYPE));
       cm.defineConfiguration(POJO_CACHE, createCache(MediaType.APPLICATION_OBJECT_TYPE));
       cm.defineConfiguration(JSON_CACHE, createCache(MediaType.APPLICATION_JSON_TYPE));
-
-      HotRodServer hotRodServer = HotRodClientTestingUtil.startHotRodServer(cm);
-
-      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort()).addContextInitializers(TestDataSCI.INSTANCE);
-      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       return cm;
+   }
+
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return TestDataSCI.INSTANCE;
    }
 
    private Configuration createCache(String mediaType) {
