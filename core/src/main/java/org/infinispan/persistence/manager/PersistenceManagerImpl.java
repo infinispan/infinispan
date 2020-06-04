@@ -70,7 +70,6 @@ import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.async.AsyncNonBlockingStore;
-import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
 import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -111,7 +110,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Inject Configuration configuration;
    @Inject GlobalConfiguration globalConfiguration;
    @Inject ComponentRef<AdvancedCache<Object, Object>> cache;
-   @Inject CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
    @Inject KeyPartitioner keyPartitioner;
    @Inject TimeService timeService;
    @Inject TransactionManager transactionManager;
@@ -191,9 +189,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   } else {
                      nonBlockingStore = actualStore;
                   }
-                  StoreConfiguration processedConfiguration = cacheStoreFactoryRegistry.processStoreConfiguration(storeConfiguration);
                   InitializationContextImpl ctx =
-                        new InitializationContextImpl(processedConfiguration, cache.wired(), keyPartitioner, persistenceMarshaller,
+                        new InitializationContextImpl(storeConfiguration, cache.wired(), keyPartitioner, persistenceMarshaller,
                               timeService, byteBufferFactory, marshallableEntryFactory, nonBlockingExecutor, globalConfiguration, blockingManager);
                   CompletionStage<Void> stage = nonBlockingStore.start(ctx).whenComplete((ignore, t) -> {
                      // On exception, just put a status with only the store - this way we can still invoke stop on it later
@@ -202,7 +199,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      }
                   });
                   return Completable.fromCompletionStage(stage)
-                        .toSingle(() -> new StoreStatus(nonBlockingStore, processedConfiguration,
+                        .toSingle(() -> new StoreStatus(nonBlockingStore, storeConfiguration,
                               updateCharacteristics(nonBlockingStore, nonBlockingStore.characteristics(), storeConfiguration)));
                })
                // This relies upon visibility guarantees of reactive streams for publishing map values
@@ -312,7 +309,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       if (cfg.segmented() && cfg instanceof AbstractSegmentedStoreConfiguration) {
          bareInstance = new ComposedSegmentedLoadWriteStore<>((AbstractSegmentedStoreConfiguration) cfg);
       } else {
-         bareInstance = cacheStoreFactoryRegistry.createInstance(cfg);
+         bareInstance = PersistenceUtil.createStoreInstance(cfg);
       }
       if (!(bareInstance instanceof NonBlockingStore)) {
          // All prior stores implemented at least Lifecycle
