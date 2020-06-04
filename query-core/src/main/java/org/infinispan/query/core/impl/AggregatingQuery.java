@@ -1,18 +1,21 @@
 package org.infinispan.query.core.impl;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Closeables;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
-import org.infinispan.objectfilter.impl.aggregation.Grouper;
+import org.infinispan.objectfilter.impl.aggregation.RowGrouper;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 
 /**
+ * Executes grouping and aggregation on top of a base query.
+ *
  * @author anistor@redhat.com
  * @since 8.0
  */
@@ -40,18 +43,17 @@ public final class AggregatingQuery<T> extends HybridQuery<T, Object[]> {
          throw new IllegalArgumentException("Aggregating query must use projections");
       }
       this.noOfGroupingColumns = noOfGroupingColumns;
-      this.accumulators = accumulators != null ? accumulators.toArray(new FieldAccumulator[accumulators.size()]) : null;
+      this.accumulators = accumulators != null ? accumulators.toArray(new FieldAccumulator[0]) : null;
       this.twoPhaseAcc = twoPhaseAcc;
    }
 
    @Override
-   protected Iterator<?> getBaseIterator() {
-      Grouper grouper = new Grouper(noOfGroupingColumns, accumulators, twoPhaseAcc);
-      List<Object[]> list = baseQuery.list();
-      for (Object[] row : list) {
+   protected CloseableIterator<?> getBaseIterator() {
+      RowGrouper grouper = new RowGrouper(noOfGroupingColumns, accumulators, twoPhaseAcc);
+      for (Object[] row : baseQuery) {
          grouper.addRow(row);
       }
-      return grouper.finish();
+      return Closeables.iterator(grouper.finish());
    }
 
    @Override

@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
 import java.util.PriorityQueue;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -63,44 +62,47 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
    @Override
    public QueryResult<T> execute() {
       partitionHandlingSupport.checkCacheAvailable();
-      return listInternal();
+      List<T> results = listInternal(getComparator());
+      return new QueryResultImpl<>(results);
    }
 
-   @SuppressWarnings("unchecked")
    @Override
    public CloseableIterator<T> iterator() {
-      if (getComparator() == null) {
+      partitionHandlingSupport.checkCacheAvailable();
+      Comparator<Comparable<?>[]> comparator = getComparator();
+      if (comparator == null) {
          MappingIterator<FilterResult, Object> iterator = new MappingIterator<>(getInternalIterator(), this::mapFilterResult)
                .limit(maxResults).skip(startOffset);
          return (CloseableIterator<T>) iterator;
       }
-      List<T> results = (List<T>) listInternal();
+      List<T> results = listInternal(comparator);
       return Closeables.iterator(results.iterator());
    }
 
-   private QueryResult<T> listInternal() {
+   private List<T> listInternal(Comparator<Comparable<?>[]> comparator) {
       List<Object> results;
       try (CloseableIterator<FilterResult> iterator = getInternalIterator()) {
          if (!iterator.hasNext()) {
             results = Collections.emptyList();
          } else {
-            Comparator<Comparable[]> comparator = getComparator();
             if (comparator == null) {
-               results = StreamSupport.stream(spliterator(), false).collect(new TimedCollector<>(Collectors.toList(), timeout));
+               results = StreamSupport.stream(spliteratorUnknownSize(new MappingIterator<>(iterator, s -> s).limit(maxResults).skip(startOffset), 0), false)
+                                      .map(this::mapFilterResult)
+                                      .collect(new TimedCollector<>(Collectors.toList(), timeout));
             } else {
                log.warnPerfSortedNonIndexed(queryString);
-               // collect and sort results, in reverse order for now
-               PriorityQueue<FilterResult> queue = new PriorityQueue<>(INITIAL_CAPACITY, new ReverseFilterResultComparator(comparator));
-               PriorityQueue<FilterResult> filterResults = StreamSupport
-                     .stream(spliteratorUnknownSize(iterator, 0), false)
-                     .collect(new TimedCollector<>(Collector.of(() -> queue, this::addToPriorityQueue, (q1, q2) -> q1, IDENTITY_FINISH), timeout));
+               // Collect and sort results in a PriorityQueue, in reverse order for now. We'll reverse them again before returning.
+               // We keep the FilterResult wrapper in the queue rather than the actual value because we need FilterResult.getSortProjection() to perform sorting.
+               PriorityQueue<FilterResult> queue = StreamSupport.stream(spliteratorUnknownSize(iterator, 0), false)
+                                                                .collect(new TimedCollector<>(Collector.of(() -> new PriorityQueue<>(INITIAL_CAPACITY, new ReverseFilterResultComparator(comparator)),
+                                                                                                           this::addToPriorityQueue, (q1, q2) -> q1, IDENTITY_FINISH), timeout));
 
-               // collect and reverse
-               if (filterResults.size() > startOffset) {
-                  Object[] res = new Object[filterResults.size() - startOffset];
-                  int i = filterResults.size();
+               // trim the results that are outside of the requested range and reverse them
+               if (queue.size() > startOffset) {
+                  Object[] res = new Object[queue.size() - startOffset];
+                  int i = queue.size();
                   while (i-- > startOffset) {
-                     FilterResult r = filterResults.remove();
+                     FilterResult r = queue.remove();
                      res[i - startOffset] = mapFilterResult(r);
                   }
                   results = Arrays.asList(res);
@@ -111,13 +113,13 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
          }
       }
 
-      return new QueryResultImpl<>(OptionalLong.empty(), (List<T>) results);
+      return (List<T>) results;
    }
 
    private void addToPriorityQueue(PriorityQueue<FilterResult> queue, FilterResult filterResult) {
       queue.add(filterResult);
       if (maxResults != -1 && queue.size() > startOffset + maxResults) {
-         // remove the head, which is actually the lowest ranking result
+         // remove the head, which is actually the lowest ranking result because the queue is reversed (initially)
          queue.remove();
       }
    }
@@ -127,7 +129,7 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
     *
     * @return the comparator or {@code null} if no sorting needs to be applied
     */
-   protected abstract Comparator<Comparable[]> getComparator();
+   protected abstract Comparator<Comparable<?>[]> getComparator();
 
    /**
     * Create an iterator over the results of the query, in no particular order. Ordering will be provided if {@link
@@ -149,10 +151,7 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
    }
 
    private Object mapFilterResult(FilterResult result) {
-      if (projection != null) {
-         return result.getProjection();
-      }
-      return result.getInstance();
+      return projection != null ? result.getProjection() : result.getInstance();
    }
 
    @Override
@@ -173,9 +172,9 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
     */
    private static final class ReverseFilterResultComparator implements Comparator<FilterResult> {
 
-      private final Comparator<Comparable[]> comparator;
+      private final Comparator<Comparable<?>[]> comparator;
 
-      private ReverseFilterResultComparator(Comparator<Comparable[]> comparator) {
+      private ReverseFilterResultComparator(Comparator<Comparable<?>[]> comparator) {
          this.comparator = comparator;
       }
 

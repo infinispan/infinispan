@@ -2,7 +2,6 @@ package org.infinispan.query.dsl.embedded.impl;
 
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -70,8 +69,9 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
       if (cacheQuery == null) {
          validateNamedParameters();
          cacheQuery = queryEngine.buildLuceneQuery(parsingResult, namedParameters, startOffset, maxResults, queryMode);
-         if (timeout > 0)
+         if (timeout > 0) {
             cacheQuery.timeout(timeout, TimeUnit.NANOSECONDS);
+         }
       }
       return cacheQuery;
    }
@@ -83,16 +83,15 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
 
    @Override
    public QueryResult<T> execute() {
-      IndexedQuery<T> cacheQuery = createCacheQuery();
       List<T> results = StreamSupport.stream(spliterator(), false).collect(Collectors.toList());
-      int hits = cacheQuery.getResultSize();
-      return new QueryResultImpl<>(OptionalLong.of(hits), results);
+      long hits = createCacheQuery().getResultSize();
+      return new QueryResultImpl<>(hits, results);
    }
 
    @Override
    public CloseableIterator<T> iterator() {
-      IndexedQuery<T> cacheQuery = createCacheQuery();
-      return new MappingIterator(cacheQuery.iterator(), t -> rowProcessor == null ? t : rowProcessor.apply((Object[]) t));
+      CloseableIterator<T> iterator = createCacheQuery().iterator();
+      return rowProcessor == null ? iterator : new MappingIterator(iterator, t -> rowProcessor.apply((Object[]) t));
    }
 
    @Override

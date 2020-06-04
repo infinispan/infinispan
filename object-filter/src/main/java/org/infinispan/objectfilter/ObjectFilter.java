@@ -56,7 +56,7 @@ public interface ObjectFilter {
     * @return the Comparator or {@code null} if no 'order by' was specified ({@link #getSortFields()} also returns
     * {@code null})
     */
-   Comparator<Comparable[]> getComparator();
+   Comparator<Comparable<?>[]> getComparator();
 
    /**
     * Tests if an object instance matches the filter.

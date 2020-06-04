@@ -2,9 +2,7 @@ package org.infinispan.query.core.impl;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
@@ -37,60 +35,17 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
    }
 
    @Override
-   protected Comparator<Comparable[]> getComparator() {
+   protected Comparator<Comparable<?>[]> getComparator() {
       return objectFilter.getComparator();
    }
 
    @Override
    protected CloseableIterator<ObjectFilter.FilterResult> getInternalIterator() {
-      return new CloseableIterator<ObjectFilter.FilterResult>() {
-
-         private final Iterator<?> it = getBaseIterator();
-
-         private ObjectFilter.FilterResult nextResult = null;
-
-         private boolean isReady = false;
-
-         @Override
-         public void close() {
-         }
-
-         @Override
-         public boolean hasNext() {
-            updateNext();
-            return nextResult != null;
-         }
-
-         @Override
-         public ObjectFilter.FilterResult next() {
-            updateNext();
-            if (nextResult != null) {
-               ObjectFilter.FilterResult next = nextResult;
-               isReady = false;
-               nextResult = null;
-               return next;
-            } else {
-               throw new NoSuchElementException();
-            }
-         }
-
-         private void updateNext() {
-            if (!isReady) {
-               while (it.hasNext()) {
-                  Object next = it.next();
-                  nextResult = objectFilter.filter(next);
-                  if (nextResult != null) {
-                     break;
-                  }
-               }
-               isReady = true;
-            }
-         }
-      };
+      return new FilteringIterator<>(getBaseIterator(), objectFilter::filter);
    }
 
-   protected Iterator<?> getBaseIterator() {
-      return baseQuery.list().iterator();
+   protected CloseableIterator<?> getBaseIterator() {
+      return baseQuery.iterator();
    }
 
    @Override

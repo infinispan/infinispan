@@ -53,7 +53,7 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
    }
 
    @Override
-   protected Comparator<Comparable[]> getComparator() {
+   protected Comparator<Comparable<?>[]> getComparator() {
       return createFilter().getObjectFilter().getComparator();
    }
 

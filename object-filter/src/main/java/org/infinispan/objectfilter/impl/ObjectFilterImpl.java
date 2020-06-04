@@ -181,7 +181,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
    }
 
    @Override
-   public Comparator<Comparable[]> getComparator() {
+   public Comparator<Comparable<?>[]> getComparator() {
       if (filterSubscription == null) {
          throw new IllegalStateException("Parameter values were not bound yet.");
       }

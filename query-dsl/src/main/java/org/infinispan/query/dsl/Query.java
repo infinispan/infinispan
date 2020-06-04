@@ -43,7 +43,7 @@ public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, Para
    QueryResult<T> execute();
 
    /**
-    * Gets the total number of results matching the query, ignoring pagination (firstResult, maxResult).
+    * Gets the total number of results matching the query, ignoring pagination (startOffset, maxResults).
     *
     * @return total number of results.
     * @deprecated since 10.1. This will be removed with no direct replacement.
@@ -90,6 +90,9 @@ public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, Para
    Query<T> setParameters(Map<String, Object> paramValues);
 
    /**
+    * Returns a {@link CloseableIterator} over the results. Please close the iterator when you are done with processing
+    * the results.
+    *
     * @return the results of the query as an iterator.
     */
    CloseableIterator<T> iterator();
