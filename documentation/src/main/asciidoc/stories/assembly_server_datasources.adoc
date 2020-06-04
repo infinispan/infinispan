@@ -1,15 +1,19 @@
 [id='datasources']
 :context: server
-= Configuring {brandname} Server Data Sources
-Create managed datasources to connect to databases for optimal connection pooling and performance.
+= Configuring {brandname} Server Datasources
+Create managed datasources to optimize connection pooling and performance for
+database connections.
 
-While JDBC cache stores can directly configure connection properties to the database,
-doing so for each cache individually wastes resources by creating multiple distinct
-connection pools as well as duplicating configuration.
-By using shared managed datasources, connection configuration and pooling can be centralized
-for more efficient usage.
+You can specify database connection properties as part of a JDBC cache store
+configuration. However you must do this for each cache definition, which
+duplicates configuration and wastes resources by creating multiple distinct
+connection pools.
 
-include::{topics}/ref_server_datasources.adoc[leveloffset=+2]
+By using shared, managed datasources, you centralize connection configuration
+and pooling for more efficient usage.
+
+include::{topics}/ref_server_datasources.adoc[leveloffset=+1]
+include::{topics}/proc_server_using_datasources.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
