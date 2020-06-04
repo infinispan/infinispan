@@ -10,6 +10,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.query.RemoteOffHeapNonIndexedQueryDslConditionsTest")
 public class RemoteOffHeapNonIndexedQueryDslConditionsTest extends RemoteNonIndexedQueryDslConditionsTest {
 
+   @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = super.getConfigurationBuilder();
       builder.memory().storageType(StorageType.OFF_HEAP);
