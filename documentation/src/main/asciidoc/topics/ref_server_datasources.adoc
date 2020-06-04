@@ -1,0 +1,68 @@
+[id='datasource_config']
+= Data Sources Configuration
+
+{brandname} configuration for data sources is composed of two sections: a *connection factory* which defines how to
+connect to the database and a *connection pool* which defines how to pool and reuse connections:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<data-sources>
+   <data-source name="ds" jndi-name="jdbc/datasource" statistics="true"> <1>
+      <connection-factory driver="org.database.Driver" <2>
+                          username="db_user" <3>
+                          password="secret" <4>
+                          url="jdbc:db://database-host:10000/dbname" <5>
+                          new-connection-sql="SELECT 1" <6>
+                          transaction-isolation="READ_COMMITTED"> <7>
+         <connection-property name="name">value</connection-property> <8>
+      </connection-factory>
+      <connection-pool
+         initial-size="1" <9>
+         max-size="10" <10>
+         min-size="3" <11>
+         background-validation="1000" <12>
+         idle-removal="1" <13>
+         blocking-timeout="1000" <14>
+         leak-detection="10000"/> <15>
+   </data-source>
+</data-sources>
+----
+
+<1> defines a data source name, JNDI name and whether to enable statistics collection.
+<2> specifies the JDBC driver that will be used to create connections. Place driver JARs in the `server/lib` directory.
+<3> the username to use for the connection.
+<4> the password to use for the connection.
+<5> the JDBC URL specific to the driver in use.
+<6> a query to execute after creating a new connection to verify that it is working correctly.
+<7> transaction isolation for the connection. One of NONE, READ_UNCOMMITTED, READ_COMMITTED, REPEATABLE_READ, SERIALIZABLE.
+<8> optional JDBC driver-specific connection properties
+<9> Initial number of connections the pool should hold.
+<10> Maximum number of connections in the pool.
+<11> Minimum number of connections the pool should hold.
+<12> Time in milliseconds between background validation runs.
+<13> Time in minutes a connection has to be idle before it can be removed.
+<14> Maximum time in milliseconds to block while waiting for a connection before throwing an exception.
+<15> Time in milliseconds a connection has to be held before a leak warning.
+
+== Using a data source
+
+Reference the data source's JNDI name in a cache's JDBC cache store configuration:
+
+[source,xml]
+----
+<distributed-cache-configuration name="persistent-cache">
+    <persistence>
+        <string-keyed-jdbc-store>
+            <data-source jndi-url="jdbc/datasource"/>
+            <string-keyed-table drop-on-exit="true"
+                          create-on-start="true"
+                          prefix="TBL">
+                <id-column name="ID" type="VARCHAR(255)"/>
+                <data-column name="DATA" type="BINARY"/>
+                <timestamp-column name="TS" type="BIGINT"/>
+                <segment-column name="S" type="INT"/>
+            </string-keyed-table>
+        </string-keyed-jdbc-store>
+    </persistence>
+</distributed-cache-configuration>
+----
