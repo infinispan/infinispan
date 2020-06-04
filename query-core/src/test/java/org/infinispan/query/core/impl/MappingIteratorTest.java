@@ -8,7 +8,7 @@ import org.infinispan.commons.util.Closeables;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", testName = "query.core.tests.MappingIteratorTest")
+@Test(groups = "unit", testName = "query.core.impl.MappingIteratorTest")
 public class MappingIteratorTest {
 
    @Test

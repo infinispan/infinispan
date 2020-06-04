@@ -3,7 +3,6 @@ package org.infinispan.query.core.impl;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
@@ -15,7 +14,6 @@ import org.infinispan.filter.CacheFilters;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.util.function.SerializablePredicate;
 
 
 /**
@@ -25,8 +23,6 @@ import org.infinispan.util.function.SerializablePredicate;
  * @since 7.0
  */
 public final class EmbeddedQuery extends BaseEmbeddedQuery {
-
-   private static final SerializablePredicate<ObjectFilter.FilterResult> NON_NULL_PREDICATE = Objects::nonNull;
 
    private final QueryEngine queryEngine;
 
@@ -65,8 +61,11 @@ public final class EmbeddedQuery extends BaseEmbeddedQuery {
    protected CloseableIterator<ObjectFilter.FilterResult> getIterator() {
       IckleFilterAndConverter<Object, Object> ickleFilter = (IckleFilterAndConverter<Object, Object>) createFilter();
       CacheStream<CacheEntry<Object, Object>> entryStream = ((AdvancedCache<Object, Object>) cache).cacheEntrySet().stream();
+      if (timeout > 0) {
+         entryStream = entryStream.timeout(timeout, TimeUnit.NANOSECONDS);
+      }
       CacheStream<ObjectFilter.FilterResult> resultStream = CacheFilters.filterAndConvertToValue(entryStream, ickleFilter);
-      if(timeout > 0) {
+      if (timeout > 0) {
          resultStream = resultStream.timeout(timeout, TimeUnit.NANOSECONDS);
       }
       return Closeables.iterator(resultStream);
@@ -80,6 +79,7 @@ public final class EmbeddedQuery extends BaseEmbeddedQuery {
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +
+            ", timeout=" + timeout +
             '}';
    }
 }
