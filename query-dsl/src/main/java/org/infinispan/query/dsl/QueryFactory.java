@@ -5,6 +5,10 @@ package org.infinispan.query.dsl;
  * returns a {@link QueryBuilder} capable of constructing {@link Query} objects. The other methods are use for creating
  * sub-conditions.
  *
+ * <p><b>NOTE:</b> Most methods in this class are deprecated, except {@link #create(java.lang.String)}. Please do not
+ * use any of the deprecated methods or else you will experience difficulties in porting your code to the new query API
+ * that will be introduced by Infinispan 12.
+ *
  * @author anistor@redhat.com
  * @since 6.0
  */
