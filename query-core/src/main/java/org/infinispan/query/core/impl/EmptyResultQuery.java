@@ -16,7 +16,7 @@ import org.infinispan.query.dsl.QueryFactory;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public final class EmptyResultQuery extends BaseEmbeddedQuery {
+public final class EmptyResultQuery<T> extends BaseEmbeddedQuery<T> {
 
    public EmptyResultQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString, Map<String, Object> namedParameters,
                            long startOffset, int maxResults) {
@@ -29,7 +29,7 @@ public final class EmptyResultQuery extends BaseEmbeddedQuery {
    }
 
    @Override
-   protected CloseableIterator<ObjectFilter.FilterResult> getIterator() {
+   protected CloseableIterator<ObjectFilter.FilterResult> getInternalIterator() {
       return new CloseableIterator<ObjectFilter.FilterResult>() {
 
          @Override
@@ -56,6 +56,7 @@ public final class EmptyResultQuery extends BaseEmbeddedQuery {
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +
+            ", timeout=" + timeout +
             '}';
    }
 }

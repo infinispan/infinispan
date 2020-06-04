@@ -93,7 +93,7 @@ public final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
    private Query<T> createQuery() {
       // the query is created first time only
       if (query == null) {
-         query = queryEngine.buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults, queryMode);
+         query = (BaseQuery<T>) queryEngine.buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults, queryMode);
          if (timeout > 0) {
             query.timeout(timeout, TimeUnit.NANOSECONDS);
          }
@@ -128,6 +128,7 @@ public final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +
+            ", timeout=" + timeout +
             '}';
    }
 }

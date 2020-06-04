@@ -103,6 +103,11 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
 
    @Override
    public String toString() {
-      return "EmbeddedLuceneQuery{queryString=" + queryString + ", namedParameters=" + namedParameters + '}';
+      return "EmbeddedLuceneQuery{queryString=" + queryString +
+            ", namedParameters=" + namedParameters +
+            ", startOffset=" + startOffset +
+            ", maxResults=" + maxResults +
+            ", timeout=" + timeout +
+            +'}';
    }
 }

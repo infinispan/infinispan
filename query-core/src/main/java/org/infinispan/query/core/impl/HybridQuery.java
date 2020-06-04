@@ -20,19 +20,20 @@ import org.infinispan.query.dsl.QueryFactory;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public class HybridQuery extends BaseEmbeddedQuery {
+public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
 
+   // An object filter is used to further filter the baseQuery
    protected final ObjectFilter objectFilter;
 
-   protected final Query baseQuery;
+   protected final Query<S> baseQuery;
 
    public HybridQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString, Map<String, Object> namedParameters,
                       ObjectFilter objectFilter,
                       long startOffset, int maxResults,
-                      Query baseQuery) {
+                      Query<?> baseQuery) {
       super(queryFactory, cache, queryString, namedParameters, objectFilter.getProjection(), startOffset, maxResults);
       this.objectFilter = objectFilter;
-      this.baseQuery = baseQuery;
+      this.baseQuery = (Query<S>) baseQuery;
    }
 
    @Override
@@ -41,7 +42,7 @@ public class HybridQuery extends BaseEmbeddedQuery {
    }
 
    @Override
-   protected CloseableIterator<ObjectFilter.FilterResult> getIterator() {
+   protected CloseableIterator<ObjectFilter.FilterResult> getInternalIterator() {
       return new CloseableIterator<ObjectFilter.FilterResult>() {
 
          private final Iterator<?> it = getBaseIterator();
@@ -100,6 +101,7 @@ public class HybridQuery extends BaseEmbeddedQuery {
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +
+            ", timeout=" + timeout +
             ", baseQuery=" + baseQuery +
             '}';
    }

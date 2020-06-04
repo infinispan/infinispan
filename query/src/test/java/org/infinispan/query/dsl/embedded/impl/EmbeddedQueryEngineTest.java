@@ -243,7 +243,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
    }
 
    private <E> Query<E> buildQuery(String queryString) {
-      return qe.buildQuery(null, qe.parse(queryString), null, -1, -1);
+      return (Query<E>) qe.buildQuery(null, qe.parse(queryString), null, -1, -1);
    }
 
    public void testSimpleProjection1() {
