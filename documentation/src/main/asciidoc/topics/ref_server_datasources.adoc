@@ -1,8 +1,9 @@
 [id='datasource_config']
-= Data Sources Configuration
+= Datasource Configuration for JDBC Cache Stores
+{brandname} server configuration for datasources is composed of two sections:
 
-{brandname} configuration for data sources is composed of two sections: a *connection factory* which defines how to
-connect to the database and a *connection pool* which defines how to pool and reuse connections:
+* A `connection factory` that defines how to connect to the database.
+* A `connection pool` that defines how to pool and reuse connections.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
@@ -28,41 +29,18 @@ connect to the database and a *connection pool* which defines how to pool and re
 </data-sources>
 ----
 
-<1> defines a data source name, JNDI name and whether to enable statistics collection.
-<2> specifies the JDBC driver that will be used to create connections. Place driver JARs in the `server/lib` directory.
-<3> the username to use for the connection.
-<4> the password to use for the connection.
-<5> the JDBC URL specific to the driver in use.
-<6> a query to execute after creating a new connection to verify that it is working correctly.
-<7> transaction isolation for the connection. One of NONE, READ_UNCOMMITTED, READ_COMMITTED, REPEATABLE_READ, SERIALIZABLE.
-<8> optional JDBC driver-specific connection properties
-<9> Initial number of connections the pool should hold.
-<10> Maximum number of connections in the pool.
-<11> Minimum number of connections the pool should hold.
-<12> Time in milliseconds between background validation runs.
-<13> Time in minutes a connection has to be idle before it can be removed.
-<14> Maximum time in milliseconds to block while waiting for a connection before throwing an exception.
-<15> Time in milliseconds a connection has to be held before a leak warning.
-
-== Using a data source
-
-Reference the data source's JNDI name in a cache's JDBC cache store configuration:
-
-[source,xml]
-----
-<distributed-cache-configuration name="persistent-cache">
-    <persistence>
-        <string-keyed-jdbc-store>
-            <data-source jndi-url="jdbc/datasource"/>
-            <string-keyed-table drop-on-exit="true"
-                          create-on-start="true"
-                          prefix="TBL">
-                <id-column name="ID" type="VARCHAR(255)"/>
-                <data-column name="DATA" type="BINARY"/>
-                <timestamp-column name="TS" type="BIGINT"/>
-                <segment-column name="S" type="INT"/>
-            </string-keyed-table>
-        </string-keyed-jdbc-store>
-    </persistence>
-</distributed-cache-configuration>
-----
+<1> Defines a datasource name, JNDI name, and whether to enable statistics collection.
+<2> Specifies the JDBC driver that creates connections. Place driver JARs in the `server/lib` directory.
+<3> Specifies a username for the connection.
+<4> Specifies a corresponding password for the connection.
+<5> Specifies the JDBC URL specific to the driver in use.
+<6> Adds a query that verifies new connections.
+<7> Configures one of the transaction isolation levels for the connection: `NONE`, `READ_UNCOMMITTED`, `READ_COMMITTED`, `REPEATABLE_READ`, `SERIALIZABLE`.
+<8> Sets optional JDBC driver-specific connection properties.
+<9> Defines the initial number of connections the pool contains.
+<10> Sets the maximum number of connections in the pool.
+<11> Sets the minimum number of connections the pool should contain.
+<12> Specifies the time, in milliseconds, between background validation runs.
+<13> Specifies the time, in minutes, a connections can remain idle before it is removed.
+<14> Specifies the amount of time, in milliseconds, to block while waiting for a connection, after which an exception is thrown.
+<15> Specifies the time, in milliseconds, a connection can be held before a leak warning occurs.
