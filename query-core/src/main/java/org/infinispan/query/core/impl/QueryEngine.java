@@ -44,6 +44,12 @@ import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.QueryStringCreator;
 import org.infinispan.util.logging.LogFactory;
 
+/**
+ * Builds Query object implementations based on an Ickle query string.
+ *
+ * @param <TypeMetadata> the metadata of the indexed entities, either a java.lang.Class or an
+ *                       org.infinispan.protostream.descriptors.Descriptor
+ */
 public class QueryEngine<TypeMetadata> {
 
    private static final Log log = LogFactory.getLog(QueryEngine.class, Log.class);
@@ -75,18 +81,18 @@ public class QueryEngine<TypeMetadata> {
       this(cache, ReflectionMatcher.class);
    }
 
-   protected BaseQuery buildQuery(QueryFactory queryFactory, IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults, IndexedQueryMode queryMode) {
+   protected BaseQuery<?> buildQuery(QueryFactory queryFactory, IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults, IndexedQueryMode queryMode) {
       if (log.isDebugEnabled()) {
          log.debugf("Building query '%s' with parameters %s", parsingResult.getQueryString(), namedParameters);
       }
-      BaseQuery query = parsingResult.hasGroupingOrAggregations() ?
+      BaseQuery<?> query = parsingResult.hasGroupingOrAggregations() ?
             buildQueryWithAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult, queryMode) :
             buildQueryNoAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult, queryMode);
       query.validateNamedParameters();
       return query;
    }
 
-   protected BaseQuery buildQueryWithAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, IndexedQueryMode queryMode) {
+   protected BaseQuery<?> buildQueryWithAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, IndexedQueryMode queryMode) {
       if (parsingResult.getProjectedPaths() == null) {
          throw log.groupingAndAggregationQueriesMustUseProjections();
       }
@@ -149,7 +155,7 @@ public class QueryEngine<TypeMetadata> {
       if (parsingResult.getHavingClause() != null) {
          BooleanExpr normalizedHavingClause = booleanFilterNormalizer.normalize(parsingResult.getHavingClause());
          if (normalizedHavingClause == ConstantBooleanExpr.FALSE) {
-            return new EmptyResultQuery(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
+            return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
          }
          if (normalizedHavingClause != ConstantBooleanExpr.TRUE) {
             havingClause = SyntaxTreePrinter.printTree(swapVariables(normalizedHavingClause, parsingResult.getTargetEntityMetadata(),
@@ -202,7 +208,7 @@ public class QueryEngine<TypeMetadata> {
          // the WHERE clause should not touch aggregated fields
          BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
          if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
-            return new EmptyResultQuery(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
+            return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
          }
          if (normalizedWhereClause != ConstantBooleanExpr.TRUE) {
             firstPhaseQuery.append(' ').append(SyntaxTreePrinter.printTree(normalizedWhereClause));
@@ -241,11 +247,11 @@ public class QueryEngine<TypeMetadata> {
 
       // first phase: gather rows matching the 'where' clause
       String firstPhaseQueryStr = firstPhaseQuery.toString();
-      BaseQuery baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr), queryMode);
+      BaseQuery<?> baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr), queryMode);
 
       // second phase: grouping, aggregation, 'having' clause filtering, sorting and pagination
       String secondPhaseQueryStr = secondPhaseQuery.toString();
-      return new AggregatingQuery(queryFactory, cache, secondPhaseQueryStr, namedParameters,
+      return new AggregatingQuery<>(queryFactory, cache, secondPhaseQueryStr, namedParameters,
             noOfGroupingColumns, accumulators, false,
             getObjectFilter(new RowMatcher(_columns), secondPhaseQueryStr, namedParameters, null),
             startOffset, maxResults, baseQuery);
@@ -334,9 +340,9 @@ public class QueryEngine<TypeMetadata> {
       return expr.acceptVisitor(new PropertyReplacer());
    }
 
-   private BaseQuery buildQueryWithRepeatedAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults,
-                                                        IckleParsingResult<TypeMetadata> parsingResult, String havingClause,
-                                                        LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns, int noOfGroupingColumns, IndexedQueryMode queryMode) {
+   private BaseQuery<?> buildQueryWithRepeatedAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults,
+                                                           IckleParsingResult<TypeMetadata> parsingResult, String havingClause,
+                                                           LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns, int noOfGroupingColumns, IndexedQueryMode queryMode) {
       // these types of aggregations can only be computed in memory
 
       StringBuilder firstPhaseQuery = new StringBuilder();
@@ -345,14 +351,14 @@ public class QueryEngine<TypeMetadata> {
          // the WHERE clause should not touch aggregated fields
          BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
          if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
-            return new EmptyResultQuery(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
+            return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
          }
          if (normalizedWhereClause != ConstantBooleanExpr.TRUE) {
             firstPhaseQuery.append(' ').append(SyntaxTreePrinter.printTree(normalizedWhereClause));
          }
       }
       String firstPhaseQueryStr = firstPhaseQuery.toString();
-      BaseQuery baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr), queryMode);
+      BaseQuery<?> baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr), queryMode);
 
       List<FieldAccumulator> secondPhaseAccumulators = new LinkedList<>();
       List<FieldAccumulator> thirdPhaseAccumulators = new LinkedList<>();
@@ -386,7 +392,7 @@ public class QueryEngine<TypeMetadata> {
       secondPhaseQuery.append(" FROM ").append(parsingResult.getTargetEntityName()).append(' ').append(QueryStringCreator.DEFAULT_ALIAS);
       String secondPhaseQueryStr = secondPhaseQuery.toString();
 
-      HybridQuery projectingAggregatingQuery = new HybridQuery(queryFactory, cache,
+      HybridQuery<?, ?> projectingAggregatingQuery = new HybridQuery<>(queryFactory, cache,
             secondPhaseQueryStr, namedParameters,
             getObjectFilter(matcher, secondPhaseQueryStr, namedParameters, secondPhaseAccumulators),
             -1, -1, baseQuery);
@@ -420,14 +426,14 @@ public class QueryEngine<TypeMetadata> {
       }
 
       String thirdPhaseQueryStr = thirdPhaseQuery.toString();
-      return new AggregatingQuery(queryFactory, cache, thirdPhaseQueryStr, namedParameters,
+      return new AggregatingQuery<>(queryFactory, cache, thirdPhaseQueryStr, namedParameters,
             noOfGroupingColumns, thirdPhaseAccumulators, true,
             getObjectFilter(new RowMatcher(_columns), thirdPhaseQueryStr, namedParameters, null),
             startOffset, maxResults, projectingAggregatingQuery);
    }
 
-   protected BaseQuery buildQueryNoAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters,
-                                                long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, IndexedQueryMode queryMode) {
+   protected BaseQuery<?> buildQueryNoAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters,
+                                                   long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, IndexedQueryMode queryMode) {
       if (parsingResult.hasGroupingOrAggregations()) {
          throw log.queryMustNotUseGroupingOrAggregation(); // may happen only due to internal programming error
       }
@@ -459,10 +465,10 @@ public class QueryEngine<TypeMetadata> {
       BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
       if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
          // the query is a contradiction, there are no matches
-         return new EmptyResultQuery(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
+         return new EmptyResultQuery<>(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
       }
 
-      return new EmbeddedQuery(this, queryFactory, cache, queryString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
+      return new EmbeddedQuery<>(this, queryFactory, cache, queryString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
    }
 
    protected IckleParsingResult<TypeMetadata> parse(String queryString) {

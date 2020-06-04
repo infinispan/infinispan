@@ -34,6 +34,9 @@ public abstract class BaseQuery<T> implements Query<T> {
 
    protected int maxResults;
 
+   /**
+    * Optional timeout in nanoseconds.
+    */
    protected long timeout = -1;
 
    //todo [anistor] can startOffset really be a long or it really has to be int due to limitations in query module?

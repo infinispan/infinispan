@@ -16,7 +16,7 @@ import org.infinispan.query.dsl.impl.BaseQuery;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public final class AggregatingQuery extends HybridQuery {
+public final class AggregatingQuery<T> extends HybridQuery<T, Object[]> {
 
    /**
     * The number of columns at the beginning of the row that are used as group key.
@@ -31,7 +31,7 @@ public final class AggregatingQuery extends HybridQuery {
                            int noOfGroupingColumns, List<FieldAccumulator> accumulators, boolean twoPhaseAcc,
                            ObjectFilter objectFilter,
                            long startOffset, int maxResults,
-                           BaseQuery baseQuery) {
+                           BaseQuery<?> baseQuery) {
       super(queryFactory, cache, queryString, namedParameters, objectFilter, startOffset, maxResults, baseQuery);
       if (baseQuery.getProjection() == null) {
          throw new IllegalArgumentException("Base query must use projections");
@@ -64,6 +64,7 @@ public final class AggregatingQuery extends HybridQuery {
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +
+            ", timeout=" + timeout +
             ", baseQuery=" + baseQuery +
             '}';
    }

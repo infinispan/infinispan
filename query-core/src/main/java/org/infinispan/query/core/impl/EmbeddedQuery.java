@@ -22,13 +22,13 @@ import org.infinispan.query.dsl.QueryFactory;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class EmbeddedQuery extends BaseEmbeddedQuery {
+public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
 
-   private final QueryEngine queryEngine;
+   private final QueryEngine<?> queryEngine;
 
    private IckleFilterAndConverter<?, ?> filter;
 
-   public EmbeddedQuery(QueryEngine queryEngine, QueryFactory queryFactory, AdvancedCache<?, ?> cache,
+   public EmbeddedQuery(QueryEngine<?> queryEngine, QueryFactory queryFactory, AdvancedCache<?, ?> cache,
                         String queryString, Map<String, Object> namedParameters, String[] projection,
                         long startOffset, int maxResults) {
       super(queryFactory, cache, queryString, namedParameters, projection, startOffset, maxResults);
@@ -58,7 +58,7 @@ public final class EmbeddedQuery extends BaseEmbeddedQuery {
    }
 
    @Override
-   protected CloseableIterator<ObjectFilter.FilterResult> getIterator() {
+   protected CloseableIterator<ObjectFilter.FilterResult> getInternalIterator() {
       IckleFilterAndConverter<Object, Object> ickleFilter = (IckleFilterAndConverter<Object, Object>) createFilter();
       CacheStream<CacheEntry<Object, Object>> entryStream = ((AdvancedCache<Object, Object>) cache).cacheEntrySet().stream();
       if (timeout > 0) {
