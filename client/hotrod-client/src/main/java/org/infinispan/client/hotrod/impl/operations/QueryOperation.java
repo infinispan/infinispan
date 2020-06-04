@@ -28,11 +28,11 @@ import io.netty.channel.Channel;
  */
 public final class QueryOperation extends RetryOnFailureOperation<Object> {
 
-   private final RemoteQuery remoteQuery;
+   private final RemoteQuery<?> remoteQuery;
    private final QuerySerializer querySerializer;
 
    public QueryOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger topologyId,
-                         int flags, Configuration cfg, RemoteQuery remoteQuery, DataFormat dataFormat) {
+                         int flags, Configuration cfg, RemoteQuery<?> remoteQuery, DataFormat dataFormat) {
       super(QUERY_REQUEST, QUERY_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat);
       this.remoteQuery = remoteQuery;
       this.querySerializer = QuerySerializer.findByMediaType(dataFormat.getValueType());

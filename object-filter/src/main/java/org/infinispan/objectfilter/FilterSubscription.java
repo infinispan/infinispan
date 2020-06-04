@@ -37,7 +37,7 @@ public interface FilterSubscription {
     *
     * @return the Comparator or {@code null} if no 'order by' was specified
     */
-   Comparator<Comparable[]> getComparator();
+   Comparator<Comparable<?>[]> getComparator();
 
    /**
     * The event types.

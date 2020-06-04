@@ -24,7 +24,7 @@ public final class EmptyResultQuery<T> extends BaseEmbeddedQuery<T> {
    }
 
    @Override
-   protected Comparator<Comparable[]> getComparator() {
+   protected Comparator<Comparable<?>[]> getComparator() {
       return null;
    }
 

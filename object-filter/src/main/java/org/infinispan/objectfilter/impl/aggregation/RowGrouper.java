@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public final class Grouper {
+public final class RowGrouper {
 
    /**
     * The number of columns at the beginning of the row that are used for grouping.
@@ -75,7 +75,7 @@ public final class Grouper {
    /**
     * noOfGroupingColumns and accumulators must not have overlapping indices.
     */
-   public Grouper(int noOfGroupingColumns, FieldAccumulator[] accumulators, boolean twoPhaseAcc) {
+   public RowGrouper(int noOfGroupingColumns, FieldAccumulator[] accumulators, boolean twoPhaseAcc) {
       this.noOfGroupingColumns = noOfGroupingColumns;
       this.accumulators = accumulators != null && accumulators.length != 0 ? accumulators : null;
       this.twoPhaseAcc = twoPhaseAcc;
@@ -173,7 +173,7 @@ public final class Grouper {
 
    @Override
    public String toString() {
-      return "Grouper{" +
+      return "RowGrouper{" +
             "noOfGroupingColumns=" + noOfGroupingColumns +
             ", inRowLength=" + inRowLength +
             ", outRowLength=" + outRowLength +

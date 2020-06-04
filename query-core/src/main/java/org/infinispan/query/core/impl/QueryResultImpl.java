@@ -9,11 +9,18 @@ import org.infinispan.query.dsl.QueryResult;
  * @since 11.0
  */
 public final class QueryResultImpl<E> implements QueryResult<E> {
+
    private final OptionalLong hitCount;
+
    private final List<E> list;
 
-   public QueryResultImpl(OptionalLong hitCount, List<E> list) {
-      this.hitCount = hitCount;
+   public QueryResultImpl(long hitCount, List<E> list) {
+      this.hitCount = OptionalLong.of(hitCount);
+      this.list = list;
+   }
+
+   public QueryResultImpl(List<E> list) {
+      this.hitCount = OptionalLong.empty();
       this.list = list;
    }
 

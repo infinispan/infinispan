@@ -338,7 +338,7 @@ public abstract class AbstractMatcherTest {
    public void testOrderBy() throws Exception {
       Matcher matcher = createMatcher();
 
-      List<Comparable[]> sortProjections = new ArrayList<>();
+      List<Comparable<?>[]> sortProjections = new ArrayList<>();
 
       String queryString1 = "from org.infinispan.objectfilter.test.model.Person p where p.age > 18 order by p.name, p.surname";
       FilterSubscription filterSubscription = matcher.registerFilter(queryString1, (userContext, eventType, instance, projection, sortProjection) -> sortProjections.add(sortProjection));

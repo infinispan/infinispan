@@ -51,7 +51,7 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
 
    private final Object[] eventTypes;
 
-   private Comparator<Comparable[]> comparator;
+   private Comparator<Comparable<?>[]> comparator;
 
    protected FilterSubscriptionImpl(String queryString, Map<String, Object> namedParameters,
                                     boolean useIntervals, MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter,
@@ -124,7 +124,7 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
    }
 
    @Override
-   public Comparator<Comparable[]> getComparator() {
+   public Comparator<Comparable<?>[]> getComparator() {
       if (sortFields != null && comparator == null) {
          boolean[] direction = new boolean[sortFields.length];
          for (int i = 0; i < sortFields.length; i++) {

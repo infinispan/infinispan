@@ -12,7 +12,10 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.operations.QueryOperation;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Closeables;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.QueryFactory;
@@ -25,6 +28,8 @@ import org.infinispan.query.remote.client.impl.BaseQueryResponse;
  * @since 6.0
  */
 public final class RemoteQuery<T> extends BaseQuery<T> {
+
+   private static final Log log = LogFactory.getLog(RemoteQuery.class);
 
    private final InternalRemoteCache<?, ?> cache;
    private final SerializationContext serializationContext;
@@ -78,7 +83,10 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
 
    @Override
    public CloseableIterator<T> iterator() {
-      throw new UnsupportedOperationException();
+      if (maxResults == -1 && startOffset == 0) {
+         log.warnPerfRemoteIterationWithoutPagination(queryString);
+      }
+      return Closeables.iterator(execute().list().iterator());
    }
 
    @Override
