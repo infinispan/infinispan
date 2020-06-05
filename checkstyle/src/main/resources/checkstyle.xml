@@ -80,11 +80,10 @@
             <!--<property name="classes" value="java.lang.Boolean"/>-->
         <!--</module>-->
 
-        <!--&lt;!&ndash;  Avoid some import statements &ndash;&gt;-->
-        <!--<module name="IllegalImport">-->
-            <!--&lt;!&ndash; Should use TestNG &ndash;&gt;-->
-            <!--<property name="illegalPkgs" value="org.junit, junit"/>-->
-        <!--</module>-->
+        <!--  Avoid some import statements -->
+        <module name="IllegalImport">
+            <property name="illegalPkgs" value="org.codehaus.jackson"/>
+        </module>
         <!--<module name="org.infinispan.checkstyle.checks.regexp.IllegalImport">-->
             <!--<property name="illegalClassnames" value="org.jgroups.util.Util.assertTrue, org.jgroups.util.Util.assertFalse, org.jgroups.util.Util.assertNotNull" />-->
             <!--<property name="message" value="Stop using the Util class from JGroups for assertions which should use TestNG!" />-->
