@@ -304,14 +304,14 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       } else {
          assertEquals(response.getStatus(), OK_200);
          JsonNode stats = MAPPER.readTree(response.getContentAsString());
-         assertTrue(stats.get("search_query_execution_count").asInt() >= 0);
-         assertTrue(stats.get("search_query_total_time").asInt() >= 0);
-         assertTrue(stats.get("search_query_execution_max_time").asInt() >= 0);
-         assertTrue(stats.get("search_query_execution_avg_time").asInt() >= 0);
-         assertTrue(stats.get("object_loading_total_time").asInt() >= 0);
-         assertTrue(stats.get("object_loading_execution_max_time").asInt() >= 0);
-         assertTrue(stats.get("object_loading_execution_avg_time").asInt() >= 0);
-         assertTrue(stats.get("objects_loaded_count").asInt() >= 0);
+         assertTrue(stats.get("search_query_execution_count").asLong() >= 0);
+         assertTrue(stats.get("search_query_total_time").asLong() >= 0);
+         assertTrue(stats.get("search_query_execution_max_time").asLong() >= 0);
+         assertTrue(stats.get("search_query_execution_avg_time").asLong() >= 0);
+         assertTrue(stats.get("object_loading_total_time").asLong() >= 0);
+         assertTrue(stats.get("object_loading_execution_max_time").asLong() >= 0);
+         assertTrue(stats.get("object_loading_execution_avg_time").asLong() >= 0);
+         assertTrue(stats.get("objects_loaded_count").asLong() >= 0);
          assertNotNull(stats.get("search_query_execution_max_time_query_string").asText());
 
          ContentResponse clearResponse = clearStatsRequest.send();
