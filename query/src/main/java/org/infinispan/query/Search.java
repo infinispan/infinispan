@@ -92,7 +92,7 @@ public final class Search {
       }
       AdvancedCache<?, ?> advancedCache = cache.getAdvancedCache();
       if (advancedCache == null) {
-         throw new IllegalArgumentException("The given cache must expose an AdvancedCache");
+         throw new IllegalArgumentException("The given cache must expose an AdvancedCache interface");
       }
       checkBulkReadPermission(advancedCache);
       return new SearchManagerImpl(advancedCache);
@@ -103,8 +103,11 @@ public final class Search {
     * @since 11.0
     */
    public static <K, V> Indexer getIndexer(Cache<K, V> cache) {
-      Cache<K, V> validCache = Objects.requireNonNull(cache, "cache parameter must not be null");
-      AdvancedCache<K, V> advancedCache = validCache.getAdvancedCache();
+      AdvancedCache<K, V> advancedCache = Objects.requireNonNull(cache, "cache parameter must not be null").getAdvancedCache();
+      if (advancedCache == null) {
+         throw new IllegalArgumentException("The given cache must expose an AdvancedCache interface");
+      }
+      checkBulkReadPermission(advancedCache);
       return ComponentRegistryUtils.getIndexer(advancedCache);
    }
 

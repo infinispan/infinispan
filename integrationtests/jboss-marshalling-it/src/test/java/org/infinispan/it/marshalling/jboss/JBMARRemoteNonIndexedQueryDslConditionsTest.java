@@ -26,7 +26,7 @@ public class JBMARRemoteNonIndexedQueryDslConditionsTest extends JBMARRemoteQuer
    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Indexing was not enabled on cache.*")
    @Override
    public void testIndexPresence() {
-      org.infinispan.query.Search.getSearchManager(getEmbeddedCache());
+      org.infinispan.query.Search.getIndexer(getEmbeddedCache());
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
