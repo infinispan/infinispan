@@ -139,6 +139,12 @@ The server is now secure by default. Use the `user-tool` to add users or remove 
 === Cache authorization roles
 If you do not explicitly specify roles when enabling cache authorization, all roles declared in the global configuration apply.
 
+== REST
+
+* REST API calls that have the extra URL parameter `?action` to perform operations with side effects now also
+support the POST method (returning 200 when the response has content or 204 otherwise).
+Support for using `GET` method on those calls will be removed in a future version.
+
 = Upgrading from 10.0 to 10.1 and 10.0 to 11.0
 
 == Maximum Idle Timeouts with Clustered Cache Modes

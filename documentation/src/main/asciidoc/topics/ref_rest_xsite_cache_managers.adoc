@@ -36,7 +36,7 @@ Take backup locations offline with the `?action=take-offline` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=take-offline
+POST /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=take-offline
 ----
 
 [id='rest_v2_cache_manager_bring_online']
@@ -45,7 +45,7 @@ Bring backup locations online with the `?action=bring-online` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=bring-online
+POST /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=bring-online
 ----
 
 [id='rest_v2_cache_manager_start_push']
@@ -54,7 +54,7 @@ Push state of all caches to remote sites with the `?action=start-push-state` par
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=start-push-state
+POST /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=start-push-state
 ----
 
 
@@ -64,5 +64,5 @@ Cancel ongoing state transfer operations with the `?action=cancel-push-state` pa
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=cancel-push-state
+POST /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=cancel-push-state
 ----

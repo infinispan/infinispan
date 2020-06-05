@@ -72,14 +72,14 @@ public class CounterResource implements ResourceHandler {
 
             // Common counter ops
             .invocation().methods(GET).path("/v2/counters/{counterName}").handleWith(this::getCounter)
-            .invocation().methods(GET).path("/v2/counters/{counterName}").withAction("reset").handleWith(this::resetCounter)
-            .invocation().methods(GET).path("/v2/counters/{counterName}").withAction("increment").handleWith(this::incrementCounter)
-            .invocation().methods(GET).path("/v2/counters/{counterName}").withAction("decrement").handleWith(this::decrementCounter)
-            .invocation().methods(GET).path("/v2/counters/{counterName}").withAction("add").handleWith(this::addValue)
+            .invocation().methods(GET, POST).path("/v2/counters/{counterName}").withAction("reset").handleWith(this::resetCounter)
+            .invocation().methods(GET, POST).path("/v2/counters/{counterName}").withAction("increment").handleWith(this::incrementCounter)
+            .invocation().methods(GET, POST).path("/v2/counters/{counterName}").withAction("decrement").handleWith(this::decrementCounter)
+            .invocation().methods(GET, POST).path("/v2/counters/{counterName}").withAction("add").handleWith(this::addValue)
 
             // Strong counter ops
-            .invocation().methods(GET).path("/v2/counters/{counterName}").withAction("compareAndSet").handleWith(this::compareSet)
-            .invocation().methods(GET).path("/v2/counters/{counterName}").withAction("compareAndSwap").handleWith(this::compareSwap)
+            .invocation().methods(GET, POST).path("/v2/counters/{counterName}").withAction("compareAndSet").handleWith(this::compareSet)
+            .invocation().methods(GET, POST).path("/v2/counters/{counterName}").withAction("compareAndSwap").handleWith(this::compareSwap)
             .create();
    }
 
@@ -159,7 +159,8 @@ public class CounterResource implements ResourceHandler {
                counterManager.getWeakCounter(counterName).reset() :
                counterManager.getStrongCounter(counterName).reset();
 
-         return result.thenApply(v -> new NettyRestResponse.Builder().build());
+         return result.thenApply(v -> new NettyRestResponse.Builder()
+               .status(request.method().equals(POST) ? NO_CONTENT : OK).build());
       });
    }
 
@@ -192,7 +193,7 @@ public class CounterResource implements ResourceHandler {
                responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity(String.format("Weak counter '%s' not found", counterName));
                return completedFuture(responseBuilder.build());
             }
-            return counter.add(delta).thenApply(v -> responseBuilder.build());
+            return counter.add(delta).thenApply(v -> responseBuilder.status(request.method().equals(POST) ? NO_CONTENT : OK).build());
          });
       } else {
          StrongCounter strongCounter = checkForStrongCounter(counterName, responseBuilder);
@@ -236,7 +237,7 @@ public class CounterResource implements ResourceHandler {
 
       CounterType type = configuration.type();
 
-      if (type == CounterType.WEAK) return executeWeakCounterOp(counterName, weakOp);
+      if (type == CounterType.WEAK) return executeWeakCounterOp(request, counterName, weakOp);
 
       return executeStrongCounterOp(counterName, strongOp);
    }
@@ -301,15 +302,20 @@ public class CounterResource implements ResourceHandler {
       return null;
    }
 
-   private CompletionStage<RestResponse> executeWeakCounterOp(String counterName, Function<WeakCounter, CompletionStage<Void>> op) {
+   private CompletionStage<RestResponse> executeWeakCounterOp(RestRequest restRequest, String counterName,
+                                                              Function<WeakCounter, CompletionStage<Void>> op) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+
+      if(restRequest.method().equals(POST)) {
+         responseBuilder.status(NO_CONTENT);
+      }
       CompletionStage<WeakCounter> weakCounter = getWeakCounter(counterName);
       return weakCounter.thenCompose(counter -> {
          if (counter == null) {
             responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity(String.format("Weak counter '%s' not found", counterName));
             return completedFuture(responseBuilder.build());
          }
-         return op.apply(counter).thenCompose(t -> completedFuture(responseBuilder.status(OK).build()));
+         return op.apply(counter).thenCompose(t -> completedFuture(responseBuilder.build()));
       });
    }
 

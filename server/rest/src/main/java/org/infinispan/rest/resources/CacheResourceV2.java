@@ -95,10 +95,10 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .invocation().method(HEAD).path("/v2/caches/{cacheName}").handleWith(this::cacheExists)
 
             // Operations
-            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("clear").handleWith(this::clearEntireCache)
+            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}").withAction("clear").handleWith(this::clearEntireCache)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("size").handleWith(this::getSize)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("sync-data").handleWith(this::syncData)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("disconnect-source").handleWith(this::disconnectSource)
+            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}").withAction("sync-data").handleWith(this::syncData)
+            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}").withAction("disconnect-source").handleWith(this::disconnectSource)
 
             // Search
             .invocation().methods(GET, POST).path("/v2/caches/{cacheName}").withAction("search").handleWith(queryAction::search)
@@ -114,6 +114,9 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
    private CompletionStage<RestResponse> disconnectSource(RestRequest request) {
       NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+
+      if (request.method().equals(POST)) builder.status(NO_CONTENT);
+
       String cacheName = request.variables().get("cacheName");
 
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);

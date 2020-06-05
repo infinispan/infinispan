@@ -45,7 +45,7 @@ public class TasksResource implements ResourceHandler {
       return new Invocations.Builder()
             .invocation().methods(GET).path("/v2/tasks/").handleWith(this::listTasks)
             .invocation().methods(PUT, POST).path("/v2/tasks/{taskName}").handleWith(this::createScriptTask)
-            .invocation().methods(GET).path("/v2/tasks/{taskName}").withAction("exec").handleWith(this::runTask)
+            .invocation().methods(GET, POST).path("/v2/tasks/{taskName}").withAction("exec").handleWith(this::runTask)
             .create();
    }
 

@@ -14,13 +14,13 @@ for each cache in your {brandname} configuration.
 . Start the synchronization operation for each cache in your {brandname}
 configuration that you want to migrate to the target cluster.
 +
-Use the {brandname} REST API and invoke `GET` requests with the `?action=sync-
+Use the {brandname} REST API and invoke `POST` requests with the `?action=sync-
 data` parameter. For example, to synchronize data in a cache named "myCache"
 from a source cluster to a target cluster, do the following:
 +
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/myCache?action=sync-data
+POST /v2/caches/myCache?action=sync-data
 ----
 +
 When the operation completes, {brandname} responds with the total number of
@@ -31,11 +31,11 @@ Alternatively, you can use JMX by invoking
 +
 . Disconnect each node in the target cluster from the source cluster.
 +
-For example, to disconnect the "myCache" cache from the source cluster, invoke the following `GET` request:
+For example, to disconnect the "myCache" cache from the source cluster, invoke the following `POST` request:
 +
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/myCache?action=disconnect-source
+POST /v2/caches/myCache?action=disconnect-source
 ----
 +
 To use JMX, invoke `disconnectSource(migratorName=hotrod)` on the `RollingUpgradeManager` MBean.

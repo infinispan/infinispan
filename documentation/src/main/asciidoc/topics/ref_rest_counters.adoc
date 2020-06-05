@@ -89,23 +89,23 @@ GET /rest/v2/counters/{counterName}
 
 [id='rest_server_counters_reset']
 = Resetting Counters
-Restore the intial value of counters without `GET` requests and the
+Restore the intial value of counters without `POST` requests and the
 `?action=reset` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/counters/{counterName}?action=reset
+POST /rest/v2/counters/{counterName}?action=reset
 ----
 
 
 [id='rest_server_counters_inc_weak']
 = Incrementing Counters
-Increment counter values with `GET` request` and the `?action=increment`
+Increment counter values with `POST` request` and the `?action=increment`
 parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/counters/{counterName}?action=increment
+POST /rest/v2/counters/{counterName}?action=increment
 ----
 
 [NOTE]
@@ -118,12 +118,12 @@ GET /rest/v2/counters/{counterName}?action=increment
 
 [id='rest_server_counters_add_weak']
 = Adding Deltas to Counters
-Add arbitrary values to counters with `GET` requests that include the
+Add arbitrary values to counters with `POST` requests that include the
 `?action=add` and `delta` parameters.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/counters/{counterName}?action=add&delta={delta}
+POST /rest/v2/counters/{counterName}?action=add&delta={delta}
 ----
 
 [NOTE]
@@ -136,12 +136,12 @@ GET /rest/v2/counters/{counterName}?action=add&delta={delta}
 
 [id='rest_server_counters_dec']
 = Decrementing Counter Values
-Decrement counter values with `GET` requests and the `?action=decrement`
+Decrement counter values with `POST` requests and the `?action=decrement`
 parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/counters/{counterName}?action=decrement
+POST /rest/v2/counters/{counterName}?action=decrement
 ----
 
 [NOTE]
@@ -159,7 +159,7 @@ Atomically set values for strong counters with `GET` requests and the
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/counters/{counterName}?action=compareAndSet&expect={expect}&update={update}
+POST /rest/v2/counters/{counterName}?action=compareAndSet&expect={expect}&update={update}
 ----
 
 {brandname} atomically sets the value to `{update}` if the current value is
@@ -173,7 +173,7 @@ Atomically set values for strong counters with `GET` requests and the
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/counters/{counterName}?action=compareAndSwap&expect={expect}&update={update}
+POST /rest/v2/counters/{counterName}?action=compareAndSwap&expect={expect}&update={update}
 ----
 
 {brandname} atomically sets the value to `{update}` if the current value is
