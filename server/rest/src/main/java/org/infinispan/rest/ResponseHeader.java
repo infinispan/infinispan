@@ -3,7 +3,7 @@ package org.infinispan.rest;
 import java.util.Arrays;
 
 /**
- * @since 10.0
+ * @since 11.0
  */
 public enum ResponseHeader {
    CACHE_CONTROL_HEADER("Cache-Control"),

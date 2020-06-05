@@ -1,5 +1,12 @@
 package org.infinispan.rest;
 
+import static org.infinispan.rest.RequestHeader.CREATED_HEADER;
+import static org.infinispan.rest.RequestHeader.FLAGS_HEADER;
+import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
+import static org.infinispan.rest.RequestHeader.LAST_USED_HEADER;
+import static org.infinispan.rest.RequestHeader.MAX_TIME_IDLE_HEADER;
+import static org.infinispan.rest.RequestHeader.TTL_SECONDS_HEADER;
+
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
@@ -31,14 +38,6 @@ public class NettyRestRequest implements RestRequest {
    private final static Log logger = LogFactory.getLog(NettyRestRequest.class, Log.class);
 
    private static final MediaType DEFAULT_KEY_CONTENT_TYPE = MediaType.fromString("application/x-java-object;type=java.lang.String");
-
-   public static final String CREATED_HEADER = "created";
-   public static final String EXTENDED_HEADER = "extended";
-   public static final String FLAGS_HEADER = "flags";
-   public static final String KEY_CONTENT_TYPE_HEADER = "key-content-type";
-   public static final String MAX_TIME_IDLE_HEADER = "maxIdleTimeSeconds";
-   public static final String LAST_USED_HEADER = "lastUsed";
-   public static final String TTL_SECONDS_HEADER = "timeToLiveSeconds";
 
    private final FullHttpRequest request;
    private final Map<String, List<String>> parameters;
@@ -147,7 +146,7 @@ public class NettyRestRequest implements RestRequest {
 
    @Override
    public MediaType keyContentType() {
-      String header = request.headers().get(KEY_CONTENT_TYPE_HEADER);
+      String header = request.headers().get(KEY_CONTENT_TYPE_HEADER.getValue());
       if (header == null) return DEFAULT_KEY_CONTENT_TYPE;
       return MediaType.fromString(header);
    }
@@ -197,18 +196,18 @@ public class NettyRestRequest implements RestRequest {
 
    @Override
    public Long getMaxIdleTimeSecondsHeader() {
-      return getHeaderAsLong(MAX_TIME_IDLE_HEADER);
+      return getHeaderAsLong(MAX_TIME_IDLE_HEADER.getValue());
    }
 
 
    @Override
    public Long getTimeToLiveSecondsHeader() {
-      return getHeaderAsLong(TTL_SECONDS_HEADER);
+      return getHeaderAsLong(TTL_SECONDS_HEADER.getValue());
    }
 
    @Override
    public EnumSet<CacheContainerAdmin.AdminFlag> getAdminFlags() {
-      String requestFlags = request.headers().get(FLAGS_HEADER);
+      String requestFlags = request.headers().get(FLAGS_HEADER.getValue());
       if (requestFlags == null || requestFlags.isEmpty()) return null;
       try {
          return CacheContainerAdmin.AdminFlag.fromString(requestFlags);
@@ -220,7 +219,7 @@ public class NettyRestRequest implements RestRequest {
    @Override
    public Flag[] getFlags() {
       try {
-         String flags = request.headers().get(FLAGS_HEADER);
+         String flags = request.headers().get(FLAGS_HEADER.getValue());
          if (flags == null || flags.isEmpty()) {
             return null;
          }
@@ -232,12 +231,12 @@ public class NettyRestRequest implements RestRequest {
 
    @Override
    public Long getCreatedHeader() {
-      return getHeaderAsLong(CREATED_HEADER);
+      return getHeaderAsLong(CREATED_HEADER.getValue());
    }
 
    @Override
    public Long getLastUsedHeader() {
-      return getHeaderAsLong(LAST_USED_HEADER);
+      return getHeaderAsLong(LAST_USED_HEADER.getValue());
    }
 
    public Subject getSubject() {
@@ -261,7 +260,7 @@ public class NettyRestRequest implements RestRequest {
    private boolean getHeaderAsBoolean(String header) {
       String headerValue = request.headers().get(header);
       if (header == null) return false;
-      return Boolean.valueOf(headerValue);
+      return Boolean.parseBoolean(headerValue);
    }
 
    private Long getHeaderAsLong(String header) {
