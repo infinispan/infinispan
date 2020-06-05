@@ -56,7 +56,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.logging.TraceException;
+import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
