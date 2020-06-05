@@ -60,7 +60,7 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
    @Override
    public void testIndexPresence() {
       // this is expected to throw an exception
-      Search.getSearchManager((Cache) getCacheForQuery());
+      Search.getIndexer((Cache<?, ?>) getCacheForQuery());
    }
 
    /**
