@@ -24,6 +24,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
@@ -31,7 +32,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
@@ -149,7 +149,8 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
    @AfterMethod
    public void checkNoActiveIterations() {
       for (HotRodServer hotRodServer : hotrodServers) {
-         assertEquals(0, hotRodServer.getIterationManager().activeIterations());
+         // The close is done async now
+         eventuallyEquals(0, () -> hotRodServer.getIterationManager().activeIterations());
       }
    }
 

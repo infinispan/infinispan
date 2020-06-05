@@ -2,7 +2,7 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import java.util.BitSet;
 import java.util.Map;
-import java.util.Set;
+import java.util.function.IntConsumer;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
@@ -42,7 +42,7 @@ public class Codec23 extends Codec22 {
    }
 
    @Override
-   public void writeIteratorStartOperation(ByteBuf buf, Set<Integer> segments, String filterConverterFactory,
+   public void writeIteratorStartOperation(ByteBuf buf, IntSet segments, String filterConverterFactory,
          int batchSize, boolean metadata, byte[][] filterParameters) {
       if (metadata) {
          throw new UnsupportedOperationException("Metadata for entry iteration not supported in this version!");
@@ -55,7 +55,7 @@ public class Codec23 extends Codec22 {
          }
          // TODO use a more compact BitSet implementation, like http://roaringbitmap.org/
          BitSet bitSet = new BitSet();
-         segments.stream().forEach(bitSet::set);
+         segments.forEach((IntConsumer) bitSet::set);
          ByteBufUtil.writeOptionalArray(buf, bitSet.toByteArray());
       }
       ByteBufUtil.writeOptionalString(buf, filterConverterFactory);

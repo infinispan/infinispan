@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
 import org.infinispan.client.hotrod.DataFormat;
@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 
 /**
@@ -81,12 +82,11 @@ class SegmentKeyTracker implements KeyTracker {
       return missed;
    }
 
-   public void segmentsFinished(byte[] finishedSegments) {
+   public void segmentsFinished(IntSet finishedSegments) {
       if (trackSegments && finishedSegments != null) {
-         BitSet bitSet = BitSet.valueOf(finishedSegments);
          if (trace)
-            log.tracef("Removing completed segments %s", bitSet);
-         bitSet.stream().forEach(seg -> keysPerSegment.set(seg, null));
+            log.tracef("Removing completed segments %s", finishedSegments);
+         finishedSegments.forEach((IntConsumer) seg -> keysPerSegment.set(seg, null));
       }
    }
 }

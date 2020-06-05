@@ -9,12 +9,18 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 
+import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -150,10 +156,18 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
          RemoteCacheImpl spy = spy(remoteCache);
          doAnswer(invocation -> {
             Object[] params = invocation.getArguments();
-            CallbackRemoteIterator<Object> remoteCloseableIterator = new CallbackRemoteIterator<>(spy.getOperationsFactory(), (int) params[1], null, true, spy.getDataFormat());
-            remoteCloseableIterator.addCallback(callback, key);
-            remoteCloseableIterator.start();
-            return remoteCloseableIterator;
+            CloseableIterator<Map.Entry<Object, Object>> iterator = remoteCache.retrieveEntriesWithMetadata(null, (int) params[1]);
+            Marshaller marshaller = new GenericJBossMarshaller();
+            return new IteratorMapper<>(iterator, entry -> {
+               try {
+                  if (key.equals(marshaller.objectFromByteBuffer((byte[]) entry.getKey()))) {
+                     callback.iterationReached(key);
+                  }
+               } catch (IOException | ClassNotFoundException ex) {
+                  throw new RuntimeException(ex);
+               }
+               return entry;
+            });
          }).when(spy).retrieveEntriesWithMetadata(isNull(), anyInt());
          TestingUtil.replaceField(spy, "remoteCache", remoteStore, RemoteStore.class);
       });

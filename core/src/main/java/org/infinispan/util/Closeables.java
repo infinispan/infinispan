@@ -1,12 +1,7 @@
 package org.infinispan.util;
 
-import java.util.Iterator;
-
 import org.infinispan.commons.util.CloseableIterator;
 import org.reactivestreams.Publisher;
-
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.disposables.Disposable;
 
 /**
  * This class is used solely for the purpose of converting classes only in core to corresponding closeable variants.
@@ -24,28 +19,10 @@ public class Closeables {
     * @param fetchSize how many entries to hold in memory at once in preparation for the iterators consumption
     * @param <E> value type
     * @return an iterator that when closed will cancel the subscription
+    * @deprecated since 11.0 Please use {@link org.infinispan.commons.util.Closeables#iterator(Publisher, int)} instead.
     */
+   @Deprecated
    public static <E> CloseableIterator<E> iterator(Publisher<E> publisher, int fetchSize) {
-      // This iterator from rxjava3 implements Disposable akin to Closeable
-      Flowable<E> flowable = Flowable.fromPublisher(publisher);
-      @SuppressWarnings("checkstyle:forbiddenmethod")
-      Iterable<E> iterable = flowable.blockingIterable(fetchSize);
-      Iterator<E> iterator = iterable.iterator();
-      return new CloseableIterator<E>() {
-         @Override
-         public void close() {
-            ((Disposable) iterator).dispose();
-         }
-
-         @Override
-         public boolean hasNext() {
-            return iterator.hasNext();
-         }
-
-         @Override
-         public E next() {
-            return iterator.next();
-         }
-      };
+     return org.infinispan.commons.util.Closeables.iterator(publisher, fetchSize);
    }
 }

@@ -227,7 +227,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Ignoring error when closing iteration '%s'", id = 4061)
-   void ignoringErrorDuringIterationClose(String iterationId, @Cause Exception e);
+   void ignoringErrorDuringIterationClose(String iterationId, @Cause Throwable e);
 
    @LogMessage(level = DEBUG)
    @Message(value = "Started iteration '%s'", id = 4062)

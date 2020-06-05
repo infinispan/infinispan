@@ -2,10 +2,11 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Set;
+import java.util.function.IntConsumer;
 
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.commons.util.IntSet;
 
 import io.netty.buffer.ByteBuf;
 
@@ -17,13 +18,13 @@ public class Codec24 extends Codec23 {
    }
 
    @Override
-   public void writeIteratorStartOperation(ByteBuf buf, Set<Integer> segments, String filterConverterFactory, int batchSize, boolean metadata, byte[][] filterParameters) {
+   public void writeIteratorStartOperation(ByteBuf buf, IntSet segments, String filterConverterFactory, int batchSize, boolean metadata, byte[][] filterParameters) {
       if (segments == null) {
          ByteBufUtil.writeSignedVInt(buf, -1);
       } else {
          // TODO use a more compact BitSet implementation, like http://roaringbitmap.org/
          BitSet bitSet = new BitSet();
-         segments.stream().forEach(bitSet::set);
+         segments.forEach((IntConsumer) bitSet::set);
          ByteBufUtil.writeOptionalArray(buf, bitSet.toByteArray());
       }
       ByteBufUtil.writeOptionalString(buf, filterConverterFactory);
