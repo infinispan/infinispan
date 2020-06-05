@@ -49,7 +49,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.TransactionalCacheWriter;
 import org.infinispan.persistence.support.BatchModification;
-import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;

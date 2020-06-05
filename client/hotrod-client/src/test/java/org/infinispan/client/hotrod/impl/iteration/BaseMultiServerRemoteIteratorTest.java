@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -136,7 +137,10 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
       RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
       populateCache(CACHE_SIZE, this::newAccount, cache);
 
-      Set<Integer> filterBySegments = rangeAsSet(30, 40);
+      CacheTopologyInfo cacheTopologyInfo = cache.getCacheTopologyInfo();
+
+      // Request all segments from one node
+      Set<Integer> filterBySegments = cacheTopologyInfo.getSegmentsPerServer().values().iterator().next();
 
       Set<Entry<Object, Object>> entries = new HashSet<>();
       try (CloseableIterator<Entry<Object, Object>> iterator = cache.retrieveEntries(null, filterBySegments, 10)) {

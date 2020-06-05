@@ -37,7 +37,7 @@ import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
-import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;

@@ -41,6 +41,9 @@ public class Util {
    private Util() {
    }
 
+   public static <T> T await(CompletionStage<T> cf) {
+      return await(cf.toCompletableFuture());
+   }
 
    public static <T> T await(CompletableFuture<T> cf) {
       try {

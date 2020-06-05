@@ -27,7 +27,7 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
-import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;

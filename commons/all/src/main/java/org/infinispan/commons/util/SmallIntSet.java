@@ -66,6 +66,11 @@ public class SmallIntSet implements IntSet {
       return set;
    }
 
+   public static SmallIntSet from(byte[] bytes) {
+      BitSet bitSet = BitSet.valueOf(bytes);
+      return new SmallIntSet(bitSet);
+   }
+
    /**
     * Either converts the given set to an IntSet if it is one or creates a new IntSet and copies the contents
     * @param set
@@ -80,14 +85,14 @@ public class SmallIntSet implements IntSet {
    }
 
    public SmallIntSet() {
-      bitSet = new BitSet();
+      this(new BitSet());
    }
 
    /**
     * Create a new {@code IntSet} and pre-allocate space for elements {@code 0..initialRange-1}.
     */
    public SmallIntSet(int initialRange) {
-      bitSet = new BitSet(initialRange);
+      this(new BitSet(initialRange));
    }
 
    public SmallIntSet(Set<Integer> set) {
@@ -102,6 +107,10 @@ public class SmallIntSet implements IntSet {
          bitSet = new BitSet();
          set.forEach(bitSet::set);
       }
+   }
+
+   private SmallIntSet(BitSet bitSet) {
+      this.bitSet = bitSet;
    }
 
    @Override

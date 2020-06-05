@@ -8,6 +8,11 @@ import java.util.stream.BaseStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.reactivestreams.Publisher;
+
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.disposables.Disposable;
+
 /**
  * This class consists exclusively of static methods that operate on or return closeable interfaces.  This is helpful
  * when wanting to change a given interface to an appropriate closeable interface.
@@ -214,5 +219,38 @@ public class Closeables {
       public void close() {
          stream.close();
       }
+   }
+
+   /**
+    * Converts a {@link Publisher} to a {@link CloseableIterator} by utilizing items fetched into an array and
+    * refetched as they are consumed from the iterator. The iterator when closed will also close the underlying
+    * {@link org.reactivestreams.Subscription} when subscribed to the publisher.
+    * @param publisher the publisher to convert
+    * @param fetchSize how many entries to hold in memory at once in preparation for the iterators consumption
+    * @param <E> value type
+    * @return an iterator that when closed will cancel the subscription
+    */
+   public static <E> CloseableIterator<E> iterator(Publisher<E> publisher, int fetchSize) {
+      // This iterator from rxjava3 implements Disposable akin to Closeable
+      Flowable<E> flowable = Flowable.fromPublisher(publisher);
+      @SuppressWarnings("checkstyle:forbiddenmethod")
+      Iterable<E> iterable = flowable.blockingIterable(fetchSize);
+      Iterator<E> iterator = iterable.iterator();
+      return new CloseableIterator<E>() {
+         @Override
+         public void close() {
+            ((Disposable) iterator).dispose();
+         }
+
+         @Override
+         public boolean hasNext() {
+            return iterator.hasNext();
+         }
+
+         @Override
+         public E next() {
+            return iterator.next();
+         }
+      };
    }
 }

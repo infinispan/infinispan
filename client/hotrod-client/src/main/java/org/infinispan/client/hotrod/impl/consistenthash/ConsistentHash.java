@@ -27,4 +27,7 @@ public interface ConsistentHash {
 
    Map<SocketAddress, Set<Integer>> getSegmentsByServer();
 
+   default Map<SocketAddress, Set<Integer>> getPrimarySegmentsByServer() {
+      return null;
+   }
 }

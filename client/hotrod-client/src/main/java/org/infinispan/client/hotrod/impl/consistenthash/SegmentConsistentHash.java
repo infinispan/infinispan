@@ -64,7 +64,17 @@ public final class SegmentConsistentHash implements ConsistentHash {
       Map<SocketAddress, Set<Integer>> map = new HashMap<>();
       IntStream.range(0, segmentOwners.length).forEach(seg -> {
          SocketAddress[] owners = segmentOwners[seg];
-         stream(owners).forEach(s -> map.computeIfAbsent(s, k -> new HashSet<>(owners.length)).add(seg));
+         stream(owners).forEach(s -> map.computeIfAbsent(s, k -> new HashSet<>()).add(seg));
+      });
+      return Immutables.immutableMapWrap(map);
+   }
+
+   @Override
+   public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByServer() {
+      Map<SocketAddress, Set<Integer>> map = new HashMap<>();
+      IntStream.range(0, segmentOwners.length).forEach(seg -> {
+         SocketAddress[] owners = segmentOwners[seg];
+         map.computeIfAbsent(owners[0], k -> new HashSet<>()).add(seg);
       });
       return Immutables.immutableMapWrap(map);
    }
