@@ -1,6 +1,7 @@
 package org.infinispan.rest.resources;
 
 import static org.infinispan.rest.framework.Method.GET;
+import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
 import java.util.Map;
@@ -34,7 +35,7 @@ public class LoginResource implements ResourceHandler {
    public Invocations getInvocations() {
       return new Invocations.Builder()
             .invocation().methods(GET).path("/v2/login").withAction("config").anonymous(true).handleWith(this::loginConfiguration)
-            .invocation().methods(GET).path("/v2/login").withAction("login").handleWith(this::login)
+            .invocation().methods(GET, POST).path("/v2/login").withAction("login").handleWith(this::login)
             .create();
    }
 

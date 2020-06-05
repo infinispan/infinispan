@@ -2,6 +2,7 @@ package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
@@ -62,7 +63,7 @@ public class ServerResource implements ResourceHandler {
             .invocation().methods(GET).path("/v2/server/config").handleWith(this::config)
             .invocation().methods(GET).path("/v2/server/env").handleWith(this::env)
             .invocation().methods(GET).path("/v2/server/memory").handleWith(this::memory)
-            .invocation().methods(GET).path("/v2/server/").withAction("stop").handleWith(this::stop)
+            .invocation().methods(GET, POST).path("/v2/server/").withAction("stop").handleWith(this::stop)
             .invocation().methods(GET).path("/v2/server/threads").handleWith(this::threads)
             .invocation().methods(GET).path("/v2/server/report").handleWith(this::report)
             .invocation().methods(GET).path("/v2/server/cache-managers").handleWith(this::cacheManagers)
@@ -148,7 +149,9 @@ public class ServerResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> stop(RestRequest restRequest) {
       invocationHelper.getServer().serverStop(Collections.emptyList());
-      return CompletableFuture.completedFuture(new NettyRestResponse.Builder().build());
+
+      return CompletableFuture.completedFuture(new NettyRestResponse.Builder()
+            .status(restRequest.method().equals(POST) ? NO_CONTENT : OK).build());
    }
 
    private CompletionStage<RestResponse> config(RestRequest restRequest) {

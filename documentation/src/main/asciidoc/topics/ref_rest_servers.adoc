@@ -139,11 +139,11 @@ routing, threads, in addition to configuration and log files.
 
 [id='rest_v2_server_stop']
 = Stopping {brandname} Servers
-Stop {brandname} servers with `GET` requests.
+Stop {brandname} servers with `POST` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/server?action=stop
+POST /rest/v2/server?action=stop
 ----
 
 {brandname} responds with `200(OK)` and then stops running.
