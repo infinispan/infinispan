@@ -1,4 +1,4 @@
-package org.infinispan.util.logging;
+package org.infinispan.commons.util.logging;
 
 /**
  * This exception is used to add stack trace information to exceptions as they move from one thread to another.
