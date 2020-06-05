@@ -1,6 +1,6 @@
 package org.infinispan.statetransfer;
 
-import static org.infinispan.reactive.RxJavaInterop.completionStageToCompletable;
+import static org.infinispan.commons.reactive.RxJavaInterop.completionStageToCompletable;
 
 import java.util.ArrayList;
 import java.util.Collection;

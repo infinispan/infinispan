@@ -4,22 +4,28 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.infinispan.test.TestingUtil;
+import org.mockito.Mockito;
+import org.reactivestreams.Publisher;
 import org.testng.annotations.Test;
+
+import io.reactivex.Flowable;
 
 /**
  * @author gustavonalle
@@ -44,7 +50,7 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
 
    private static class TestSegmentKeyTracker implements KeyTracker {
 
-      List<Integer> finished = new ArrayList<>();
+      final IntSet finished = IntSets.mutableEmptySet();
 
       @Override
       public boolean track(byte[] key, short status, ClassWhiteList whitelist) {
@@ -52,9 +58,8 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
       }
 
       @Override
-      public void segmentsFinished(byte[] finishedSegments) {
-         BitSet bitSet = BitSet.valueOf(finishedSegments);
-         bitSet.stream().forEach(finished::add);
+      public void segmentsFinished(IntSet finishedSegments) {
+         finished.addAll(finishedSegments);
       }
 
       @Override
@@ -68,8 +73,9 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
       populateCache(CACHE_SIZE, this::newAccount, cache);
       TestSegmentKeyTracker testSegmentKeyTracker = new TestSegmentKeyTracker();
 
-      try (CloseableIterator<Map.Entry<Object, Object>> iterator = cache.retrieveEntries(null, 3)) {
-         TestingUtil.replaceField(testSegmentKeyTracker, "segmentKeyTracker", iterator, RemoteCloseableIterator.class);
+      Publisher<Map.Entry<Object, Object>> publisher = cache.publishEntries(null, null, null, 3);
+      try (CloseableIterator<Map.Entry<Object, Object>> iterator = Closeables.iterator(publisher, 3)) {
+         TestingUtil.replaceField(testSegmentKeyTracker, "segmentKeyTracker", publisher, RemotePublisher.class);
          while (iterator.hasNext()) iterator.next();
          assertEquals(60, testSegmentKeyTracker.finished.size());
       }
@@ -89,10 +95,21 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
    @Test
    public void testIterationRouting() throws Exception {
       for (int i = 0; i < clients.size(); i++) {
+         int clientOffset = i;
          RemoteCacheManager client = client(i);
-         try (CloseableIterator<Map.Entry<Object, Object>> ignored = client.getCache().retrieveEntries(null, 10)) {
-            assertIterationActiveOnlyOnServer(i);
-         }
+         KeyTracker segmentKeyTracker = Mockito.mock(KeyTracker.class);
+         Mockito.when(segmentKeyTracker.track(Mockito.any(), Mockito.anyShort(), Mockito.any()))
+               .then(invocation -> {
+                  assertIterationActiveOnlyOnServer(clientOffset);
+                  return invocation.callRealMethod();
+               });
+         Publisher<Map.Entry<Object, Object>> publisher = client.getCache().publishEntries(null, null, null, 10);
+         TestingUtil.replaceField(segmentKeyTracker, "segmentKeyTracker", publisher, RemotePublisher.class);
+
+         Flowable.fromPublisher(publisher)
+               .to(RxJavaInterop.flowableToCompletionStage())
+               .toCompletableFuture()
+               .get(10, TimeUnit.SECONDS);
       }
    }
 

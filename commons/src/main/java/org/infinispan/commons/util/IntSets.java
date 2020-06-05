@@ -65,8 +65,16 @@ public class IntSets {
          case 1:
             return new SingletonIntSet(integerSet.iterator().next());
          default:
-            return new SmallIntSet(integerSet);
+            return SmallIntSet.from(integerSet);
       }
+   }
+
+   public static IntSet from(byte[] bytes) {
+      int size = bytes.length;
+      if (size == 0) {
+         return EmptyIntSet.getInstance();
+      }
+      return SmallIntSet.from(bytes);
    }
 
    /**

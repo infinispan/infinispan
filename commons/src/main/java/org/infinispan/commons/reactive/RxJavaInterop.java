@@ -1,4 +1,4 @@
-package org.infinispan.reactive;
+package org.infinispan.commons.reactive;
 
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -13,6 +13,7 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.internal.functions.Functions;
 import io.reactivex.processors.AsyncProcessor;
@@ -28,6 +29,34 @@ import io.reactivex.subjects.SingleSubject;
  */
 public class RxJavaInterop {
    private RxJavaInterop() { }
+
+   /**
+    * Provides a {@link Function} that can be used to convert from an instance of {@link java.util.Map.Entry} to
+    * the key of the entry. This is useful for the instance passed to a method like {@link Flowable#map(Function)}.
+    * @param <K> key type
+    * @param <V> value type
+    * @return rxjava function to convert from a Map.Entry to its key.
+    */
+   public static <K, V> Function<Map.Entry<K, V>, K> entryToKeyFunction() {
+      return (Function) entryToKeyFunction;
+   }
+
+   public static <R> Function<? super Throwable, Publisher<R>> cacheExceptionWrapper() {
+      return (Function) wrapThrowable;
+   }
+
+   public static <R> Function<R, R> identityFunction() {
+      return (Function) identityFunction;
+   }
+
+   public static <R> Consumer<R> emptyConsumer() {
+      return (Consumer) emptyConsumer;
+   }
+
+   private static final Function<Object, Object> identityFunction = i -> i;
+   private static final Consumer<Object> emptyConsumer = ignore -> {};
+   private static final Function<Map.Entry<Object, Object>, Object> entryToKeyFunction = Map.Entry::getKey;
+   private static final Function<? super Throwable, Publisher<?>> wrapThrowable = t -> Flowable.error(Util.rewrapAsCacheException(t));
 
    public static Function<Completable, CompletionStage<Void>> completableToCompletionStage() {
       return completableToCompletionStage;
@@ -128,26 +157,11 @@ public class RxJavaInterop {
             .doOnTerminate(stream::close);
    }
 
-   /**
-    * Provides a {@link Function} that can be used to convert from an instance of {@link java.util.Map.Entry} to
-    * the key of the entry. This is useful for the instance passed to a method like {@link Flowable#map(Function)}.
-    * @param <K> key type
-    * @param <V> value type
-    * @return rxjava function to convert from a Map.Entry to its key.
-    */
-   public static <K, V> Function<Map.Entry<K, V>, K> entryToKeyFunction() {
-      return (Function) entryToKeyFunction;
-   }
-
    private static final Function<Completable, CompletionStage<Void>> completableToCompletionStage = completable -> {
       CompletableFuture<Void> cf = new CompletableFuture<>();
       completable.subscribe(() -> cf.complete(null), cf::completeExceptionally);
       return cf;
    };
-
-   public static <R> Function<? super Throwable, Publisher<R>> cacheExceptionWrapper() {
-      return (Function) wrapThrowable;
-   }
 
    private static final Function<Single<Object>, CompletionStage<Object>> singleToCompletionStage = single -> {
       CompletableFuture<Object> cf = new CompletableFuture<>();
@@ -182,20 +196,16 @@ public class RxJavaInterop {
       return asyncProcessor;
    };
 
-   private static final Function<Map.Entry<Object, Object>, Object> entryToKeyFunction = Map.Entry::getKey;
-
    private static final java.util.function.Function<CompletionStage<?>, Completable> completionStageCompletableFunction =
-      completionStage -> {
-         CompletableSubject cs = CompletableSubject.create();
-         completionStage.whenComplete((o, throwable) -> {
-            if (throwable != null) {
-               cs.onError(throwable);
-            } else {
-               cs.onComplete();
-            }
-         });
-         return cs;
-      };
-
-   private static final Function<? super Throwable, Publisher<?>> wrapThrowable = t -> Flowable.error(Util.rewrapAsCacheException(t));
+         completionStage -> {
+            CompletableSubject cs = CompletableSubject.create();
+            completionStage.whenComplete((o, throwable) -> {
+               if (throwable != null) {
+                  cs.onError(throwable);
+               } else {
+                  cs.onComplete();
+               }
+            });
+            return cs;
+         };
 }

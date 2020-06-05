@@ -22,8 +22,8 @@ import java.util.stream.Collector;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.Util;
-import org.infinispan.reactive.RxJavaInterop;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;

@@ -38,7 +38,7 @@ import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
 import org.infinispan.client.hotrod.filter.Filters;
-import org.infinispan.client.hotrod.impl.iteration.RemoteCloseableIterator;
+import org.infinispan.client.hotrod.impl.iteration.RemotePublisher;
 import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
 import org.infinispan.client.hotrod.impl.operations.ClearOperation;
 import org.infinispan.client.hotrod.impl.operations.ContainsKeyOperation;
@@ -73,6 +73,9 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.query.dsl.Query;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -221,38 +224,43 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize) {
+      Publisher<Entry<Object, Object>> remotePublisher = publishEntries(filterConverterFactory, filterConverterParams, segments, batchSize);
+      return Closeables.iterator(remotePublisher, batchSize);
+   }
+
+   @Override
+   public Publisher<Map.Entry<Object, Object>> publishEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize) {
       assertRemoteCacheManagerIsStarted();
       if (segments != null && segments.isEmpty()) {
-         return Closeables.iterator(Collections.emptyIterator());
+         return Flowable.empty();
       }
       byte[][] params = marshallParams(filterConverterParams);
-      RemoteCloseableIterator remoteCloseableIterator = new RemoteCloseableIterator(operationsFactory,
-            defaultMarshaller, filterConverterFactory, params, segments, batchSize, false, dataFormat);
-      remoteCloseableIterator.start();
-      return remoteCloseableIterator;
-   }
-
-   @Override
-   public CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Set<Integer> segments, int batchSize) {
-      return retrieveEntries(filterConverterFactory, null, segments, batchSize);
-   }
-
-   @Override
-   public CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, int batchSize) {
-      return retrieveEntries(filterConverterFactory, null, batchSize);
+      return new RemotePublisher<>(operationsFactory, defaultMarshaller, filterConverterFactory, params, segments,
+            batchSize, false, dataFormat);
    }
 
    @Override
    public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
+      Publisher<Entry<Object, Object>> remotePublisher = publishEntriesByQuery(filterQuery, segments, batchSize);
+      return Closeables.iterator(remotePublisher, batchSize);
+   }
+
+   @Override
+   public Publisher<Entry<Object, Object>> publishEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
       Object[] factoryParams = makeFactoryParams(filterQuery);
-      return retrieveEntries(Filters.ITERATION_QUERY_FILTER_CONVERTER_FACTORY_NAME, factoryParams, segments, batchSize);
+      return publishEntries(Filters.ITERATION_QUERY_FILTER_CONVERTER_FACTORY_NAME, factoryParams, segments, batchSize);
    }
 
    @Override
    public CloseableIterator<Entry<Object, MetadataValue<Object>>> retrieveEntriesWithMetadata(Set<Integer> segments, int batchSize) {
-      RemoteCloseableIterator remoteCloseableIterator = new RemoteCloseableIterator(operationsFactory, defaultMarshaller, batchSize, segments, true, dataFormat);
-      remoteCloseableIterator.start();
-      return remoteCloseableIterator;
+      Publisher<Entry<Object, MetadataValue<Object>>> remotePublisher = publishEntriesWithMetadata(segments, batchSize);
+      return Closeables.iterator(remotePublisher, batchSize);
+   }
+
+   @Override
+   public Publisher<Entry<Object, MetadataValue<Object>>> publishEntriesWithMetadata(Set<Integer> segments, int batchSize) {
+      return new RemotePublisher<>(operationsFactory, defaultMarshaller, null, null, segments,
+            batchSize, true, dataFormat);
    }
 
    @Override

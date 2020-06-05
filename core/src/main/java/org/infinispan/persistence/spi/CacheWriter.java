@@ -4,7 +4,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;

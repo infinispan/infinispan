@@ -3,8 +3,8 @@ package org.infinispan.stream.impl.intops.object;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.stream.impl.intops.FlatMappingOperation;
 
 import io.reactivex.Flowable;

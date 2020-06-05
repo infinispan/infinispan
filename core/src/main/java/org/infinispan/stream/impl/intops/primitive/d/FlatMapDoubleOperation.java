@@ -4,7 +4,7 @@ import java.util.function.DoubleFunction;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
-import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.stream.impl.intops.FlatMappingOperation;
 
 import io.reactivex.Flowable;

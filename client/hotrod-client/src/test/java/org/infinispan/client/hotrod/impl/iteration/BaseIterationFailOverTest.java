@@ -37,9 +37,15 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest i
 
    public abstract ConfigurationBuilder getCacheConfiguration();
 
+   @Override
+   protected int maxRetries() {
+      // We kill one node in many tests - let it failover in that case
+      return 1;
+   }
+
    @Test(groups = "functional")
    public void testFailOver() throws InterruptedException {
-      int cacheSize = 10000;
+      int cacheSize = 1_000;
       int batch = 17;
       RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
       populateCache(cacheSize, this::newAccount, cache);
@@ -51,7 +57,7 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest i
          entries.add(next);
       }
 
-      killIterationServer();
+      killAnIterationServer();
 
       while (iterator.hasNext()) {
          Map.Entry<Object, Object> next = iterator.next();
@@ -63,14 +69,11 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest i
 
       Set<Integer> keys = extractKeys(entries);
       assertEquals(rangeAsSet(0, cacheSize), keys);
-
    }
 
-   protected void killIterationServer() {
+   protected void killAnIterationServer() {
       servers.stream()
             .filter(s -> s.getIterationManager().activeIterations() > 0)
-            .forEach(HotRodClientTestingUtil::killServers);
+            .findFirst().ifPresent(HotRodClientTestingUtil::killServers);
    }
-
-
 }

@@ -8,6 +8,9 @@ import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -59,6 +62,37 @@ public final class TopologyInfo {
          return Immutables.immutableMapWrap(
                servers.get(key).stream().collect(toMap(identity(), s -> segments.orElse(Collections.emptySet())))
          );
+      }
+   }
+
+   public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByServer(byte[] cacheName) {
+      WrappedByteArray key = new WrappedByteArray(cacheName);
+      ConsistentHash consistentHash = consistentHashes.get(key);
+      if (consistentHash != null) {
+         return consistentHash.getPrimarySegmentsByServer();
+      } else {
+         Optional<Integer> numSegments = Optional.ofNullable(segmentsByCache.get(key));
+         Collection<SocketAddress> cacheServers = servers.get(key);
+
+         if (cacheServers.isEmpty()) {
+            return Collections.emptyMap();
+         }
+
+         Optional<Map<SocketAddress, Set<Integer>>> targets = numSegments.map(maxSegment -> {
+            Map<SocketAddress, Set<Integer>> addressSegments = new HashMap<>(cacheServers.size());
+            Iterator<SocketAddress> addressIterator = cacheServers.iterator();
+            for (int i = 0; i < maxSegment; ++i) {
+               SocketAddress nextAddress;
+               if (!addressIterator.hasNext()) {
+                  addressIterator = cacheServers.iterator();
+               }
+               nextAddress = addressIterator.next();
+               addressSegments.computeIfAbsent(nextAddress, ignore -> new HashSet<>()).add(i);
+            }
+            return addressSegments;
+         });
+
+         return Immutables.immutableMapWrap(targets.orElse(Collections.emptyMap()));
       }
    }
 

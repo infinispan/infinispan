@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.iteration.SegmentFilteredFailOverTest")
 public class SegmentFilteredFailOverTest extends DistFailOverRemoteIteratorTest {
 
-   static final int ENTRIES = 100;
+   static final int ENTRIES = 1_000;
 
    @Override
    public void testFailOver() throws InterruptedException {
@@ -35,13 +35,13 @@ public class SegmentFilteredFailOverTest extends DistFailOverRemoteIteratorTest 
       long expectedCount = cache.keySet().stream().filterKeySegments(segments).count();
 
       int actualCount = 0;
-      try (CloseableIterator<Entry<Object, Object>> iterator = remoteCache.retrieveEntries(null, segments, 100)) {
+      try (CloseableIterator<Entry<Object, Object>> iterator = remoteCache.retrieveEntries(null, segments, 10)) {
          for (int i = 0; i < ENTRIES / 5; i++) {
             iterator.next();
             actualCount++;
          }
 
-         killIterationServer();
+         killAnIterationServer();
 
          while (iterator.hasNext()) {
             iterator.next();

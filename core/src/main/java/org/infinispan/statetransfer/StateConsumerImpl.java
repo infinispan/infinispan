@@ -1,5 +1,7 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.commons.reactive.RxJavaInterop.completableToCompletionStage;
+import static org.infinispan.commons.reactive.RxJavaInterop.completionStageToCompletable;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
 import static org.infinispan.context.Flag.PUT_FOR_STATE_TRANSFER;
@@ -10,7 +12,6 @@ import static org.infinispan.context.Flag.SKIP_SHARED_CACHE_STORE;
 import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
-import static org.infinispan.reactive.RxJavaInterop.completionStageToCompletable;
 import static org.infinispan.util.concurrent.CompletionStages.handleAndCompose;
 import static org.infinispan.util.concurrent.CompletionStages.ignoreValue;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
@@ -80,7 +81,6 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -1125,7 +1125,7 @@ public class StateConsumerImpl implements StateConsumer {
                         removedEntriesCounter.addAndGet(keysToRemove.size());
                         return completionStageToCompletable(invalidateBatch(keysToRemove));
                      })
-                     .to(RxJavaInterop.completableToCompletionStage())
+                     .to(completableToCompletionStage())
                      .thenRun(() -> {
                         if (trace) log.tracef("Removed %d keys, data container now has %d keys",
                                               removedEntriesCounter.get(), dataContainer.sizeIncludingExpired());

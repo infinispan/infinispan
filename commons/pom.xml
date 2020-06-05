@@ -35,6 +35,11 @@
       </dependency>
 
       <dependency>
+         <groupId>io.reactivex.rxjava2</groupId>
+         <artifactId>rxjava</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.spec.javax.transaction</groupId>
          <artifactId>jboss-transaction-api_1.2_spec</artifactId>
          <scope>provided</scope>

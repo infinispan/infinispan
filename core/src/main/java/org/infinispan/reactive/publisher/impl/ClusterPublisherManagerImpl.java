@@ -27,6 +27,7 @@ import java.util.function.Supplier;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -45,7 +46,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.MarshallableFunctions;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.commands.batch.CancelPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;

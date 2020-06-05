@@ -19,6 +19,8 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -65,8 +67,9 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
          finishedSegments = ByteBufUtil.readArray(buf);
          entriesSize = ByteBufUtil.readVInt(buf);
          if (entriesSize == 0) {
-            segmentKeyTracker.segmentsFinished(finishedSegments);
-            complete(new IterationNextResponse(status, Collections.emptyList(), false));
+            IntSet finishedSegmentSet = IntSets.from(finishedSegments);
+            segmentKeyTracker.segmentsFinished(finishedSegmentSet);
+            complete(new IterationNextResponse(status, Collections.emptyList(), finishedSegmentSet, false));
             return;
          }
          entries = new ArrayList<>(entriesSize);
@@ -115,11 +118,12 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
          }
          decoder.checkpoint();
       }
-      segmentKeyTracker.segmentsFinished(finishedSegments);
+      IntSet finishedSegmentSet = IntSets.from(finishedSegments);
+      segmentKeyTracker.segmentsFinished(finishedSegmentSet);
       if (HotRodConstants.isInvalidIteration(status)) {
          throw HOTROD.errorRetrievingNext(new String(iterationId, HOTROD_STRING_CHARSET));
       }
-      complete(new IterationNextResponse(status, entries, entriesSize > 0));
+      complete(new IterationNextResponse(status, entries, finishedSegmentSet, entriesSize > 0));
    }
 
    private Object unmarshallValue(byte[] bytes, short status) {

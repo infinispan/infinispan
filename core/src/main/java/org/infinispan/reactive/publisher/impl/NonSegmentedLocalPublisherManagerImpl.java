@@ -5,10 +5,10 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.infinispan.CacheSet;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.commands.reduction.PublisherResult;
 import org.infinispan.reactive.publisher.impl.commands.reduction.SegmentPublisherResult;
 import org.reactivestreams.Publisher;

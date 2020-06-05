@@ -22,6 +22,7 @@ import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.query.dsl.Query;
+import org.reactivestreams.Publisher;
 
 /**
  * Base class for building wrappers over remote cache instances.
@@ -566,13 +567,28 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
+   public Publisher<Entry<Object, Object>> publishEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize) {
+      return delegate.publishEntries(filterConverterFactory, filterConverterParams, segments, batchSize);
+   }
+
+   @Override
    public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
       return delegate.retrieveEntriesByQuery(filterQuery, segments, batchSize);
    }
 
    @Override
+   public Publisher<Entry<Object, Object>> publishEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
+      return delegate.publishEntriesByQuery(filterQuery, segments, batchSize);
+   }
+
+   @Override
    public CloseableIterator<Entry<Object, MetadataValue<Object>>> retrieveEntriesWithMetadata(Set<Integer> segments, int batchSize) {
       return delegate.retrieveEntriesWithMetadata(segments, batchSize);
+   }
+
+   @Override
+   public Publisher<Entry<Object, MetadataValue<Object>>> publishEntriesWithMetadata(Set<Integer> segments, int batchSize) {
+      return delegate.publishEntriesWithMetadata(segments, batchSize);
    }
 
    @Override

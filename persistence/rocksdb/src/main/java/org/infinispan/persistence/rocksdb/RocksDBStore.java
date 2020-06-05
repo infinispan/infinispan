@@ -48,7 +48,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.rxjava.FlowableFromIntSetFunction;

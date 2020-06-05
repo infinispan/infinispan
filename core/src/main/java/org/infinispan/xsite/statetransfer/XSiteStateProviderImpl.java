@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
@@ -35,7 +36,6 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.RetryOnFailureXSiteCommand;
