@@ -124,10 +124,10 @@ public class ResponseAssertion {
       return this;
    }
 
-   public ResponseAssertion hasHeaderWithValues(String header, CharSequence... headers) {
-      Set<String> expected = Arrays.stream(headers).map(c -> c.toString().toLowerCase()).collect(Collectors.toSet());
+   public ResponseAssertion hasHeaderWithValues(String header, String... headers) {
+      Set<String> expected = Arrays.stream(headers).map(String::toLowerCase).collect(Collectors.toSet());
       for (String headerValue : response.getHeaders().get(header).split(",")) {
-         assertTrue(expected.contains(headerValue.toLowerCase()));
+         assertTrue(headerValue + " must be present", expected.contains(headerValue.toLowerCase()));
       }
       return this;
    }
