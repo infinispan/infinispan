@@ -24,7 +24,7 @@ import org.infinispan.remoting.transport.XSiteAsyncAckListener;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.logging.TraceException;
+import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.xsite.XSiteBackup;
 import org.jgroups.UnreachableException;
 
