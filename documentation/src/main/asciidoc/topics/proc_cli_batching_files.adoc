@@ -37,4 +37,7 @@ hello
 [disconnected]>
 ----
 
-NOTE: CLI batch files support system property expansion: strings of the form `${property}` will be replaced with the value of the `property` system property.
+[NOTE]
+====
+CLI batch files support system property expansion: strings of the form `${property}` will be replaced with the value of the `property` system property.
+====
