@@ -97,7 +97,7 @@ public class CliIT {
    public void testCliBatch() {
       AeshTestShell shell = new AeshTestShell();
       CLI.main(shell, new String[]{"-f", this.getClass().getResource("/cli/batch.cli").getPath()});
-      shell.assertContains("Hi CLI");
+      shell.assertContains("Hi CLI running on " + System.getProperty("os.arch"));
       shell.assertContains("batch1");
    }
 

@@ -1,4 +1,4 @@
-echo Hi CLI
+echo Hi CLI running on ${os.arch}
 connect
 ls
 cd caches

@@ -26,6 +26,11 @@ final class SecurityActions {
          public String getProperty(final String name) {
             return System.getProperty(name);
          }
+
+         @Override
+         public String getEnv(String name) {
+            return System.getenv(name);
+         }
       };
 
       SysProps PRIVILEGED = new SysProps() {
@@ -38,11 +43,18 @@ final class SecurityActions {
          public String getProperty(final String name) {
             return AccessController.doPrivileged((PrivilegedAction<String>) () -> System.getProperty(name));
          }
+
+         @Override
+         public String getEnv(String name) {
+            return AccessController.doPrivileged((PrivilegedAction<String>) () -> System.getenv(name));
+         }
       };
 
       String getProperty(String name, String defaultValue);
 
       String getProperty(String name);
+
+      String getEnv(String name);
    }
 
    static String getProperty(String name, String defaultValue) {
@@ -57,6 +69,13 @@ final class SecurityActions {
          return SysProps.NON_PRIVILEGED.getProperty(name);
 
       return SysProps.PRIVILEGED.getProperty(name);
+   }
+
+   static String getEnv(String name) {
+      if (System.getSecurityManager() == null)
+         return SysProps.NON_PRIVILEGED.getEnv(name);
+
+      return SysProps.PRIVILEGED.getEnv(name);
    }
 
    private static <T> T doPrivileged(PrivilegedAction<T> action) {
