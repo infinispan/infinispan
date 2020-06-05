@@ -12,8 +12,6 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
@@ -33,6 +31,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @since 11.0
@@ -206,7 +207,7 @@ public class RollingUpgradeIT {
          try {
             JsonNode jsonNode = MAPPER.readTree(response);
             Set<String> names = new HashSet<>();
-            jsonNode.get("cluster_members").getElements().forEachRemaining(n -> names.add(n.asText()));
+            jsonNode.get("cluster_members").elements().forEachRemaining(n -> names.add(n.asText()));
             return names;
          } catch (IOException e) {
             Assert.fail(e.getMessage());
