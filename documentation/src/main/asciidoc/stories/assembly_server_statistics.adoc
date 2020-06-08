@@ -9,8 +9,6 @@ include::{topics}/proc_enabling_statistics.adoc[leveloffset=+1]
 include::{topics}/proc_enabling_metrics.adoc[leveloffset=+1]
 include::{topics}/proc_collecting_metrics.adoc[leveloffset=+1]
 include::{topics}/proc_enabling_jmx.adoc[leveloffset=+1]
-include::{topics}/proc_naming_cache_managers.adoc[leveloffset=+2]
-include::{topics}/proc_registering_jmx_mbeans.adoc[leveloffset=+2]
 include::{topics}/ref_jmx_mbeans.adoc[leveloffset=+2]
 
 // Restore the parent context.

@@ -5,6 +5,7 @@ Bring sites online and offline. Transfer cache state to remote sites.
 
 include::assembly_xsite_cli.adoc[leveloffset=+1]
 include::assembly_xsite_rest.adoc[leveloffset=+1]
+include::assembly_xsite_jmx.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

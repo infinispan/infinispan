@@ -1,13 +1,12 @@
-[id='enable_statistics']
+[id='enable_statistics-{context}']
 = Enabling {brandname} Statistics
-{brandname} lets you enable statistics for Cache Managers and specific cache
-instances.
+{brandname} lets you enable statistics for Cache Managers and caches. However,
+enabling statistics for a Cache Manager does not enable statistics for the
+caches that it controls. You must explicitly enable statistics for your caches.
 
 [NOTE]
 ====
-{brandname} servers provide default `infinispan.xml` configuration files that
-enable statistics for Cache Managers. If you use the default {brandname} server
-configuration, you only need to enable statistics when you configure caches.
+{brandname} server enables statistics for Cache Managers by default.
 ====
 
 .Procedure
@@ -23,8 +22,8 @@ configuration, you only need to enable statistics when you configure caches.
 </cache-container>
 ----
 
-<1> collects statistics about the Cache Manager.
-<2> collects statistics about the named cache.
+<1> Enables statistics for the Cache Manager.
+<2> Enables statistics for the named cache.
 
 .Programmatically
 
@@ -41,11 +40,5 @@ Configuration config = new ConfigurationBuilder()
   .build();
 ----
 
-<1> collects statistics about the Cache Manager.
-<2> collects statistics about the named cache.
-
-[NOTE]
-====
-Enabling statistics for Cache Managers does not globally enable statistics for
-caches. This configuration only collects statistics for the Cache Manager.
-====
+<1> Enables statistics for the Cache Manager.
+<2> Enables statistics for the named cache.

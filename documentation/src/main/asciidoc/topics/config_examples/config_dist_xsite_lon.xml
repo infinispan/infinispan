@@ -2,4 +2,4 @@
   <backups>
     <backup site="LON" strategy="SYNC" />
   </backups>
-</replicated-cache>
+</distributed-cache>

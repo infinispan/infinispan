@@ -1,4 +1,4 @@
-[id='conflicting_entries-{context}']
+[id='conflict_resolution-{context}']
 = Concurrent Writes and Conflicting Entries
 Conflicting entries can occur with Active/Active site configurations if clients
 write to the same entries at the same time but at different sites.

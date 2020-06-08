@@ -1,16 +1,6 @@
-[id='configure_metrics']
+[id='configure_metrics-{context}']
 = Enabling {brandname} Metrics
-{brandname} is compatible with the Eclipse MicroProfile Metrics API and can
-generate gauge and histogram metrics.
-
-* {brandname} metrics are provided at the `vendor` scope. Metrics related to
-the JVM are provided in the `base` scope for {brandname} server.
-* Gauges provide values such as the average number of nanoseconds for write
-operations or JVM uptime. Gauges are enabled by default. If you enable
-statistics, {brandname} automatically generates gauges.
-* Histograms provide details about operation execution times such as read,
-write, and remove times. {brandname} does not enable histograms by default
-because they require additional computation.
+Configure {brandname} to export gauges and histograms.
 
 .Procedure
 
@@ -25,6 +15,9 @@ because they require additional computation.
 </cache-container>
 ----
 
+<1> Computes and collects statistics about the Cache Manager.
+<2> Exports collected statistics as gauge and histogram metrics.
+
 .Programmatically
 
 [source,java]
@@ -35,10 +28,5 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
   .build();
 ----
 
-<1> computes and collects statistics about the Cache Manager.
-<2> exports collected statistics as gauge and histogram metrics.
-
-.Reference
-
-* link:https://github.com/eclipse/microprofile-metrics/blob/master/README.adoc[Eclipse MicroProfile Metrics]
-* link:#enable_statistics[Enabling {brandname} Statistics]
+<1> Computes and collects statistics about the Cache Manager.
+<2> Exports collected statistics as gauge and histogram metrics.
