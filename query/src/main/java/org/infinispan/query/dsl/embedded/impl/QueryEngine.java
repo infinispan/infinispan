@@ -761,9 +761,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
 
    private IndexedQueryMode detectQueryMode() {
       CacheMode cacheMode = cache.getCacheConfiguration().clustering().cacheMode();
-      boolean localCache = !cacheMode.isClustered();
-      boolean replicated = cacheMode.isReplicated();
-      return localCache || replicated ? IndexedQueryMode.FETCH : IndexedQueryMode.BROADCAST;
+      return !cacheMode.isClustered() || cacheMode.isReplicated() ? IndexedQueryMode.FETCH : IndexedQueryMode.BROADCAST;
    }
 
    /**
