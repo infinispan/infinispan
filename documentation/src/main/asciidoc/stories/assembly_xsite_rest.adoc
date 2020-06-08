@@ -1,6 +1,6 @@
 [id='xsite_operations_rest']
-:context: xsite
-= Cross-Site Operations with the REST API
+:context: rest-ops
+= Performing Cross-Site Operations with the REST API
 {brandname} servers provide a REST API that allows you to perform cross-site
 operations.
 

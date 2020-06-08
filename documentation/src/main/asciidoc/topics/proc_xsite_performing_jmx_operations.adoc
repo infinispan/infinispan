@@ -1,0 +1,25 @@
+[id='performing_jmx_operations-{context}']
+= Performing Cross-Site Operations
+Perform cross-site operations via JMX clients.
+
+.Prerequisites
+
+* Configure {brandname} to register JMX MBeans
+
+.Procedure
+
+. Connect to {brandname} with any JMX client.
+. Invoke operations from the following MBeans:
++
+* `XSiteAdmin` provides cross-site operations for caches.
+* `GlobalXSiteAdminOperations` provides cross-site operations for Cache Managers.
++
+For example, to bring sites back online, invoke `bringSiteOnline(siteName)`.
+
+See the _{brandname} JMX Components_ documentation for details about available
+cross-site operations.
+
+.Reference
+
+* link:{javadocroot}/jmxComponents.html#XSiteAdmin[XSiteAdmin MBean]
+* link:{javadocroot}/jmxComponents.html#XSiteAdmin[GlobalXSiteAdminOperations MBean]

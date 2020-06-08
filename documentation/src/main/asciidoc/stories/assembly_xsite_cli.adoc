@@ -1,10 +1,11 @@
 [id='xsite_operations_cli']
-:context: xsite
-= Cross-Site Operations with the CLI
+:context: cli-ops
+= Performing Cross-Site Operations with the CLI
 The {brandname} command line interface lets you remotely connect to {brandname}
 servers, manage sites, and push state transfer to backup locations.
 
 .Prerequisites
+
 * Start the {brandname} CLI.
 * Connect to a running {brandname} cluster.
 
