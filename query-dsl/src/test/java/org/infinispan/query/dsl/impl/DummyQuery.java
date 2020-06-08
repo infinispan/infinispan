@@ -89,7 +89,12 @@ class DummyQuery<T> implements Query<T> {
 
    @Override
    public String[] getProjection() {
-      return new String[0];
+      return null;
+   }
+
+   @Override
+   public boolean hasProjections() {
+      return false;
    }
 
    @Override

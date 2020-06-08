@@ -46,15 +46,26 @@ public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, Para
     * Gets the total number of results matching the query, ignoring pagination (startOffset, maxResults).
     *
     * @return total number of results.
-    * @deprecated since 10.1. This will be removed with no direct replacement.
+    * @deprecated since 10.1. This will be removed in 12. It's closest replacement is {@link QueryResult#hitCount()}
+    * which returns an optional long.
     */
    @Deprecated
-   int getResultSize(); //todo [anistor] this should probably be a long?
+   int getResultSize();
 
    /**
     * @return the values for query projections or {@code null} if the query does not have projections.
+    * @deprecated since 11.0. This method will be removed in next major version. To find out if a query uses projections use {@link #hasProjections()}
     */
+   @Deprecated
    String[] getProjection();
+
+   /**
+    * Indicates if the parsed query has projections (a SELECT clause) and consequently the returned results will
+    * actually be {@code Object[]} containing the projected values rather than the target entity.
+    *
+    * @return {@code true} if it has projections, {@code false} otherwise.
+    */
+   boolean hasProjections();
 
    long getStartOffset();
 

@@ -36,7 +36,7 @@ public final class AggregatingQuery<T> extends HybridQuery<T, Object[]> {
                            long startOffset, int maxResults,
                            BaseQuery<?> baseQuery) {
       super(queryFactory, cache, queryString, namedParameters, objectFilter, startOffset, maxResults, baseQuery);
-      if (baseQuery.getProjection() == null) {
+      if (!baseQuery.hasProjections()) {
          throw new IllegalArgumentException("Base query must use projections");
       }
       if (projection == null) {

@@ -154,9 +154,13 @@ public abstract class BaseQuery<T> implements Query<T> {
       }
    }
 
-   @Override
    public String[] getProjection() {
       return projection;
+   }
+
+   @Override
+   public boolean hasProjections() {
+      return projection != null;
    }
 
    @Override
