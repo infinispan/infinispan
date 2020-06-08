@@ -1,6 +1,9 @@
 package org.infinispan.server.persistence;
 
+import static org.junit.Assert.assertEquals;
+
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
 import org.infinispan.server.test.core.category.Persistence;
@@ -13,8 +16,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import static org.junit.Assert.assertEquals;
 
 @Category(Persistence.class)
 public class CustomStoreOperationsIT {
@@ -39,6 +40,7 @@ public class CustomStoreOperationsIT {
    @Test
    public void testDefineCustomStoreAndUtilize() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+      configurationBuilder.encoding().mediaType(MediaType.APPLICATION_JBOSS_MARSHALLING_TYPE);
       configurationBuilder.persistence()
             .addStore(CustomStoreConfigurationBuilder.class)
             .customStoreClass(CustomNonBlockingStore.class);
