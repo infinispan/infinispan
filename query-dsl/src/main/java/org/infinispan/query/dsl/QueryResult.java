@@ -6,10 +6,9 @@ import java.util.OptionalLong;
 /**
  * Represents the result of a {@link Query}.
  *
- * @param <E> The type of the result. Queries having one or more fields in the SELECT clause will return
- *           an Object[] for each result, with the field values. When not using SELECT, the
- *           results will contain instances of objects corresponding to the cache values matching the query.
- *
+ * @param <E> The type of the result. Queries having projections (a SELECT clause) will return an Object[] for each
+ *            result, with the field values. When not using SELECT, the results will contain instances of objects
+ *            corresponding to the cache values matching the query.
  * @since 11.0
  */
 public interface QueryResult<E> {
@@ -23,8 +22,6 @@ public interface QueryResult<E> {
    /**
     * @return The results of the query as a list, respecting the bounds specified in {@link Query#startOffset(long)} and
     * {@link Query#maxResults(int)}.
-    *
     */
    List<E> list();
-
 }

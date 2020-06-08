@@ -1,8 +1,8 @@
 package org.infinispan.client.hotrod.query;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.testng.Assert.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 import java.util.List;
 
@@ -43,12 +43,12 @@ public class HotRodQueryIspnDirectoryTest extends HotRodQueryTest {
       assertEquals("Tom", user1.get("name").asText());
       assertEquals("Cat", user1.get("surname").asText());
 
-      Query<String> query = Search.getQueryFactory(jsonCache).create("FROM sample_bank_account.User where name = 'Tom'");
+      Query<String> query = Search.getQueryFactory(jsonCache).create("FROM sample_bank_account.User WHERE name = 'Tom'");
       QueryResult<String> result = query.execute();
       List<String> results = result.list();
 
       assertEquals(1, query.getResultSize());
-      assertNull(query.getProjection());
+      assertFalse(query.hasProjections());
 
       JsonNode jsonNode = new ObjectMapper().readTree(results.iterator().next());
       assertEquals("Tom", jsonNode.get("name").asText());
