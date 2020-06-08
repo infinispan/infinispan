@@ -4,7 +4,9 @@ package org.infinispan.query.dsl;
  * Defines the execution mode of an indexed query.
  *
  * @since 9.2
+ * @deprecated since 11. Will be removed with no replacement in next major version.
  */
+@Deprecated
 public enum IndexedQueryMode {
 
    /**

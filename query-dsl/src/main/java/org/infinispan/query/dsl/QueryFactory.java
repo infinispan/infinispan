@@ -25,7 +25,8 @@ public interface QueryFactory {
     * Creates a Query based on an Ickle query string.
     *
     * @param queryMode the {@link IndexedQueryMode} dictating the indexed query execution mode if applicable.
-    * @deprecated since 11.0. {@link IndexedQueryMode} is now automatically selected. Use {@link QueryFactory#create(String)} instead.
+    * @deprecated since 11.0. {@link IndexedQueryMode} is now automatically selected. Use {@link
+    * QueryFactory#create(String)} instead. This method will be removed in next major version.
     */
    @Deprecated
    <T> Query<T> create(String queryString, IndexedQueryMode queryMode);

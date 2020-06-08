@@ -38,7 +38,7 @@ final class LazyIterator<E> extends AbstractIterator<E> {
       try {
          return extractor.extract(index);
       } catch (IOException e) {
-         throw new CacheException("Cannot load result at index " + index, e);
+         throw new CacheException("Cannot load result at position " + index, e);
       }
    }
 }
