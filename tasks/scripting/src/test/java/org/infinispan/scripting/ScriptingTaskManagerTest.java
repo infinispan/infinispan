@@ -25,8 +25,8 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class ScriptingTaskManagerTest extends SingleCacheManagerTest {
 
-   protected static final String TEST_SCRIPT = "test.js";
-   protected static final String BROKEN_SCRIPT = "brokenTest.js";
+   protected static final String TEST_SCRIPT = "/js/test.js";
+   protected static final String BROKEN_SCRIPT = "/js/brokenTest.js";
    protected TaskManager taskManager;
 
    @Override
@@ -51,7 +51,7 @@ public class ScriptingTaskManagerTest extends SingleCacheManagerTest {
       assertEquals(1, tasks.size());
 
       ScriptTask scriptTask = (ScriptTask) tasks.get(0);
-      assertEquals("test.js", scriptTask.getName());
+      assertEquals(TEST_SCRIPT, scriptTask.getName());
       assertEquals(TaskExecutionMode.ONE_NODE, scriptTask.getExecutionMode());
       assertEquals("Script", scriptTask.getType());
    }

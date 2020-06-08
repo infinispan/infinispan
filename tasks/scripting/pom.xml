@@ -50,6 +50,16 @@
          <artifactId>blockhound</artifactId>
          <optional>true</optional>
       </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-scripting-engines-java</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-scripting-engines-jshell</artifactId>
+         <scope>test</scope>
+      </dependency>
       <!-- Included to avoid issue in blockhound during tests -->
       <dependency>
          <groupId>org.eclipse.microprofile.metrics</groupId>
@@ -60,6 +70,12 @@
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <scope>test</scope>
+         <exclusions>
+            <exclusion>
+               <groupId>org.apache-extras.beanshell</groupId>
+               <artifactId>bsh</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
    </dependencies>
 

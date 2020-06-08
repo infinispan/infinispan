@@ -1,0 +1,2 @@
+// mode=local,language=jshell
+throw new Error('Failed on purpose');

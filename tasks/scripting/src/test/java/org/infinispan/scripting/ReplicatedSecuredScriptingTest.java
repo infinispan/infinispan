@@ -107,7 +107,7 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
         Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
             @Override
             public Void run() throws Exception {
-                loadScript(scriptingManager, "/testRole.js");
+                loadScript(scriptingManager, "/js/testRole.js");
                 return null;
             }
         });
@@ -116,7 +116,7 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
             @Override
             public Void run() throws Exception {
                 Cache cache = manager(0).getCache(SecureScriptingTest.SECURE_CACHE_NAME);
-                String value = (String) scriptingManager.runScript("testRole.js",
+                String value = (String) scriptingManager.runScript("/js/testRole.js",
                         new TaskContext().cache(cache).addParameter("a", "value")).get();
 
                 assertEquals("value", value);
@@ -133,7 +133,7 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
         Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
             @Override
             public Void run() throws Exception {
-                loadScript(scriptingManager, "/testRole.js");
+                loadScript(scriptingManager, "/js/testRole.js");
                 return null;
             }
         });
@@ -142,7 +142,7 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
             @Override
             public Void run() throws Exception {
                 Cache cache = manager(0).getCache();
-                scriptingManager.runScript("testRole.js",
+                scriptingManager.runScript("/js/testRole.js",
                         new TaskContext().cache(cache).addParameter("a", "value")).get();
                 return null;
             }
@@ -156,7 +156,7 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
         Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
             @Override
             public Void run() throws Exception {
-                loadScript(scriptingManager, "/testRole_dist.js");
+                loadScript(scriptingManager, "/js/testRole_dist.js");
                 return null;
             }
         });
@@ -165,7 +165,7 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
             @Override
             public Void run() throws Exception {
                 Cache cache = manager(0).getCache();
-                List<JGroupsAddress> value = (List<JGroupsAddress>) scriptingManager.runScript("testRole_dist.js",
+                List<JGroupsAddress> value = (List<JGroupsAddress>) scriptingManager.runScript("/js/testRole_dist.js",
                         new TaskContext().cache(cache).addParameter("a", "value")).get();
 
                 assertEquals(value.get(0), manager(0).getAddress());
@@ -184,7 +184,7 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
         Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
             @Override
             public Void run() throws Exception {
-                loadScript(scriptingManager, "/testRole_dist.js");
+                loadScript(scriptingManager, "/js/testRole_dist.js");
                 return null;
             }
         });
@@ -193,7 +193,7 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
             @Override
             public Void run() throws Exception {
                 Cache cache = manager(0).getCache();
-                scriptingManager.runScript("testRole_dist.js",
+                scriptingManager.runScript("/js/testRole_dist.js",
                         new TaskContext().cache(cache).addParameter("a", "value")).get();
                 return null;
             }

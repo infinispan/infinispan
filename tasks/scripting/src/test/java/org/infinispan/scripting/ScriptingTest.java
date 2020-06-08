@@ -25,10 +25,10 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class ScriptingTest extends AbstractScriptingTest {
 
-   static final String CACHE_NAME = "script-exec";
+   public static final String CACHE_NAME = "script-exec";
 
    protected String[] getScripts() {
-      return new String[]{"test.js", "testMissingMetaProps.js", "testExecWithoutProp.js", "testInnerScriptCall.js"};
+      return new String[]{"/js/test.js", "/js/testMissingMetaProps.js", "/js/testExecWithoutProp.js", "/js/testInnerScriptCall.js"};
    }
 
    @Override
@@ -46,15 +46,15 @@ public class ScriptingTest extends AbstractScriptingTest {
    }
 
    public void testSimpleScript() throws Exception {
-      String result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).get();
+      String result = (String) scriptingManager.runScript("/js/test.js", new TaskContext().addParameter("a", "a")).get();
       assertEquals("a", result);
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*No script named.*")
    public void testScriptRemove() throws Exception {
-      scriptingManager.getScript("testExecWithoutProp.js");
-      scriptingManager.removeScript("testExecWithoutProp.js");
-      scriptingManager.getScript("testExecWithoutProp.js");
+      scriptingManager.getScript("/js/testExecWithoutProp.js");
+      scriptingManager.removeScript("/js/testExecWithoutProp.js");
+      scriptingManager.getScript("/js/testExecWithoutProp.js");
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*No script named.*")
@@ -65,58 +65,58 @@ public class ScriptingTest extends AbstractScriptingTest {
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*Script execution error.*")
    public void testSimpleScriptWitoutPassingParameter() throws Exception {
-      String result = (String) scriptingManager.runScript("test.js").get();
+      String result = (String) scriptingManager.runScript("/js/test.js").get();
       assertEquals("a", result);
    }
 
    public void testSimpleScriptReplacementWithNew() throws ExecutionException, InterruptedException, IOException {
-      String result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).get();
+      String result = (String) scriptingManager.runScript("/js/test.js", new TaskContext().addParameter("a", "a")).get();
       assertEquals("a", result);
 
       //Replacing the existing script with new one.
-      InputStream is = this.getClass().getResourceAsStream("/test1.js");
+      InputStream is = this.getClass().getResourceAsStream("/js/test1.js");
       String script = loadFileAsString(is);
 
-      scriptingManager.addScript("test.js", script);
-      result = (String) scriptingManager.runScript("test.js").get();
+      scriptingManager.addScript("/js/test.js", script);
+      result = (String) scriptingManager.runScript("/js/test.js").get();
       assertEquals("a:modified", result);
 
       //Rolling back the replacement.
-      is = this.getClass().getResourceAsStream("/test.js");
+      is = this.getClass().getResourceAsStream("/js/test.js");
       script = loadFileAsString(is);
 
-      scriptingManager.addScript("test.js", script);
+      scriptingManager.addScript("/js/test.js", script);
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*No script named.*")
    public void testScriptingCacheClear() throws Exception {
-      String result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).get();
+      String result = (String) scriptingManager.runScript("/js/test.js", new TaskContext().addParameter("a", "a")).get();
       assertEquals("a", result);
 
       cache(ScriptingManager.SCRIPT_CACHE).clear();
 
-      result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).get();
+      result = (String) scriptingManager.runScript("/js/test.js", new TaskContext().addParameter("a", "a")).get();
       assertEquals("a", result);
    }
 
    public void testScriptingCacheManualReplace() throws Exception {
-      String result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")).get();
+      String result = (String) scriptingManager.runScript("/js/test.js", new TaskContext().addParameter("a", "a")).get();
       assertEquals("a", result);
 
       //Replacing the existing script with new one.
-      InputStream is = this.getClass().getResourceAsStream("/test1.js");
+      InputStream is = this.getClass().getResourceAsStream("/js/test1.js");
       String script = loadFileAsString(is);
 
-      cache(ScriptingManager.SCRIPT_CACHE).replace("test.js", script);
+      cache(ScriptingManager.SCRIPT_CACHE).replace("/js/test.js", script);
 
-      result = (String) scriptingManager.runScript("test.js").get();
+      result = (String) scriptingManager.runScript("/js/test.js").get();
       assertEquals("a:modified", result);
 
       //Rolling back the replacement.
-      is = this.getClass().getResourceAsStream("/test.js");
+      is = this.getClass().getResourceAsStream("/js/test.js");
       script = loadFileAsString(is);
 
-      scriptingManager.addScript("test.js", script);
+      scriptingManager.addScript("/js/test.js", script);
    }
 
    public void testSimpleScript1() throws Exception {
@@ -125,14 +125,14 @@ public class ScriptingTest extends AbstractScriptingTest {
 
       cacheManager.getCache(CACHE_NAME).put(key, value);
 
-      CompletableFuture<?> exec = scriptingManager.runScript("testExecWithoutProp.js");
+      CompletableFuture<?> exec = scriptingManager.runScript("/js/testExecWithoutProp.js");
       exec.get(1000, TimeUnit.MILLISECONDS);
 
       assertEquals(value + ":additionFromJavascript", cacheManager.getCache(CACHE_NAME).get(key));
    }
 
    public void testScriptCallFromJavascript() throws Exception {
-      String result = (String) scriptingManager.runScript("testInnerScriptCall.js",
+      String result = (String) scriptingManager.runScript("/js/testInnerScriptCall.js",
             new TaskContext().cache(cacheManager.getCache(CACHE_NAME)).addParameter("a", "ahoj")).get();
 
       assertEquals("script1:additionFromJavascript", result);
@@ -140,7 +140,7 @@ public class ScriptingTest extends AbstractScriptingTest {
    }
 
    public void testSimpleScriptWithMissingLanguageInMetaPropeties() throws Exception {
-      String result = (String) scriptingManager.runScript("testMissingMetaProps.js", new TaskContext().addParameter("a", "a")).get();
+      String result = (String) scriptingManager.runScript("/js/testMissingMetaProps.js", new TaskContext().addParameter("a", "a")).get();
       assertEquals("a", result);
    }
 
@@ -150,48 +150,48 @@ public class ScriptingTest extends AbstractScriptingTest {
    }
 
    public void testRemovingScript() throws IOException, ExecutionException, InterruptedException {
-      assertNotNull(scriptingManager.getScript("test.js"));
+      assertNotNull(scriptingManager.getScript("/js/test.js"));
 
-      scriptingManager.removeScript("test.js");
-      assertNull(cacheManager.getCache(ScriptingManager.SCRIPT_CACHE).get("test.js"));
+      scriptingManager.removeScript("/js/test.js");
+      assertNull(cacheManager.getCache(ScriptingManager.SCRIPT_CACHE).get("/js/test.js"));
 
-      InputStream is = this.getClass().getResourceAsStream("/test.js");
+      InputStream is = this.getClass().getResourceAsStream("/js/test.js");
       String script = loadFileAsString(is);
 
-      scriptingManager.addScript("test.js", script);
-      assertNotNull(scriptingManager.getScript("test.js"));
+      scriptingManager.addScript("/js/test.js", script);
+      assertNotNull(scriptingManager.getScript("/js/test.js"));
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*Script execution error.*")
    public void testWrongJavaRef() throws Exception {
-      InputStream is = this.getClass().getResourceAsStream("/testWrongJavaRef.js");
+      InputStream is = this.getClass().getResourceAsStream("/js/testWrongJavaRef.js");
       String script = loadFileAsString(is);
 
-      scriptingManager.addScript("testWrongJavaRef.js", script);
+      scriptingManager.addScript("/js/testWrongJavaRef.js", script);
 
-      String result = (String) scriptingManager.runScript("testWrongJavaRef.js", new TaskContext().addParameter("a", "a")).get();
+      String result = (String) scriptingManager.runScript("/js/testWrongJavaRef.js", new TaskContext().addParameter("a", "a")).get();
       assertEquals("a", result);
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*Script execution error.*")
    public void testWrongPropertyRef() throws Exception {
-      InputStream is = this.getClass().getResourceAsStream("/testWrongPropertyRef.js");
+      InputStream is = this.getClass().getResourceAsStream("/js/testWrongPropertyRef.js");
       String script = loadFileAsString(is);
 
-      scriptingManager.addScript("testWrongPropertyRef.js", script);
+      scriptingManager.addScript("/js/testWrongPropertyRef.js", script);
 
-      String result = (String) scriptingManager.runScript("testWrongPropertyRef.js").get();
+      String result = (String) scriptingManager.runScript("/js/testWrongPropertyRef.js").get();
       assertEquals("a", result);
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*Compiler error for script.*")
    public void testJsCompilationError() throws Exception {
-      InputStream is = this.getClass().getResourceAsStream("/testJsCompilationError.js");
+      InputStream is = this.getClass().getResourceAsStream("/js/testJsCompilationError.js");
       String script = loadFileAsString(is);
 
-      scriptingManager.addScript("testJsCompilationError.js", script);
+      scriptingManager.addScript("/js/testJsCompilationError.js", script);
 
-      String result = (String) scriptingManager.runScript("testJsCompilationError.js").get();
+      String result = (String) scriptingManager.runScript("/js/testJsCompilationError.js").get();
       assertEquals("a", result);
    }
 
@@ -213,13 +213,13 @@ public class ScriptingTest extends AbstractScriptingTest {
    }
 
    public void testMapReduceScript() throws IOException, ExecutionException, InterruptedException {
-      InputStream is = this.getClass().getResourceAsStream("/wordCountStream.js");
+      InputStream is = this.getClass().getResourceAsStream("/js/wordCountStream.js");
       String script = loadFileAsString(is);
       Cache<String, String> cache = cache(CACHE_NAME);
       loadData(cache, "/macbeth.txt");
 
-      scriptingManager.addScript("wordCountStream.js", script);
-      Map<String, Long> result = (Map<String, Long>) scriptingManager.runScript("wordCountStream.js", new TaskContext().cache(cache)).get();
+      scriptingManager.addScript("/js/wordCountStream.js", script);
+      Map<String, Long> result = (Map<String, Long>) scriptingManager.runScript("/js/wordCountStream.js", new TaskContext().cache(cache)).get();
       assertEquals(3202, result.size());
       assertEquals(Long.valueOf(287), result.get("macbeth"));
    }

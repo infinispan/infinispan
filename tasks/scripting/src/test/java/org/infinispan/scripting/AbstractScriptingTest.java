@@ -27,7 +27,7 @@ public abstract class AbstractScriptingTest extends SingleCacheManagerTest {
         super.setup();
         scriptingManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
         for (String scriptName : getScripts()) {
-            try (InputStream is = this.getClass().getResourceAsStream("/" + scriptName)) {
+            try (InputStream is = this.getClass().getResourceAsStream(scriptName)) {
                 String script = loadFileAsString(is);
                 scriptingManager.addScript(scriptName, script);
             }

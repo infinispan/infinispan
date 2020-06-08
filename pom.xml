@@ -130,6 +130,8 @@
       <module>tasks/api</module>
       <module>tasks/manager</module>
       <module>tasks/scripting</module>
+      <module>tasks/engines/java</module>
+      <module>tasks/engines/jshell</module>
       <module>cdi</module>
       <module>cdi/common</module>
       <module>cdi/embedded</module>

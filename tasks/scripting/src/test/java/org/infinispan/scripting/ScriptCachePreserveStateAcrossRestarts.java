@@ -38,9 +38,9 @@ public class ScriptCachePreserveStateAcrossRestarts extends AbstractInfinispanTe
          @Override
          public void call() throws Exception {
             Cache<String, String> scriptCache = cm.getCache(ScriptingManagerImpl.SCRIPT_CACHE);
-            try (InputStream is = this.getClass().getResourceAsStream("/test.js")) {
+            try (InputStream is = this.getClass().getResourceAsStream("/js/test.js")) {
                String script = loadFileAsString(is);
-               scriptCache.put("test.js", script);
+               scriptCache.put("/js/test.js", script);
             }
          }
       });
@@ -49,7 +49,7 @@ public class ScriptCachePreserveStateAcrossRestarts extends AbstractInfinispanTe
          @Override
          public void call() throws Exception {
             Cache<String, String> scriptCache = cm.getCache(ScriptingManagerImpl.SCRIPT_CACHE);
-            assertTrue(scriptCache.containsKey("test.js"));
+            assertTrue(scriptCache.containsKey("/js/test.js"));
          }
       });
    }

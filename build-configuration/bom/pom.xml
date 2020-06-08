@@ -310,6 +310,16 @@
                 <artifactId>infinispan-scripting</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
+           <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-scripting-engines-java</artifactId>
+              <version>${version.infinispan}</version>
+           </dependency>
+           <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-scripting-engines-jshell</artifactId>
+              <version>${version.infinispan}</version>
+           </dependency>
             <!-- TODO should be here? -->
             <dependency>
                 <groupId>org.infinispan</groupId>

@@ -115,7 +115,7 @@ public class ExecTest extends MultiHotRodServersTest {
       builder.encoding().key().mediaType(APPLICATION_OBJECT_TYPE)
             .encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
       defineInAll(cacheName, builder);
-      try (InputStream is = this.getClass().getResourceAsStream("/distExec.js")) {
+      try (InputStream is = this.getClass().getResourceAsStream("/js/distExec.js")) {
          String script = loadFileAsString(is);
          manager(0).getCache(ScriptingManager.SCRIPT_CACHE).put("testScriptExecutionWithPassingParams.js", script);
       }
@@ -152,9 +152,9 @@ public class ExecTest extends MultiHotRodServersTest {
       RemoteCache<String, String> cache = clients.get(0).getCache(cacheName);
       ScriptingUtils.loadData(cache, "/macbeth.txt");
       ScriptingManager scriptingManager = manager(0).getGlobalComponentRegistry().getComponent(ScriptingManager.class);
-      loadScript("/wordCountStream_dist.js", scriptingManager, "wordCountStream_dist.js");
+      loadScript("/js/wordCountStream_dist.js", scriptingManager, "js/wordCountStream_dist.js");
 
-      ArrayList<Map<String, Long>> results = cache.execute("wordCountStream_dist.js", new HashMap<String, String>());
+      ArrayList<Map<String, Long>> results = cache.execute("js/wordCountStream_dist.js", new HashMap<String, String>());
       assertEquals(2, results.size());
       assertEquals(3202, results.get(0).size());
       assertEquals(3202, results.get(1).size());
@@ -164,7 +164,7 @@ public class ExecTest extends MultiHotRodServersTest {
 
    @Test(dataProvider = "CacheNameProvider")
    public void testExecPutConstantGet(String cacheName) throws IOException {
-      withScript(manager(0), "/test-put-constant-get.js", scriptName -> {
+      withScript(manager(0), "/js/test-put-constant-get.js", scriptName -> {
          Map<String, String> params = new HashMap<>();
          String result = clients.get(0).getCache(cacheName).execute(scriptName, params);
          assertEquals("hoptimus prime", result);
@@ -174,7 +174,7 @@ public class ExecTest extends MultiHotRodServersTest {
 
    @Test(dataProvider = "CacheNameProvider")
    public void testExecReturnNull(String cacheName) throws IOException {
-      withScript(manager(0), "/test-null-return.js", scriptName -> {
+      withScript(manager(0), "/js/test-null-return.js", scriptName -> {
          Object result = clients.get(0).getCache(cacheName).execute(scriptName, new HashMap<>());
          assertEquals(null, result);
       });
@@ -182,19 +182,19 @@ public class ExecTest extends MultiHotRodServersTest {
 
    @Test(dataProvider = "CacheNameProvider")
    public void testLocalExecPutGet(String cacheName) {
-      execPutGet(cacheName, "/test-put-get.js", ExecMode.LOCAL, "local-key", "local-value");
+      execPutGet(cacheName, "/js/test-put-get.js", ExecMode.LOCAL, "local-key", "local-value");
    }
 
    @Test(dataProvider = "CacheNameProvider")
    public void testDistExecPutGet(String cacheName) {
-      execPutGet(cacheName, "/test-put-get-dist.js", ExecMode.DIST, "dist-key", "dist-value");
+      execPutGet(cacheName, "/js/test-put-get-dist.js", ExecMode.DIST, "dist-key", "dist-value");
    }
 
    @Test(dataProvider = "CacheNameProvider")
    public void testLocalExecPutGetWithListener(String cacheName) {
       final EventLogListener<String> l = new EventLogListener<>(clients.get(0).getCache(cacheName));
       withClientListener(l, remote ->
-            withScript(manager(0), "/test-put-get.js", scriptName -> {
+            withScript(manager(0), "/js/test-put-get.js", scriptName -> {
                Map<String, String> params = new HashMap<>();
                params.put("k", "local-key-listen");
                params.put("v", "local-value-listen");
@@ -206,7 +206,7 @@ public class ExecTest extends MultiHotRodServersTest {
 
    @Test(dataProvider = "CacheNameProvider")
    public void testExecWithHint(String cacheName) {
-      withScript(manager(0), "/test-is-primary-owner.js", scriptName -> {
+      withScript(manager(0), "/js/test-is-primary-owner.js", scriptName -> {
          RemoteCache<Object, Object> cache = clients.get(0).getCache(cacheName);
          for (int i = 0; i < 50; ++i) {
             String someKey = "someKey" + i;

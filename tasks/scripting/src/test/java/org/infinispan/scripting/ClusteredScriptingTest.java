@@ -48,9 +48,9 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             for (EmbeddedCacheManager cm : cms) {
                cm.defineConfiguration(ScriptingTest.CACHE_NAME, configuration);
             }
-            loadScript(scriptingManager, "/test.js");
-            executeScriptOnManager("test.js", cms[0]);
-            executeScriptOnManager("test.js", cms[1]);
+            loadScript(scriptingManager, "/js/test.js");
+            executeScriptOnManager("/js/test.js", cms[0]);
+            executeScriptOnManager("/js/test.js", cms[1]);
          }
       });
    }
@@ -70,12 +70,12 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             }
             Cache<Object, Object> cache = cms[0].getCache(ScriptingTest.CACHE_NAME);
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
-            loadScript(scriptingManager, "/test1.js");
+            loadScript(scriptingManager, "/js/test1.js");
 
             cache.put("a", "newValue");
 
-            executeScriptOnManager("test1.js", cms[0]);
-            executeScriptOnManager("test1.js", cms[1]);
+            executeScriptOnManager("/js/test1.js", cms[0]);
+            executeScriptOnManager("/js/test1.js", cms[1]);
          }
       });
    }
@@ -88,10 +88,10 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             Cache cache1 = cms[0].getCache();
             Cache cache2 = cms[1].getCache();
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
-            loadScript(scriptingManager, "/distExec1.js");
+            loadScript(scriptingManager, "/js/distExec1.js");
             waitForNoRebalance(cache1, cache2);
 
-            CompletableFuture<ArrayList<JGroupsAddress>> resultsFuture = scriptingManager.runScript("distExec1.js", new TaskContext().cache(cache1));
+            CompletableFuture<ArrayList<JGroupsAddress>> resultsFuture = scriptingManager.runScript("/js/distExec1.js", new TaskContext().cache(cache1));
             ArrayList<JGroupsAddress> results = resultsFuture.get();
             assertEquals(2, results.size());
 
@@ -115,10 +115,10 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             Cache cache2 = cms[1].getCache();
 
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
-            loadScript(scriptingManager, "/distExec.js");
+            loadScript(scriptingManager, "/js/distExec.js");
             waitForNoRebalance(cache1, cache2);
 
-            CompletableFuture<ArrayList<JGroupsAddress>> resultsFuture = scriptingManager.runScript("distExec.js",
+            CompletableFuture<ArrayList<JGroupsAddress>> resultsFuture = scriptingManager.runScript("/js/distExec.js",
                   new TaskContext().cache(cache1).addParameter("a", "value"));
 
             ArrayList<JGroupsAddress> results = resultsFuture.get();
@@ -138,9 +138,9 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
          public void call() throws Exception {
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
-            loadScript(scriptingManager, "/distExec.js");
+            loadScript(scriptingManager, "/js/distExec.js");
 
-            scriptingManager.runScript("distExec.js").get();
+            scriptingManager.runScript("/js/distExec.js").get();
          }
       });
    }
@@ -155,16 +155,16 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             Cache cache2 = cms[1].getCache();
 
             loadData(cache1, "/macbeth.txt");
-            loadScript(scriptingManager, "/wordCountStream.js");
+            loadScript(scriptingManager, "/js/wordCountStream.js");
             waitForNoRebalance(cache1, cache2);
 
             Map<String, Long> resultsFuture = (Map<String, Long>) scriptingManager.runScript(
-                    "wordCountStream.js", new TaskContext().cache(cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL))).get();
+                  "/js/wordCountStream.js", new TaskContext().cache(cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL))).get();
             assertEquals(EXPECTED_WORDS, resultsFuture.size());
             assertEquals(resultsFuture.get("macbeth"), Long.valueOf(287));
 
             resultsFuture = (Map<String, Long>) scriptingManager.runScript(
-                    "wordCountStream.js", new TaskContext().cache(cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL))).get();
+                  "/js/wordCountStream.js", new TaskContext().cache(cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL))).get();
             assertEquals(EXPECTED_WORDS, resultsFuture.size());
             assertEquals(resultsFuture.get("macbeth"), Long.valueOf(287));
          }
@@ -182,11 +182,11 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             Cache cache2 = cms[1].getCache();
 
             loadData(cache1, "/macbeth.txt");
-            loadScript(scriptingManager, "/wordCountStream_serializable.js");
+            loadScript(scriptingManager, "/js/wordCountStream_serializable.js");
             waitForNoRebalance(cache1, cache2);
 
             ArrayList<Map<String, Long>> resultsFuture = (ArrayList<Map<String, Long>>) scriptingManager.runScript(
-                  "wordCountStream_serializable.js", new TaskContext().cache(cache1)).get();
+                  "/js/wordCountStream_serializable.js", new TaskContext().cache(cache1)).get();
             assertEquals(2, resultsFuture.size());
             assertEquals(EXPECTED_WORDS, resultsFuture.get(0).size());
             assertEquals(EXPECTED_WORDS, resultsFuture.get(1).size());
@@ -206,11 +206,11 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             Cache cache2 = cms[1].getCache();
 
             loadData(cache1, "/macbeth.txt");
-            loadScript(scriptingManager, "/wordCountStream_Exec.js");
+            loadScript(scriptingManager, "/js/wordCountStream_Exec.js");
             waitForNoRebalance(cache1, cache2);
 
             ArrayList<Map<String, Long>> resultsFuture = (ArrayList<Map<String, Long>>) scriptingManager.runScript(
-                  "wordCountStream_Exec.js", new TaskContext().cache(cache1)).get();
+                  "/js/wordCountStream_Exec.js", new TaskContext().cache(cache1)).get();
             assertEquals(2, resultsFuture.size());
             assertEquals(EXPECTED_WORDS, resultsFuture.get(0).size());
             assertEquals(EXPECTED_WORDS, resultsFuture.get(1).size());
@@ -230,11 +230,11 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             Cache cache2 = cms[1].getCache();
 
             loadData(cache1, "/macbeth.txt");
-            loadScript(scriptingManager, "/wordCountStream_dist.js");
+            loadScript(scriptingManager, "/js/wordCountStream_dist.js");
             waitForNoRebalance(cache1, cache2);
 
             ArrayList<Map<String, Long>> resultsFuture = (ArrayList<Map<String, Long>>) scriptingManager.runScript(
-                  "wordCountStream_dist.js", new TaskContext().cache(cache1)).get();
+                  "js/wordCountStream_dist.js", new TaskContext().cache(cache1)).get();
             assertEquals(2, resultsFuture.size());
             assertEquals(EXPECTED_WORDS, resultsFuture.get(0).size());
             assertEquals(EXPECTED_WORDS, resultsFuture.get(1).size());

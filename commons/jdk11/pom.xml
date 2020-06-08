@@ -13,6 +13,10 @@
    <name>Infinispan Commons JDK 11</name>
    <description>Infinispan Commons JDK 11</description>
 
+   <properties>
+      <maven.compiler.target>11</maven.compiler.target>
+   </properties>
+
    <build>
       <plugins>
          <plugin>

@@ -36,13 +36,15 @@ public class ScriptingUtils {
         }
     }
 
-    public static void loadScript(ScriptingManager scriptingManager, String fileName) throws IOException {
+    public static String loadScript(ScriptingManager scriptingManager, String fileName) throws IOException {
         if (!fileName.startsWith("/")) {
             fileName = "/" + fileName;
         }
         try (InputStream is = ScriptingUtils.class.getResourceAsStream(fileName)) {
             String script = loadFileAsString(is);
-            scriptingManager.addScript(fileName.replaceAll("\\/", ""), script);
+            String name = fileName;//.replaceAll("\\/", "");
+            scriptingManager.addScript(name, script);
+            return name;
         }
     }
 

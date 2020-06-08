@@ -41,7 +41,7 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class SecureScriptingTaskManagerTest extends SingleCacheManagerTest {
 
-    protected static final String SCRIPT_NAME = "testRole.js";
+    protected static final String SCRIPT_NAME = "js/testRole.js";
     protected TaskManager taskManager;
 
     static final Subject ADMIN = TestingUtil.makeSubject("admin", ScriptingManager.SCRIPT_MANAGER_ROLE);
@@ -78,7 +78,7 @@ public class SecureScriptingTaskManagerTest extends SingleCacheManagerTest {
                 SecureScriptingTaskManagerTest.super.setup();
                 taskManager = cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
                 Cache<String, String> scriptCache = cacheManager.getCache(ScriptingManager.SCRIPT_CACHE);
-                try (InputStream is = this.getClass().getResourceAsStream("/testRole.js")) {
+                try (InputStream is = this.getClass().getResourceAsStream("/js/testRole.js")) {
                     String script = loadFileAsString(is);
                     scriptCache.put(SCRIPT_NAME, script);
                 }

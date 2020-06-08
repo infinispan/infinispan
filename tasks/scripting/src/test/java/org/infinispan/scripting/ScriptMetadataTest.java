@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 public class ScriptMetadataTest extends AbstractInfinispanTest {
 
    public void testDoubleSlashComment() throws Exception {
-      ScriptMetadata metadata = ScriptMetadataParser.parse("test.js", "// name=test");
+      ScriptMetadata metadata = ScriptMetadataParser.parse("js/test.js", "// name=test");
       assertEquals("test", metadata.name());
    }
 
@@ -32,12 +32,12 @@ public class ScriptMetadataTest extends AbstractInfinispanTest {
    }
 
    public void testHashComment() throws Exception {
-      ScriptMetadata metadata = ScriptMetadataParser.parse("test.js", "# name=test");
+      ScriptMetadata metadata = ScriptMetadataParser.parse("js/test.js", "# name=test");
       assertEquals("test", metadata.name());
    }
 
    public void testDoublSemicolonComment() throws Exception {
-      ScriptMetadata metadata = ScriptMetadataParser.parse("test.js", ";; name=test");
+      ScriptMetadata metadata = ScriptMetadataParser.parse("js/test.js", ";; name=test");
       assertEquals("test", metadata.name());
    }
 

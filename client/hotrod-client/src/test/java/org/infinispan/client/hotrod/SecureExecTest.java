@@ -114,7 +114,7 @@ public class SecureExecTest extends AbstractAuthenticationTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = initServerAndClient();
       clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("RWEuser", "realm", "password".toCharArray()));
 
-      runTestWithGivenScript(clientBuilder.build(), "/testRole.js");
+      runTestWithGivenScript(clientBuilder.build(), "/js/testRole.js");
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*Unauthorized access.*")

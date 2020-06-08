@@ -1,6 +1,7 @@
 package org.infinispan.scripting.impl;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -57,7 +58,9 @@ public class CacheScriptBindings implements Bindings {
 
    @Override
    public Set<String> keySet() {
-      return userBindings.keySet();//TODO: join with systemBindings
+      Set<String> combined = new HashSet<>(userBindings.keySet());
+      combined.addAll(systemBindings.keySet());
+      return combined;
    }
 
    @Override
@@ -67,13 +70,16 @@ public class CacheScriptBindings implements Bindings {
 
    @Override
    public Set<java.util.Map.Entry<String, Object>> entrySet() {
-      return userBindings.entrySet(); //TODO: join with systemBindings
+      Set<java.util.Map.Entry<String, Object>> combined = new HashSet<>();
+      combined.addAll(userBindings.entrySet());
+      combined.addAll(systemBindings.entrySet());
+      return combined;
    }
 
    @Override
    public Object put(String name, Object value) {
       if (systemBindings.containsKey(name)) {
-         throw new IllegalArgumentException();
+         return systemBindings.put(name, value);
       } else {
          return userBindings.put(name, value);
       }
