@@ -12,7 +12,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * <p>
- * Performs conversions where there is no direct transcoder, but there are two transcoders availabl:
+ * Performs conversions where there is no direct transcoder, but there are two transcoders available:
  * <ul>
  *    <li>one from source media type to <b>application/x-java-object</b>
  *    <li>one from <b>application/x-java-object</b> to the destination media type
