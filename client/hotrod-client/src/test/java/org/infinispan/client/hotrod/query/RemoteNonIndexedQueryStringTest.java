@@ -49,7 +49,7 @@ public class RemoteNonIndexedQueryStringTest extends RemoteQueryStringTest {
       super.testFullTextWithAggregation();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text queries.")
+   @Test(enabled = false, description = "IPROTO-142", expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text queries.")
    @Override
    public void testFullTextTermBoostAndSorting() {
       super.testFullTextTermBoostAndSorting();
