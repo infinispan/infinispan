@@ -47,6 +47,10 @@ public final class MediaType {
    public static final String APPLICATION_ZIP_TYPE = "application/zip";
    public static final String APPLICATION_JBOSS_MARSHALLING_TYPE = "application/x-jboss-marshalling";
    public static final String APPLICATION_PROTOSTREAM_TYPE = "application/x-protostream";
+   /**
+    * @deprecated Since 11.0, without replacement.
+    */
+   @Deprecated
    public static final String APPLICATION_UNKNOWN_TYPE = "application/unknown";
    public static final String WWW_FORM_URLENCODED_TYPE = "application/x-www-form-urlencoded";
    public static final String IMAGE_GIF_TYPE = "image/gif";
@@ -108,6 +112,10 @@ public final class MediaType {
     */
    @Deprecated
    public static final MediaType APPLICATION_INFINISPAN_MARSHALLING = fromString(APPLICATION_INFINISPAN_MARSHALLING_TYPE);
+   /**
+    * @deprecated Since 11.0, without replacement.
+    */
+   @Deprecated
    public static final MediaType APPLICATION_UNKNOWN = fromString(APPLICATION_UNKNOWN_TYPE);
    public static final MediaType MATCH_ALL = fromString(MATCH_ALL_TYPE);
 

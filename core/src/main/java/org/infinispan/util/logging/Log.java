@@ -2032,4 +2032,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Store '%s' must specify the '%s' attribute when global state is disabled", id = 598)
    CacheConfigurationException storeLocationRequired(String storeType, String attributeName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cache '%s' has an unknown encoding for keys or values. " +
+         "Operations that require data conversions may not work as expected, " +
+         "please specify the required MediaType using the 'encoding' element in the cache configuration", id = 599)
+   void unknownEncoding(String cacheName);
 }
