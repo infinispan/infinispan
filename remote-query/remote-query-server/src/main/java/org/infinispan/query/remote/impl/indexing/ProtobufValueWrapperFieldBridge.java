@@ -32,6 +32,8 @@ public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
 
    private final Set<String> indexedTypes;
 
+   private volatile boolean logUndeclaredTypeWarning = true;
+
    /**
     * This is lazily initialised in {@link #init()} method. This does not need to be volatile nor do we need to
     * synchronize before accessing it. It may happen to be initialized multiple times by different threads but that is
@@ -71,6 +73,14 @@ public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
          ProtobufParser.INSTANCE.parse(new IndexingWrappedMessageTagHandler(valueWrapper, serializationContext, indexedTypes, document, luceneOptions), wrapperDescriptor, valueWrapper.getBinary());
       } catch (IOException e) {
          throw new CacheException(e);
+      }
+
+      Descriptor descriptor = valueWrapper.getMessageDescriptor();
+      IndexingMetadata indexingMetadata = descriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+      if (indexingMetadata != null && logUndeclaredTypeWarning && indexingMetadata.isIndexed() && !indexedTypes.contains(descriptor.getFullName())) {
+         logUndeclaredTypeWarning = false;
+         //TODO [anistor] This warning must be turned into an error in 12
+         log.indexingUndeclaredType(descriptor.getFullName());
       }
    }
 

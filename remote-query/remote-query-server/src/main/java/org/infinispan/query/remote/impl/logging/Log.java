@@ -66,4 +66,9 @@ public interface Log extends BasicLogger {
    @Message(id = 28016, value = "Query performed in a cache ('%s') that has an unknown format configuration. " +
          "Please configure the cache encoding as 'application/x-protostream' or 'application/x-java-object'")
    void warnNoMediaType(String cacheName);
+
+   //TODO [anistor] This warning will become ERROR in version 12
+   @LogMessage(level = WARN)
+   @Message(id = 28017, value = "Type '%s' was not declared as an indexed entity. Please include it in the indexing configuration of your cache.")
+   void indexingUndeclaredType(String typeName);
 }
