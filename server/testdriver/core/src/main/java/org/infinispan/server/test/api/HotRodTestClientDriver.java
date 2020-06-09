@@ -5,7 +5,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
@@ -37,17 +36,13 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
    }
 
    /**
-    * Provide a custom client configuration to connect to the server. This method always overrides the configured marshaller
-    * so if a marshaller other than the default {@link ProtoStreamMarshaller} is required, a subsequent call to
-    * {@link #withMarshaller(Class)} is required.
+    * Provide a custom client configuration to connect to the server.
     *
     * @param clientConfiguration
     * @return the current {@link HotRodTestClientDriver} instance with the client configuration override
     */
    public HotRodTestClientDriver withClientConfiguration(ConfigurationBuilder clientConfiguration) {
       this.clientConfiguration = clientConfiguration;
-      // Explicitly configure the ProtoStreamMarshaller as the jboss-marshalling module is on the classpath
-      this.clientConfiguration.marshaller(ProtoStreamMarshaller.class);
       return this;
    }
 
