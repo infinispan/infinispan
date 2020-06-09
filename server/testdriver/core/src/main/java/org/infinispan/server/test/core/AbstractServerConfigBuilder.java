@@ -1,10 +1,10 @@
 package org.infinispan.server.test.core;
 
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
 /**
  * Common code for JUnit 4 and Junit 5 Extension
@@ -25,7 +25,7 @@ public abstract class AbstractServerConfigBuilder<T> {
    private boolean parallelStartup = true;
    private final List<InfinispanServerListener> listeners = new ArrayList<>();
    private String siteName;
-
+   private int portOffset = 0;
 
    protected AbstractServerConfigBuilder(String configurationFile, boolean defaultFile) {
       this.configurationFile = configurationFile;
@@ -37,7 +37,7 @@ public abstract class AbstractServerConfigBuilder<T> {
 
    protected InfinispanServerTestConfiguration createServerTestConfiguration() {
       return new InfinispanServerTestConfiguration(configurationFile, numServers, runMode, this.properties, mavenArtifacts,
-                  archives, jmx, parallelStartup, defaultFile, listeners, siteName);
+                  archives, jmx, parallelStartup, defaultFile, listeners, siteName, portOffset);
    }
 
    public T mavenArtifacts(String... mavenArtifacts) {
@@ -97,4 +97,8 @@ public abstract class AbstractServerConfigBuilder<T> {
       return (T) this;
    }
 
+   public T portOffset(int port) {
+      this.portOffset = port;
+      return (T) this;
+   }
 }
