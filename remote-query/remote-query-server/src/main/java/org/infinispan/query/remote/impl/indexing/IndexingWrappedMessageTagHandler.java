@@ -6,9 +6,11 @@ import java.util.Set;
 import org.apache.lucene.document.Document;
 import org.hibernate.search.bridge.LuceneOptions;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.query.remote.impl.logging.Log;
 
 /**
  * Protostream tag handler for {@code org.infinispan.protostream.WrappedMessage} protobuf type defined in
@@ -18,6 +20,8 @@ import org.infinispan.protostream.descriptors.Descriptor;
  * @since 9.3
  */
 final class IndexingWrappedMessageTagHandler extends WrappedMessageTagHandler {
+
+   private static final Log log = LogFactory.getLog(IndexingWrappedMessageTagHandler.class, Log.class);
 
    private final Document document;
    private final LuceneOptions luceneOptions;
@@ -43,11 +47,11 @@ final class IndexingWrappedMessageTagHandler extends WrappedMessageTagHandler {
 
          // not all message types are annotated for indexing
          if (indexingMetadata != null && indexingMetadata.isIndexed()) {
-
             // must ensure it's one of the declared indexed types
-            if (!indexedTypes.contains(descriptor.getFullName())) {
-                throw new CacheException("Type " + descriptor.getFullName() + " was not declared as an indexed entity");
-            }
+            // TODO [anistor] This error will happen in 12
+            //if (!indexedTypes.contains(descriptor.getFullName())) {
+            //   throw new CacheConfigurationException("Type " + descriptor.getFullName() + " was not declared as an indexed entity");
+            //}
 
             try {
                ProtobufParser.INSTANCE.parse(new IndexingTagHandler(descriptor, document), descriptor, messageBytes);

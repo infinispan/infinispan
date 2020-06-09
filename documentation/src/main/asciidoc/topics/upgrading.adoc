@@ -42,6 +42,11 @@ It is forbidden to use both the `.indexing().enabled( )` and the deprecated `.in
 
 * The `auto-config` attribute is deprecated and will be removed in a future version.
 
+* Starting with version 11 it is mandatory to declare all indexed types in the indexing configuration or else warnings will be logged when the undeclared type is firstly used.
+This requirement exists solely for indexed caches and applies to both Java classes and protobuf types.
+Please consider updating your cache configurations in order to avoid these warnings now.
+Starting with next major such incomplete configurations will be considered invalid and will result in a fatal error at cache startup time.
+
 === Querying
 
 * The `SearchManager` has been deprecated and no longer supports Lucene and Hibernate Search native objects:
