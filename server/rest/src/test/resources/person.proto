@@ -39,6 +39,7 @@ message Person {
 
     /**
      * @Field(store = Store.YES)
+     * @SortableField
      */
     required string name = 2;
 

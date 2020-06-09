@@ -26,7 +26,7 @@ Total Order transaction protocol was deprecated in 10.0 and now it is removed.
 
 OSGi support has been deprecated and will be removed in a future release.
 
-== Query
+== Search
 
 === Indexing
 
@@ -42,7 +42,7 @@ It is forbidden to use both the `.indexing().enabled( )` and the deprecated `.in
 
 * The `auto-config` attribute is deprecated and will be removed in a future version.
 
-=== Searching
+=== Querying
 
 * The `SearchManager` has been deprecated and no longer supports Lucene and Hibernate Search native objects:
 ** `.getQuery()` methods that take a Lucene Query have been removed. The alternative methods that take an Ickle query from the `org.infinispan.query.Search` entry point should be used instead.
@@ -53,6 +53,20 @@ It is forbidden to use both the `.indexing().enabled( )` and the deprecated `.in
 
 * Instances of `org.infinispan.query.dsl.Query` don't cache query results anymore and allow queries to be re-executed when
 calling methods such as `list()`.
+
+==== Entity Mappings
+
+* It is now required to annotate a field that requires sorting with `@SortableField`, both for embedded and remote queries.
+
+* Several features have been deprecated:
+
+** Custom bridges, declared with  `@FieldBridge` and `@ClassBridge`
+** Analyzer definitions, declared with `@AnalyzerDef` and `@NormalizerDef`
+** Dynamic selection of analyzers based on a discriminator, declared with `@AnalyzerDiscriminator`
+** Index time boosting, declared as an attribute of the `@Field` annotation
+** Definition of a default analyzer, either using the configuration property `hibernate.search.analyzer` or using the `@Analyzer` annotation
+** `indexNullAs`, used as an attribute in the `@Field` declaration
+** The configuration `hibernate.search.index_uninverting_allowed`, that allows regular `@Field` to be sortable by un-inverting them at runtime
 
 == ThreadFactoryConfiguration changes
 

@@ -187,6 +187,11 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    }
 
    @Override
+   @Test(enabled = false, description = "IPROTO-142")
+   public void testSortByDate() {
+   }
+
+   @Override
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014026: The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testGroupBy3() {
       // the original exception gets wrapped in HotRodClientException
