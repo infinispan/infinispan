@@ -1,5 +1,7 @@
 package org.infinispan.encoding.impl;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
+
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
@@ -18,6 +20,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Key/value storage information (storage media type and wrapping).
@@ -27,6 +31,8 @@ import org.infinispan.registry.InternalCacheRegistry;
  */
 @Scope(Scopes.NAMED_CACHE)
 public class StorageConfigurationManager {
+   private static final Log LOG = LogFactory.getLog(StorageConfigurationManager.class, Log.class);
+
    private Wrapper keyWrapper;
    private Wrapper valueWrapper;
    private MediaType keyStorageMediaType;
@@ -79,6 +85,10 @@ public class StorageConfigurationManager {
                                                      true);
       this.valueStorageMediaType = getStorageMediaType(configuration, embeddedMode, internalCache, persistenceMarshaller,
                                                      false);
+
+      if(keyStorageMediaType.equals(APPLICATION_UNKNOWN) || valueStorageMediaType.equals(APPLICATION_UNKNOWN)) {
+         LOG.unknownEncoding(cacheName);
+      }
    }
 
    private MediaType getStorageMediaType(Configuration configuration, boolean embeddedMode, boolean internalCache,
@@ -102,7 +112,7 @@ public class StorageConfigurationManager {
          return heap ? MediaType.APPLICATION_OBJECT : mediaType;
       }
 
-      return MediaType.APPLICATION_UNKNOWN;
+      return APPLICATION_UNKNOWN;
    }
 
    /**
