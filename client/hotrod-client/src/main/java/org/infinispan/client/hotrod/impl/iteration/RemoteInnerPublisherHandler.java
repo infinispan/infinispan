@@ -20,7 +20,8 @@ import org.infinispan.commons.util.logging.TraceException;
 
 import io.netty.channel.Channel;
 
-class RemoteInnerPublisherHandler<E> extends AbstractAsyncPublisherHandler<Map.Entry<SocketAddress, IntSet>, Map.Entry<Object, E>, IterationStartResponse, IterationNextResponse<E>> {
+class RemoteInnerPublisherHandler<E> extends AbstractAsyncPublisherHandler<Map.Entry<SocketAddress, IntSet>,
+      Map.Entry<Object, E>, IterationStartResponse, IterationNextResponse<E>> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    protected final RemotePublisher<E> publisher;
@@ -30,7 +31,8 @@ class RemoteInnerPublisherHandler<E> extends AbstractAsyncPublisherHandler<Map.E
    private volatile byte[] iterationId;
    private AtomicBoolean cancelled = new AtomicBoolean();
 
-   protected RemoteInnerPublisherHandler(RemotePublisher<E> parent, int batchSize, Supplier<Map.Entry<SocketAddress, IntSet>> supplier, Map.Entry<SocketAddress, IntSet> firstTarget) {
+   protected RemoteInnerPublisherHandler(RemotePublisher<E> parent, int batchSize,
+         Supplier<Map.Entry<SocketAddress, IntSet>> supplier, Map.Entry<SocketAddress, IntSet> firstTarget) {
       super(batchSize, supplier, firstTarget);
       this.publisher = parent;
    }

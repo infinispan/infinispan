@@ -207,7 +207,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    }
 
    /**
-    * Retrieve entries from the server
+    * Retrieve entries from the server.
     *
     * @param filterConverterFactory Factory name for the KeyValueFilterConverter or null for no filtering.
     * @param filterConverterParams  Parameters to the KeyValueFilterConverter
@@ -217,6 +217,18 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     */
    CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize);
 
+   /**
+    * Publishes the entries from the server in a non blocking fashion.
+    * <p>
+    * Any subscriber that subscribes to the returned Publisher must not block. It is therefore recommended to offload
+    * any blocking or long running operations to a different thread and not use the invoking one. Failure to do so
+    * may cause concurrent operations to stall.
+    * @param filterConverterFactory Factory name for the KeyValueFilterConverter or null for no filtering.
+    * @param filterConverterParams  Parameters to the KeyValueFilterConverter
+    * @param segments               The segments to utilize. If null all segments will be utilized. An empty set will filter out all entries.
+    * @param batchSize              The number of entries transferred from the server at a time.
+    * @return Publisher for the entries
+    */
    Publisher<Entry<Object, Object>> publishEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize);
 
    /**
@@ -236,6 +248,17 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     */
    CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize);
 
+   /**
+    * Publish entries from the server matching a query.
+    * <p>
+    * Any subscriber that subscribes to the returned Publisher must not block. It is therefore recommended to offload
+    * any blocking or long running operations to a different thread and not use the invoking one. Failure to do so
+    * may cause concurrent operations to stall.
+    * @param filterQuery {@link Query}
+    * @param segments    The segments to utilize. If null all segments will be utilized. An empty set will filter out all entries.
+    * @param batchSize   The number of entries transferred from the server at a time.
+    * @return Publisher containing matching entries
+    */
    Publisher<Entry<Object, Object>> publishEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize);
 
    /**
@@ -243,6 +266,16 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     */
    CloseableIterator<Entry<Object, MetadataValue<Object>>> retrieveEntriesWithMetadata(Set<Integer> segments, int batchSize);
 
+   /**
+    * Publish entries with metadata information
+    * <p>
+    * Any subscriber that subscribes to the returned Publisher must not block. It is therefore recommended to offload
+    * any blocking or long running operations to a different thread and not use the invoking one. Failure to do so
+    * may cause concurrent operations to stall.
+    * @param segments    The segments to utilize. If null all segments will be utilized. An empty set will filter out all entries.
+    * @param batchSize   The number of entries transferred from the server at a time.
+    * @return Publisher containing entries along with metadata
+    */
    Publisher<Entry<Object, MetadataValue<Object>>> publishEntriesWithMetadata(Set<Integer> segments, int batchSize);
 
    /**

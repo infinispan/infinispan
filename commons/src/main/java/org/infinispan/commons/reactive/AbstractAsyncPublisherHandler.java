@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscription;
 
 import io.reactivex.functions.Action;
 import io.reactivex.functions.LongConsumer;
@@ -16,7 +17,34 @@ import io.reactivex.processors.FlowableProcessor;
 import io.reactivex.processors.UnicastProcessor;
 
 /**
- * TODO:
+ * Abstract handler that handles request and cancellation of a given non blocking resource.
+ * When additional entries are requested via {@link org.reactivestreams.Subscription#request(long)} the handler will keep
+ * track of the outstanding count and invoke either {@link #sendInitialCommand(Object, int)} or
+ * {@link #sendNextCommand(Object, int)} depending upon if it is the first request or subsequent.
+ * This handler guarantees that there is only one outstanding request and that if the request amount is larger than the
+ * batch, it will continue to send new commands one at a time until the request amount has been satisfied.
+ * <p>
+ * The handler processes each target via the provided {@link Supplier} one by one, exhausting all values from the
+ * target, until there are no more targets left or the publishing has been cancelled by the subscriber.
+ * <p>
+ * When a command returns successfully either the {@link #handleInitialResponse(Object, Object)} or
+ * {@link #handleNextResponse(Object, Object)} will be invoked with the response object. The returned entries can then
+ * be emitted by invoking the {@link #onNext(Object)} method for each value. Note that the return of {@code onNext}
+ * should be checked in case if the {@code Subscriber} has cancelled the publishing of values in the middle.
+ * <p>
+ * A command may also encounter a Throwable and it is possible to customize what happens by implementing the
+ * {@link #handleThrowableInResponse(Throwable, Object)} method. For example you may want to skip the given
+ * <p>
+ * Each request is provided a {@code batchSize} argument and the underlying resource should adhere to this,
+ * failure to do so may cause an {@link OutOfMemoryError}, since entries are only emitted to the Subscriber based on the
+ * requested amount, and any additional are enqueued.
+ * <p>
+ * This handler also supports {@link Subscription#cancel()} by extending the {@link #sendCancel(Object)} command and
+ * the underlying service must be cancelled in an asynchronous and non blocking fashion. Once cancelled this Publisher
+ * will not publish additional values or requests.
+ * <p>
+ * Note this handler only supports a single Subscriber for the returned Publisher from {@link #startPublisher()}. Failure
+ * to do so can cause multiple requests and unexpected problems.
  */
 public abstract class AbstractAsyncPublisherHandler<Target, Output, InitialResponse, NextResponse> implements LongConsumer, Action {
    protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
@@ -58,7 +86,7 @@ public abstract class AbstractAsyncPublisherHandler<Target, Output, InitialRespo
    }
 
    /**
-    * This is invoked when the flowable is completed - need to close any pending publishers
+    * This is invoked when the Subscription is cancelled
     */
    @Override
    public void run() {

@@ -77,13 +77,15 @@ public class RemotePublisher<E> implements Publisher<Map.Entry<Object, E>> {
 
    @Override
    public void subscribe(Subscriber<? super Map.Entry<Object, E>> subscriber) {
+      // Segments can be null if we weren't provided any and we don't have a ConsistentHash
       if (segments == null) {
          AtomicBoolean shouldRetry = new AtomicBoolean(true);
 
          RemoteInnerPublisherHandler<E> innerHandler = new RemoteInnerPublisherHandler<E>(this,
                batchSize, () -> {
-            if (shouldRetry.get()) {
-               shouldRetry.set(false);
+            // Note that this publisher will continue to return empty entries until it has completed a given
+            // target without encountering a Throwable
+            if (shouldRetry.getAndSet(false)) {
                return new AbstractMap.SimpleImmutableEntry<>(null, null);
             }
             return null;
@@ -121,6 +123,7 @@ public class RemotePublisher<E> implements Publisher<Map.Entry<Object, E>> {
                      actualTargets.put(targetAddress, segmentsNeeded);
                   }
                }
+               // If no addresses could handle the segments directly - then just send to any node all segments
                if (actualTargets.isEmpty()) {
                   actualTargets.put(null, segments);
                }

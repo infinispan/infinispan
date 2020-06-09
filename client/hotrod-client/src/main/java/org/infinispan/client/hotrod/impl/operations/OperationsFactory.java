@@ -289,8 +289,8 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    /**
-    * Returns a map containing for each address all of its primarily owned segments. If the primary segments cannot
-    * be found an empty map will be returned instead
+    * Returns a map containing for each address all of its primarily owned segments. If the primary segments are not
+    * known an empty map will be returned instead
     * @return map containing addresses and their primary segments
     */
    public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByAddress() {
