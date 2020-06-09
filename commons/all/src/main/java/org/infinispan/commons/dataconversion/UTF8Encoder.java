@@ -3,6 +3,8 @@ package org.infinispan.commons.dataconversion;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.commons.logging.Log.CONTAINER;
 
+import org.infinispan.commons.util.Util;
+
 /**
  * Encoder to/from UTF-8 content using the java string encoding mechanism.
  *
@@ -11,6 +13,7 @@ import static org.infinispan.commons.logging.Log.CONTAINER;
 public class UTF8Encoder implements Encoder {
 
    public static final UTF8Encoder INSTANCE = new UTF8Encoder();
+   private static final MediaType UTF8 = MediaType.fromString("text/plain; charset=utf-8");
 
    @Override
    public Object toStorage(Object content) {
@@ -18,7 +21,7 @@ public class UTF8Encoder implements Encoder {
          return String.class.cast(content).getBytes(UTF_8);
       }
 
-      throw CONTAINER.unsupportedContent(content);
+      throw CONTAINER.unsupportedConversion(Util.toStr(content), UTF8);
    }
 
    @Override

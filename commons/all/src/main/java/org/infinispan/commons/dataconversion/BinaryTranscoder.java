@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.util.Util;
 
 /**
  * Handle conversions for the generic binary format 'application/unknown' that is assumed when no MediaType is specified.
@@ -60,9 +61,9 @@ public final class BinaryTranscoder extends OneToManyTranscoder {
          if (destinationType.match(APPLICATION_WWW_FORM_URLENCODED)) {
             return convertToUrlEncoded(content, contentType);
          }
-         throw CONTAINER.unsupportedContent(content);
+         throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, destinationType);
       } catch (InterruptedException | IOException | EncodingException | ClassNotFoundException e) {
-         throw CONTAINER.unsupportedContent(content);
+         throw CONTAINER.errorTranscoding(Util.toStr(content), contentType, destinationType, e);
       }
    }
 
@@ -79,7 +80,7 @@ public final class BinaryTranscoder extends OneToManyTranscoder {
          }
          return StandardConversions.convertJavaToOctetStream(content, contentType, getMashaller());
       } catch (EncodingException | InterruptedException | IOException e) {
-         throw CONTAINER.unsupportedContent(content);
+         throw CONTAINER.errorTranscoding(Util.toStr(content), contentType, APPLICATION_UNKNOWN, e);
       }
    }
 
@@ -96,7 +97,7 @@ public final class BinaryTranscoder extends OneToManyTranscoder {
       if (contentType.match(APPLICATION_WWW_FORM_URLENCODED)) {
          return content;
       }
-      throw CONTAINER.unsupportedContent(content);
+      throw CONTAINER.unsupportedConversion(Util.toStr(content), APPLICATION_UNKNOWN, contentType);
    }
 
 }

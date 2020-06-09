@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.Util;
 
 /**
  * Handle conversions between text/plain, url-encoded, java objects, and octet-stream contents.
@@ -50,9 +51,9 @@ public final class DefaultTranscoder implements Transcoder {
          if (destinationType.match(APPLICATION_WWW_FORM_URLENCODED)) {
             return convertToUrlEncoded(content, contentType);
          }
-         throw CONTAINER.unsupportedContent(content);
+         throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, destinationType);
       } catch (EncodingException | InterruptedException | IOException e) {
-         throw CONTAINER.unsupportedContent(content);
+         throw CONTAINER.errorTranscoding(Util.toStr(content), contentType, destinationType, e);
       }
    }
 
@@ -69,7 +70,7 @@ public final class DefaultTranscoder implements Transcoder {
       if (contentType.match(APPLICATION_WWW_FORM_URLENCODED)) {
          return content;
       }
-      throw CONTAINER.unsupportedContent(content);
+      throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, APPLICATION_WWW_FORM_URLENCODED);
    }
 
    private Object convertToTextPlain(Object content, MediaType contentType, MediaType destinationType) {
@@ -86,7 +87,7 @@ public final class DefaultTranscoder implements Transcoder {
       if (contentType.match(APPLICATION_WWW_FORM_URLENCODED)) {
          return StandardConversions.convertUrlEncodedToText(content, destinationType);
       }
-      throw CONTAINER.unsupportedContent(content);
+      throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, destinationType);
    }
 
    private Object convertToObject(Object content, MediaType contentType, MediaType destinationType) {
@@ -103,7 +104,7 @@ public final class DefaultTranscoder implements Transcoder {
       if (contentType.match(APPLICATION_WWW_FORM_URLENCODED)) {
          return StandardConversions.convertUrlEncodedToObject(content);
       }
-      throw CONTAINER.unsupportedContent(content);
+      throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, destinationType);
    }
 
    public Object convertToOctetStream(Object content, MediaType contentType, MediaType destinationType) throws IOException, InterruptedException {
@@ -119,7 +120,7 @@ public final class DefaultTranscoder implements Transcoder {
       if (contentType.match(APPLICATION_WWW_FORM_URLENCODED)) {
          return StandardConversions.convertUrlEncodedToOctetStream(content);
       }
-      throw CONTAINER.unsupportedContent(content);
+      throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, destinationType);
    }
 
    @Override

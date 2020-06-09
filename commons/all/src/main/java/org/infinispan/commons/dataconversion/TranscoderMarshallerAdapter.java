@@ -8,6 +8,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.Util;
 
 /**
  * Base class for transcoder between application/x-java-object and byte[] produced by a marshaller.
@@ -41,7 +42,7 @@ public class TranscoderMarshallerAdapter extends OneToManyTranscoder {
       } catch (InterruptedException | IOException | ClassNotFoundException e) {
          throw new CacheException(e);
       }
-      throw CONTAINER.unsupportedContent(content);
+      throw CONTAINER.unsupportedConversion(Util.toStr(content), contentType, destinationType);
    }
 
 }
