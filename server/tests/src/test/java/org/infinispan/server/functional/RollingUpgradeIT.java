@@ -1,6 +1,7 @@
 package org.infinispan.server.functional;
 
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DRIVER;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
@@ -24,7 +25,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
-import org.infinispan.server.test.core.EmbeddedInfinispanServerDriver;
+import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.junit.After;
@@ -45,14 +46,13 @@ public class RollingUpgradeIT {
    public static final ObjectMapper MAPPER = new ObjectMapper();
 
    private Cluster source, target;
-   private RestClient restClientSource, restClientTarget;
 
    @Before
    public void before() {
-      String path = getClass().getClassLoader().getResource("configuration/ClusteredServerTest.xml").getPath();
+      String config = "configuration/ClusteredServerTest.xml";
       // Start two embedded clusters with 2-node each
-      source = new Cluster(new ClusterConfiguration(path, 2));
-      target = new Cluster(new ClusterConfiguration(path, 2), 1000);
+      source = new Cluster(new ClusterConfiguration(config, 2, 0));
+      target = new Cluster(new ClusterConfiguration(config, 2, 1000));
       source.start("source");
       target.start("target");
 
@@ -60,24 +60,24 @@ public class RollingUpgradeIT {
       assertEquals(2, source.getMembers().size());
       assertEquals(2, target.getMembers().size());
       assertNotSame(source.getMembers(), target.getMembers());
-
-      restClientSource = source.getClient(0);
-      restClientTarget = target.getClient(1);
    }
 
    @After
-   public void after() {
+   public void after() throws Exception {
       source.stop("source");
       target.stop("target");
    }
 
    @Test
    public void testRollingUpgrade() throws IOException {
+      RestClient restClientSource = source.getClient();
+      RestClient restClientTarget = target.getClient();
+
       // Create cache in the source cluster
       createSourceClusterCache(restClientSource);
 
       // Create cache in the target cluster pointing to the source cluster via remote-store
-      createTargetClusterCache(restClientTarget, 11222);
+      createTargetClusterCache(restClientTarget);
 
       // Register proto schema
       addSchema(restClientSource);
@@ -143,15 +143,16 @@ public class RollingUpgradeIT {
       assertEquals(404, errorResponse.getStatus());
    }
 
-   private void createTargetClusterCache(RestClient client, int port) {
+   private void createTargetClusterCache(RestClient client) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence()
             .addStore(RemoteStoreConfigurationBuilder.class)
             .remoteCacheName(CACHE_NAME)
             .hotRodWrapping(true)
             .protocolVersion(ProtocolVersion.PROTOCOL_VERSION_25)
-            .addServer().host("127.0.0.1")
-            .port(port);
+            .addServer()
+            .host(source.driver.getServerAddress(0).getHostAddress())
+            .port(11222);
 
       String cacheConfig = JSON_WRITER.toJSON(builder.build());
       StringRestEntityOkHttp body = new StringRestEntityOkHttp(MediaType.APPLICATION_JSON, cacheConfig);
@@ -169,41 +170,39 @@ public class RollingUpgradeIT {
    }
 
    private static class ClusterConfiguration extends InfinispanServerTestConfiguration {
-      public ClusterConfiguration(String configurationFile, int numServers) {
+      public ClusterConfiguration(String configurationFile, int numServers, int portOffset) {
          super(configurationFile, numServers, ServerRunMode.EMBEDDED, new Properties(), null, null,
-               false, false, false, Collections.emptyList(), null);
+               false, false, false, Collections.emptyList(), null, portOffset);
       }
    }
 
    /**
     * A simplified embedded cluster not tied to junit
     */
-   static class Cluster extends EmbeddedInfinispanServerDriver {
-      private final int clusterPortOffset;
+   static class Cluster {
+      final AbstractInfinispanServerDriver driver;
+      RestClient client;
 
-      public Cluster(ClusterConfiguration simpleConfiguration, int clusterPortOffset) {
-         super(simpleConfiguration);
-         this.clusterPortOffset = clusterPortOffset;
+      Cluster(ClusterConfiguration simpleConfiguration) {
+         String driverProperty = System.getProperties().getProperty(INFINISPAN_TEST_SERVER_DRIVER);
+         if (driverProperty != null)
+            simpleConfiguration.properties().setProperty(INFINISPAN_TEST_SERVER_DRIVER, driverProperty);
+         this.driver = ServerRunMode.DEFAULT.newDriver(simpleConfiguration);
       }
 
-      @Override
-      public void start(String name) {
-         super.prepare(name);
-         super.start(name);
+      void start(String name) {
+         driver.prepare(name);
+         driver.start(name);
       }
 
-      public Cluster(ClusterConfiguration simpleConfiguration) {
-         this(simpleConfiguration, 0);
+      void stop(String name) throws Exception {
+         driver.stop(name);
+         if (client != null)
+            client.close();
       }
 
-      @Override
-      protected int clusterPortOffset() {
-         return clusterPortOffset;
-      }
-
-
-      protected Set<String> getMembers() {
-         String response = join(getClient(0).cacheManager("default").info()).getBody();
+      Set<String> getMembers() {
+         String response = join(getClient().cacheManager("default").info()).getBody();
          try {
             JsonNode jsonNode = MAPPER.readTree(response);
             Set<String> names = new HashSet<>();
@@ -215,12 +214,15 @@ public class RollingUpgradeIT {
          return null;
       }
 
-      protected RestClient getClient(int server) {
-         InetSocketAddress serverSocket = getServerSocket(server, 11222);
-         return RestClient.forConfiguration(
-               new RestClientConfigurationBuilder().addServer()
-                     .host("localhost").port(serverSocket.getPort()).build()
-         );
+      RestClient getClient() {
+         if (client == null) {
+            InetSocketAddress serverSocket = driver.getServerSocket(0, 11222);
+            client = RestClient.forConfiguration(
+                  new RestClientConfigurationBuilder().addServer()
+                        .host(serverSocket.getHostName()).port(serverSocket.getPort()).build()
+            );
+         }
+         return client;
       }
    }
 }
