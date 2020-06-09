@@ -42,7 +42,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
@@ -337,10 +336,10 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public <K, V> CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry<K, V>> entries,
-                                                              Predicate<? super StoreConfiguration> predicate, long flags) {
+      public <K, V> CompletionStage<Void> writeEntries(Iterable<MarshallableEntry<K, V>> iterable,
+            Predicate<? super StoreConfiguration> predicate) {
          passivate.set(true);
-         return CompletableFutures.completedNull();
+         return super.writeEntries(iterable, predicate);
       }
    }
 }

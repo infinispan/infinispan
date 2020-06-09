@@ -14,7 +14,9 @@ import org.jboss.marshalling.Externalizer;
  *
  * @author Galder Zamarreño
  * @since 5.0
+ * @deprecated since 11.0. To be removed in 14.0 ISPN-11947.
  */
+@Deprecated
 public class SerializeWithExtFactory implements ClassExternalizerFactory {
 
    final ClassExternalizerFactory jbmarExtFactory = new AnnotationClassExternalizerFactory();

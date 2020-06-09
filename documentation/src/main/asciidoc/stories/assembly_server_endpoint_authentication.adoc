@@ -4,6 +4,11 @@
 Configure Hot Rod and REST connectors with SASL or HTTP authentication
 mechanisms to authenticate with clients.
 
+{brandname} servers require user authentication to access the
+command line interface (CLI) and console as well as the Hot Rod and REST
+endpoints. {brandname} servers also automatically configure authentication
+mechanisms based on the security realms that you define.
+
 include::{topics}/ref_server_authentication.adoc[leveloffset=+1]
 //Hot Rod
 include::{topics}/proc_server_endpoint_hotrod_auth.adoc[leveloffset=+1]

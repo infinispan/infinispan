@@ -449,26 +449,6 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
    }
 
-   public void testGetCacheWithTemplateAlreadyDefinedConfiguration() {
-      withCacheManager(new CacheManagerCallable(createClusteredCacheManager()) {
-         @Override
-         public void call() {
-            ConfigurationBuilder builder = new ConfigurationBuilder();
-            CacheMode cacheMode = CacheMode.DIST_ASYNC;
-            // DIST_ASYNC isn't default so it should stay applied
-            builder.clustering().cacheMode(cacheMode);
-            String distCacheName = "dist-cache";
-            cm.defineConfiguration(distCacheName, builder.build());
-
-            String templateName = "template";
-            cm.defineConfiguration(templateName, new ConfigurationBuilder().template(true).build());
-
-            Cache<?, ?> cache = cm.getCache(distCacheName, templateName);
-            assertEquals(cacheMode, cache.getCacheConfiguration().clustering().cacheMode());
-         }
-      });
-   }
-
    public void testDefineConfigurationWithOverrideAndTemplate() {
       withCacheManager(new CacheManagerCallable(createClusteredCacheManager()) {
          @Override

@@ -1,12 +1,13 @@
-[id='persistence_spi']
-:context: spi
-= {brandname} Persistence SPIs
-{brandname} Service Provider Interfaces (SPI) enable read and write operations
-to external storage and provide the following features:
+[id='persistent_spi']
+= {brandname} Persistence SPI
+The {brandname} Service Provider Interface (SPI) enables read and write
+operations to external storage through the `NonBlockingStore` interface and has
+the following features:
 
 Portability across JCache-compliant vendors::
-The {brandname} `CacheWriter` and `CacheLoader` interfaces align with the
-`JSR-107` JCache specification.
+{brandname} maintains compatibility between the `NonBlockingStore` interface
+and the `JSR-107` JCache specification by using an adapter that handles
+blocking code.
 
 Simplified transaction integration::
 {brandname} automatically handles locking so your implementations do not need
@@ -27,13 +28,6 @@ writing to the wire.
 
 .Reference
 
+* link:{javadocroot}/org/infinispan/persistence/spi/package-summary.html[Persistence SPI]
+* link:{javadocroot}/org/infinispan/persistence/spi/NonBlockingStore.html[NonBlockingStore]
 * link:http://jcp.org/en/jsr/detail?id=107[JSR-107]
-* link:{javadocroot}/org/infinispan/persistence/spi/CacheWriter.html[CacheWriter]
-* link:{javadocroot}/org/infinispan/persistence/spi/CacheLoader.html[CacheLoader]
-
-
-include::{topics}/ref_persistence_spi.adoc[leveloffset=+1]
-
-// Restore the parent context.
-ifdef::parent-context[:context: {parent-context}]
-ifndef::parent-context[:!context:]

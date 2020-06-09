@@ -11,7 +11,7 @@
       </security>
       <local-cache name="secured">
          <security>
-            <authorization roles="admin supervisor reader"/>
+            <authorization roles="admin supervisor reader"/> <1>
          </security>
       </local-cache>
    </cache-container>

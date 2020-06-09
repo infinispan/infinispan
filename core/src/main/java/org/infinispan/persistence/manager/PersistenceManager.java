@@ -6,10 +6,12 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -291,21 +293,34 @@ public interface PersistenceManager extends Lifecycle {
          Predicate<? super StoreConfiguration> predicate);
 
    /**
-    * Write all entries to the underlying non-transactional stores as a single batch.
-    *
-    * @param entries a List of MarshalledEntry to be written to the store.
-    * @param predicate whether a given store should write the entry
-    * @param flags Flags used during command invocation
+    * Writes the values modified from a put map command to the stores.
+    * @param putMapCommand the put map command to write values from
+    * @param ctx context to lookup entries
+    * @param commandKeyPredicate predicate to control if a key/command combination should be accepted
+    * @return a stage of how many writes were performed
     */
-   <K, V> CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry<K, V>> entries, Predicate<? super StoreConfiguration> predicate, long flags);
+   CompletionStage<Long> writeMapCommand(PutMapCommand putMapCommand, InvocationContext ctx,
+         BiPredicate<? super PutMapCommand, Object> commandKeyPredicate);
 
    /**
-    *
-    * @param modifications
-    * @return
+    * Writes a batch for the given modifications in the transactional context
+    * @param invocationContext transactional context
+    * @param commandKeyPredicate predicate to control if a key/command combination should be accepted
+    * @return a stage of how many writes were performed
     */
    CompletionStage<Long> performBatch(TxInvocationContext<AbstractCacheTransaction> invocationContext,
-         BiPredicate<WriteCommand, Object> commandKeyPredicate);
+         BiPredicate<? super WriteCommand, Object> commandKeyPredicate);
+
+   /**
+    * Writes the entries to the stores that pass the given predicate
+    * @param iterable entries to write
+    * @param predicate predicate to test for a store
+    * @param <K> key type
+    * @param <V> value type
+    * @return a stage that when complete the values were written
+    */
+   <K, V> CompletionStage<Void> writeEntries(Iterable<MarshallableEntry<K, V>> iterable,
+         Predicate<? super StoreConfiguration> predicate);
 
    /**
     * @return true if all configured stores are available and ready for read/write operations.

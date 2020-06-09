@@ -1,4 +1,4 @@
-package org.infinispan.server.core.dataconversion;
+package org.infinispan.encoding.impl;
 
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;

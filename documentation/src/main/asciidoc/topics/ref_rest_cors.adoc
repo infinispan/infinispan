@@ -38,3 +38,15 @@ other than "http://host1" or "https://host1" can perform the allowed methods
 and use the supplied headers.
 
 For information about configuring CORS rules, see the link:{configdocroot}[{brandname} Server Configuration Schema].
+
+== Allowing all CORS permissions for some origins
+
+The VM property `infinispan.server.rest.cors-allow` can be used when starting the server to allow all permissions to one or more origins.
+Example:
+
+[source,options="nowrap",subs=attributes+]
+----
+./bin/server.sh -Dinfinispan.server.rest.cors-allow=http://192.168.1.78:11222,http://host.mydomain.com
+----
+
+All origins specified using this method will take precedence over the configured rules.

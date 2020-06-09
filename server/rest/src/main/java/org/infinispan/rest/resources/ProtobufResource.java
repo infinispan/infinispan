@@ -1,18 +1,25 @@
 package org.infinispan.rest.resources;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.reactivex.rxjava3.core.Flowable;
+import static org.infinispan.rest.framework.Method.DELETE;
+import static org.infinispan.rest.framework.Method.GET;
+import static org.infinispan.rest.framework.Method.POST;
+import static org.infinispan.rest.framework.Method.PUT;
+import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
+
+import java.util.Comparator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
-import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -23,17 +30,10 @@ import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 import org.infinispan.rest.operations.exceptions.NoKeyException;
 import org.infinispan.util.concurrent.CompletableFutures;
 
-import java.util.Comparator;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.rest.framework.Method.DELETE;
-import static org.infinispan.rest.framework.Method.GET;
-import static org.infinispan.rest.framework.Method.POST;
-import static org.infinispan.rest.framework.Method.PUT;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Protobuf schema manipulation Resource
@@ -83,15 +83,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
                })
                 .sorted(Comparator.comparing(s -> s.name))
                 .collect(Collectors.toList())
-                .map(protoSchemas -> {
-                  try {
-                     byte[] bytes = objectMapper.writeValueAsBytes(protoSchemas);
-                     responseBuilder.contentType(APPLICATION_JSON).entity(bytes);
-                  } catch (JsonProcessingException e) {
-                     throw new RestResponseException(e);
-                  }
-                  return (RestResponse) responseBuilder.build();
-               })
+                .map(protoSchemas -> asJsonResponse(protoSchemas, invocationHelper))
                 .toCompletionStage()
       , invocationHelper.getExecutor())
             .thenCompose(Function.identity());
@@ -136,16 +128,9 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
             if (validationError != null) {
                protoSchema.error = createErrorContent(schemaName, (String) validationError);
             }
-            byte[] detailsResponse = Util.EMPTY_BYTE_ARRAY;
-            try {
-               detailsResponse = invocationHelper.getMapper().writeValueAsBytes(protoSchema);
-            } catch (JsonProcessingException e) {
-               builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-            }
-            return builder.contentType(APPLICATION_JSON).entity(detailsResponse).build();
-         } else {
-            return builder.build();
+            addEntityAsJson(protoSchema, builder, invocationHelper);
          }
+         return builder.build();
       });
    }
 

@@ -1239,6 +1239,7 @@
       </xs:choice>
       <xs:attribute type="xs:string" name="name" use="required"/>
       <xs:attribute type="xs:string" name="auth-server-url" use="required"/>
+      <xs:attribute type="xs:string" name="client-id" use="required"/>
       <xs:attribute type="xs:string" name="principal-claim" default="username"/>
    </xs:complexType>
 

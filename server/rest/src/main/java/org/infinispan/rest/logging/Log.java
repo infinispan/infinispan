@@ -99,4 +99,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Synchronized %d entries", id = 12024)
    String synchronizedEntries(long hotrod);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Ignoring invalid origin '%s' when reading '-D%s'", id = 12025)
+   void invalidOrigin(String origin, String prop);
 }

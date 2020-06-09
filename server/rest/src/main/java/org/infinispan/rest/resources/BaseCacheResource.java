@@ -1,6 +1,6 @@
 package org.infinispan.rest.resources;
 
-import static org.infinispan.rest.NettyRestRequest.EXTENDED_HEADER;
+import static org.infinispan.rest.RequestHeader.EXTENDED_HEADER;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
@@ -188,7 +188,7 @@ public class BaseCacheResource {
                      .created(ice.getCreated())
                      .lastUsed(ice.getLastUsed());
 
-               List<String> extended = request.parameters().get(EXTENDED_HEADER);
+               List<String> extended = request.parameters().get(EXTENDED_HEADER.getValue());
                RestServerConfiguration restServerConfiguration = invocationHelper.getConfiguration();
                if (extended != null && extended.size() > 0 && CacheOperationsHelper.supportsExtendedHeaders(restServerConfiguration, extended.iterator().next())) {
                   responseBuilder.clusterPrimaryOwner(restCacheManager.getPrimaryOwner(cacheName, key, request))

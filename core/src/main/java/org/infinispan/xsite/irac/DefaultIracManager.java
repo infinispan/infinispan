@@ -206,9 +206,9 @@ public class DefaultIracManager implements IracManager, Runnable {
          //not in teh cache topology
          return;
       }
-      IntSet addedSegments = IntSets.from(newCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
+      IntSet addedSegments = IntSets.mutableCopyFrom(newCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
       if (oldCacheTopology.getMembers().contains(local)) {
-         addedSegments.removeAll(IntSets.from(oldCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local)));
+         addedSegments.removeAll(oldCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
       }
 
       if (addedSegments.isEmpty()) {

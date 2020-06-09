@@ -3,12 +3,12 @@ package org.infinispan.server.core;
 import java.util.EnumSet;
 
 import org.infinispan.commons.configuration.ClassWhiteList;
-import org.infinispan.commons.dataconversion.BinaryTranscoder;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.encoding.impl.TwoStepTranscoder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
@@ -17,19 +17,16 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.server.core.dataconversion.JBossMarshallingTranscoder;
-import org.infinispan.server.core.dataconversion.JavaSerializationTranscoder;
 import org.infinispan.server.core.dataconversion.JsonTranscoder;
 import org.infinispan.server.core.dataconversion.XMLTranscoder;
 
 /**
- * Module lifecycle callbacks implementation that enables module specific
- * {@link org.infinispan.commons.marshall.AdvancedExternalizer} implementations to be registered.
+ * Server module lifecycle callbacks
  *
  * @author Galder Zamarreño
  * @since 5.0
  */
-@InfinispanModule(name = "server-core", requiredModules = "core")
+@InfinispanModule(name = "server-core", requiredModules = "core", optionalModules = "jboss-marshalling")
 public class LifecycleCallbacks implements ModuleLifecycle {
 
    static final String SERVER_STATE_CACHE = "org.infinispan.SERVER_STATE";
@@ -46,19 +43,18 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 
       ClassWhiteList classWhiteList = gcr.getComponent(EmbeddedCacheManager.class).getClassWhiteList();
       ClassLoader classLoader = globalConfiguration.classLoader();
-      Marshaller jbossMarshaller = Util.getJBossMarshaller(classLoader, classWhiteList);
 
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
       JsonTranscoder jsonTranscoder = new JsonTranscoder(classLoader, classWhiteList);
 
       encoderRegistry.registerTranscoder(jsonTranscoder);
       encoderRegistry.registerTranscoder(new XMLTranscoder(classLoader, classWhiteList));
-      encoderRegistry.registerTranscoder(new JavaSerializationTranscoder(classWhiteList));
 
-      if (jbossMarshaller != null) {
-         encoderRegistry.registerTranscoder(new JBossMarshallingTranscoder(jsonTranscoder, jbossMarshaller));
-         BinaryTranscoder transcoder = encoderRegistry.getTranscoder(BinaryTranscoder.class);
-         transcoder.overrideMarshaller(jbossMarshaller);
+      // Allow transcoding between JBoss Marshalling and JSON
+      if (encoderRegistry.isConversionSupported(MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_JBOSS_MARSHALLING)) {
+         Transcoder jbossMarshallingTranscoder =
+               encoderRegistry.getTranscoder(MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_JBOSS_MARSHALLING);
+         encoderRegistry.registerTranscoder(new TwoStepTranscoder(jbossMarshallingTranscoder, jsonTranscoder));
       }
    }
 

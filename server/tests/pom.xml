@@ -20,6 +20,8 @@
       <defaultExcludedTestGroup/>
       <org.infinispan.test.server.dir>${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
       <org.infinispan.test.server.lib.dir>${project.build.directory}/testlibs</org.infinispan.test.server.lib.dir>
+      <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
+      <org.infinispan.test.server.cluster.stack>test-${infinispan.cluster.stack}</org.infinispan.test.server.cluster.stack>
    </properties>
 
    <dependencies>
@@ -88,6 +90,7 @@
                <useFile>false</useFile>
                <systemPropertyVariables>
                   <infinispan.cluster.stack>${infinispan.cluster.stack}</infinispan.cluster.stack>
+                  <org.infinispan.test.server.cluster.stack>${org.infinispan.test.server.cluster.stack}</org.infinispan.test.server.cluster.stack>
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>

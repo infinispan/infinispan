@@ -18,8 +18,8 @@ include::{topics}/ref_config_templates.adoc[leveloffset=+2]
 include::{topics}/ref_config_wildcards.adoc[leveloffset=+2]
 include::{topics}/ref_config_xinclude.adoc[leveloffset=+2]
 
+include::{topics}/ref_config_programmatic_objects.adoc[leveloffset=+1]
 include::{topics}/ref_config_programmatic.adoc[leveloffset=+1]
-include::{topics}/ref_config_programmatic_objects.adoc[leveloffset=+2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

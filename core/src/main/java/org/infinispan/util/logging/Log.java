@@ -1487,9 +1487,9 @@ public interface Log extends BasicLogger {
    @Message(value = "%s cannot be shared", id = 430)
    CacheConfigurationException nonSharedStoreConfiguredAsShared(String storeType);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to validate %s's configuration as the @Store annotation is missing", id = 431)
-   void warnStoreAnnotationMissing(String name);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Unable to validate %s's configuration as the @Store annotation is missing", id = 431)
+//   void warnStoreAnnotationMissing(String name);
 
    @Message(value = "Missing configuration for default cache '%s' declared on container", id = 432)
    CacheConfigurationException missingDefaultCacheDeclaration(String defaultCache);
@@ -1561,10 +1561,6 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Attempt to define configuration for cache %s which already exists", id = 453)
    CacheConfigurationException configAlreadyDefined(String cacheName);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Calling getCache with a cache override is no longer supported. Please invoke createCache first and then getCache. Cache name was %s", id = 454)
-   void warnAttemptToOverrideExistingConfiguration(String cacheName);
 
    @LogMessage(level = ERROR)
    @Message(value = "Failure during leaver transactions cleanup", id = 455)

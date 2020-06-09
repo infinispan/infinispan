@@ -8,11 +8,13 @@ import static org.eclipse.jetty.http.HttpMethod.POST;
 import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.VOLATILE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.commons.util.Util.getResourceAsString;
 import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
 import static org.infinispan.context.Flag.SKIP_INDEXING;
 import static org.infinispan.globalstate.GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME;
+import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -52,6 +54,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    private static final String PERSISTENT_LOCATION = tmpDirectory(CacheV2ResourceTest.class.getName());
+   private final ObjectMapper objectMapper = new ObjectMapper();
 
    @Override
    protected void defineCaches(EmbeddedCacheManager cm) {
@@ -128,6 +131,22 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       testCreateAndUseCache("a%25bc");
    }
 
+   @Test
+   public void testCreateCacheEncoding() throws Exception {
+      String cacheName = "encoding-test";
+      String json = "{\"local-cache\":{\"encoding\":{\"media-type\":\"text/plain\"}}}";
+
+      createCache(json, cacheName);
+      String cacheConfig = getCacheConfig(APPLICATION_JSON_TYPE, cacheName);
+
+      JsonNode encoding = objectMapper.readTree(cacheConfig).get("local-cache").get("encoding");
+      JsonNode keyMediaType = encoding.get("key").get("media-type");
+      JsonNode valueMediaType = encoding.get("value").get("media-type");
+
+      assertEquals(TEXT_PLAIN_TYPE, keyMediaType.asText());
+      assertEquals(TEXT_PLAIN_TYPE, valueMediaType.asText());
+   }
+
    private void testCreateAndUseCache(String name) throws Exception {
       String baseURL = String.format("http://localhost:%d/rest/v2/caches/", restServer().getPort());
       String cacheName = URLEncoder.encode(name, "UTF-8");
@@ -148,7 +167,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       ContentResponse namesResponse = client.newRequest(baseURL).send();
       ResponseAssertion.assertThat(namesResponse).isOk();
-      List<String> names = Arrays.asList(new ObjectMapper().readValue(namesResponse.getContentAsString(), String[].class));
+      List<String> names = Arrays.asList(objectMapper.readValue(namesResponse.getContentAsString(), String[].class));
       assertTrue(names.contains(name));
 
       ContentResponse putResponse = client.newRequest(url + "/key")
@@ -222,7 +241,6 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testCacheV2Stats() throws Exception {
-      ObjectMapper objectMapper = new ObjectMapper();
       String cacheJson = "{ \"distributed-cache\" : { \"statistics\":true } }";
       String cacheURL = String.format("http://localhost:%d/rest/v2/caches/statCache", restServer().getPort());
 
@@ -309,6 +327,10 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    private void createCache(ConfigurationBuilder builder, String name) throws Exception {
       String json = new JsonWriter().toJSON(builder.build());
+      createCache(json, name);
+   }
+
+   private void createCache(String json, String name) throws Exception {
       String url = String.format("http://localhost:%d/rest/v2/caches/%s", restServer().getPort(), name);
       ContentResponse response = client.newRequest(url).header("Content-type", APPLICATION_JSON_TYPE)
             .method(POST).content(new StringContentProvider(json)).send();
@@ -320,12 +342,11 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       ContentResponse response = client.newRequest(url).header("Accept", APPLICATION_JSON_TYPE).send();
       ResponseAssertion.assertThat(response).isOk();
 
-      return new ObjectMapper().readTree(response.getContentAsString());
+      return objectMapper.readTree(response.getContentAsString());
    }
 
    @Test
    public void testCacheNames() throws Exception {
-      ObjectMapper objectMapper = new ObjectMapper();
       String URL = String.format("http://localhost:%d/rest/v2/caches/", restServer().getPort());
 
       ContentResponse response = client.newRequest(URL).send();
@@ -397,13 +418,13 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       String url = String.format("http://localhost:%d/rest/v2/caches/default?action=%s", restServer().getPort(), "keys");
 
       ContentResponse response = client.newRequest(url).method(GET).send();
-      Set emptyKeys = new ObjectMapper().readValue(response.getContentAsString(), Set.class);
+      Set emptyKeys = objectMapper.readValue(response.getContentAsString(), Set.class);
       assertEquals(0, emptyKeys.size());
 
 
       putStringValueInCache("default", "1", "value");
       response = client.newRequest(url).method(GET).send();
-      Set singleSet = new ObjectMapper().readValue(response.getContentAsString(), Set.class);
+      Set singleSet = objectMapper.readValue(response.getContentAsString(), Set.class);
       assertEquals(1, singleSet.size());
 
       int entries = 1000;
@@ -411,7 +432,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
          putStringValueInCache("default", String.valueOf(i), "value");
       }
       response = client.newRequest(url).method(GET).send();
-      Set keys = new ObjectMapper().readValue(response.getContentAsString(), Set.class);
+      Set keys = objectMapper.readValue(response.getContentAsString(), Set.class);
       assertEquals(entries, keys.size());
       assertTrue(IntStream.range(0, entries).allMatch(keys::contains));
    }
@@ -421,7 +442,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       /**
        * Special role {@link ProtobufMetadataManager#SCHEMA_MANAGER_ROLE} is needed for authz. Subject USER has it
        */
-      String cache = ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME;
+      String cache = PROTOBUF_METADATA_CACHE_NAME;
       String url = String.format("http://localhost:%d/rest/v2/caches/%s?action=%s", restServer().getPort(), cache, "keys");
 
       putStringValueInCache(cache, "file1.proto", "message A{}");
@@ -429,7 +450,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       ContentResponse response = client.newRequest(url).method(GET).send();
       String contentAsString = response.getContentAsString();
-      Set keys = new ObjectMapper().readValue(contentAsString, Set.class);
+      Set keys = objectMapper.readValue(contentAsString, Set.class);
       assertEquals(2, keys.size());
    }
 
@@ -440,9 +461,14 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    }
 
    private void testGetProtoCacheConfig(String accept) throws Exception {
-      String url = String.format("http://localhost:%d/rest/v2/caches/___protobuf_metadata?action=config", restServer().getPort());
+      getCacheConfig(accept, PROTOBUF_METADATA_CACHE_NAME);
+   }
+
+   private String getCacheConfig(String accept, String name) throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/%s?action=config", restServer().getPort(), name);
       ContentResponse response = client.newRequest(url).header(ACCEPT, accept).send();
       ResponseAssertion.assertThat(response).isOk();
+      return response.getContentAsString();
    }
 
    @Test
@@ -462,7 +488,6 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       ContentResponse response = client.newRequest(url).method(POST).content(new StringContentProvider(xml)).send();
       ResponseAssertion.assertThat(response).isOk();
 
-      ObjectMapper objectMapper = new ObjectMapper();
       JsonNode jsonNode = objectMapper.readTree(response.getContentAsString());
 
       JsonNode distCache = jsonNode.get("distributed-cache");

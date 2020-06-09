@@ -1,39 +1,33 @@
 [[cache_manager]]
-= Cache Manager
-The `CacheManager` interface is the main entry point to {brandname} and lets you:
+= Cache Managers
+The main entry point to {brandname} is the `CacheManager` interface that lets you:
 
-* configure and obtain caches
-* manage and monitor your nodes
-* execute code across a cluster
-* more...
+* Configure and obtain caches.
+* Manage and monitor clustered {brandname} nodes.
+* Execute code across your cluster.
 
-Depending on whether you embed {brandname} in applications or run it as a remote server, you use either an `EmbeddedCacheManager` or a `RemoteCacheManager`. While they share some methods and properties,
-be aware that there are semantic differences between them. The following chapters focus mostly on the _embedded_
-implementation.
+If you embed {brandname} in your application, then you use an
+`EmbeddedCacheManager`. If you run {brandname} as a remote server, then you use
+a `RemoteCacheManager`.
 
-CacheManagers are heavyweight objects, and we foresee no more than one CacheManager being used per JVM
-(unless specific setups require more than one; but either way, this would be a minimal and finite
-number of instances).
-
-The simplest way to create a CacheManager is:
+Cache Managers are heavyweight objects so you should instantiate only one
+`CacheManager` instance per JVM in most cases.
 
 [source,java]
 ----
-include::code_examples/NewDefaultCacheManager.java[]
+EmbeddedCacheManager manager = new DefaultCacheManager(); <1>
 ----
 
-which starts the most basic, local mode, non-clustered cache manager with no caches. CacheManagers have a lifecycle
-and the default constructors also call link:{javadocroot}/org/infinispan/commons/api/Lifecycle.html#start()[Lifecycle.start()].
-Overloaded versions of the constructors are available, that do not start the CacheManager, although keep in
-mind that CacheManagers need to be started before they can be used to create Cache instances.
+<1> Starts a local, non-clustered, Cache Manager with no caches.
 
-Once constructed, CacheManagers should be made available to any component that require to interact with it via some form
-of application-wide scope such as JNDI, a ServletContext or via some other mechanism such as an IoC container.
+Cache Managers have lifecycles and the default constructors also call the
+`start()` method. Overloaded versions of the constructors are available, but
+they do not start the `CacheManager`. However, you must always start the
+`CacheManager` before you can create caches.
 
-When you are done with a CacheManager, you must stop it so that it can release its resources: `manager.stop();`
-
-This will ensure all caches within its scope are properly stopped, thread pools are shutdown. If the CacheManager was
-clustered it will also leave the cluster gracefully.
+Likewise, you must call `stop()` when you no longer require a running
+`CacheManager` so that it releases resources. This also ensures that the Cache 
+Manager safely stops any caches that it controls.
 
 == Obtaining caches
 After you configure the `CacheManager`, you can obtain and control caches.

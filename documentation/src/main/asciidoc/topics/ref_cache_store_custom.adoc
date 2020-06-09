@@ -1,9 +1,0 @@
-[id='custom_cache_store']
-= Custom Cache Stores
-You can create custom cache stores that implement one or more of the
-{brandname} persistent SPIs.
-
-.Reference
-
-* link:#persistence_spi[Persistence SPI]
-* link:{javadocroot}/org/infinispan/persistence/spi/package-summary.html[Persistence SPI package summary]
