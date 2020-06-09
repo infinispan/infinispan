@@ -1,5 +1,11 @@
 = Upgrading from 10.1 to 11.0
 
+== HotRod Client
+The `GenericJBossMarshaller` is no longer automatically configured if the `infinispan-jboss-marshalling` module is on the
+classpath. If jboss-marshalling is required, it's necessary for the aforementioned jar to be on the classpath and for
+the `org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller` to be explicitly configured when creating the
+RemoteCacheManager.
+
 == Wildfly modules
 
 The Wildfly modules are now deprecated. The `jgroups`, `infinispan` and `endpoint` extensions have been removed and

@@ -392,9 +392,7 @@ public class HotRodTestingUtil {
    }
 
    private static Marshaller getMarshaller() {
-      // Must check for GenericJbossMarshaller as infinispan-jboss-marshalling still used by client
-      Marshaller marshaller = Util.getJBossMarshaller(HotRodTestingUtil.class.getClassLoader(), null);
-      return marshaller != null ? marshaller : new ProtoStreamMarshaller();
+      return new ProtoStreamMarshaller();
    }
 
    public static void withClientListener(HotRodClient client, TestClientListener listener,

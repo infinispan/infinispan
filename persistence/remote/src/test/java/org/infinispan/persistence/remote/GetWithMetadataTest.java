@@ -16,7 +16,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -32,28 +32,25 @@ public class GetWithMetadataTest extends AbstractInfinispanTest {
 
    public static final String CACHE_NAME = "testCache";
 
-   protected PersistenceConfigurationBuilder createCacheStoreConfig(String cacheName, int port,
-                                                                    PersistenceConfigurationBuilder persistence) {
-      persistence.addStore(RemoteStoreConfigurationBuilder.class)
-              .remoteCacheName(cacheName)
-              .hotRodWrapping(true)
-              .addServer()
-              .host("localhost")
-              .port(port);
-      return persistence;
-   }
-
    private <K, V> RemoteCache<K, V> getRemoteCache(HotRodServer hotRodServer) {
-      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-              new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
-      RemoteCacheManager remoteCacheManager =
-              new RemoteCacheManager(clientBuilder.addServer().host("localhost").port(hotRodServer.getPort()).build());
+      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder(hotRodServer)
+                  .marshaller(GenericJBossMarshaller.class)
+                  .build()
+      );
       return remoteCacheManager.getCache(CACHE_NAME);
    }
 
    protected ConfigurationBuilder getTargetCacheConfiguration(int sourcePort) {
       ConfigurationBuilder cb = hotRodCacheConfiguration(MediaType.APPLICATION_JBOSS_MARSHALLING);
-      createCacheStoreConfig(CACHE_NAME, sourcePort, cb.persistence());
+
+      cb.persistence()
+            .addStore(RemoteStoreConfigurationBuilder.class)
+            .remoteCacheName(CACHE_NAME)
+            .hotRodWrapping(true)
+            .addServer()
+            .host("localhost")
+            .port(sourcePort);
       return cb;
    }
 

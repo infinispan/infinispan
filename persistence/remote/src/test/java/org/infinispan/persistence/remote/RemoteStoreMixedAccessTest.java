@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -53,11 +54,12 @@ public class RemoteStoreMixedAccessTest extends AbstractInfinispanTest {
             .port(hrServer.getPort());
       clientCacheManager = TestCacheManagerFactory.createCacheManager(clientBuilder);
       clientCache = clientCacheManager.getCache();
-      org.infinispan.client.hotrod.configuration.ConfigurationBuilder rcmBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
-      rcmBuilder.addServer()
-         .host(hrServer.getHost())
-         .port(hrServer.getPort());
-      remoteCacheManager = new RemoteCacheManager(rcmBuilder.build());
+
+      remoteCacheManager = new RemoteCacheManager(
+            HotRodClientTestingUtil.newRemoteConfigurationBuilder(hrServer)
+                  .marshaller(GenericJBossMarshaller.class)
+                  .build()
+      );
       remoteCacheManager.start();
       remoteCache = remoteCacheManager.getCache();
    }
