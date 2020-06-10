@@ -166,7 +166,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
          return null;
 
       Class<?> componentClass = componentRef.wired().getClass();
-      ComponentAccessor metadata = moduleRepository.getComponentAccessor(componentClass.getName());
+      ComponentAccessor<Object> metadata = moduleRepository.getComponentAccessor(componentClass.getName());
       if (metadata != null && metadata.isGlobalScope())
          return null;
 

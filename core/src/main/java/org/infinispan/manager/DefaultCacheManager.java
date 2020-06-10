@@ -262,9 +262,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             defaultCacheName = null;
          }
       }
-      ModuleRepository.Builder moduleRepositoryBuilder = new ModuleRepository.Builder(
-         globalConfiguration.classLoader());
-      ModuleRepository moduleRepository = moduleRepositoryBuilder.build(globalConfiguration);
+      ModuleRepository moduleRepository = ModuleRepository.newModuleRepository(globalConfiguration.classLoader(), globalConfiguration);
       this.classWhiteList = globalConfiguration.serialization().whiteList().create();
       this.globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(),
                                                                  moduleRepository, configurationManager);
@@ -363,8 +361,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          classWhiteList = globalConfiguration.serialization().whiteList().create();
          defaultCacheName = globalConfiguration.defaultCacheName().orElse(null);
 
-         ModuleRepository.Builder moduleRepositoryBuilder = new ModuleRepository.Builder(globalConfiguration.classLoader());
-         ModuleRepository moduleRepository = moduleRepositoryBuilder.build(globalConfiguration);
+         ModuleRepository moduleRepository = ModuleRepository.newModuleRepository(globalConfiguration.classLoader(), globalConfiguration);
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(),
                                                                moduleRepository, configurationManager);
 
