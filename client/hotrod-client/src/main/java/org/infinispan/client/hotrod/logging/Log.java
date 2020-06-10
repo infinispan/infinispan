@@ -352,4 +352,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Remote iteration over the entire result set of query '%s' without using pagination options is inefficient for large result sets. Please consider using 'startOffset' and 'maxResults' options.", id = 4099)
    void warnPerfRemoteIterationWithoutPagination(String query);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Error reaching the server during iteration", id = 4100)
+   void throwableDuringPublisher(@Cause Throwable t);
 }

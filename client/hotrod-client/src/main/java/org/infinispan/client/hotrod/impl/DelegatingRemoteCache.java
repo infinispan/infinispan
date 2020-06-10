@@ -212,7 +212,7 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
-   public Publisher<Entry<Object, Object>> publishEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize) {
+   public <E> Publisher<Entry<K, E>> publishEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize) {
       return delegate.publishEntries(filterConverterFactory, filterConverterParams, segments, batchSize);
    }
 
@@ -222,7 +222,7 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
-   public Publisher<Entry<Object, Object>> publishEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
+   public <E> Publisher<Entry<K, E>> publishEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
       return delegate.publishEntriesByQuery(filterQuery, segments, batchSize);
    }
 
@@ -232,7 +232,7 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
-   public Publisher<Entry<Object, MetadataValue<Object>>> publishEntriesWithMetadata(Set<Integer> segments, int batchSize) {
+   public Publisher<Entry<K, MetadataValue<V>>> publishEntriesWithMetadata(Set<Integer> segments, int batchSize) {
       return delegate.publishEntriesWithMetadata(segments, batchSize);
    }
 

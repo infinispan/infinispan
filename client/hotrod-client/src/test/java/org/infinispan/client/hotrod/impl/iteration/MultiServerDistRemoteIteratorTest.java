@@ -72,8 +72,8 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
       populateCache(CACHE_SIZE, this::newAccount, cache);
       TestSegmentKeyTracker testSegmentKeyTracker = new TestSegmentKeyTracker();
 
-      Publisher<Map.Entry<Object, Object>> publisher = cache.publishEntries(null, null, null, 3);
-      try (CloseableIterator<Map.Entry<Object, Object>> iterator = Closeables.iterator(publisher, 3)) {
+      Publisher<Map.Entry<Integer, AccountHS>> publisher = cache.publishEntries(null, null, null, 3);
+      try (CloseableIterator<Map.Entry<Integer, AccountHS>> iterator = Closeables.iterator(publisher, 3)) {
          TestingUtil.replaceField(testSegmentKeyTracker, "segmentKeyTracker", publisher, RemotePublisher.class);
          while (iterator.hasNext()) iterator.next();
          assertEquals(60, testSegmentKeyTracker.finished.size());

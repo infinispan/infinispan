@@ -201,12 +201,13 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize) {
-      Publisher<Entry<Object, Object>> remotePublisher = publishEntries(filterConverterFactory, filterConverterParams, segments, batchSize);
-      return Closeables.iterator(remotePublisher, batchSize);
+      Publisher<Entry<K, Object>> remotePublisher = publishEntries(filterConverterFactory, filterConverterParams, segments, batchSize);
+      //noinspection unchecked
+      return Closeables.iterator((Publisher) remotePublisher, batchSize);
    }
 
    @Override
-   public Publisher<Map.Entry<Object, Object>> publishEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize) {
+   public <E> Publisher<Entry<K, E>> publishEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize) {
       assertRemoteCacheManagerIsStarted();
       if (segments != null && segments.isEmpty()) {
          return Flowable.empty();
@@ -218,24 +219,26 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
-      Publisher<Entry<Object, Object>> remotePublisher = publishEntriesByQuery(filterQuery, segments, batchSize);
-      return Closeables.iterator(remotePublisher, batchSize);
+      Publisher<Entry<K, Object>> remotePublisher = publishEntriesByQuery(filterQuery, segments, batchSize);
+      //noinspection unchecked
+      return Closeables.iterator((Publisher) remotePublisher, batchSize);
    }
 
    @Override
-   public Publisher<Entry<Object, Object>> publishEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
+   public <E> Publisher<Entry<K, E>> publishEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
       Object[] factoryParams = makeFactoryParams(filterQuery);
       return publishEntries(Filters.ITERATION_QUERY_FILTER_CONVERTER_FACTORY_NAME, factoryParams, segments, batchSize);
    }
 
    @Override
    public CloseableIterator<Entry<Object, MetadataValue<Object>>> retrieveEntriesWithMetadata(Set<Integer> segments, int batchSize) {
-      Publisher<Entry<Object, MetadataValue<Object>>> remotePublisher = publishEntriesWithMetadata(segments, batchSize);
-      return Closeables.iterator(remotePublisher, batchSize);
+      Publisher<Entry<K, MetadataValue<V>>> remotePublisher = publishEntriesWithMetadata(segments, batchSize);
+      //noinspection unchecked
+      return Closeables.iterator((Publisher) remotePublisher, batchSize);
    }
 
    @Override
-   public Publisher<Entry<Object, MetadataValue<Object>>> publishEntriesWithMetadata(Set<Integer> segments, int batchSize) {
+   public Publisher<Entry<K, MetadataValue<V>>> publishEntriesWithMetadata(Set<Integer> segments, int batchSize) {
       return new RemotePublisher<>(operationsFactory, defaultMarshaller, null, null, segments,
             batchSize, true, dataFormat);
    }
