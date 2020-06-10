@@ -16,7 +16,7 @@ public interface ModuleMetadataBuilder {
 
    interface ModuleBuilder {
 
-      void registerComponentAccessor(String componentClassName, List<String> factoryComponentNames, ComponentAccessor accessor);
+      void registerComponentAccessor(String componentClassName, List<String> factoryComponentNames, ComponentAccessor<?> accessor);
 
       void registerMBeanMetadata(String componentClassName, MBeanMetadata mBeanMetadata);
 
