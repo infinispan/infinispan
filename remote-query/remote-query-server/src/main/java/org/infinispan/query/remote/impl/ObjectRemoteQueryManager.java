@@ -75,7 +75,7 @@ final class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
       return queryEngine;
    }
 
-   private EntityNameResolver createEntityNamesResolver(MediaType mediaType) {
+   private EntityNameResolver<Class<?>> createEntityNamesResolver(MediaType mediaType) {
       if (mediaType.match(APPLICATION_PROTOSTREAM)) {
          return new ProtobufEntityNameResolver(serCtx);
       } else {

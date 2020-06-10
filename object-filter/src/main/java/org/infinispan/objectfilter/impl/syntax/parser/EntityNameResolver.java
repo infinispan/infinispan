@@ -5,8 +5,8 @@ package org.infinispan.objectfilter.impl.syntax.parser;
  * @since 9.0
  */
 @FunctionalInterface
-public interface EntityNameResolver {
+public interface EntityNameResolver<TypeMetadata> {
 
-   //todo [anistor] now that all types are predeclared we could be able to resolve unqualified type names too
-   Class<?> resolve(String name);
+   //TODO [anistor] ISPN-11986, now that all types are predeclared for indexed caches we could be able to resolve unqualified type names too
+   TypeMetadata resolve(String typeName);
 }

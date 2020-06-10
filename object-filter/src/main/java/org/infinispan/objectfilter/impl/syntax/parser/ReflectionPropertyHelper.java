@@ -11,9 +11,9 @@ import org.infinispan.objectfilter.impl.util.ReflectionHelper;
  */
 public class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?>> {
 
-   private final EntityNameResolver entityNameResolver;
+   private final EntityNameResolver<Class<?>> entityNameResolver;
 
-   public ReflectionPropertyHelper(EntityNameResolver entityNameResolver) {
+   public ReflectionPropertyHelper(EntityNameResolver<Class<?>> entityNameResolver) {
       if (entityNameResolver == null) {
          throw new IllegalArgumentException("The entityNameResolver argument cannot be null");
       }
