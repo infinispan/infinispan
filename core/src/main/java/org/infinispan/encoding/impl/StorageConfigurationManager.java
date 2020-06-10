@@ -97,7 +97,6 @@ public class StorageConfigurationManager {
       ContentTypeConfiguration contentTypeConfiguration = isKey ? encodingConfiguration.keyDataType() : encodingConfiguration.valueDataType();
       Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
       MediaType mediaType = userMarshaller.mediaType();
-      boolean heap = configuration.memory().storageType() == StorageType.OBJECT;
       // If explicitly configured, use the value provided
       if (contentTypeConfiguration.isMediaTypeChanged()) {
          return contentTypeConfiguration.mediaType();
@@ -109,6 +108,8 @@ public class StorageConfigurationManager {
       if (internalCache) return MediaType.APPLICATION_OBJECT;
 
       if (embeddedMode) {
+         boolean heap = configuration.memory().storage() == StorageType.OBJECT ||
+                        configuration.memory().storage() == StorageType.HEAP;
          return heap ? MediaType.APPLICATION_OBJECT : mediaType;
       }
 
