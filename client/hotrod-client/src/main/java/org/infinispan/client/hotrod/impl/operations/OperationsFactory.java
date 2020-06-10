@@ -307,7 +307,7 @@ public class OperationsFactory implements HotRodConstants {
       return new IterationEndOperation(codec, flags(), cfg, cacheNameBytes, topologyId, iterationId, channelFactory, channel);
    }
 
-   public <E> IterationNextOperation<E> newIterationNextOperation(byte[] iterationId, Channel channel, KeyTracker segmentKeyTracker, DataFormat dataFormat) {
+   public <K, E> IterationNextOperation<K, E> newIterationNextOperation(byte[] iterationId, Channel channel, KeyTracker segmentKeyTracker, DataFormat dataFormat) {
       return new IterationNextOperation<>(codec, flags(), cfg, cacheNameBytes, topologyId, iterationId, channel, channelFactory, segmentKeyTracker, dataFormat);
    }
 

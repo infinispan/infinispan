@@ -566,7 +566,7 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public Publisher<Entry<Object, Object>> publishEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize) {
+   public <E> Publisher<Entry<K, E>> publishEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize) {
       return delegate.publishEntries(filterConverterFactory, filterConverterParams, segments, batchSize);
    }
 
@@ -576,7 +576,7 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public Publisher<Entry<Object, Object>> publishEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
+   public <E> Publisher<Entry<K, E>> publishEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
       return delegate.publishEntriesByQuery(filterQuery, segments, batchSize);
    }
 
@@ -586,7 +586,7 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public Publisher<Entry<Object, MetadataValue<Object>>> publishEntriesWithMetadata(Set<Integer> segments, int batchSize) {
+   public Publisher<Entry<K, MetadataValue<V>>> publishEntriesWithMetadata(Set<Integer> segments, int batchSize) {
       return delegate.publishEntriesWithMetadata(segments, batchSize);
    }
 

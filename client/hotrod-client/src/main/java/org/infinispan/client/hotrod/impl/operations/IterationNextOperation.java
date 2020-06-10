@@ -29,7 +29,7 @@ import io.netty.channel.Channel;
  * @author gustavonalle
  * @since 8.0
  */
-public class IterationNextOperation<E> extends HotRodOperation<IterationNextResponse<E>> {
+public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextResponse<K, E>> {
 
    private final byte[] iterationId;
    private final Channel channel;
@@ -37,7 +37,7 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
 
    private byte[] finishedSegments;
    private int entriesSize = -1;
-   private List<Entry<Object, E>> entries;
+   private List<Entry<K, E>> entries;
    private int projectionsSize;
    private int untrackedEntries;
 
@@ -52,7 +52,7 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
    }
 
    @Override
-   public CompletableFuture<IterationNextResponse<E>> execute() {
+   public CompletableFuture<IterationNextResponse<K, E>> execute() {
       if (!channel.isActive()) {
          throw HOTROD.channelInactive(channel.remoteAddress(), channel.remoteAddress());
       }
@@ -96,22 +96,22 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
             version = buf.readLong();
          }
          byte[] key = ByteBufUtil.readArray(buf);
-         Object value;
+         E value;
          if (projectionsSize > 1) {
             Object[] projections = new Object[projectionsSize];
             for (int j = 0; j < projectionsSize; j++) {
                projections[j] = unmarshallValue(ByteBufUtil.readArray(buf), status);
             }
-            value = projections;
+            value = (E) projections;
          } else {
             value = unmarshallValue(ByteBufUtil.readArray(buf), status);
          }
          if (meta == 1) {
-            value = new MetadataValueImpl<>(creation, lifespan, lastUsed, maxIdle, version, value);
+            value = (E) new MetadataValueImpl<>(creation, lifespan, lastUsed, maxIdle, version, value);
          }
 
          if (segmentKeyTracker.track(key, status, cfg.getClassWhiteList())) {
-            Object unmarshallKey = dataFormat.keyToObj(key, cfg.getClassWhiteList());
+            K unmarshallKey = dataFormat.keyToObj(key, cfg.getClassWhiteList());
             entries.add(new SimpleEntry<>(unmarshallKey, (E) value));
          } else {
             untrackedEntries++;
@@ -123,10 +123,10 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
       if (HotRodConstants.isInvalidIteration(status)) {
          throw HOTROD.errorRetrievingNext(new String(iterationId, HOTROD_STRING_CHARSET));
       }
-      complete(new IterationNextResponse(status, entries, finishedSegmentSet, entriesSize > 0));
+      complete(new IterationNextResponse<>(status, entries, finishedSegmentSet, entriesSize > 0));
    }
 
-   private Object unmarshallValue(byte[] bytes, short status) {
+   private <M> M unmarshallValue(byte[] bytes, short status) {
       return dataFormat.valueToObj(bytes, cfg.getClassWhiteList());
    }
 }

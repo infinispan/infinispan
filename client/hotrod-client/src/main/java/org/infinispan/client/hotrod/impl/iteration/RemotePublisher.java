@@ -33,7 +33,7 @@ import org.reactivestreams.Subscriber;
 import io.netty.channel.Channel;
 import io.reactivex.rxjava3.core.Flowable;
 
-public class RemotePublisher<E> implements Publisher<Map.Entry<Object, E>> {
+public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final OperationsFactory operationsFactory;
@@ -76,12 +76,12 @@ public class RemotePublisher<E> implements Publisher<Map.Entry<Object, E>> {
    }
 
    @Override
-   public void subscribe(Subscriber<? super Map.Entry<Object, E>> subscriber) {
+   public void subscribe(Subscriber<? super Map.Entry<K, E>> subscriber) {
       // Segments can be null if we weren't provided any and we don't have a ConsistentHash
       if (segments == null) {
          AtomicBoolean shouldRetry = new AtomicBoolean(true);
 
-         RemoteInnerPublisherHandler<E> innerHandler = new RemoteInnerPublisherHandler<E>(this,
+         RemoteInnerPublisherHandler<K, E> innerHandler = new RemoteInnerPublisherHandler<K, E>(this,
                batchSize, () -> {
             // Note that this publisher will continue to return empty entries until it has completed a given
             // target without encountering a Throwable
@@ -132,7 +132,7 @@ public class RemotePublisher<E> implements Publisher<Map.Entry<Object, E>> {
                int batchSize = (this.batchSize / actualTargets.size()) + 1;
                return Flowable.fromIterable(actualTargets.entrySet())
                      .map(entry -> {
-                        RemoteInnerPublisherHandler<E> innerHandler = new RemoteInnerPublisherHandler<>(this,
+                        RemoteInnerPublisherHandler<K, E> innerHandler = new RemoteInnerPublisherHandler<>(this,
                               batchSize, () -> null, entry);
                         return innerHandler.startPublisher();
                      }).flatMap(RxJavaInterop.identityFunction(), actualTargets.size());
@@ -183,8 +183,8 @@ public class RemotePublisher<E> implements Publisher<Map.Entry<Object, E>> {
       return iterationStartOperation.execute();
    }
 
-   CompletionStage<IterationNextResponse<E>> newIteratorNextOperation(byte[] iterationId, Channel channel) {
-      IterationNextOperation<E> iterationNextOperation = operationsFactory.newIterationNextOperation(iterationId,
+   CompletionStage<IterationNextResponse<K, E>> newIteratorNextOperation(byte[] iterationId, Channel channel) {
+      IterationNextOperation<K, E> iterationNextOperation = operationsFactory.newIterationNextOperation(iterationId,
             channel, segmentKeyTracker, dataFormat);
       return iterationNextOperation.execute();
    }

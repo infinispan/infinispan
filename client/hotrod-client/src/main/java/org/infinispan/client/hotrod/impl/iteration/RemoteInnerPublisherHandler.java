@@ -20,18 +20,18 @@ import org.infinispan.commons.util.logging.TraceException;
 
 import io.netty.channel.Channel;
 
-class RemoteInnerPublisherHandler<E> extends AbstractAsyncPublisherHandler<Map.Entry<SocketAddress, IntSet>,
-      Map.Entry<Object, E>, IterationStartResponse, IterationNextResponse<E>> {
+class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Map.Entry<SocketAddress, IntSet>,
+      Map.Entry<K, E>, IterationStartResponse, IterationNextResponse<K, E>> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   protected final RemotePublisher<E> publisher;
+   protected final RemotePublisher<K, E> publisher;
 
    // Need to be volatile since cancel can come on a different thread
    protected volatile Channel channel;
    private volatile byte[] iterationId;
    private AtomicBoolean cancelled = new AtomicBoolean();
 
-   protected RemoteInnerPublisherHandler(RemotePublisher<E> parent, int batchSize,
+   protected RemoteInnerPublisherHandler(RemotePublisher<K, E> parent, int batchSize,
          Supplier<Map.Entry<SocketAddress, IntSet>> supplier, Map.Entry<SocketAddress, IntSet> firstTarget) {
       super(batchSize, supplier, firstTarget);
       this.publisher = parent;
@@ -60,14 +60,12 @@ class RemoteInnerPublisherHandler<E> extends AbstractAsyncPublisherHandler<Map.E
          Map.Entry<SocketAddress, IntSet> target, int batchSize) {
       SocketAddress address = target.getKey();
       IntSet segments = target.getValue();
-      if (log.isDebugEnabled()) {
-         log.debugf("Starting iteration with segments %s", segments);
-      }
+      log.tracef("Starting iteration with segments %s", segments);
       return publisher.newIteratorStartOperation(address, segments, batchSize);
    }
 
    @Override
-   protected CompletionStage<IterationNextResponse<E>> sendNextCommand(Map.Entry<SocketAddress, IntSet> target, int batchSize) {
+   protected CompletionStage<IterationNextResponse<K, E>> sendNextCommand(Map.Entry<SocketAddress, IntSet> target, int batchSize) {
       return publisher.newIteratorNextOperation(iterationId, channel);
    }
 
@@ -80,6 +78,7 @@ class RemoteInnerPublisherHandler<E> extends AbstractAsyncPublisherHandler<Map.E
          log.startedIteration(iterationId());
       }
 
+      // We could have been cancelled while the initial response was sent
       if (cancelled.get()) {
          actualCancel();
       }
@@ -87,7 +86,7 @@ class RemoteInnerPublisherHandler<E> extends AbstractAsyncPublisherHandler<Map.E
    }
 
    @Override
-   protected long handleNextResponse(IterationNextResponse<E> nextResponse, Map.Entry<SocketAddress, IntSet> target) {
+   protected long handleNextResponse(IterationNextResponse<K, E> nextResponse, Map.Entry<SocketAddress, IntSet> target) {
       if (!nextResponse.hasMore()) {
          // server doesn't clean up when complete
          sendCancel(target);
@@ -102,8 +101,8 @@ class RemoteInnerPublisherHandler<E> extends AbstractAsyncPublisherHandler<Map.E
          }
       }
       publisher.completeSegments(completedSegments);
-      List<Map.Entry<Object, E>> entries = nextResponse.getEntries();
-      for (Map.Entry<Object, E> entry : entries) {
+      List<Map.Entry<K, E>> entries = nextResponse.getEntries();
+      for (Map.Entry<K, E> entry : entries) {
          if (!onNext(entry)) {
             break;
          }
@@ -114,11 +113,11 @@ class RemoteInnerPublisherHandler<E> extends AbstractAsyncPublisherHandler<Map.E
    @Override
    protected void handleThrowableInResponse(Throwable t, Map.Entry<SocketAddress, IntSet> target) {
       if (t instanceof TransportException || t instanceof RemoteIllegalLifecycleStateException) {
-         log.warnf(t, "Error reaching the server during iteration");
+         log.throwableDuringPublisher(t);
          if (log.isTraceEnabled()) {
             IntSet targetSegments = target.getValue();
             if (targetSegments != null) {
-               log.tracef("There are still outstanding segments %s that will need to be retried", target);
+               log.tracef("There are still outstanding segments %s that will need to be retried", targetSegments);
             }
          }
          publisher.erroredServer(target.getKey());

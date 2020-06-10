@@ -234,7 +234,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * @param batchSize              The number of entries transferred from the server at a time.
     * @return Publisher for the entries
     */
-   Publisher<Entry<Object, Object>> publishEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize);
+   <E> Publisher<Entry<K, E>> publishEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize);
 
    /**
     * @see #retrieveEntries(String, Object[], java.util.Set, int)
@@ -264,7 +264,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * @param batchSize   The number of entries transferred from the server at a time.
     * @return Publisher containing matching entries
     */
-   Publisher<Entry<Object, Object>> publishEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize);
+   <E> Publisher<Entry<K, E>> publishEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize);
 
    /**
     * Retrieve entries with metadata information
@@ -281,7 +281,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * @param batchSize   The number of entries transferred from the server at a time.
     * @return Publisher containing entries along with metadata
     */
-   Publisher<Entry<Object, MetadataValue<Object>>> publishEntriesWithMetadata(Set<Integer> segments, int batchSize);
+   Publisher<Entry<K, MetadataValue<V>>> publishEntriesWithMetadata(Set<Integer> segments, int batchSize);
 
    /**
     * Returns the {@link MetadataValue} associated to the supplied key param, or null if it doesn't exist.
