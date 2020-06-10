@@ -38,7 +38,7 @@ public class PrepareTimeoutTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ControlledConsistentHashFactory consistentHashFactory = new ControlledConsistentHashFactory.Default(1, 2);
+      ControlledConsistentHashFactory<?> consistentHashFactory = new ControlledConsistentHashFactory.Default(1, 2);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
@@ -86,7 +86,8 @@ public class PrepareTimeoutTest extends MultipleCacheManagersTest {
             .after("backup:after_rollback");
 
 
-      assertEquals(Arrays.asList(address(1), address(2)), cacheTopology(0).getDistribution(TEST_KEY));
+      assertEquals(Arrays.asList(address(1), address(2)),
+                   cacheTopology(0).getDistribution(TEST_KEY).writeOwners());
       sequencer.advance("main:start");
 
       tm(0).begin();
@@ -117,7 +118,7 @@ public class PrepareTimeoutTest extends MultipleCacheManagersTest {
       assertFalse(transactionTable(1).containRemoteTx(gtx1));
       assertFalse(transactionTable(2).containRemoteTx(gtx1));
 
-      for (Cache cache : caches()) {
+      for (Cache<?, ?> cache : caches()) {
          assertEquals(TX2_VALUE, cache.get(TEST_KEY));
       }
    }
