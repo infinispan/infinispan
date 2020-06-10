@@ -44,7 +44,9 @@ public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuil
    public void validate() {
       String globalMediaType = mediaType.get();
       if (globalMediaType != null) {
-         if ((keyContentTypeBuilder.mediaType() != null || valueContentTypeBuilder.mediaType() != null)) {
+         String keyType = keyContentTypeBuilder.mediaType();
+         String valueType = valueContentTypeBuilder.mediaType();
+         if ((keyType != null && !keyType.equals(globalMediaType)) || valueType != null && !valueType.equals(globalMediaType)) {
             CONFIG.ignoringSpecificMediaTypes();
          }
          keyContentTypeBuilder.mediaType(globalMediaType);
