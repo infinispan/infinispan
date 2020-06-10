@@ -4,7 +4,7 @@ package org.infinispan.objectfilter.impl.syntax.parser;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class ReflectionEntityNamesResolver implements EntityNameResolver {
+public final class ReflectionEntityNamesResolver implements EntityNameResolver<Class<?>> {
 
    private final ClassLoader[] classLoaders;
 

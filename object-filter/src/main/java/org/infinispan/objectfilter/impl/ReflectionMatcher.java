@@ -23,7 +23,7 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
       this(new ReflectionEntityNamesResolver(classLoader));
    }
 
-   public ReflectionMatcher(EntityNameResolver entityNameResolver) {
+   public ReflectionMatcher(EntityNameResolver<Class<?>> entityNameResolver) {
       super(new ReflectionPropertyHelper(entityNameResolver));
    }
 

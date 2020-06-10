@@ -16,11 +16,11 @@ public final class ObjectReflectionMatcher extends ReflectionMatcher {
       super(hibernateSearchPropertyHelper);
    }
 
-   private ObjectReflectionMatcher(EntityNameResolver entityNameResolver) {
+   private ObjectReflectionMatcher(EntityNameResolver<Class<?>> entityNameResolver) {
       super(entityNameResolver);
    }
 
-   public static ObjectReflectionMatcher create(EntityNameResolver entityNameResolver, SearchIntegrator searchIntegrator) {
+   public static ObjectReflectionMatcher create(EntityNameResolver<Class<?>> entityNameResolver, SearchIntegrator searchIntegrator) {
       return searchIntegrator == null ? new ObjectReflectionMatcher(entityNameResolver) :
             new ObjectReflectionMatcher(new HibernateSearchPropertyHelper(searchIntegrator, entityNameResolver));
    }

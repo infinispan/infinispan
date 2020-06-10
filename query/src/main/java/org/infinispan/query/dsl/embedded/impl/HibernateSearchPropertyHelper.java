@@ -53,7 +53,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
 
    private final SearchIntegrator searchFactory;
 
-   public HibernateSearchPropertyHelper(SearchIntegrator searchFactory, EntityNameResolver entityNameResolver) {
+   public HibernateSearchPropertyHelper(SearchIntegrator searchFactory, EntityNameResolver<Class<?>> entityNameResolver) {
       super(entityNameResolver);
       this.searchFactory = searchFactory;
    }

@@ -22,12 +22,16 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    private static final Log log = Logger.getMessageLogger(Log.class, ProtobufPropertyHelper.class.getName());
 
-   private final SerializationContext serializationContext;
+   private final EntityNameResolver<Descriptor> entityNameResolver;
 
    private final IndexedFieldProvider<Descriptor> indexedFieldProvider;
 
    public ProtobufPropertyHelper(SerializationContext serializationContext, IndexedFieldProvider<Descriptor> indexedFieldProvider) {
-      this.serializationContext = serializationContext;
+      this(serializationContext::getMessageDescriptor, indexedFieldProvider);
+   }
+
+   public ProtobufPropertyHelper(EntityNameResolver<Descriptor> entityNameResolver, IndexedFieldProvider<Descriptor> indexedFieldProvider) {
+      this.entityNameResolver = entityNameResolver;
       this.indexedFieldProvider = indexedFieldProvider != null ? indexedFieldProvider : super.getIndexedFieldProvider();
    }
 
@@ -38,7 +42,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    @Override
    public Descriptor getEntityMetadata(String typeName) {
-      return serializationContext.getMessageDescriptor(typeName);
+      return entityNameResolver.resolve(typeName);
    }
 
    @Override
