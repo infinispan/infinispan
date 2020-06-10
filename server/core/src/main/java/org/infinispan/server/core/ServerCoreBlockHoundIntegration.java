@@ -31,14 +31,6 @@ public class ServerCoreBlockHoundIntegration implements BlockHoundIntegration {
     * @param builder the block hound builder to register methods
     */
    private static void methodsToBeRemoved(BlockHound.Builder builder) {
-      // ProtobufMetadataManagerInterceptor is blocking in quite a few places
-      // https://issues.redhat.com/browse/ISPN-11832
-      try {
-         CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, Class.forName("org.infinispan.query.remote.impl.ProtobufMetadataManagerInterceptor"));
-      } catch (ClassNotFoundException e) {
-         // Just ignore - means that most likely this module isn't present (ie. server/core or server/memcached)
-      }
-
       // ScriptingManger interface is blocking - but relies upon a persistent and clustered cache
       // https://issues.redhat.com/browse/ISPN-11833
       try {
