@@ -23,19 +23,14 @@ public final class QueryFacadeImpl implements QueryFacade {
 
    private static final Log log = LogFactory.getLog(QueryFacadeImpl.class, Log.class);
 
-   /**
-    * A special 'hidden' Lucene document field that holds the actual protobuf type name.
-    */
-   public static final String TYPE_FIELD_NAME = "$type$";
-
    @Override
-   public byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {
+   public byte[] query(AdvancedCache<?, ?> cache, byte[] query) {
       AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(cache);
       if (authorizationManager != null) {
          authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
       }
       RemoteQueryManager remoteQueryManager = SecurityActions.getRemoteQueryManager(cache);
-      if (!remoteQueryManager.isQueryEnabled(cache)) {  //todo [anistor] remoteQueryManager should be null if not queryable
+      if (remoteQueryManager.getQueryEngine(cache) == null) {  //todo [anistor] remoteQueryManager should be null if not queryable
          throw log.queryingNotEnabled(cache.getName());
       }
 

@@ -89,7 +89,7 @@ final class RemoteQueryEngine extends ObjectRemoteQueryEngine {
    @Override
    protected Query makeTypeQuery(Query query, String targetEntityName) {
       return new BooleanQuery.Builder()
-            .add(new TermQuery(new Term(QueryFacadeImpl.TYPE_FIELD_NAME, targetEntityName)), BooleanClause.Occur.FILTER)
+            .add(new TermQuery(new Term(ProtobufValueWrapper.TYPE_FIELD_NAME, targetEntityName)), BooleanClause.Occur.FILTER)
             .add(query, BooleanClause.Occur.MUST)
             .build();
    }
