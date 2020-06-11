@@ -22,6 +22,8 @@
                <!-- Forking is necessary to allow for the compiler args to be picked up. -->
                <fork combine.children="append">true</fork>
                <release>11</release>
+               <!-- Workaround for https://youtrack.jetbrains.com/issue/IDEA-199818 -->
+               <target>11</target>
             </configuration>
          </plugin>
          <plugin>
