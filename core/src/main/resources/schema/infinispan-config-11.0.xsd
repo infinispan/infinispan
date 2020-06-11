@@ -1305,7 +1305,7 @@
           <xs:annotation>
             <xs:documentation>
               Deprecated since 11.0. Use instead the 'encoding' element to specify the media type of keys
-              and values, plus the storage attribute as 'heap'.
+              and values, plus the storage attribute as 'HEAP'.
               Store keys and values as instance variables in the Java heap.
               Instances of byte[] are wrapped to ensure equality. This is the
               default storage format.
@@ -1316,7 +1316,7 @@
           <xs:annotation>
             <xs:documentation>
               Deprecated since 11.0. Use instead the 'encoding' element to specify the media type of keys
-              and values, plus the storage attribute as 'heap'.
+              and values, plus the storage attribute as 'HEAP'.
               Store keys and values as bytes in the Java heap. Cache
               entries are serialized to binary representations. Note that
               binary storage violates object equality. This occurs because
@@ -1329,7 +1329,7 @@
           <xs:annotation>
             <xs:documentation>
               Deprecated since 11.0. Use instead the 'encoding' element to specify the media type of keys
-              and values, plus the storage attribute as 'off-heap'.
+              and values, plus the storage attribute as 'OFF_HEAP'.
               Store keys and values as bytes in native memory. Cache
               entries are serialized to binary representations. Temporary
               objects are stored in the Java heap space until processing
@@ -1394,6 +1394,22 @@
           <xs:documentation>
             Stores cache entries as bytes in native memory outside the Java
             heap.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="OBJECT">
+        <xs:annotation>
+          <xs:documentation>
+            Deprecated, only added in 11.0 to simplify the transition from the &lt;object/&gt; element.
+            Please use HEAP instead.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="BINARY">
+        <xs:annotation>
+          <xs:documentation>
+            Deprecated, only added in 11.0 to simplify the transition from the &lt;binary/&gt; element.
+            Please use HEAP and set the encoding media type instead.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>

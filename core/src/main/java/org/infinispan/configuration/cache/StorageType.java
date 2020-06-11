@@ -58,6 +58,10 @@ public enum StorageType {
       return STORAGE_PER_ELEMENT.get(element);
    }
 
+   public boolean canStoreReferences() {
+      return this == HEAP || this == OBJECT;
+   }
+
    private static final Map<String, StorageType> STORAGE_PER_ELEMENT = new HashMap<>(3);
 
    static {

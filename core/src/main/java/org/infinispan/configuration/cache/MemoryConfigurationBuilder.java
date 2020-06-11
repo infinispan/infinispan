@@ -2,12 +2,16 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.util.logging.Log.CONFIG;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeListener;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -19,18 +23,75 @@ import org.infinispan.eviction.EvictionType;
  *
  * @author William Burns
  */
-public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<MemoryConfiguration>, ConfigurationBuilderInfo {
+public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilder implements
+                                                                                  Builder<MemoryConfiguration>,
+                                                                                  ConfigurationBuilderInfo {
    private MemoryStorageConfigurationBuilder memoryStorageConfigurationBuilder;
    private final List<ConfigurationBuilderInfo> elements;
    private final AttributeSet attributes;
-   private final AttributeChangeTracker attributeTracker;
+   private final List<String> legacyAttributesUsed = new ArrayList<>();
+   private boolean newAttributesUsed = false;
+   private boolean isInListener = false;
 
    MemoryConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       this.memoryStorageConfigurationBuilder = new MemoryStorageConfigurationBuilder(builder);
       this.elements = Collections.singletonList(memoryStorageConfigurationBuilder);
       this.attributes = MemoryConfiguration.attributeDefinitionSet();
-      this.attributeTracker = new AttributeChangeTracker(attributes);
+
+      // Keep new and legacy attributes in sync
+      // Only attribute listeners are invoked when parsing JSON
+      attributes.attribute(MemoryConfiguration.STORAGE)
+                .addListener(nonReentrantListener((attribute, oldValue) -> {
+                   memoryStorageAttribute(MemoryStorageConfiguration.STORAGE_TYPE).set(attribute.get());
+                }));
+      attributes.attribute(MemoryConfiguration.WHEN_FULL)
+                .addListener(nonReentrantListener((attribute, oldValue) -> {
+                   memoryStorageAttribute(MemoryStorageConfiguration.EVICTION_STRATEGY).set(attribute.get());
+                }));
+      attributes.attribute(MemoryConfiguration.MAX_COUNT)
+                .addListener(nonReentrantListener((attribute, oldValue) -> {
+                   updateMaxCount(attribute.get());
+                }));
+      attributes.attribute(MemoryConfiguration.MAX_SIZE)
+                .addListener(nonReentrantListener((attribute, oldValue) -> {
+                   updateMaxSize(attribute.get());
+                }));
+
+      memoryStorageAttribute(MemoryStorageConfiguration.STORAGE_TYPE)
+            .addListener(nonReentrantListener((attribute, oldValue) -> {
+               attributes.attribute(MemoryConfiguration.STORAGE).set(attribute.get());
+            }));
+      memoryStorageAttribute(MemoryStorageConfiguration.EVICTION_STRATEGY)
+            .addListener(nonReentrantListener((attribute, oldValue) -> {
+               attributes.attribute(MemoryConfiguration.WHEN_FULL).set(attribute.get());
+            }));
+      memoryStorageAttribute(MemoryStorageConfiguration.EVICTION_TYPE)
+            .addListener(nonReentrantListener((attribute, oldValue) -> {
+               long size = memoryStorageAttribute(MemoryStorageConfiguration.SIZE).get();
+               if (size == -1)
+                  return;
+
+               updateLegacySize(attribute.get(), size);
+            }));
+      memoryStorageAttribute(MemoryStorageConfiguration.SIZE)
+            .addListener(nonReentrantListener((attribute, oldValue) -> {
+               EvictionType evictionType = memoryStorageAttribute(MemoryStorageConfiguration.EVICTION_TYPE).get();
+               updateLegacySize(evictionType, attribute.get());
+            }));
+   }
+
+   private <T> AttributeListener<T> nonReentrantListener(AttributeListener<T> listener) {
+      return ((attribute, oldValue) -> {
+         if (isInListener)
+            return;
+         isInListener = true;
+         try {
+            listener.attributeChanged(attribute, oldValue);
+         } finally {
+            isInListener = false;
+         }
+      });
    }
 
    @Override
@@ -51,25 +112,16 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     */
    @Deprecated
    public MemoryConfigurationBuilder storageType(StorageType storageType) {
-      memoryStorageConfigurationBuilder.storageType(storageType);
-      return this;
+      return storage(storageType);
    }
 
    public MemoryConfigurationBuilder storage(StorageType storageType) {
-      if (storageType != null) {
-         switch (storageType) {
-            case OBJECT:
-            case HEAP:
-               attributes.attribute(MemoryConfiguration.STORAGE).set(StorageType.HEAP);
-               break;
-            default:
-               attributes.attribute(MemoryConfiguration.STORAGE).set(storageType);
-         }
-      }
+      attributes.attribute(MemoryConfiguration.STORAGE).set(storageType);
       return this;
    }
 
    public MemoryConfigurationBuilder maxSize(String size) {
+      newAttributesUsed = true;
       attributes.attribute(MemoryConfiguration.MAX_SIZE).set(size);
       return this;
    }
@@ -79,6 +131,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    public MemoryConfigurationBuilder maxCount(long count) {
+      newAttributesUsed = true;
       attributes.attribute(MemoryConfiguration.MAX_COUNT).set(count);
       return this;
    }
@@ -94,7 +147,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     */
    @Deprecated
    public StorageType storageType() {
-      return memoryStorageConfigurationBuilder.storageType();
+      return storage();
    }
 
    public StorageType storage() {
@@ -114,7 +167,8 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     */
    @Deprecated
    public MemoryConfigurationBuilder size(long size) {
-      memoryStorageConfigurationBuilder.size(size);
+      legacyAttributesUsed.add(MemoryStorageConfiguration.SIZE.name());
+      memoryStorageAttribute(MemoryStorageConfiguration.SIZE).set(size);
       return this;
    }
 
@@ -130,7 +184,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     */
    @Deprecated
    public long size() {
-      return memoryStorageConfigurationBuilder.size();
+      return memoryStorageAttribute(MemoryStorageConfiguration.SIZE).get();
    }
 
    /**
@@ -149,18 +203,24 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     */
    @Deprecated
    public MemoryConfigurationBuilder evictionType(EvictionType type) {
-      memoryStorageConfigurationBuilder.evictionType(type);
+      legacyAttributesUsed.add(MemoryStorageConfiguration.EVICTION_TYPE.name());
+      memoryStorageAttribute(MemoryStorageConfiguration.EVICTION_TYPE).set(type);
       return this;
+   }
+
+   private <T> Attribute<T> memoryStorageAttribute(AttributeDefinition<T> attributeDefinition) {
+      return memoryStorageConfigurationBuilder.attributes().attribute(attributeDefinition);
    }
 
    /**
     * The configured eviction type, please see {@link MemoryConfigurationBuilder#evictionType(EvictionType)}.
+    *
     * @return the configured eviction type
     * @deprecated since 11.0, @see {@link #evictionType(EvictionType)}
     */
    @Deprecated
    public EvictionType evictionType() {
-      return memoryStorageConfigurationBuilder.evictionType();
+      return memoryStorageAttribute(MemoryStorageConfiguration.EVICTION_TYPE).get();
    }
 
    /**
@@ -180,8 +240,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     */
    @Deprecated
    public MemoryConfigurationBuilder evictionStrategy(EvictionStrategy strategy) {
-      memoryStorageConfigurationBuilder.evictionStrategy(strategy);
-      return this;
+      return whenFull(strategy);
    }
 
    public MemoryConfigurationBuilder whenFull(EvictionStrategy strategy) {
@@ -200,7 +259,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     */
    @Deprecated
    public EvictionStrategy evictionStrategy() {
-      return memoryStorageConfigurationBuilder.evictionStrategy();
+      return whenFull();
    }
 
    boolean isSizeBounded() {
@@ -214,13 +273,13 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
    private void checkBinaryRequirement() {
       String keyType = encoding().key().mediaType();
       String valueType = encoding().value().mediaType();
-      if (storageType() != StorageType.HEAP && storageType() != StorageType.OBJECT) {
+      if (!storageType().canStoreReferences()) {
          if (getBuilder().clustering().hash().groups().isEnabled()) {
             throw CONFIG.groupingOnlyCompatibleWithObjectStorage(keyType, valueType);
          }
       }
 
-      boolean storageBinary = encoding().isStorageBinary() || storageType() != StorageType.HEAP;
+      boolean storageBinary = encoding().isStorageBinary() || !storageType().canStoreReferences();
       if (isSizeBounded() && !storageBinary) {
          throw CONFIG.offHeapMemoryEvictionNotSupportedWithObject();
       }
@@ -228,7 +287,38 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    @Override
    public void validate() {
-      // State Changes cannot be done here because validation can be turned off in the ConfigurationBuilder
+      if (newAttributesUsed && !legacyAttributesUsed.isEmpty()) {
+         // Prevent mixing of old and new attributes
+         throw CONFIG.cannotUseDeprecatedAndReplacement(legacyAttributesUsed.toString());
+      }
+      if (isSizeBounded() && isCountBounded()) {
+         throw CONFIG.cannotProvideBothSizeAndCount();
+      }
+
+      EvictionStrategy strategy = evictionStrategy();
+      if (strategy.isEnabled()) {
+         if (!isCountBounded() && !isSizeBounded()) {
+            throw CONFIG.invalidEvictionSize();
+         }
+         if (strategy.isExceptionBased()) {
+            TransactionConfigurationBuilder transactionConfiguration = getBuilder().transaction();
+            org.infinispan.transaction.TransactionMode transactionMode = transactionConfiguration.transactionMode();
+            if (transactionMode == null || !transactionMode.isTransactional() ||
+                transactionConfiguration.useSynchronization() ||
+                transactionConfiguration.use1PcForAutoCommitTransactions()) {
+               throw CONFIG.exceptionBasedEvictionOnlySupportedInTransactionalCaches();
+            }
+         }
+      } else {
+         if (getBuilder().persistence().passivation() && strategy != EvictionStrategy.MANUAL &&
+             !getBuilder().template()) {
+            // maxSize of maxCount would automatically set evictionStrategy(REMOVAL)
+            if (!isSizeBounded() && !isCountBounded()) {
+               CONFIG.passivationWithoutEviction();
+            }
+         }
+      }
+      checkBinaryRequirement();
    }
 
    @Override
@@ -237,112 +327,104 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    @Override
    public MemoryConfiguration create() {
-      AttributeChangeTracker legacyAttributeTracker = memoryStorageConfigurationBuilder.getAttributeTracker();
-      legacyAttributeTracker.stopChangeTracking();
-      boolean hasLegacyChanges = legacyAttributeTracker.hasChanges();
-      String changedLegacyAttributes = legacyAttributeTracker.getChangedAttributes();
-
-      attributeTracker.stopChangeTracking();
-      boolean hasChanges = attributeTracker.hasChanges();
-
-      if (hasChanges && hasLegacyChanges) {
-         // Prevent mixing of old and new attributes
-         throw CONFIG.cannotUseDeprecatedAndReplacement(changedLegacyAttributes);
-      }
-
-      if (hasLegacyChanges) {
-         // The builder used legacy/deprecated attributes
-         CONFIG.warnUsingDeprecatedMemoryConfigs(changedLegacyAttributes);
-      }
-
-      if (hasLegacyChanges || memoryStorageConfigurationBuilder.isEnabled()) {
-         memoryStorageConfigurationBuilder.enable();
-         // Translate deprecated attributes to the new ones
-         this.read(memoryStorageConfigurationBuilder);
-      } else {
-         // Only new attributes were changed, translate them to legacy attributes for backwards compatibility
-         memoryStorageConfigurationBuilder.read(this);
-      }
-
-      if (isSizeBounded() && isCountBounded()) {
-         throw CONFIG.cannotProvideBothSizeAndCount();
-      }
-      checkBinaryRequirement();
-
       EvictionStrategy strategy = evictionStrategy();
       if (!strategy.isEnabled()) {
          if (isSizeBounded() || isCountBounded()) {
             EvictionStrategy newStrategy = EvictionStrategy.REMOVE;
             whenFull(newStrategy);
-            memoryStorageConfigurationBuilder.evictionStrategy(newStrategy);
             if (isCountBounded()) {
                CONFIG.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overridden to %s", maxCount(), newStrategy);
             } else {
                CONFIG.debugf("Max size configured (%s) without eviction strategy. Eviction strategy overridden to %s", maxSize(), newStrategy);
             }
-         } else if (getBuilder().persistence().passivation() && strategy != EvictionStrategy.MANUAL &&
-               !getBuilder().template()) {
-            CONFIG.passivationWithoutEviction();
-         }
-      } else {
-         if (!isCountBounded() && !isSizeBounded()) {
-            throw CONFIG.invalidEvictionSize();
-         }
-         if (strategy.isExceptionBased()) {
-            TransactionConfigurationBuilder transactionConfiguration = getBuilder().transaction();
-            org.infinispan.transaction.TransactionMode transactionMode = transactionConfiguration.transactionMode();
-            if (transactionMode == null || !transactionMode.isTransactional() ||
-                  transactionConfiguration.useSynchronization() ||
-                  transactionConfiguration.use1PcForAutoCommitTransactions()) {
-               throw CONFIG.exceptionBasedEvictionOnlySupportedInTransactionalCaches();
-            }
          }
       }
-      attributeTracker.reset();
       return new MemoryConfiguration(attributes.protect(), memoryStorageConfigurationBuilder.create());
    }
 
    @Override
    public MemoryConfigurationBuilder read(MemoryConfiguration template) {
-      MemoryStorageConfiguration legacyConfig = template.heapConfiguration();
-      if (!legacyConfig.isEnabled()) {
-         attributes.read(template.attributes());
-      } else {
-         memoryStorageConfigurationBuilder.read(legacyConfig);
+      attributes.read(template.attributes());
+
+      // Propagate any changes to the MemoryStorageConfiguration attributes,
+      // because reading an attribute does not invoke the listener
+      // There's no need to do the reverse, since the new and legacy attributes
+      // are in sync at build time
+      if (attributes.attribute(MemoryConfiguration.STORAGE).isModified()) {
+         memoryStorageAttribute(MemoryStorageConfiguration.STORAGE_TYPE).set(storage());
+      }
+      if (attributes.attribute(MemoryConfiguration.WHEN_FULL).isModified()) {
+         memoryStorageAttribute(MemoryStorageConfiguration.EVICTION_STRATEGY).set(whenFull());
+      }
+      if (attributes.attribute(MemoryConfiguration.MAX_COUNT).isModified()) {
+         updateMaxCount(maxCount());
+      }
+      if (attributes.attribute(MemoryConfiguration.MAX_SIZE).isModified()) {
+         updateMaxSize(maxSize());
       }
       return this;
-   }
-
-   private void read(MemoryStorageConfigurationBuilder memoryStorageConfigurationBuilder) {
-      long legacySize = memoryStorageConfigurationBuilder.size();
-      if (memoryStorageConfigurationBuilder.evictionType() == EvictionType.MEMORY) {
-         maxSize(String.valueOf(legacySize));
-      } else {
-         maxCount(legacySize);
-      }
-      whenFull(memoryStorageConfigurationBuilder.evictionStrategy());
-      StorageType storageType = memoryStorageConfigurationBuilder.storageType();
-      if (storageType == StorageType.OBJECT) {
-         storage(StorageType.HEAP);
-      } else {
-         storage(storageType);
-      }
    }
 
    @Override
    public ConfigurationBuilderInfo getBuilderInfo(String name, String qualifier) {
       switch (name) {
          case "off-heap":
-            memoryStorageConfigurationBuilder.storageType(StorageType.OFF_HEAP);
+            storage(StorageType.OFF_HEAP);
             break;
          case "binary":
-            memoryStorageConfigurationBuilder.storageType(StorageType.BINARY);
+            storage(StorageType.BINARY);
             break;
          case "object":
-            memoryStorageConfigurationBuilder.storageType(StorageType.OBJECT);
+            storage(StorageType.OBJECT);
             break;
+         default:
+            return null;
       }
       return memoryStorageConfigurationBuilder;
+   }
+
+   private void updateMaxSize(String maxSize) {
+      Attribute<EvictionType> evictionTypeAttribute =
+            memoryStorageAttribute(MemoryStorageConfiguration.EVICTION_TYPE);
+      if (maxSize != null && evictionTypeAttribute.get() != EvictionType.MEMORY) {
+         evictionTypeAttribute.set(EvictionType.MEMORY);
+      }
+      if (maxSize != null || maxCount() == -1L) {
+         // Either the new maxSize is valid or both maxSize and maxCount are -1
+         long maxSizeBytes = MemoryConfiguration.maxSizeToBytes(maxSize);
+         memoryStorageAttribute(MemoryStorageConfiguration.SIZE).set(maxSizeBytes);
+      }
+   }
+
+   private void updateMaxCount(long maxCount) {
+      Attribute<EvictionType> evictionTypeAttribute =
+            memoryStorageAttribute(MemoryStorageConfiguration.EVICTION_TYPE);
+      if (maxCount != -1 && evictionTypeAttribute.get() != EvictionType.COUNT) {
+         evictionTypeAttribute.set(EvictionType.COUNT);
+      }
+      if (maxCount != -1L || maxSize() == null) {
+         // Either the new maxCount is valid or both maxSize and maxCount are -1
+         memoryStorageAttribute(MemoryStorageConfiguration.SIZE).set(maxCount);
+      }
+   }
+
+   private void updateLegacySize(EvictionType type, Long size) {
+      switch (type) {
+         case COUNT:
+            if (attributes.attribute(MemoryConfiguration.MAX_SIZE).get() != null) {
+               attributes.attribute(MemoryConfiguration.MAX_SIZE).reset();
+            }
+            attributes.attribute(MemoryConfiguration.MAX_COUNT).set(size);
+            break;
+         case MEMORY:
+            if (attributes.attribute(MemoryConfiguration.MAX_COUNT).get() != -1L) {
+               attributes.attribute(MemoryConfiguration.MAX_COUNT).reset();
+            }
+            attributes.attribute(MemoryConfiguration.MAX_SIZE).set(String.valueOf(size));
+            break;
+         default:
+            throw new IllegalArgumentException();
+      }
    }
 
    @Override

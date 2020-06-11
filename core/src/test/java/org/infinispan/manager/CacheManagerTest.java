@@ -145,11 +145,11 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       holder.newConfigurationBuilder("*")
             .template(true)
             .clustering().cacheMode(CacheMode.LOCAL)
-            .memory().maxSize("1");
+            .memory().maxCount(1);
       EmbeddedCacheManager cm = createClusteredCacheManager(holder);
       try {
          Cache<Object, Object> aCache = cm.getCache("a");
-         assertEquals("1", aCache.getCacheConfiguration().memory().maxSize());
+         assertEquals(1L, aCache.getCacheConfiguration().memory().maxCount());
       } finally {
          killCacheManagers(cm);
       }

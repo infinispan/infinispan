@@ -19,16 +19,14 @@ import org.infinispan.eviction.EvictionType;
  * @author William Burns
  */
 public class MemoryConfiguration implements Matchable<MemoryConfiguration>, ConfigurationInfo {
-
-   private final MemoryStorageConfiguration memoryStorageConfiguration;
-
    public static final ElementDefinition<?> ELEMENT_DEFINITION = new DefaultElementDefinition<>(MEMORY.getLocalName());
 
-   public static final AttributeDefinition<StorageType> STORAGE = AttributeDefinition.builder("storage", StorageType.HEAP).build();
+   public static final AttributeDefinition<StorageType> STORAGE = AttributeDefinition.builder("storage", StorageType.HEAP).immutable().build();
    public static final AttributeDefinition<String> MAX_SIZE = AttributeDefinition.builder("maxSize", null, String.class).build();
    public static final AttributeDefinition<Long> MAX_COUNT = AttributeDefinition.builder("maxCount", -1L).build();
-   public static final AttributeDefinition<EvictionStrategy> WHEN_FULL = AttributeDefinition.builder("whenFull", EvictionStrategy.NONE).build();
-   private long maxSizeBytes;
+   public static final AttributeDefinition<EvictionStrategy> WHEN_FULL = AttributeDefinition.builder("whenFull", EvictionStrategy.NONE).immutable().build();
+
+   private final MemoryStorageConfiguration memoryStorageConfiguration;
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(MemoryConfiguration.class, STORAGE, MAX_SIZE, MAX_COUNT, WHEN_FULL);
@@ -39,8 +37,12 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
    MemoryConfiguration(AttributeSet attributes, MemoryStorageConfiguration memoryStorageConfiguration) {
       this.memoryStorageConfiguration = memoryStorageConfiguration;
       this.attributes = attributes.checkProtection();
-      String sizeString = attributes.attribute(MAX_SIZE).get();
-      this.maxSizeBytes = sizeString == null ? -1 : ByteQuantity.parse(sizeString);
+
+      // Add a listener to keep new attributes in sync with legacy size without complicating MemoryStorageConfiguration
+      // Size is the only legacy attribute that can modify at runtime
+      // Unlike the builder, updates to the new attributes are handled directly in the setters
+      memoryStorageConfiguration.attributes().attribute(MemoryStorageConfiguration.SIZE)
+                                .addListener((a, oldValue) -> updateSize(a.get()));
    }
 
    @Override
@@ -64,7 +66,7 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
     * @return The max size in bytes or -1 if not configured.
     */
    public long maxSizeBytes() {
-      return maxSizeBytes;
+      return maxSizeToBytes(maxSize());
    }
 
    public String maxSize() {
@@ -72,10 +74,10 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
    }
 
    public void maxSize(String maxSize) {
-      if (!isSizeBounded()) throw CONFIG.cannotIncreaseMaxSize();
+      if (!isSizeBounded()) throw CONFIG.cannotChangeMaxSize();
 
-      maxSizeBytes = ByteQuantity.parse(maxSize);
       attributes.attribute(MAX_SIZE).set(maxSize);
+      memoryStorageConfiguration.attributes().attribute(MemoryStorageConfiguration.SIZE).set(maxSizeToBytes(maxSize));
    }
 
    /**
@@ -86,19 +88,19 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
    }
 
    public void maxCount(long maxCount) {
-      if (!isCountBounded()) throw CONFIG.cannotIncreaseMaxCount();
+      if (!isCountBounded()) throw CONFIG.cannotChangeMaxCount();
 
       attributes.attribute(MAX_COUNT).set(maxCount);
+      memoryStorageConfiguration.attributes().attribute(MemoryStorageConfiguration.SIZE).set(maxCount);
    }
 
    /**
     * Storage type to use for the data container
-    * @return
     * @deprecated Use {@link #storage()} instead.
     */
    @Deprecated
    public StorageType storageType() {
-      return memoryStorageConfiguration.storageType();
+      return storage();
    }
 
    /**
@@ -125,18 +127,22 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
     */
    @Deprecated
    public void size(long newSize) {
-      if (isSizeBounded()) {
-         attributes.attribute(MAX_SIZE).set(String.valueOf(newSize));
-      } else {
-         attributes.attribute(MAX_COUNT).set(newSize);
-      }
       memoryStorageConfiguration.size(newSize);
+   }
+
+   private void updateSize(long newSize) {
+      if (isCountBounded()) {
+         attributes.attribute(MAX_COUNT).set(newSize);
+      } else {
+         attributes.attribute(MAX_SIZE).set(String.valueOf(newSize));
+      }
    }
 
    /**
     * The configured eviction type
+    *
     * @deprecated Since 11.0, use {@link #maxCount()} or {@link #maxSize()} to obtain either the maximum number of
-    * entries or the maximum size of the data container.
+    *       entries or the maximum size of the data container.
     */
    @Deprecated
    public EvictionType evictionType() {
@@ -145,7 +151,6 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
 
    /**
     * The configured eviction strategy
-    * @return
     * @deprecated Since 11.0, use {@link #whenFull()}
     */
    @Deprecated
@@ -162,14 +167,13 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
 
    /**
     * Returns whether remove eviction is in use
-    * @return
     */
    public boolean isEvictionEnabled() {
       return (isSizeBounded() || isCountBounded()) && evictionStrategy().isRemovalBased();
    }
 
    private boolean isSizeBounded() {
-      return maxSizeBytes > 0;
+      return maxSize() != null;
    }
 
    private boolean isCountBounded() {
@@ -197,17 +201,21 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
    @Override
    public String toString() {
       return "MemoryConfiguration{" +
-            "memoryStorageConfiguration=" + memoryStorageConfiguration +
-            ", attributes=" + attributes +
-            '}';
+             "memoryStorageConfiguration=" + memoryStorageConfiguration +
+             ", attributes=" + attributes +
+             '}';
    }
 
    /**
     * @deprecated Since 11.0, use {@link #evictionStrategy()}, {@link #maxSize()},
-    * {@link #maxCount()}, {@link #isOffHeap()} instead
+    *       {@link #maxCount()}, {@link #isOffHeap()} instead
     */
    @Deprecated
    public MemoryStorageConfiguration heapConfiguration() {
       return memoryStorageConfiguration;
+   }
+
+   static long maxSizeToBytes(String maxSizeStr) {
+      return maxSizeStr != null ? ByteQuantity.parse(maxSizeStr) : -1;
    }
 }

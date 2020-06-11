@@ -104,7 +104,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       ConfigurationBuilderHolder holder = parserRegistry.parse(url);
       for (ParserVersionCheck check : ParserVersionCheck.values()) {
          if (check.isIncludedBy(major, minor)) {
-            check.check(holder);
+            check.check(holder, major, minor);
          }
       }
    }
@@ -112,7 +112,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    public enum ParserVersionCheck {
       INFINISPAN_110(11, 0) {
          @Override
-         public void check(ConfigurationBuilderHolder holder) {
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             DefaultThreadFactory threadFactory;
             BlockingThreadPoolExecutorFactory threadPool;
 
@@ -149,7 +149,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
             Configuration heapBinary = getConfiguration(holder, "heap_binary");
             assertEquals(MediaType.APPLICATION_PROTOSTREAM, heapBinary.encoding().keyDataType().mediaType());
-            assertEquals(StorageType.BINARY, heapBinary.memory().storageType());
+            assertEquals(StorageType.HEAP, heapBinary.memory().storageType());
             assertEquals(EvictionStrategy.REMOVE, heapBinary.memory().evictionStrategy());
             assertEquals(1_500_000_000, heapBinary.memory().maxSizeBytes());
             assertEquals(MediaType.APPLICATION_PROTOSTREAM, heapBinary.encoding().keyDataType().mediaType());
@@ -158,7 +158,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       },
       INFINISPAN_100(10, 0) {
          @Override
-         public void check(ConfigurationBuilderHolder holder) {
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             // tcp-test and mytcp should be identical aside from MERGE3.max_interval
             ProtocolStackConfigurator tcp = holder.getJGroupsStack("tcp-test");
             ProtocolStackConfigurator mytcp = holder.getJGroupsStack("mytcp");
@@ -194,7 +194,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
       INFINISPAN_93(9, 3) {
          @Override
-         public void check(ConfigurationBuilderHolder holder) {
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             Configuration local = getConfiguration(holder, "local");
             PersistenceConfiguration persistenceConfiguration = local.persistence();
             assertEquals(5, persistenceConfiguration.connectionAttempts());
@@ -208,7 +208,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
       INFINISPAN_92(9, 2) {
          @Override
-         public void check(ConfigurationBuilderHolder holder) {
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             GlobalStateConfiguration gs = getGlobalConfiguration(holder).globalState();
             assertEquals(ConfigurationStorage.OVERLAY, gs.configurationStorage());
             assertEquals(Paths.get(TMPDIR, "sharedPath").toString(), gs.sharedPersistentLocation());
@@ -224,7 +224,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
       INFINISPAN_91(9, 1) {
          @Override
-         public void check(ConfigurationBuilderHolder holder) {
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             PartitionHandlingConfiguration ph = getConfiguration(holder, "dist").clustering().partitionHandling();
             assertEquals(PartitionHandling.ALLOW_READS, ph.whenSplit());
             assertEquals(MergePolicy.PREFERRED_NON_NULL, ph.mergePolicy());
@@ -237,7 +237,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
       INFINISPAN_90(9, 0) {
          @Override
-         public void check(ConfigurationBuilderHolder holder) {
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             GlobalConfiguration globalConfiguration = getGlobalConfiguration(holder);
             assertEquals(4, globalConfiguration.transport().initialClusterSize());
             assertEquals(30000, globalConfiguration.transport().initialClusterTimeout());
@@ -263,7 +263,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          }
 
          @Override
-         public void check(ConfigurationBuilderHolder holder) {
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             GlobalStateConfiguration gs = getGlobalConfiguration(holder).globalState();
             assertEquals(ConfigurationStorage.OVERLAY, gs.configurationStorage());
             assertEquals(Paths.get(TMPDIR, "sharedPath").toString(), gs.sharedPersistentLocation());
@@ -296,21 +296,21 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
       INFINISPAN_84(8, 4) {
          @Override
-         public void check(ConfigurationBuilderHolder holder) {
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             // Nothing new
          }
       },
 
       INFINISPAN_83(8, 3) {
          @Override
-         public void check(ConfigurationBuilderHolder holder) {
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             // Nothing new
          }
       },
 
       INFINISPAN_82(8, 2) {
          @Override
-         public void check(ConfigurationBuilderHolder holder) {
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             GlobalConfiguration globalConfiguration = getGlobalConfiguration(holder);
             assertEquals(4, globalConfiguration.transport().initialClusterSize());
             assertEquals(30000, globalConfiguration.transport().initialClusterTimeout());
@@ -319,7 +319,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
       INFINISPAN_81(8, 1) {
          @Override
-         public void check(ConfigurationBuilderHolder holder) {
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             GlobalConfiguration globalConfiguration = getGlobalConfiguration(holder);
             assertTrue(globalConfiguration.globalState().enabled());
             assertEquals(Paths.get(TMPDIR, "persistentPath").toString(), globalConfiguration.globalState().persistentLocation());
@@ -329,7 +329,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
       INFINISPAN_80(8, 0) {
          @Override
-         public void check(ConfigurationBuilderHolder holder) {
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             Configuration c = holder.getDefaultConfigurationBuilder().build();
             assertFalse(c.memory().evictionType() == EvictionType.MEMORY);
             c = getConfiguration(holder, "invalid");
@@ -375,7 +375,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       },
 
       INFINISPAN_70(7, 0) {
-         public void check(ConfigurationBuilderHolder holder) {
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             GlobalConfiguration g = getGlobalConfiguration(holder);
             assertEquals("maximal", g.cacheManagerName());
             assertTrue(g.statistics());
@@ -557,7 +557,10 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
-            assertEquals(StorageType.OBJECT, c.memory().storageType());
+            // Storage type was not configurable before 9.0/8.5
+            StorageType objectOrDefaultStorageType =
+                  (schemaMajor < 9 && schemaMinor < 5) ? StorageType.HEAP : StorageType.OBJECT;
+            assertEquals(objectOrDefaultStorageType, c.memory().storageType());
             assertEquals(-1, c.memory().size());
             fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
             assertTrue(fileStore.preload());
@@ -568,7 +571,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
-            assertEquals(StorageType.OBJECT, c.memory().storageType());
+            assertEquals(objectOrDefaultStorageType, c.memory().storageType());
             assertEquals(-1, c.memory().size());
             DummyInMemoryStoreConfiguration dummyStore = getStoreConfiguration(c, DummyInMemoryStoreConfiguration.class);
             assertFalse(dummyStore.preload());
@@ -579,7 +582,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
-            assertEquals(StorageType.OBJECT, c.memory().storageType());
+            assertEquals(objectOrDefaultStorageType, c.memory().storageType());
             assertEquals(-1, c.memory().size());
             assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
 
@@ -588,7 +591,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
-            assertEquals(StorageType.OBJECT, c.memory().storageType());
+            assertEquals(objectOrDefaultStorageType, c.memory().storageType());
             assertEquals(-1, c.memory().size());
             fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
             assertTrue(fileStore.preload());
@@ -600,7 +603,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
-            assertEquals(StorageType.OBJECT, c.memory().storageType());
+            assertEquals(objectOrDefaultStorageType, c.memory().storageType());
             assertEquals(-1, c.memory().size());
             assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
             fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
@@ -686,7 +689,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          this.minor = minor;
       }
 
-      public abstract void check(ConfigurationBuilderHolder cm);
+      public abstract void check(ConfigurationBuilderHolder cm, int schemaMajor, int schemaMinor);
 
       public boolean isIncludedBy(int major, int minor) {
          return major > this.major || (major == this.major && minor >= this.minor);
