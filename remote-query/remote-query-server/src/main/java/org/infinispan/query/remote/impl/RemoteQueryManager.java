@@ -46,10 +46,6 @@ public interface RemoteQueryManager {
     */
    Object encodeFilterResult(Object filterResult);
 
-   default boolean isQueryEnabled(AdvancedCache<byte[], byte[]> cache) {
-      return getQueryEngine(cache) != null;
-   }
-
    Object convertKey(Object key, MediaType destinationFormat);
 
    Object convertValue(Object value, MediaType destinationFormat);

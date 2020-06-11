@@ -11,9 +11,8 @@ import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstant
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
@@ -220,8 +219,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       this.hasDefaultCache = configuration.defaultCacheName() != null || cacheManager.getCacheManagerConfiguration().defaultCacheName().isPresent();
 
       // Initialize query-specific stuff
-      List<QueryFacade> queryFacades = loadQueryFacades();
-      queryFacade = queryFacades.size() > 0 ? queryFacades.get(0) : null;
+      queryFacade = loadQueryFacade();
       clientListenerRegistry = new ClientListenerRegistry(gcr.getComponent(EncoderRegistry.class),
             gcr.getComponent(ExecutorService.class, NON_BLOCKING_EXECUTOR));
       clientCounterNotificationManager = new ClientCounterManagerNotificationManager(asCounterManager(cacheManager));
@@ -276,10 +274,18 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       });
    }
 
-   private List<QueryFacade> loadQueryFacades() {
-      List<QueryFacade> facades = new ArrayList<>();
-      ServiceLoader.load(QueryFacade.class, getClass().getClassLoader()).forEach(facades::add);
-      return facades;
+   private QueryFacade loadQueryFacade() {
+      QueryFacade facadeImpl = null;
+      Iterator<QueryFacade> iterator = ServiceLoader.load(QueryFacade.class, getClass().getClassLoader()).iterator();
+      if (iterator.hasNext()) {
+         facadeImpl = iterator.next();
+         if (iterator.hasNext()) {
+            throw new IllegalStateException("Found multiple QueryFacade service implementations: "
+                                                  + facadeImpl.getClass().getName() + " and "
+                                                  + iterator.next().getClass().getName());
+         }
+      }
+      return facadeImpl;
    }
 
    @Override

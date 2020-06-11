@@ -21,6 +21,12 @@ import org.infinispan.protostream.descriptors.Descriptor;
 @ProtoTypeId(ProtoStreamTypeIds.PROTOBUF_VALUE_WRAPPER)
 public final class ProtobufValueWrapper implements WrappedBytes {
 
+   /**
+    * A special hidden Lucene document field that holds the actual protobuf fully qualified type name.
+    * This should no longer be needed after migration to Hibernate Search 6.
+    */
+   public static final String TYPE_FIELD_NAME = "$type$";
+
    public static final IndexedTypeIdentifier INDEXING_TYPE = PojoIndexedTypeIdentifier.convertFromLegacy(ProtobufValueWrapper.class);
 
    /**

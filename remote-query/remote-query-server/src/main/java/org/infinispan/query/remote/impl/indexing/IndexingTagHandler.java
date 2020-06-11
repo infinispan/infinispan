@@ -15,7 +15,6 @@ import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
-import org.infinispan.query.remote.impl.QueryFacadeImpl;
 
 /**
  * Extracts and indexes all tags (fields) from a protobuf encoded message.
@@ -45,7 +44,7 @@ final class IndexingTagHandler implements TagHandler {
    @Override
    public void onStart(GenericDescriptor descriptor) {
       // add the type discriminator field
-      NOT_STORED_NOT_ANALYZED.addFieldToDocument(QueryFacadeImpl.TYPE_FIELD_NAME, messageContext.getMessageDescriptor().getFullName(), document);
+      NOT_STORED_NOT_ANALYZED.addFieldToDocument(ProtobufValueWrapper.TYPE_FIELD_NAME, messageContext.getMessageDescriptor().getFullName(), document);
    }
 
    @Override
