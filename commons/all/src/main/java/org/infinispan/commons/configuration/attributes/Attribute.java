@@ -90,7 +90,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
    }
 
    public void addListener(AttributeListener<T> listener) {
-      if (isImmutable()) {
+      if (isImmutable() && isProtect()) {
          throw new UnsupportedOperationException();
       }
       if (listeners == null) {

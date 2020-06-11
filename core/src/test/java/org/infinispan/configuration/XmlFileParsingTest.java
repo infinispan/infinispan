@@ -148,7 +148,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       );
       holder = parseStringConfiguration(config);
       cfg = holder.getDefaultConfigurationBuilder().build();
-      assertEquals(StorageType.OBJECT, cfg.memory().storageType());
+      assertEquals(StorageType.HEAP, cfg.memory().storageType());
 
       config = TestingUtil.wrapXMLWithoutSchema(
             "<cache-container default-cache=\"default\">" +
@@ -475,7 +475,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(20000, c.locking().lockAcquisitionTimeout());
       assertEquals(1000, c.locking().concurrencyLevel());
       assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().isolationLevel());
-      assertEquals(StorageType.OBJECT, c.memory().storageType());
+      assertEquals(StorageType.HEAP, c.memory().storageType());
 
       c = getCacheConfiguration(holder, "storeAsBinary");
       assertEquals(StorageType.BINARY, c.memory().storageType());

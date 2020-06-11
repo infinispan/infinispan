@@ -1628,6 +1628,7 @@ public class Parser implements ConfigurationParser {
       }
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
+         CONFIG.warnUsingDeprecatedMemoryConfigs(element.getLocalName());
          switch (element) {
             case OFF_HEAP:
                memoryBuilder.storageType(StorageType.OFF_HEAP);

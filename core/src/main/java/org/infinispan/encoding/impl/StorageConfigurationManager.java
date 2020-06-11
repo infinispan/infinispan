@@ -10,7 +10,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.configuration.cache.EncodingConfiguration;
-import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -108,9 +107,8 @@ public class StorageConfigurationManager {
       if (internalCache) return MediaType.APPLICATION_OBJECT;
 
       if (embeddedMode) {
-         boolean heap = configuration.memory().storage() == StorageType.OBJECT ||
-                        configuration.memory().storage() == StorageType.HEAP;
-         return heap ? MediaType.APPLICATION_OBJECT : mediaType;
+         boolean canStoreReferences = configuration.memory().storage().canStoreReferences();
+         return canStoreReferences ? MediaType.APPLICATION_OBJECT : mediaType;
       }
 
       return APPLICATION_UNKNOWN;

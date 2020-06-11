@@ -76,8 +76,10 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", StaticTestingErrorHandler.class.getName());
-      cacheCfg.memory()
-            .storageType(storageType);
+      if (storageType != null) {
+         cacheCfg.memory()
+                 .storageType(storageType);
+      }
       createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
       cacheAMachine1 = cache(0);
       cacheAMachine2 = cache(1);

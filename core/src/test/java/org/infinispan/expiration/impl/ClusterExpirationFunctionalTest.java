@@ -73,7 +73,9 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       configurationBuilder.clustering().cacheMode(cacheMode);
       configurationBuilder.transaction().transactionMode(transactionMode()).lockingMode(lockingMode);
       configurationBuilder.expiration().disableReaper();
-      configurationBuilder.memory().storageType(storageType);
+      if (storageType != null) {
+         configurationBuilder.memory().storage(storageType);
+      }
       createCluster(TestDataSCI.INSTANCE, configurationBuilder, 3);
       waitForClusterToForm();
       injectTimeServices();

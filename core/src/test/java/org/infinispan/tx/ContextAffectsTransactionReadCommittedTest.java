@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.fail;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+
 import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -17,6 +18,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -30,6 +32,7 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
 
    protected StorageType storage;
 
+   @Factory
    public Object[] factory() {
       return new Object[] {
             new ContextAffectsTransactionReadCommittedTest().withStorage(StorageType.BINARY),

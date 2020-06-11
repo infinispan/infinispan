@@ -1980,7 +1980,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot configure both maxCount and maxSize in memory configuration", id = 583)
    CacheConfigurationException cannotProvideBothSizeAndCount();
 
-   @Message(value = "The memory configuration(s) %s have been deprecated and cannot be used in conjunction to the new configuration. Please update your code ", id = 584)
+   @Message(value = "The memory attribute(s) %s have been deprecated and cannot be used in conjunction with the new configuration", id = 584)
    CacheConfigurationException cannotUseDeprecatedAndReplacement(String legacyName);
 
    @LogMessage(level = WARN)
@@ -1988,14 +1988,14 @@ public interface Log extends BasicLogger {
    void ignoringSpecificMediaTypes();
 
    @LogMessage(level = WARN)
-   @Message(value = "The memory configuration attribute(s) '%s' have been deprecated. Please update your configuration", id = 586)
-   void warnUsingDeprecatedMemoryConfigs(String config);
+   @Message(value = "The memory configuration element '%s' has been deprecated. Please update your configuration", id = 586)
+   void warnUsingDeprecatedMemoryConfigs(String element);
 
    @Message(value = "Cannot change max-size since max-count is already defined", id = 587)
-   CacheException cannotIncreaseMaxSize();
+   CacheConfigurationException cannotChangeMaxSize();
 
    @Message(value = "Cannot change max-count since max-size is already defined", id = 588)
-   CacheException cannotIncreaseMaxCount();
+   CacheConfigurationException cannotChangeMaxCount();
 
    @Message(value = "A store cannot be configured with both preload and purgeOnStartup", id = 589)
    CacheConfigurationException preloadAndPurgeOnStartupConflict();

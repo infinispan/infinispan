@@ -7,23 +7,24 @@ import static org.infinispan.configuration.cache.StorageType.OFF_HEAP;
 import static org.infinispan.eviction.EvictionStrategy.REMOVE;
 import static org.infinispan.eviction.EvictionType.COUNT;
 import static org.infinispan.eviction.EvictionType.MEMORY;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertThrows;
-import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.MemoryStorageConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -49,7 +50,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
 
       assertEquals(configuration.memory().maxSizeBytes(), -1);
       assertEquals(configuration.memory().maxCount(), 200);
-      assertEquals(configuration.memory().storageType(), OBJECT);
+      assertEquals(configuration.memory().storageType(), HEAP);
 
       Configuration fromSameBuilder = builder.build();
       assertEquals(configuration, fromSameBuilder);
@@ -89,13 +90,14 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
    public void testLegacyConfigAvailable() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory().maxSize("1.5 GB").storage(HEAP).whenFull(REMOVE);
+      builder.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
 
       Configuration configuration = builder.build();
 
       assertEquals(configuration.memory().maxSizeBytes(), 1_500_000_000);
       assertEquals(configuration.memory().maxCount(), -1);
       assertEquals(configuration.memory().whenFull(), REMOVE);
-      assertEquals(configuration.memory().storageType(), OBJECT);
+      assertEquals(configuration.memory().storageType(), HEAP);
       assertEquals(configuration.memory().evictionStrategy(), REMOVE);
       assertEquals(configuration.memory().size(), 1_500_000_000);
       assertEquals(configuration.memory().evictionType(), MEMORY);
@@ -109,7 +111,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
       assertEquals(larger.memory().maxCount(), -1);
       assertEquals(larger.memory().whenFull(), REMOVE);
       assertEquals(larger.memory().storage(), HEAP);
-      assertEquals(larger.memory().storageType(), OBJECT);
+      assertEquals(larger.memory().storageType(), HEAP);
       assertEquals(larger.memory().evictionStrategy(), REMOVE);
       assertEquals(larger.memory().size(), 2_000_000_000);
       assertEquals(larger.memory().evictionType(), MEMORY);
@@ -123,7 +125,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
 
       assertFalse(configuration.memory().isEvictionEnabled());
       assertEquals(configuration.memory().storage(), HEAP);
-      assertEquals(configuration.memory().storageType(), BINARY);
+      assertEquals(configuration.memory().storageType(), HEAP);
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)
@@ -145,19 +147,19 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
       assertFalse(configuration.memory().isOffHeap());
       assertEquals(configuration.memory().maxCount(), -1L);
       assertEquals(configuration.memory().maxSizeBytes(), -1L);
-      assertEquals(configuration.memory().storageType(), OBJECT);
+      assertEquals(configuration.memory().storageType(), HEAP);
    }
 
    @Test
    public void testChangeFromMinimal() {
       ConfigurationBuilder initial = new ConfigurationBuilder();
       Configuration initialConfig = initial.build();
-      assertEquals(initialConfig.memory().storageType(), OBJECT);
+      assertEquals(initialConfig.memory().storageType(), HEAP);
       assertEquals(initialConfig.memory().size(), -1);
 
       initial.memory().size(3);
       Configuration larger = initial.build();
-      assertEquals(larger.memory().storageType(), OBJECT);
+      assertEquals(larger.memory().storageType(), HEAP);
       assertEquals(larger.memory().size(), 3);
       assertEquals(larger.memory().maxCount(), 3);
       assertEquals(larger.memory().storage(), HEAP);
@@ -165,16 +167,16 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
 
    @Test
    public void testRuntimeConfigChanges() {
-      Configuration countBounded = new ConfigurationBuilder().memory().maxCount(1000).storage(OFF_HEAP).build();
-      Configuration sizeBounded = new ConfigurationBuilder().memory().maxSize("10 MB").build();
+      Configuration countBounded = new ConfigurationBuilder().memory().maxCount(1000).build();
+      Configuration sizeBounded = new ConfigurationBuilder().memory().maxSize("10 MB").storage(OFF_HEAP).build();
 
       countBounded.memory().maxCount(1200);
       sizeBounded.memory().maxSize("20MB");
 
       assertEquals(countBounded.memory().maxCount(), 1200);
       assertEquals(sizeBounded.memory().maxSizeBytes(), 20_000_000);
-      assertThrows(CacheException.class, () -> countBounded.memory().maxSize("30MB"));
-      assertThrows(CacheException.class, () -> sizeBounded.memory().maxCount(2000));
+      Exceptions.expectException(CacheConfigurationException.class, () -> countBounded.memory().maxSize("30MB"));
+      Exceptions.expectException(CacheConfigurationException.class, () -> sizeBounded.memory().maxCount(2000));
    }
 
    @Test
@@ -298,7 +300,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
       assertEquals(afterParsing.memory().maxCount(), 2000);
       assertEquals(afterParsing.memory().whenFull(), REMOVE);
 
-      assertEquals(afterParsing.memory().storageType(), OBJECT);
+      assertEquals(afterParsing.memory().storageType(), HEAP);
       assertEquals(afterParsing.memory().evictionStrategy(), REMOVE);
       assertEquals(afterParsing.memory().size(), 2000);
       assertEquals(afterParsing.memory().evictionType(), COUNT);
@@ -326,12 +328,27 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
       assertEquals(afterParsing.memory().storage(), HEAP);
       assertEquals(afterParsing.memory().maxSizeBytes(), 1_000_000);
       assertEquals(afterParsing.memory().whenFull(), REMOVE);
-      assertEquals(afterParsing.memory().storageType(), BINARY);
+      assertEquals(afterParsing.memory().storageType(), HEAP);
       assertEquals(afterParsing.memory().size(), 1_000_000);
       assertEquals(afterParsing.memory().evictionStrategy(), REMOVE);
       assertEquals(afterParsing.memory().evictionType(), MEMORY);
    }
 
+
+   @Test
+   public void testParseJSON() {
+      String newJSON = "{\"local-cache\":{ \"memory\":{\"storage\":\"HEAP\",\"when-full\":\"REMOVE\",\"max-count\":5000}}}}";
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      JSON_READER.readJson(builder, newJSON);
+      Configuration fromJson = builder.build();
+      assertEquals(fromJson.memory().maxSizeBytes(), -1);
+      assertEquals(fromJson.memory().maxCount(), 5000);
+      assertEquals(fromJson.memory().storageType(), HEAP);
+      assertEquals(fromJson.memory().evictionStrategy(), REMOVE);
+      assertEquals(fromJson.memory().size(), 5000);
+      assertEquals(fromJson.memory().evictionType(), COUNT);
+      assertEquals(fromJson.memory().heapConfiguration().evictionStrategy(), REMOVE);
+   }
 
    @Test
    public void testParseLegacyJSON() {
@@ -356,6 +373,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
       Configuration afterRead = new ConfigurationBuilder().read(configuration).build();
 
       assertEquals(afterRead.memory().storage(), OFF_HEAP);
+      assertEquals(afterRead.memory().whenFull(), REMOVE);
       assertEquals(afterRead.memory().maxCount(), 1_000);
       assertEquals(afterRead.memory().maxSizeBytes(), -1);
       assertEquals(afterRead.memory().storageType(), OFF_HEAP);
@@ -386,26 +404,89 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
       assertEquals(overridden.memory().evictionType(), COUNT);
    }
 
-   @Test
-   public void testListenToLegacyAttribute() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.memory().storageType(HEAP).size(120);
+   public void testListenToCountChanges() {
+      ConfigurationBuilder countBuilder = new ConfigurationBuilder();
+      countBuilder.memory().storage(HEAP).maxCount(20);
 
-      AtomicBoolean listenerTriggered = new AtomicBoolean();
-      Configuration configuration = builder.build();
-      configuration.memory().heapConfiguration().attributes().attribute(MemoryStorageConfiguration.SIZE)
-            .addListener((attribute, oldValue) -> listenerTriggered.set(true));
-
-      configuration.memory().size(400);
-
-      assertEquals(400, configuration.memory().maxCount());
-      assertEquals(400, configuration.memory().size());
+      Configuration configuration = countBuilder.build();
       assertEquals(COUNT, configuration.memory().evictionType());
-      assertTrue(listenerTriggered.get());
+
+      Queue<Object> sizeListenerQueue = new ArrayDeque<>(1);
+      Queue<Object> maxCountListenerQueue = new ArrayDeque<>(1);
+      Queue<Object> maxSizeListenerQueue = new ArrayDeque<>(1);
+      setUpListeners(configuration, sizeListenerQueue, maxCountListenerQueue, maxSizeListenerQueue);
+
+      configuration.memory().size(100);
+      assertCountUpdate(configuration, 100, sizeListenerQueue, maxCountListenerQueue, maxSizeListenerQueue);
+
+      configuration.memory().heapConfiguration().size(200);
+      assertCountUpdate(configuration, 200, sizeListenerQueue, maxCountListenerQueue, maxSizeListenerQueue);
+
+      configuration.memory().maxCount(300);
+      assertCountUpdate(configuration, 300, sizeListenerQueue, maxCountListenerQueue, maxSizeListenerQueue);
+   }
+
+   public void testListenToSizeChanges() {
+      ConfigurationBuilder sizeBuilder = new ConfigurationBuilder();
+      sizeBuilder.memory().storage(HEAP).maxSize("20");
+      sizeBuilder.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
+
+      Configuration configuration = sizeBuilder.build();
+      assertEquals(MEMORY, configuration.memory().evictionType());
+
+      Queue<Object> sizeListenerQueue = new ArrayDeque<>(1);
+      Queue<Object> maxSizeListenerQueue = new ArrayDeque<>(1);
+      Queue<Object> maxCountListenerQueue = new ArrayDeque<>(1);
+      setUpListeners(configuration, sizeListenerQueue, maxCountListenerQueue, maxSizeListenerQueue);
+
+      configuration.memory().size(100);
+      assertSizeUpdate(configuration, 100, sizeListenerQueue, maxCountListenerQueue, maxSizeListenerQueue);
+
+      configuration.memory().heapConfiguration().size(200);
+      assertSizeUpdate(configuration, 200, sizeListenerQueue, maxCountListenerQueue, maxSizeListenerQueue);
+
+      configuration.memory().maxSize("300");
+      assertSizeUpdate(configuration, 300, sizeListenerQueue, maxCountListenerQueue, maxSizeListenerQueue);
+   }
+
+   private void setUpListeners(Configuration configuration, Queue<Object> sizeListenerQueue,
+                               Queue<Object> maxCountListenerQueue, Queue<Object> maxSizeListenerQueue) {
+      configuration.memory().heapConfiguration().attributes().attribute(MemoryStorageConfiguration.SIZE)
+                   .addListener((attribute, oldValue) -> sizeListenerQueue.add(attribute.get()));
+      configuration.memory().attributes().attribute(MemoryConfiguration.MAX_COUNT)
+                   .addListener((attribute, oldValue) -> maxCountListenerQueue.add(attribute.get()));
+      configuration.memory().attributes().attribute(MemoryConfiguration.MAX_SIZE)
+                   .addListener((attribute, oldValue) -> maxSizeListenerQueue.add(attribute.get()));
+   }
+
+   private void assertCountUpdate(Configuration configuration, long newValue, Queue<Object> sizeListenerQueue,
+                                 Queue<Object> maxCountListenerQueue, Queue<Object> maxSizeListenerQueue) {
+      assertEquals(newValue, configuration.memory().size());
+      assertEquals(newValue, sizeListenerQueue.poll());
+
+      assertEquals(newValue, configuration.memory().maxCount());
+      assertEquals(newValue, maxCountListenerQueue.poll());
+
+      assertEquals(-1L, configuration.memory().maxSizeBytes());
+      assertEquals(0, maxSizeListenerQueue.size());
+   }
+
+   private void assertSizeUpdate(Configuration configuration, long newValue, Queue<Object> sizeListenerQueue,
+                                 Queue<Object> maxCountListenerQueue, Queue<Object> maxSizeListenerQueue) {
+      assertEquals(newValue, configuration.memory().size());
+      assertEquals(newValue, sizeListenerQueue.poll());
+
+      assertEquals(String.valueOf(newValue), configuration.memory().maxSize());
+      assertEquals(newValue, configuration.memory().maxSizeBytes());
+      assertEquals(String.valueOf(newValue), maxSizeListenerQueue.poll());
+
+      assertEquals(-1L, configuration.memory().maxCount());
+      assertEquals(0, maxCountListenerQueue.size());
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class,
-         expectedExceptionsMessageRegExp = ".*storage-type=OFF_HEAP, size=456, type=MEMORY have been deprecated and cannot be used in conjunction to the new configuration.*")
+         expectedExceptionsMessageRegExp = ".*\\[size, type] have been deprecated and cannot be used in conjunction " +
+                                           "with the new configuration.*")
    public void testErrorForAmbiguousXML() {
       String xmlNew = "<infinispan>\n" +
             "   <cache-container>\n" +

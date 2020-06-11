@@ -48,7 +48,9 @@ public class StateTransferTimestampsTest extends MultipleCacheManagersTest {
       timeService = new ControlledTimeService();
       ConfigurationBuilder replConfig = new ConfigurationBuilder();
       replConfig.clustering().cacheMode(cacheMode).hash().numSegments(4);
-      replConfig.memory().storageType(storageType);
+      if (storageType != null) {
+         replConfig.memory().storage(storageType);
+      }
       for (EmbeddedCacheManager manager : managers()) {
          TestingUtil.replaceComponent(manager, TimeService.class, timeService, true);
          manager.defineConfiguration(CACHE_NAME, replConfig.build());
