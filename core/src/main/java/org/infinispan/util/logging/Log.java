@@ -2034,8 +2034,8 @@ public interface Log extends BasicLogger {
    CacheConfigurationException storeLocationRequired(String storeType, String attributeName);
 
    @LogMessage(level = WARN)
-   @Message(value = "Cache '%s' has an unknown encoding for keys or values. " +
-         "Operations that require data conversions may not work as expected, " +
-         "please specify the required MediaType using the 'encoding' element in the cache configuration", id = 599)
+   @Message(value = "Configuration for cache '%s' does not define the encoding for keys or values. " +
+         "If you use operations that require data conversion or queries, you should configure the " +
+         "cache with a specific MediaType for keys or values.", id = 599)
    void unknownEncoding(String cacheName);
 }
