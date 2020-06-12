@@ -205,9 +205,4 @@ public class RemoteQueryStringTest extends QueryStringTest {
       assertEquals(1, list.size());
       assertEquals("testing 123", list.get(0).notIndexedField);
    }
-
-   @Override
-   @Test(enabled = false, description = "IPROTO-142")
-   public void testFullTextTermBoostAndSorting() {
-   }
 }
