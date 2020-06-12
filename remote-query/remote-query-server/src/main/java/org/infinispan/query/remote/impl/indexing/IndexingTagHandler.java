@@ -34,7 +34,7 @@ final class IndexingTagHandler implements TagHandler {
 
    private final Document document;
 
-   private MessageContext<? extends MessageContext> messageContext;
+   private MessageContext<?> messageContext;
 
    IndexingTagHandler(Descriptor messageDescriptor, Document document) {
       this.document = document;
