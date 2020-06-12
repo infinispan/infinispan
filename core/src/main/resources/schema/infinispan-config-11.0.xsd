@@ -910,7 +910,8 @@
               </xs:annotation>
               <xs:complexType>
                 <xs:sequence>
-                  <xs:element name="indexed-entity" type="xs:string" minOccurs="1" maxOccurs="unbounded">
+                  <!-- TODO [anistor] change minOccurs="1" in version 12 -->
+                  <xs:element name="indexed-entity" type="xs:string" minOccurs="0" maxOccurs="unbounded">
                     <xs:annotation>
                       <xs:documentation>Indexed entity type name. Must be either a fully qualified Java class name or a protobuf type name.</xs:documentation>
                     </xs:annotation>
