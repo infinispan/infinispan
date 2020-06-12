@@ -13,7 +13,6 @@ import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.query.remote.impl.logging.Log;
-import org.jboss.logging.Logger;
 
 //todo [anistor] Should be able to have multiple mappings per field like in Hibernate Search, ie. have a @Fields plural annotation
 
@@ -115,14 +114,14 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
 
             FieldMapping fieldMapping = new FieldMapping(fieldName, isIndexed, fieldLevelBoost, isAnalyzed, isStored, isSortable, fieldLevelAnalyzer, indexNullAs, luceneOptions, fd);
             fields.put(fieldName, fieldMapping);
-            if (log.isEnabled(Logger.Level.DEBUG)) {
+            if (log.isDebugEnabled()) {
                log.debugf("fieldName=%s fieldMapping=%s", fieldName, fieldMapping);
             }
          }
       }
 
       IndexingMetadata indexingMetadata = new IndexingMetadata(true, indexName, entityAnalyzer, fields);
-      if (log.isEnabled(Logger.Level.DEBUG)) {
+      if (log.isDebugEnabled()) {
          log.debugf("Descriptor name=%s indexingMetadata=%s", descriptor.getFullName(), indexingMetadata);
       }
       return indexingMetadata;
