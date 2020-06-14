@@ -84,6 +84,21 @@
             ]
           },
           {
+            "name": "IracMetadata",
+            "fields": [
+              {
+                "id": 1,
+                "name": "site",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "version",
+                "type": "IracEntryVersion"
+              }
+            ]
+          },
+          {
             "name": "EmbeddedMetadata",
             "fields": [
               {
@@ -105,6 +120,21 @@
                 "id": 1,
                 "name": "bytes",
                 "type": "bytes"
+              }
+            ]
+          },
+          {
+            "name": "MapEntry",
+            "fields": [
+              {
+                "id": 1,
+                "name": "site",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "version",
+                "type": "TopologyIracVersion"
               }
             ]
           },
@@ -164,6 +194,11 @@
                     "value": "-1"
                   }
                 ]
+              },
+              {
+                "id": 7,
+                "name": "counterConfiguration",
+                "type": "org.infinispan.persistence.commons.CounterConfiguration"
               }
             ]
           },
@@ -179,6 +214,33 @@
                 "id": 2,
                 "name": "version",
                 "type": "SimpleClusteredVersion"
+              }
+            ]
+          },
+          {
+            "name": "TopologyIracVersion",
+            "fields": [
+              {
+                "id": 1,
+                "name": "topologyId",
+                "type": "uint32",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "version",
+                "type": "uint64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
               }
             ]
           },
@@ -236,6 +298,17 @@
             ]
           },
           {
+            "name": "IracEntryVersion",
+            "fields": [
+              {
+                "id": 1,
+                "name": "entries",
+                "type": "MapEntry",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "MarshalledValueImpl",
             "fields": [
               {
@@ -269,6 +342,11 @@
                     "value": "-1"
                   }
                 ]
+              },
+              {
+                "id": 5,
+                "name": "internalMetadata",
+                "type": "bytes"
               }
             ]
           },
@@ -285,6 +363,26 @@
                     "value": "-1"
                   }
                 ]
+              }
+            ]
+          },
+          {
+            "name": "PrivateMetadata",
+            "fields": [
+              {
+                "id": 1,
+                "name": "iracMetadata",
+                "type": "IracMetadata"
+              },
+              {
+                "id": 2,
+                "name": "numericVersion",
+                "type": "NumericVersion"
+              },
+              {
+                "id": 3,
+                "name": "clusteredVersion",
+                "type": "SimpleClusteredVersion"
               }
             ]
           },
@@ -333,6 +431,11 @@
                 "type": "bytes"
               }
             ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "persistence.commons.proto"
           }
         ],
         "package": {

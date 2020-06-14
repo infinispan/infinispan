@@ -3,6 +3,28 @@
     {
       "protopath": "generated:/:global.commons.proto",
       "def": {
+        "messages": [
+          {
+            "name": "KeyValueWithPrevious",
+            "fields": [
+              {
+                "id": 1,
+                "name": "wrappedKey",
+                "type": "org.infinispan.protostream.WrappedMessage"
+              },
+              {
+                "id": 2,
+                "name": "wrappedValue",
+                "type": "org.infinispan.protostream.WrappedMessage"
+              },
+              {
+                "id": 3,
+                "name": "wrappedPrev",
+                "type": "org.infinispan.protostream.WrappedMessage"
+              }
+            ]
+          }
+        ],
         "imports": [
           {
             "path": "org/infinispan/protostream/message-wrapping.proto"
@@ -32,6 +54,34 @@
                 "integer": 2
               }
             ]
+          },
+          {
+            "name": "Storage",
+            "enum_fields": [
+              {
+                "name": "VOLATILE"
+              },
+              {
+                "name": "PERSISTENT",
+                "integer": 1
+              }
+            ]
+          },
+          {
+            "name": "CounterType",
+            "enum_fields": [
+              {
+                "name": "UNBOUNDED_STRONG"
+              },
+              {
+                "name": "BOUNDED_STRONG",
+                "integer": 1
+              },
+              {
+                "name": "WEAK",
+                "integer": 2
+              }
+            ]
           }
         ],
         "messages": [
@@ -46,6 +96,65 @@
             ]
           },
           {
+            "name": "CounterConfiguration",
+            "fields": [
+              {
+                "id": 1,
+                "name": "initialValue",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "lowerBound",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "upperBound",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "concurrencyLevel",
+                "type": "int32",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "type",
+                "type": "CounterType"
+              },
+              {
+                "id": 6,
+                "name": "storage",
+                "type": "Storage"
+              }
+            ]
+          },
+          {
             "name": "WrappedByteArray",
             "fields": [
               {
@@ -54,11 +163,6 @@
                 "type": "bytes"
               }
             ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "org/infinispan/protostream/message-wrapping.proto"
           }
         ],
         "package": {
