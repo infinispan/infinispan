@@ -322,7 +322,7 @@
                      <excludedocfilessubdir>org/infinispan/commons/jdkspecific</excludedocfilessubdir>
                      <doclint>none</doclint>
                      <useStandardDocletOptions>true</useStandardDocletOptions>
-                     <additionalOptions>
+                     <additionalOptions combine.self="override">
                         <additionalOption>--allow-script-in-comments</additionalOption>
                         <additionalOption>--excludeGeneratedBy org.jboss.logging.processor.generator.model.MessageLoggerImplementor</additionalOption>
                      </additionalOptions>
