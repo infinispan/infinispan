@@ -30,4 +30,6 @@ public interface RestCacheManagerClient {
    CompletionStage<RestResponse> pushSiteState(String backup);
 
    CompletionStage<RestResponse> cancelPushState(String backup);
+
+   CompletionStage<RestResponse> caches();
 }

@@ -75,7 +75,7 @@ public class RestCacheManagerResource {
       RestResponse restResponse = sync(client.cache(cacheName).createWithTemplate("org.infinispan.LOCAL"));
       assertEquals(200, restResponse.getStatus());
 
-      restResponse = sync(client.raw().get("/rest/v2/cache-managers/default/caches"));
+      restResponse = sync(client.cacheManager("default").caches());
       assertEquals(200, restResponse.getStatus());
       ArrayNode cacheArray = (ArrayNode) mapper.readTree(restResponse.getBody());
       assertNotNull(cacheArray);

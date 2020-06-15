@@ -86,4 +86,9 @@ public class RestCacheManagerClientOkHttp implements RestCacheManagerClient {
    public CompletionStage<RestResponse> healthStatus() {
       return client.execute(baseCacheManagerUrl, "health", "status");
    }
+
+   @Override
+   public CompletionStage<RestResponse> caches() {
+      return client.execute(baseCacheManagerUrl, "caches");
+   }
 }
