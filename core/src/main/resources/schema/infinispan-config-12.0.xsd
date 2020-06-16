@@ -2622,7 +2622,22 @@
         </xs:enumeration>
         <xs:enumeration value="INSERT_AFTER">
           <xs:annotation>
-            <xs:documentation>Inserts the protocol after an existing protocol in the stack, referenced using the stack.position attribute.</xs:documentation>
+            <xs:documentation>Inserts the protocol after/above an existing protocol in the stack, referenced using the stack.position attribute.</xs:documentation>
+          </xs:annotation>
+        </xs:enumeration>
+        <xs:enumeration value="INSERT_ABOVE">
+          <xs:annotation>
+            <xs:documentation>Inserts the protocol after/above an existing protocol in the stack, referenced using the stack.position attribute.</xs:documentation>
+          </xs:annotation>
+        </xs:enumeration>
+        <xs:enumeration value="INSERT_BEFORE">
+          <xs:annotation>
+            <xs:documentation>Inserts the protocol before/below an existing protocol in the stack, referenced using the stack.position attribute.</xs:documentation>
+          </xs:annotation>
+        </xs:enumeration>
+        <xs:enumeration value="INSERT_BELOW">
+          <xs:annotation>
+            <xs:documentation>Inserts the protocol before/below an existing protocol in the stack, referenced using the stack.position attribute.</xs:documentation>
           </xs:annotation>
         </xs:enumeration>
         <xs:enumeration value="REPLACE">

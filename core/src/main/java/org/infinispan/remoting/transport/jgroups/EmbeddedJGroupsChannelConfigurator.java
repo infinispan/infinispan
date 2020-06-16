@@ -158,9 +158,19 @@ public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigu
                }
                actualStack.set(position, protocol);
                break;
-            case INSERT_AFTER:
+            case INSERT_BEFORE:
+            case INSERT_BELOW:
                if (stackPosition == null) {
-                  throw CONFIG.jgroupsInsertAfterRequiresPosition(protocolName);
+                  throw CONFIG.jgroupsInsertRequiresPosition(protocolName);
+               }
+               position = findProtocol(stackPosition, actualStack);
+               assertExisting(mode, stackPosition, position);
+               actualStack.add(position, protocol);
+               break;
+            case INSERT_AFTER:
+            case INSERT_ABOVE:
+               if (stackPosition == null) {
+                  throw CONFIG.jgroupsInsertRequiresPosition(protocolName);
                }
                position = findProtocol(stackPosition, actualStack);
                assertExisting(mode, stackPosition, position);
@@ -196,6 +206,9 @@ public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigu
    public enum StackCombine {
       COMBINE,
       INSERT_AFTER,
+      INSERT_ABOVE,
+      INSERT_BEFORE,
+      INSERT_BELOW,
       REPLACE,
       REMOVE,
       APPEND, // non-public
