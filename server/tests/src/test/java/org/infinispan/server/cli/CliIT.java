@@ -128,6 +128,25 @@ public class CliIT {
       }
    }
 
+   @Test
+   public void testCliUploadProtobufSchemas() {
+      try (AeshTestConnection terminal = new AeshTestConnection()) {
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{});
+
+         // connect
+         terminal.readln("connect " + hostAddress() + ":11222");
+         terminal.assertContains("//containers/default]>");
+         terminal.clear();
+
+         // upload
+         terminal.readln("schema --upload="+ this.getClass().getResource("/cli/person.proto").getPath() +" person.proto");
+         terminal.clear();
+         terminal.readln("cd /containers/default/schemas");
+         terminal.readln("ls");
+         terminal.assertContains("person.proto");
+      }
+   }
+
    private String hostAddress() {
       return SERVERS.getTestServer().getDriver().getServerAddress(0).getHostAddress();
    }
