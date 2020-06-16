@@ -119,6 +119,7 @@
       <module>client/rest-client</module>
       <module>client/hotrod-client</module>
       <module>client/infinispan-key-value-store-hotrod</module>
+      <module>archetypes</module>
       <module>all</module>
       <module>all/cli</module>
       <module>osgi</module>
