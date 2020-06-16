@@ -1848,7 +1848,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException jgroupsNoSuchProtocol(String protocolName, String combineMode);
 
    @Message(value = "Inserting protocol '%s' in a JGroups stack requires the 'stack.position' attribute", id = 545)
-   CacheConfigurationException jgroupsInsertAfterRequiresPosition(String protocolName);
+   CacheConfigurationException jgroupsInsertRequiresPosition(String protocolName);
 
    @Message(value = "Duplicate remote site '%s' in stack '%s'", id = 546)
    CacheConfigurationException duplicateRemoteSite(String remoteSite, String name);
