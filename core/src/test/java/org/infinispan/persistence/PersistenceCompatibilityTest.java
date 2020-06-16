@@ -90,6 +90,7 @@ public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManager
    protected void setup() throws Exception {
       tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
       Util.recursiveFileRemove(tmpDirectory);
+      log.debugf("Using tmpDirectory=%s", tmpDirectory);
       super.setup();
    }
 
