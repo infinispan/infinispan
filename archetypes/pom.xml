@@ -19,6 +19,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>client</module>
         <module>embedded</module>
         <module>store</module>
     </modules>
