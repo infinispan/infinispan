@@ -15,3 +15,4 @@ mvn archetype:generate \
 
 Where `<archetype-name>` can be one of the following:
   - `embedded` Creates a sample Embedded Infinispan application
+  - `store` Creates a skeleton implementation of a custom Infinispan store
