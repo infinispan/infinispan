@@ -2692,6 +2692,13 @@
                         <id>java11-test</id>
                         <phase>none</phase>
                      </execution>
+                     <!--
+                     Explicitly disable the java8-test execution defined in the jboss-parent POM
+                     -->
+                     <execution>
+                        <id>java8-test</id>
+                        <phase>none</phase>
+                     </execution>
                   </executions>
                </plugin>
                <plugin>
