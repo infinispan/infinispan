@@ -17,6 +17,7 @@
 
     <properties>
         <download.url>https://infinispan.org/download/</download.url>
+        <infinispan.tutorials>https://github.com/infinispan/infinispan-simple-tutorials/</infinispan.tutorials>
         <javadoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/apidocs</javadoc.root>
         <configdoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/configdocs/</configdoc.root>
         <wildfly.docroot>https://docs.jboss.org/author/display/WFLY11</wildfly.docroot>
@@ -172,6 +173,7 @@
                                 <jdkdocroot>${jdk.docroot}</jdkdocroot>
                                 <javaeedocroot>${javaee.docroot}</javaeedocroot>
                                 <download_url>${download.url}</download_url>
+                                <tutorials>${infininspan.tutorials}</tutorials>
                                 <imagesdir>../../topics/images</imagesdir>
                             </attributes>
                         </configuration>
@@ -242,6 +244,7 @@
                                         <jdkdocroot>${jdk.docroot}</jdkdocroot>
                                         <javaeedocroot>${javaee.docroot}</javaeedocroot>
                                         <download_url>${download.url}</download_url>
+                                        <tutorials>${infininspan.tutorials}</tutorials>
                                         <imagesdir>../../topics/images</imagesdir>
                                     </attributes>
                                 </configuration>

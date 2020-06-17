@@ -4,13 +4,16 @@ Remove data from caches with the {brandname} CLI.
 
 .Procedure
 
-* Clear caches. This command deletes all entries from a cache.
+. Create a CLI connection to {brandname}.
+. Do one of the following:
++
+* Delete all entries with the [command]`clearcache` command.
 +
 ----
 [//containers/default]> clearcache mycache
 ----
-
-* Remove specific entries from a cache.
++
+* Remove specific entries with the [command]`remove` command.
 +
 ----
 [//containers/default]> remove --cache=mycache hello

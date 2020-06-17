@@ -1,25 +1,42 @@
+[id='cli_start-{context}']
 = Connecting to {brandname} Servers
+Establish CLI connections to {brandname}.
 
-Do one of the following:
+.Prerequisites
 
-* Run the `connect` command to connect to a {brandname} server on the default port of `11222`:
+Add user credentials and have at least one running {brandname} server instance.
+
+.Procedure
+
+. Open a terminal in `{server_home}`.
+. Start the CLI.
++
+* *Linux:*
++
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/cli_nix.adoc[]
+----
++
+* *Microsoft Windows:*
++
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/cli_win.adoc[]
+----
++
+. Run the [command]`connect` command and enter your username and password when prompted.
++
+* {brandname} Server on the default port of `11222`:
 +
 [source,options="nowrap",subs=attributes+]
 ----
 [disconnected]> connect
-[hostname1@cluster//containers/default]>
 ----
-
-* Specify the location of a {brandname} server. For example, connect to a local server that has a port offset of 100:
++
+* {brandname} Server with a port offset of `100`:
 +
 [source,options="nowrap",subs=attributes+]
 ----
 [disconnected]> connect 127.0.0.1:11322
-[hostname2@cluster//containers/default]>
 ----
-
-[TIP]
-====
-Press the tab key to display available commands and options. Use the `-h`
-option to display help text.
-====

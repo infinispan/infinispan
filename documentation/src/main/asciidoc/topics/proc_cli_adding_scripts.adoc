@@ -3,11 +3,13 @@
 Use the command line interface to add scripts to {brandname} servers.
 
 .Prerequisites
-{brandname} servers store scripts in the `\___script_cache` cache. If you enable
-cache authorization, users must have the `___script_manager` role to access
+
+{brandname} Server stores scripts in the `\___script_cache` cache. If you enable
+cache authorization, users require the `___script_manager` role to access
 `___script_cache`.
 
 .Procedure
+
 . Define scripts as required.
 +
 For example, create a file named `multiplication.js` that runs on a single
@@ -20,8 +22,8 @@ value:
 multiplicand * multiplier
 ----
 +
-. Open a CLI connection to {brandname} and use the `task` command to upload
-your scripts as in the following example:
+. Create a CLI connection to {brandname}.
+. Use the [command]`task` command to upload scripts, as in the following example:
 +
 ----
 [//containers/default]> task upload --file=multiplication.js multiplication

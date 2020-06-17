@@ -1,0 +1,37 @@
+[id='default_remote_cm-{context}']
+= Default Cache Manager
+{ProductName} Server provides a default Cache Manager configuration. When you
+start {brandname} Server, it instantiates the Cache Manager so you can remotely
+create caches at run-time.
+
+.Default Cache Manager
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<cache-container name="default" <1>
+                 statistics="true"> <2>
+  <transport cluster="${infinispan.cluster.name}" <3>
+             stack="${infinispan.cluster.stack:tcp}" <4>
+             node-name="${infinispan.node.name:}"/>
+</cache-container>
+----
+
+<1> Creates a Cache Manager named "default".
+<2> Exports Cache Manager statistics through the `metrics` endpoint.
+<3> Adds a JGroups cluster transport that allows {ProductName} servers to
+automatically discover each other and form clusters.
+<4> Uses the default TCP stack for cluster traffic.
+
+.Examining the Cache Manager
+
+After you start {brandname} Server and add user credentials, you can access the
+default Cache Manager through the Command Line Interface (CLI) or REST endpoint
+as follows:
+
+* CLI: Use the [command]`describe` command in the default container.
++
+----
+[//containers/default]> describe
+----
+
+* REST: Navigate to `<server_hostname>:11222/rest/v2/cache-managers/default/` in any browser.

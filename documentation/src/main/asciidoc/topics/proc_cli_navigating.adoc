@@ -1,13 +1,21 @@
 = Navigating CLI Resources
-The {brandname} CLI exposes a navigable tree that allows you to list, describe, and manipulate {brandname} cluster resources.
+The {brandname} CLI exposes a navigable tree that allows you to list, describe,
+and manipulate {brandname} cluster resources.
 
-When you connect to a {brandname} cluster, it opens in the context of the default cache container.
+[TIP]
+====
+Press the tab key to display available commands and options. Use the `-h`
+option to display help text.
+====
+
+When you connect to a {brandname} cluster, it opens in the context of the
+default cache container.
 
 ----
 [//containers/default]>
 ----
 
-* Use `ls` to list resources.
+* Use [command]`ls` to list resources.
 
 ----
 [//containers/default]> ls
@@ -18,13 +26,13 @@ schemas
 tasks
 ----
 
-* Use `cd` to navigate the resource tree.
+* Use [command]`cd` to navigate the resource tree.
 
 ----
 [//containers/default]> cd caches
 ----
 
-* Use `describe` to view information about resources.
+* Use [command]`describe` to view information about resources.
 
 ----
 [//containers/default]> describe

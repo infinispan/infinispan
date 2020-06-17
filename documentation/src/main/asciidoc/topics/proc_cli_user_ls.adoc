@@ -4,27 +4,29 @@ List and describe users and groups stored in the property security realms.
 
 .Procedure
 
-* List the users with the `user ls` command:
+. Start the {brandname} CLI.
+. List and describe users as in the following examples:
+
+* List the users with the [command]`user ls` command:
 +
 ----
 [disconnected]> user ls
 [ "admin", "reader", "writer" ]
 ----
 
-* Describe a user with the `user describe` command:
+* Describe a user with the [command]`user describe` command:
 +
 ----
 [disconnected]> user describe admin
 { username: "admin", realm: "default", groups = ["administrators", "supervisors"] }
 ----
 
-* List the groups with the `user ls` command:
+* List the groups with the [command]`user ls` command:
 +
 ----
 [disconnected]> user ls --groups
 [ "administrators", "readers", "writers" ]
 ----
-+
 
 
-For more information, run the `help user` command.
+For more information, run the [command]`help user` command.

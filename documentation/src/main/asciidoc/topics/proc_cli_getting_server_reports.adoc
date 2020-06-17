@@ -5,13 +5,10 @@ contain diagnostic information about both the {brandname} server and the host.
 The report provides details about CPU, memory, open files, network sockets and
 routing, threads, in addition to configuration and log files.
 
-.Prerequisites
-
-* Open a CLI connection to {brandname}.
-
 .Procedure
 
-. Use the `server report` command to download a `tar.gz` archive:
+. Create a CLI connection to {brandname}.
+. Use the [command]`server report` command to download a `tar.gz` archive:
 +
 [source,options="nowrap",subs=attributes+]
 ----

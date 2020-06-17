@@ -4,8 +4,8 @@ Take backup locations offline manually and bring them back online.
 
 .Procedure
 
-* Check if backup locations are online or offline with the `site status`
-command:
+. Create a CLI connection to {brandname}.
+. Check if backup locations are online or offline with the [command]`site status` command:
 +
 ----
 //containers/default]> site status --cache=cacheName --site=NYC
@@ -16,17 +16,19 @@ command:
 `--site` is an optional argument. If not set, the CLI returns all backup
 locations.
 ====
-
-* Bring backup locations online with the `bring-online` command:
++
+. Manage backup locations as follows:
++
+* Bring backup locations online with the [command]`bring-online` command:
 +
 ----
 //containers/default]> site bring-online --cache=customers --site=NYC
 ----
-
-* Take backup locations offline with the `take-offline` command:
++
+* Take backup locations offline with the [command]`take-offline` command:
 +
 ----
 //containers/default]> site take-offline --cache=customers --site=NYC
 ----
 
-For more information and examples, run the `help site` command.
+For more information and examples, run the [command]`help site` command.

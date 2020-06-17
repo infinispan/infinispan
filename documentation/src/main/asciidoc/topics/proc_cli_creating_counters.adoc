@@ -2,7 +2,9 @@
 Create strong and weak counters with the {brandname} CLI.
 
 .Procedure
-. Run `create counter` with the appropriate arguments.
+
+. Create a CLI connection to {brandname}.
+. Run the [command]`create counter` command with the appropriate arguments.
 .. Create `my-weak-counter`.
 +
 [source,json,options="nowrap",subs=attributes+]
