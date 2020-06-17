@@ -2,7 +2,7 @@
 After you define a cache for your {brandname} server cluster, you can add data.
 
 .Procedure
-. Invoke a `POST` request to create a new *key:value* entry.
+. Invoke a `POST` request to create a new `key:value` entry.
 +
 [source,options="nowrap",subs=attributes+]
 ----

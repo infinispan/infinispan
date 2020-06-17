@@ -2,6 +2,7 @@
 Increment or decrement counters with arbitrary values.
 
 .Procedure
+
 . Select a counter.
 +
 [source,json,options="nowrap",subs=attributes+]

@@ -1,14 +1,20 @@
 = Shutting Down {brandname} Servers
-Use the CLI to gracefully shutdown running servers. This ensures that {brandname} passivates all entries to disk and persists state.
+Gracefully shut down running {brandname} servers to passivate all entries to
+disk and persist state.
 
-* Use the `shutdown server` command to stop individual servers.
+.Procedure
+
+. Create a CLI connection to {brandname}.
+. Do one of the following:
++
+* Stop individual servers with the [command]`shutdown server` command:
 +
 [source,options="nowrap",subs=attributes+]
 ----
 [//containers/default]> shutdown server $hostname
 ----
-
-* Use the `shutdown cluster` command to stop all servers joined to the cluster.
++
+* Stop all nodes in the cluster with the [command]`shutdown cluster` command:
 +
 [source,options="nowrap",subs=attributes+]
 ----

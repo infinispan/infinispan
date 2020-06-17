@@ -2,6 +2,7 @@
 Create files that contain a set of operations and then pass them to the {brandname} CLI.
 
 .Procedure
+
 . Create a file that contains a set of operations.
 +
 For example, create a file named `batch` that creates a cache named `mybatch`, adds two entries to the cache, and disconnects from the CLI.
@@ -23,7 +24,7 @@ EOF
 $ bin/cli.sh -c localhost:11222 -f batch
 ----
 +
-. Open a new CLI connection to {brandname} and verify `mybatch`.
+. Create a new {brandname} CLI connection and verify `mybatch`.
 +
 [source,options="nowrap",subs=attributes+]
 ----
@@ -39,5 +40,7 @@ hello
 
 [NOTE]
 ====
-CLI batch files support system property expansion: strings of the form `${property}` will be replaced with the value of the `property` system property.
+CLI batch files support system property expansion. Strings that use the
+`${property}` format are replaced with the value of the `property` system
+property.
 ====

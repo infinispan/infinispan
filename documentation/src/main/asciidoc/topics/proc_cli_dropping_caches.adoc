@@ -4,7 +4,8 @@ Drop caches to remove them and delete all data they contain.
 
 .Procedure
 
-* Remove caches with the **drop** command.
+. Create a CLI connection to {brandname}.
+. Remove caches with the [command]`drop` command.
 +
 ----
 [//containers/default]> drop cache mycache

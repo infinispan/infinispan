@@ -1,16 +1,16 @@
+[id='verify_cluster_discovery-{context}']
 = Verifying {brandname} Cluster Discovery
-By default {brandname} servers running on the same network discover each other
-with the `MPING` protocol.
-
-This procedure shows you how to start two {brandname} servers on the same host
-and verify that the cluster view.
+{brandname} servers running on the same network discover each other with the
+`MPING` protocol and automatically form clusters. This procedure demonstrates
+that capability with two locally running {brandname} server instances.
 
 .Prerequisites
-Start a {brandname} server instance on your host.
+
+Start a locally running {brandname} server instance.
 
 .Procedure
 
-. Install and run a new {brandname} server instance.
+. Create a new {brandname} server instance.
 .. Open a terminal in `{server_home}`.
 .. Copy the root directory to `server2`.
 +
@@ -28,7 +28,7 @@ include::cmd_examples/start_server2.adoc[]
 
 .Verification
 
-Check the server logs for the following messages:
+Check server logs for the following messages:
 
 [source,options="nowrap",subs=attributes+]
 ----

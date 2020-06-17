@@ -63,6 +63,8 @@ following server-specific elements:
 * `endpoints` lists the enabled endpoint connectors (hotrod, rest, and so on).
 * `socket-bindings` lists the socket bindings.
 
+//Community
+ifndef::productized[]
 The following is an example server configuration:
 
 [source,xml,options="nowrap",subs=attributes+]
@@ -73,7 +75,7 @@ The following is an example server configuration:
                             urn:infinispan:server:11.0 https://infinispan.org/schemas/infinispan-server-11.0.xsd"
         xmlns="urn:infinispan:config:11.0"
         xmlns:server="urn:infinispan:server:11.0">
-<cache-container default-cache="default" statistics="false">
+   <cache-container default-cache="default" statistics="false">
       <transport cluster="${infinispan.cluster.name}" stack="udp"/>
       <global-state/>
       <distributed-cache name="default"/>
@@ -128,6 +130,7 @@ The following is an example server configuration:
    </server>
 </infinispan>
 ----
+endif::productized[]
 
 == Additional Details
 The following is a list of additional details about the server, in no particular order:

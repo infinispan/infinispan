@@ -1,0 +1,30 @@
+[id='create_cache_rest']
+= Creating {brandname} Caches with HTTP Clients
+Add cache definitions to {brandname} servers through the REST endpoint with any
+suitable HTTP client.
+
+.Prerequisites
+
+Add {brandname} credentials and start at least one {brandname} server instance.
+
+.Procedure
+
+* Create caches with `POST` requests to `/rest/v2/caches/$cacheName`.
+
+Use XML or JSON configuration by including it in the request payload.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches/mycache
+----
+
+Use the `?template=` parameter to create caches from `org.infinispan` templates.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches/mycache?template=org.infinispan.DIST_SYNC
+----
+
+.Reference
+
+* link:{rest_docs}#rest_v2_cache_operations[Creating and Managing Caches with the REST API]

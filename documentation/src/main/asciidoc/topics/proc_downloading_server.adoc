@@ -39,4 +39,5 @@ include::cmd_examples/sha_rhdg_server.adoc[]
 endif::productized[]
 
 .Reference
-link:{runtime_readme}[{brandname} Server README] describes the contents of the server distribution.
+
+* link:{runtime_readme}[{brandname} Server README] describes the contents of the server distribution.

@@ -1,35 +1,30 @@
 [id='cli_add_entries']
 = Adding Cache Entries
-Add data to caches with the {brandname} CLI.
+Create `key:value` pair entries in the data container.
 
 .Prerequisites
 
-* Create a cache named "mycache" and `cd` into it.
-+
-[source,options="nowrap",subs=attributes+]
-----
-[//containers/default]> cd caches/mycache
-----
+Create a {brandname} cache that can store your data.
 
 .Procedure
 
-. Put an entry into "mycache".
+. Create a CLI connection to {brandname}.
+. Add entries into your cache as follows:
++
+* Use the [command]`put` command from the context of a cache:
 +
 [source,options="nowrap",subs=attributes+]
 ----
 [//containers/default/caches/mycache]> put hello world
 ----
 +
-[TIP]
-====
-If not in the context of a cache, use the `--cache=` parameter. For example:
-
+* Use the [command]`--cache=` with the [command]`put` command:
++
 ----
 [//containers/default]> put --cache=mycache hello world
 ----
-====
 +
-. Get the entry to verify it.
+. Use the [command]`get` command to verify entries.
 +
 [source,options="nowrap",subs=attributes+]
 ----

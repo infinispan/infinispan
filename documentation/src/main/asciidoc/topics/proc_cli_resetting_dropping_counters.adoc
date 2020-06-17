@@ -1,18 +1,21 @@
 [id='cli_drop_counters']
 = Resetting and Dropping Counters
-Use the **reset** and **drop** commands for counters.
+Use the [command]`reset` and [command]`drop` commands for counters.
 
 .Procedure
 
-* Do one of the following to reset counters:
+. Create a CLI connection to {brandname}.
+. Do one of the following:
++
+* Reset counters with the [command]`reset` command:
 +
 [source,options="nowrap",subs=attributes+]
 ----
 [//containers/default/counters/my-strong-counter]> reset
 [//containers/default/counters]> reset my-weak-counter
 ----
-
-* Do the following to delete counters:
++
+* Delete counters with the [command]`drop` command:
 +
 [source,options="nowrap",subs=attributes+]
 ----

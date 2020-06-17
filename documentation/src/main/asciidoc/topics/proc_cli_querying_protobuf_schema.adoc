@@ -1,5 +1,6 @@
 = Querying Caches with Protobuf Schemas
-{brandname} automatically converts JSON to Protobuf so that you can read and write cache entries in JSON format and use Protobuf schemas to query them.
+{brandname} automatically converts JSON to Protobuf so that you can read and
+write cache entries in JSON format and use Protobuf schemas to query them.
 
 For example, consider the following JSON documents:
 
@@ -44,10 +45,11 @@ For example, consider the following JSON documents:
 
 Each of the preceding JSON documents contains:
 
-* a `_type` field that identifies the Protobuf message to which the JSON document corresponds.
-* several fields that correspond to datatypes in the `person.proto` schema.
+* A `_type` field that identifies the Protobuf message to which the JSON document corresponds.
+* Several fields that correspond to datatypes in the `person.proto` schema.
 
 .Procedure
+
 . Navigate to the `pcache` cache.
 +
 ----

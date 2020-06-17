@@ -1,0 +1,52 @@
+[id='create_cache_cli']
+= Creating Caches with the {brandname} Command Line Interface (CLI)
+Use the {brandname} CLI to add caches from templates or configuration files in
+XML or JSON format.
+
+.Prerequisites
+
+Add {brandname} credentials and start at least one {brandname} server instance.
+
+.Procedure
+
+. Create a CLI connection to {brandname}.
+. Add cache definitions with the [command]`create cache` command.
++
+* Add a cache definition from an XML or JSON file with the [command]`--file` option.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> create cache --file=configuration.xml mycache
+----
++
+* Add a cache definition from a template with the [command]`--template` option.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> create cache --template=org.infinispan.DIST_SYNC mycache
+----
++
+[TIP]
+====
+Press the tab key after the `--template=` argument to list available cache templates.
+====
++
+. Verify the cache exists with the [command]`ls` command.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> ls caches
+mycache
+----
++
+. Retrieve the cache configuration with the [command]`describe` command.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> describe caches/mycache
+----
+
+.Reference
+
+* link:{cli_docs}#cli_start-cli[Creating {brandname} CLI Connections]
+* link:{cli_docs}#cache_operations[Performing Cache Operations with the {brandname} CLI]

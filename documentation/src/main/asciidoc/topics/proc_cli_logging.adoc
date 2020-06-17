@@ -1,26 +1,27 @@
 [id='configuring_server_logs_cli-{context}']
 = Changing {brandname} Server Logging Configuration at Runtime
+Modify the logging configuration for {brandname} servers at runtime to
+temporarily adjust logging to troubleshoot issues and perform root cause
+analysis.
 
-Use the command line interface to change the logging configuration of {brandname} servers at runtime.
-Use this functionality to temporarily make modifications to the logging configuration, for example while investigating a problem.
+Modifying the logging configuration through the CLI is a runtime-only
+operation, which means that changes:
 
-.Note
-Modifying the logging configuration via the CLI is a runtime-only operation:
+* Are not saved to the `log4j2.xml` file. Restarting server nodes or the entire cluster resets the logging configuration to the default properties in the `log4j2.xml` file.
+* Apply only to the nodes in the cluster when you invoke the CLI. Nodes that join the cluster after you change the logging configuration use the default properties.
 
-* any changes will not be persisted to the `log4j2.xml` file.
-Restarting any individual server or the entire cluster will cause the logging configuration to be reset to that defined in the `log4j2.xml` file.
-* the changes only apply to the nodes that are present in the cluster at invocation time.
-Any nodes that are started after the modifications will be using their default logging configuration.
+.Procedure
 
+. Create a CLI connection to {brandname}.
+. Use the [command]`logging` to make the required adjustments.
 
-.Listing appenders
-List all appenders defined on the server:
+* List all appenders defined on the server:
 
 ----
 [//containers/default]> logging list-appenders
 ----
 
-The above command will return:
+The preceding command returns:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
@@ -43,14 +44,13 @@ The above command will return:
 }
 ----
 
-.Listing loggers
-List all logger configurations defined on the server:
+* List all logger configurations defined on the server:
 
 ----
 [//containers/default]> logging list-loggers
 ----
 
-The above command will return:
+The preceding command returns:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
@@ -73,18 +73,20 @@ The above command will return:
 } ]
 ----
 
-.Adding/modifying loggers
-You can add/modify logger configurations via the `set` subcommand, by specifying the logger name and the level.
+* Add and modify logger configurations with the [command]`set` subcommand
 
-For example, the following command will set the logging level for the `org.infinispan` package to `DEBUG`.
+For example, the following command sets the logging level for the
+`org.infinispan` package to `DEBUG`:
+
 ----
 [//containers/default]> logging set --level=DEBUG org.infinispan
 ----
 
-.Removing loggers
-You can remove existing logger configurations via the `remove` subcommand.
+* Remove existing logger configurations with the [command]`remove` subcommand.
 
-For example, the following command will remove the `org.infinispan` logger configuration, meaning that the root configuration will be used instead:
+For example, the following command removes the `org.infinispan` logger
+configuration, which means the root configuration is used instead:
+
 ----
 [//containers/default]> logging remove org.infinispan
 ----

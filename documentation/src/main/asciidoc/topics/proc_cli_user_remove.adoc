@@ -1,14 +1,14 @@
 [id='user_remove-{context}']
-= Removing users from property security realms
-Remove users.
+= Removing Users
+Delete users from property security realms.
 
 .Procedure
 
-* Remove a user with the `user remove` command:
+. Start the {brandname} CLI.
+. Delete users with the [command]`user remove` command.
 +
 ----
 [disconnected]> user remove admin
 ----
-+
 
-For more information, run the `help user` command.
+For more information, run the [command]`help user` command.

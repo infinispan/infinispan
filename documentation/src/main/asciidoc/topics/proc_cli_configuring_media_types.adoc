@@ -4,6 +4,7 @@ Encode cache entries with different media types to store data in a format that b
 For example, the following procedure shows you how to configure the `application/x-protostream` media type.
 
 .Procedure
+
 . Create a {brandname} configuration file that adds a distributed cache named `qcache` and configures the media type, for example:
 +
 [source,xml,options="nowrap",subs=attributes+]
@@ -20,7 +21,7 @@ For example, the following procedure shows you how to configure the `application
 </infinispan>
 ----
 +
-. Create `qcache` from `pcache.xml` with the `--file=` option.
+. Create `qcache` from `pcache.xml` with the [command]`--file=` option.
 +
 [source,options="nowrap",subs=attributes+]
 ----

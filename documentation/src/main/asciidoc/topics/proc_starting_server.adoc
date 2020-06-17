@@ -1,28 +1,13 @@
 = Starting {brandname} Servers
 Launch {brandname} server with the startup script.
 
+.Prerequisites
+
+* Add {brandname} credentials.
+
 .Procedure
 
 . Open a terminal in `{server_home}`.
-. Add credentials with the {brandname} CLI **user create** command.
-+
-{brandname} server requires authentication by default so you should define
-credentials before you start the server.
-+
-Linux::
-+
-[source,options="nowrap",subs=attributes+]
-----
-include::cmd_examples/user_tool_nix.adoc[]
-----
-+
-Microsoft Windows::
-+
-[source,options="nowrap",subs=attributes+]
-----
-include::cmd_examples/user_tool_win.adoc[]
-----
-+
 . Start {brandname} with the `server` script.
 +
 Linux::
@@ -52,7 +37,3 @@ _Hello {brandname}!_
 
 * Open `127.0.0.1:11222` in any browser, enter your credentials, and then
 access the {brandname} console.
-
-.Reference
-link:{runtime_readme}[{brandname} Server README] describes command line
-arguments for the `server` script.
