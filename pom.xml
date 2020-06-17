@@ -1637,6 +1637,11 @@
          </dependency>
          <dependency>
             <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl</artifactId>
+            <version>${version.org.wildfly.openssl}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
             <artifactId>wildfly-openssl-linux-x86_64</artifactId>
             <version>${versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64}</version>
          </dependency>

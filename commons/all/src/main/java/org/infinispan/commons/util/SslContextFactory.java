@@ -17,6 +17,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 import org.wildfly.openssl.OpenSSLProvider;
+import org.wildfly.openssl.SSL;
 
 /**
  * SslContextFactory.
@@ -35,6 +36,7 @@ public class SslContextFactory {
       if (Boolean.parseBoolean(SecurityActions.getProperty("org.infinispan.openssl", "true"))) {
          try {
             OpenSSLProvider.register();
+            SSL.getInstance();
             sslProtocolPrefix = "openssl.";
             SECURITY.openSSLAvailable();
          } catch (Throwable e) {
