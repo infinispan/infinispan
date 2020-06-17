@@ -17,7 +17,7 @@ Clustered Caches::
 each other and form clusters to handle cache operations.
 
 Invalidation Mode::
-Rather than replicating cache entries across the cluser, {brandname} evicts
+Rather than replicating cache entries across the cluster, {brandname} evicts
 stale data from all nodes whenever operations modify entries in the cache.
 {brandname} performs local read operations only.
 
