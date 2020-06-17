@@ -10,6 +10,18 @@ import org.infinispan.commons.marshall.Marshaller;
 public interface RemoteCacheContainer extends BasicCacheContainer {
 
    /**
+    * @see BasicCacheContainer#getCache()
+    */
+   @Override
+   <K, V> RemoteCache<K, V> getCache();
+
+   /**
+    * @see BasicCacheContainer#getCache(String)
+    */
+   @Override
+   <K, V> RemoteCache<K, V> getCache(String cacheName);
+
+   /**
     * Retrieves the configuration currently in use. The configuration object
     * is immutable. If you wish to change configuration, you should use the
     * following pattern:
