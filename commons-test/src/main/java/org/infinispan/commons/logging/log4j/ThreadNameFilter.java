@@ -22,40 +22,36 @@ import org.apache.logging.log4j.message.Message;
  */
 @Plugin(name = "ThreadNameFilter", category = "Core", elementType = Filter.ELEMENT_TYPE, printObject = true)
 public final class ThreadNameFilter extends AbstractFilter {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = 1L;
+
    private final Level level;
    private final Pattern includePattern;
 
-   public ThreadNameFilter(Level actualLevel, String includeRegex) {
-      this.level = actualLevel;
-      this.includePattern = Pattern.compile(includeRegex);
+   private ThreadNameFilter(Level level, String includeRegex) {
+      this.level = level == null ? Level.DEBUG : level;
+      this.includePattern = Pattern.compile(includeRegex == null ? ".*" : includeRegex);
    }
 
    @Override
-   public Result filter(final Logger logger, final Level level, final Marker marker, final String msg,
-                        final Object... params) {
-       return filter(level, Thread.currentThread().getName());
+   public Result filter(Logger logger, Level level, Marker marker, String msg, Object... params) {
+      return filter(level, Thread.currentThread().getName());
    }
 
    @Override
-   public Result filter(final Logger logger, final Level level, final Marker marker, final Object msg,
-                        final Throwable t) {
-       return filter(level, Thread.currentThread().getName());
+   public Result filter(Logger logger, Level level, Marker marker, Object msg, Throwable t) {
+      return filter(level, Thread.currentThread().getName());
    }
 
    @Override
-   public Result filter(final Logger logger, final Level level, final Marker marker, final Message msg,
-                        final Throwable t) {
-       return filter(level, Thread.currentThread().getName());
+   public Result filter(Logger logger, Level level, Marker marker, Message msg, Throwable t) {
+      return filter(level, Thread.currentThread().getName());
    }
 
    @Override
-   public Result filter(final LogEvent event) {
+   public Result filter(LogEvent event) {
       return filter(event.getLevel(), event.getThreadName());
    }
 
-   private Result filter(final Level level, String threadName) {
+   private Result filter(Level level, String threadName) {
       if (level.isMoreSpecificThan(this.level)) {
          return Result.NEUTRAL;
       } else if (includePattern == null || includePattern.matcher(threadName).find()) {
@@ -67,22 +63,19 @@ public final class ThreadNameFilter extends AbstractFilter {
 
    @Override
    public String toString() {
-       return level.toString();
+      return "ThreadNameFilter{level=" + level + ", include=" + includePattern.pattern() + '}';
    }
 
    /**
-    * Create a ThresholdFilter.
-    * @param level The log Level.
-    * @param match The action to take on a match.
-    * @param mismatch The action to take on a mismatch.
-    * @return The created ThresholdFilter.
+    * Create a ThreadNameFilter.
+    *
+    * @param level   The log Level.
+    * @param include The regex
+    * @return The created filter.
     */
    @PluginFactory
-   public static ThreadNameFilter createFilter(
-           @PluginAttribute("level") final Level level,
-           @PluginAttribute("include") final String include) {
-       final Level actualLevel = level == null ? Level.DEBUG : level;
-       final String includeRegex = include == null ? ".*" : include;
-       return new ThreadNameFilter(actualLevel, includeRegex);
+   public static ThreadNameFilter createFilter(@PluginAttribute("level") Level level,
+                                               @PluginAttribute("include") String include) {
+      return new ThreadNameFilter(level, include);
    }
 }

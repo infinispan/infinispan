@@ -14,6 +14,7 @@ import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.AppenderRef;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.config.Property;
 
 /**
  * A Log4J Appender which stores logs in a StringBuilder
@@ -28,8 +29,8 @@ public class StringLogAppender extends AbstractAppender {
    private final List<String> logs;
    private final Predicate<Thread> threadFilter;
 
-   public StringLogAppender(String category, Level level, Predicate<Thread> threadFilter, Layout layout) {
-      super(StringLogAppender.class.getName(), null, layout);
+   public StringLogAppender(String category, Level level, Predicate<Thread> threadFilter, Layout<?> layout) {
+      super(StringLogAppender.class.getName(), null, layout, true, Property.EMPTY_ARRAY);
       this.category = category;
       this.level = level;
       this.logs = Collections.synchronizedList(new ArrayList<>());
@@ -42,7 +43,7 @@ public class StringLogAppender extends AbstractAppender {
       this.start();
       config.addAppender(this);
       AppenderRef ref = AppenderRef.createAppenderRef(this.getName(), level, null);
-      AppenderRef[] refs = new AppenderRef[] {ref};
+      AppenderRef[] refs = new AppenderRef[]{ref};
       LoggerConfig loggerConfig = LoggerConfig.createLogger(true, level, category, null, refs, null, config, null);
       loggerConfig.addAppender(this, null, null);
       config.addLogger(category, loggerConfig);
@@ -63,12 +64,13 @@ public class StringLogAppender extends AbstractAppender {
    }
 
    public String getLog(int index) {
-      int size = logs.size();
-      if (size == 0) {
-         throw new IllegalStateException("No logs recorded yet");
+      if (index < 0) {
+         throw new IllegalArgumentException("Index must not be negative.");
       }
-      if (index < 0 || index >= size) {
-         throw new IllegalArgumentException("Index " + index + " is out of bounds: [0.." + size + "]");
+      int size = logs.size();
+      if (index >= size) {
+         throw new IllegalArgumentException("Index " + index + " is out of bounds. "
+                                                  + (size == 0 ? "No logs recorded yet." : "Accepted values are: [0 .. " + (size - 1) + "]"));
       }
       return logs.get(index);
    }
