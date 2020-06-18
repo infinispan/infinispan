@@ -25,6 +25,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
 
 @CleanupAfterMethod
@@ -318,7 +319,22 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
 
    private void assertNoTransactionsAndLocks() {
       assertNoTransactions();
-      TestingUtil.assertNoLocks(cache(0));
-      TestingUtil.assertNoLocks(cache(1));
+      waitForNoLocks(cache(0));
+      waitForNoLocks(cache(1));
+   }
+
+   private void waitForNoLocks(Cache<?, ?> cache) {
+      LockManager lm = TestingUtil.extractLockManager(cache);
+      if (lm != null) {
+         eventually(() -> {
+            for (Object key : cache.keySet()) {
+               if (lm.isLocked(key)) {
+                  return false;
+               }
+            }
+            return true;
+         });
+
+      }
    }
 }

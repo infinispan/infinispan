@@ -10,7 +10,7 @@ import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
+import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.PlatformMBeanServerLookup;
 import org.infinispan.commons.marshall.Marshaller;
@@ -27,6 +27,7 @@ import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.factories.threads.CoreExecutorFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -421,18 +422,17 @@ public class TestCacheManagerFactory {
    }
 
    public static void minimizeThreads(GlobalConfigurationBuilder builder) {
-      BlockingThreadPoolExecutorFactory executorFactoryWithQueue =
-         new BlockingThreadPoolExecutorFactory(NAMED_EXECUTORS_THREADS_WITH_QUEUE, NAMED_EXECUTORS_THREADS_WITH_QUEUE,
-                                               NAMED_EXECUTORS_QUEUE_SIZE, NAMED_EXECUTORS_KEEP_ALIVE);
-      BlockingThreadPoolExecutorFactory nonBlockingExecutorFactoryWithQueue =
-            new BlockingThreadPoolExecutorFactory(NAMED_EXECUTORS_THREADS_WITH_QUEUE, NAMED_EXECUTORS_THREADS_WITH_QUEUE,
+      ThreadPoolExecutorFactory executorFactoryWithQueue =
+         CoreExecutorFactory.executorFactory(NAMED_EXECUTORS_THREADS_WITH_QUEUE, NAMED_EXECUTORS_THREADS_WITH_QUEUE,
+                                               NAMED_EXECUTORS_QUEUE_SIZE, NAMED_EXECUTORS_KEEP_ALIVE, false);
+      ThreadPoolExecutorFactory nonBlockingExecutorFactoryWithQueue =
+            CoreExecutorFactory.executorFactory(NAMED_EXECUTORS_THREADS_WITH_QUEUE, NAMED_EXECUTORS_THREADS_WITH_QUEUE,
                   NAMED_EXECUTORS_QUEUE_SIZE, NAMED_EXECUTORS_KEEP_ALIVE, true);
 
       builder.blockingThreadPool().threadPoolFactory(executorFactoryWithQueue);
       builder.nonBlockingThreadPool().threadPoolFactory(nonBlockingExecutorFactoryWithQueue);
       // Listener thread pool already has a single thread
       // builder.listenerThreadPool().threadPoolFactory(executorFactoryWithQueue);
-      builder.transport().transportThreadPool().threadPoolFactory(executorFactoryWithQueue);
       // TODO Scheduled thread pools don't have a threads limit
       // Timeout thread pool is not configurable at all
    }

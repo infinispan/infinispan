@@ -12,7 +12,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -21,6 +20,7 @@ import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService
 import org.infinispan.executors.LazyInitializingScheduledExecutorService;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.threads.BlockingThreadFactory;
+import org.infinispan.factories.threads.CoreExecutorFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.factories.threads.NonBlockingThreadFactory;
 
@@ -128,7 +128,7 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
          default:
             int defaultQueueSize = KnownComponentNames.getDefaultQueueSize(componentName);
             int defaultMaxThreads = KnownComponentNames.getDefaultThreads(componentName);
-            return BlockingThreadPoolExecutorFactory.create(defaultMaxThreads, defaultQueueSize,
+            return CoreExecutorFactory.executorFactory(defaultMaxThreads, defaultQueueSize,
                   type == ExecutorServiceType.NON_BLOCKING);
       }
    }
