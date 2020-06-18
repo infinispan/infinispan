@@ -291,7 +291,15 @@ public class ChannelFactory {
    }
 
    public <T extends ChannelOperation> T fetchChannelAndInvoke(Object key, Set<SocketAddress> failedServers, byte[] cacheName, T operation) {
-      Optional<SocketAddress> hashAwareServer = topologyInfo.getHashAwareServer(key, cacheName);
+      return fetchChannelAndInvoke(topologyInfo.getHashAwareServer(key, cacheName), failedServers, cacheName, operation);
+   }
+
+   public <T extends ChannelOperation> T fetchChannelAndInvokeForSegments(Set<Integer> segments, Set<SocketAddress> failedServers, byte[] cacheName, T operation) {
+      return fetchChannelAndInvoke(topologyInfo.getHashAwareServer(segments, cacheName), failedServers, cacheName, operation);
+   }
+
+   private <T extends ChannelOperation> T fetchChannelAndInvoke(Optional<SocketAddress> hashAwareServer,
+         Set<SocketAddress> failedServers, byte[] cacheName, T operation) {
       if (failedServers != null) {
          hashAwareServer = hashAwareServer.filter(server -> !failedServers.contains(server));
       }

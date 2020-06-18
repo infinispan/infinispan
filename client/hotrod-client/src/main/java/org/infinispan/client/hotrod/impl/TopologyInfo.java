@@ -121,6 +121,74 @@ public final class TopologyInfo {
       return Optional.empty();
    }
 
+   private boolean isReplicated(Map<SocketAddress, Set<Integer>> ch) {
+      if(ch.isEmpty()) return false;
+      Set<Integer> first = ch.values().iterator().next();
+      return ch.values().stream().allMatch(s -> s.equals(first));
+   }
+
+   /**
+    * Returns an address that is an owner, either primary or backup, of the most amount of segments from the provided
+    * set of segments.
+    * @param segments desired segments
+    * @param cacheName cache to check
+    * @return an address that should be contacted for the given segments or empty if the topology is not valid
+    */
+   public Optional<SocketAddress> getHashAwareServer(Set<Integer> segments, byte[] cacheName) {
+      Optional<SocketAddress> server = Optional.empty();
+      if(segments == null || segments.isEmpty()) return server;
+      if (isTopologyValid(cacheName)) {
+         ConsistentHash consistentHash = consistentHashes.get(new WrappedByteArray(cacheName));
+         if (consistentHash != null) {
+            Map<SocketAddress, Set<Integer>> segmentsByServer = consistentHash.getSegmentsByServer();
+            if (isReplicated(segmentsByServer)) {
+               // For replicated caches, it does not matter which server is picked, since all
+               // servers have all segments, but it's better to avoid always picking the first
+               Integer firstSegment = segments.iterator().next();
+               int index = firstSegment % segmentsByServer.size();
+               Optional<SocketAddress> replicatedServer = segmentsByServer.keySet().stream().skip(index).findFirst();
+               if (trace) {
+                  log.tracef("Remote cache is replicated, choosing server %s for segments %s", replicatedServer, segments);
+               }
+               return replicatedServer;
+            }
+            final int segmentMax = segments.size();
+            int currentMax = 0;
+            SocketAddress socketAddressToUse = null;
+
+            for (Map.Entry<SocketAddress, Set<Integer>> serverSegment : segmentsByServer.entrySet()) {
+               int segmentOwnedCount = 0;
+               for (Integer segment : serverSegment.getValue()) {
+                  if (segments.contains(segment)) {
+                     segmentOwnedCount++;
+                  }
+               }
+               // Means the current server owns all segments so just use it
+               if (segmentOwnedCount == segmentMax) {
+                  socketAddressToUse = serverSegment.getKey();
+                  break;
+               }
+               // Prefer the server that owns the most segments
+               if (segmentOwnedCount > currentMax) {
+                  currentMax = segmentOwnedCount;
+                  socketAddressToUse = serverSegment.getKey();
+               }
+            }
+
+            if (socketAddressToUse != null) {
+               server = Optional.of(socketAddressToUse);
+            }
+
+            if (trace) {
+               log.tracef("Using consistent hash for determining the server: " + socketAddressToUse +
+                     " as it owns " + currentMax + " of the " + segmentMax + " provided segments.");
+            }
+         }
+      }
+
+      return server;
+   }
+
    public boolean isTopologyValid(byte[] cacheName) {
       Integer id = topologyIds.get(new WrappedByteArray(cacheName)).get();
       Boolean valid = id == null || id.intValue() != HotRodConstants.SWITCH_CLUSTER_TOPOLOGY;
