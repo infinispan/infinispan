@@ -22,11 +22,11 @@ public class HotRodUpgradeStressTest extends AbstractInfinispanTest {
 
    @BeforeClass
    public void setup() throws Exception {
-      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
+      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(3)
             .cache().name(CACHE_NAME)
             .build();
 
-      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
+      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(1)
             .cache().name(CACHE_NAME).remotePort(sourceCluster.getHotRodPort())
             .build();
    }
@@ -53,14 +53,14 @@ public class HotRodUpgradeStressTest extends AbstractInfinispanTest {
 
    @Test
    public void testMigrate() throws Exception {
-      loadSourceCluster(1_000_000);
+      loadSourceCluster(10000);
 
       long start = System.currentTimeMillis();
       RollingUpgradeManager rum = targetCluster.getRollingUpgradeManager(CACHE_NAME);
       rum.synchronizeData("hotrod", 1000, 5);
       System.out.println("Elapsed (s): " + (System.currentTimeMillis() - start) / 1000);
 
-      rum.disconnectSource("hotrod");
+      targetCluster.disconnectSource(CACHE_NAME);
 
       assertEquals(targetCluster.getRemoteCache(CACHE_NAME).size(), sourceCluster.getRemoteCache(CACHE_NAME).size());
 

@@ -3,13 +3,10 @@ package org.infinispan.persistence.remote.upgrade;
 import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.DEFAULT_READ_BATCH_SIZE;
 import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS;
 import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.awaitTermination;
-import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.range;
-import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.split;
 import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.supportsIteration;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -35,6 +32,7 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.logging.Log;
+import org.infinispan.persistence.remote.upgrade.impl.LocalityAwareDataPartitioner;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.upgrade.TargetMigrator;
 import org.infinispan.util.logging.LogFactory;
@@ -44,6 +42,8 @@ import org.kohsuke.MetaInfServices;
 public class HotRodTargetMigrator implements TargetMigrator {
 
    private static final Log log = LogFactory.getLog(HotRodTargetMigrator.class, Log.class);
+
+   private final DataPartitioner segmentSplitter = new LocalityAwareDataPartitioner();
 
    public HotRodTargetMigrator() {
    }
@@ -118,20 +118,22 @@ public class HotRodTargetMigrator implements TargetMigrator {
             if (sourceCacheTopologyInfo.getSegmentsPerServer().size() == 1) {
                return migrateFromSingleServer(cache, readBatch, threads);
             }
-            int sourceSegments = sourceCacheTopologyInfo.getNumSegments();
             List<Address> targetServers = cache.getAdvancedCache().getDistributionManager().getWriteConsistentHash().getMembers();
-
-            List<List<Integer>> partitions = split(range(sourceSegments), targetServers.size());
-            Iterator<Address> iterator = targetServers.iterator();
+            Collection<Set<Integer>> partitions = segmentSplitter.split(sourceCacheTopologyInfo);
+            log.debugf("Created partitions for data processing: %s", partitions);
             List<CompletableFuture<Integer>> futures = new ArrayList<>(targetServers.size());
-            for (List<Integer> partition : partitions) {
-               Set<Integer> segmentSet = new HashSet<>();
-               segmentSet.addAll(partition);
+            int serverIndex = 0;
+            for (Set<Integer> partition : partitions) {
+               Address server = targetServers.get(serverIndex);
                DistributedTask<Integer> task = executor
-                     .createDistributedTaskBuilder(new MigrationTask(segmentSet, readBatch, threads))
+                     .createDistributedTaskBuilder(new MigrationTask(partition, readBatch, threads))
                      .timeout(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
                      .build();
-               futures.add(executor.submit(iterator.next(), task));
+               futures.add(executor.submit(server, task));
+
+               if (++serverIndex == targetServers.size()) {
+                  serverIndex = 0;
+               }
             }
             return futures.stream().mapToInt(f -> {
                try {
