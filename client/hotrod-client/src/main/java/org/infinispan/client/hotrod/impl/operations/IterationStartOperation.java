@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -50,6 +51,15 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
       codec.writeHeader(buf, header);
       codec.writeIteratorStartOperation(buf, segments, filterConverterFactory, batchSize, metadata, filterParameters);
       channel.writeAndFlush(buf);
+   }
+
+   @Override
+   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
+      if (retryCount == 0) {
+         channelFactory.fetchChannelAndInvokeForSegments(segments, failedServers, cacheName, this);
+      } else {
+         channelFactory.fetchChannelAndInvoke(failedServers, cacheName, this);
+      }
    }
 
    public void releaseChannel(Channel channel) {
