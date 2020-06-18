@@ -14,7 +14,6 @@ import java.io.InputStream;
 import java.util.Map;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
@@ -33,7 +32,9 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.factories.threads.AbstractThreadPoolExecutorFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
+import org.infinispan.factories.threads.EnhancedQueueExecutorFactory;
 import org.infinispan.interceptors.FooInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.AdvancedExternalizerTest;
@@ -351,7 +352,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    private void assertNamedCacheFile(ConfigurationBuilderHolder holder, boolean deprecated) {
       GlobalConfiguration gc = holder.getGlobalConfigurationBuilder().build();
 
-      BlockingThreadPoolExecutorFactory listenerThreadPool =
+      EnhancedQueueExecutorFactory listenerThreadPool =
          gc.listenerThreadPool().threadPoolFactory();
       assertEquals(5, listenerThreadPool.maxThreads());
       assertEquals(10000, listenerThreadPool.queueLength());
@@ -359,11 +360,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          gc.listenerThreadPool().threadFactory();
       assertEquals("AsyncListenerThread", listenerThreadFactory.threadNamePattern());
 
-      BlockingThreadPoolExecutorFactory persistenceThreadPool =
+      AbstractThreadPoolExecutorFactory persistenceThreadPool =
          gc.persistenceThreadPool().threadPoolFactory();
       assertNull(persistenceThreadPool);
 
-      BlockingThreadPoolExecutorFactory blockingThreadPool =
+      AbstractThreadPoolExecutorFactory blockingThreadPool =
             gc.blockingThreadPool().threadPoolFactory();
       assertEquals(6, blockingThreadPool.maxThreads());
       assertEquals(10001, blockingThreadPool.queueLength());
@@ -371,11 +372,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             gc.blockingThreadPool().threadFactory();
       assertEquals("BlockingThread", persistenceThreadFactory.threadNamePattern());
 
-      BlockingThreadPoolExecutorFactory asyncThreadPool =
+      AbstractThreadPoolExecutorFactory asyncThreadPool =
          gc.asyncThreadPool().threadPoolFactory();
       assertNull(asyncThreadPool);
 
-      BlockingThreadPoolExecutorFactory nonBlockingThreadPool =
+      AbstractThreadPoolExecutorFactory nonBlockingThreadPool =
             gc.nonBlockingThreadPool().threadPoolFactory();
       assertEquals(5, nonBlockingThreadPool.coreThreads());
       assertEquals(5, nonBlockingThreadPool.maxThreads());
@@ -384,15 +385,15 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       DefaultThreadFactory asyncThreadFactory = gc.nonBlockingThreadPool().threadFactory();
       assertEquals("NonBlockingThread", asyncThreadFactory.threadNamePattern());
 
-      BlockingThreadPoolExecutorFactory transportThreadPool =
+      AbstractThreadPoolExecutorFactory transportThreadPool =
          gc.transport().transportThreadPool().threadPoolFactory();
       assertNull(transportThreadPool);
 
-      BlockingThreadPoolExecutorFactory remoteCommandThreadPool =
+      AbstractThreadPoolExecutorFactory remoteCommandThreadPool =
          gc.transport().remoteCommandThreadPool().threadPoolFactory();
       assertNull(remoteCommandThreadPool);
 
-      BlockingThreadPoolExecutorFactory stateTransferThreadPool =
+      AbstractThreadPoolExecutorFactory stateTransferThreadPool =
          gc.stateTransferThreadPool().threadPoolFactory();
       assertNull(stateTransferThreadPool);
 

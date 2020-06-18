@@ -4,11 +4,11 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Properties;
 
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.factories.threads.EnhancedQueueExecutorFactory;
 import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -39,11 +39,11 @@ public class StringPropertyReplacementTest extends AbstractInfinispanTest {
    public void testGlobalConfig() throws Exception {
       ConfigurationBuilderHolder holder = parse();
       GlobalConfiguration gc = holder.getGlobalConfigurationBuilder().build();
-      BlockingThreadPoolExecutorFactory listenerThreadPool =
+      EnhancedQueueExecutorFactory listenerThreadPool =
             gc.listenerThreadPool().threadPoolFactory();
       assertEquals(2, listenerThreadPool.maxThreads());
 
-      BlockingThreadPoolExecutorFactory blockingThreadPool =
+      EnhancedQueueExecutorFactory blockingThreadPool =
             gc.blockingThreadPool().threadPoolFactory();
       assertEquals(4, blockingThreadPool.maxThreads());
 

@@ -10,7 +10,7 @@ import static org.infinispan.configuration.global.CachedThreadPoolConfiguration.
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
+import org.infinispan.factories.threads.CoreExecutorFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 
 /*
@@ -114,7 +114,7 @@ public class BoundedThreadPoolConfigurationBuilder extends AbstractGlobalConfigu
    public ThreadPoolConfiguration asThreadPoolConfigurationBuilder() {
       ThreadPoolConfigurationBuilder builder = new ThreadPoolConfigurationBuilder(getGlobalConfig());
       boolean isNonBlocking = isNonBlocking();
-      builder.threadPoolFactory(new BlockingThreadPoolExecutorFactory(maxThreads(), coreThreads(), queueLength(),
+      builder.threadPoolFactory(CoreExecutorFactory.executorFactory(maxThreads(), coreThreads(), queueLength(),
             keepAliveTime(), isNonBlocking));
       builder.name(name());
       if (threadFactory() != null) {
