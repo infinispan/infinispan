@@ -1,4 +1,4 @@
-package org.infinispan.commons.executors;
+package org.infinispan.factories.threads;
 
 import static org.infinispan.commons.logging.Log.CONFIG;
 
@@ -10,71 +10,37 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.util.concurrent.BlockingRejectedExecutionHandler;
+import org.infinispan.commons.executors.NonBlockingResource;
 import org.infinispan.commons.util.concurrent.NonBlockingRejectedExecutionHandler;
 
 /**
- * @author Galder Zamarreño
- * @deprecated since 12.0 with no replacement
+ * Executor Factory used for non blocking executors which utilizes {@link ThreadPoolExecutor} internally.
+ * @author wburns
  */
-@Deprecated
-public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFactory<ExecutorService> {
+public class NonBlockingThreadPoolExecutorFactory extends AbstractThreadPoolExecutorFactory<ExecutorService> {
    public static final int DEFAULT_KEEP_ALIVE_MILLIS = 60000;
 
-   private final int maxThreads;
-   private final int coreThreads;
-   private final int queueLength;
-   private final long keepAlive;
-   private final boolean nonBlocking;
-
-   public BlockingThreadPoolExecutorFactory(int maxThreads, int coreThreads, int queueLength, long keepAlive) {
-      this(maxThreads, coreThreads, queueLength, keepAlive, false);
-   }
-
-   public BlockingThreadPoolExecutorFactory(int maxThreads, int coreThreads, int queueLength, long keepAlive,
-         boolean nonBlocking) {
-      this.maxThreads = maxThreads;
-      this.coreThreads = coreThreads;
-      this.queueLength = queueLength;
-      this.keepAlive = keepAlive;
-      this.nonBlocking = nonBlocking;
-   }
-
-   public int maxThreads() {
-      return maxThreads;
-   }
-
-   public int coreThreads() {
-      return coreThreads;
-   }
-
-   public int queueLength() {
-      return queueLength;
-   }
-
-   public long keepAlive() {
-      return keepAlive;
+   protected NonBlockingThreadPoolExecutorFactory(int maxThreads, int coreThreads, int queueLength, long keepAlive) {
+      super(maxThreads, coreThreads, queueLength, keepAlive);
    }
 
    @Override
    public boolean createsNonBlockingThreads() {
-      return nonBlocking;
+      return true;
    }
 
    @Override
    public ExecutorService createExecutor(ThreadFactory threadFactory) {
       BlockingQueue<Runnable> queue = queueLength == 0 ? new SynchronousQueue<>() : new LinkedBlockingQueue<>(queueLength);
 
-      if (nonBlocking) {
-         if (!(threadFactory instanceof NonBlockingResource)) {
-            throw new IllegalStateException("Executor factory configured to be non blocking and received a thread" +
-                  " factory that can create blocking threads!");
-         }
+      if (!(threadFactory instanceof NonBlockingResource)) {
+         throw new IllegalStateException("Executor factory configured to be non blocking and received a thread" +
+               " factory that can create blocking threads!");
       }
 
       return new ThreadPoolExecutor(coreThreads, maxThreads, keepAlive,
             TimeUnit.MILLISECONDS, queue, threadFactory,
-            nonBlocking ? NonBlockingRejectedExecutionHandler.getInstance() : BlockingRejectedExecutionHandler.getInstance());
+            NonBlockingRejectedExecutionHandler.getInstance());
    }
 
    @Override
@@ -106,10 +72,9 @@ public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFact
             '}';
    }
 
-   public static BlockingThreadPoolExecutorFactory create(int maxThreads, int queueSize, boolean nonBlocking) {
+   public static NonBlockingThreadPoolExecutorFactory create(int maxThreads, int queueSize) {
       int coreThreads = queueSize == 0 ? 1 : maxThreads;
-      return new BlockingThreadPoolExecutorFactory(maxThreads, coreThreads, queueSize, DEFAULT_KEEP_ALIVE_MILLIS,
-            nonBlocking);
+      return new NonBlockingThreadPoolExecutorFactory(maxThreads, coreThreads, queueSize, DEFAULT_KEEP_ALIVE_MILLIS);
    }
 
 }
