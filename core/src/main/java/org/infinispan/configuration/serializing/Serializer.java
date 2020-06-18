@@ -70,6 +70,8 @@ import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.factories.threads.DefaultThreadFactory;
+import org.infinispan.factories.threads.EnhancedQueueExecutorFactory;
+import org.infinispan.factories.threads.NonBlockingThreadPoolExecutorFactory;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
@@ -94,7 +96,8 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
    static {
       THREAD_POOL_FACTORIES = new ConcurrentHashMap<>();
       THREAD_POOL_FACTORIES.put(CachedThreadPoolExecutorFactory.class.getName(), Element.CACHED_THREAD_POOL);
-      THREAD_POOL_FACTORIES.put(BlockingThreadPoolExecutorFactory.class.getName(), Element.BLOCKING_BOUNDED_QUEUE_THREAD_POOL);
+      THREAD_POOL_FACTORIES.put(NonBlockingThreadPoolExecutorFactory.class.getName(), Element.BLOCKING_BOUNDED_QUEUE_THREAD_POOL);
+      THREAD_POOL_FACTORIES.put(EnhancedQueueExecutorFactory.class.getName(), Element.BLOCKING_BOUNDED_QUEUE_THREAD_POOL);
       THREAD_POOL_FACTORIES.put(ScheduledThreadPoolExecutorFactory.class.getName(), Element.SCHEDULED_THREAD_POOL);
    }
 

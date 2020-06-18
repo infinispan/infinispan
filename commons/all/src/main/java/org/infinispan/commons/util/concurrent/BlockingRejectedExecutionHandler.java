@@ -1,6 +1,7 @@
 package org.infinispan.commons.util.concurrent;
 
 import java.lang.invoke.MethodHandles;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -23,12 +24,16 @@ public class BlockingRejectedExecutionHandler implements RejectedExecutionHandle
 
    private static final BlockingRejectedExecutionHandler INSTANCE = new BlockingRejectedExecutionHandler();
 
-   public static RejectedExecutionHandler getInstance() {
+   public static BlockingRejectedExecutionHandler getInstance() {
       return INSTANCE;
    }
 
    @Override
    public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+      rejectedExecution(r, (ExecutorService) executor);
+   }
+
+   public void rejectedExecution(Runnable r, ExecutorService executor) {
       if (executor.isShutdown()) {
          throw new IllegalLifecycleStateException();
       }

@@ -9,6 +9,7 @@ import org.infinispan.container.offheap.SegmentedBoundedOffHeapDataContainer;
 import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.expiration.impl.ClusterExpirationManager;
 import org.infinispan.factories.impl.BasicComponentRegistryImpl;
+import org.infinispan.factories.threads.EnhancedQueueExecutorFactory;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.interceptors.impl.PrefetchInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
@@ -69,6 +70,9 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
 
       // The blocking iterator locks to signal at the end - ignore (we can't reference class object as it is internal)
       builder.allowBlockingCallsInside("io.reactivex.rxjava3.internal.operators.flowable.BlockingFlowableIterable" + "$BlockingFlowableIterator", "signalConsumer");
+
+      // Loading up the EnhancedQueueExecutor class loads org.jboss.threads.Version that reads a file to determine version
+      builder.allowBlockingCallsInside(EnhancedQueueExecutorFactory.class.getName(), "createExecutor");
 
       methodsToBeRemoved(builder);
 

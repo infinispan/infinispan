@@ -11,5 +11,6 @@
       <bundle>mvn:org.jgroups/jgroups/${version.jgroups}</bundle>
       <bundle>mvn:io.reactivex.rxjava3/rxjava/${version.rxjava}</bundle>
       <bundle>mvn:org.reactivestreams/reactive-streams/${version.reactivestreams}</bundle>
+      <bundle>wrap:mvn:org.jboss.threads/jboss-threads/${versionx.org.jboss.threads.jboss-threads}</bundle>
    </feature>
 </features>
