@@ -202,10 +202,11 @@
          --add-exports=jdk.unsupported/sun.reflect=ALL-UNNAMED
          --add-modules=java.se
       </testjvm.jigsawArgs>
+      <testjvm.jdkSpecificArgs>${testjvm.jigsawArgs}</testjvm.jdkSpecificArgs>
       <testjvm.extraArgs/>
       <forkJvmArgs>-Xmx1G ${testjvm.commonArgs} ${testjvm.extraArgs}</forkJvmArgs>
       <server.jvm>${env.JAVA_HOME}</server.jvm>
-      <server.jvm.args>${testjvm.commonArgs} ${testjvm.jigsawArgs} ${testjvm.extraArgs}</server.jvm.args>
+      <server.jvm.args>${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs}</server.jvm.args>
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
       <infinispan.test.jvm.version.regex>^1\.8\.0.*</infinispan.test.jvm.version.regex>
       <ansi.strip/>
@@ -1921,7 +1922,7 @@
                      <ansi.strip>${ansi.strip}</ansi.strip>
                      <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
                   </systemPropertyVariables>
-                  <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
+                  <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs}</argLine>
                </configuration>
             </plugin>
             <plugin>
@@ -2334,7 +2335,7 @@
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${testNGListeners}</listener>
                </properties>
-               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Djdk.attach.allowAttachSelf=true</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true</argLine>
             </configuration>
          </plugin>
          <plugin>
@@ -2663,7 +2664,7 @@
          <properties>
             <server.jvm>${env.JAVA8_HOME}</server.jvm>
             <server.jvm.args>${testjvm.commonArgs} ${testjvm.extraArgs}</server.jvm.args>
-            <testjvm.jigsawArgs/>
+            <testjvm.jdkSpecificArgs/>
          </properties>
          <dependencies>
             <dependency>
@@ -2687,11 +2688,6 @@
                      </systemProperties>
                   </configuration>
                   <executions>
-                     <execution>
-                        <!-- Do not run the JDK11-specific tests with JDK8 -->
-                        <id>java11-test</id>
-                        <phase>none</phase>
-                     </execution>
                      <!--
                      Explicitly disable the java8-test execution defined in the jboss-parent POM
                      -->
@@ -2718,10 +2714,10 @@
       <profile>
          <id>java13-test</id>
          <activation>
-            <jdk>[13,</jdk>
+            <jdk>[13,)</jdk>
          </activation>
          <properties>
-            <testjvm.extraArgs>-XX:+AllowRedefinitionToAddDeleteMethods</testjvm.extraArgs>
+            <testjvm.jdkSpecificArgs>${testjvm.jigsawArgs} -XX:+AllowRedefinitionToAddDeleteMethods</testjvm.jdkSpecificArgs>
          </properties>
       </profile>
       <profile>
