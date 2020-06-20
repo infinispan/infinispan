@@ -1,5 +1,6 @@
 package org.infinispan.jcache.util;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,7 +16,7 @@ import javax.cache.integration.CacheLoaderException;
  * @author Galder Zamarreño
  * @since // TODO
  */
-public class InMemoryJCacheLoader<K, V> implements CacheLoader<K, V> {
+public class InMemoryJCacheLoader<K, V> implements CacheLoader<K, V>, Serializable {
 
    private final ConcurrentMap<K, V> store = new ConcurrentHashMap<>();
 
@@ -37,7 +38,7 @@ public class InMemoryJCacheLoader<K, V> implements CacheLoader<K, V> {
 
    @Override
    public Map<K, V> loadAll(Iterable<? extends K> keys) throws CacheLoaderException {
-      Map<K, V> values = new HashMap<K, V>();
+      Map<K, V> values = new HashMap<>();
       for (K key : keys)
          values.put(key, load(key));
 

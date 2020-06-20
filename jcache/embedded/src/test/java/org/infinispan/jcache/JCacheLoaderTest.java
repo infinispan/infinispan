@@ -54,12 +54,11 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
          public void call() {
             JCacheManager jCacheManager = createJCacheManager(cm, this);
 
-            InMemoryJCacheLoader<Integer, String> cacheLoader = new InMemoryJCacheLoader<Integer, String>();
+            InMemoryJCacheLoader<Integer, String> cacheLoader = new InMemoryJCacheLoader<>();
             cacheLoader.store(1, "v1").store(2, "v2");
 
-            MutableConfiguration<Integer, String> cfg = new MutableConfiguration<Integer, String>();
-            // JDK6 fails to compile when calling FactoryBuilder.factoryOf() :(
-            cfg.setCacheLoaderFactory(new FactoryBuilder.SingletonFactory(cacheLoader));
+            MutableConfiguration<Integer, String> cfg = new MutableConfiguration<>();
+            cfg.setCacheLoaderFactory(FactoryBuilder.factoryOf(cacheLoader));
             Cache<Integer, String> cache = jCacheManager.createCache(cacheName, cfg);
 
             assertEquals(0, cacheLoader.getLoadCount());
@@ -82,7 +81,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
             ConfigurationBuilder builder = new ConfigurationBuilder();
             builder.persistence()
                   .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-                  .storeName(this.getClass().getName());
+                  .storeName(JCacheLoaderTest.this.getClass().getName());
 
             cm.defineConfiguration("dummyStore", builder.build());
             JCacheManager jCacheManager = createJCacheManager(cm, this);
@@ -123,35 +122,29 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
             TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
             JCacheManager jCacheManager = createJCacheManager(cm, this);
 
-            InMemoryJCacheLoader<Integer, String> cacheLoader = new InMemoryJCacheLoader<Integer, String>();
+            InMemoryJCacheLoader<Integer, String> cacheLoader = new InMemoryJCacheLoader<>();
             cacheLoader.store(1, "v1").store(2, "v2");
 
-            MutableConfiguration<Integer, String> cfg = new MutableConfiguration<Integer, String>();
+            MutableConfiguration<Integer, String> cfg = new MutableConfiguration<>();
             final long lifespan = 3000;
             cfg.setReadThrough(true);
-            cfg.setExpiryPolicyFactory(new Factory<ExpiryPolicy>() {
+            cfg.setExpiryPolicyFactory((Factory<ExpiryPolicy>) () -> new ExpiryPolicy() {
                @Override
-               public ExpiryPolicy create() {
-                  return new ExpiryPolicy() {
-                     @Override
-                     public Duration getExpiryForCreation() {
-                        return new Duration(TimeUnit.MILLISECONDS, lifespan);
-                     }
+               public Duration getExpiryForCreation() {
+                  return new Duration(TimeUnit.MILLISECONDS, lifespan);
+               }
 
-                     @Override
-                     public Duration getExpiryForAccess() {
-                        return null;
-                     }
+               @Override
+               public Duration getExpiryForAccess() {
+                  return null;
+               }
 
-                     @Override
-                     public Duration getExpiryForUpdate() {
-                        return Duration.ZERO;
-                     }
-                  };
+               @Override
+               public Duration getExpiryForUpdate() {
+                  return Duration.ZERO;
                }
             });
-            // JDK6 fails to compile when calling FactoryBuilder.factoryOf() :(
-            cfg.setCacheLoaderFactory(new FactoryBuilder.SingletonFactory(cacheLoader));
+            cfg.setCacheLoaderFactory(FactoryBuilder.factoryOf(cacheLoader));
             Cache<Integer, String> cache = jCacheManager.createCache(cacheName, cfg);
 
             assertEquals("v2", cache.get(2));
@@ -161,8 +154,40 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
 
             DataContainer<Integer, String> dc = cache.unwrap(AdvancedCache.class).getDataContainer();
 
-            assertEquals(null, dc.get(2));
-            assertEquals(null, dc.get(1));
+            assertEquals(null, dc.peek(2));
+            assertEquals(null, dc.peek(1));
+         }
+      });
+   }
+
+   public void testLoadUnmarshallableValue(Method m) {
+      final String cacheName = m.getName();
+      NonMarshallablePojo v1 = new NonMarshallablePojo("v1");
+      NonMarshallablePojo v2 = new NonMarshallablePojo("v2");
+
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(false)) {
+         @Override
+         public void call() {
+            JCacheManager jCacheManager = createJCacheManager(cm, this);
+
+            InMemoryJCacheLoader<Integer, NonMarshallablePojo> cacheLoader = new InMemoryJCacheLoader<>();
+            cacheLoader.store(1, v1).store(2, v2);
+
+            MutableConfiguration<Integer, NonMarshallablePojo> cfg = new MutableConfiguration<>();
+            cfg.setStoreByValue(false);
+            cfg.setReadThrough(true);
+            cfg.setCacheLoaderFactory(FactoryBuilder.factoryOf(cacheLoader));
+            Cache<Integer, NonMarshallablePojo> cache = jCacheManager.createCache(cacheName, cfg);
+
+            assertEquals(v2, cache.get(2));
+            assertEquals(v1, cache.get(1));
+
+
+            DataContainer<Integer, String> dc = cache.unwrap(AdvancedCache.class).getDataContainer();
+
+            assertEquals(v2, dc.peek(2).getValue());
+            assertEquals(v1, dc.peek(1).getValue());
          }
       });
    }
@@ -184,4 +209,31 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
       return new JCacheManager(URI.create(creator.getClass().getName()), cm, null);
    }
 
+   public static class NonMarshallablePojo {
+      public final String value;
+
+      public NonMarshallablePojo(String value) {
+         this.value = value;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         NonMarshallablePojo that = (NonMarshallablePojo) o;
+         return value.equals(that.value);
+      }
+
+      @Override
+      public int hashCode() {
+         return value.hashCode();
+      }
+
+      @Override
+      public String toString() {
+         return "NonMarshallablePojo{" +
+                "value='" + value + '\'' +
+                '}';
+      }
+   }
 }
