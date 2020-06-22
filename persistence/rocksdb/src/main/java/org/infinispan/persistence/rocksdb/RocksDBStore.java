@@ -30,6 +30,7 @@ import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.IntSet;
@@ -49,7 +50,6 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
@@ -58,7 +58,6 @@ import org.rocksdb.BuiltinComparator;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.ColumnFamilyOptions;
-import org.rocksdb.CompressionType;
 import org.rocksdb.DBOptions;
 import org.rocksdb.Options;
 import org.rocksdb.ReadOptions;
@@ -545,8 +544,10 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          } else {
             columnFamilyOptions = new ColumnFamilyOptions();
          }
-         return new ColumnFamilyDescriptor(name,
-               columnFamilyOptions.setCompressionType(CompressionType.getCompressionType(configuration.compressionType().toString())));
+         if (configuration.attributes().attribute(RocksDBStoreConfiguration.COMPRESSION_TYPE).isModified()) {
+            columnFamilyOptions.setCompressionType(configuration.compressionType().getValue());
+         }
+         return new ColumnFamilyDescriptor(name, columnFamilyOptions);
       }
 
       CompletionStage<MarshallableEntry<K, V>> load(int segment, Object key) {
@@ -684,8 +685,9 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          File dir = location.toFile();
          dir.mkdirs();
          List<ColumnFamilyHandle> handles = new ArrayList<>(1);
+         ColumnFamilyDescriptor desc = newDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY);
          RocksDB rocksDB = RocksDB.open(options, location.toString(),
-               Collections.singletonList(newDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY)),
+               Collections.singletonList(desc),
                handles);
          defaultColumnFamilyHandle = handles.get(0);
          return rocksDB;
