@@ -141,7 +141,9 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
          },
          schemaFileName = "test.core.TransportSenderExceptionHandlingTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.core.TransportSenderExceptionHandlingTest")
+         schemaPackageName = "org.infinispan.test.core.TransportSenderExceptionHandlingTest",
+         service = false
+   )
    interface FailureTypeSCI extends SerializationContextInitializer {
       FailureTypeSCI INSTANCE = new FailureTypeSCIImpl();
    }

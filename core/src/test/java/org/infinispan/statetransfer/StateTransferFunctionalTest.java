@@ -361,7 +361,9 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
          },
          schemaFileName = "test.core.StateTransferFunctionalTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.core.StateTransferFunctionalTest")
+         schemaPackageName = "org.infinispan.test.core.StateTransferFunctionalTest",
+         service = false
+   )
    interface StateTransferFunctionalSCI extends SerializationContextInitializer {
    }
 }

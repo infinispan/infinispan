@@ -242,7 +242,9 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
          },
          schemaFileName = "test.client.BaseMultiServerRemoteIterator.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.client.BaseMultiServerRemoteIterator")
+         schemaPackageName = "org.infinispan.test.client.BaseMultiServerRemoteIterator",
+         service = false
+   )
    interface SCI extends SerializationContextInitializer {
       SCI INSTANCE = new SCIImpl();
    }

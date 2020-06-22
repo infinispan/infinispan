@@ -150,7 +150,9 @@ public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCach
          },
          schemaFileName = "core.stream.binary.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.core.stream.binary")
+         schemaPackageName = "org.infinispan.test.core.stream.binary",
+         service = false
+   )
    interface StreamStoreAsBinarySerializationContext extends SerializationContextInitializer {
    }
 }

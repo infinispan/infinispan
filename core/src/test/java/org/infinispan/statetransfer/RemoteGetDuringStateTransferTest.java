@@ -898,7 +898,9 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
          includeClasses = SingleKeyConsistentHashFactory.class,
          schemaFileName = "test.core.RemoteGetDuringStateTransferTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.core.RemoteGetDuringStateTransferTest")
+         schemaPackageName = "org.infinispan.test.core.RemoteGetDuringStateTransferTest",
+         service = false
+   )
    interface RemoteGetDuringStateTransferSCI extends SerializationContextInitializer {
       RemoteGetDuringStateTransferSCI INSTANCE = new RemoteGetDuringStateTransferSCIImpl();
    }

@@ -17,7 +17,9 @@ import org.infinispan.rest.search.entity.PhoneNumber;
       },
       schemaFileName = "test.rest.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.test.rest")
+      schemaPackageName = "org.infinispan.test.rest",
+      service = false
+)
 public interface RestTestSCI extends SerializationContextInitializer {
    RestTestSCI INSTANCE = new RestTestSCIImpl();
 }

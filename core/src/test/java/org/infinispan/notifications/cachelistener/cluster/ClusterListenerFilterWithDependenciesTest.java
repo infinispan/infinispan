@@ -92,7 +92,9 @@ public class ClusterListenerFilterWithDependenciesTest extends MultipleCacheMana
          },
          schemaFileName = "test.core.ClusterListenerFilterWithDependenciesTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.core.ClusterListenerFilterWithDependenciesTest")
+         schemaPackageName = "org.infinispan.test.core.ClusterListenerFilterWithDependenciesTest",
+         service = false
+   )
    interface ClusterListenerWithDependenciesSCI extends SerializationContextInitializer {
    }
 }

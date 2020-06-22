@@ -769,7 +769,9 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          },
          schemaFileName = "test.core.VersionAwareMarshallerTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.core.VersionAwareMarshallerTest")
+         schemaPackageName = "org.infinispan.test.core.VersionAwareMarshallerTest",
+         service = false
+   )
    interface VersionAwareMarshallerSCI extends SerializationContextInitializer {
    }
 }

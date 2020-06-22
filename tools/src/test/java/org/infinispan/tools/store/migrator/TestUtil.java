@@ -159,7 +159,9 @@ public class TestUtil {
          includeClasses = TestObject.class,
          schemaFileName = "test.tools.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.tools")
+         schemaPackageName = "org.infinispan.test.tools",
+         service = false
+   )
    interface SCI extends SerializationContextInitializer {
       SCI INSTANCE = new SCIImpl();
    }

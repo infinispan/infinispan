@@ -172,7 +172,9 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
          includeClasses = SEntity.class,
          schemaFileName = "test.query.persistence.InconsistentIndexesAfterRestartTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.InconsistentIndexesAfterRestartTest")
+         schemaPackageName = "org.infinispan.test.InconsistentIndexesAfterRestartTest",
+         service = false
+   )
    interface SCI extends SerializationContextInitializer {
       InconsistentIndexesAfterRestartTest.SCI INSTANCE = new SCIImpl();
    }

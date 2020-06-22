@@ -25,7 +25,9 @@ import org.infinispan.test.data.Value;
       },
       schemaFileName = "test.core.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.test.core")
+      schemaPackageName = "org.infinispan.test.core",
+      service = false
+)
 public interface TestDataSCI extends SerializationContextInitializer {
    TestDataSCI INSTANCE = new TestDataSCIImpl();
 }

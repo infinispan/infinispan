@@ -26,7 +26,9 @@ import org.infinispan.query.test.QueryTestSCI;
       },
       schemaFileName = "test.query.dsl.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.test.query.dsl")
+      schemaPackageName = "org.infinispan.test.query.dsl",
+      service = false
+)
 public interface DslSCI extends SerializationContextInitializer {
    DslSCI INSTANCE = new DslSCIImpl();
 }

@@ -330,7 +330,9 @@ public class DataFormatTest extends SingleHotRodServerTest {
          includeClasses = ComplexKey.class,
          schemaFileName = "test.client.DataFormatTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.client.DataFormatTest")
+         schemaPackageName = "org.infinispan.test.client.DataFormatTest",
+         service = false
+   )
    interface SCI extends SerializationContextInitializer {
       SCI INSTANCE = new SCIImpl();
    }

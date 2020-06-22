@@ -208,7 +208,9 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
          },
          schemaFileName = "test.core.GroupTestsSCI.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.core.GroupTestsSCI")
+         schemaPackageName = "org.infinispan.test.core.GroupTestsSCI",
+         service = false
+   )
    interface GroupTestsSCI extends SerializationContextInitializer {
       GroupTestsSCI INSTANCE = new GroupTestsSCIImpl();
    }

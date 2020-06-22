@@ -13,7 +13,9 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       },
       schemaFileName = "test.endpoints.it.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = EndpointITSCI.PACKAGE_NAME)
+      schemaPackageName = EndpointITSCI.PACKAGE_NAME,
+      service = false
+)
 public interface EndpointITSCI extends SerializationContextInitializer {
    String PACKAGE_NAME = "org.infinispan.test.endpoint.it";
    EndpointITSCI INSTANCE = new EndpointITSCIImpl();

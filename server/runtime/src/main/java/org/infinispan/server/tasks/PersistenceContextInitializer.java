@@ -17,6 +17,8 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       },
       schemaFileName = "persistence.servertasks.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.persistence.servertasks")
+      schemaPackageName = "org.infinispan.persistence.servertasks",
+      service = false
+)
 interface PersistenceContextInitializer extends SerializationContextInitializer {
 }
