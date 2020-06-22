@@ -111,7 +111,9 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
          includeClasses = ExampleUserPojo.class,
          schemaFileName = "test.core.protostream-user-marshall.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.marshall")
+         schemaPackageName = "org.infinispan.test.marshall",
+         service = false
+   )
    interface UserSCI extends SerializationContextInitializer {
    }
 
@@ -119,7 +121,9 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
          includeClasses = AnotherExampleUserPojo.class,
          schemaFileName = "test.core.protostream-another-user-marshall.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.marshall")
+         schemaPackageName = "org.infinispan.test.marshall",
+         service = false
+   )
    interface AnotherUserSCI extends SerializationContextInitializer {
    }
 }

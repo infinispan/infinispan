@@ -15,7 +15,9 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       includeClasses = KeyValueWithPrevious.class,
       schemaFileName = "global.commons.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.global.commons")
+      schemaPackageName = "org.infinispan.global.commons",
+      service = false
+)
 public interface GlobalContextInitializer extends SerializationContextInitializer {
    GlobalContextInitializer INSTANCE = new GlobalContextInitializerImpl();
 }

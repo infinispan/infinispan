@@ -30,7 +30,9 @@ import org.infinispan.query.queries.faceting.Car;
       },
       schemaFileName = "test.query.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.test.query")
+      schemaPackageName = "org.infinispan.test.query",
+      service = false
+)
 public interface QueryTestSCI extends SerializationContextInitializer {
    QueryTestSCI INSTANCE = new QueryTestSCIImpl();
 }

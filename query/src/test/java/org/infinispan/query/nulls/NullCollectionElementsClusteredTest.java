@@ -225,7 +225,9 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
          includeClasses = Foo.class,
          schemaFileName = "test.query.nulls.NullCollectionElementsClusteredTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.NullCollectionElementsClusteredTest")
+         schemaPackageName = "org.infinispan.test.NullCollectionElementsClusteredTest",
+         service = false
+   )
    interface SCI extends SerializationContextInitializer {
       SCI INSTANCE = new SCIImpl();
    }

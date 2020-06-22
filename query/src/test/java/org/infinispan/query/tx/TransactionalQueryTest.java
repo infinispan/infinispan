@@ -83,7 +83,9 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
          includeClasses = Session.class,
          schemaFileName = "test.query.tx.TransactionalQueryTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.TransactionalQueryTest")
+         schemaPackageName = "org.infinispan.test.TransactionalQueryTest",
+         service = false
+   )
    interface SCI extends SerializationContextInitializer {
    }
 }

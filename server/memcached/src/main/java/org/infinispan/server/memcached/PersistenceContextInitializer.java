@@ -18,6 +18,8 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       includeClasses = MemcachedMetadata.class,
       schemaFileName = "persistence.memcached.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.persistence.memcached")
+      schemaPackageName = "org.infinispan.persistence.memcached",
+      service = false
+)
 interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

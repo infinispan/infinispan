@@ -13,7 +13,9 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       },
       schemaFileName = "test.jcache.embedded.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.test.jcache.embedded")
+      schemaPackageName = "org.infinispan.test.jcache.embedded",
+      service = false
+)
 public interface JCacheTestSCI extends SerializationContextInitializer {
    JCacheTestSCI INSTANCE = new JCacheTestSCIImpl();
 }

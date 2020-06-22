@@ -8,7 +8,9 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
             KeyValueEntity.class
       },
       schemaFileName = "test.it.wildfly.proto",
-      schemaPackageName = "org.infinispan.test.it.wildfly")
+      schemaPackageName = "org.infinispan.test.it.wildfly",
+      service = false
+)
 public interface WidlflyIntegrationSCI extends SerializationContextInitializer {
       Class[] CLASSES = new Class[] {KeyValueEntity.class,
             WidlflyIntegrationSCI.class, WidlflyIntegrationSCIImpl.class};

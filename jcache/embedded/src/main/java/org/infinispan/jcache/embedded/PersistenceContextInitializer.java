@@ -16,6 +16,8 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       includeClasses = DefaultCacheKey.class,
       schemaFileName = "persistence.jcache.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.persistence.jcache")
+      schemaPackageName = "org.infinispan.persistence.jcache",
+      service = false
+)
 public interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

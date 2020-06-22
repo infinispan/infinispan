@@ -760,7 +760,9 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
          includeClasses = SameHashCodeKey.class,
          schemaFileName = "test.core.eviction.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.core.eviction")
+         schemaPackageName = "org.infinispan.test.core.eviction",
+         service = false
+   )
    interface EvictionWithConcurrentOperationsSCI extends SerializationContextInitializer {
    }
 }

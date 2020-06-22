@@ -22,7 +22,9 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       },
       schemaFileName = "test.jpa.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.test.jpa")
+      schemaPackageName = "org.infinispan.test.jpa",
+      service = false
+)
 public interface JpaSCI extends SerializationContextInitializer {
       JpaSCI INSTANCE = new JpaSCIImpl();
 }

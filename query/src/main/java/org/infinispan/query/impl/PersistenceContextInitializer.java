@@ -19,7 +19,9 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
       includeClasses = PersistenceContextInitializer.KnownClassKey.class,
       schemaFileName = "persistence.query.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.persistence.query")
+      schemaPackageName = "org.infinispan.persistence.query",
+      service = false
+)
 interface PersistenceContextInitializer extends SerializationContextInitializer {
 
    //TODO [anistor] remove this !

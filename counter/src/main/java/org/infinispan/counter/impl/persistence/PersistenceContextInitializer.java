@@ -26,6 +26,8 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       },
       schemaFileName = "persistence.counters.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.persistence.counters")
+      schemaPackageName = "org.infinispan.persistence.counters",
+      service = false
+)
 interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

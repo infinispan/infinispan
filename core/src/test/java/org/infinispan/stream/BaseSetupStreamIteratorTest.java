@@ -184,7 +184,9 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
          },
          schemaFileName = "core.stream.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.core.stream")
+         schemaPackageName = "org.infinispan.test.core.stream",
+         service = false
+   )
    interface StreamSerializationContext extends SerializationContextInitializer {
    }
 }

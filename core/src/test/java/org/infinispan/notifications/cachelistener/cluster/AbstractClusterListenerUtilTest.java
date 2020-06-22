@@ -431,7 +431,9 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
          },
          schemaFileName = "core.listeners.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.core.notifications")
+         schemaPackageName = "org.infinispan.test.core.notifications",
+         service = false
+   )
    interface ListenerSerializationContext extends SerializationContextInitializer {
    }
 }

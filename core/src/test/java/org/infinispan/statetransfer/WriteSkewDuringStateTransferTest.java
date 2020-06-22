@@ -435,7 +435,9 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
          includeClasses = ConsistentHashFactoryImpl.class,
          schemaFileName = "test.core.WriteSkewDuringStateTransferTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.core.WriteSkewDuringStateTransferTest")
+         schemaPackageName = "org.infinispan.test.core.WriteSkewDuringStateTransferTest",
+         service = false
+   )
    public interface WriteSkewDuringStateTransferSCI extends SerializationContextInitializer {
       WriteSkewDuringStateTransferSCI INSTANCE = new WriteSkewDuringStateTransferSCIImpl();
    }

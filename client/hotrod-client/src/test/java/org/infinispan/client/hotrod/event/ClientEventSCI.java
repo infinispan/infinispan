@@ -22,7 +22,9 @@ import org.infinispan.query.dsl.embedded.DslSCI;
       },
       schemaFileName = "test.client.event.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.test.client")
+      schemaPackageName = "org.infinispan.test.client",
+      service = false
+)
 public interface ClientEventSCI extends SerializationContextInitializer {
    ClientEventSCI INSTANCE = new ClientEventSCIImpl();
 }

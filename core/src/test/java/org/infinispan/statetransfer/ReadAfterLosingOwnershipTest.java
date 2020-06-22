@@ -198,7 +198,9 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
          includeClasses = SingleKeyConsistentHashFactory.class,
          schemaFileName = "test.core.ReadAfterLostOwnershipTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.core.ReadAfterLostOwnershipTest")
+         schemaPackageName = "org.infinispan.test.core.ReadAfterLostOwnershipTest",
+         service = false
+   )
    interface ReadAfterLostOwnershipTestSCI extends SerializationContextInitializer {
       ReadAfterLostOwnershipTestSCI INSTANCE = new ReadAfterLostOwnershipTestSCIImpl();
    }

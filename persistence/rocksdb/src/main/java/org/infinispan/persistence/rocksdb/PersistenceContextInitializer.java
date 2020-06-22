@@ -15,6 +15,8 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       includeClasses = RocksDBStore.ExpiryBucket.class,
       schemaFileName = "persistence.rocksdb.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.persistence.rocksdb")
+      schemaPackageName = "org.infinispan.persistence.rocksdb",
+      service = false
+)
 interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

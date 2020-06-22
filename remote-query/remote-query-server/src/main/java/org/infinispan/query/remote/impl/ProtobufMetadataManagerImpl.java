@@ -95,6 +95,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
             getProtobufMetadataCacheConfig(globalConfiguration).build(),
             EnumSet.of(InternalCacheRegistry.Flag.USER, InternalCacheRegistry.Flag.PROTECTED, InternalCacheRegistry.Flag.PERSISTENT));
 
+      processSerializationContextInitializer(ServiceFinder.load(SerializationContextInitializer.class, globalConfiguration.classLoader()));
       processSerializationContextInitializer(globalConfiguration.serialization().contextInitializers());
       processProtostreamSerializationContextInitializers(globalConfiguration.classLoader());
    }
@@ -112,7 +113,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       }
    }
 
-   private void processSerializationContextInitializer(List<SerializationContextInitializer> initializers) {
+   private void processSerializationContextInitializer(Iterable<SerializationContextInitializer> initializers) {
       if (initializers != null) {
          for (SerializationContextInitializer sci : initializers) {
             try {

@@ -8,6 +8,8 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       includeClasses = Bucket.class,
       schemaFileName = "persistence.multimap.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.persistence.multimap")
+      schemaPackageName = "org.infinispan.persistence.multimap",
+      service = false
+)
 interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

@@ -433,7 +433,9 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
          },
          schemaFileName = "test.hotrod.AbstractHotRodClusterEvents.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.hotord.AbstractHotRodClusterEvents")
+         schemaPackageName = "org.infinispan.test.hotord.AbstractHotRodClusterEvents",
+         service = false
+   )
    interface HotRodClusterEventsSCI extends SerializationContextInitializer {
       HotRodClusterEventsSCI INSTANCE = new HotRodClusterEventsSCIImpl();
    }

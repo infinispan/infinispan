@@ -114,7 +114,9 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
          includeClasses = ClusteredCacheWithLongIndexNameTest.ClassWithLongIndexName.class,
          schemaFileName = "test.query.blackbox.ClusteredCacheWithLongIndexNameTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.ClusteredCacheWithLongIndexNameTest")
+         schemaPackageName = "org.infinispan.test.ClusteredCacheWithLongIndexNameTest",
+         service = false
+   )
    interface SCI extends SerializationContextInitializer {
       SCI INSTANCE = new SCIImpl();
    }
