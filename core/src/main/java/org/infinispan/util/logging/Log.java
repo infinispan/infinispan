@@ -2038,4 +2038,7 @@ public interface Log extends BasicLogger {
          "If you use operations that require data conversion or queries, you should configure the " +
          "cache with a specific MediaType for keys or values.", id = 599)
    void unknownEncoding(String cacheName);
+
+   @Message(value = "Store %s cannot be configured to be shared as it does not contain the SHARED characteristic", id = 600)
+   CacheConfigurationException storeConfiguredSharedButCharacteristicNotPresent(String storeClassName);
 }

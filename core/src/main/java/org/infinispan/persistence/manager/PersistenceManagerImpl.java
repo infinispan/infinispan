@@ -137,6 +137,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private volatile AutoCloseable availabilityTask;
    private volatile String unavailableExceptionMessage;
 
+   private boolean allSegmentedOrShared;
+
    private int segmentCount;
 
    @GuardedBy("lock")
@@ -219,14 +221,21 @@ public class PersistenceManagerImpl implements PersistenceManager {
                availabilityTask = nonBlockingManager.scheduleWithFixedDelay(this::pollStoreAvailability, interval, interval, MILLISECONDS));
          }
 
-         storeStartup.doOnComplete(() -> lock.unlockWrite(stamp))
-               // Blocks here waiting for stores and availability task to start if needed
-               .blockingAwait();
+         // Blocks here waiting for stores and availability task to start if needed
+         storeStartup.blockingAwait();
+         allSegmentedOrShared = allStoresSegmentedOrShared();
       } catch (Throwable t) {
-         lock.unlockWrite(stamp);
          log.debug("PersistenceManagerImpl encountered an exception during startup of stores", t);
          throw t;
+      } finally {
+         lock.unlockWrite(stamp);
       }
+   }
+
+   @GuardedBy("lock")
+   private boolean allStoresSegmentedOrShared() {
+      return getStoreLocked(storeStatus -> !storeStatus.characteristics.contains(Characteristic.SEGMENTABLE) ||
+            !storeStatus.characteristics.contains(Characteristic.SHAREABLE)) != null;
    }
 
    private Set<Characteristic> updateCharacteristics(NonBlockingStore store, Set<Characteristic> characteristics,
@@ -256,6 +265,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
          }
       } else {
          characteristics.remove(Characteristic.TRANSACTIONAL);
+      }
+      if (storeConfiguration.shared()) {
+         if (!characteristics.contains(Characteristic.SHAREABLE)) {
+            throw log.storeConfiguredSharedButCharacteristicNotPresent(store.getClass().getName());
+         }
+      } else {
+         characteristics.remove(Characteristic.SHAREABLE);
       }
       return characteristics;
    }
@@ -560,6 +576,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          } else if (allAvailable) {
             unavailableExceptionMessage = null;
          }
+         allSegmentedOrShared = allStoresSegmentedOrShared();
       } finally {
          lock.unlockWrite(stamp);
       }
@@ -1243,42 +1260,41 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public CompletionStage<Boolean> addSegments(IntSet segments) {
-      return Single.using(
+      return Completable.using(
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
                if (trace) {
                   log.tracef("Adding segments %s to stores", segments);
                }
-               int size = stores.size();
                return Flowable.fromIterable(stores)
-                     .filter(storeStatus -> storeStatus.characteristics.contains(Characteristic.SEGMENTABLE))
-                     .delay(storeStatus -> Completable.fromCompletionStage(storeStatus.store.addSegments(segments)).toFlowable())
-                     .count()
-                     .map(count -> size == count);
+                     .filter(PersistenceManagerImpl::shouldInvokeSegmentMethods)
+                     .flatMapCompletable(storeStatus -> Completable.fromCompletionStage(storeStatus.store.addSegments(segments)));
             },
             this::releaseReadLock
-      ).toCompletionStage();
+      ).toCompletionStage(allSegmentedOrShared);
    }
 
    @Override
    public CompletionStage<Boolean> removeSegments(IntSet segments) {
-      return Single.using(
+      return Completable.using(
             this::acquireReadLock,
             ignore -> {
                checkStoreAvailability();
                if (trace) {
                   log.tracef("Removing segments %s from stores", segments);
                }
-               int size = stores.size();
                return Flowable.fromIterable(stores)
-                     .filter(storeStatus -> storeStatus.characteristics.contains(Characteristic.SEGMENTABLE))
-                     .delay(storeStatus -> Completable.fromCompletionStage(storeStatus.store.removeSegments(segments)).toFlowable())
-                     .count()
-                     .map(count -> size == count);
+                     .filter(PersistenceManagerImpl::shouldInvokeSegmentMethods)
+                     .flatMapCompletable(storeStatus -> Completable.fromCompletionStage(storeStatus.store.removeSegments(segments)));
             },
             this::releaseReadLock
-      ).toCompletionStage();
+      ).toCompletionStage(allSegmentedOrShared);
+   }
+
+   private static boolean shouldInvokeSegmentMethods(StoreStatus storeStatus) {
+      return storeStatus.characteristics.contains(Characteristic.SEGMENTABLE) &&
+            !storeStatus.characteristics.contains(Characteristic.SHAREABLE);
    }
 
    public <K, V> List<NonBlockingStore<K, V>> getAllStores(Predicate<Set<Characteristic>> predicate) {
