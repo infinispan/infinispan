@@ -563,8 +563,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       return result;
    }
 
-   public PingResponse ping() {
-      return await(operationsFactory.newFaultTolerantPingOperation().execute());
+   public CompletionStage<PingResponse> ping() {
+      return operationsFactory.newFaultTolerantPingOperation().execute();
    }
 
    @Override

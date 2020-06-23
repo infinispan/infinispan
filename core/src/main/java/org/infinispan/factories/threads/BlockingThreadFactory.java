@@ -13,8 +13,8 @@ public class BlockingThreadFactory extends DefaultThreadFactory implements Block
       super(name, new ISPNBlockingThreadGroup(threadGroupName), initialPriority, threadNamePattern, node, component);
    }
 
-   static final class ISPNBlockingThreadGroup extends ThreadGroup implements BlockingResource {
-      ISPNBlockingThreadGroup(String name) {
+   public static final class ISPNBlockingThreadGroup extends ThreadGroup implements BlockingResource {
+      public ISPNBlockingThreadGroup(String name) {
          super(name);
       }
    }

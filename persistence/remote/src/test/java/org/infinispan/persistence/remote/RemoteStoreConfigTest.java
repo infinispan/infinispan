@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -45,10 +44,6 @@ public class RemoteStoreConfigTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Cache<Object, Object> cache = cm.getCache();
-            CacheLoader cacheLoader = TestingUtil.getCacheLoader(cache);
-            assert cacheLoader != null;
-            assert cacheLoader instanceof RemoteStore;
-
 
             cache.put("k", "v");
 

@@ -6,14 +6,15 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
-import org.infinispan.persistence.BaseStoreTest;
+import org.infinispan.persistence.BaseNonBlockingStoreTest;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.SecurityConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -30,49 +31,51 @@ import org.testng.annotations.Test;
  * @since 9.1
  */
 @Test(testName = "persistence.remote.RemoteStoreSSLTest", groups = "functional")
-public class RemoteStoreSSLTest extends BaseStoreTest {
+public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
 
    private static final String REMOTE_CACHE = "remote-cache";
    private EmbeddedCacheManager localCacheManager;
    private HotRodServer hrServer;
 
    @Override
-   protected AdvancedLoadWriteStore createStore() throws Exception {
-      ConfigurationBuilder localBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-
+   protected Configuration buildConfig(ConfigurationBuilder builder) {
       localCacheManager = TestCacheManagerFactory.createCacheManager(
             new GlobalConfigurationBuilder().defaultCacheName(REMOTE_CACHE),
-            hotRodCacheConfiguration(localBuilder));
+            hotRodCacheConfiguration(builder));
 
-      localCacheManager.getCache(REMOTE_CACHE);
-      TestingUtil.replaceComponent(localCacheManager, TimeService.class, timeService, true);
-      localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().rewire();
       ClassLoader cl = RemoteStoreSSLTest.class.getClassLoader();
-      SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
-      HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
-      serverBuilder
-            .ssl()
-            .enable()
-            .requireClientAuth(true)
-            .keyStoreFileName(cl.getResource("keystore_server.jks").getPath())
-            .keyStorePassword("secret".toCharArray())
-            .keyAlias("hotrod")
-            .trustStoreFileName(cl.getResource("ca.jks").getPath())
-            .trustStorePassword("secret".toCharArray());
-      serverBuilder
-            .authentication()
-            .enable()
-            .serverName("localhost")
-            .addAllowedMech("EXTERNAL")
-            .serverAuthenticationProvider(sap);
-      hrServer = new HotRodServer();
-      hrServer.start(serverBuilder.build(), localCacheManager);
+      // Unfortunately BaseNonBlockingStore stops and restarts the store, which can start a second hrServer - prevent that
+      if (hrServer == null) {
+         localCacheManager.getCache(REMOTE_CACHE);
+         TestingUtil.replaceComponent(localCacheManager, TimeService.class, timeService, true);
+         localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().rewire();
 
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+         SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
+         HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
+         serverBuilder
+               .ssl()
+               .enable()
+               .requireClientAuth(true)
+               .keyStoreFileName(cl.getResource("keystore_server.jks").getPath())
+               .keyStorePassword("secret".toCharArray())
+               .keyAlias("hotrod")
+               .trustStoreFileName(cl.getResource("ca.jks").getPath())
+               .trustStorePassword("secret".toCharArray());
+         serverBuilder
+               .authentication()
+               .enable()
+               .serverName("localhost")
+               .addAllowedMech("EXTERNAL")
+               .serverAuthenticationProvider(sap);
+         hrServer = new HotRodServer();
+         hrServer.start(serverBuilder.build(), localCacheManager);
+      }
+
       SecurityConfigurationBuilder remoteSecurity = builder
             .persistence()
             .addStore(RemoteStoreConfigurationBuilder.class)
             .remoteCacheName(REMOTE_CACHE)
+            .shared(true)
             .remoteSecurity();
       remoteSecurity
             .ssl().enable()
@@ -86,10 +89,13 @@ public class RemoteStoreSSLTest extends BaseStoreTest {
       remoteSecurity
             .authentication().enable()
             .saslMechanism("EXTERNAL");
-      RemoteStore remoteStore = new RemoteStore();
-      remoteStore.init(createContext(builder.build()));
 
-      return remoteStore;
+      return builder.build();
+   }
+
+   @Override
+   protected NonBlockingStore createStore() throws Exception {
+      return new RemoteStore();
    }
 
    @Override
@@ -102,6 +108,7 @@ public class RemoteStoreSSLTest extends BaseStoreTest {
    public void tearDown() {
       super.tearDown();
       HotRodClientTestingUtil.killServers(hrServer);
+      hrServer = null;
       TestingUtil.killCacheManagers(localCacheManager);
    }
 
@@ -116,11 +123,11 @@ public class RemoteStoreSSLTest extends BaseStoreTest {
 
    @Override
    public void testReplaceExpiredEntry() throws Exception {
-      cl.write(marshalledEntry(internalCacheEntry("k1", "v1", 100l)));
+      store.write(marshalledEntry(internalCacheEntry("k1", "v1", 100l)));
       timeService.advance(1101);
-      assertNull(cl.loadEntry("k1"));
+      assertNull(store.loadEntry("k1"));
       long start = System.currentTimeMillis();
-      cl.write(marshalledEntry(internalCacheEntry("k1", "v2", 100l)));
-      assertTrue(cl.loadEntry("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100));
+      store.write(marshalledEntry(internalCacheEntry("k1", "v2", 100l)));
+      assertTrue(store.loadEntry("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100));
    }
 }

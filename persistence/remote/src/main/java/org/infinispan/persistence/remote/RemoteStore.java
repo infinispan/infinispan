@@ -1,8 +1,11 @@
 package org.infinispan.persistence.remote;
 
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -15,23 +18,22 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
-import org.infinispan.client.hotrod.impl.operations.PingResponse;
+import org.infinispan.client.hotrod.impl.protocol.Codec27;
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.persistence.Store;
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.remote.configuration.AuthenticationConfiguration;
 import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
@@ -39,19 +41,18 @@ import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.configuration.SslConfiguration;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.persistence.remote.wrapper.HotRodEntryMarshaller;
-import org.infinispan.persistence.spi.FlagAffectedStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.MarshalledValue;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.persistence.spi.NonBlockingStore;
+import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import net.jcip.annotations.ThreadSafe;
 
 /**
  * Cache store that delegates the call to a infinispan cluster. Communication between this cache store and the remote
@@ -68,34 +69,37 @@ import net.jcip.annotations.ThreadSafe;
  * @see <a href="http://community.jboss.org/wiki/JavaHotRodclient">Hotrod Java Client</a>
  * @since 4.1
  */
-@Store(shared = true)
-@ThreadSafe
 @ConfiguredBy(RemoteStoreConfiguration.class)
-public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>, FlagAffectedStore<K, V> {
+public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
    private static final Log log = LogFactory.getLog(RemoteStore.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private RemoteStoreConfiguration configuration;
 
-   private volatile RemoteCacheManager remoteCacheManager;
-   private volatile RemoteCache<Object, Object> remoteCache;
+   private RemoteCacheManager remoteCacheManager;
+   private RemoteCache<Object, Object> remoteCache;
 
    private InternalEntryFactory iceFactory;
    private static final String LIFESPAN = "lifespan";
    private static final String MAXIDLE = "maxidle";
    protected InitializationContext ctx;
    private MarshallableEntryFactory<K, V> entryFactory;
+   private BlockingManager blockingManager;
+   private KeyPartitioner keyPartitioner;
+   private int segmentCount;
 
    @Override
-   public void init(InitializationContext ctx) {
+   public CompletionStage<Void> start(InitializationContext ctx) {
       this.ctx = ctx;
       this.configuration = ctx.getConfiguration();
       this.entryFactory = ctx.getMarshallableEntryFactory();
-   }
+      this.blockingManager = ctx.getBlockingManager();
+      this.keyPartitioner = ctx.getKeyPartitioner();
 
-   @Override
-   public void start() throws PersistenceException {
+      ClusteringConfiguration clusterConfiguration = ctx.getCache().getCacheConfiguration().clustering();
+      this.segmentCount = clusterConfiguration.hash().numSegments();
+
       final Marshaller marshaller;
       if (configuration.marshaller() != null) {
          marshaller = Util.getInstance(configuration.marshaller(), ctx.getCache().getAdvancedCache().getClassLoader());
@@ -107,40 +111,50 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
       } else {
          marshaller = ctx.getPersistenceMarshaller();
       }
-      ConfigurationBuilder builder = buildRemoteConfiguration(configuration, marshaller);
-      remoteCacheManager = new RemoteCacheManager(builder.build());
 
-      if (configuration.remoteCacheName().isEmpty())
-         remoteCache = remoteCacheManager.getCache();
-      else
-         remoteCache = remoteCacheManager.getCache(configuration.remoteCacheName());
+      // Segmented cannot work properly in a clustered cache without being shared
+      if (clusterConfiguration.cacheMode().isClustered() && !configuration.shared() && configuration.segmented()) {
+         throw log.segmentationRequiresBeingShared();
+      }
+
       if (configuration.rawValues() && iceFactory == null) {
          iceFactory = ctx.getCache().getAdvancedCache().getComponentRegistry().getComponent(InternalEntryFactory.class);
       }
+
+      // Make sure threads are marked as non blocking if user didn't specify
+      configuration.properties().putIfAbsent("blocking", "false");
+
+      ConfigurationBuilder builder = buildRemoteConfiguration(configuration, marshaller);
+
+      return blockingManager.runBlocking(() -> {
+         remoteCacheManager = new RemoteCacheManager(builder.build());
+
+         if (configuration.remoteCacheName().isEmpty())
+            remoteCache = remoteCacheManager.getCache();
+         else
+            remoteCache = remoteCacheManager.getCache(configuration.remoteCacheName());
+      }, "RemoteStore-start");
    }
 
    @Override
-   public void stop() throws PersistenceException {
-      remoteCacheManager.stop();
+   public Set<Characteristic> characteristics() {
+      return EnumSet.of(Characteristic.BULK_READ, Characteristic.EXPIRATION,
+            Characteristic.SHAREABLE);
    }
 
    @Override
-   public boolean isAvailable() {
-      try {
-         PingResponse pr = ((RemoteCacheImpl) remoteCache).ping();
-         return pr.isSuccess();
-      } catch (Exception e) {
-         return false;
-      }
+   public CompletionStage<Void> stop() {
+      return blockingManager.runBlocking(() -> remoteCacheManager.stop(), "RemoteStore-stop");
    }
 
    @Override
-   public MarshallableEntry<K, V> get(int segment, Object key) {
-      return loadEntry(key);
+   public CompletionStage<Boolean> isAvailable() {
+      return ((RemoteCacheImpl<?, ?>) remoteCache).ping()
+            .handle((v, t) -> t == null && v.isSuccess());
    }
 
    @Override
-   public MarshallableEntry<K, V> loadEntry(Object key) throws PersistenceException {
+   public CompletionStage<MarshallableEntry<K, V>> load(int segment, Object key) {
       if (configuration.rawValues()) {
          Object unwrappedKey;
          if (key instanceof WrappedByteArray) {
@@ -148,22 +162,24 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
          } else {
             unwrappedKey = key;
          }
-         MetadataValue<?> value = remoteCache.getWithMetadata(unwrappedKey);
-         if (value != null) {
-            Metadata metadata = new EmbeddedMetadata.Builder()
-                  .version(new NumericVersion(value.getVersion()))
-                  .lifespan(value.getLifespan(), TimeUnit.SECONDS)
-                  .maxIdle(value.getMaxIdle(), TimeUnit.SECONDS).build();
-            long created = value.getCreated();
-            long lastUsed = value.getLastUsed();
-            Object realValue = value.getValue();
-            if (realValue instanceof byte[]) {
-               realValue = new WrappedByteArray((byte[]) realValue);
+         CompletableFuture<MetadataValue<Object>> valueStage = remoteCache.getWithMetadataAsync(unwrappedKey);
+         return valueStage.thenApply(metadataValue -> {
+            if (metadataValue != null) {
+               Metadata metadata = new EmbeddedMetadata.Builder()
+                     .version(new NumericVersion(metadataValue.getVersion()))
+                     .lifespan(metadataValue.getLifespan(), TimeUnit.SECONDS)
+                     .maxIdle(metadataValue.getMaxIdle(), TimeUnit.SECONDS).build();
+               long created = metadataValue.getCreated();
+               long lastUsed = metadataValue.getLastUsed();
+               Object realValue = metadataValue.getValue();
+               if (realValue instanceof byte[]) {
+                  realValue = new WrappedByteArray((byte[]) realValue);
+               }
+               return entryFactory.create(key, realValue, metadata, null, created, lastUsed);
+            } else {
+               return null;
             }
-            return entryFactory.create(key, realValue, metadata, null, created, lastUsed);
-         } else {
-            return null;
-         }
+         });
       } else {
          Object unwrappedKey;
          if (key instanceof WrappedByteArray) {
@@ -171,33 +187,26 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
          } else {
             unwrappedKey = key;
          }
-         MarshalledValue value = (MarshalledValue) remoteCache.get(unwrappedKey);
-         return value == null ? null : entryFactory.create(key, value);
+         return remoteCache.getAsync(unwrappedKey)
+               .thenApply(value -> value == null ? null : entryFactory.create(key, (MarshalledValue) value));
       }
    }
 
    @Override
-   public boolean contains(int segment, Object key) {
-      return contains(key);
-   }
-
-   @Override
-   public boolean contains(Object key) throws PersistenceException {
+   public CompletionStage<Boolean> containsKey(int segment, Object key) {
       if (key instanceof WrappedByteArray) {
          key = ((WrappedByteArray) key).getBytes();
       }
-      return remoteCache.containsKey(key);
-   }
-
-   @Override
-   public Flowable<K> publishKeys(Predicate<? super K> filter) {
-      return publishKeys(null, filter);
+      return remoteCache.containsKeyAsync(key);
    }
 
    @Override
    public Flowable<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
-      Flowable<K> keyFlowable = entryFlowable(remoteCache.keySet(segments).iterator())
+      Flowable<K> keyFlowable = Flowable.fromPublisher(remoteCache.publishEntries(Codec27.EMPTY_VAUE_CONVERTER,
+            null, null, 512))
+            .map(Map.Entry::getKey)
             .map(RemoteStore::wrap);
+
       if (filter != null) {
          keyFlowable = keyFlowable.filter(filter::test);
       }
@@ -205,60 +214,32 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
    }
 
    @Override
-   public Publisher<MarshallableEntry<K, V>> entryPublisher(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
-      return entryPublisher(null, filter, fetchValue, fetchMetadata);
-   }
-
-   @Override
-   public Publisher<MarshallableEntry<K, V>> entryPublisher(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
-      if (!fetchValue && !fetchMetadata) {
-         Flowable<K> keyFlowable = publishKeys(segments, filter);
-         return keyFlowable.map(key -> entryFactory.create(key));
-      }
+   public Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean includeValues) {
       if (configuration.rawValues()) {
-         io.reactivex.rxjava3.functions.Predicate<Map.Entry<Object, ?>> filterToUse = filter == null ? null :
-               e -> filter.test(wrap(e.getKey()));
-         if (!fetchMetadata) {
-            // Only pass segments if we are running segmented mode (denoted by keyPartitioner being non null)
-            Flowable<Map.Entry<Object, Object>> entryFlowable = entryFlowable(remoteCache.entrySet(segments)
-                  .iterator());
-            if (filterToUse != null) {
-               entryFlowable = entryFlowable.filter(filterToUse);
-            }
-            return entryFlowable.map(e -> entryFactory.create(wrap(e.getKey()), (V) wrap(e.getValue())));
-         } else {
-            Flowable<Map.Entry<Object, MetadataValue<Object>>> entryMetatdataFlowable = entryFlowable(
-                  remoteCache.retrieveEntriesWithMetadata(segments, 512));
-            if (filterToUse != null) {
-               entryMetatdataFlowable = entryMetatdataFlowable.filter(filterToUse);
-            }
-            return entryMetatdataFlowable.map(e -> {
-               MetadataValue<Object> value = e.getValue();
-               Metadata metadata = new EmbeddedMetadata.Builder()
-                     .version(new NumericVersion(value.getVersion()))
-                     .lifespan(value.getLifespan(), TimeUnit.SECONDS)
-                     .maxIdle(value.getMaxIdle(), TimeUnit.SECONDS).build();
-               long created = value.getCreated();
-               long lastUsed = value.getLastUsed();
-               Object realValue = value.getValue();
-               return entryFactory.create(wrap(e.getKey()), wrap(realValue), metadata, null, created, lastUsed);
-            });
+         Flowable<Map.Entry<Object, MetadataValue<Object>>> entryFlowable = Flowable.fromPublisher(remoteCache.publishEntriesWithMetadata(null, 512));
+         if (filter != null) {
+            entryFlowable = entryFlowable.filter(e -> filter.test(wrap(e.getKey())));
          }
+         return entryFlowable.map(e -> {
+            MetadataValue<Object> value = e.getValue();
+            Metadata metadata = new EmbeddedMetadata.Builder()
+                  .version(new NumericVersion(value.getVersion()))
+                  .lifespan(value.getLifespan(), TimeUnit.SECONDS)
+                  .maxIdle(value.getMaxIdle(), TimeUnit.SECONDS).build();
+            long created = value.getCreated();
+            long lastUsed = value.getLastUsed();
+            Object realValue = value.getValue();
+            return entryFactory.create(wrap(e.getKey()), wrap(realValue), metadata, null, created, lastUsed);
+         });
       } else {
-         Flowable<Map.Entry<Object, Object>> entryFlowable = entryFlowable(remoteCache.entrySet(segments).iterator());
+         Flowable<Map.Entry<Object, Object>> entryFlowable = Flowable.fromPublisher(
+               remoteCache.publishEntries(null, null, null, 512));
          if (filter != null) {
             entryFlowable = entryFlowable.filter(e -> filter.test(wrap(e.getKey())));
          }
          // Technically we will send the metadata and value to the user, no matter what.
          return entryFlowable.map(e -> e.getValue() == null ? null : entryFactory.create(e.getKey(), (MarshalledValue) e.getValue()));
       }
-   }
-
-   private static <E> Flowable<E> entryFlowable(CloseableIterator<E> closeableIteratorSet) {
-      return Flowable.using(
-            () -> closeableIteratorSet,
-            iter -> Flowable.fromIterable(() -> iter),
-            AutoCloseable::close);
    }
 
    private static <T> T wrap(Object obj) {
@@ -269,27 +250,21 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
    }
 
    @Override
-   public int size() {
-      return remoteCache.size();
+   public CompletionStage<Long> size(IntSet segments) {
+      if (segmentCount == segments.size()) {
+         return remoteCache.sizeAsync();
+      }
+      return publishKeys(segments, null).count().toCompletionStage();
    }
 
    @Override
-   public int size(IntSet segments) {
-      return PersistenceUtil.count(this, segments);
+   public Publisher<MarshallableEntry<K, V>> purgeExpired() {
+      // Nothing to do here - expiration is controlled by the server
+      return Flowable.empty();
    }
 
    @Override
-   public void purge(Executor threadPool, PurgeListener task) {
-      //ignored
-   }
-
-   @Override
-   public void write(int segment, MarshallableEntry<? extends K, ? extends V> entry) {
-      write(entry);
-   }
-
-   @Override
-   public void write(MarshallableEntry entry) throws PersistenceException {
+   public CompletionStage<Void> write(int segment, MarshallableEntry<? extends K, ? extends V> entry) {
       if (trace) {
          log.tracef("Adding entry: %s", entry);
       }
@@ -299,8 +274,9 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
       Object key = getKey(entry);
       Object value = getValue(entry);
 
-      remoteCache.put(key, value, toSeconds(lifespan, entry.getKey(), LIFESPAN), TimeUnit.SECONDS,
-            toSeconds(maxIdle, entry.getKey(), MAXIDLE), TimeUnit.SECONDS);
+      return remoteCache.putAsync(key, value, toSeconds(lifespan, entry.getKey(), LIFESPAN), TimeUnit.SECONDS,
+            toSeconds(maxIdle, entry.getKey(), MAXIDLE), TimeUnit.SECONDS)
+            .thenApply(CompletableFutures.toNullFunction());
    }
 
    private Object getKey(MarshallableEntry entry) {
@@ -319,45 +295,46 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
    }
 
    @Override
-   public CompletionStage<Void> bulkUpdate(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
-      return Flowable.fromPublisher(publisher)
-            .buffer(configuration.maxBatchSize())
-            // TODO: this is blocking - when the full non blocking SPI is introduced this needs to chain returns
-            // of the putAll to ensure that only a single batch is sent at a time
-            .doOnNext(entries -> remoteCache.putAll(entries.stream().collect(Collectors.toMap(this::getKey, this::getValue))))
-            .doOnError(PersistenceException::new)
-            .ignoreElements()
+   public CompletionStage<Void> batch(int publisherCount, Publisher<SegmentedPublisher<Object>> removePublisher,
+         Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
+      Completable removeCompletable = Flowable.fromPublisher(removePublisher)
+            .flatMap(sp -> Flowable.fromPublisher(sp), publisherCount)
+            .map(key -> key instanceof WrappedByteArray ? ((WrappedByteArray) key).getBytes() : key)
+            .flatMapCompletable(key -> Completable.fromCompletionStage(remoteCache.removeAsync(key)), false, 10);
+
+      Completable putCompletable = Flowable.fromPublisher(writePublisher)
+            .flatMap(sp -> Flowable.fromPublisher(sp), publisherCount)
+            .groupBy(MarshallableEntry::getMetadata)
+            .flatMapCompletable(meFlowable -> meFlowable.buffer(configuration.maxBatchSize())
+                  .flatMapCompletable(meList -> {
+                     Map<Object, Object> map = meList.stream().collect(Collectors.toMap(this::getKey, this::getValue));
+
+                     Metadata metadata = meFlowable.getKey();
+                     long lifespan = metadata != null ? metadata.lifespan() : -1;
+                     long maxIdle = metadata != null ? metadata.maxIdle() : -1;
+
+                     return Completable.fromCompletionStage(remoteCache.putAllAsync(map, lifespan, TimeUnit.SECONDS,
+                           maxIdle, TimeUnit.SECONDS));
+                  }));
+      return removeCompletable.mergeWith(putCompletable)
             .toCompletionStage(null);
    }
 
    @Override
-   public void clear() throws PersistenceException {
-      remoteCache.clear();
+   public CompletionStage<Void> clear() {
+      return remoteCache.clearAsync();
    }
 
    @Override
-   public void clear(IntSet segments) {
-      CompletionStage<Void> stage = publishKeys(segments, null)
-            .doOnNext(k -> remoteCache.remove(k))
-            .ignoreElements()
-            .toCompletionStage(null);
-      CompletionStages.join(stage);
-   }
-
-   @Override
-   public boolean delete(int segment, Object key) {
-      return delete(key);
-   }
-
-   @Override
-   public boolean delete(Object key) throws PersistenceException {
+   public CompletionStage<Boolean> delete(int segment, Object key) {
       if (key instanceof WrappedByteArray) {
          key = ((WrappedByteArray) key).getBytes();
       }
       // Less than ideal, but RemoteCache, since it extends Cache, can only
       // know whether the operation succeeded based on whether the previous
       // value is null or not.
-      return remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).remove(key) != null;
+      return remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).removeAsync(key)
+            .thenApply(Objects::nonNull);
    }
 
    private long toSeconds(long millis, Object key, String desc) {
@@ -407,6 +384,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
             .keySizeEstimate(configuration.keySizeEstimate())
             .marshaller(marshaller)
             .asyncExecutorFactory().factoryClass(configuration.asyncExecutorFactory().factory().getClass())
+            .asyncExecutorFactory().withExecutorProperties(configuration.asyncExecutorFactory().properties())
             .socketTimeout(socketTimeout.intValue())
             .tcpNoDelay(configuration.tcpNoDelay())
             .valueSizeEstimate(configuration.valueSizeEstimate())
@@ -451,7 +429,19 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
    }
 
    @Override
-   public boolean shouldWrite(long commandFlags) {
-      return !EnumUtil.containsAny(FlagBitSets.ROLLING_UPGRADE, commandFlags);
+   public boolean ignoreCommandWithFlags(long commandFlags) {
+      return EnumUtil.containsAny(FlagBitSets.ROLLING_UPGRADE, commandFlags);
+   }
+
+   @Override
+   public CompletionStage<Void> addSegments(IntSet segments) {
+      // Here for documentation purposes. This method should never be invoked as we only support segmented when shared
+      return NonBlockingStore.super.addSegments(segments);
+   }
+
+   @Override
+   public CompletionStage<Void> removeSegments(IntSet segments) {
+      // Here for documentation purposes. This method should never be invoked as we only support segmented when shared
+      return NonBlockingStore.super.removeSegments(segments);
    }
 }

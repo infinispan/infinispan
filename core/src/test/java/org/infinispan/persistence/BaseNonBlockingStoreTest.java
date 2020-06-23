@@ -175,7 +175,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    /**
     * Overridden in stores which accept only certain value types
     */
-   protected Object wrap(String key, String value) {
+   protected Object wrap(Object key, Object value) {
       return value;
    }
 
@@ -656,7 +656,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       assertEquals("contains(" + k + ")", expected, store.contains(k));
    }
 
-   protected final InternalCacheEntry<Object, Object> internalCacheEntry(String key, String value, long lifespan) {
+   protected final <K> InternalCacheEntry<K, Object> internalCacheEntry(K key, Object value, long lifespan) {
       return TestInternalCacheEntryFactory.create(factory, key, wrap(key, value), lifespan);
    }
 

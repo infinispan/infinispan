@@ -15,6 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.executors.SecurityAwareExecutorFactory;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.factories.threads.BlockingThreadFactory;
+import org.infinispan.factories.threads.NonBlockingThreadFactory;
 
 /**
  * Default executor factory that creates executors using the JDK Executors service.
@@ -41,13 +43,21 @@ public class DefaultExecutorFactory implements SecurityAwareExecutorFactory {
       final int threadPrio = tp.getIntProperty("threadPriority", Thread.MIN_PRIORITY);
       final String threadNamePrefix = tp.getProperty("threadNamePrefix", tp.getProperty("componentName", "Thread"));
       final String threadNameSuffix = tp.getProperty("threadNameSuffix", "");
+      String blocking = tp.getProperty("blocking");
+      ThreadGroup threadGroup;
+      if (blocking == null) {
+         threadGroup = Thread.currentThread().getThreadGroup();
+      } else {
+         threadGroup = Boolean.parseBoolean(blocking) ? new BlockingThreadFactory.ISPNBlockingThreadGroup(threadNamePrefix + "-group") :
+               new NonBlockingThreadFactory.ISPNNonBlockingThreadGroup(threadNamePrefix + "-group");
+      }
       BlockingQueue<Runnable> queue = queueSize == 0 ? new SynchronousQueue<Runnable>()
             : new LinkedBlockingQueue<Runnable>(queueSize);
       ThreadFactory tf = new ThreadFactory() {
 
          private Thread createThread(Runnable r) {
             String threadName = threadNamePrefix + "-" + counter.getAndIncrement() + threadNameSuffix;
-            Thread th = new Thread(r, threadName);
+            Thread th = new Thread(threadGroup, r, threadName);
             th.setDaemon(true);
             th.setPriority(threadPrio);
             return th;

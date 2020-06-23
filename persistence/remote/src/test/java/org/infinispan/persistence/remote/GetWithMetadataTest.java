@@ -50,7 +50,8 @@ public class GetWithMetadataTest extends AbstractInfinispanTest {
             .hotRodWrapping(true)
             .addServer()
             .host("localhost")
-            .port(sourcePort);
+            .port(sourcePort)
+            .shared(true);
       return cb;
    }
 
