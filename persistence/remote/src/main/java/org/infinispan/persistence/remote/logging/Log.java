@@ -47,4 +47,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "RemoteStore only supports segmentation when using at least protocol version %s or higher", id = 10008)
    CacheConfigurationException segmentationNotSupportedInThisVersion(ProtocolVersion version);
+
+   @Message(value = "A segmented RemoteStore must be shared", id = 10009)
+   CacheConfigurationException segmentationRequiresBeingShared();
 }
