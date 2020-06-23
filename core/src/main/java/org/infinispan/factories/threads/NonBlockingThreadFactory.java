@@ -13,8 +13,8 @@ public class NonBlockingThreadFactory extends DefaultThreadFactory implements No
       super(name, new ISPNNonBlockingThreadGroup(threadGroupName), initialPriority, threadNamePattern, node, component);
    }
 
-   static final class ISPNNonBlockingThreadGroup extends ThreadGroup implements NonBlockingResource {
-      ISPNNonBlockingThreadGroup(String name) {
+   public static final class ISPNNonBlockingThreadGroup extends ThreadGroup implements NonBlockingResource {
+      public ISPNNonBlockingThreadGroup(String name) {
          super(name);
       }
    }

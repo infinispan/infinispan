@@ -15,7 +15,7 @@ public interface CacheTopologyInfo {
    /**
     * @return The number of configured segments for the cache.
     */
-   int getNumSegments();
+   Integer getNumSegments();
 
    /**
     * @return Segments owned by each server.

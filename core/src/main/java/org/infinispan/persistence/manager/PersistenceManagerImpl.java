@@ -261,7 +261,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
          characteristics.add(Characteristic.WRITE_ONLY);
          characteristics.remove(Characteristic.BULK_READ);
       }
-      if (!storeConfiguration.segmented()) {
+      if (storeConfiguration.segmented()) {
+         if (!characteristics.contains(Characteristic.SEGMENTABLE)) {
+            throw log.storeConfiguredSegmentedButCharacteristicNotPresent(store.getClass().getName());
+         }
+      } else {
          characteristics.remove(Characteristic.SEGMENTABLE);
       }
       if (storeConfiguration.transactional()) {

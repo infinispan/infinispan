@@ -2041,4 +2041,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Store %s cannot be configured to be shared as it does not contain the SHARED characteristic", id = 600)
    CacheConfigurationException storeConfiguredSharedButCharacteristicNotPresent(String storeClassName);
+
+   @Message(value = "Store %s cannot be configured to be segmented as it does not contain the SEGMENTABLE characteristic", id = 601)
+   CacheConfigurationException storeConfiguredSegmentedButCharacteristicNotPresent(String storeClassName);
 }

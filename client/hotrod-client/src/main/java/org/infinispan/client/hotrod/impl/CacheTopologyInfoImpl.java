@@ -22,7 +22,7 @@ public class CacheTopologyInfoImpl implements CacheTopologyInfo {
    }
 
    @Override
-   public int getNumSegments() {
+   public Integer getNumSegments() {
       return numSegments;
    }
 

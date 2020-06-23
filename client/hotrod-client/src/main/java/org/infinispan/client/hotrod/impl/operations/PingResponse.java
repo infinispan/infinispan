@@ -71,6 +71,14 @@ public class PingResponse {
       return version;
    }
 
+   public MediaType getKeyMediaType() {
+      return keyMediaType;
+   }
+
+   public MediaType getValueMediaType() {
+      return valueMediaType;
+   }
+
    public static class Decoder {
       int decoderState = 0;
       final ProtocolVersion version;
