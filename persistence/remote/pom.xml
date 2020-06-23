@@ -80,6 +80,12 @@
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>io.projectreactor.tools</groupId>
+         <artifactId>blockhound</artifactId>
+         <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>org.testng</groupId>
