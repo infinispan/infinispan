@@ -1878,7 +1878,7 @@ public interface Log extends BasicLogger {
    void marshallersNotSupported();
 
    @LogMessage(level = WARN)
-   @Message(value = "infinispan-boss-marshalling dependency detected, jboss-marshalling has been deprecated and will be removed in the future", id = 554)
+   @Message(value = "jboss-marshalling is deprecated and planned for removal", id = 554)
    void jbossMarshallingDetected();
 
    @LogMessage(level = ERROR)
