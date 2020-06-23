@@ -257,6 +257,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
       } else {
          characteristics.remove(Characteristic.TRANSACTIONAL);
       }
+      if (storeConfiguration.shared()) {
+         if (!characteristics.contains(Characteristic.SHAREABLE)) {
+            throw log.storeConfiguredSharedButCharacteristicNotPresent(store.getClass().getName());
+         }
+      } else {
+         characteristics.remove(Characteristic.SHAREABLE);
+      }
       return characteristics;
    }
 
@@ -1252,7 +1259,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                }
                int size = stores.size();
                return Flowable.fromIterable(stores)
-                     .filter(storeStatus -> storeStatus.characteristics.contains(Characteristic.SEGMENTABLE))
+                     .filter(PersistenceManagerImpl::shouldInvokeSegmentMethods)
                      .delay(storeStatus -> Completable.fromCompletionStage(storeStatus.store.addSegments(segments)).toFlowable())
                      .count()
                      .map(count -> size == count);
@@ -1272,13 +1279,18 @@ public class PersistenceManagerImpl implements PersistenceManager {
                }
                int size = stores.size();
                return Flowable.fromIterable(stores)
-                     .filter(storeStatus -> storeStatus.characteristics.contains(Characteristic.SEGMENTABLE))
+                     .filter(PersistenceManagerImpl::shouldInvokeSegmentMethods)
                      .delay(storeStatus -> Completable.fromCompletionStage(storeStatus.store.removeSegments(segments)).toFlowable())
                      .count()
                      .map(count -> size == count);
             },
             this::releaseReadLock
       ).toCompletionStage();
+   }
+
+   private static boolean shouldInvokeSegmentMethods(StoreStatus storeStatus) {
+      return storeStatus.characteristics.contains(Characteristic.SEGMENTABLE) &&
+            !storeStatus.characteristics.contains(Characteristic.SHAREABLE);
    }
 
    public <K, V> List<NonBlockingStore<K, V>> getAllStores(Predicate<Set<Characteristic>> predicate) {

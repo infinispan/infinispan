@@ -377,7 +377,8 @@ public interface NonBlockingStore<K, V> {
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">This method is invoked only if the store has this characteristic.</td>
+    *       <td valign="top">This method is invoked only if the store has this characteristic and configured to be
+    *          {@link StoreConfiguration#segmented()}.</td>
     *    </tr>
     * </table>
     * <p>
@@ -408,7 +409,8 @@ public interface NonBlockingStore<K, V> {
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">This method is invoked only if the store has this characteristic.</td>
+    *       <td valign="top">This method is invoked only if the store has this characteristic and configured to be
+    *          {@link StoreConfiguration#segmented()}.</td>
     *    </tr>
     * </table>
     * <p>
