@@ -9,12 +9,12 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Formatter;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -79,7 +79,7 @@ public class DigestAuthenticator extends AbstractAuthenticator implements Cachin
    public synchronized Request authenticate(Route route, Response response) throws IOException {
       String header = findHeader(response.headers(), WWW_AUTH, "Digest");
       Matcher matcher = HEADER_REGEX.matcher(header);
-      Map<String, String> parameters = new HashMap<>(8);
+      Map<String, String> parameters = new ConcurrentHashMap<>(8);
       while (matcher.find()) {
          parameters.put(matcher.group(1), matcher.group(2));
       }
@@ -96,7 +96,7 @@ public class DigestAuthenticator extends AbstractAuthenticator implements Cachin
    public Request authenticateWithState(Route route, Request request) throws IOException {
       Map<String, String> ref = parametersRef.get();
       Map<String, String> parameters = ref == null
-            ? new HashMap<>() : new HashMap<>(ref);
+            ? new ConcurrentHashMap<>() : new ConcurrentHashMap<>(ref);
       return authenticateWithState(route, request, parameters);
    }
 

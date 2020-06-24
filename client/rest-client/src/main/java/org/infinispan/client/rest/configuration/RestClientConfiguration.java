@@ -134,4 +134,24 @@ public class RestClientConfiguration {
 
       return properties;
    }
+
+   public String toURI() {
+      StringBuilder sb = new StringBuilder("http");
+      if (security.ssl().enabled()) {
+         sb.append('s');
+      }
+      sb.append("://");
+      if (security.authentication().enabled()) {
+         sb.append(security.authentication().username()).append(':').append(security.authentication().password()).append('@');
+      }
+      for (int i = 0; i < servers.size(); i++) {
+         if (i > 0) {
+            sb.append(";");
+         }
+         ServerConfiguration server = servers.get(i);
+         sb.append(server.host()).append(":").append(server.port());
+      }
+
+      return sb.toString();
+   }
 }

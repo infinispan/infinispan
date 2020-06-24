@@ -87,6 +87,7 @@ import org.infinispan.client.rest.configuration.ServerConfiguration;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -120,8 +121,17 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
+   public String getURI() {
+      if (client != null) {
+         return client.getConfiguration().toURI();
+      } else {
+         return null;
+      }
+   }
+
+   @Override
    public void close() throws IOException {
-      client.close();
+      Util.close(client);
    }
 
    @Override

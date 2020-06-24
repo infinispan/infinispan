@@ -174,7 +174,7 @@
       <version.mockito_dep.objenesis>2.6</version.mockito_dep.objenesis>
       <version.netty>4.1.51.Final</version.netty>
       <version.okhttp>3.14.8</version.okhttp>
-      <version.openjdk.jmh>1.12</version.openjdk.jmh>
+      <version.openjdk.jmh>1.23</version.openjdk.jmh>
       <version.org.wildfly.arquillian>2.2.0.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.core>10.0.3.Final</version.org.wildfly.core>
       <version.org.wildfly.elytron>1.12.1.Final</version.org.wildfly.elytron>

@@ -1,5 +1,6 @@
 package org.infinispan.client.rest.configuration;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -7,6 +8,7 @@ import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.infinispan.client.rest.RestURI;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -122,6 +124,16 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
 
    public RestClientConfigurationBuilder contextPath(String contextPath) {
       this.contextPath = contextPath;
+      return this;
+   }
+
+   public RestClientConfigurationBuilder uri(URI uri) {
+      this.read(RestURI.create(uri).toConfigurationBuilder().build(false));
+      return this;
+   }
+
+   public RestClientConfigurationBuilder uri(String uri) {
+      this.read(RestURI.create(uri).toConfigurationBuilder().build(false));
       return this;
    }
 
