@@ -11,7 +11,7 @@ import org.infinispan.commons.util.TypedProperties;
  * @version 10.0
  */
 public class RestClientConfigurationProperties {
-   private static final String ICR = "infinispan.client.rest.";
+   public static final String ICR = "infinispan.client.rest.";
 
    public static final String SERVER_LIST = ICR + "server_list";
    public static final String CONTEXT_PATH = ICR + "context_path";
