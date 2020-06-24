@@ -3,7 +3,7 @@ package org.infinispan.remoting.inboundhandler;
 import org.infinispan.commands.remote.CacheRpcCommand;
 
 /**
- * Class to be extended to allow some control over the {@link org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler}
+ * Class to be extended to allow some control over the {@link PerCacheInboundInvocationHandler}
  * in tests.
  *
  * @author Pedro Ruivo
@@ -37,9 +37,9 @@ public abstract class AbstractDelegatingHandler implements PerCacheInboundInvoca
    }
 
    /**
-    * Invoked before the command is handled by the real {@link org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler}.
+    * Invoked before the command is handled by the real {@link PerCacheInboundInvocationHandler}.
     *
-    * @return {@code true} if the command should be handled by the read {@link org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler},
+    * @return {@code true} if the command should be handled by the read {@link PerCacheInboundInvocationHandler},
     * {@code false} otherwise.
     */
    protected boolean beforeHandle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
@@ -49,7 +49,7 @@ public abstract class AbstractDelegatingHandler implements PerCacheInboundInvoca
    /**
     * Invoked after the command is handled.
     *
-    * @param delegated {@code true} if the command was handled by the real {@link org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler},
+    * @param delegated {@code true} if the command was handled by the real {@link PerCacheInboundInvocationHandler},
     *                  {@code false} otherwise.
     */
    protected void afterHandle(CacheRpcCommand command, DeliverOrder order, boolean delegated) {
@@ -58,8 +58,8 @@ public abstract class AbstractDelegatingHandler implements PerCacheInboundInvoca
 
 
    @Override
-   public void registerXSiteCommandReceiver(boolean sync) {
-      delegate.registerXSiteCommandReceiver(sync);
+   public void registerXSiteCommandReceiver() {
+      delegate.registerXSiteCommandReceiver();
    }
 
    @Override

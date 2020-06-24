@@ -52,23 +52,20 @@ public class PerCacheInboundHandlerMBeanTest extends AbstractClusterMBeanTest {
 
 
       //check if it is collected
-      handler.registerXSiteCommandReceiver(true);
+      handler.registerXSiteCommandReceiver();
 
-      assertEquals(1, (long) mBeanServer.getAttribute(objName, "SyncXSiteRequestsReceived"));
-      assertEquals(0, (long) mBeanServer.getAttribute(objName, "AsyncXSiteRequestsReceived"));
+      assertEquals(1, (long) mBeanServer.getAttribute(objName, "XSiteRequestsReceived"));
 
       // now reset statistics
       mBeanServer.invoke(objName, "resetStatistics", new Object[0], new String[0]);
-      assertEquals(0, (long) mBeanServer.getAttribute(objName, "SyncXSiteRequestsReceived"));
-      assertEquals(0, (long) mBeanServer.getAttribute(objName, "AsyncXSiteRequestsReceived"));
+      assertEquals(0, (long) mBeanServer.getAttribute(objName, "XSiteRequestsReceived"));
 
       //disable it
       mBeanServer.setAttribute(objName, new Attribute("StatisticsEnabled", Boolean.FALSE));
 
-      handler.registerXSiteCommandReceiver(true);
+      handler.registerXSiteCommandReceiver();
 
-      assertEquals(0, (long) mBeanServer.getAttribute(objName, "SyncXSiteRequestsReceived"));
-      assertEquals(0, (long) mBeanServer.getAttribute(objName, "AsyncXSiteRequestsReceived"));
+      assertEquals(0, (long) mBeanServer.getAttribute(objName, "XSiteRequestsReceived"));
 
       // reset stats enabled parameter
       mBeanServer.setAttribute(objName, new Attribute("StatisticsEnabled", Boolean.TRUE));
@@ -93,37 +90,28 @@ public class PerCacheInboundHandlerMBeanTest extends AbstractClusterMBeanTest {
       Reply reply = response -> {
       }; //sync reply
 
-      //PER_SENDER to avoid span new threads
       handler.handleFromRemoteSite("another-site", command, reply, DeliverOrder.PER_SENDER);
-      assertEquals(1, (long) mBeanServer.getAttribute(objName, "SyncXSiteRequestsReceived"));
-      assertEquals(0, (long) mBeanServer.getAttribute(objName, "AsyncXSiteRequestsReceived"));
+      assertEquals(1, (long) mBeanServer.getAttribute(objName, "XSiteRequestsReceived"));
 
       handler.handleFromRemoteSite("another-site", command, reply, DeliverOrder.PER_SENDER);
-      assertEquals(2, (long) mBeanServer.getAttribute(objName, "SyncXSiteRequestsReceived"));
-      assertEquals(0, (long) mBeanServer.getAttribute(objName, "AsyncXSiteRequestsReceived"));
+      assertEquals(2, (long) mBeanServer.getAttribute(objName, "XSiteRequestsReceived"));
 
-      //NO_OP reply identifies a asynchronous request
       handler.handleFromRemoteSite("another-site", command, Reply.NO_OP, DeliverOrder.PER_SENDER);
-      assertEquals(2, (long) mBeanServer.getAttribute(objName, "SyncXSiteRequestsReceived"));
-      assertEquals(1, (long) mBeanServer.getAttribute(objName, "AsyncXSiteRequestsReceived"));
+      assertEquals(3, (long) mBeanServer.getAttribute(objName, "XSiteRequestsReceived"));
 
       // now reset statistics
       mBeanServer.invoke(objName, "resetStatistics", new Object[0], new String[0]);
-      assertEquals(0, (long) mBeanServer.getAttribute(objName, "SyncXSiteRequestsReceived"));
-      assertEquals(0, (long) mBeanServer.getAttribute(objName, "AsyncXSiteRequestsReceived"));
+      assertEquals(0, (long) mBeanServer.getAttribute(objName, "XSiteRequestsReceived"));
 
       handler.handleFromRemoteSite("another-site", command, Reply.NO_OP, DeliverOrder.PER_SENDER);
-      assertEquals(0, (long) mBeanServer.getAttribute(objName, "SyncXSiteRequestsReceived"));
-      assertEquals(1, (long) mBeanServer.getAttribute(objName, "AsyncXSiteRequestsReceived"));
+      assertEquals(1, (long) mBeanServer.getAttribute(objName, "XSiteRequestsReceived"));
 
       handler.handleFromRemoteSite("another-site", command, Reply.NO_OP, DeliverOrder.PER_SENDER);
-      assertEquals(0, (long) mBeanServer.getAttribute(objName, "SyncXSiteRequestsReceived"));
-      assertEquals(2, (long) mBeanServer.getAttribute(objName, "AsyncXSiteRequestsReceived"));
+      assertEquals(2, (long) mBeanServer.getAttribute(objName, "XSiteRequestsReceived"));
 
       // now reset statistics
       mBeanServer.invoke(objName, "resetStatistics", new Object[0], new String[0]);
-      assertEquals(0, (long) mBeanServer.getAttribute(objName, "SyncXSiteRequestsReceived"));
-      assertEquals(0, (long) mBeanServer.getAttribute(objName, "AsyncXSiteRequestsReceived"));
+      assertEquals(0, (long) mBeanServer.getAttribute(objName, "XSiteRequestsReceived"));
    }
 
    private ObjectName getObjectName() {

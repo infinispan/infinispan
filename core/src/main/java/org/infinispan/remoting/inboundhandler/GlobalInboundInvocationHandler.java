@@ -130,7 +130,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       ComponentRegistry cr = globalComponentRegistry.getNamedComponentRegistry(localCacheName);
       PerCacheInboundInvocationHandler handler = cr.getPerCacheInboundInvocationHandler();
       assert handler != null;
-      handler.registerXSiteCommandReceiver(reply != Reply.NO_OP);
+      handler.registerXSiteCommandReceiver();
       BackupReceiver receiver = cr.getBackupReceiver().running();
       command.performInLocalSite(receiver, order.preserveOrder()).whenComplete(new ResponseConsumer(command, reply));
    }
