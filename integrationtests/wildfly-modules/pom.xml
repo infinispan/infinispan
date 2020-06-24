@@ -18,14 +18,14 @@
       <server.build.dist>${ispnserver.project.dir}/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
       <ispnserver.dist>${basedir}/target/infinispan-server</ispnserver.dist>
       <resources.dir>${basedir}/src/test/resources</resources.dir>
-      <serverMemoryJvmArgs>-Xmx300m ${testjvm.commonArgs}</serverMemoryJvmArgs>
+      <serverMemoryJvmArgs>-Xmx300m</serverMemoryJvmArgs>
       <jvm.x64.args />
       <transport.stack>-Dinfinispan.cluster.stack=${infinispan.cluster.stack}</transport.stack>
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
       <mcast.ip>234.99.54.14</mcast.ip>
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
       <server.jvm>${env.JAVA_HOME}</server.jvm>
-      <server.jvm.args>${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args} ${testjvm.jigsawArgs}</server.jvm.args>
+      <server.jvm.args>${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
       <log4j.configurationFile>log4j2.xml</log4j.configurationFile>
    </properties>
 
@@ -398,7 +398,7 @@
          </activation>
          <properties>
             <server.jvm>${env.JAVA8_HOME}</server.jvm>
-            <server.jvm.args>${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
+            <server.jvm.args>${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
          </properties>
       </profile>
    </profiles>

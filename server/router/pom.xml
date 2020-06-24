@@ -216,7 +216,7 @@
                         <usedefaultlisteners>false</usedefaultlisteners>
                         <listener>${junitListener}</listener>
                     </properties>
-                    <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
+                    <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs}</argLine>
                 </configuration>
                 <dependencies>
                     <dependency>
