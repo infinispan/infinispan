@@ -76,6 +76,11 @@ public interface RestClient extends Closeable {
    RestMetricsClient metrics();
 
    /**
+    * Protobuf schemas
+    */
+   RestSchemaClient schemas();
+
+   /**
     * Returns the configuration of this {@link RestClient}
     */
    RestClientConfiguration getConfiguration();

@@ -1,24 +1,25 @@
 package org.infinispan.rest.resources;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.client.util.StringContentProvider;
-import org.eclipse.jetty.http.HttpMethod;
+import static org.infinispan.commons.util.Util.getResourceAsString;
+import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.security.PrivilegedAction;
+import java.util.concurrent.CompletionStage;
+
+import javax.security.auth.Subject;
+
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.RestSchemaClient;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.security.auth.Subject;
-import java.security.PrivilegedAction;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
-import static org.infinispan.commons.util.Util.getResourceAsString;
-import static org.testng.AssertJUnit.assertEquals;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Test(groups = "functional", testName = "rest.ProtobufResourceTest")
 public class ProtobufResourceTest extends AbstractRestResourceTest {
@@ -42,25 +43,16 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
    }
 
    public void listSchemasWhenEmpty() throws Exception {
-      String BASE_URL = String.format("http://localhost:%d/rest/v2/schemas", restServer().getPort());
-
-      ContentResponse response = client.newRequest(BASE_URL)
-            .method(HttpMethod.GET)
-            .accept(APPLICATION_JSON_TYPE).send();
+      CompletionStage<RestResponse> response = client.schemas().names();
 
       ResponseAssertion.assertThat(response).isOk();
-      JsonNode jsonNode = new ObjectMapper().readTree(response.getContentAsString());
+      JsonNode jsonNode = new ObjectMapper().readTree(join(response).getBody());
       assertEquals(0, jsonNode.size());
    }
 
    @Test
-   public void getNotExistingSchema() throws Exception {
-      String BASE_URL = String.format("http://localhost:%d/rest/v2/schemas", restServer().getPort());
-
-      ContentResponse response = client.newRequest(BASE_URL + "/coco")
-            .method(HttpMethod.GET)
-            .accept(TEXT_PLAIN_TYPE).send();
-
+   public void getNotExistingSchema() {
+      CompletionStage<RestResponse> response = client.schemas().get("coco");
       ResponseAssertion.assertThat(response).isNotFound();
    }
 
@@ -68,32 +60,29 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
    public void updateNonExistingSchema() throws Exception {
       String person = getResourceAsString("person.proto", getClass().getClassLoader());
 
-      ContentResponse response = updateSchema("person", person);
-
+      CompletionStage<RestResponse> response = client.schemas().put("person", person);
       ResponseAssertion.assertThat(response).isOk();
    }
 
    @Test
    public void putAndGetWrongProtobuf() throws Exception {
-      String BASE_URL = String.format("http://localhost:%d/rest/v2/schemas", restServer().getPort());
+      RestSchemaClient schemaClient = client.schemas();
 
       String errorProto = getResourceAsString("error.proto", getClass().getClassLoader());
 
-      ContentResponse response = addSchema("error", errorProto);
+      RestResponse response = join(schemaClient.post("error", errorProto));
 
       String cause = "java.lang.IllegalStateException:"
             + " Syntax error in error.proto at 3:8: unexpected label: messoge";
 
       ResponseAssertion.assertThat(response).isOk();
-      JsonNode jsonNode = new ObjectMapper().readTree(response.getContent());
+      JsonNode jsonNode = new ObjectMapper().readTree(response.getBody());
       assertEquals("error.proto", jsonNode.get("name").asText());
       assertEquals("Schema error.proto has errors", jsonNode.get("error").get("message").asText());
       assertEquals(cause, jsonNode.get("error").get("cause").asText());
 
       // Read adding .proto should also work
-      response = client.newRequest(BASE_URL + "/error")
-            .method(HttpMethod.GET)
-            .accept(TEXT_PLAIN_TYPE).send();
+      response = join(schemaClient.get("error"));
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentEqualToFile("error.proto");
 
@@ -102,104 +91,80 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void crudSchema() throws Exception {
-      String BASE_URL = String.format("http://localhost:%d/rest/v2/schemas", restServer().getPort());
+      RestSchemaClient schemaClient = client.schemas();
       String personProto = getResourceAsString("person.proto", getClass().getClassLoader());
 
       // Create
-      ContentResponse response = addSchema("person", personProto);
+      RestResponse response = join(schemaClient.post("person", personProto));
       ResponseAssertion.assertThat(response).isOk();
-      ObjectMapper objectMapper = new ObjectMapper();
-      JsonNode jsonNode = objectMapper.readTree(response.getContent());
-      assertEquals("null", jsonNode.get("error").asText());
+
+      JsonNode jsonNode = new ObjectMapper().readTree(response.getBody());
+      assertTrue(jsonNode.get("error").isNull());
 
       // Read
-      response = client.newRequest(BASE_URL + "/person")
-            .method(HttpMethod.GET)
-            .accept(TEXT_PLAIN_TYPE).send();
+      response = join(schemaClient.get("person"));
 
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentEqualToFile("person.proto");
 
       // Read adding .proto should also work
-      response = client.newRequest(BASE_URL + "/person.proto")
-            .method(HttpMethod.GET)
-            .accept(TEXT_PLAIN_TYPE).send();
+      response = join(schemaClient.get("person.proto"));
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentEqualToFile("person.proto");
 
       // Update
-      response = updateSchema("person", personProto);
+      response = join(schemaClient.put("person", personProto));
       ResponseAssertion.assertThat(response).isOk();
 
       // Delete
-      response = client.newRequest(BASE_URL + "/person")
-            .content(new StringContentProvider(personProto))
-            .method(HttpMethod.DELETE).send();
-
+      response = join(schemaClient.delete("person"));
       ResponseAssertion.assertThat(response).isOk();
 
-      response = client.newRequest(BASE_URL + "/person")
-            .content(new StringContentProvider(personProto))
-            .method(HttpMethod.GET)
-            .accept(TEXT_PLAIN_TYPE).send();
-
+      response = join(schemaClient.get("person"));
       ResponseAssertion.assertThat(response).isNotFound();
    }
 
    @Test
    public void createTwiceSchema() throws Exception {
+      RestSchemaClient schemaClient = client.schemas();
+
       String personProto = getResourceAsString("person.proto", getClass().getClassLoader());
-      ContentResponse response = addSchema("person", personProto);
+      CompletionStage<RestResponse> response = schemaClient.post("person", personProto);
       ResponseAssertion.assertThat(response).isOk();
-      response = addSchema("person", personProto);
+      response = schemaClient.post("person", personProto);
       ResponseAssertion.assertThat(response).isConflicted();
    }
 
    @Test
    public void addAndGetListOrderedByName() throws Exception {
-      String personProto = getResourceAsString("person.proto", getClass().getClassLoader());
-      addSchema("users", personProto);
-      addSchema("people", personProto);
-      addSchema("dancers", personProto);
+      RestSchemaClient schemaClient = client.schemas();
 
-      String url = String.format("http://localhost:%d/rest/v2/schemas", restServer().getPort());
-      ContentResponse response = client.newRequest(url)
-            .method(HttpMethod.GET)
-            .accept(APPLICATION_JSON_TYPE).send();
+      String personProto = getResourceAsString("person.proto", getClass().getClassLoader());
+
+      join(CompletionStages.allOf(
+            schemaClient.post("users", personProto),
+            schemaClient.post("people", personProto),
+            schemaClient.post("dancers", personProto)
+      ));
+
+      RestResponse response = join(schemaClient.names());
 
       ResponseAssertion.assertThat(response).isOk();
       ObjectMapper objectMapper = new ObjectMapper();
-      JsonNode jsonNode = objectMapper.readTree(response.getContent());
+      JsonNode jsonNode = objectMapper.readTree(response.getBody());
       assertEquals(3, jsonNode.size());
       assertEquals("dancers.proto", jsonNode.get(0).get("name").asText());
       assertEquals("people.proto", jsonNode.get(1).get("name").asText());
       assertEquals("users.proto", jsonNode.get(2).get("name").asText());
    }
 
-   private ContentResponse addSchema(String schemaName, String schemaContent)
-         throws InterruptedException, TimeoutException, ExecutionException {
-      return callAPI(schemaName, schemaContent, HttpMethod.POST);
-   }
-
-   private ContentResponse updateSchema(String schemaName, String schemaContent)
-         throws InterruptedException, TimeoutException, ExecutionException {
-      return callAPI(schemaName, schemaContent, HttpMethod.PUT);
-   }
-
-   private ContentResponse callAPI(String schemaName, String schemaContent, HttpMethod method)
-         throws InterruptedException, TimeoutException, ExecutionException {
-      return client.newRequest(String.format("http://localhost:%d/rest/v2/schemas/", restServer().getPort()) + schemaName)
-            .content(new StringContentProvider(schemaContent))
-            .header("Content-type", "text/plain; charset=utf-8")
-            .method(method).send();
-   }
-
    private void checkListProtobufEndpointUrl(String fileName, String errorMessage) throws Exception {
-      String url = String.format("http://localhost:%d/rest/v2/schemas", restServer().getPort());
-      ContentResponse response = client.newRequest(url).method(HttpMethod.GET).accept(APPLICATION_JSON_TYPE).send();
+      RestSchemaClient schemaClient = client.schemas();
+
+      RestResponse response = join(schemaClient.names());
 
       ObjectMapper objectMapper = new ObjectMapper();
-      JsonNode jsonNode = objectMapper.readTree(response.getContent());
+      JsonNode jsonNode = objectMapper.readTree(response.getBody());
       assertEquals(1, jsonNode.size());
       assertEquals(fileName, jsonNode.get(0).get("name").asText());
 

@@ -10,16 +10,19 @@ import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.commons.dataconversion.MediaType;
 
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
 public class RestResponseOkHttp implements RestResponse {
-   Response response;
+   private final Response response;
+   private final ResponseBody body;
 
    RestResponseOkHttp(Response response) {
       this.response = response;
+      this.body = this.response.body();
    }
 
    @Override
@@ -33,9 +36,16 @@ public class RestResponseOkHttp implements RestResponse {
    }
 
    @Override
+   public String getHeader(String header) {
+      List<String> values = response.headers(header);
+      if (values.isEmpty()) return null;
+      return String.join(",", values);
+   }
+
+   @Override
    public String getBody() {
       try {
-         return response.body().string();
+         return body.string();
       } catch (IOException e) {
          return null;
       }
@@ -43,21 +53,21 @@ public class RestResponseOkHttp implements RestResponse {
 
    @Override
    public InputStream getBodyAsStream() {
-      return response.body().byteStream();
+      return body.byteStream();
    }
 
    @Override
    public byte[] getBodyAsByteArray() {
       try {
-         return response.body().bytes();
+         return body.bytes();
       } catch (IOException e) {
-        throw new RuntimeException(e);
+         throw new RuntimeException(e);
       }
    }
 
    @Override
    public MediaType contentType() {
-      okhttp3.MediaType mediaType = response.body().contentType();
+      okhttp3.MediaType mediaType = body.contentType();
       return mediaType == null ? null : MediaType.fromString(mediaType.toString());
    }
 

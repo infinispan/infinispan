@@ -17,6 +17,11 @@ public interface RestResponse extends RestEntity, AutoCloseable {
 
    Map<String, List<String>> headers();
 
+   /**
+    * Returns the value of a header as a String. For multi-valued headers, values are separated by comma.
+    */
+   String getHeader(String header);
+
    InputStream getBodyAsStream();
 
    byte[] getBodyAsByteArray();

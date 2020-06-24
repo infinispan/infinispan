@@ -3,6 +3,8 @@ package org.infinispan.rest.helper;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -127,4 +129,11 @@ public class RestServerHelper {
    public void unignoreCache(String cacheName) {
       restServer.getCacheIgnore().unignoreCache(cacheName);
    }
+
+   public RestClient createClient() {
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      builder.addServer().host(restServer.getHost()).port(restServer.getPort());
+      return RestClient.forConfiguration(builder.build());
+   }
+
 }

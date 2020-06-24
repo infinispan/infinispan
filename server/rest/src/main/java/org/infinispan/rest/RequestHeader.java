@@ -6,8 +6,10 @@ import java.util.Arrays;
  * @since 11.0
  */
 public enum RequestHeader {
+   ACCEPT_HEADER("Accept"),
    AUTHORIZATION("Authorization"),
    CACHE_CONTROL_HEADER("Cache-Control"),
+   CONTENT_ENCODING_HEADER("Content-encoding"),
    CONTENT_TYPE_HEADER("Content-Type"),
    CREATED_HEADER("created"),
    EXTENDED_HEADER("extended"),
