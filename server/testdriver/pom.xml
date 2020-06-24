@@ -3,9 +3,9 @@
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-parent</artifactId>
+      <artifactId>infinispan-server-parent</artifactId>
       <version>11.0.1-SNAPSHOT</version>
-      <relativePath>../../pom.xml</relativePath>
+      <relativePath>../pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-testdriver-parent-pom</artifactId>
@@ -14,6 +14,7 @@
 
    <properties>
       <server.output.dir.prefix>${infinispan.brand.prefix}-testdriver</server.output.dir.prefix>
+      <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
    </properties>
    <modules>
       <module>core</module>
