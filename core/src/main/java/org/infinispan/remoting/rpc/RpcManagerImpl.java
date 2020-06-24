@@ -13,7 +13,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 
 import org.infinispan.commands.CommandsFactory;
@@ -90,9 +89,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    private final AtomicLong replicationCount = new AtomicLong(0);
    private final AtomicLong replicationFailures = new AtomicLong(0);
    private final AtomicLong totalReplicationTime = new AtomicLong(0);
-   private volatile SimpleStat syncXSiteReplicationTime = new DefaultSimpleStat();
-   private volatile SimpleStat asyncXSiteReplicationTime = new DefaultSimpleStat();
-   private final LongAdder asyncXSiteCounter = new LongAdder();
+   private volatile SimpleStat xSiteReplicationTime = new DefaultSimpleStat();
 
    private boolean statisticsEnabled = false; // by default, don't gather statistics.
 
@@ -377,9 +374,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       if (!statisticsEnabled) {
          return t.backupRemotely(backup, command);
       }
-      if (!backup.isSync()) {
-         asyncXSiteCounter.increment();
-      }
       XSiteResponse rsp = t.backupRemotely(backup, command);
       rsp.whenCompleted(xSiteResponseCompleted);
       return rsp;
@@ -387,20 +381,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    private void registerXSiteTime(XSiteBackup backup, long sendDurationNanos, long durationNanos, Throwable ignored) {
       long durationMillis = TimeUnit.NANOSECONDS.toMillis(durationNanos);
-      if (backup.isSync()) {
-         syncXSiteReplicationTime.record(durationMillis);
-      } else {
-         asyncXSiteReplicationTime.record(durationMillis);
-      }
-   }
-
-   private void registerXsiteReplicationTime(long durationMillis) {
-      syncXSiteReplicationTime.record(durationMillis);
-   }
-
-   private void registerAsyncXSiteReplicationTime(long sendTimeNanos, String siteNameIgnored, Throwable throwable) {
-      long durationMillis = timeService.timeDuration(sendTimeNanos, TimeUnit.MILLISECONDS);
-      asyncXSiteReplicationTime.record(durationMillis);
+      xSiteReplicationTime.record(durationMillis);
    }
 
    private <T> T errorReplicating(Throwable t) {
@@ -435,9 +416,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       replicationCount.set(0);
       replicationFailures.set(0);
       totalReplicationTime.set(0);
-      syncXSiteReplicationTime = new DefaultSimpleStat();
-      asyncXSiteCounter.reset();
-      asyncXSiteReplicationTime = new DefaultSimpleStat();
+      xSiteReplicationTime = new DefaultSimpleStat();
    }
 
    @ManagedAttribute(description = "Number of successful replications", displayName = "Number of successful replications", measurementType = MeasurementType.TRENDSUP)
@@ -514,60 +493,27 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
          displayName = "Average Cross-Site replication time",
          units = Units.MILLISECONDS)
    public long getAverageXSiteReplicationTime() {
-      return isStatisticsEnabled() ? syncXSiteReplicationTime.getAverage(-1) : -1;
+      return isStatisticsEnabled() ? xSiteReplicationTime.getAverage(-1) : -1;
    }
 
    @ManagedAttribute(description = "Returns the minimum replication time, in milliseconds, for a cross-site replication request",
          displayName = "Minimum Cross-Site replication time",
          units = Units.MILLISECONDS)
    public long getMinimumXSiteReplicationTime() {
-      return isStatisticsEnabled() ? syncXSiteReplicationTime.getMin(-1) : -1;
+      return isStatisticsEnabled() ? xSiteReplicationTime.getMin(-1) : -1;
    }
 
    @ManagedAttribute(description = "Returns the maximum replication time, in milliseconds, for a cross-site replication request",
          displayName = "Minimum Cross-Site replication time",
          units = Units.MILLISECONDS)
    public long getMaximumXSiteReplicationTime() {
-      return isStatisticsEnabled() ? syncXSiteReplicationTime.getMax(-1) : -1;
+      return isStatisticsEnabled() ? xSiteReplicationTime.getMax(-1) : -1;
    }
 
    @ManagedAttribute(description = "Returns the number of sync cross-site requests",
-         displayName = "Sync Cross-Site replication requests")
-   public long getSyncXSiteCount() {
-      return isStatisticsEnabled() ? syncXSiteReplicationTime.count() : 0;
-   }
-
-   @ManagedAttribute(description = "Returns the number of async cross-site requests",
-         displayName = "Async Cross-Site replication requests")
-   public long getAsyncXSiteCount() {
-      return isStatisticsEnabled() ? asyncXSiteCounter.sum() : 0;
-   }
-
-   @ManagedAttribute(description = "Returns the average replication time, in milliseconds, for an asynchronous cross-site replication request",
-         displayName = "Average async Cross-Site replication time",
-         units = Units.MILLISECONDS)
-   public long getAverageAsyncXSiteReplicationTime() {
-      return isStatisticsEnabled() ? asyncXSiteReplicationTime.getAverage(-1) : -1;
-   }
-
-   @ManagedAttribute(description = "Returns the minimum replication time, in milliseconds, for an asynchronous cross-site replication request",
-         displayName = "Minimum async Cross-Site replication time",
-         units = Units.MILLISECONDS)
-   public long getMinimumAsyncXSiteReplicationTime() {
-      return isStatisticsEnabled() ? asyncXSiteReplicationTime.getMin(-1) : -1;
-   }
-
-   @ManagedAttribute(description = "Returns the maximum replication time, in milliseconds, for an asynchronous cross-site replication request",
-         displayName = "Maximum async Cross-Site replication time",
-         units = Units.MILLISECONDS)
-   public long getMaximumAsyncXSiteReplicationTime() {
-      return isStatisticsEnabled() ? asyncXSiteReplicationTime.getMax(-1) : -1;
-   }
-
-   @ManagedAttribute(description = "Returns the number of async cross-site acknowledges received",
-         displayName = "Async Cross-Site replication acks")
-   public long getAsyncXSiteAcksCount() {
-      return isStatisticsEnabled() ? asyncXSiteReplicationTime.count() : 0;
+         displayName = "Cross-Site replication requests")
+   public long getNumberXSiteRequests() {
+      return isStatisticsEnabled() ? xSiteReplicationTime.count() : 0;
    }
 
    // mainly for unit testing
