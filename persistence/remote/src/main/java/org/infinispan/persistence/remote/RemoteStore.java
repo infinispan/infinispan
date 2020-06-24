@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.ProtocolVersion;
@@ -30,9 +31,11 @@ import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.remote.configuration.AuthenticationConfiguration;
 import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
@@ -85,7 +88,9 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    protected InitializationContext ctx;
    private MarshallableEntryFactory<K, V> entryFactory;
    private BlockingManager blockingManager;
+   private KeyPartitioner keyPartitioner;
    private int segmentCount;
+   private boolean actuallySegmented;
 
    @Override
    public CompletionStage<Void> start(InitializationContext ctx) {
@@ -93,6 +98,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       this.configuration = ctx.getConfiguration();
       this.entryFactory = ctx.getMarshallableEntryFactory();
       this.blockingManager = ctx.getBlockingManager();
+      this.keyPartitioner = ctx.getKeyPartitioner();
 
       ClusteringConfiguration clusterConfiguration = ctx.getCache().getCacheConfiguration().clustering();
       boolean needsStateTransfer = clusterConfiguration.cacheMode().needsStateTransfer();
@@ -132,13 +138,32 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
             remoteCache = remoteCacheManager.getCache();
          else
             remoteCache = remoteCacheManager.getCache(configuration.remoteCacheName());
+
+         if (configuration.segmented()) {
+            CacheTopologyInfo cacheTopologyInfo = remoteCache.getCacheTopologyInfo();
+            if (cacheTopologyInfo.getNumSegments() == segmentCount) {
+               if (ctx.getCache().getCacheConfiguration().encoding().keyDataType().isObjectStorage()) {
+                  // TODO: change to Log method
+                  throw new UnsupportedOperationException("Segmentation is not supported for a RemoteStore that is configured for object storage");
+               }
+            } else if (trace) {
+               // TODO: change to Log method
+               throw new UnsupportedOperationException("Segmentation is not supported for a RemoteStore where the" +
+                     " configured segments " + segmentCount + " do not match the remote servers amount " + cacheTopologyInfo.getNumSegments());
+            }
+            actuallySegmented = true;
+         }
       }, "RemoteStore-start");
    }
 
    @Override
    public Set<Characteristic> characteristics() {
-      return EnumSet.of(Characteristic.BULK_READ, Characteristic.EXPIRATION, Characteristic.SEGMENTABLE,
+      EnumSet<Characteristic> characteristics = EnumSet.of(Characteristic.BULK_READ, Characteristic.EXPIRATION,
             Characteristic.SHAREABLE);
+      if (actuallySegmented) {
+         characteristics.add(Characteristic.SEGMENTABLE);
+      }
+      return characteristics;
    }
 
    @Override
@@ -201,25 +226,47 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
    @Override
    public Flowable<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
+      Predicate<? super K> filterToUse;
+      IntSet segmentsToUse;
+      if (actuallySegmented) {
+         segmentsToUse = segments;
+         filterToUse = filter;
+      } else {
+         // When not segmented we have to pull down all entries
+         segmentsToUse = null;
+         filterToUse = PersistenceUtil.combinePredicate(segments, keyPartitioner, filter);
+      }
+
       Flowable<K> keyFlowable = Flowable.fromPublisher(remoteCache.publishEntries(Codec27.EMPTY_VAUE_CONVERTER,
-            null, segments, 512))
+            null, segmentsToUse, 512))
             .map(Map.Entry::getKey)
             .map(RemoteStore::wrap);
-      if (filter != null) {
-         keyFlowable = keyFlowable.filter(filter::test);
+
+      if (filterToUse != null) {
+         keyFlowable = keyFlowable.filter(filterToUse::test);
       }
       return keyFlowable;
    }
 
    @Override
    public Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean includeValues) {
+      Predicate<? super K> filterToUse;
+      IntSet segmentsToUse;
+      if (actuallySegmented) {
+         segmentsToUse = segments;
+         filterToUse = filter;
+      } else {
+         // When not segmented we have to pull down all entries
+         segmentsToUse = null;
+         filterToUse = PersistenceUtil.combinePredicate(segments, keyPartitioner, filter);
+      }
       if (configuration.rawValues()) {
-         io.reactivex.rxjava3.functions.Predicate<Map.Entry<Object, ?>> filterToUse = filter == null ? null :
-               e -> filter.test(wrap(e.getKey()));
+         io.reactivex.rxjava3.functions.Predicate<Map.Entry<Object, ?>> wrapFilter = filterToUse == null ? null :
+               e -> filterToUse.test(wrap(e.getKey()));
          Flowable<Map.Entry<Object, MetadataValue<Object>>> entryMetatdataFlowable =
-            Flowable.fromPublisher(remoteCache.publishEntriesWithMetadata(segments, 512));
-         if (filterToUse != null) {
-            entryMetatdataFlowable = entryMetatdataFlowable.filter(filterToUse);
+            Flowable.fromPublisher(remoteCache.publishEntriesWithMetadata(segmentsToUse, 512));
+         if (wrapFilter != null) {
+            entryMetatdataFlowable = entryMetatdataFlowable.filter(wrapFilter);
          }
          return entryMetatdataFlowable.map(e -> {
             MetadataValue<Object> value = e.getValue();
@@ -234,9 +281,9 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
          });
       } else {
          Flowable<Map.Entry<Object, Object>> entryFlowable = Flowable.fromPublisher(
-               remoteCache.publishEntries(null, null, segments, 512));
-         if (filter != null) {
-            entryFlowable = entryFlowable.filter(e -> filter.test(wrap(e.getKey())));
+               remoteCache.publishEntries(null, null, segmentsToUse, 512));
+         if (filterToUse != null) {
+            entryFlowable = entryFlowable.filter(e -> filterToUse.test(wrap(e.getKey())));
          }
          // Technically we will send the metadata and value to the user, no matter what.
          return entryFlowable.map(e -> e.getValue() == null ? null : entryFactory.create(e.getKey(), (MarshalledValue) e.getValue()));
@@ -305,10 +352,18 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
       Completable putCompletable = Flowable.fromPublisher(writePublisher)
             .flatMap(sp -> Flowable.fromPublisher(sp), publisherCount)
-            .buffer(configuration.maxBatchSize())
-            .flatMapCompletable(meList -> Completable.fromCompletionStage(
-               // TODO: this doesn't pay attention to metadata
-               remoteCache.putAllAsync(meList.stream().collect(Collectors.toMap(this::getKey, this::getValue)))));
+            .groupBy(MarshallableEntry::getMetadata)
+            .flatMapCompletable(meFlowable -> meFlowable.buffer(configuration.maxBatchSize())
+                  .flatMapCompletable(meList -> {
+                     Map<Object, Object> map = meList.stream().collect(Collectors.toMap(this::getKey, this::getValue));
+
+                     Metadata metadata = meFlowable.getKey();
+                     long lifespan = metadata != null ? metadata.lifespan() : -1;
+                     long maxIdle = metadata != null ? metadata.maxIdle() : -1;
+
+                     return Completable.fromCompletionStage(remoteCache.putAllAsync(map, lifespan, TimeUnit.SECONDS,
+                           maxIdle, TimeUnit.SECONDS));
+                  }));
       return removeCompletable.mergeWith(putCompletable)
             .toCompletionStage(null);
    }
