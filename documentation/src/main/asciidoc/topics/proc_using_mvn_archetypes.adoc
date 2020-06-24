@@ -1,0 +1,50 @@
+[id='mvn_archetypes']
+= Creating {brandname} Projects
+{brandname} provides a set of Maven archetypes that you can use to generate
+skeleton projects with sample code and `pom.xml` files. You can then import
+these projects into your IDE and start building and running applications with
+{brandname} capabilities.
+
+.Prerequisites
+
+* Maven 3.2 or later.
+* Ensure the JBoss GA repository, `jboss-ga-repository`, is included in your Maven settings.
+
+.Procedure
+
+. Open a terminal window and navigate to a directory where you
+. Generate projects from {brandname} archetypes with the following command:
++
+----
+$ mvn archetype:generate -DarchetypeGroupId=org.infinispan.archetypes \
+    -DarchetypeArtifactId=<archetype-name> \ <1>
+    -DarchetypeVersion=<infinispan-version> <2>
+----
++
+<1> Creates projects from one of the following archetypes:
++
+* `client` Creates a sample Hot Rod Java client application.
+* `embedded` Creates a sample application that embeds {brandname}.
+* `store` Creates a sample implementation of a custom cache store.
++
+<2> Specifies the {brandname} version to use, for example:
++
+`-DarchetypeVersion={ispn_version}`
++
+. When prompted, define _artifactId_, _groupId_, and _version_ values for your project.
+. Import your new {brandname} project into your IDE.
+. Run your project application from the directory where the `pom.xml` file resides as follows:
++
+----
+$ mvn package exec:java
+----
++
+[NOTE]
+====
+The `store` archetype does not include a project application,
+`Application.java`, that you can run.
+====
+
+.Reference
+
+* link:https://maven.apache.org/guides/introduction/introduction-to-archetypes.html[Introduction to Maven Archetypes]

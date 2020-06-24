@@ -15,7 +15,7 @@
     <version>11.0.1-SNAPSHOT</version>
 
     <name>Infinispan Archetypes</name>
-    <description>Archetypes for the Infinispan project</description>
+    <description>Infinispan Maven Archetypes</description>
     <packaging>pom</packaging>
 
     <modules>

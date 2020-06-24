@@ -1,19 +1,6 @@
-# The Infinispan Archetypes project
+# Infinispan Archetypes
 
-This project provides a set of quick-start archetypes which can be used to generate skeleton projects using [Infinispan](https://infinispan.org).
+Use the [Infinispan](https://infinispan.org) archetypes to quickly generate
+skeleton projects.
 
-# Archetype Usage
-To utilise the archetypes utilise the following command:
-
-```
-mvn archetype:generate \
-    -DarchetypeGroupId=org.infinispan.archetypes \
-    -DarchetypeArtifactId=<archetype-name> \
-    -DarchetypeVersion=<infinispan-version> \
-    -DarchetypeRepository=https://repository.jboss.org/nexus/content/groups/public
-```
-
-Where `<archetype-name>` can be one of the following:
-  - `embedded` Creates a sample Embedded Infinispan application
-  - `store` Creates a skeleton implementation of a custom Infinispan store
-  - `client` Creates a sample Infinispan Hot Rod Client application
+Find more information about using the archetypes in our [Getting Started Guide](https://infinispan.org/docs/stable/titles/getting_started/getting_started.html#maven_archetypes).

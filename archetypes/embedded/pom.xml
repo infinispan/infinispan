@@ -12,5 +12,5 @@
     <artifactId>embedded</artifactId>
     <packaging>jar</packaging>
     <name>Infinispan Embedded Archetype</name>
-    <description>Archetype for a Embedded Infinispan application</description>
+    <description>Maven archetype for a sample application that embeds Infinispan.</description>
 </project>
