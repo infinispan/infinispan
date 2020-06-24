@@ -114,7 +114,7 @@ public class RestURI {
 
    @Override
    public String toString() {
-      return "HotRodURI{" +
+      return "RestURI{" +
             "addresses=" + addresses +
             ", ssl=" + ssl +
             ", username='" + username + '\'' +

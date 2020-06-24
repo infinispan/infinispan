@@ -53,6 +53,7 @@ import org.wildfly.security.provider.util.ProviderUtil;
       groupCommands = {
             Add.class,
             Backup.class,
+            Benchmark.class,
             Cache.class,
             Cas.class,
             Cd.class,

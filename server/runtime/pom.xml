@@ -147,6 +147,11 @@
          <artifactId>metainf-services</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.openjdk.jmh</groupId>
+         <artifactId>jmh-core</artifactId>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
          <groupId>org.wildfly.openssl</groupId>
          <artifactId>wildfly-openssl-java</artifactId>
       </dependency>

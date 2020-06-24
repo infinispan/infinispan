@@ -71,6 +71,27 @@
          <artifactId>log4j-core</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-client-hotrod</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.openssl</groupId>
+         <artifactId>wildfly-openssl-java</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.openjdk.jmh</groupId>
+         <artifactId>jmh-core</artifactId>
+         <scope>compile</scope>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.openjdk.jmh</groupId>
+         <artifactId>jmh-generator-annprocess</artifactId>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>
          <scope>test</scope>
@@ -85,6 +106,18 @@
          </resource>
       </resources>
       <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+               <archive>
+                  <manifest>
+                     <addClasspath>true</addClasspath>
+                     <mainClass>${cli.main.class}</mainClass>
+                  </manifest>
+               </archive>
+            </configuration>
+         </plugin>
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
@@ -224,6 +257,8 @@
                            <workingDirectory>${project.build.directory}</workingDirectory>
                            <arguments>
                               <argument>--verbose</argument>
+                              <argument>--allow-incomplete-classpath</argument>
+                              <argument>--no-fallback</argument>
                               <argument>-H:+ReportUnsupportedElementsAtRuntime</argument>
                               <argument>-H:+ReportExceptionStackTraces</argument>
                               <argument>-H:ReflectionConfigurationFiles=cli_reflection.json</argument>

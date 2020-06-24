@@ -4,7 +4,7 @@
       <!-- Colored output on the console -->
       <Console name="STDOUT">
          <PatternLayout
-                 pattern="%highlight{%d{HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%throwable}{INFO=normal, DEBUG=normal, TRACE=normal}%n"/>
+                 pattern="%highlight{%d{HH:mm:ss,SSS} %-5p [%c{1}] %m%throwable}{INFO=normal, DEBUG=normal, TRACE=normal}%n"/>
       </Console>
       <File name="FILE" createOnDemand="true"
                    fileName="cli.log">
@@ -18,7 +18,7 @@
       </Logger>
 
       <Root level="INFO">
-         <AppenderRef ref="STDOUT" level="INFO"/>
+         <AppenderRef ref="STDOUT" level="WARN"/>
          <!-- AppenderRef ref="FILE" level="DEBUG"/ -->
       </Root>
    </Loggers>
