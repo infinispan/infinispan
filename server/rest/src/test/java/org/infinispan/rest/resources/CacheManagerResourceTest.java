@@ -1,9 +1,11 @@
 package org.infinispan.rest.resources;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
 import static org.infinispan.configuration.cache.CacheMode.LOCAL;
 import static org.infinispan.partitionhandling.PartitionHandling.DENY_READ_WRITES;
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
@@ -17,11 +19,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.http.HttpHeader;
-import org.eclipse.jetty.http.HttpMethod;
+import org.infinispan.client.rest.RestCacheManagerClient;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.configuration.JsonWriter;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -45,6 +45,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    private ObjectMapper mapper = new ObjectMapper();
    private JsonWriter jsonWriter = new JsonWriter();
    private Configuration templateConfig;
+   private RestCacheManagerClient cacheManagerClient;
 
    @Override
    public Object[] factory() {
@@ -52,6 +53,12 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
             new CacheManagerResourceTest().withSecurity(true),
             new CacheManagerResourceTest().withSecurity(false)
       };
+   }
+
+   @Override
+   protected void createCacheManagers() throws Exception {
+      super.createCacheManagers();
+      cacheManagerClient = client.cacheManager("default");
    }
 
    @Override
@@ -80,11 +87,10 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testHealth() throws Exception {
-      String url = String.format("http://localhost:%d/rest/v2/cache-managers/default/health", restServer().getPort());
-      ContentResponse response = client.newRequest(url).send();
+      RestResponse response = join(cacheManagerClient.health());
       ResponseAssertion.assertThat(response).isOk();
 
-      JsonNode jsonNode = mapper.readTree(response.getContent());
+      JsonNode jsonNode = mapper.readTree(response.getBody());
       JsonNode clusterHealth = jsonNode.get("cluster_health");
       assertEquals(clusterHealth.get("health_status").asText(), "HEALTHY");
       assertEquals(clusterHealth.get("number_of_nodes").asInt(), 2);
@@ -95,7 +101,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       assertTrue(cacheNames.contains("cache1"));
       assertTrue(cacheNames.contains("cache2"));
 
-      response = client.newRequest(url).method(HttpMethod.HEAD).send();
+      response = join(cacheManagerClient.health(true));
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasNoContent();
    }
@@ -103,11 +109,12 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    @Test
    public void testCacheConfigs() throws Exception {
       String accept = "text/plain; q=0.9, application/json; q=0.6";
-      String url = String.format("http://localhost:%d/rest/v2/cache-managers/default/cache-configs", restServer().getPort());
-      ContentResponse response = client.newRequest(url).header("Accept", accept).send();
+
+      RestResponse response = join(cacheManagerClient.cacheConfigurations(accept));
+
       ResponseAssertion.assertThat(response).isOk();
 
-      String json = response.getContentAsString();
+      String json = response.getBody();
       ArrayNode jsonNode = (ArrayNode) mapper.readTree(json);
       Map<String, String> cachesAndConfig = cacheAndConfig(jsonNode);
 
@@ -119,11 +126,12 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    @Test
    public void testCacheConfigsTemplates() throws Exception {
       String accept = "text/plain; q=0.9, application/json; q=0.6";
-      String url = String.format("http://localhost:%d/rest/v2/cache-managers/default/cache-configs/templates", restServer().getPort());
-      ContentResponse response = client.newRequest(url).header("Accept", accept).send();
+
+      RestResponse response = join(cacheManagerClient.templates(accept));
+
       ResponseAssertion.assertThat(response).isOk();
 
-      String json = response.getContentAsString();
+      String json = response.getBody();
       ArrayNode jsonNode = (ArrayNode) mapper.readTree(json);
       Map<String, String> cachesAndConfig = cacheAndConfig(jsonNode);
 
@@ -134,12 +142,10 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testCaches() throws Exception {
-      String accept = "text/plain; q=0.9, application/json; q=0.6";
-      String url = String.format("http://localhost:%d/rest/v2/cache-managers/default/caches", restServer().getPort());
-      ContentResponse response = client.newRequest(url).header("Accept", accept).send();
+      RestResponse response = join(cacheManagerClient.caches());
       ResponseAssertion.assertThat(response).isOk();
 
-      String json = response.getContentAsString();
+      String json = response.getBody();
       JsonNode jsonNode = mapper.readTree(json);
       List<String> names = asText(jsonNode.findValues("name"));
       Set<String> expectedNames = Util.asSet("defaultcache", "cache1", "cache2");
@@ -182,12 +188,11 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    @Test
    public void testCachesWithIgnoreCache() throws Exception {
       ignoreManager.ignoreCache("cache1");
-      String accept = "text/plain; q=0.9, application/json; q=0.6";
-      String url = String.format("http://localhost:%d/rest/v2/cache-managers/default/caches", restServer().getPort());
-      ContentResponse response = client.newRequest(url).header("Accept", accept).send();
+
+      RestResponse response = join(cacheManagerClient.caches());
       ResponseAssertion.assertThat(response).isOk();
 
-      String json = response.getContentAsString();
+      String json = response.getBody();
       JsonNode jsonNode = mapper.readTree(json);
       List<String> names = asText(jsonNode.findValues("name"));
       Set<String> expectedNames = Util.asSet("defaultcache", "cache1", "cache2");
@@ -204,12 +209,12 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testGetGlobalConfig() throws Exception {
-      String url = String.format("http://localhost:%d/rest/v2/cache-managers/default/config", restServer().getPort());
-      ContentResponse response = client.newRequest(url).send();
+   public void testGetGlobalConfig() {
+      RestResponse response = join(cacheManagerClient.globalConfiguration());
+
       ResponseAssertion.assertThat(response).isOk();
 
-      String json = response.getContentAsString();
+      String json = response.getBody();
       EmbeddedCacheManager embeddedCacheManager = cacheManagers.get(0);
       GlobalConfiguration globalConfiguration = embeddedCacheManager.withSubject(ADMIN_USER).getCacheManagerConfiguration();
       String globalConfigJSON = jsonWriter.toJSON(globalConfiguration);
@@ -217,12 +222,12 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testGetGlobalConfigXML() throws Exception {
-      String url = String.format("http://localhost:%d/rest/v2/cache-managers/default/config", restServer().getPort());
-      ContentResponse response = client.newRequest(url).header(HttpHeader.ACCEPT, MediaType.APPLICATION_XML_TYPE).send();
+   public void testGetGlobalConfigXML() {
+      RestResponse response = join(cacheManagerClient.globalConfiguration(APPLICATION_XML_TYPE));
+
       ResponseAssertion.assertThat(response).isOk();
 
-      String xml = response.getContentAsString();
+      String xml = response.getBody();
       ParserRegistry parserRegistry = new ParserRegistry();
       ConfigurationBuilderHolder builderHolder = parserRegistry.parse(xml);
 
@@ -232,11 +237,11 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testInfo() throws Exception {
-      String url = String.format("http://localhost:%d/rest/v2/cache-managers/default/", restServer().getPort());
-      ContentResponse response = client.newRequest(url).send();
+      RestResponse response = join(cacheManagerClient.info());
+
       ResponseAssertion.assertThat(response).isOk();
 
-      String json = response.getContentAsString();
+      String json = response.getBody();
       JsonNode cmInfo = mapper.readTree(json);
 
       assertFalse(cmInfo.get("version").asText().isEmpty());
@@ -247,11 +252,11 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testStats() throws Exception {
-      String url = String.format("http://localhost:%d/rest/v2/cache-managers/default/stats", restServer().getPort());
-      ContentResponse response = client.newRequest(url).send();
+      RestResponse response = join(cacheManagerClient.stats());
+
       ResponseAssertion.assertThat(response).isOk();
 
-      String json = response.getContentAsString();
+      String json = response.getBody();
       JsonNode cmStats = mapper.readTree(json);
 
       assertTrue(cmStats.get("statistics_enabled").asBoolean());
@@ -259,7 +264,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       assertEquals(0, cmStats.get("number_of_entries").asInt());
 
       cacheManagers.iterator().next().getCache("cache1").put("key", "value");
-      cmStats = mapper.readTree(client.newRequest(url).send().getContentAsString());
+      cmStats = mapper.readTree(join(cacheManagerClient.stats()).getBody());
       assertEquals(1, cmStats.get("stores").asInt());
       assertEquals(1, cmStats.get("number_of_entries").asInt());
    }

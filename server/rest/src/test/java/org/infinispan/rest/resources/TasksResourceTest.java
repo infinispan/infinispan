@@ -1,13 +1,18 @@
 package org.infinispan.rest.resources;
 
-import static org.eclipse.jetty.http.HttpMethod.GET;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JAVASCRIPT_TYPE;
+import static java.util.Collections.singletonMap;
+import static org.infinispan.client.rest.RestTaskClient.ResultType.ALL;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JAVASCRIPT;
 import static org.infinispan.commons.util.Util.getResourceAsString;
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.client.util.StringContentProvider;
-import org.eclipse.jetty.http.HttpMethod;
+import java.util.Collections;
+import java.util.concurrent.CompletionStage;
+
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.RestTaskClient;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
@@ -17,6 +22,7 @@ import org.infinispan.tasks.spi.TaskEngine;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -48,10 +54,12 @@ public class TasksResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testTaskList() throws Exception {
-      String baseURL = String.format("http://localhost:%d/rest/v2/tasks", restServer().getPort());
-      ContentResponse response = client.newRequest(baseURL).method(GET).send();
+      RestTaskClient taskClient = client.tasks();
+
+      RestResponse response = join(taskClient.list(ALL));
       ResponseAssertion.assertThat(response).isOk();
-      JsonNode jsonNode = mapper.readTree(response.getContent());
+
+      JsonNode jsonNode = mapper.readTree(response.getBody());
       assertEquals(4, jsonNode.size());
       JsonNode task = jsonNode.get(0);
       assertEquals("Dummy", task.get("type").asText());
@@ -61,40 +69,42 @@ public class TasksResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testTaskExec() throws Exception {
-      String baseURL = String.format("http://localhost:%d/rest/v2/tasks", restServer().getPort());
-      ContentResponse response = client.newRequest(baseURL + "/SUCCESSFUL_TASK?action=exec").method(GET).send();
+      RestTaskClient taskClient = client.tasks();
+      RestResponse response = join(taskClient.exec("SUCCESSFUL_TASK"));
       ResponseAssertion.assertThat(response).isOk();
-      JsonNode jsonNode = mapper.readTree(response.getContent());
+      JsonNode jsonNode = mapper.readTree(response.getBody());
       assertEquals("result", jsonNode.asText());
    }
 
    @Test
-   public void testParameterizedTaskExec() throws Exception {
-      String baseURL = String.format("http://localhost:%d/rest/v2/tasks", restServer().getPort());
-      ContentResponse response = client.newRequest(baseURL + "/PARAMETERIZED_TASK?action=exec&param.parameter=Hello").method(GET).send();
+   public void testParameterizedTaskExec() throws JsonProcessingException {
+      RestTaskClient taskClient = client.tasks();
+      CompletionStage<RestResponse> response = taskClient.exec("PARAMETERIZED_TASK", singletonMap("parameter", "Hello"));
       ResponseAssertion.assertThat(response).isOk();
-      JsonNode jsonNode = mapper.readTree(response.getContent());
+      JsonNode jsonNode = mapper.readTree(join(response).getBody());
       assertEquals("Hello", jsonNode.asText());
    }
 
    @Test
-   public void testFailingTaskExec() throws Exception {
-      String baseURL = String.format("http://localhost:%d/rest/v2/tasks", restServer().getPort());
-      ContentResponse response = client.newRequest(baseURL + "/FAILING_TASK?action=exec").method(GET).send();
+   public void testFailingTaskExec() {
+      RestTaskClient taskClient = client.tasks();
+      CompletionStage<RestResponse> response = taskClient.exec("FAILING_TASK");
       ResponseAssertion.assertThat(response).isError();
    }
 
    @Test
    public void testTaskUpload() throws Exception {
-      String baseURL = String.format("http://localhost:%d/rest/v2/tasks", restServer().getPort());
+      RestTaskClient taskClient = client.tasks();
+
       String script = getResourceAsString("hello.js", getClass().getClassLoader());
-      ContentResponse response = client.newRequest(baseURL + "/hello").header("Content-type", APPLICATION_JAVASCRIPT_TYPE)
-            .method(HttpMethod.POST).content(new StringContentProvider(script)).send();
+      RestEntity scriptEntity = RestEntity.create(APPLICATION_JAVASCRIPT, script);
+
+      CompletionStage<RestResponse> response = taskClient.uploadScript("hello", scriptEntity);
       ResponseAssertion.assertThat(response).isOk();
 
-      response = client.newRequest(baseURL + "/hello?action=exec&param.greetee=Friend").method(GET).send();
+      response = taskClient.exec("hello", Collections.singletonMap("greetee", "Friend"));
       ResponseAssertion.assertThat(response).isOk();
-      JsonNode jsonNode = mapper.readTree(response.getContent());
+      JsonNode jsonNode = mapper.readTree(join(response).getBody());
       assertEquals("Hello Friend", jsonNode.asText());
    }
 }

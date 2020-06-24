@@ -7,6 +7,8 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestResponse;
 
+import okhttp3.Request;
+
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
@@ -28,13 +30,29 @@ public class RestCacheManagerClientOkHttp implements RestCacheManagerClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> globalConfiguration() {
-      return client.execute(baseCacheManagerUrl, "config");
+   public CompletionStage<RestResponse> globalConfiguration(String mediaType) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(baseCacheManagerUrl + "/config").header("Accept", mediaType);
+      return client.execute(builder);
    }
 
    @Override
    public CompletionStage<RestResponse> cacheConfigurations() {
       return client.execute(baseCacheManagerUrl, "cache-configs");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> cacheConfigurations(String mediaType) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(baseCacheManagerUrl + "/cache-configs").header("Accept", mediaType);
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> templates(String mediaType) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(baseCacheManagerUrl + "/cache-configs/templates").header("Accept", mediaType);
+      return client.execute(builder);
    }
 
    @Override
@@ -79,11 +97,26 @@ public class RestCacheManagerClientOkHttp implements RestCacheManagerClient {
 
    @Override
    public CompletionStage<RestResponse> health() {
-      return client.execute(baseCacheManagerUrl, "health");
+      return health(false);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> health(boolean skipBody) {
+      Request.Builder builder = new Request.Builder().url(baseCacheManagerUrl);
+      if (skipBody) {
+         builder.head();
+      }
+      builder.url(baseCacheManagerUrl + "/health");
+      return client.execute(builder);
    }
 
    @Override
    public CompletionStage<RestResponse> healthStatus() {
       return client.execute(baseCacheManagerUrl, "health", "status");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> caches() {
+      return client.execute(baseCacheManagerUrl, "caches");
    }
 }

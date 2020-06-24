@@ -1,6 +1,8 @@
 package org.infinispan.rest.search;
 
-import org.eclipse.jetty.client.api.ContentResponse;
+import java.util.concurrent.CompletionStage;
+
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -30,7 +32,7 @@ public class NonIndexedPojoQueryTest extends BaseRestSearchTest {
    }
 
    @Override
-   protected void registerProtobuf(String protoFileName, String protoFileContents) {
+   protected void registerProtobuf(String protoFileContents) {
       // Not needed
    }
 
@@ -40,8 +42,8 @@ public class NonIndexedPojoQueryTest extends BaseRestSearchTest {
    }
 
    @Override
-   public void testReadDocumentFromBrowser() throws Exception {
-      ContentResponse fromBrowser = get("2", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+   public void testReadDocumentFromBrowser() {
+      CompletionStage<RestResponse> fromBrowser = get("2", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 
       ResponseAssertion.assertThat(fromBrowser).isOk();
       ResponseAssertion.assertThat(fromBrowser).bodyNotEmpty();

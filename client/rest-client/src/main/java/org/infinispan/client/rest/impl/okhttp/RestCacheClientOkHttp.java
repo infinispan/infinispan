@@ -5,6 +5,8 @@ import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.TEXT_PLAIN
 import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.addEnumHeader;
 import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.sanitize;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestCacheClient;
@@ -123,6 +125,26 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> put(String key, String keyContentType, RestEntity value) {
+      Request.Builder builder = new Request.Builder();
+      if (keyContentType != null) {
+         builder.addHeader("Key-Content-Type", keyContentType);
+      }
+      builder.url(cacheUrl + "/" + sanitize(key)).put(((RestEntityAdaptorOkHttp) value).toRequestBody());
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> put(String key, RestEntity value, String... flags) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "/" + sanitize(key)).put(((RestEntityAdaptorOkHttp) value).toRequestBody());
+      if (flags.length > 0) {
+         builder.header("flags", String.join(",", flags));
+      }
+      return client.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> put(String key, RestEntity value) {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "/" + sanitize(key)).put(((RestEntityAdaptorOkHttp) value).toRequestBody());
@@ -162,16 +184,53 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> get(String key, Map<String, String> headers) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "/" + sanitize(key));
+      headers.forEach(builder::header);
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> get(String key, String mediaType) {
+      return get(key, mediaType, false);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> get(String key, String mediaType, boolean extended) {
+      Request.Builder builder = new Request.Builder();
+      String url = cacheUrl + "/" + sanitize(key);
+      if (extended) {
+         url = url + "?extended=true";
+      }
+      builder.url(url);
+      builder.header("Accept", mediaType);
+      return client.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> head(String key) {
+      return head(key, Collections.emptyMap());
+   }
+
+   @Override
+   public CompletionStage<RestResponse> head(String key, Map<String, String> headers) {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "/" + sanitize(key) + "?extended").head();
+      headers.forEach(builder::header);
       return client.execute(builder);
    }
 
    @Override
    public CompletionStage<RestResponse> remove(String key) {
+      return remove(key, Collections.emptyMap());
+   }
+
+   @Override
+   public CompletionStage<RestResponse> remove(String key, Map<String, String> headers) {
       Request.Builder builder = new Request.Builder();
-      builder.url(cacheUrl + "/" + sanitize(key)).delete();
+      builder.url(cacheUrl + "/" + sanitize(key) + "?extended").delete();
+      headers.forEach(builder::header);
       return client.execute(builder);
    }
 
@@ -206,9 +265,20 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> configuration() {
+   public CompletionStage<RestResponse> keys(String mediaType) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "?action=keys").get();
+      builder.header("Accept", mediaType);
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> configuration(String mediaType) {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "?action=config");
+      if (mediaType != null) {
+         builder.header("Accept", mediaType);
+      }
       return client.execute(builder);
    }
 
@@ -308,6 +378,54 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    private CompletionStage<RestResponse> executeXSiteOperation(String site, String action) {
       Request.Builder builder = new Request.Builder();
       builder.url(String.format("%s/x-site/backups/%s?action=%s", cacheUrl, site, action));
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> reindex() {
+      return executeIndexOperation("mass-index");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> clearIndex() {
+      return executeIndexOperation("clear");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> queryStats() {
+      return executeSearchStatOperation("query", null);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> indexStats() {
+      return executeSearchStatOperation("indexes", null);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> clearQueryStats() {
+      return executeSearchStatOperation("query", "clear");
+   }
+
+   private CompletionStage<RestResponse> executeIndexOperation(String action) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(String.format("%s/search/indexes?action=%s", cacheUrl, action));
+      return client.execute(builder);
+   }
+
+   private CompletionStage<RestResponse> executeSearchStatOperation(String type, String action) {
+      String url = String.format("%s/search/%s/stats", cacheUrl, type);
+      if (action != null) {
+         url = url + "?action=" + action;
+      }
+      Request.Builder builder = new Request.Builder();
+      builder.url(url);
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> details() {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl).get();
       return client.execute(builder);
    }
 }

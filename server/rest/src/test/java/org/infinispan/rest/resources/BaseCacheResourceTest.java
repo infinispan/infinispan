@@ -6,9 +6,15 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.rest.RequestHeader.ACCEPT_HEADER;
+import static org.infinispan.rest.RequestHeader.IF_NONE_MATCH;
+import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
+import static org.infinispan.util.concurrent.CompletionStages.join;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -17,19 +23,15 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.URLEncoder;
-import java.nio.ByteBuffer;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import org.assertj.core.api.Assertions;
-import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.client.util.ByteBufferContentProvider;
-import org.eclipse.jetty.client.util.BytesContentProvider;
-import org.eclipse.jetty.client.util.StringContentProvider;
-import org.eclipse.jetty.http.HttpHeader;
-import org.eclipse.jetty.http.HttpMethod;
 import org.infinispan.AdvancedCache;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestRawClient;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
@@ -42,6 +44,7 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.rest.RequestHeader;
 import org.infinispan.rest.RestTestSCI;
 import org.infinispan.rest.TestClass;
 import org.infinispan.rest.assertion.ResponseAssertion;
@@ -78,7 +81,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       unknownContentCacheConfiguration.encoding().value().mediaType("application/unknown");
 
       ConfigurationBuilder javaSerialized = getDefaultCacheBuilder();
-      javaSerialized.encoding().value().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE);
+      javaSerialized.encoding().value().mediaType(APPLICATION_SERIALIZED_OBJECT_TYPE);
 
       ConfigurationBuilder text = getDefaultCacheBuilder();
       text.encoding().key().mediaType(TEXT_PLAIN_TYPE);
@@ -102,8 +105,8 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
    @SuppressWarnings("unchecked")
    public InternalCacheEntry<String, byte[]> getCacheEntry(String cacheName, byte[] key) {
-      AdvancedCache cache = getCache(cacheName).withStorageMediaType();
-      CacheEntry cacheEntry = cache.getCacheEntry(key);
+      AdvancedCache<String, byte[]> cache = getCache(cacheName).withStorageMediaType();
+      CacheEntry<String, byte[]> cacheEntry = cache.getCacheEntry(key);
       return (InternalCacheEntry<String, byte[]>) cacheEntry;
    }
 
@@ -112,24 +115,20 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldGetNonExistingValue() throws Exception {
-      //when
-      ContentResponse response = client.GET("http://localhost:" + restServer().getPort() + "/rest/v2/caches/default/nonExisting");
+   public void shouldGetNonExistingValue() {
+      CompletionStage<RestResponse> response = client.cache("default").get("nonExisting");
 
-      //then
       ResponseAssertion.assertThat(response).doesntExist();
    }
 
    @Test
    public void shouldReturnNotExistingOnWrongContext() throws Exception {
-      //given
       putStringValueInCache("default", "test", "test");
 
-      //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/wrongContext/%s/%s", restServer().getPort(), "default", "test"))
-            .header(HttpHeader.ACCEPT, "text/plain")
-            .send();
+      RestRawClient rawClient = client.raw();
+      String path = String.format("/wrongContext/%s/%s", "default", "test");
+
+      CompletionStage<RestResponse> response = rawClient.get(path);
 
       //then
       ResponseAssertion.assertThat(response).doesntExist();
@@ -137,14 +136,9 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void shouldGetAsciiValueStoredInSpecificFormat() throws Exception {
-      //given
       putStringValueInCache("default", "test", "test");
 
-      //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .header(HttpHeader.ACCEPT, "text/plain")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("default").get("test", TEXT_PLAIN_TYPE);
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -157,11 +151,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       //given
       putStringValueInCache("default", "test", "test");
 
-      //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .header(HttpHeader.ACCEPT, "text/plain")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("default").get("test", TEXT_PLAIN_TYPE);
 
       //then
       ResponseAssertion.assertThat(response).hasEtag();
@@ -174,10 +164,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "test", "test");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s?extended=true", restServer().getPort(), "default", "test"))
-            .header(HttpHeader.ACCEPT, "text/plain")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("default").get("test", TEXT_PLAIN_TYPE, true);
 
       //then
       ResponseAssertion.assertThat(response).hasExtendedHeaders();
@@ -189,10 +176,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "test", "test");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .header(HttpHeader.ACCEPT, "text/plain;charset=UTF-8")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("default").get("test", "text/plain;charset=UTF-8");
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -206,10 +190,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putJsonValueInCache("json", "test", "{\"name\": \"test\"}");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "json", "test"))
-            .header(HttpHeader.ACCEPT, "application/json")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("json").get("test", APPLICATION_JSON_TYPE);
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -223,10 +204,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("xml", "test", "<xml><name>test</name></xml>");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "xml", "test"))
-            .header(HttpHeader.ACCEPT, "application/xml")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("xml").get("test", APPLICATION_XML_TYPE);
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -240,9 +218,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "test", "test");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .send();
+      CompletionStage<RestResponse> response = client.cache("default").get("test");
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -258,11 +234,9 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putBinaryValueInCache("serialized", "test", convertToBytes(testClass), APPLICATION_SERIALIZED_OBJECT);
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "serialized", "test"))
-            .send();
+      RestResponse response = join(client.cache("serialized").get("test"));
 
-      TestClass convertedObject = convertFromBytes(response.getContent(), TestClass.class);
+      TestClass convertedObject = convertFromBytes(response.getBodyAsByteArray());
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -277,10 +251,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "test", "test");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .header(HttpHeader.ACCEPT, "text/plain")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("default").get("test", TEXT_PLAIN_TYPE);
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -294,10 +265,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "test", "test");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .header(HttpHeader.ACCEPT, "text/plain;charset=utf-8")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("default").get("test", "text/plain;charset=UTF-8");
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -315,25 +283,17 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "test", "test");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .method(HttpMethod.HEAD)
-            .send();
+      CompletionStage<RestResponse> response = client.cache("default").head("test");
 
       //then
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasNoContent();
    }
 
-   private void putInCache(String cacheName, Object key, String keyContentType, String value, String contentType) throws InterruptedException, ExecutionException, TimeoutException {
-      Request request = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), cacheName, key))
-            .content(new StringContentProvider(value))
-            .header("Content-type", contentType)
-            .method(HttpMethod.PUT);
-      if (keyContentType != null) request.header("Key-Content-type", keyContentType);
+   private void putInCache(String cacheName, Object key, String keyContentType, String value, String contentType) {
+      RestEntity entity = RestEntity.create(MediaType.fromString(contentType), value);
+      CompletionStage<RestResponse> response = client.cache(cacheName).put(key.toString(), keyContentType, entity);
 
-      ContentResponse response = request.send();
       ResponseAssertion.assertThat(response).isOk();
    }
 
@@ -345,7 +305,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       }
    }
 
-   private <T> T convertFromBytes(byte[] bytes, Class<T> klass) throws IOException, ClassNotFoundException {
+   private <T> T convertFromBytes(byte[] bytes) throws IOException, ClassNotFoundException {
       try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes)) {
          ObjectInputStream in = new ObjectInputStream(bis);
          return (T) in.readObject();
@@ -357,10 +317,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "test", "test");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .method(HttpMethod.DELETE)
-            .send();
+      CompletionStage<RestResponse> response = client.cache("default").remove("test");
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -371,22 +328,16 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldDeleteExistingValueWithAcceptHeader() throws Exception {
       putBinaryValueInCache("serialized", "test", convertToBytes(42), APPLICATION_SERIALIZED_OBJECT);
 
-      ContentResponse headResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "serialized", "test"))
-            .method(HttpMethod.HEAD)
-            .header(HttpHeader.ACCEPT, "application/x-java-serialized-object")
-            .send();
+      Map<String, String> headers = createHeaders(ACCEPT_HEADER, APPLICATION_SERIALIZED_OBJECT_TYPE);
+
+      CompletionStage<RestResponse> headResponse = client.cache("serialized").head("test", headers);
 
       ResponseAssertion.assertThat(headResponse).isOk();
       ResponseAssertion.assertThat(headResponse).hasContentType("application/x-java-serialized-object");
 
+      headers = createHeaders(ACCEPT_HEADER, "text/plain;charset=UTF-8");
 
-      //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "serialized", "test"))
-            .method(HttpMethod.DELETE)
-            .header(HttpHeader.CONTENT_TYPE, "text/plain;charset=UTF-8")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("serialized").remove("test", headers);
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -398,10 +349,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "test", "test");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "doesnt_exist"))
-            .method(HttpMethod.DELETE)
-            .send();
+      CompletionStage<RestResponse> response = client.cache("default").remove("doesnt_exist");
 
       //then
       ResponseAssertion.assertThat(response).isNotFound();
@@ -412,10 +360,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "test", "test");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s?action=clear", restServer().getPort(), "default"))
-            .method(HttpMethod.GET)
-            .send();
+      CompletionStage<RestResponse> response = client.cache("default").clear();
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -423,13 +368,9 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldGetAllEntriesFromEmptyCache() throws Exception {
+   public void shouldGetAllEntriesFromEmptyCache() {
       //when
-      ContentResponse response = client
-            .newRequest("http://localhost:" + restServer().getPort() + "/rest/v2/caches/default?action=keys")
-            .method(HttpMethod.GET)
-            .header("Content-Type", "text/plain; charset=utf-8")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("default").keys("text/plain; charset=utf-8");
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -443,10 +384,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("textCache", "key2", "test2");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s?action=keys", restServer().getPort(), "textCache"))
-            .header(HttpHeader.ACCEPT, "application/json")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("textCache").keys(APPLICATION_JSON_TYPE);
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -461,10 +399,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("textCache", "key1", "test1");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "textCache", "key1"))
-            .header(HttpHeader.ACCEPT, "ignored/wrong , text/plain")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("textCache").get("key1", "ignored/wrong , text/plain");
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -478,10 +413,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "key1", "test1");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "key1"))
-            .header(HttpHeader.ACCEPT, "application/wrong-content-type")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("default").get("key1", "application/wrong-content-type");
 
       //then
       ResponseAssertion.assertThat(response).isNotAcceptable();
@@ -489,16 +421,12 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void shouldNotAcceptUnknownContentTypeWithHead() throws Exception {
-      //given
       putStringValueInCache("default", "key1", "test1");
 
-      //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "key1"))
-            .method(HttpMethod.HEAD)
-            .header(HttpHeader.ACCEPT, "garbage")
-            .send();
-      //then
+      Map<String, String> headers = createHeaders(ACCEPT_HEADER, "garbage");
+
+      CompletionStage<RestResponse> response = client.cache("default").head("key1", headers);
+
       ResponseAssertion.assertThat(response).isNotAcceptable();
    }
 
@@ -508,18 +436,13 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "test", "test");
 
       //when
-      ContentResponse firstResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .method(HttpMethod.GET)
-            .send();
+      RestResponse firstResponse = join(client.cache("default").get("test"));
 
-      String etagFromFirstCall = firstResponse.getHeaders().get("ETag");
+      String etagFromFirstCall = firstResponse.headers().get("ETag").get(0);
 
-      ContentResponse secondResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .header("If-None-Match", etagFromFirstCall)
-            .method(HttpMethod.GET)
-            .send();
+      Map<String, String> headers = createHeaders(IF_NONE_MATCH, etagFromFirstCall);
+
+      CompletionStage<RestResponse> secondResponse = client.cache("default").get("test", headers);
 
       //then
       Assertions.assertThat(etagFromFirstCall).isNotNull().isNotEmpty();
@@ -531,12 +454,10 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       //given
       putStringValueInCache("default", "test", "test");
 
+      Map<String, String> headers = createHeaders(IF_NONE_MATCH, "Invalid-etag");
+
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .header("If-None-Match", "Invalid-etag")
-            .method(HttpMethod.GET)
-            .send();
+      CompletionStage<RestResponse> response = client.cache("default").get("test", headers);
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -544,13 +465,11 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldPutTextValueInCache() throws Exception {
+   public void shouldPutTextValueInCache() {
       //when
-      ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .content(new StringContentProvider("Hey!"))
-            .header("Content-type", "text/plain;charset=UTF-8")
-            .send();
+      RestEntity restEntity = RestEntity.create(MediaType.fromString("text/plain;charset=UTF-8"), "Hey!");
+      CompletionStage<RestResponse> response = client.cache("default").post("test", restEntity);
+      ResponseAssertion.assertThat(response).isOk();
 
       InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("default", "test".getBytes());
 
@@ -564,11 +483,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldReturnJsonWithDefaultConfig() throws Exception {
       putStringValueInCache("textCache", "test", "Hey!");
 
-      ContentResponse getResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "textCache", "test"))
-            .method(HttpMethod.GET)
-            .header("Accept", "application/json")
-            .send();
+      CompletionStage<RestResponse> getResponse = client.cache("textCache").get("test", APPLICATION_JSON_TYPE);
 
       ResponseAssertion.assertThat(getResponse).isOk();
       ResponseAssertion.assertThat(getResponse).hasReturnedText("\"Hey!\"");
@@ -576,13 +491,11 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldPutUnknownFormatValueInCache() throws Exception {
+   public void shouldPutUnknownFormatValueInCache() {
       //when
-      ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "unknown", "test"))
-            .content(new StringContentProvider("Hey!"))
-            .header("Content-type", "application/unknown")
-            .send();
+      RestEntity restEntity = RestEntity.create(MediaType.fromString("application/unknown"), "Hey!");
+      CompletionStage<RestResponse> response = client.cache("unknown").post("test", restEntity);
+      ResponseAssertion.assertThat(response).isOk();
 
       InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("unknown", "test".getBytes());
 
@@ -598,18 +511,13 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       TestClass testClass = new TestClass();
       testClass.setName("test");
 
-      ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "serialized", "test"))
-            .content(new BytesContentProvider(convertToBytes(testClass)))
-            .header("Content-type", "application/x-java-serialized-object")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("serialized")
+            .post("test", RestEntity.create(APPLICATION_SERIALIZED_OBJECT, convertToBytes(testClass)));
+      ResponseAssertion.assertThat(response).isOk();
 
       InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("serialized", "test".getBytes());
+      TestClass valueFromCache = convertFromBytes(cacheEntry.getValue());
 
-      TestClass valueFromCache = convertFromBytes(cacheEntry.getValue(), TestClass.class);
-
-      //then
-      ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasEtag();
       Assertions.assertThat(valueFromCache.getName()).isEqualTo("test");
    }
@@ -620,11 +528,9 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "test", "test");
 
       //when
-      ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .content(new StringContentProvider("Hey!"))
-            .header("Content-type", "text/plain;charset=UTF-8")
-            .send();
+      RestEntity restEntity = RestEntity.create(MediaType.fromString("text/plain;charset=UTF-8"), "Hey!");
+
+      CompletionStage<RestResponse> response = client.cache("default").post("test", restEntity);
 
       //then
       ResponseAssertion.assertThat(response).isConflicted();
@@ -636,12 +542,8 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "test", "test");
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .content(new StringContentProvider("Hey!"))
-            .header("Content-type", "text/plain;charset=UTF-8")
-            .method(HttpMethod.PUT)
-            .send();
+      RestResponse response = join(client.cache("default")
+            .put("test", RestEntity.create(MediaType.fromString("text/plain;charset=UTF-8"), "Hey!")));
 
       String valueFromCache = new String(getCacheEntry("default", "test".getBytes()).getValue());
 
@@ -651,12 +553,10 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldPutEntryWithDefaultTllAndIdleTime() throws Exception {
+   public void shouldPutEntryWithDefaultTllAndIdleTime() {
       //when
-      ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "expiration", "test"))
-            .content(new StringContentProvider("test"))
-            .send();
+      CompletionStage<RestResponse> response = client.cache("expiration").post("test", "test");
+      ResponseAssertion.assertThat(response).isOk();
 
       InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test".getBytes());
 
@@ -669,14 +569,10 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldPutImmortalEntryWithMinusOneTtlAndIdleTime() throws Exception {
+   public void shouldPutImmortalEntryWithMinusOneTtlAndIdleTime() {
       //when
-      ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "expiration", "test"))
-            .content(new StringContentProvider("test"))
-            .header("timeToLiveSeconds", "-1")
-            .header("maxIdleTimeSeconds", "-1")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("expiration").put("test", "test", -1, -1);
+      ResponseAssertion.assertThat(response).isOk();
 
       InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test".getBytes());
       Metadata metadata = cacheEntry.getMetadata();
@@ -688,14 +584,10 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldPutImmortalEntryWithZeroTtlAndIdleTime() throws Exception {
+   public void shouldPutImmortalEntryWithZeroTtlAndIdleTime() {
       //when
-      ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "expiration", "test"))
-            .content(new StringContentProvider("test"))
-            .header("timeToLiveSeconds", "0")
-            .header("maxIdleTimeSeconds", "0")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("expiration").post("test", "test", 0, 0);
+      ResponseAssertion.assertThat(response).isOk();
 
       InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test".getBytes());
       Metadata metadata = cacheEntry.getMetadata();
@@ -710,25 +602,17 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void testErrorPropagation() throws Exception {
       putStringValueInCache("xml", "key", "<value/>");
 
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "xml", "key"))
-            .header(HttpHeader.ACCEPT, "application/json")
-            .method(HttpMethod.GET)
-            .send();
+      CompletionStage<RestResponse> response = client.cache("xml").get("key", APPLICATION_JSON_TYPE);
 
       ResponseAssertion.assertThat(response).isNotAcceptable();
       ResponseAssertion.assertThat(response).containsReturnedText("Cannot convert to application/json");
    }
 
    @Test
-   public void shouldPutEntryWithTtlAndIdleTime() throws Exception {
+   public void shouldPutEntryWithTtlAndIdleTime() {
       //when
-      ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "expiration", "test"))
-            .content(new StringContentProvider("test"))
-            .header("timeToLiveSeconds", "50")
-            .header("maxIdleTimeSeconds", "50")
-            .send();
+      CompletionStage<RestResponse> response = client.cache("expiration").post("test", "test", 50, 50);
+      ResponseAssertion.assertThat(response).isOk();
 
       InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test".getBytes());
       Metadata metadata = cacheEntry.getMetadata();
@@ -740,31 +624,24 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldPutLargeObject() throws Exception {
-      //when
-      ByteBuffer payload = ByteBuffer.allocate(1_000_000);
-      ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "binary", "test"))
-            .content(new ByteBufferContentProvider(payload))
-            .send();
-
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("binary", "test".getBytes());
-
-      //then
+   public void shouldPutLargeObject() {
+      byte[] payload = new byte[1_000_000];
+      CompletionStage<RestResponse> response = client.cache("binary")
+            .post("test", RestEntity.create(APPLICATION_OCTET_STREAM, payload));
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasEtag();
 
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("binary", "test".getBytes());
       Assertions.assertThat(cacheEntry.getValue().length).isEqualTo(1_000_000);
    }
 
    @Test
-   public void shouldFailTooLargeObject() throws Exception {
+   public void shouldFailTooLargeObject() {
       //when
-      ByteBuffer payload = ByteBuffer.allocate(1_100_000);
-      ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .content(new ByteBufferContentProvider(payload))
-            .send();
+      byte[] payload = new byte[1_100_000];
+      RestEntity restEntity = RestEntity.create(APPLICATION_OCTET_STREAM, payload);
+
+      CompletionStage<RestResponse> response = client.cache("default").post("test", restEntity);
 
       //then
       ResponseAssertion.assertThat(response).isPayloadTooLarge();
@@ -774,40 +651,28 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void testWildcardAccept() throws Exception {
       putStringValueInCache("default", "test", "test");
 
-      ContentResponse getResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
-            .accept("*/*")
-            .method(HttpMethod.GET)
-            .send();
+      CompletionStage<RestResponse> getResponse = client.cache("default").get("test", MATCH_ALL_TYPE);
 
       ResponseAssertion.assertThat(getResponse).isOk();
       ResponseAssertion.assertThat(getResponse).hasReturnedText("test");
 
    }
 
-   protected ContentResponse get(String cacheName, Object key, String keyContentType, String acceptHeader) throws Exception {
-      Request request = client.newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), cacheName, key))
-            .method(HttpMethod.GET);
+   protected RestResponse get(String cacheName, Object key, String keyContentType, String acceptHeader) {
+      Map<String, String> headers = new HashMap<>();
       if (acceptHeader != null) {
-         request.accept(acceptHeader);
+         headers.put(ACCEPT_HEADER.getValue(), acceptHeader);
       }
       if (keyContentType != null) {
-         request.header("Key-Content-Type", keyContentType);
+         headers.put(KEY_CONTENT_TYPE_HEADER.getValue(), keyContentType);
       }
-      ContentResponse response = request.send();
+      RestResponse response = join(client.cache(cacheName).get(key.toString(), headers));
       ResponseAssertion.assertThat(response).isOk();
       return response;
    }
 
-   protected ContentResponse get(String cacheName, Object key, String acceptHeader) throws Exception {
-      Request request = client.newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), cacheName, key))
-            .method(HttpMethod.GET);
-      if (acceptHeader != null) {
-         request.accept(acceptHeader);
-      }
-      ContentResponse response = request.send();
-      ResponseAssertion.assertThat(response).isOk();
-      return response;
+   protected RestResponse get(String cacheName, Object key, String acceptHeader) {
+      return get(cacheName, key, null, acceptHeader);
    }
 
    @Test
@@ -816,7 +681,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       String urlEncoded = URLEncoder.encode(value, "UTF-8");
       putBinaryValueInCache("default", "test", urlEncoded.getBytes(UTF_8), APPLICATION_WWW_FORM_URLENCODED);
 
-      ContentResponse getResponse = get("default", "test", TEXT_PLAIN_TYPE);
+      RestResponse getResponse = get("default", "test", TEXT_PLAIN_TYPE);
 
       ResponseAssertion.assertThat(getResponse).hasReturnedText(value);
       ResponseAssertion.assertThat(getResponse).hasContentType(TEXT_PLAIN_TYPE);
@@ -826,7 +691,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldNegotiateFromDefaultCacheWithoutAccept() throws Exception {
       putStringValueInCache("default", "test", "test");
 
-      ContentResponse getResponse = get("default", "test", null);
+      RestResponse getResponse = get("default", "test", null);
 
       ResponseAssertion.assertThat(getResponse).hasReturnedText("test");
       ResponseAssertion.assertThat(getResponse).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
@@ -836,17 +701,17 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldNegotiateFromDefaultCacheWithAccept() throws Exception {
       putStringValueInCache("default", "test", "test");
 
-      ContentResponse jsonResponse = get("default", "test", "application/json");
+      RestResponse jsonResponse = get("default", "test", "application/json");
 
       ResponseAssertion.assertThat(jsonResponse).hasReturnedText("\"test\"");
       ResponseAssertion.assertThat(jsonResponse).hasContentType("application/json");
 
-      ContentResponse xmlResponse = get("default", "test", "text/plain");
+      RestResponse xmlResponse = get("default", "test", "text/plain");
 
       ResponseAssertion.assertThat(xmlResponse).hasReturnedText("test");
       ResponseAssertion.assertThat(xmlResponse).hasContentType("text/plain");
 
-      ContentResponse binaryResponse = get("default", "test", APPLICATION_OCTET_STREAM_TYPE);
+      RestResponse binaryResponse = get("default", "test", APPLICATION_OCTET_STREAM_TYPE);
 
       ResponseAssertion.assertThat(binaryResponse).hasReturnedBytes("test".getBytes(UTF_8));
       ResponseAssertion.assertThat(binaryResponse).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
@@ -860,7 +725,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       putBinaryValueInCache("default", "test", javaSerialized, APPLICATION_OCTET_STREAM);
 
-      ContentResponse response = get("default", "test", APPLICATION_OCTET_STREAM_TYPE);
+      RestResponse response = get("default", "test", APPLICATION_OCTET_STREAM_TYPE);
 
       ResponseAssertion.assertThat(response).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
       ResponseAssertion.assertThat(response).hasReturnedBytes(javaSerialized);
@@ -870,7 +735,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldNegotiateFromDefaultCacheWithWildcardAccept() throws Exception {
       putStringValueInCache("default", "test", "test");
 
-      ContentResponse getResponse = get("default", "test", "*/*");
+      RestResponse getResponse = get("default", "test", "*/*");
 
       ResponseAssertion.assertThat(getResponse).isOk();
       ResponseAssertion.assertThat(getResponse).hasReturnedText("test");
@@ -881,13 +746,13 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldNegotiateFromDefaultCacheWithMultipleAccept() throws Exception {
       putStringValueInCache("default", "test", "test");
 
-      ContentResponse sameWeightResponse = get("default", "test", "text/html,application/xhtml+xml,*/*");
+      RestResponse sameWeightResponse = get("default", "test", "text/html,application/xhtml+xml,*/*");
 
       ResponseAssertion.assertThat(sameWeightResponse).isOk();
       ResponseAssertion.assertThat(sameWeightResponse).hasReturnedText("test");
       ResponseAssertion.assertThat(sameWeightResponse).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
 
-      ContentResponse weightedResponse = get("default", "test", "text/plain;q=0.1, application/json;q=0.8, */*;q=0.7");
+      RestResponse weightedResponse = get("default", "test", "text/plain;q=0.1, application/json;q=0.8, */*;q=0.7");
 
       ResponseAssertion.assertThat(weightedResponse).isOk();
       ResponseAssertion.assertThat(weightedResponse).hasReturnedText("\"test\"");
@@ -902,7 +767,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       putJsonValueInCache(cacheName, key, value);
 
-      ContentResponse getResponse = get(cacheName, key, null);
+      RestResponse getResponse = get(cacheName, key, null);
 
       ResponseAssertion.assertThat(getResponse).hasReturnedText(value);
       ResponseAssertion.assertThat(getResponse).hasContentType(APPLICATION_JSON_TYPE);
@@ -916,12 +781,12 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       putJsonValueInCache(cacheName, key, value);
 
-      ContentResponse jsonResponse = get(cacheName, key, APPLICATION_JSON_TYPE);
+      RestResponse jsonResponse = get(cacheName, key, APPLICATION_JSON_TYPE);
 
       ResponseAssertion.assertThat(jsonResponse).hasReturnedText(value);
       ResponseAssertion.assertThat(jsonResponse).hasContentType(APPLICATION_JSON_TYPE);
 
-      ContentResponse textResponse = get(cacheName, key, TEXT_PLAIN_TYPE);
+      RestResponse textResponse = get(cacheName, key, TEXT_PLAIN_TYPE);
 
       ResponseAssertion.assertThat(textResponse).hasReturnedBytes(value.getBytes(UTF_8));
       ResponseAssertion.assertThat(textResponse).hasContentType(TEXT_PLAIN_TYPE);
@@ -935,7 +800,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       putJsonValueInCache(cacheName, key, value);
 
-      ContentResponse jsonResponse = get(cacheName, key, "*/*");
+      RestResponse jsonResponse = get(cacheName, key, "*/*");
 
       ResponseAssertion.assertThat(jsonResponse).isOk();
       ResponseAssertion.assertThat(jsonResponse).hasReturnedText(value);
@@ -950,13 +815,13 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       putJsonValueInCache(cacheName, key, value);
 
-      ContentResponse jsonResponse = get(cacheName, key, "text/html,*/*");
+      RestResponse jsonResponse = get(cacheName, key, "text/html,*/*");
 
       ResponseAssertion.assertThat(jsonResponse).isOk();
       ResponseAssertion.assertThat(jsonResponse).hasReturnedText(value);
       ResponseAssertion.assertThat(jsonResponse).hasContentType(APPLICATION_JSON_TYPE);
 
-      ContentResponse binaryResponse = get(cacheName, key, "application/xml, text/plain; q=0.71, */*;q=0.7");
+      RestResponse binaryResponse = get(cacheName, key, "application/xml, text/plain; q=0.71, */*;q=0.7");
 
       ResponseAssertion.assertThat(binaryResponse).isOk();
       ResponseAssertion.assertThat(binaryResponse).hasReturnedText(value);
@@ -968,64 +833,64 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       String value = "<test/>";
       putStringValueInCache("default", "test", value);
 
-      ContentResponse getResponse = get("default", "test", "text/html, application/xml");
+      RestResponse getResponse = get("default", "test", "text/html, application/xml");
 
       ResponseAssertion.assertThat(getResponse).hasReturnedText("<test/>");
       ResponseAssertion.assertThat(getResponse).hasContentType("application/xml");
    }
 
    @Test
-   public void shouldHandleInvalidPath() throws Exception {
-      Request browserRequest = client.newRequest(String.format("http://localhost:%d/rest/v2/caches/%s", restServer().getPort(), "asdjsad"))
-            .header(HttpHeader.ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-            .method(HttpMethod.GET);
+   public void shouldHandleInvalidPath() {
+      String Url = String.format("/rest/v2/caches/%s", "asdjsad");
+      Map<String, String> headers = createHeaders(ACCEPT_HEADER, "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 
-      ContentResponse response = browserRequest.send();
+      CompletionStage<RestResponse> response = client.raw().get(Url, headers);
+
       ResponseAssertion.assertThat(response).isNotFound();
    }
 
    @Test
-   public void shouldHandleIncompletePath() throws Exception {
-      Request req = client.newRequest(String.format("http://localhost:%d/rest/v2/caches/%s?action", restServer().getPort(), "default"))
-            .method(HttpMethod.GET);
+   public void shouldHandleIncompletePath() {
+      String Url = String.format("/rest/v2/caches/%s?action", "default");
 
-      ContentResponse response = req.send();
+      CompletionStage<RestResponse> response = client.raw().get(Url);
+
       ResponseAssertion.assertThat(response).isBadRequest();
    }
 
    @Test
-   public void testIntegerKeysXmlToTextValues() throws Exception {
+   public void testIntegerKeysXmlToTextValues() {
       Integer key = 123;
       String keyContentType = "application/x-java-object;type=java.lang.Integer";
       String valueContentType = "application/xml; charset=UTF-8";
       String value = "<root>test</root>";
 
       putInCache("default", key, keyContentType, value, valueContentType);
-      ContentResponse response = get("default", key, keyContentType, "text/plain");
+      RestResponse response = get("default", key, keyContentType, "text/plain");
 
       ResponseAssertion.assertThat(response).hasReturnedText(value);
    }
 
    @Test
-   public void testIntKeysAndJSONToTextValues() throws Exception {
+   public void testIntKeysAndJSONToTextValues() {
       Integer key = 1234;
       String keyContentType = "application/x-java-object;type=java.lang.Integer";
       String value = "{\"a\": 1}";
 
       putInCache("default", key, keyContentType, value, APPLICATION_JSON_TYPE);
-      ContentResponse response = get("default", key, keyContentType, TEXT_PLAIN_TYPE);
+      RestResponse response = get("default", key, keyContentType, TEXT_PLAIN_TYPE);
 
       ResponseAssertion.assertThat(response).hasReturnedText(value);
    }
 
    @Test
-   public void testIntKeysTextToXMLValues() throws Exception {
+   public void testIntKeysTextToXMLValues() {
       Integer key = 12345;
       String keyContentType = "application/x-java-object;type=java.lang.Integer";
       String value = "<foo>bar</foo>";
 
       putInCache("default", key, keyContentType, value, TEXT_PLAIN_TYPE);
-      ContentResponse response = get("default", key, keyContentType, APPLICATION_XML_TYPE);
+      RestResponse response = get("default", key, keyContentType, APPLICATION_XML_TYPE);
 
       ResponseAssertion.assertThat(response).hasReturnedText(value);
    }
@@ -1037,12 +902,15 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       putInCache("default", key, invalidXML, TEXT_PLAIN_TYPE);
 
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", key))
-            .header(HttpHeader.ACCEPT, APPLICATION_XML_TYPE)
-            .method(HttpMethod.GET).send();
+      CompletionStage<RestResponse> response = client.cache("default").get(key, APPLICATION_XML_TYPE);
 
       ResponseAssertion.assertThat(response).containsReturnedText("<string>foo</string>");
+   }
+
+   protected Map<String, String> createHeaders(RequestHeader header, String value) {
+      Map<String, String> headers = new HashMap<>();
+      headers.put(header.getValue(), value);
+      return headers;
    }
 
 }

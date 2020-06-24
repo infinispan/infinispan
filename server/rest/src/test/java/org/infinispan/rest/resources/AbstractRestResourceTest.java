@@ -1,21 +1,23 @@
 package org.infinispan.rest.resources;
 
+import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
+
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import javax.security.auth.Subject;
 
-import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.client.util.BytesContentProvider;
-import org.eclipse.jetty.client.util.StringContentProvider;
-import org.eclipse.jetty.http.HttpHeader;
-import org.eclipse.jetty.http.HttpMethod;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
@@ -31,7 +33,6 @@ import org.infinispan.rest.TestClass;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.authentication.impl.BasicAuthenticator;
 import org.infinispan.rest.helper.RestServerHelper;
-import org.infinispan.rest.resources.security.AuthClient;
 import org.infinispan.rest.resources.security.SimpleSecurityDomain;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.security.AuthorizationPermission;
@@ -53,7 +54,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    public static final Subject USER = TestingUtil.makeSubject("USER", ProtobufMetadataManager.SCHEMA_MANAGER_ROLE);
 
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
-   protected HttpClient client;
+   protected RestClient client;
    private static final int NUM_SERVERS = 2;
    private final List<RestServerHelper> restServers = new ArrayList<>(NUM_SERVERS);
 
@@ -119,8 +120,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
          ignoreManager = SecurityActions.getGlobalComponentRegistry(cacheManagers.get(0)).getComponent(CacheIgnoreManager.class);
          return null;
       });
-      client = createNewClient();
-      client.start();
+      client = RestClient.forConfiguration(getClientConfig().build());
    }
 
    protected RestServerHelper restServer() {
@@ -134,7 +134,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    public void afterSuite() {
       Subject.doAs(ADMIN_USER, (PrivilegedAction<Void>) () -> {
          try {
-            client.stop();
+            client.close();
          } catch (Exception ignored) {
          }
          restServers.forEach(RestServerHelper::stop);
@@ -150,19 +150,17 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       });
    }
 
-   private void putInCache(String cacheName, Object key, String keyContentType, String value, String contentType) throws InterruptedException, ExecutionException, TimeoutException {
-      Request request = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), cacheName, key))
-            .content(new StringContentProvider(value))
-            .header("Content-type", contentType)
-            .method(HttpMethod.PUT);
-      if (keyContentType != null) request.header("Key-Content-type", keyContentType);
+   private void putInCache(String cacheName, Object key, String keyContentType, String value, String contentType) {
+      String url = String.format("/rest/v2/caches/%s/%s", cacheName, key);
+      Map<String, String> headers = new HashMap<>();
+      if (keyContentType != null) headers.put(KEY_CONTENT_TYPE_HEADER.getValue(), contentType);
 
-      ContentResponse response = request.send();
+      CompletionStage<RestResponse> response = client.raw().putValue(url, headers, value, contentType);
+
       ResponseAssertion.assertThat(response).isOk();
    }
 
-   void putInCache(String cacheName, Object key, String value, String contentType) throws InterruptedException, ExecutionException, TimeoutException {
+   void putInCache(String cacheName, Object key, String value, String contentType) {
       putInCache(cacheName, key, null, value, contentType);
    }
 
@@ -174,20 +172,18 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       putInCache(cacheName, key, value, "application/json; charset=utf-8");
    }
 
-   void putBinaryValueInCache(String cacheName, String key, byte[] value, MediaType mediaType) throws InterruptedException, ExecutionException, TimeoutException {
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), cacheName, key))
-            .content(new BytesContentProvider(value))
-            .header(HttpHeader.CONTENT_TYPE, mediaType.toString())
-            .method(HttpMethod.PUT)
-            .send();
+   void putBinaryValueInCache(String cacheName, String key, byte[] value, MediaType mediaType) {
+      RestEntity restEntity = RestEntity.create(mediaType, value);
+      CompletionStage<RestResponse> response = client.cache(cacheName).put(key, restEntity);
       ResponseAssertion.assertThat(response).isOk();
    }
 
-   protected HttpClient createNewClient() {
+   protected RestClientConfigurationBuilder getClientConfig() {
+      RestClientConfigurationBuilder clientConfigurationBuilder = new RestClientConfigurationBuilder();
       if (isSecurityEnabled()) {
-         return new AuthClient("user", "user");
+         clientConfigurationBuilder.security().authentication().enable().username("user").password("user");
       }
-      return new HttpClient();
+      restServers.forEach(s -> clientConfigurationBuilder.addServer().host(s.getHost()).port(s.getPort()));
+      return clientConfigurationBuilder;
    }
 }

@@ -36,6 +36,14 @@ public class RestRawClientOkHttp implements RestRawClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> post(String url, String body, String bodyMediaType) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(restClient.getBaseURL() + url);
+      builder.post(RequestBody.create(MediaType.parse(bodyMediaType), body));
+      return restClient.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> post(String url, Map<String, String> headers) {
       Request.Builder builder = new Request.Builder();
       builder.url(restClient.getBaseURL() + url);
@@ -75,6 +83,24 @@ public class RestRawClientOkHttp implements RestRawClient {
       builder.url(restClient.getBaseURL() + url);
       headers.forEach(builder::header);
       builder.delete();
+      return restClient.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> options(String url, Map<String, String> headers) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(restClient.getBaseURL() + url);
+      headers.forEach(builder::header);
+      builder.method("OPTIONS", Util.EMPTY_REQUEST);
+      return restClient.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> head(String url, Map<String, String> headers) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(restClient.getBaseURL() + url);
+      headers.forEach(builder::header);
+      builder.head();
       return restClient.execute(builder);
    }
 }

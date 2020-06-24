@@ -1,18 +1,18 @@
 package org.infinispan.rest.resources;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collection;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.CompletionStage;
 
-import org.apache.http.HttpHeaders;
-import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.client.util.StringContentProvider;
-import org.eclipse.jetty.http.HttpMethod;
+import org.infinispan.client.rest.RestCounterClient;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.api.CounterConfiguration;
@@ -22,7 +22,6 @@ import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.configuration.AbstractCounterConfiguration;
 import org.infinispan.counter.configuration.ConvertUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.rest.assertion.ResponseAssertion;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -52,85 +51,89 @@ public class CounterResourceTest extends AbstractRestResourceTest {
             .initialValue(5).storage(Storage.VOLATILE).concurrencyLevel(6).build();
       createCounter("sample-counter", counterConfig);
 
-      String url = String.format("http://localhost:%d/rest/v2/counters/sample-counter", restServer().getPort());
+      RestCounterClient counterClient = client.counter("sample-counter");
 
-      ContentResponse response = client.newRequest(url + "/config").accept(APPLICATION_JSON_TYPE).send();
-      JsonNode jsonNode = new ObjectMapper().readTree(response.getContentAsString());
+      RestResponse response = join(counterClient.configuration(APPLICATION_JSON_TYPE));
+      JsonNode jsonNode = new ObjectMapper().readTree(response.getBody());
       JsonNode config = jsonNode.get("weak-counter");
       assertEquals(config.get("initial-value").asInt(), 5);
       assertEquals(config.get("storage").asText(), "VOLATILE");
       assertEquals(config.get("concurrency-level").asInt(), 6);
 
-      response = client.newRequest(url).method(HttpMethod.DELETE).send();
-      ResponseAssertion.assertThat(response).isOk();
+      response = join(counterClient.delete());
+      assertThat(response).isOk();
 
-      response = client.newRequest(url + "/config").accept(APPLICATION_JSON_TYPE).send();
-      ResponseAssertion.assertThat(response).isNotFound();
+      response = join(counterClient.configuration());
+      assertThat(response).isNotFound();
    }
 
    @Test
-   public void testWeakCounterOps() throws Exception {
+   public void testWeakCounterOps() {
       String name = "weak-test";
       createCounter(name, CounterConfiguration.builder(CounterType.WEAK).initialValue(5).build());
 
-      ContentResponse response = callCounterOp(name, "increment");
+      RestCounterClient counterClient = client.counter(name);
+
+      CompletionStage<RestResponse> response = counterClient.increment();
       assertThat(response).hasNoContent();
       waitForCounterToReach(name, 6);
 
-      response = callCounterOp(name, "increment");
+      response = counterClient.increment();
       assertThat(response).hasNoContent();
       waitForCounterToReach(name, 7);
 
-      response = callCounterOp(name, "decrement");
+      response = counterClient.decrement();
       assertThat(response).hasNoContent();
       waitForCounterToReach(name, 6);
 
-      response = callCounterOp(name, "decrement");
+      response = counterClient.decrement();
       assertThat(response).hasNoContent();
       waitForCounterToReach(name, 5);
 
-      response = callCounterOp(name, "add", "delta=10");
+      response = counterClient.add(10);
       assertThat(response).hasNoContent();
       waitForCounterToReach(name, 15);
 
-      response = callCounterOp(name, "reset");
+      response = counterClient.reset();
       assertThat(response).hasNoContent();
       waitForCounterToReach(name, 5);
    }
 
    @Test
-   public void testStrongCounterOps() throws Exception {
+   public void testStrongCounterOps() {
       String name = "strong-test";
       createCounter(name, CounterConfiguration.builder(CounterType.BOUNDED_STRONG).lowerBound(0).upperBound(100)
             .initialValue(0).build());
 
-      ContentResponse response = callCounterOp(name, "increment");
+      RestCounterClient counterClient = client.counter(name);
+
+      CompletionStage<RestResponse> response = counterClient.increment();
       assertThat(response).hasReturnedText("1");
 
-      response = callCounterOp(name, "increment");
+      response = counterClient.increment();
       assertThat(response).hasReturnedText("2");
 
-      response = callCounterOp(name, "decrement");
+      response = counterClient.decrement();
       assertThat(response).hasReturnedText("1");
 
-      response = callCounterOp(name, "decrement");
+      response = counterClient.decrement();
       assertThat(response).hasReturnedText("0");
 
-      response = callCounterOp(name, "add", "delta=35");
+      response = counterClient.add(35);
       assertThat(response).hasReturnedText("35");
       waitForCounterToReach(name, 35);
 
-      response = callCounterOp(name, "compareAndSet", "expect=5", "update=12");
+      response = counterClient.compareAndSet(5, 32);
       assertThat(response).hasReturnedText("false");
 
-      response = callCounterOp(name, "compareAndSet", "expect=35", "update=50");
+      response = counterClient.compareAndSet(35, 50);
       assertThat(response).hasReturnedText("true");
       waitForCounterToReach(name, 50);
 
-      response = callCounterOp(name, "compareAndSwap", "expect=50", "update=90");
+      response = counterClient.compareAndSwap(50, 90);
       assertThat(response).hasReturnedText("50");
 
-      response = getCounterValue(name);
+      response = counterClient.get();
       assertThat(response).hasReturnedText("90");
    }
 
@@ -142,10 +145,9 @@ public class CounterResourceTest extends AbstractRestResourceTest {
          createCounter(String.format(name, i), CounterConfiguration.builder(CounterType.WEAK).initialValue(5).build());
       }
 
-      String url = String.format("http://localhost:%d/rest/v2/counters", restServer().getPort());
-      ContentResponse response = client.newRequest(url).send();
-      ResponseAssertion.assertThat(response).isOk();
-      JsonNode jsonNode = objectMapper.readTree(response.getContent());
+      RestResponse response = join(client.counters());
+      assertThat(response).isOk();
+      JsonNode jsonNode = objectMapper.readTree(response.getBody());
       Collection<String> counterNames = EmbeddedCounterManagerFactory.asCounterManager(cacheManagers.get(0)).getCounterNames();
       assertEquals(counterNames.size(), jsonNode.size());
       for (int i = 0; i < jsonNode.size(); i++) {
@@ -153,42 +155,21 @@ public class CounterResourceTest extends AbstractRestResourceTest {
       }
    }
 
-   private void createCounter(String name, CounterConfiguration configuration) throws InterruptedException, ExecutionException, TimeoutException {
-      String url = String.format("http://localhost:%d/rest/v2/counters/" + name, restServer().getPort());
+   private void createCounter(String name, CounterConfiguration configuration) {
       AbstractCounterConfiguration config = ConvertUtil.configToParsedConfig(name, configuration);
-      ContentResponse response = client
-            .newRequest(url)
-            .method(HttpMethod.POST)
-            .content(new StringContentProvider(new JsonWriter().toJSON(config)))
-            .header(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_TYPE)
-            .send();
-      ResponseAssertion.assertThat(response).isOk();
+      RestEntity restEntity = RestEntity.create(APPLICATION_JSON, new JsonWriter().toJSON(config));
+      CompletionStage<RestResponse> response = client.counter(name).create(restEntity);
+      assertThat(response).isOk();
    }
 
    private void waitForCounterToReach(String name, int i) {
-      String url = String.format("http://localhost:%d/rest/v2/counters/" + name, restServer().getPort());
+      RestCounterClient counterClient = client.counter(name);
       eventually(() -> {
-         ContentResponse r = client.newRequest(url).send();
-         ResponseAssertion.assertThat(r).isOk();
-         long value = Long.parseLong(r.getContentAsString());
+         RestResponse r = join(counterClient.get());
+         assertThat(r).isOk();
+         long value = Long.parseLong(r.getBody());
          return value == i;
       });
-   }
-
-   private ContentResponse callCounterOp(String name, String op, String... params) throws Exception {
-      String urlParams = params.length == 0 ? "" : "&" + String.join("&", params);
-      String url = String.format("http://localhost:%d/rest/v2/counters/%s?action=%s&%s", restServer().getPort(),
-            name, op, urlParams);
-      ContentResponse response = client.newRequest(url).send();
-      ResponseAssertion.assertThat(response).isOk();
-      return response;
-   }
-
-   private ContentResponse getCounterValue(String name) throws Exception {
-      String url = String.format("http://localhost:%d/rest/v2/counters/%s", restServer().getPort(), name);
-      ContentResponse response = client.newRequest(url).send();
-      ResponseAssertion.assertThat(response).isOk();
-      return response;
    }
 
 }

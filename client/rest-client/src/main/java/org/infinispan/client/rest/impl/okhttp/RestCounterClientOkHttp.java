@@ -41,8 +41,16 @@ public class RestCounterClientOkHttp implements RestCounterClient {
 
    @Override
    public CompletionStage<RestResponse> configuration() {
+      return configuration(null);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> configuration(String mediaType) {
       Request.Builder builder = new Request.Builder();
       builder.url(counterUrl + "/config");
+      if (mediaType != null) {
+         builder.header("Accept", mediaType);
+      }
       return client.execute(builder);
    }
 
@@ -91,7 +99,7 @@ public class RestCounterClientOkHttp implements RestCounterClient {
    @Override
    public CompletionStage<RestResponse> compareAndSwap(long expect, long value) {
       Request.Builder builder = new Request.Builder();
-      builder.url(counterUrl + "?action=compareAndSet&expect=" + expect + "&update=" + value);
+      builder.url(counterUrl + "?action=compareAndSwap&expect=" + expect + "&update=" + value);
       return client.execute(builder);
    }
 }

@@ -1,5 +1,6 @@
 package org.infinispan.client.rest;
 
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
@@ -18,9 +19,21 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> keys();
 
    /**
+    * Retrieves all keys from the cache with a specific MediaType or list of MediaTypes.
+    */
+   CompletionStage<RestResponse> keys(String mediaType);
+
+   /**
     * Retrieves the cache configuration
     */
-   CompletionStage<RestResponse> configuration();
+   default CompletionStage<RestResponse> configuration() {
+      return configuration(null);
+   }
+
+   /**
+    * Retrieves the cache configuration with a specific MediaType or list of MediaTypes.
+    */
+   CompletionStage<RestResponse> configuration(String mediaType);
 
    /**
     * Clears a cache
@@ -82,6 +95,11 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> put(String key, String value);
 
    /**
+    * PUT a key/value to the cache with custom media types for keys and values
+    */
+   CompletionStage<RestResponse> put(String key, String keyContentType, RestEntity value);
+
+   /**
     * PUTs a key/value to the cache as text/plain with the specified expiration
     *
     * @param key
@@ -100,6 +118,11 @@ public interface RestCacheClient {
     * @return
     */
    CompletionStage<RestResponse> put(String key, RestEntity value);
+
+   /**
+    * Same as {@link #put(String, RestEntity)} also allowing one or more {@link org.infinispan.context.Flag} to be passed.
+    */
+   CompletionStage<RestResponse> put(String key, RestEntity value, String... flags);
 
    /**
     * PUTs a key/value to the cache with the specified encoding and expiration
@@ -121,11 +144,32 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> get(String key);
 
    /**
+    * Same as {@link #get(String)} but allowing custom headers.
+    */
+   CompletionStage<RestResponse> get(String key, Map<String, String> headers);
+
+   /**
+    * GETs a key from the cache with a specific MediaType or list of MediaTypes.
+    */
+   CompletionStage<RestResponse> get(String key, String mediaType);
+
+   /**
+    * Same as {@link #get(String, String)} but with an option to return extended headers.
+    */
+   CompletionStage<RestResponse> get(String key, String mediaType, boolean extended);
+
+
+   /**
     * Similar to {@link #get(String)} but only retrieves headers
     * @param key
     * @return
     */
    CompletionStage<RestResponse> head(String key);
+
+   /**
+    * Similar to {@link #head(String)} but allowing custom headers
+    */
+   CompletionStage<RestResponse> head(String key, Map<String, String> headers);
 
    /**
     * DELETEs an entry from the cache
@@ -134,6 +178,11 @@ public interface RestCacheClient {
     * @return
     */
    CompletionStage<RestResponse> remove(String key);
+
+   /**
+    * Same as {@link #remove(String)} but allowing custom headers
+    */
+   CompletionStage<RestResponse> remove(String test, Map<String, String> headers);
 
    /**
     * Creates the cache using the supplied template name
@@ -256,4 +305,37 @@ public interface RestCacheClient {
     * Disconnects the target cluster from the source cluster after a Rolling Upgrade
     */
    CompletionStage<RestResponse> disconnectSource();
+
+   /**
+    * Rebuild the search indexes of the cache based on its data.
+    */
+   CompletionStage<RestResponse> reindex();
+
+   /**
+    * Deletes all the indexes from the cache.
+    */
+   CompletionStage<RestResponse> clearIndex();
+
+   /**
+    * Obtain statistics about queries.
+    */
+   CompletionStage<RestResponse> queryStats();
+
+   /**
+    * Obtain statistics about the indexes.
+    */
+   CompletionStage<RestResponse> indexStats();
+
+   /**
+    * Clear runtime query statistics.
+    */
+   CompletionStage<RestResponse> clearQueryStats();
+
+
+   /**
+    * Obtains details about the cache
+    */
+   CompletionStage<RestResponse> details();
+
+
 }

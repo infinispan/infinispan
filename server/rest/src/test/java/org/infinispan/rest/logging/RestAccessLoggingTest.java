@@ -1,18 +1,19 @@
 package org.infinispan.rest.logging;
 
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.util.StringContentProvider;
-import org.eclipse.jetty.http.HttpMethod;
+import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.skip.StringLogAppender;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**
@@ -24,7 +25,8 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
    private StringLogAppender logAppender;
    private String testShortName;
    private RestServerHelper restServer;
-   private HttpClient client;
+   private RestClient restClient;
+   private RestCacheClient cacheClient;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {
@@ -42,33 +44,30 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
       logAppender.install();
       restServer = new RestServerHelper(cacheManager);
       restServer.start(TestResourceTracker.getCurrentTestShortName());
-      client = new HttpClient();
-      client.start();
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      builder.addServer().host(restServer.getHost()).port(restServer.getPort());
+      restClient = RestClient.forConfiguration(builder.create());
+      cacheClient = restClient.cache("default");
    }
 
    @Override
    protected void teardown() {
       try {
          logAppender.uninstall();
-         client.stop();
+         restClient.close();
          restServer.stop();
-      } catch (Exception e) {
-
+      } catch (Exception ignored) {
       }
       super.teardown();
    }
 
-   public void testRestAccessLog() throws Exception {
-      client.newRequest(String.format("http://localhost:%d/rest/v2/caches/default/key", restServer.getPort()))
-            .content(new StringContentProvider("value"))
-            .header("Content-type", "text/plain; charset=utf-8")
-            .method(HttpMethod.PUT)
-            .send();
+   public void testRestAccessLog() {
+      join(cacheClient.put("key", "value"));
 
       restServer.stop();
 
       String logline = logAppender.getLog(0);
 
-      assertTrue(logline, logline.matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d+] \"PUT /rest/v2/caches/default/key HTTP/1\\.1\" 404 \\d+ \\d+ \\d+ Jetty/\\p{Graph}+$"));
+      assertTrue(logline, logline.matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d+] \"PUT /rest/v2/caches/default/key HTTP/1\\.1\" 404 \\d+ \\d+ \\d+ okhttp/\\p{Graph}+$"));
    }
 }

@@ -13,6 +13,8 @@ public interface RestCounterClient {
 
    CompletionStage<RestResponse> configuration();
 
+   CompletionStage<RestResponse> configuration(String mediaType);
+
    CompletionStage<RestResponse> get();
 
    CompletionStage<RestResponse> add(long delta);

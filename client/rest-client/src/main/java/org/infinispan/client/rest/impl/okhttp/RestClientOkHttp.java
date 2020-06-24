@@ -23,6 +23,7 @@ import org.infinispan.client.rest.RestCounterClient;
 import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.RestSchemaClient;
 import org.infinispan.client.rest.RestServerClient;
 import org.infinispan.client.rest.RestTaskClient;
 import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
@@ -233,6 +234,11 @@ public class RestClientOkHttp implements RestClient {
    @Override
    public RestMetricsClient metrics() {
       return new RestMetricsClientOkHttp(this);
+   }
+
+   @Override
+   public RestSchemaClient schemas() {
+      return new RestSchemasClientOkHttp(this);
    }
 
    CompletionStage<RestResponse> execute(Request.Builder request) {
