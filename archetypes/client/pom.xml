@@ -12,5 +12,5 @@
     <artifactId>client</artifactId>
     <packaging>jar</packaging>
     <name>Infinispan Client Archetype</name>
-    <description>Archetype for a Infinispan Hot Rod Client application</description>
+    <description>Maven archetype for a sample application using the Hot Rod Java client.</description>
 </project>

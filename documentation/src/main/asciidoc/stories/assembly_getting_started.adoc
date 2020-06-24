@@ -2,7 +2,7 @@
 :context: start
 
 include::{topics}/ref_quick_start.adoc[leveloffset=+0]
-include::{topics}/create_project.adoc[leveloffset=+0]
+include::{topics}/proc_using_mvn_archetypes.adoc[leveloffset=+0]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

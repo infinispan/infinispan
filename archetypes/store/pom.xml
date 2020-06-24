@@ -12,5 +12,5 @@
     <artifactId>store</artifactId>
     <packaging>jar</packaging>
     <name>Infinispan Custom Store Archetype</name>
-    <description>Archetype for a custom Infinispan store implementation</description>
+    <description>Maven archetype for a sample implementation of a custom cache store.</description>
 </project>
