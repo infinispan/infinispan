@@ -22,7 +22,6 @@
       <embedded.CacheEntryImpl>org.infinispan.jcache.JCacheEntry</embedded.CacheEntryImpl>
       <embedded.CacheInvocationContextImpl>org.infinispan.jcache.annotation.CacheKeyInvocationContextImpl</embedded.CacheInvocationContextImpl>
 
-      <transport.stack>-Dinfinispan.cluster.stack=${infinispan.cluster.stack}</transport.stack>
       <jvm.x64.args />
    </properties>
 
@@ -123,7 +122,7 @@
                   <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   <ansi.strip>${ansi.strip}</ansi.strip>
                </systemPropertyVariables>
-               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs}</argLine>
                <properties>
                   <listener>${junitListener}</listener>
                </properties>

@@ -201,11 +201,13 @@
          --add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED
          --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED
          --add-exports=jdk.unsupported/sun.reflect=ALL-UNNAMED
+         --add-opens=java.base/com.sun.crypto.provider=ALL-UNNAMED
          --add-modules=java.se
       </testjvm.jigsawArgs>
-      <testjvm.jdkSpecificArgs>${testjvm.jigsawArgs}</testjvm.jdkSpecificArgs>
+      <testjvm.blockHoundRedefinitionArgs/>
+      <testjvm.jdkSpecificArgs>${testjvm.jigsawArgs} ${testjvm.blockHoundRedefinitionArgs}</testjvm.jdkSpecificArgs>
       <testjvm.extraArgs/>
-      <forkJvmArgs>-Xmx1G ${testjvm.commonArgs} ${testjvm.extraArgs}</forkJvmArgs>
+      <forkJvmArgs>-Xmx1G ${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs}</forkJvmArgs>
       <server.jvm>${env.JAVA_HOME}</server.jvm>
       <server.jvm.args>${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs}</server.jvm.args>
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
@@ -2667,6 +2669,10 @@
          <properties>
             <server.jvm>${env.JAVA8_HOME}</server.jvm>
             <server.jvm.args>${testjvm.commonArgs} ${testjvm.extraArgs}</server.jvm.args>
+            <!-- Unset all JDK-specific properties -->
+            <testjvm.jigsawArgs/>
+            <testjvm.blockHoundRedefinitionArgs/>
+            <!-- Also unset the aggregate property, just in case -->
             <testjvm.jdkSpecificArgs/>
          </properties>
          <dependencies>
@@ -2720,7 +2726,7 @@
             <jdk>[13,)</jdk>
          </activation>
          <properties>
-            <testjvm.jdkSpecificArgs>${testjvm.jigsawArgs} -XX:+AllowRedefinitionToAddDeleteMethods</testjvm.jdkSpecificArgs>
+            <testjvm.blockHoundRedefinitionArgs>-XX:+AllowRedefinitionToAddDeleteMethods</testjvm.blockHoundRedefinitionArgs>
          </properties>
       </profile>
       <profile>
@@ -3191,4 +3197,3 @@
       </profile>
    </profiles>
 </project>
-

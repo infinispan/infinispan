@@ -117,7 +117,7 @@
                <dependenciesToScan>
                   <dependency>${project.groupId}:infinispan-hibernate-cache-commons</dependency>
                </dependenciesToScan>
-                <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Djdk.attach.allowAttachSelf=true</argLine>
+                <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true</argLine>
                <systemPropertyVariables>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                   <jgroups.ping.timeout>500</jgroups.ping.timeout>
