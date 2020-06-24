@@ -92,6 +92,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    @Override
    protected void start(String name, File rootDir, File configurationFile) {
       this.name = name;
+      String jGroupsStack = System.getProperty(Server.INFINISPAN_CLUSTER_STACK);
       // Build a skeleton server layout
       createServerHierarchy(rootDir);
       // Build the command-line that launches the server
@@ -102,8 +103,10 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       args.add("-b");
       args.add("SITE_LOCAL");
       args.add("-Djgroups.bind.address=SITE_LOCAL");
-      args.add("-j");
-      args.add(System.getProperty(Server.INFINISPAN_CLUSTER_STACK, "test-tcp"));
+      if (jGroupsStack != null) {
+         args.add("-j");
+         args.add(jGroupsStack);
+      }
       args.add("-Dinfinispan.cluster.name=" + name);
       args.add("-D" + TEST_HOST_ADDRESS + "=" + testHostAddress.getHostAddress());
       if (configuration.isJMXEnabled()) {
