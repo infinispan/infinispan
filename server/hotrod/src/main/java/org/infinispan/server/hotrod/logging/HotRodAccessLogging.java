@@ -1,7 +1,7 @@
 package org.infinispan.server.hotrod.logging;
 
 import java.net.InetSocketAddress;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import org.infinispan.commons.util.Util;
@@ -42,7 +42,7 @@ public class HotRodAccessLogging {
          if (header.requestStart == null) {
             duration = -1;
          } else {
-            duration = ChronoUnit.MILLIS.between(header.requestStart, ZonedDateTime.now());
+            duration = ChronoUnit.MILLIS.between(header.requestStart, Instant.now());
          }
          MDC.clear();
          MDC.put("address", remoteAddress);

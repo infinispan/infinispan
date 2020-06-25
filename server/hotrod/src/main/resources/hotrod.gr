@@ -11,7 +11,7 @@ constants org.infinispan.server.hotrod.HotRodConstants;
 // methods vInt, vLong, array, byte...
 intrinsics org.infinispan.server.hotrod.Intrinsics;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.time.temporal.Temporal;
 import java.util.Collections;
 import java.util.Map;
@@ -63,7 +63,7 @@ deadend {
 
 // this is the root
 root request
-   : magic { if (accessLogging) { requestStart = ZonedDateTime.now(); } }
+   : magic { if (accessLogging) { requestStart = Instant.now(); } }
       header { if (trace) log.tracef("Parsed header: %s", header); }
       parameters
    ;
