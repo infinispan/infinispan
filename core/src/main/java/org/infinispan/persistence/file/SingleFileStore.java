@@ -8,6 +8,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -357,7 +358,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          //close old file
          channel.close();
          //delete
-         file.delete();
+         Files.delete(file.toPath());
          //rename new file
          if (!newFile.renameTo(file)) {
             throw new IOException(String.format("Unable to move file \"%s\" to \"%s\"",
