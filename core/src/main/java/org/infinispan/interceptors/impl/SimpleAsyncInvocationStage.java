@@ -11,7 +11,7 @@ import org.infinispan.interceptors.InvocationCallback;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.logging.TraceException;
+import org.infinispan.commons.util.logging.TraceException;
 
 /**
  * Invocation stage representing a computation that may or may not be done yet.

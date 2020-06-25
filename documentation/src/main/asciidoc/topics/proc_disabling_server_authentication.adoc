@@ -1,5 +1,7 @@
 [id='disable_endpoint_auth']
 = Disabling {brandname} Server Authentication
+In local development environments or on isolated networks you can configure
+{brandname} servers to allow unauthenticated client requests.
 
 .Procedure
 

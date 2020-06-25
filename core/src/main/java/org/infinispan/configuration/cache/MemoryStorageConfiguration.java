@@ -3,7 +3,6 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
@@ -16,31 +15,18 @@ import org.infinispan.eviction.EvictionType;
 public class MemoryStorageConfiguration implements ConfigurationInfo {
 
    public static final AttributeDefinition<Long> SIZE = AttributeDefinition.builder("size", -1L).build();
-   public static final AttributeDefinition<EvictionType> EVICTION_TYPE = AttributeDefinition.builder("type", EvictionType.COUNT).xmlName(org.infinispan.configuration.parsing.Attribute.EVICTION.getLocalName()).build();
-   public static final AttributeDefinition<EvictionStrategy> EVICTION_STRATEGY = AttributeDefinition.builder("strategy", EvictionStrategy.NONE).build();
-   public static final AttributeDefinition<StorageType> STORAGE_TYPE = AttributeDefinition.builder("storage-type", StorageType.OBJECT).build();
+   public static final AttributeDefinition<EvictionType> EVICTION_TYPE = AttributeDefinition.builder("type", EvictionType.COUNT).xmlName(org.infinispan.configuration.parsing.Attribute.EVICTION.getLocalName()).immutable().build();
+   public static final AttributeDefinition<EvictionStrategy> EVICTION_STRATEGY = AttributeDefinition.builder("strategy", EvictionStrategy.NONE).immutable().build();
+   public static final AttributeDefinition<StorageType> STORAGE_TYPE = AttributeDefinition.builder("storage-type", StorageType.HEAP).immutable().build();
 
    private final AttributeSet attributes;
-   private final boolean enabled;
-   private final ElementDefinition<MemoryStorageConfiguration> elementDefinition;
 
    static public AttributeSet attributeDefinitionSet() {
       return new AttributeSet(MemoryStorageConfiguration.class, SIZE, EVICTION_TYPE, EVICTION_STRATEGY, STORAGE_TYPE);
    }
 
-   public MemoryStorageConfiguration(AttributeSet attributes, boolean enabled) {
+   public MemoryStorageConfiguration(AttributeSet attributes) {
       this.attributes = attributes;
-      this.enabled = enabled;
-      StorageType storageType = attributes.attribute(STORAGE_TYPE).get();
-      String storage = storageType == null ? StorageType.OBJECT.getElement().getLocalName() : storageType.getElement().getLocalName();
-      this.elementDefinition = new DefaultElementDefinition<>(storage, true, false);
-   }
-
-   /**
-    * @return true if the {@link MemoryStorageConfigurationBuilder} was non-empty when building this configuration.
-    */
-   boolean isEnabled() {
-      return enabled;
    }
 
    @Override
@@ -50,7 +36,7 @@ public class MemoryStorageConfiguration implements ConfigurationInfo {
 
    @Override
    public ElementDefinition<MemoryStorageConfiguration> getElementDefinition() {
-      return elementDefinition;
+      throw new UnsupportedOperationException();
    }
 
    public StorageType storageType() {

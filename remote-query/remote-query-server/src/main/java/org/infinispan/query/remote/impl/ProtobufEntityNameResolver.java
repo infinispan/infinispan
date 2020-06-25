@@ -7,7 +7,7 @@ import org.infinispan.protostream.SerializationContext;
  * @author anistor@redhat.com
  * @since 9.1
  */
-final class ProtobufEntityNameResolver implements EntityNameResolver {
+final class ProtobufEntityNameResolver implements EntityNameResolver<Class<?>> {
 
    private final SerializationContext serializationContext;
 

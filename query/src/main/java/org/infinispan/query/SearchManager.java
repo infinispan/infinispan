@@ -21,7 +21,9 @@ public interface SearchManager {
     * @throws org.hibernate.search.exception.SearchException if the queryString cannot be converted to an indexed query,
     *                                                        due to lack of indexes to resolve it fully or if contains
     *                                                        aggregations and grouping.
+    * @deprecated since 11.0 with no replacement. To be removed in next major version.
     */
+   @Deprecated
    <E> CacheQuery<E> getQuery(String queryString, IndexedQueryMode indexedQueryMode);
 
    /**
@@ -29,6 +31,7 @@ public interface SearchManager {
     * query all data in the cluster
     * @param queryString the Ickle query
     * @return
+    * @deprecated since 11.0, all search operations should be done with the {@link Search} entry point.
     */
    <E> CacheQuery<E> getQuery(String queryString);
 

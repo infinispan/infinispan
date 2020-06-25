@@ -71,13 +71,10 @@ public abstract class DelegatingNonBlockingStore<K, V> implements NonBlockingSto
    }
 
    @Override
-   public CompletionStage<Void> bulkWrite(int publisherCount, Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> publisher) {
-      return delegate().bulkWrite(publisherCount, publisher);
-   }
-
-   @Override
-   public CompletionStage<Void> bulkDelete(int publisherCount, Publisher<SegmentedPublisher<Object>> publisher) {
-      return delegate().bulkDelete(publisherCount, publisher);
+   public CompletionStage<Void> batch(int publisherCount,
+         Publisher<NonBlockingStore.SegmentedPublisher<Object>> removePublisher,
+         Publisher<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
+      return delegate().batch(publisherCount, removePublisher, writePublisher);
    }
 
    @Override
@@ -106,8 +103,9 @@ public abstract class DelegatingNonBlockingStore<K, V> implements NonBlockingSto
    }
 
    @Override
-   public CompletionStage<Void> prepareWithModifications(Transaction transaction, BatchModification batchModification) {
-      return delegate().prepareWithModifications(transaction, batchModification);
+   public CompletionStage<Void> prepareWithModifications(Transaction transaction, int publisherCount,
+         Publisher<SegmentedPublisher<Object>> removePublisher, Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
+      return delegate().prepareWithModifications(transaction, publisherCount, removePublisher, writePublisher);
    }
 
    @Override

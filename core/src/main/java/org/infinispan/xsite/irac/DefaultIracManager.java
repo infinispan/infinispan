@@ -199,16 +199,16 @@ public class DefaultIracManager implements IracManager, Runnable {
    @Override
    public void onTopologyUpdate(CacheTopology oldCacheTopology, CacheTopology newCacheTopology) {
       if (trace) {
-         log.trace("[IRAC] Topology Updated! Checking pending keys.");
+         log.trace("[IRAC] Topology Updated. Checking pending keys.");
       }
       Address local = rpcManager.getAddress();
       if (!newCacheTopology.getMembers().contains(local)) {
          //not in teh cache topology
          return;
       }
-      IntSet addedSegments = IntSets.from(newCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
+      IntSet addedSegments = IntSets.mutableCopyFrom(newCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
       if (oldCacheTopology.getMembers().contains(local)) {
-         addedSegments.removeAll(IntSets.from(oldCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local)));
+         addedSegments.removeAll(oldCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
       }
 
       if (addedSegments.isEmpty()) {
@@ -290,7 +290,7 @@ public class DefaultIracManager implements IracManager, Runnable {
          return true;
       } catch (ExecutionException e) {
          //can be ignored. it will be retried in the next round.
-         log.trace("IRAC update failed!", e);
+         log.trace("IRAC update not successful.", e);
          //if it fails, we release a permit so the thread can retry
          //otherwise, if the cluster is idle, the keys will never been sent to the remote site
          senderNotifier.release();
@@ -320,7 +320,7 @@ public class DefaultIracManager implements IracManager, Runnable {
          throw e;
       } catch (Throwable t) {
          //TODO log exception
-         log.fatal("[IRAC] Unexpected error!", t);
+         log.fatal("[IRAC] Unexpected error occurred.", t);
       }
    }
 

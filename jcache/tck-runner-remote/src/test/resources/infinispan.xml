@@ -6,7 +6,9 @@
         xmlns:server="urn:infinispan:server:11.0">
 
     <cache-container name="default" statistics="true">
-        <transport cluster="${infinispan.cluster.name}" stack="${infinispan.cluster.stack:tcp}"/>
+        <!-- Note: Maven resources plugin replaces ${infinispan.cluster.stack} with the property value
+             It would not replace ${infinispan.cluster.stack:tcp -->
+        <transport cluster="${infinispan.cluster.name}" stack="${infinispan.cluster.stack}"/>
         <serialization>
             <context-initializer class="org.infinispan.jcache.tck.JCacheTckContextInitializer"/>
         </serialization>

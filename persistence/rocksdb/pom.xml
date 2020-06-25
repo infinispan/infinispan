@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-persistence-parent</artifactId>
-      <version>11.0.0-SNAPSHOT</version>
+      <version>11.0.1-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-cachestore-rocksdb</artifactId>
@@ -24,6 +24,18 @@
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>io.projectreactor.tools</groupId>
+         <artifactId>blockhound</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <!-- Included to avoid issue in blockhound during tests -->
+      <dependency>
+         <groupId>org.eclipse.microprofile.metrics</groupId>
+         <artifactId>microprofile-metrics-api</artifactId>
+         <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>org.testng</groupId>

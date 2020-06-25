@@ -20,6 +20,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -233,7 +234,7 @@ class TestCluster {
             build.security().ssl().keyStoreFileName(keyStoreFileName).keyStorePassword(keyStorePassword);
          }
 
-         return new TestCluster(hotRodServers, embeddedCacheManagers, new RemoteCacheManager(build.build()));
+         return new TestCluster(hotRodServers, embeddedCacheManagers, new RemoteCacheManager(build.marshaller(GenericJBossMarshaller.class).build()));
       }
 
    }

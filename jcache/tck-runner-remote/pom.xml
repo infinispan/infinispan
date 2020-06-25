@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-jcache-parent</artifactId>
-      <version>11.0.0-SNAPSHOT</version>
+      <version>11.0.1-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -31,11 +31,16 @@
       <server.dir>${server.dir.parent}/${server.dir.name}</server.dir>
       <mcast.ip>234.99.54.14</mcast.ip>
       <server.jvm>${env.JAVA_HOME}</server.jvm>
-      <server.jvm.args>${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${testjvm.jigsawArgs}</server.jvm.args>
+      <server.jvm.args>${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs}</server.jvm.args>
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
-      <serverMemoryJvmArgs>-Xmx500m ${testjvm.commonArgs}</serverMemoryJvmArgs>
+      <serverMemoryJvmArgs>-Xmx500m</serverMemoryJvmArgs>
 
-      <!-- TODO Remove? -->
+      <!--
+      Note: Maven resource plugin replaces ${infinispan.cluster.stack} in infinispan.xml at build time,
+      so the module must be rebuilt in order to run with a different stack.
+      TODO Reuse test-tcp stack from server/tests (ISPN-11772)
+      -->
+      <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
       <transport.stack>-Dinfinispan.cluster.stack=${infinispan.cluster.stack}</transport.stack>
       <jvm.x64.args />
    </properties>
@@ -238,7 +243,7 @@
                   <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   <ansi.strip>${ansi.strip}</ansi.strip>
                </systemPropertyVariables>
-               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs}</argLine>
                <properties>
                   <listener>${junitListener}</listener>
                </properties>

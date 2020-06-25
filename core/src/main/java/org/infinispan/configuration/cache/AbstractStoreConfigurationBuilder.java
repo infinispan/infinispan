@@ -235,8 +235,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
             if (!storeProps.shared() && attributes.attribute(SHARED).get()) {
                throw CONFIG.nonSharedStoreConfiguredAsShared(storeKlass.getSimpleName());
             }
-         } else {
-            CONFIG.warnStoreAnnotationMissing(storeKlass.getSimpleName());
          }
       } else {
          CONFIG.warnConfigurationForAnnotationMissing(attributes.getName());

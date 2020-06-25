@@ -112,6 +112,16 @@
           <xs:documentation>LZ4HC compression.</xs:documentation>
         </xs:annotation>
       </xs:enumeration>
+      <xs:enumeration value="XPRESS">
+        <xs:annotation>
+          <xs:documentation>XPRESS compression.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="ZSTD">
+        <xs:annotation>
+          <xs:documentation>ZSTD compression.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
 

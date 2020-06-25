@@ -1,7 +1,6 @@
 [id='programmatic-{context}']
-= Programmatic Configuration
-Create new Configuration objects with the `ConfigurationBuilder` class and then
-define cache configurations with the Cache Manager.
+= Configuring Caches Programmatically
+Define cache configurations with the Cache Manager.
 
 [NOTE]
 ====
@@ -29,9 +28,9 @@ manager.defineConfiguration(newCacheName, c); <3>
 Cache<String, String> cache = manager.getCache(newCacheName);
 ----
 
-<1> creates a new Configuration object.
-<2> specifies distributed, synchronous cache mode.
-<3> defines a new cache named "replicatedCache" with the Configuration object.
+<1> Creates a new Configuration object.
+<2> Specifies distributed, synchronous cache mode.
+<3> Defines a new cache named "replicatedCache" with the Configuration object.
 
 .Create new caches from existing configurations
 
@@ -53,11 +52,11 @@ manager.defineConfiguration(newCacheName, c); <5>
 Cache<String, String> cache = manager.getCache(newCacheName);
 ----
 
-<1> returns the default cache configuration from the Cache Manager. In this example, `infinispan-prod.xml` defines a replicated cache as the default.
-<2> creates a new Configuration object that uses the default cache configuration as a base.
-<3> specifies distributed, synchronous cache mode.
-<4> adds an L1 lifespan configuration.
-<5> defines a new cache named "distributedWithL1" with the Configuration object.
+<1> Returns the default cache configuration from the Cache Manager. In this example, `infinispan-prod.xml` defines a replicated cache as the default.
+<2> Creates a new Configuration object that uses the default cache configuration as a base.
+<3> Specifies distributed, synchronous cache mode.
+<4> Adds an L1 lifespan configuration.
+<5> Defines a new cache named "distributedWithL1" with the Configuration object.
 
 [source,java,options="nowrap"]
 ----
@@ -75,7 +74,7 @@ manager.defineConfiguration(newCacheName, c);
 Cache<String, String> cache = manager.getCache(newCacheName);
 ----
 
-<1> uses a cache configuration named "replicatedCache" as a base.
+<1> Uses a cache configuration named "replicatedCache" as a base.
 
 .Reference
 

@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.Query;
+
 /**
  * @author anistor@redhat.com
  * @since 7.0
@@ -11,7 +13,7 @@ class DummyQueryBuilder extends BaseQueryBuilder {
    }
 
    @Override
-   public DummyQuery build() {
-      return new DummyQuery();
+   public <T> Query<T> build() {
+      return new DummyQuery<>();
    }
 }

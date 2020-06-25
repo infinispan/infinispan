@@ -11,16 +11,20 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
+import org.infinispan.commons.test.BlockHoundHelper;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.SingleSegmentKeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.impl.TestComponentAccessors;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.TestModuleRepository;
@@ -29,7 +33,9 @@ import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.BlockingManagerImpl;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 /**
@@ -41,6 +47,51 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
  */
 public class PersistenceMockUtil {
 
+   public static class InvocationContextBuilder {
+      private final Class<?> testClass;
+      private final Configuration configuration;
+      private final PersistenceMarshaller persistenceMarshaller;
+      private ClassWhiteList classWhiteList;
+      private TimeService timeService = AbstractInfinispanTest.TIME_SERVICE;
+      private KeyPartitioner keyPartitioner = SingleSegmentKeyPartitioner.getInstance();
+
+      public InvocationContextBuilder(Class<?> testClass, Configuration configuration, PersistenceMarshaller persistenceMarshaller) {
+         this.testClass = testClass;
+         this.configuration = configuration;
+         this.persistenceMarshaller = persistenceMarshaller;
+      }
+
+      public InvocationContextBuilder setTimeService(TimeService timeService) {
+         this.timeService = timeService;
+         return this;
+      }
+
+      public InvocationContextBuilder setClassWhiteList(ClassWhiteList classWhiteList) {
+         this.classWhiteList = classWhiteList;
+         return this;
+      }
+
+      public InvocationContextBuilder setKeyPartitioner(KeyPartitioner keyPartitioner) {
+         this.keyPartitioner = keyPartitioner;
+         return this;
+      }
+
+      public InitializationContext build() {
+         Cache mockCache = mockCache(testClass.getSimpleName(), configuration, timeService, classWhiteList);
+         BlockingManager blockingManager = new BlockingManagerImpl();
+         TestingUtil.inject(blockingManager,
+               new TestComponentAccessors.NamedComponent(KnownComponentNames.BLOCKING_EXECUTOR, BlockHoundHelper.allowBlockingExecutor()),
+               new TestComponentAccessors.NamedComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, BlockHoundHelper.ensureNonBlockingExecutor()));
+         TestingUtil.startComponent(blockingManager);
+         MarshalledEntryFactoryImpl mef = new MarshalledEntryFactoryImpl(persistenceMarshaller);
+         GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+         global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(testClass));
+         return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache,
+               keyPartitioner, persistenceMarshaller, timeService, new ByteBufferFactoryImpl(), mef,
+               new WithinThreadExecutor(), global.build(), blockingManager);
+      }
+   }
+
    public static InitializationContext createContext(Class<?> testClass, Configuration configuration, PersistenceMarshaller marshaller) {
       return createContext(testClass, configuration, marshaller, AbstractInfinispanTest.TIME_SERVICE);
    }
@@ -51,14 +102,10 @@ public class PersistenceMockUtil {
 
    public static InitializationContext createContext(Class<?> testClass, Configuration configuration, PersistenceMarshaller marshaller,
                                                      TimeService timeService, ClassWhiteList whiteList) {
-      Cache mockCache = mockCache(testClass.getSimpleName(), configuration, timeService, whiteList);
-      BlockingManager mockManager = mock(BlockingManager.class);
-      MarshalledEntryFactoryImpl mef = new MarshalledEntryFactoryImpl(marshaller);
-      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(testClass));
-      return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache,
-            SingleSegmentKeyPartitioner.getInstance(), marshaller, timeService, new ByteBufferFactoryImpl(), mef,
-            new WithinThreadExecutor(), global.build(), mockManager);
+      return new InvocationContextBuilder(testClass, configuration, marshaller)
+            .setTimeService(timeService)
+            .setClassWhiteList(whiteList)
+            .build();
    }
 
    private static Cache mockCache(String nodeName, Configuration configuration, TimeService timeService, ClassWhiteList whiteList) {

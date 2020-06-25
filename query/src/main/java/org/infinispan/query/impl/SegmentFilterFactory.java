@@ -25,7 +25,10 @@ public class SegmentFilterFactory {
 
    @Factory
    public Query create() {
-      if (segments == null) throw new IllegalStateException("Cannot filter, missing segments parameters");
+      if (segments == null) {
+         throw new IllegalStateException("Segments filter parameter was not set");
+      }
+
       BooleanQuery.Builder builder = new BooleanQuery.Builder();
       segments.stream().forEach(seg -> builder.add(new TermQuery(new Term(SEGMENT_FIELD, String.valueOf(seg))), SHOULD));
       return builder.build();
@@ -34,5 +37,4 @@ public class SegmentFilterFactory {
    public void setSegments(BitSet segments) {
       this.segments = segments;
    }
-
 }

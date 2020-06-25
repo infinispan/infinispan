@@ -71,6 +71,16 @@ public class ContentTypeConfiguration implements ConfigurationInfo {
       return attributes.attribute(MEDIA_TYPE).isModified();
    }
 
+   public boolean isObjectStorage() {
+      String mediaType = attributes.attribute(MEDIA_TYPE).get();
+      return mediaType != null && MediaType.fromString(mediaType).match(MediaType.APPLICATION_OBJECT);
+   }
+
+   public boolean isProtobufStorage() {
+      String mediaType = attributes.attribute(MEDIA_TYPE).get();
+      return mediaType != null && MediaType.fromString(mediaType).match(MediaType.APPLICATION_PROTOSTREAM);
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;

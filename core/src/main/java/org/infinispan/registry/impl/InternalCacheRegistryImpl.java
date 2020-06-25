@@ -49,7 +49,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    @Override
    public synchronized void registerInternalCache(String name, Configuration configuration, EnumSet<Flag> flags) {
       log.debugf("Registering internal cache %s %s", name, flags);
-      boolean configPresent = configurationManager.getConfiguration(name, true) != null;
+      boolean configPresent = configurationManager.getConfiguration(name, false) != null;
       // check if it already has been defined. Currently we don't support existing user-defined configuration.
       if ((flags.contains(Flag.EXCLUSIVE) || !internalCaches.containsKey(name)) && configPresent) {
          throw CONFIG.existingConfigForInternalCache(name);

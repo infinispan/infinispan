@@ -1,28 +1,9 @@
 package org.infinispan.rest;
 
-import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
-import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
-import static io.netty.handler.codec.http.HttpHeaderNames.IF_MODIFIED_SINCE;
-import static io.netty.handler.codec.http.HttpHeaderNames.IF_NONE_MATCH;
-import static io.netty.handler.codec.http.HttpHeaderNames.IF_UNMODIFIED_SINCE;
-import static io.netty.handler.codec.http.HttpMethod.DELETE;
-import static io.netty.handler.codec.http.HttpMethod.GET;
-import static io.netty.handler.codec.http.HttpMethod.HEAD;
-import static io.netty.handler.codec.http.HttpMethod.OPTIONS;
-import static io.netty.handler.codec.http.HttpMethod.POST;
-import static io.netty.handler.codec.http.HttpMethod.PUT;
-import static org.infinispan.rest.NettyRestRequest.CREATED_HEADER;
-import static org.infinispan.rest.NettyRestRequest.EXTENDED_HEADER;
-import static org.infinispan.rest.NettyRestRequest.FLAGS_HEADER;
-import static org.infinispan.rest.NettyRestRequest.KEY_CONTENT_TYPE_HEADER;
-import static org.infinispan.rest.NettyRestRequest.LAST_USED_HEADER;
-import static org.infinispan.rest.NettyRestRequest.MAX_TIME_IDLE_HEADER;
-import static org.infinispan.rest.NettyRestRequest.TTL_SECONDS_HEADER;
 import static org.infinispan.rest.RestChannelInitializer.MAX_HEADER_SIZE;
 import static org.infinispan.rest.RestChannelInitializer.MAX_INITIAL_LINE_SIZE;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import io.netty.channel.Channel;
@@ -36,7 +17,6 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler.UpgradeCodecFactory;
 import io.netty.handler.codec.http.cors.CorsConfig;
-import io.netty.handler.codec.http.cors.CorsConfigBuilder;
 import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.codec.http2.CleartextHttp2ServerUpgradeHandler;
 import io.netty.handler.codec.http2.DefaultHttp2Connection;
@@ -65,7 +45,6 @@ import io.netty.util.AsciiString;
 public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
 
    private static final int CROSS_ORIGIN_ALT_PORT = 9000;
-   private static final String[] SCHEMES = new String[]{"http", "https"};
 
    protected final RestServer restServer;
 
@@ -131,33 +110,13 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
 
       pipeline.addLast(new HttpContentCompressor(restServer.getConfiguration().getCompressionLevel()));
       pipeline.addLast(new HttpObjectAggregator(maxContentLength()));
-      List<CorsConfig> configuredRules = restServer.getConfiguration().getCorsRules();
-      List<CorsConfig> rules = addLocalhostPermissions(configuredRules, restServer.getPort(), CROSS_ORIGIN_ALT_PORT);
-      pipeline.addLast(new CorsHandler(rules, true));
+      List<CorsConfig> corsRules = new ArrayList<>();
+      corsRules.addAll(CorsUtil.enableAllForSystemConfig());
+      corsRules.addAll(CorsUtil.enableAllForLocalHost(restServer.getPort(), CROSS_ORIGIN_ALT_PORT));
+      corsRules.addAll(restServer.getConfiguration().getCorsRules());
+      pipeline.addLast(new CorsHandler(corsRules, true));
       pipeline.addLast(new ChunkedWriteHandler());
       pipeline.addLast(new Http11RequestHandler(restServer));
-   }
-
-   private List<CorsConfig> addLocalhostPermissions(List<CorsConfig> corsRules, int... ports) {
-      List<CorsConfig> configs = new ArrayList<>(corsRules);
-      for (int port : ports) {
-         for (String scheme : SCHEMES) {
-            String localIpv4 = scheme + "://" + "127.0.0.1" + ":" + port;
-            String localDomain = scheme + "://" + "localhost" + ":" + port;
-            String localIpv6 = scheme + "://" + "[::1]" + ":" + port;
-            CorsConfig config = CorsConfigBuilder.forOrigins(localIpv4, localDomain, localIpv6)
-                  .allowCredentials()
-                  .allowedRequestMethods(GET, POST, PUT, DELETE, HEAD, OPTIONS)
-                  // Not all browsers support "*" (https://github.com/whatwg/fetch/issues/251) so we need to add each
-                  // header individually
-                  .allowedRequestHeaders(CACHE_CONTROL, CONTENT_TYPE, CREATED_HEADER, EXTENDED_HEADER, FLAGS_HEADER,
-                        IF_MODIFIED_SINCE, IF_UNMODIFIED_SINCE, IF_NONE_MATCH, KEY_CONTENT_TYPE_HEADER,
-                        MAX_TIME_IDLE_HEADER, LAST_USED_HEADER, TTL_SECONDS_HEADER)
-                  .build();
-            configs.add(config);
-         }
-      }
-      return Collections.unmodifiableList(configs);
    }
 
    protected int maxContentLength() {

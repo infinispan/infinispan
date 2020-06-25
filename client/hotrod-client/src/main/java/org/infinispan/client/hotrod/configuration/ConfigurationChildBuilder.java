@@ -235,7 +235,7 @@ public interface ConfigurationChildBuilder {
 
    /**
     * Per-cache configuration
-    * @param name the name of the cache to which specific configuration should be applied
+    * @param name the name of the cache to which specific configuration should be applied. You may use wildcard globbing (e.g. <code>cache-*</code>) which will apply to any cache that matches.
     * @return the {@link RemoteCacheConfigurationBuilder} for the cache
     */
    RemoteCacheConfigurationBuilder remoteCache(String name);

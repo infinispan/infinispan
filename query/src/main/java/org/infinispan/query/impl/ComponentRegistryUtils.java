@@ -75,6 +75,7 @@ public final class ComponentRegistryUtils {
    }
 
    public static Indexer getIndexer(AdvancedCache<?, ?> cache) {
+      ensureIndexed(cache);
       return getRequiredComponent(cache, Indexer.class);
    }
 

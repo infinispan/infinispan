@@ -2,15 +2,18 @@ package org.infinispan.rest.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JAVASCRIPT;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
+import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
 import java.security.PrivilegedAction;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+
+import javax.security.auth.Subject;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.StandardConversions;
@@ -27,12 +30,6 @@ import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
-import io.netty.handler.codec.http.HttpResponseStatus;
-
-import javax.security.auth.Subject;
-
 /**
  * @since 10.1
  */
@@ -48,7 +45,7 @@ public class TasksResource implements ResourceHandler {
       return new Invocations.Builder()
             .invocation().methods(GET).path("/v2/tasks/").handleWith(this::listTasks)
             .invocation().methods(PUT, POST).path("/v2/tasks/{taskName}").handleWith(this::createScriptTask)
-            .invocation().methods(GET).path("/v2/tasks/{taskName}").withAction("exec").handleWith(this::runTask)
+            .invocation().methods(GET, POST).path("/v2/tasks/{taskName}").withAction("exec").handleWith(this::runTask)
             .create();
    }
 
@@ -58,15 +55,8 @@ public class TasksResource implements ResourceHandler {
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
-      try {
-         List<Task> tasks = userOnly ? taskManager.getUserTasks() : taskManager.getTasks();
-         byte[] resultBytes = invocationHelper.getMapper().writeValueAsBytes(tasks);
-         builder.contentType(APPLICATION_JSON_TYPE).entity(resultBytes);
-      } catch (JsonProcessingException e) {
-         builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
-      }
-      return completedFuture(builder.build());
+      List<Task> tasks = userOnly ? taskManager.getUserTasks() : taskManager.getTasks();
+      return asJsonResponseFuture(tasks, invocationHelper);
    }
 
    private CompletionStage<RestResponse> createScriptTask(RestRequest request) {
@@ -101,15 +91,10 @@ public class TasksResource implements ResourceHandler {
 
       return runResult.thenApply(result -> {
          NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
-         try {
-            if (result instanceof byte[]) {
-               builder.contentType(TEXT_PLAIN_TYPE).entity(result);
-            } else {
-               byte[] resultBytes = invocationHelper.getMapper().writeValueAsBytes(result);
-               builder.contentType(APPLICATION_JSON_TYPE).entity(resultBytes);
-            }
-         } catch (JsonProcessingException e) {
-            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
+         if (result instanceof byte[]) {
+            builder.contentType(TEXT_PLAIN_TYPE).entity(result);
+         } else {
+            addEntityAsJson(result, builder, invocationHelper);
          }
          return builder.build();
       });

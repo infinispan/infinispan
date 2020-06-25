@@ -853,13 +853,12 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028503:.*")
    public void testInvalidEmbeddedAttributeQuery() {
       QueryFactory qf = getQueryFactory();
-
       QueryBuilder queryBuilder = qf.from(getModelFactory().getUserImplClass())
             .select("addresses");
 
       Query q = queryBuilder.build();
 
-      q.list();  // exception expected
+      q.list();  // exception thrown only at execution time when in remote mode!
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014027: The property path 'addresses.postCode' cannot be projected because it is multi-valued")
@@ -868,7 +867,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .select("addresses.postCode")
             .build();
-      q.list();
+      q.list();  // exception thrown only at execution time
    }
 
    public void testIsNull1() {
@@ -2774,7 +2773,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testNotStoredProjection() {
       QueryFactory qf = getQueryFactory();
 
-      Query q = qf.from(getModelFactory().getTransactionImplClass())
+      Query<Object[]> q = qf.from(getModelFactory().getTransactionImplClass())
             .select("id", "description")
             .having("id").gte(98)
             .orderBy("id")
@@ -2793,7 +2792,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testNotIndexedOrderBy() {
       QueryFactory qf = getQueryFactory();
 
-      Query q = qf.from(getModelFactory().getTransactionImplClass())
+      Query<Object[]> q = qf.from(getModelFactory().getTransactionImplClass())
             .select("id", "isValid")
             .having("id").gte(98)
             .orderBy("isValid")
@@ -2813,7 +2812,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testNotStoredOrderBy() {
       QueryFactory qf = getQueryFactory();
 
-      Query q = qf.from(getModelFactory().getTransactionImplClass())
+      Query<Object[]> q = qf.from(getModelFactory().getTransactionImplClass())
             .select("id", "description")
             .having("id").gte(98)
             .orderBy("description")
@@ -2833,7 +2832,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testDuplicateDateProjection() throws Exception {
       QueryFactory qf = getQueryFactory();
 
-      Query q = qf.from(getModelFactory().getTransactionImplClass())
+      Query<Object[]> q = qf.from(getModelFactory().getTransactionImplClass())
             .select("id", "date", "date")
             .having("description").eq("Hotel")
             .build();
@@ -2849,7 +2848,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testDuplicateBooleanProjection() {
       QueryFactory qf = getQueryFactory();
 
-      Query q = qf.from(getModelFactory().getTransactionImplClass())
+      Query<Object[]> q = qf.from(getModelFactory().getTransactionImplClass())
             .select("id", "isDebit", "isDebit")
             .having("description").eq("Hotel")
             .build();
@@ -2865,7 +2864,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014023: Using the multi-valued property path 'addresses.street' in the GROUP BY clause is not currently supported")
    public void testGroupByMustNotAcceptRepeatedProperty() {
       QueryFactory qf = getQueryFactory();
-      Query q = qf.from(getModelFactory().getUserImplClass())
+      Query<Object[]> q = qf.from(getModelFactory().getUserImplClass())
             .select(min("name"))
             .groupBy("addresses.street")
             .build();
@@ -2875,7 +2874,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014024: The property path 'addresses.street' cannot be used in the ORDER BY clause because it is multi-valued")
    public void testOrderByMustNotAcceptRepeatedProperty() {
       QueryFactory qf = getQueryFactory();
-      Query q = qf.from(getModelFactory().getUserImplClass())
+      Query<Object[]> q = qf.from(getModelFactory().getUserImplClass())
             .select("name")
             .orderBy("addresses.street")
             .build();
@@ -2884,7 +2883,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    public void testOrderByInAggregationQueryMustAcceptRepeatedProperty() {
       QueryFactory qf = getQueryFactory();
-      Query q = qf.from(getModelFactory().getUserImplClass())
+      Query<Object[]> q = qf.from(getModelFactory().getUserImplClass())
             .select(avg("age"), property("name"))
             .having("name").gt("A")
             .groupBy("name")
@@ -2913,7 +2912,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    public void testAggregateRepeatedField() {
       QueryFactory qf = getQueryFactory();
-      Query q = qf.from(getModelFactory().getUserImplClass())
+      Query<Object[]> q = qf.from(getModelFactory().getUserImplClass())
             .select(min("addresses.street"))
             .having("name").eq("Spider")
             .build();
@@ -2924,7 +2923,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    public void testGroupingAndAggregationOnSameField() {
       QueryFactory qf = getQueryFactory();
-      Query q = qf.from(getModelFactory().getUserImplClass())
+      Query<Object[]> q = qf.from(getModelFactory().getUserImplClass())
             .select(count("surname"))
             .groupBy("surname")
             .build();
@@ -2939,7 +2938,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    public void testTwoPhaseGroupingAndAggregationOnSameField() {
       QueryFactory qf = getQueryFactory();
-      Query q = qf.from(getModelFactory().getUserImplClass())
+      Query<Object[]> q = qf.from(getModelFactory().getUserImplClass())
             .select(count("surname"), sum("addresses.number"))
             .groupBy("surname")
             .orderBy("surname")
@@ -2963,25 +2962,25 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       // use a true wildcard
-      Query q1 = qf.from(getModelFactory().getUserImplClass())
+      Query<User> q1 = qf.from(getModelFactory().getUserImplClass())
             .having("name").like("J%n")
             .build();
       assertEquals(1, q1.list().size());
 
       // use an improper wildcard
-      Query q2 = qf.from(getModelFactory().getUserImplClass())
+      Query<User> q2 = qf.from(getModelFactory().getUserImplClass())
             .having("name").like("J*n")
             .build();
       assertEquals(0, q2.list().size());
 
       // use a true wildcard
-      Query q3 = qf.from(getModelFactory().getUserImplClass())
+      Query<User> q3 = qf.from(getModelFactory().getUserImplClass())
             .having("name").like("Jo_n")
             .build();
       assertEquals(1, q3.list().size());
 
       // use an improper wildcard
-      Query q4 = qf.from(getModelFactory().getUserImplClass())
+      Query<User> q4 = qf.from(getModelFactory().getUserImplClass())
             .having("name").like("Jo?n")
             .build();
       assertEquals(0, q4.list().size());
@@ -2990,7 +2989,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testCompareLongWithInt() {
       QueryFactory qf = getQueryFactory();
 
-      Query q = qf.from(getModelFactory().getUserImplClass())
+      Query<Object[]> q = qf.from(getModelFactory().getUserImplClass())
             .select(sum("age"))
             .groupBy("name")
             .having(sum("age")).gt(50000)
@@ -3003,7 +3002,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testCompareDoubleWithInt() {
       QueryFactory qf = getQueryFactory();
 
-      Query q = qf.from(getModelFactory().getTransactionImplClass())
+      Query<Object[]> q = qf.from(getModelFactory().getTransactionImplClass())
             .select(sum("amount"))
             .groupBy("accountId")
             .having(sum("amount")).gt(50000)
@@ -3016,7 +3015,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testFullTextTerm() {
       QueryFactory qf = getQueryFactory();
 
-      Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'rent'");
+      Query<Transaction> q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'rent'");
 
       List<Transaction> list = q.list();
       assertEquals(1, list.size());
@@ -3025,7 +3024,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testFullTextPhrase() {
       QueryFactory qf = getQueryFactory();
 
-      Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'expensive shoes'");
+      Query<Transaction> q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'expensive shoes'");
 
       List<Transaction> list = q.list();
       assertEquals(50, list.size());
@@ -3034,7 +3033,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testInstant1() {
       QueryFactory qf = getQueryFactory();
 
-      Query q = qf.from(getModelFactory().getUserImplClass())
+      Query<User> q = qf.from(getModelFactory().getUserImplClass())
             .having("creationDate").eq(Instant.parse("2011-12-03T10:15:30Z"))
             .build();
 
@@ -3045,7 +3044,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testInstant2() {
       QueryFactory qf = getQueryFactory();
 
-      Query q = qf.from(getModelFactory().getUserImplClass())
+      Query<User> q = qf.from(getModelFactory().getUserImplClass())
             .having("passwordExpirationDate").eq(Instant.parse("2011-12-03T10:15:30Z"))
             .build();
 
@@ -3064,14 +3063,14 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       // This query is a boolean contradiction, so our smart query engine does not really execute it,
       // it just returns 0 results and that is fine. We just wanted to check it is parsed correctly.
-      List<User> list = qb.build().list();
+      List<User> list = qb.<User>build().list();
       assertEquals(0, list.size());
    }
 
    public void testSingleIN() {
       QueryFactory qf = getQueryFactory();
 
-      Query q = qf.from(getModelFactory().getUserImplClass())
+      Query<User> q = qf.from(getModelFactory().getUserImplClass())
             .having("surname").in("Man")
             .and()
             .having("gender").eq(User.Gender.MALE)

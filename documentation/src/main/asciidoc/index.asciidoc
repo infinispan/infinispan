@@ -2,60 +2,58 @@
 Written and maintained by the {brandname} community
 :icons: font
 
-Get answers and find help in the {brandname} {infinispanversion} doc set.
+++++
+<script async src="https://cse.google.com/cse.js?cx=013815398149802919631:_cym2xwxalo"></script>
+<div class="gcse-search"></div>
+++++
 
-Embedding {brandname}::
+[discrete]
+== Get Started
 
-* link:titles/embedding/embedding.html[Using {brandname} as an Embedded Library]
+[unstyled]
+* link:titles/getting_started/getting_started.html[Getting Started with {brandname}]
 
-{brandname} Servers::
+[discrete]
+== Administrator
 
+[unstyled]
 * link:titles/server/server.html[{brandname} Server Guide]
-* link:titles/cli/cli.html[Using the Command Line Interface]
-* link:titles/rest/rest.html[{brandname} REST API Guide]
+* link:titles/cli/cli.html[Command Line Interface]
+* link:titles/upgrading/upgrading.html[Upgrading {brandname}]
+* link:titles/security/security.html[Security]
+* link:titles/tuning/tuning.html[Performance Tuning]
 
-Operator for Kubernetes and OpenShift::
+[discrete]
+== Developer
 
-* link:https://infinispan.org/infinispan-operator/master/operator.html[{brandname} Operator Guide: Development]
-* link:https://infinispan.org/infinispan-operator/1.1.x/operator.html[{brandname} Operator Guide: Stable]
-
-Hot Rod Clients::
-
+[unstyled]
+* link:titles/embedding/embedding.html[Embedding {brandname}]
+* link:titles/developing/developing.html[Developer's Guide]
+* link:titles/configuring/configuring.html[Configuring {brandname}]
+* link:titles/xsite/xsite.html[Using Cross-Site Replication]
+* link:titles/developing/developing.html#search_api[Index and Search API]
 * link:titles/hotrod_java/hotrod_java.html[Hot Rod Java Client Guide]
 * link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference]
-
-Configuring {brandname}::
-
-* link:titles/configuring/configuring.html[{brandname} Configuration Guide]
-
-Configuring and Using Cross-Site Replication Capabilities::
-
-* link:titles/xsite/xsite.html[{brandname} Guide to Cross-Site Replication]
-
-Developer Content::
-
-* link:titles/developing/developing.html[Programmer's Guide to {brandname}]
-* link:titles/integrating/integrating.html[Apache Lucene, Hibernate, and Spring Framework Integration]
+* link:titles/rest/rest.html[REST API]
+* link:titles/integrating/integrating.html[Integrations]
 * link:https://infinispan.org/infinispan-spring-boot/master/spring_boot_starter.html[Spring Boot Starter]
 
-Upgrading {brandname}::
+[discrete]
+== Cloud
 
-* link:titles/upgrading/upgrading.html[{brandname} Upgrade Guide]
+[unstyled]
+* link:https://infinispan.org/infinispan-operator/master/operator.html[{brandname} Operator Guide: Version 2.0.x (Dev)]
+* link:https://infinispan.org/infinispan-operator/1.1.x/operator.html[{brandname} Operator Guide: Version 1.1.x]
 
-Security and Performance Tuning::
+[discrete]
+== Additional Resources
 
-* link:titles/security/security.html[Security Guide]
-* link:titles/tuning/tuning.html[Tuning {brandname} Performance]
+Our link:titles/overview/overview.html[Technical Overview] illustrates different deployment scenarios and provides an FAQ. Although it is worth noting that the _Technical Overview_ is not always updated between releases so you might find details that do not apply to the version of {brandname} that you're using.
 
-If you're new to {brandname}, feel free to try our link:titles/getting_started/getting_started.html[Getting Started Guide] or check out the link:titles/overview/overview.html[{brandname} Technical Overview] that explains different
-deployment scenarios and provides an FAQ.
+The link:titles/memcached/memcached.html[Memcached Client Guide] is also
+available. However, {brandname} does not recommend using Memcached for security
+reasons and the Memcached API is planned for removal. See the link:titles/server/server.html[Server Guide] for details.
 
-We also have a link:titles/memcached/memcached.html[Memcached Client Guide].
-However, {brandname} does not recommend using Memcached for security reasons and
-the server endpoint is planned for removal. See the link:titles/server/server.html[Server Guide] for details.
+If you're interested in getting involved with {brandname}, then take a look at our link:titles/contributing/contributing.html[Contributor's Guide].
 
-Come and join the link:http://www.infinispan.org/community[{brandname} community] to submit feedback or ask questions.
-
-Interested in getting involved with {brandname}? See the link:titles/contributing/contributing.html[Contributor's Guide].
-
-Also see our link:http://www.infinispan.org/documentation[{brandname} Documentation] home to find more resources and details for other versions.
+Visit the link:http://www.infinispan.org/documentation[{brandname} Documentation] home page to find guides for other versions.

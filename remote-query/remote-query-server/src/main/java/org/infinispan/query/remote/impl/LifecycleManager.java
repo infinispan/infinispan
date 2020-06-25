@@ -5,11 +5,13 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 
 import java.util.Map;
+import java.util.Set;
 
 import javax.management.ObjectName;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
@@ -146,6 +148,17 @@ public final class LifecycleManager implements ModuleLifecycle {
             log.debugf("Wrapping the SearchWorkCreator for indexed cache %s", cacheName);
             QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
             queryInterceptor.setSearchWorkCreator(new ProtobufValueWrapperSearchWorkCreator(queryInterceptor.getSearchWorkCreator(), serCtx));
+
+            AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
+            if (cache.getValueDataConversion().getStorageMediaType().match(MediaType.APPLICATION_PROTOSTREAM)) {
+               // Try to resolve the indexed type names to protobuf type names.
+               Set<String> knownTypes = protobufMetadataManager.getSerializationContext().getGenericDescriptors().keySet();
+               for (String typeName : cfg.indexing().indexedEntityTypes()) {
+                  if (!knownTypes.contains(typeName)) {
+                     throw new CacheConfigurationException("The declared indexed type '" + typeName + "' is not known. Please register its proto schema file first.");
+                  }
+               }
+            }
          }
       }
    }

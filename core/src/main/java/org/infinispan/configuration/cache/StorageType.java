@@ -23,9 +23,9 @@ public enum StorageType {
    OBJECT(Element.OBJECT),
 
    /**
-    * Objects are stored on heap. By default, storage uses the {@link MediaType#APPLICATION_OBJECT_TYPE}
-    * format, and equality is defined by the equals of the implementation class. If the configured {@link MediaType}
-    * causes the storage to be byte[], then equality is defined by these byte[] instances.
+    * Objects are stored on heap. Equality is defined by the equals of the implementation class.
+    * If the configured {@link MediaType} causes the storage to be byte[], then equality is defined by these
+    * byte[] instances.
     */
    HEAP(Element.HEAP),
 
@@ -56,6 +56,10 @@ public enum StorageType {
 
    public static StorageType forElement(String element) {
       return STORAGE_PER_ELEMENT.get(element);
+   }
+
+   public boolean canStoreReferences() {
+      return this == HEAP || this == OBJECT;
    }
 
    private static final Map<String, StorageType> STORAGE_PER_ELEMENT = new HashMap<>(3);

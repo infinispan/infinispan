@@ -199,7 +199,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       }
       List<RuntimeException> validationExceptions = new ArrayList<>();
       for (Builder<?> validatable:
-            asList(clustering, customInterceptors, expiration, indexing,
+            asList(clustering, customInterceptors, expiration, indexing, encoding,
                    invocationBatching, statistics, persistence, locking, transaction,
                    unsafe, sites, memory)) {
          try {

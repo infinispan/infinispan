@@ -25,12 +25,11 @@ pipeline {
                     env.MAVEN_HOME = tool('Maven')
                     env.MAVEN_OPTS = "-Xmx800m -XX:+HeapDumpOnOutOfMemoryError"
                     env.JAVA_HOME = tool('JDK 11')
-                    env.TESTCONTAINERS_RYUK_DISABLED = true
                 }
 
                 // ISPN-9703 Ensure distribution build works on non-prs
                 script {
-                    env.DISTRIBUTION_BUILD = env.BRANCH_NAME.startsWith('PR-') ? "" : "-Pdistribution"
+                    env.DISTRIBUTION_BUILD = env.BRANCH_NAME.startsWith('PR-') && !pullRequest.labels.contains('Documentation') ? "" : "-Pdistribution"
                 }
 
                 sh 'cleanup.sh'

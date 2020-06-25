@@ -55,6 +55,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    // Match IPv4 (host:port) or IPv6 ([host]:port) addresses
    private static final Pattern ADDRESS_PATTERN = Pattern
          .compile("(\\[([0-9A-Fa-f:]+)\\]|([^:/?#]*))(?::(\\d*))?");
+   private static final int CACHE_PREFIX_LENGTH = ConfigurationProperties.CACHE_PREFIX.length();
 
    private WeakReference<ClassLoader> classLoader;
    private final ExecutorFactoryConfigurationBuilder asyncExecutorFactory;
@@ -445,9 +446,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       });
 
       Set<String> cachesNames = typed.keySet().stream()
-            .filter(k -> ((String) k).startsWith(ConfigurationProperties.CACHE_PREFIX))
-            .map(k -> ((String) k).substring(ConfigurationProperties.CACHE_PREFIX.length(), ((String) k).indexOf('.', ConfigurationProperties.CACHE_PREFIX.length())))
-            .collect(Collectors.toSet());
+            .map(k -> (String)k)
+            .filter(k -> k.startsWith(ConfigurationProperties.CACHE_PREFIX))
+            .map(k ->
+                  k.charAt(CACHE_PREFIX_LENGTH) =='[' ?
+                        k.substring(CACHE_PREFIX_LENGTH + 1, k.indexOf(']', CACHE_PREFIX_LENGTH)) :
+                        k.substring(CACHE_PREFIX_LENGTH, k.indexOf('.', CACHE_PREFIX_LENGTH + 1 ))
+            ).collect(Collectors.toSet());
 
       for(String cacheName : cachesNames) {
          this.remoteCache(cacheName).withProperties(typed);
@@ -490,26 +495,30 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       List<ClusterConfiguration> serverClusterConfigs = clusters.stream()
             .map(ClusterConfigurationBuilder::create).collect(Collectors.toList());
-      if (marshaller == null && marshallerClass == null) {
-         handleNullMarshaller();
+
+      Marshaller buildMarshaller = this.marshaller;
+      if (buildMarshaller == null && marshallerClass == null) {
+         buildMarshaller = handleNullMarshaller();
+      }
+      Class<? extends Marshaller> buildMarshallerClass = this.marshallerClass;
+      if (buildMarshallerClass == null) {
+         // Populate the marshaller class as well, so it can be exported to properties
+         buildMarshallerClass = buildMarshaller.getClass();
+      } else {
+         if (buildMarshaller != null && !buildMarshallerClass.isInstance(buildMarshaller))
+            throw new IllegalArgumentException("Both marshaller and marshallerClass attributes are present, but marshaller is not an instance of marshallerClass");
       }
 
       Map<String, RemoteCacheConfiguration> remoteCaches = remoteCacheBuilders.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().create()));
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
-            consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
-            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create(), statistics.create(), features, contextInitializers, remoteCaches);
+                               consistentHashImpl, forceReturnValues, keySizeEstimate, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
+                               valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create(), statistics.create(), features, contextInitializers, remoteCaches);
    }
 
    // Method that handles default marshaller - needed as a placeholder
-   private void handleNullMarshaller() {
-      // First see if infinispan-jboss-marshalling is in the class path - if so we can use the generic marshaller
-      marshaller = Util.getJBossMarshaller(ConfigurationBuilder.class.getClassLoader(), null);
-      if (marshaller == null) {
-         // Otherwise we use the protostream marshaller
-         marshaller = new ProtoStreamMarshaller();
-      }
-      marshallerClass = marshaller.getClass();
+   private Marshaller handleNullMarshaller() {
+      return new ProtoStreamMarshaller();
    }
 
    @Override

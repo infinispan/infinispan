@@ -2,12 +2,7 @@
 :context: persistence
 = {brandname} Cache Stores
 Cache stores connect {brandname} to persistent data sources and implement the
-following interfaces:
-
-`org.infinispan.persistence.spi.CacheLoader`::
-Allows {brandname} to load data from persistent storage.
-`org.infinispan.persistence.spi.CacheWriter`::
-Allows {brandname} to persist data to persistent storage.
+`NonBlockingStore` interface.
 
 include::{topics}/proc_configuring_cache_stores.adoc[leveloffset=+1]
 include::{topics}/proc_setting_persistent_location.adoc[leveloffset=+1]

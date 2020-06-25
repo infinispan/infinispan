@@ -9,7 +9,7 @@ import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.commands.batch.KeyPublisherResponse;
 import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
 import org.infinispan.remoting.transport.Address;

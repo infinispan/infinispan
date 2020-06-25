@@ -65,7 +65,7 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
 
       GlobalConfigurationBuilder glob = new GlobalConfigurationBuilder().nonClusteredDefault()
             .defaultCacheName("cache");
-      glob.globalState().persistentLocation(tmpDirectory);
+      glob.globalState().enable().persistentLocation(tmpDirectory);
       ConfigurationBuilder cacheb = new ConfigurationBuilder();
       cacheb.clustering().cacheMode(CacheMode.LOCAL)
             .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)

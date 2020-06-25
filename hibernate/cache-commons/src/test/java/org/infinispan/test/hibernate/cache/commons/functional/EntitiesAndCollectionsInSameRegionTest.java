@@ -38,11 +38,11 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
    public EntitiesAndCollectionsInSameRegionTest() {
       anEntity = new AnEntity();
       anEntity.id = 1;
-      anEntity.values.add("abc");
+      anEntity.valuesSet.add("abc");
 
       anotherEntity = new AnotherEntity();
       anotherEntity.id = 1;
-      anotherEntity.values.add(123);
+      anotherEntity.valuesSet.add(123);
    }
 
    @Override
@@ -119,8 +119,8 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
 
             stats.clear();
 
-            assertFalse(Hibernate.isInitialized(anEntity1.values));
-            Hibernate.initialize(anEntity1.values);
+            assertFalse(Hibernate.isInitialized(anEntity1.valuesSet));
+            Hibernate.initialize(anEntity1.valuesSet);
 
             // anEntity1.values gets cached when it gets loadead
             cacheStatistics = stats.getSecondLevelCacheStatistics(REGION_NAME);
@@ -140,8 +140,8 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
 
             stats.clear();
 
-            assertFalse(Hibernate.isInitialized(anotherEntity1.values));
-            Hibernate.initialize(anotherEntity1.values);
+            assertFalse(Hibernate.isInitialized(anotherEntity1.valuesSet));
+            Hibernate.initialize(anotherEntity1.valuesSet);
 
             // anotherEntity1.values gets cached when it gets loadead
             cacheStatistics = stats.getSecondLevelCacheStatistics(REGION_NAME);
@@ -169,15 +169,15 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
 
             stats.clear();
 
-            assertFalse(Hibernate.isInitialized(anEntity1.values));
-            Hibernate.initialize(anEntity1.values);
+            assertFalse(Hibernate.isInitialized(anEntity1.valuesSet));
+            Hibernate.initialize(anEntity1.valuesSet);
 
             cacheStatistics = stats.getSecondLevelCacheStatistics(REGION_NAME);
             assertEquals(0, cacheStatistics.getMissCount());
             assertEquals(1, cacheStatistics.getHitCount());
             assertEquals(0, cacheStatistics.getPutCount());
 
-            assertEquals(anEntity.values, anEntity1.values);
+            assertEquals(anEntity.valuesSet, anEntity1.valuesSet);
 
             stats.clear();
 
@@ -190,15 +190,15 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
 
             stats.clear();
 
-            assertFalse(Hibernate.isInitialized(anotherEntity1.values));
-            Hibernate.initialize(anotherEntity1.values);
+            assertFalse(Hibernate.isInitialized(anotherEntity1.valuesSet));
+            Hibernate.initialize(anotherEntity1.valuesSet);
 
             cacheStatistics = stats.getSecondLevelCacheStatistics(REGION_NAME);
             assertEquals(0, cacheStatistics.getMissCount());
             assertEquals(1, cacheStatistics.getHitCount());
             assertEquals(0, cacheStatistics.getPutCount());
 
-            assertEquals(anotherEntity.values, anotherEntity1.values);
+            assertEquals(anotherEntity.valuesSet, anotherEntity1.valuesSet);
          }
       );
    }
@@ -212,7 +212,7 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
 
       @ElementCollection
       @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL, region = REGION_NAME)
-      private Set<String> values = new HashSet<>();
+      private Set<String> valuesSet = new HashSet<>();
    }
 
    @Entity(name = "AnotherEntity")
@@ -224,7 +224,7 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
 
       @ElementCollection
       @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL, region = REGION_NAME)
-      private Set<Integer> values = new HashSet<>();
+      private Set<Integer> valuesSet = new HashSet<>();
    }
 
 }

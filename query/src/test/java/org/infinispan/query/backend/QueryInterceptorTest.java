@@ -28,6 +28,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent
 import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
@@ -41,7 +42,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * Test for interaction of activation and preload on indexing
+ * Test for interaction of activation and preload on indexing.
  *
  * @author gustavonalle
  * @since 7.0
@@ -78,12 +79,12 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
             LuceneIndexTracker luceneIndexTracker = new LuceneIndexTracker(new File(indexDir + "/person"));
             luceneIndexTracker.mark();
 
-            Cache<Integer, Person> cache = cm.getCache();
-            CacheListener cacheListener = new CacheListener();
+            Cache<String, Person> cache = cm.getCache();
+            CacheListener<String, Person> cacheListener = new CacheListener<>();
             cache.addListener(cacheListener);
 
-            cache.put(1, person1);
-            cache.put(2, person2);
+            cache.put("key1", person1);
+            cache.put("key2", person2);
 
             // Notification is non blocking
             eventuallyEquals(1, cacheListener::numberOfPassivations);
@@ -92,7 +93,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
 
             luceneIndexTracker.mark();
 
-            cache.get(1);
+            cache.get("key1");
 
             assertEquals(cacheListener.numberOfActivations(), 1);
             assertFalse(luceneIndexTracker.indexChanged());
@@ -108,9 +109,9 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(createCacheManager(MAX_CACHE_ENTRIES)) {
          @Override
          public void call() {
-            Cache<Integer, Person> cache = cm.getCache();
-            cache.put(1, person1);
-            cache.put(2, person2);
+            Cache<String, Person> cache = cm.getCache();
+            cache.put("key1", person1);
+            cache.put("key2", person2);
             assertTrue(luceneIndexTracker.indexChanged());
          }
       });
@@ -120,18 +121,17 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(createCacheManager(MAX_CACHE_ENTRIES + 10)) {
          @Override
          public void call() {
-            Cache<Integer, Person> cache = cm.getCache();
-            CacheListener cacheListener = new CacheListener();
+            Cache<String, Person> cache = cm.getCache();
+            CacheListener<String, Person> cacheListener = new CacheListener<>();
             cache.addListener(cacheListener);
 
-            assertTrue(cache.containsKey(1));
-            assertTrue(cache.containsKey(2));
+            assertTrue(cache.containsKey("key1"));
+            assertTrue(cache.containsKey("key2"));
             assertEquals(cacheListener.numberOfPassivations(), 0);
             assertEquals(cacheListener.numberOfActivations(), 0);
             assertFalse(luceneIndexTracker.indexChanged());
          }
       });
-
    }
 
    @Test
@@ -159,13 +159,10 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
             assertEquals(0, countIndex(Person.class, cache));
          }
       });
-
-
    }
 
    @Test
-   @SuppressWarnings("unchecked")
-   public void shouldDeleteFromAllIndexesById() throws Exception {
+   public void shouldDeleteFromAllIndexesById() {
       withCacheManager(new CacheManagerCallable(createVolatileCacheManager()) {
          @Override
          public void call() {
@@ -220,7 +217,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
 
    protected EmbeddedCacheManager createCacheManager(int maxEntries) throws Exception {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalBuilder.globalState().persistentLocation(storeDir.getAbsolutePath());
+      globalBuilder.globalState().enable().persistentLocation(storeDir.getAbsolutePath());
       globalBuilder.serialization().addContextInitializer(QueryTestSCI.INSTANCE);
 
       ConfigurationBuilder b = new ConfigurationBuilder();
@@ -247,7 +244,8 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
    }
 
    private long countIndex(Class<?> entityType, Cache<?, ?> cache) {
-      return Search.getQueryFactory(cache).create("FROM " + entityType.getName()).execute().hitCount().orElse(-1);
+      Query<?> query = Search.getQueryFactory(cache).create("FROM " + entityType.getName());
+      return query.execute().hitCount().orElse(-1);
    }
 
    private static final class LuceneIndexTracker {
@@ -274,21 +272,23 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
 
    @Listener
    @SuppressWarnings("unused")
-   private static final class CacheListener {
+   private static final class CacheListener<K, V> {
 
       private final LongAdder passivationCount = new LongAdder();
       private final LongAdder activationCount = new LongAdder();
 
       @CacheEntryPassivated
-      public void onEvent(CacheEntryPassivatedEvent payload) {
-         if (!payload.isPre())
+      public void onEvent(CacheEntryPassivatedEvent<K, V> payload) {
+         if (!payload.isPre()) {
             passivationCount.increment();
+         }
       }
 
       @CacheEntryActivated
-      public void onEvent(CacheEntryActivatedEvent payload) {
-         if (!payload.isPre())
+      public void onEvent(CacheEntryActivatedEvent<K, V> payload) {
+         if (!payload.isPre()) {
             activationCount.increment();
+         }
       }
 
       public int numberOfPassivations() {

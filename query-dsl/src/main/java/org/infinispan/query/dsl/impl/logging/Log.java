@@ -96,6 +96,6 @@ public interface Log extends BasicLogger {
    IllegalArgumentException leftAndRightCannotBeTheSame();
 
    @LogMessage(level = WARN)
-   @Message(value = "Distributed sort not supported for non-indexed query '%s'. Consider using an index for optimal performance", id = 14827)
-   void warnPerfSortedNonIndexed(String q);
+   @Message(value = "Distributed sort not supported for non-indexed query '%s'. Consider using an index for optimal performance.", id = 14827)
+   void warnPerfSortedNonIndexed(String query);
 }

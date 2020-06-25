@@ -34,13 +34,13 @@ public class QueryStringTest extends AbstractQueryDslTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.transaction()
-            .transactionMode(TransactionMode.TRANSACTIONAL)
-            .indexing().enable()
-            .addIndexedEntity(getModelFactory().getUserImplClass())
-            .addIndexedEntity(getModelFactory().getAccountImplClass())
-            .addIndexedEntity(getModelFactory().getTransactionImplClass())
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+         .transactionMode(TransactionMode.TRANSACTIONAL)
+         .indexing().enable()
+         .addIndexedEntity(getModelFactory().getUserImplClass())
+         .addIndexedEntity(getModelFactory().getAccountImplClass())
+         .addIndexedEntity(getModelFactory().getTransactionImplClass())
+         .addProperty("default.directory_provider", "local-heap")
+         .addProperty("lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(1, cfg);
    }
 
@@ -181,18 +181,18 @@ public class QueryStringTest extends AbstractQueryDslTest {
    }
 
    public void testParam() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where id = :idParam");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where id = :idParam");
 
       q.setParameter("idParam", 1);
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
 
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).getId());
 
       q.setParameter("idParam", 2);
 
-      list = q.list();
+      list = q.execute().list();
 
       assertEquals(1, list.size());
       assertEquals(2, list.get(0).getId());
@@ -201,51 +201,51 @@ public class QueryStringTest extends AbstractQueryDslTest {
    @Test(enabled = false)
    public void testParamWithSpacePadding() {
       //todo [anistor] need special tree nodes for all literal types (and for params) to be able to distinguish them better; QueryRendererDelegate.predicateXXX should receive such a tree node instead of a string
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where id = :  idParam");
-      List<Transaction> list = q.list();
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where id = :  idParam");
+      List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    public void testExactMatch() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where description = 'Birthday present'");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where description = 'Birthday present'");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    public void testFullTextTerm() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'rent'");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'rent'");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    public void testFullTextTermRightOperandAnalyzed() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'RENT'");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'RENT'");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    public void testFullTextTermBoost() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:('rent'^8 'shoes')");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:('rent'^8 'shoes')");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(51, list.size());
    }
 
    public void testFullTextPhrase() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'expensive shoes'");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'expensive shoes'");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(50, list.size());
    }
 
    public void testFullTextWithAggregation() {
-      Query q = createQueryFromString("select t.accountId, max(t.amount), max(t.description) from " + getModelFactory().getTransactionTypeName()
-            + " t where t.longDescription : (+'beer' && -'food') group by t.accountId");
+      Query<Object[]> q = createQueryFromString("select t.accountId, max(t.amount), max(t.description) from " + getModelFactory().getTransactionTypeName()
+                                                      + " t where t.longDescription : (+'beer' && -'food') group by t.accountId");
 
-      List<Object[]> list = q.list();
+      List<Object[]> list = q.execute().list();
       assertEquals(1, list.size());
       assertEquals(2, list.get(0)[0]);
       assertEquals(149.0, list.get(0)[1]);
@@ -253,147 +253,147 @@ public class QueryStringTest extends AbstractQueryDslTest {
    }
 
    public void testFullTextTermBoostAndSorting() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:('rent'^8 'shoes') order by amount");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:('rent'^8 'shoes') order by amount");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(51, list.size());
    }
 
    public void testFullTextTermOccur() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where not (t.longDescription : (+'failed') or t.longDescription : 'blocked')");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where not (t.longDescription : (+'failed') or t.longDescription : 'blocked')");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(56, list.size());
    }
 
    public void testFullTextTermDoesntOccur() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : (-'really')");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : (-'really')");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(6, list.size());
    }
 
    public void testFullTextRangeWildcard() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : [* to *]");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : [* to *]");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(54, list.size());
    }
 
    public void testFullTextRange() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.amount : [23 to 45]");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.amount : [23 to 45]");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(2, list.size());
    }
 
    public void testFullTextPrefix() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ren*'");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ren*'");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    public void testFullTextWildcard() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 're?t'");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 're?t'");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014036: Prefix, wildcard or regexp queries cannot be fuzzy.*")
    public void testFullTextWildcardFuzzyNotAllowed() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 're?t'~2");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 're?t'~2");
 
-      q.list();
+      q.execute();
    }
 
    public void testFullTextFuzzy() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'retn'~");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'retn'~");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    public void testFullTextFuzzyDefaultEdits() {
       // default number of edits should be 2
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ertn'~");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ertn'~");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
 
       q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ajunayr'~");
 
-      list = q.list();
+      list = q.execute().list();
       assertEquals(0, list.size());
    }
 
    public void testFullTextFuzzySpecifiedEdits() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ajnuary'~1");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ajnuary'~1");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
 
       q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ajunary'~1");
 
-      list = q.list();
+      list = q.execute().list();
       assertEquals(0, list.size());
    }
 
    public void testFullTextRegexp() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : /[R|r]ent/");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : /[R|r]ent/");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
    public void testFullTextRegexpFuzzyNotAllowed() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : /[R|r]ent/~2");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : /[R|r]ent/~2");
 
-      q.list();
+      q.execute();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028522: .*property is analyzed.*")
    public void testExactMatchOnAnalyzedFieldNotAllowed() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription = 'Birthday present'");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription = 'Birthday present'");
 
-      q.list();
+      q.execute();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: .*unless the property is indexed and analyzed.*")
    public void testFullTextTermOnNonAnalyzedFieldNotAllowed() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where description:'rent'");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where description:'rent'");
 
-      q.list();
+      q.execute();
    }
 
    @Test(enabled = false) //TODO [anistor] fix!
    public void testFullTextRegexp2() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : ( -'beer' and '*')");
+      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : ( -'beer' and '*')");
 
-      List<Transaction> list = q.list();
+      List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    public void testInstant1() {
-      Query q = createQueryFromString("from " + getModelFactory().getUserTypeName() + " u where u.creationDate = '2011-12-03T10:15:30Z'");
+      Query<User> q = createQueryFromString("from " + getModelFactory().getUserTypeName() + " u where u.creationDate = '2011-12-03T10:15:30Z'");
 
-      List<User> list = q.list();
+      List<User> list = q.execute().list();
       assertEquals(3, list.size());
    }
 
    public void testInstant2() {
-      Query q = createQueryFromString("from " + getModelFactory().getUserTypeName() + " u where u.passwordExpirationDate = '2011-12-03T10:15:30Z'");
+      Query<User> q = createQueryFromString("from " + getModelFactory().getUserTypeName() + " u where u.passwordExpirationDate = '2011-12-03T10:15:30Z'");
 
-      List<User> list = q.list();
+      List<User> list = q.execute().list();
       assertEquals(3, list.size());
    }
 
    public void testEqNonIndexedType() {
-      Query q = createQueryFromString("from " + NotIndexed.class.getName() + " where notIndexedField = 'testing 123'");
+      Query<NotIndexed> q = createQueryFromString("FROM " + NotIndexed.class.getName() + " WHERE notIndexedField = 'testing 123'");
 
-      List<NotIndexed> list = q.list();
+      List<NotIndexed> list = q.execute().list();
       assertEquals(1, list.size());
       assertEquals("testing 123", list.get(0).notIndexedField);
    }
@@ -402,11 +402,11 @@ public class QueryStringTest extends AbstractQueryDslTest {
     * See <a href="https://issues.jboss.org/browse/ISPN-7863">ISPN-7863</a>
     */
    public void testAliasContainingLetterV() {
-      Query q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " vvv where vvv.description = 'Birthday present'");
-      assertEquals(1, q.list().size());
+      Query<Transaction> q = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " vvv WHERE vvv.description = 'Birthday present'");
+      assertEquals(1, q.execute().list().size());
    }
 
-   protected Query createQueryFromString(String q) {
-      return getQueryFactory().create(q);
+   protected <T> Query<T> createQueryFromString(String queryString) {
+      return getQueryFactory().create(queryString);
    }
 }

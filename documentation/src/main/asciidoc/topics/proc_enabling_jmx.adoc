@@ -1,14 +1,9 @@
-[id='enable_jmx']
-= Enabling and Configuring JMX
-You can enable JMX with {brandname} servers to collect statistics and perform
-administrative operations.
-
-[NOTE]
-====
-You can enable JMX without enabling statistics if you want to use management
-operations only. In this case, {brandname} provides `0` values for all
-statistics.
-====
+[id='enable_jmx-{context}']
+= Configuring {brandname} to Register JMX MBeans
+{brandname} can register JMX MBeans that you can use to collect statistics and
+perform administrative operations. However, you must enable statistics
+separately to JMX otherwise {brandname} provides `0` values for all statistic
+attributes.
 
 .Procedure
 
@@ -23,6 +18,8 @@ statistics.
 </cache-container>
 ----
 
+<1> Registers {brandname} JMX MBeans.
+
 .Programmatically
 
 [source,java]
@@ -32,8 +29,4 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
   .build();
 ----
 
-<1> registers {brandname} JMX MBeans.
-
-.Reference
-
-* link:#enable_statistics[Enabling {brandname} Statistics]
+<1> Registers {brandname} JMX MBeans.

@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-server-parent</artifactId>
-      <version>11.0.0-SNAPSHOT</version>
+      <version>11.0.1-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -157,6 +157,11 @@
       </dependency>
 
       <!-- Test dependencies -->
+      <dependency>
+         <groupId>org.antlr</groupId>
+         <artifactId>antlr-runtime</artifactId>
+         <scope>test</scope>
+      </dependency>
       <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>

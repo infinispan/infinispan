@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.testng.annotations.Test;
 
 /**
@@ -32,9 +33,10 @@ public class ProtobufRemoteIteratorIndexingTest extends MultiHotRodServersTest i
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      cfg.indexing().enable().addProperty("default.directory_provider", "local-heap");
+      cfg.indexing().enable()
+         .addIndexedEntity("sample_bank_account.Account")
+         .addProperty("default.directory_provider", "local-heap");
       createHotRodServers(NUM_NODES, hotRodCacheConfiguration(cfg));
-
       waitForClusterToForm();
    }
 
@@ -61,7 +63,9 @@ public class ProtobufRemoteIteratorIndexingTest extends MultiHotRodServersTest i
 
       int lowerId = 5;
       int higherId = 8;
-      Query simpleQuery = queryFactory.from(AccountPB.class).having("id").between(lowerId, higherId).build();
+      Query<Account> simpleQuery = queryFactory.<Account>create("FROM sample_bank_account.Account WHERE id BETWEEN :lowerId AND :higherId")
+                                      .setParameter("lowerId", lowerId)
+                                      .setParameter("higherId", higherId);
       Set<Entry<Object, Object>> entries = extractEntries(remoteCache.retrieveEntriesByQuery(simpleQuery, null, 10));
       Set<Integer> keys = extractKeys(entries);
 
@@ -69,15 +73,16 @@ public class ProtobufRemoteIteratorIndexingTest extends MultiHotRodServersTest i
       assertForAll(keys, key -> key >= lowerId && key <= higherId);
       assertForAll(entries, e -> e.getValue() instanceof AccountPB);
 
-      Query projectionsQuery = queryFactory.from(AccountPB.class).select("id", "description").having("id").between(lowerId, higherId).build();
+      Query<Object[]> projectionsQuery = queryFactory.<Object[]>create("SELECT id, description FROM sample_bank_account.Account WHERE id BETWEEN :lowerId AND :higherId")
+                                           .setParameter("lowerId", lowerId)
+                                           .setParameter("higherId", higherId);
       Set<Entry<Integer, Object[]>> entriesWithProjection = extractEntries(remoteCache.retrieveEntriesByQuery(projectionsQuery, null, 10));
 
       assertEquals(4, entriesWithProjection.size());
       assertForAll(entriesWithProjection, entry -> {
          Integer id = entry.getKey();
-         Object[] value = entry.getValue();
-         return value[0] == id && value[1].equals("description for " + id);
+         Object[] projection = entry.getValue();
+         return projection[0].equals(id) && projection[1].equals("description for " + id);
       });
    }
-
 }

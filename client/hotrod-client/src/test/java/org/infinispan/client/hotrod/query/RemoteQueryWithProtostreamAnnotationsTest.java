@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.query;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.io.IOException;
@@ -25,7 +24,6 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -130,21 +128,31 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addIndexedEntity("Memo")
+             .addProperty("default.directory_provider", "local-heap")
+             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      return TestCacheManagerFactory.createServerModeCacheManager(builder);
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
+
+      manager.defineConfiguration("test", builder.build());
+
+      return manager;
    }
 
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
-      return new RemoteCacheManager(clientBuilder.build());
+      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+      try {
+         registerProtobufSchema(remoteCacheManager);
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
+      return remoteCacheManager;
    }
 
-   @BeforeClass
-   protected void registerProtobufSchema() throws Exception {
+   protected void registerProtobufSchema(RemoteCacheManager remoteCacheManager) throws Exception {
       //initialize client-side serialization context
       String authorSchemaFile = "/* @Indexed */\n" +
             "message Author {\n" +
@@ -191,11 +199,11 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.put("author.proto", authorSchemaFile);
       metadataCache.put("memo.proto", memoSchemaFile);
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      RemoteQueryTestUtils.checkSchemaErrors(metadataCache);
    }
 
    public void testAttributeQuery() {
-      RemoteCache<Integer, Memo> remoteCache = remoteCacheManager.getCache();
+      RemoteCache<Integer, Memo> remoteCache = remoteCacheManager.getCache("test");
 
       remoteCache.put(1, createMemo1());
       remoteCache.put(2, createMemo2());
@@ -206,10 +214,10 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
 
       // get memo1 back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(Memo.class)
+      Query<Memo> query = qf.from(Memo.class)
             .having("text").like("%ipsum%")
             .build();
-      List<Memo> list = query.list();
+      List<Memo> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
       assertEquals(Memo.class, list.get(0).getClass());
@@ -219,7 +227,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       query = qf.from(Memo.class)
             .having("author.name").eq("Adrian")
             .build();
-      list = query.list();
+      list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
       assertEquals(Memo.class, list.get(0).getClass());

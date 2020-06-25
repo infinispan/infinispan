@@ -35,7 +35,7 @@ final class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
    private final ComponentRegistry cr;
 
    ObjectRemoteQueryManager(AdvancedCache<?, ?> cache, ComponentRegistry cr, QuerySerializers querySerializers) {
-      super(cache, querySerializers);
+      super(cache, querySerializers, cr);
       this.cr = cr;
       this.searchIntegrator = cr.getComponent(SearchIntegrator.class);
       this.serCtx = SecurityActions.getSerializationContext(cache.getCacheManager());
@@ -75,7 +75,7 @@ final class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
       return queryEngine;
    }
 
-   private EntityNameResolver createEntityNamesResolver(MediaType mediaType) {
+   private EntityNameResolver<Class<?>> createEntityNamesResolver(MediaType mediaType) {
       if (mediaType.match(APPLICATION_PROTOSTREAM)) {
          return new ProtobufEntityNameResolver(serCtx);
       } else {

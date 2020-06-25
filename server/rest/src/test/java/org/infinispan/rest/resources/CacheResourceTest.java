@@ -1,13 +1,9 @@
 package org.infinispan.rest.resources;
 
-import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
-import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
-import static io.netty.handler.codec.http.HttpHeaderNames.IF_MODIFIED_SINCE;
-import static io.netty.handler.codec.http.HttpHeaderNames.IF_NONE_MATCH;
-import static io.netty.handler.codec.http.HttpHeaderNames.IF_UNMODIFIED_SINCE;
-import static io.netty.handler.codec.http.HttpHeaders.Names.ACCESS_CONTROL_ALLOW_HEADERS;
-import static io.netty.handler.codec.http.HttpHeaders.Names.ACCESS_CONTROL_ALLOW_METHODS;
-import static io.netty.handler.codec.http.HttpHeaders.Names.ACCESS_CONTROL_ALLOW_ORIGIN;
+import static io.netty.handler.codec.http.HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS;
+import static io.netty.handler.codec.http.HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS;
+import static io.netty.handler.codec.http.HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN;
+import static io.netty.handler.codec.http.HttpHeaderNames.ACCESS_CONTROL_EXPOSE_HEADERS;
 import static org.eclipse.jetty.http.HttpHeader.ACCEPT_ENCODING;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
@@ -21,13 +17,6 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.util.Util.getResourceAsString;
 import static org.infinispan.dataconversion.Gzip.decompress;
 import static org.infinispan.rest.JSONConstants.TYPE;
-import static org.infinispan.rest.NettyRestRequest.CREATED_HEADER;
-import static org.infinispan.rest.NettyRestRequest.EXTENDED_HEADER;
-import static org.infinispan.rest.NettyRestRequest.FLAGS_HEADER;
-import static org.infinispan.rest.NettyRestRequest.KEY_CONTENT_TYPE_HEADER;
-import static org.infinispan.rest.NettyRestRequest.LAST_USED_HEADER;
-import static org.infinispan.rest.NettyRestRequest.MAX_TIME_IDLE_HEADER;
-import static org.infinispan.rest.NettyRestRequest.TTL_SECONDS_HEADER;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -48,6 +37,8 @@ import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.DateUtils;
+import org.infinispan.rest.RequestHeader;
+import org.infinispan.rest.ResponseHeader;
 import org.infinispan.rest.TestClass;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
@@ -76,6 +67,10 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       cm.defineConfiguration("objectCache", object.build());
       cm.defineConfiguration("legacy", legacyStorageCache.build());
       cm.defineConfiguration("rest", getDefaultCacheBuilder().build());
+   }
+
+   static {
+      System.setProperty("infinispan.server.rest.cors-allow", "http://infinispan.org");
    }
 
    @Override
@@ -326,10 +321,8 @@ public class CacheResourceTest extends BaseCacheResourceTest {
 
       assertThat(preFlight).isOk();
       assertThat(preFlight).hasNoContent();
-      assertThat(preFlight).containsAllHeaders(ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_HEADERS);
-      assertThat(preFlight).hasHeaderWithValues(ACCESS_CONTROL_ALLOW_HEADERS, CACHE_CONTROL, CONTENT_TYPE, CREATED_HEADER, EXTENDED_HEADER, FLAGS_HEADER,
-            IF_MODIFIED_SINCE, IF_UNMODIFIED_SINCE, IF_NONE_MATCH, KEY_CONTENT_TYPE_HEADER,
-            MAX_TIME_IDLE_HEADER, LAST_USED_HEADER, TTL_SECONDS_HEADER);
+      assertThat(preFlight).containsAllHeaders(ACCESS_CONTROL_ALLOW_ORIGIN.toString(), ACCESS_CONTROL_ALLOW_METHODS.toString(), ACCESS_CONTROL_ALLOW_HEADERS.toString());
+      assertThat(preFlight).hasHeaderWithValues(ACCESS_CONTROL_ALLOW_HEADERS.toString(), (String[]) RequestHeader.toArray());
    }
 
    @Test
@@ -341,6 +334,19 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       ContentResponse response = client
             .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", port, "default", "test"))
             .header(HttpHeader.ORIGIN, "http://127.0.0.1:" + port)
+            .send();
+
+      assertThat(response).isOk();
+      assertThat(response).containsAllHeaders("access-control-allow-origin");
+      assertThat(response).hasHeaderWithValues(ACCESS_CONTROL_EXPOSE_HEADERS.toString(), (String[]) ResponseHeader.toArray());
+   }
+
+   @Test
+   public void testCorsAllowedJVMProp() throws Exception {
+      int port = restServer().getPort();
+      ContentResponse response = client
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches", port))
+            .header(HttpHeader.ORIGIN, "http://infinispan.org")
             .send();
 
       assertThat(response).isOk();

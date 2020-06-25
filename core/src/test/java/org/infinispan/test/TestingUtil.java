@@ -115,6 +115,8 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.DelegatingPersistenceManager;
 import org.infinispan.persistence.support.NonBlockingStoreAdapter;
+import org.infinispan.persistence.support.SegmentPublisherWrapper;
+import org.infinispan.persistence.support.SingleSegmentPublisher;
 import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.protostream.ProtobufUtil;
@@ -147,6 +149,7 @@ import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.ProtocolStack;
+import org.reactivestreams.Publisher;
 import org.testng.AssertJUnit;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -1676,6 +1679,10 @@ public class TestingUtil {
       return allEntries(store, IntSets.immutableSet(0), filter);
    }
 
+   public static <K, V> Set<MarshallableEntry<K, V>> allEntries(NonBlockingStore<K, V> store, IntSet segments) {
+      return allEntries(store, segments, null);
+   }
+
    public static <K, V> Set<MarshallableEntry<K, V>> allEntries(NonBlockingStore<K, V> store, IntSet segments,
          Predicate<? super K> filter) {
       return Flowable.fromPublisher(store.publishEntries(segments, filter, true))
@@ -1923,5 +1930,16 @@ public class TestingUtil {
       sci.registerSchema(ctx);
       sci.registerMarshallers(ctx);
       return new ProtoStreamMarshaller(ctx);
+   }
+
+   public static <E> Publisher<NonBlockingStore.SegmentedPublisher<E>> singleSegmentPublisher(Publisher<E> flowable) {
+      return Flowable.just(SingleSegmentPublisher.singleSegment(flowable));
+   }
+
+   public static <E> Publisher<NonBlockingStore.SegmentedPublisher<E>> multipleSegmentPublisher(Publisher<E> flowable,
+         Function<E, Object> toKeyFunction, KeyPartitioner keyPartitioner) {
+      return Flowable.fromPublisher(flowable)
+            .groupBy(e -> keyPartitioner.getSegment(toKeyFunction.apply(e)))
+            .map(SegmentPublisherWrapper::wrap);
    }
 }

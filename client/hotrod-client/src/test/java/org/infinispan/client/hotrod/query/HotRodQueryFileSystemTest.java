@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  */
 @Test(testName = "client.hotrod.query.HotRodQueryFileSystemTest", groups = "functional")
-public class HotRodQueryFileSystemTest extends HotRodQueryTest {
+public class HotRodQueryFileSystemTest extends HotRodQueryIspnDirectoryTest {
 
    private final String indexDirectory = CommonsTestingUtil.tmpDirectory(getClass());
 

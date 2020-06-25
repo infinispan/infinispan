@@ -4,6 +4,8 @@ import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 import java.io.File;
+import java.io.Writer;
+import java.nio.file.Files;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -85,6 +87,22 @@ public class RemoteCacheCreateOnAccessTest extends MultiHotRodServersTest {
       }
    }
 
+   public void createOnAccessTemplateProgrammaticWildcard() throws Throwable {
+      String cacheName = "org.infinispan.cache-from-template-programmatic-wildcard";
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      clientBuilder
+            .addServer()
+            .host(server(0).getHost())
+            .port(server(0).getPort())
+            .socketTimeout(3000)
+            .remoteCache("org.infinispan.cache-*")
+            .templateName("template");
+      try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build())) {
+         RemoteCache<String, String> cache = remoteCacheManager.getCache(cacheName);
+         cache.put("a", "a");
+      }
+   }
+
    public void createOnAccessTemplateDeclarative() throws Throwable {
       String cacheName = "cache-from-template-declarative";
       Properties properties = new Properties();
@@ -102,8 +120,25 @@ public class RemoteCacheCreateOnAccessTest extends MultiHotRodServersTest {
       }
    }
 
+   public void createOnAccessTemplateDeclarativeWildcard() throws Throwable {
+      String cacheName = "org.infinispan.cache-from-template-declarative";
+      Properties properties = new Properties();
+      properties.put(ConfigurationProperties.SO_TIMEOUT, "3000");
+      properties.put(ConfigurationProperties.CACHE_PREFIX + "[org.infinispan.cache*]" + ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX, "template");
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      clientBuilder
+            .addServer()
+            .host(server(0).getHost())
+            .port(server(0).getPort())
+            .withProperties(properties);
+      try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build())) {
+         RemoteCache<String, String> cache = remoteCacheManager.getCache(cacheName);
+         cache.put("a", "a");
+      }
+   }
+
    public void createOnAccessConfigurationProgrammatic() throws Throwable {
-      String cacheName = "cache-from-config-declarative";
+      String cacheName = "cache-from-config-programmatic";
       String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"/></cache-container></infinispan>", cacheName);
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder
@@ -120,11 +155,54 @@ public class RemoteCacheCreateOnAccessTest extends MultiHotRodServersTest {
    }
 
    public void createOnAccessConfigurationDeclarative() throws Throwable {
-      String cacheName = "cache-from-config-programmatic";
+      String cacheName = "cache-from-config-declarative";
       String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"/></cache-container></infinispan>", cacheName);
       Properties properties = new Properties();
       properties.put(ConfigurationProperties.SO_TIMEOUT, "3000");
       properties.put(ConfigurationProperties.CACHE_PREFIX + cacheName + ConfigurationProperties.CACHE_CONFIGURATION_SUFFIX, xml);
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      clientBuilder
+            .addServer()
+            .host(server(0).getHost())
+            .port(server(0).getPort())
+            .withProperties(properties);
+      try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build())) {
+         RemoteCache<String, String> cache = remoteCacheManager.getCache(cacheName);
+         cache.put("a", "a");
+      }
+   }
+
+   public void createOnAccessConfigurationURIProgrammatic() throws Throwable {
+      String cacheName = "cache-from-config-uri-programmatic";
+      String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"/></cache-container></infinispan>", cacheName);
+      File file = new File(String.format("target/test-classes/%s-hotrod-client.properties", cacheName));
+      try (Writer w = Files.newBufferedWriter(file.toPath())) {
+         w.write(xml);
+      }
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      clientBuilder
+            .addServer()
+            .host(server(0).getHost())
+            .port(server(0).getPort())
+            .socketTimeout(3000)
+            .remoteCache(cacheName)
+            .configurationURI(file.toURI());
+      try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build())) {
+         RemoteCache<String, String> cache = remoteCacheManager.getCache(cacheName);
+         cache.put("a", "a");
+      }
+   }
+
+   public void createOnAccessConfigurationURIDeclarative() throws Throwable {
+      String cacheName = "cache-from-config-uri-declarative";
+      String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"/></cache-container></infinispan>", cacheName);
+      File file = new File(String.format("target/test-classes/%s-hotrod-client.properties", cacheName));
+      try (Writer w = Files.newBufferedWriter(file.toPath())) {
+         w.write(xml);
+      }
+      Properties properties = new Properties();
+      properties.put(ConfigurationProperties.SO_TIMEOUT, "3000");
+      properties.put(ConfigurationProperties.CACHE_PREFIX + cacheName + ConfigurationProperties.CACHE_CONFIGURATION_URI_SUFFIX, file.toURI().toString());
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder
             .addServer()

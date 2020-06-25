@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
 public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
@@ -81,8 +81,8 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       assertEquals(0, internalCache.size());
 
       // create and execute a query
-      Query query = Search.getQueryFactory(cache).create(queryString);
-      query.list();
+      Query<?> query = Search.getQueryFactory(cache).create(queryString);
+      query.execute().list();
 
       // ensure the query cache has it now: one FilterParsingResult and one LuceneQueryParsingResult
       assertEquals(2, internalCache.size());

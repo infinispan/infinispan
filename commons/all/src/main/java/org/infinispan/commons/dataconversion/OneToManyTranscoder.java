@@ -1,6 +1,6 @@
 package org.infinispan.commons.dataconversion;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -9,14 +9,14 @@ import java.util.Set;
  */
 public abstract class OneToManyTranscoder implements Transcoder {
 
-   private MediaType mainType;
+   protected final MediaType mainType;
 
    protected final Set<MediaType> supportedTypes = new HashSet<>();
 
    public OneToManyTranscoder(MediaType mainType, MediaType... supportedConversions) {
       this.mainType = mainType;
       this.supportedTypes.add(mainType);
-      this.supportedTypes.addAll(Arrays.asList(supportedConversions));
+      Collections.addAll(supportedTypes, supportedConversions);
    }
 
    private boolean in(MediaType mediaType, Set<MediaType> set) {

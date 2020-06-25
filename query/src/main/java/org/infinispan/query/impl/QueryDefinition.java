@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Sort;
@@ -20,6 +21,7 @@ import org.hibernate.search.spi.impl.IndexedTypeMaps;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.dsl.embedded.impl.HsQueryRequest;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
@@ -38,6 +40,7 @@ public final class QueryDefinition {
    private HSQuery hsQuery;
    private int maxResults = 100;
    private int firstResult;
+   private long timeout = -1;
    private Set<String> sortableFields;
    private Class<?> indexedType;
    private Sort sort;
@@ -98,6 +101,10 @@ public final class QueryDefinition {
          hsQuery.projection(hsQueryRequest.getProjections());
          hsQuery.firstResult(firstResult);
          hsQuery.maxResults(maxResults);
+         hsQuery.timeoutExceptionFactory((msg, q) -> new SearchTimeoutException(msg + " \"" + q + '\"'));
+         if (timeout > 0) {
+            hsQuery.getTimeoutManager().setTimeout(timeout, TimeUnit.NANOSECONDS);
+         }
       }
    }
 
@@ -125,6 +132,10 @@ public final class QueryDefinition {
       } else {
          namedParameters.putAll(params);
       }
+   }
+
+   public void setTimeout(long timeout, TimeUnit timeUnit) {
+      this.timeout = timeUnit.toNanos(timeout);
    }
 
    public Map<String, Object> getNamedParameters() {
@@ -205,6 +216,7 @@ public final class QueryDefinition {
          output.writeInt(queryDefinition.maxResults);
          output.writeObject(queryDefinition.sortableFields);
          output.writeObject(queryDefinition.indexedType);
+         output.writeLong(queryDefinition.timeout);
          Map<String, Object> namedParameters = queryDefinition.namedParameters;
          int paramSize = namedParameters.size();
          output.writeShort(paramSize);
@@ -218,16 +230,16 @@ public final class QueryDefinition {
 
       @Override
       public QueryDefinition readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         QueryDefinition queryDefinition;
          String queryString = input.readUTF();
          SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = (SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>) input.readObject();
-         queryDefinition = new QueryDefinition(queryString, queryEngineProvider);
+         QueryDefinition queryDefinition = new QueryDefinition(queryString, queryEngineProvider);
          queryDefinition.setFirstResult(input.readInt());
          queryDefinition.setMaxResults(input.readInt());
          Set<String> sortableField = (Set<String>) input.readObject();
-         Class<?> indexedTypes = (Class<?>) input.readObject();
          queryDefinition.setSortableField(sortableField);
-         queryDefinition.setIndexedType(indexedTypes);
+         Class<?> indexedType = (Class<?>) input.readObject();
+         queryDefinition.setIndexedType(indexedType);
+         queryDefinition.timeout = input.readLong();
          short paramSize = input.readShort();
          if (paramSize != 0) {
             Map<String, Object> params = new HashMap<>(paramSize);

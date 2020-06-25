@@ -8,12 +8,15 @@ import static org.eclipse.jetty.http.HttpMethod.POST;
 import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.VOLATILE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.commons.util.Util.getResourceAsString;
 import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
 import static org.infinispan.context.Flag.SKIP_INDEXING;
 import static org.infinispan.globalstate.GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME;
+import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.net.URLEncoder;
@@ -28,8 +31,11 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpMethod;
 import org.infinispan.Cache;
+import org.infinispan.commons.configuration.JsonWriter;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.globalstate.ConfigurationStorage;
@@ -37,7 +43,7 @@ import org.infinispan.globalstate.ScopedState;
 import org.infinispan.globalstate.impl.CacheState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.query.remote.ProtobufMetadataManager;
+import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.testng.annotations.Test;
 
@@ -48,10 +54,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    private static final String PERSISTENT_LOCATION = tmpDirectory(CacheV2ResourceTest.class.getName());
+   private final ObjectMapper objectMapper = new ObjectMapper();
 
    @Override
    protected void defineCaches(EmbeddedCacheManager cm) {
       cm.defineConfiguration("default", getDefaultCacheBuilder().build());
+
+      Cache<String, String> metadataCache = cm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      String proto = "/* @Indexed */ message Entity { /* @Field */ required int32 value=1; }";
+      metadataCache.putIfAbsent("sample.proto", proto);
+      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+
       cm.defineConfiguration("indexedCache", getIndexedPersistedCache().build());
    }
 
@@ -66,9 +79,10 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    private ConfigurationBuilder getIndexedPersistedCache() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .statistics().enable()
-            .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
+             .addIndexedEntity("Entity")
+             .addProperty("default.directory_provider", "local-heap")
+             .statistics().enable()
+             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
       return builder;
    }
 
@@ -124,6 +138,22 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       testCreateAndUseCache("a%25bc");
    }
 
+   @Test
+   public void testCreateCacheEncoding() throws Exception {
+      String cacheName = "encoding-test";
+      String json = "{\"local-cache\":{\"encoding\":{\"media-type\":\"text/plain\"}}}";
+
+      createCache(json, cacheName);
+      String cacheConfig = getCacheConfig(APPLICATION_JSON_TYPE, cacheName);
+
+      JsonNode encoding = objectMapper.readTree(cacheConfig).get("local-cache").get("encoding");
+      JsonNode keyMediaType = encoding.get("key").get("media-type");
+      JsonNode valueMediaType = encoding.get("value").get("media-type");
+
+      assertEquals(TEXT_PLAIN_TYPE, keyMediaType.asText());
+      assertEquals(TEXT_PLAIN_TYPE, valueMediaType.asText());
+   }
+
    private void testCreateAndUseCache(String name) throws Exception {
       String baseURL = String.format("http://localhost:%d/rest/v2/caches/", restServer().getPort());
       String cacheName = URLEncoder.encode(name, "UTF-8");
@@ -144,7 +174,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       ContentResponse namesResponse = client.newRequest(baseURL).send();
       ResponseAssertion.assertThat(namesResponse).isOk();
-      List<String> names = Arrays.asList(new ObjectMapper().readValue(namesResponse.getContentAsString(), String[].class));
+      List<String> names = Arrays.asList(objectMapper.readValue(namesResponse.getContentAsString(), String[].class));
       assertTrue(names.contains(name));
 
       ContentResponse putResponse = client.newRequest(url + "/key")
@@ -218,7 +248,6 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testCacheV2Stats() throws Exception {
-      ObjectMapper objectMapper = new ObjectMapper();
       String cacheJson = "{ \"distributed-cache\" : { \"statistics\":true } }";
       String cacheURL = String.format("http://localhost:%d/rest/v2/caches/statCache", restServer().getPort());
 
@@ -278,11 +307,53 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).containsReturnedText("has_remote_backup");
       ResponseAssertion.assertThat(response).containsReturnedText("secured");
       ResponseAssertion.assertThat(response).containsReturnedText("indexing_in_progress");
+      ResponseAssertion.assertThat(response).containsReturnedText("queryable");
+   }
+
+   public void testCacheQueryable() throws Exception {
+      // Default config
+      createCache(new ConfigurationBuilder(), "cacheNotQueryable");
+      JsonNode details = getCacheDetail("cacheNotQueryable");
+      assertFalse(details.get("queryable").asBoolean());
+
+      // Indexed
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.indexing().addProperty("default.directory_provider", "local-heap").enable();
+      builder.indexing().enable();
+      createCache(builder, "cacheIndexed");
+      details = getCacheDetail("cacheIndexed");
+      assertTrue(details.get("queryable").asBoolean());
+
+      // NonIndexed
+      ConfigurationBuilder proto = new ConfigurationBuilder();
+      proto.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
+      createCache(proto, "cacheQueryable");
+      details = getCacheDetail("cacheQueryable");
+      assertTrue(details.get("queryable").asBoolean());
+   }
+
+   private void createCache(ConfigurationBuilder builder, String name) throws Exception {
+      String json = new JsonWriter().toJSON(builder.build());
+      createCache(json, name);
+   }
+
+   private void createCache(String json, String name) throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/%s", restServer().getPort(), name);
+      ContentResponse response = client.newRequest(url).header("Content-type", APPLICATION_JSON_TYPE)
+            .method(POST).content(new StringContentProvider(json)).send();
+      ResponseAssertion.assertThat(response).isOk();
+   }
+
+   private JsonNode getCacheDetail(String name) throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/%s", restServer().getPort(), name);
+      ContentResponse response = client.newRequest(url).header("Accept", APPLICATION_JSON_TYPE).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      return objectMapper.readTree(response.getContentAsString());
    }
 
    @Test
    public void testCacheNames() throws Exception {
-      ObjectMapper objectMapper = new ObjectMapper();
       String URL = String.format("http://localhost:%d/rest/v2/caches/", restServer().getPort());
 
       ContentResponse response = client.newRequest(URL).send();
@@ -299,7 +370,8 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testFlags() throws Exception {
-      registerSchema();
+      String proto = "/* @Indexed */ message Entity { /* @Field */ required int32 value=1; }";
+      registerSchema("sample.proto", proto);
       ContentResponse response = insertEntity(1, 1000);
       ResponseAssertion.assertThat(response).isOk();
       assertIndexed(1000);
@@ -313,17 +385,53 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
+   public void testValidateCacheQueryable() throws Exception {
+      registerSchema("simple.proto", "message Simple { required int32 value=1;}");
+      correctReportNotQueryableCache("jsonCache", new ConfigurationBuilder().encoding().mediaType(APPLICATION_JSON_TYPE).build());
+   }
+
+   private void correctReportNotQueryableCache(String name, Configuration configuration) throws Exception {
+      createAndWriteToCache(name, configuration);
+
+      ContentResponse response = queryCache(name);
+      ResponseAssertion.assertThat(response).isBadRequest();
+
+      JsonNode json = new ObjectMapper().readTree(response.getContentAsString());
+      assertTrue(json.get("error").get("cause").toString().matches(".*ISPN028015.*"));
+   }
+
+   private ContentResponse queryCache(String name) throws Exception {
+      String url = "http://localhost:%d/rest/v2/caches/%s?action=search&query=%s";
+      String query = URLEncoder.encode("FROM Simple", "UTF-8");
+      String queryURL = String.format(url, restServer().getPort(), name, query);
+      return client.newRequest(queryURL).send();
+   }
+
+   private void createAndWriteToCache(String name, Configuration configuration) throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/%s", restServer().getPort(), name);
+      String jsonConfig = new JsonWriter().toJSON(configuration);
+      ContentResponse response = client.newRequest(url).header("Content-type", APPLICATION_JSON_TYPE)
+            .method(POST).content(new StringContentProvider(jsonConfig)).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      response = client.newRequest(url + "/1")
+            .method(POST).content(new StringContentProvider("{\"_type\":\"Simple\",\"value\":1}")).send();
+
+      ResponseAssertion.assertThat(response).isOk();
+   }
+
+   @Test
    public void testGetAllKeys() throws Exception {
       String url = String.format("http://localhost:%d/rest/v2/caches/default?action=%s", restServer().getPort(), "keys");
 
       ContentResponse response = client.newRequest(url).method(GET).send();
-      Set emptyKeys = new ObjectMapper().readValue(response.getContentAsString(), Set.class);
+      Set<?> emptyKeys = objectMapper.readValue(response.getContentAsString(), Set.class);
       assertEquals(0, emptyKeys.size());
 
 
       putStringValueInCache("default", "1", "value");
       response = client.newRequest(url).method(GET).send();
-      Set singleSet = new ObjectMapper().readValue(response.getContentAsString(), Set.class);
+      Set<?> singleSet = objectMapper.readValue(response.getContentAsString(), Set.class);
       assertEquals(1, singleSet.size());
 
       int entries = 1000;
@@ -331,17 +439,15 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
          putStringValueInCache("default", String.valueOf(i), "value");
       }
       response = client.newRequest(url).method(GET).send();
-      Set keys = new ObjectMapper().readValue(response.getContentAsString(), Set.class);
+      Set<?> keys = objectMapper.readValue(response.getContentAsString(), Set.class);
       assertEquals(entries, keys.size());
       assertTrue(IntStream.range(0, entries).allMatch(keys::contains));
    }
 
    @Test
    public void testProtobufMetadataManipulation() throws Exception {
-      /**
-       * Special role {@link ProtobufMetadataManager#SCHEMA_MANAGER_ROLE} is needed for authz. Subject USER has it
-       */
-      String cache = ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME;
+      // Special role {@link ProtobufMetadataManager#SCHEMA_MANAGER_ROLE} is needed for authz. Subject USER has it
+      String cache = PROTOBUF_METADATA_CACHE_NAME;
       String url = String.format("http://localhost:%d/rest/v2/caches/%s?action=%s", restServer().getPort(), cache, "keys");
 
       putStringValueInCache(cache, "file1.proto", "message A{}");
@@ -349,7 +455,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       ContentResponse response = client.newRequest(url).method(GET).send();
       String contentAsString = response.getContentAsString();
-      Set keys = new ObjectMapper().readValue(contentAsString, Set.class);
+      Set<?> keys = objectMapper.readValue(contentAsString, Set.class);
       assertEquals(2, keys.size());
    }
 
@@ -360,9 +466,14 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    }
 
    private void testGetProtoCacheConfig(String accept) throws Exception {
-      String url = String.format("http://localhost:%d/rest/v2/caches/___protobuf_metadata?action=config", restServer().getPort());
+      getCacheConfig(accept, PROTOBUF_METADATA_CACHE_NAME);
+   }
+
+   private String getCacheConfig(String accept, String name) throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/%s?action=config", restServer().getPort(), name);
       ContentResponse response = client.newRequest(url).header(ACCEPT, accept).send();
       ResponseAssertion.assertThat(response).isOk();
+      return response.getContentAsString();
    }
 
    @Test
@@ -382,7 +493,6 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       ContentResponse response = client.newRequest(url).method(POST).content(new StringContentProvider(xml)).send();
       ResponseAssertion.assertThat(response).isOk();
 
-      ObjectMapper objectMapper = new ObjectMapper();
       JsonNode jsonNode = objectMapper.readTree(response.getContentAsString());
 
       JsonNode distCache = jsonNode.get("distributed-cache");
@@ -404,10 +514,9 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       return response.getStatus();
    }
 
-   private void registerSchema() throws Exception {
-      String url = String.format("http://localhost:%d/rest/v2/caches/___protobuf_metadata/sample.proto", restServer().getPort());
-      String proto = "/* @Indexed */ message Entity { /* @Field */ required int32 value=1; }";
-      ContentResponse response = client.newRequest(url).method(HttpMethod.PUT).content(new StringContentProvider(proto)).send();
+   private void registerSchema(String name, String schema) throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/___protobuf_metadata/%s", restServer().getPort(), name);
+      ContentResponse response = client.newRequest(url).method(HttpMethod.PUT).content(new StringContentProvider(schema)).send();
       ResponseAssertion.assertThat(response).isOk();
    }
 
@@ -431,7 +540,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    }
 
    private void assertIndex(int value, boolean present) throws Exception {
-      String query = URLEncoder.encode("FROM Entity where value = " + value);
+      String query = URLEncoder.encode("FROM Entity WHERE value = " + value, "UTF-8");
       String url = String.format("http://localhost:%d/rest/v2/caches/indexedCache?action=search&query=%s", restServer().getPort(), query);
       ContentResponse response = client.newRequest(url).method(GET).send();
       ResponseAssertion.assertThat(response).isOk();

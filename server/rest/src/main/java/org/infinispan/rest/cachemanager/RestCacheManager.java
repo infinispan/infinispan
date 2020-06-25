@@ -19,6 +19,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
@@ -98,6 +99,12 @@ public class RestCacheManager<V> {
       } else if (!allowInternalCacheAccess && icr.isInternalCache(cacheName) && !icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.USER)) {
          throw logger.requestNotAllowedToInternalCachesWithoutAuthz(cacheName);
       }
+   }
+
+   public boolean isCacheQueryable(Cache<?, ?> cache) {
+      return SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache())
+            .getComponent(StorageConfigurationManager.class)
+            .isQueryable();
    }
 
    public Collection<String> getCacheNames() {

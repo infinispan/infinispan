@@ -2,8 +2,10 @@ package org.infinispan.query.dsl;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.query.SearchTimeoutException;
 
 //todo [anistor] We need to deprecate the 'always caching' behaviour and provide a clearCachedResults method
 
@@ -41,18 +43,29 @@ public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, Para
    QueryResult<T> execute();
 
    /**
-    * Gets the total number of results matching the query, ignoring pagination (firstResult, maxResult).
+    * Gets the total number of results matching the query, ignoring pagination (startOffset, maxResults).
     *
     * @return total number of results.
-    * @deprecated since 10.1. This will be removed with no direct replacement.
+    * @deprecated since 10.1. This will be removed in 12. It's closest replacement is {@link QueryResult#hitCount()}
+    * which returns an optional long.
     */
    @Deprecated
-   int getResultSize(); //todo [anistor] this should probably be a long?
+   int getResultSize();
 
    /**
     * @return the values for query projections or {@code null} if the query does not have projections.
+    * @deprecated since 11.0. This method will be removed in next major version. To find out if a query uses projections use {@link #hasProjections()}
     */
+   @Deprecated
    String[] getProjection();
+
+   /**
+    * Indicates if the parsed query has projections (a SELECT clause) and consequently the returned results will
+    * actually be {@code Object[]} containing the projected values rather than the target entity.
+    *
+    * @return {@code true} if it has projections, {@code false} otherwise.
+    */
+   boolean hasProjections();
 
    long getStartOffset();
 
@@ -88,7 +101,16 @@ public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, Para
    Query<T> setParameters(Map<String, Object> paramValues);
 
    /**
+    * Returns a {@link CloseableIterator} over the results. Please close the iterator when you are done with processing
+    * the results.
+    *
     * @return the results of the query as an iterator.
     */
    CloseableIterator<T> iterator();
+
+   /**
+    *  Set the timeout for this query. If the query hasn't finished processing before the timeout,
+    *  a {@link SearchTimeoutException} will be thrown.
+    */
+   Query<T> timeout(long timeout, TimeUnit timeUnit);
 }

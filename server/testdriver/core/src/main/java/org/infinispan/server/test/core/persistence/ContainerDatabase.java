@@ -61,4 +61,20 @@ public class ContainerDatabase extends Database {
       props.setProperty("container.address", address);
       return StringPropertyReplacer.replaceProperties(super.jdbcUrl(), props);
    }
+
+   @Override
+   public String username() {
+      String username = System.getProperty("org.infinispan.server.test.database.mysql.username", "test");
+      Properties props = new Properties();
+      props.setProperty("org.infinispan.server.test.database.mysql.username", username);
+      return StringPropertyReplacer.replaceProperties(super.username(), props);
+   }
+
+   @Override
+   public String password() {
+      String password = System.getProperty("org.infinispan.server.test.database.mysql.password", "test");
+      Properties props = new Properties();
+      props.setProperty("org.infinispan.server.test.database.mysql.password", password);
+      return StringPropertyReplacer.replaceProperties(super.password(), props);
+   }
 }

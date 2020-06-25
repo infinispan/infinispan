@@ -141,11 +141,6 @@ public final class IndexingMetadata {
    public static final String SORTABLE_FIELDS_ANNOTATION = "SortableFields";
 
    /**
-    * A metadata instance to be used if indexing is disabled for a type.
-    */
-   public static final IndexingMetadata NO_INDEXING = new IndexingMetadata(false, null, null, null);
-
-   /**
     * Indicates if the type is indexed.
     */
    private final boolean isIndexed;

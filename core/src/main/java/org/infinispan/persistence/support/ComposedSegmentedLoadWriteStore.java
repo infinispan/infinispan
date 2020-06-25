@@ -18,12 +18,12 @@ import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.persistence.InitializationContextImpl;
-import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
+import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.reactivestreams.Publisher;
 
@@ -39,7 +39,6 @@ import io.reactivex.rxjava3.core.Flowable;
 public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedStoreConfiguration> extends AbstractSegmentedAdvancedLoadWriteStore<K, V> {
    private final AbstractSegmentedStoreConfiguration<T> configuration;
    Cache<K, V> cache;
-   CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
    KeyPartitioner keyPartitioner;
    InitializationContext ctx;
    boolean shouldStopSegments;
@@ -229,8 +228,6 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
    @Override
    public void start() {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
-      cacheStoreFactoryRegistry = componentRegistry.getComponent(CacheStoreFactoryRegistry.class);
-
       HashConfiguration hashConfiguration = cache.getCacheConfiguration().clustering().hash();
       keyPartitioner = componentRegistry.getComponent(KeyPartitioner.class);
       stores = new AtomicReferenceArray<>(hashConfiguration.numSegments());
@@ -250,7 +247,7 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
    private void startNewStoreForSegment(int segment) {
       if (stores.get(segment) == null) {
          T storeConfiguration = configuration.newConfigurationFrom(segment, ctx);
-         AdvancedLoadWriteStore<K, V> newStore = (AdvancedLoadWriteStore<K, V>) cacheStoreFactoryRegistry.createInstance(storeConfiguration);
+         AdvancedLoadWriteStore<K, V> newStore = PersistenceUtil.createStoreInstance(storeConfiguration);
          newStore.init(new InitializationContextImpl(storeConfiguration, cache, keyPartitioner, ctx.getPersistenceMarshaller(), ctx.getTimeService(),
                ctx.getByteBufferFactory(), ctx.getMarshallableEntryFactory(), ctx.getNonBlockingExecutor(), ctx.getGlobalConfiguration(),
                ctx.getBlockingManager()));

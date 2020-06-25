@@ -24,7 +24,8 @@ public class JsonIndexingProtobufStoreTest extends BaseJsonTest {
       ConfigurationBuilder indexedCache = new ConfigurationBuilder();
 
       indexedCache.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap");
+                  .addIndexedEntity("org.infinispan.test.endpoint.it.CryptoCurrency")
+                  .addProperty("default.directory_provider", "local-heap");
 
       indexedCache.encoding().key().mediaType(APPLICATION_PROTOSTREAM_TYPE);
       indexedCache.encoding().value().mediaType(APPLICATION_PROTOSTREAM_TYPE);

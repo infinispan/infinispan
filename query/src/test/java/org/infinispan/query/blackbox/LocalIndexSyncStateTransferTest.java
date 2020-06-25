@@ -47,7 +47,7 @@ public class LocalIndexSyncStateTransferTest extends MultipleCacheManagersTest {
       String address = c.getAdvancedCache().getRpcManager().getAddress().toString();
       Map<Class<?>, AtomicInteger> countPerEntity = getEntityCountPerClass(c);
       countPerEntity.forEach((entity, count) -> {
-         Query q = Search.getQueryFactory(c).create("FROM " + entity.getName(), IndexedQueryMode.FETCH);
+         Query<?> q = Search.getQueryFactory(c).create("FROM " + entity.getName(), IndexedQueryMode.FETCH);
          Supplier<String> messageSupplier = () -> String.format("On node %s index contains %d entries for entity %s," +
                " but data container has %d", address, q.list().size(), entity.getName(), count.get());
          eventually(messageSupplier, () -> q.list().size() == count.get());
@@ -65,7 +65,7 @@ public class LocalIndexSyncStateTransferTest extends MultipleCacheManagersTest {
 
    public void testIndexSyncedDuringST() {
       // Populate caches
-      Cache<Object, Object> cache = cache(0);
+      Cache<Integer, Person> cache = cache(0);
       for (int i = 0; i < 10; i++) {
          cache.put(i, new Person("person" + i, "blurb" + i, i + 10));
       }
@@ -79,5 +79,4 @@ public class LocalIndexSyncStateTransferTest extends MultipleCacheManagersTest {
       killMember(2);
       assertIndexesSynced();
    }
-
 }

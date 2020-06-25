@@ -1,5 +1,8 @@
 <replicated-cache name="myCache">
    <indexing>
+      <indexed-entities>
+         <indexed-entity>com.acme.Book</indexed-entity>
+      </indexed-entities>
       <property name="default.directory_provider">local-heap</property>
    </indexing>
 </replicated-cache>

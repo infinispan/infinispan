@@ -33,7 +33,7 @@ public class MultiServerObjectStoreTest extends MultiHotRodServersTest implement
    }
 
    @Test
-   public void testIteration() throws Exception {
+   public void testIteration() {
       RemoteCache<Integer, String> remoteCache = clients.get(0).getCache();
       populateCache(CACHE_SIZE, i -> "value", remoteCache);
       Set<Map.Entry<Object, Object>> entries = extractEntries(remoteCache.retrieveEntries(null, 5));

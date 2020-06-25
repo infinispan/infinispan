@@ -327,12 +327,12 @@ GET /rest/v2/caches/{cacheName}?action=keys
 [id='rest_v2_clear_cache']
 = Clearing Caches
 
-To delete all data from a cache, invoke a `GET` request with the
+To delete all data from a cache, invoke a `POST` request with the
 `?action=clear` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/caches/{cacheName}?action=clear
+POST /rest/v2/caches/{cacheName}?action=clear
 ----
 
 
@@ -423,12 +423,12 @@ include::json_examples/rest_query_request_body.json[]
 
 [id='rest_v2_query_reindex']
 = Re-indexing Data
-Re-index all data in caches with `GET` requests and the
+Re-index all data in caches with `POST` requests and the
 `?action=mass-index&mode={mode}` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET  /v2/caches/{cacheName}/search/indexes?action=mass-index&mode={mode}
+POST  /v2/caches/{cacheName}/search/indexes?action=mass-index&mode={mode}
 ----
 
 Values for the `mode` parameter are as follows:
@@ -438,12 +438,12 @@ Values for the `mode` parameter are as follows:
 
 [id='rest_v2_query_purge_index']
 = Purging Indexes
-Delete all indexes from caches with `GET` requests and the `?action=clear`
+Delete all indexes from caches with `POST` requests and the `?action=clear`
 parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET  /v2/caches/{cacheName}/search/indexes?action=clear
+POST  /v2/caches/{cacheName}/search/indexes?action=clear
 ----
 
 
@@ -499,11 +499,11 @@ include::json_examples/rest_query_stats.json[]
 
 [id='rest_v2_query_stats_clear']
 = Clearing Query Statistics
-Reset runtime statistics with `GET` requests and the `?action=clear` parameter.
+Reset runtime statistics with `POST` requests and the `?action=clear` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}/search/query/stats?action=clear
+POST /v2/caches/{cacheName}/search/query/stats?action=clear
 ----
 
 

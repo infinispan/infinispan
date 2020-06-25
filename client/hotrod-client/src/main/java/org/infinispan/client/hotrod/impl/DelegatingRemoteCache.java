@@ -24,6 +24,7 @@ import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.query.dsl.Query;
+import org.reactivestreams.Publisher;
 
 /**
  * Delegates all invocations to the provided underlying {@link InternalRemoteCache} but provides extensibility to intercept
@@ -211,13 +212,28 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
-   public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
+   public <E> Publisher<Entry<K, E>> publishEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize) {
+      return delegate.publishEntries(filterConverterFactory, filterConverterParams, segments, batchSize);
+   }
+
+   @Override
+   public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query<?> filterQuery, Set<Integer> segments, int batchSize) {
       return delegate.retrieveEntriesByQuery(filterQuery, segments, batchSize);
+   }
+
+   @Override
+   public <E> Publisher<Entry<K, E>> publishEntriesByQuery(Query<?> filterQuery, Set<Integer> segments, int batchSize) {
+      return delegate.publishEntriesByQuery(filterQuery, segments, batchSize);
    }
 
    @Override
    public CloseableIterator<Entry<Object, MetadataValue<Object>>> retrieveEntriesWithMetadata(Set<Integer> segments, int batchSize) {
       return delegate.retrieveEntriesWithMetadata(segments, batchSize);
+   }
+
+   @Override
+   public Publisher<Entry<K, MetadataValue<V>>> publishEntriesWithMetadata(Set<Integer> segments, int batchSize) {
+      return delegate.publishEntriesWithMetadata(segments, batchSize);
    }
 
    @Override

@@ -1,0 +1,21 @@
+[id='ispn_modules']
+:context: server
+= {brandname} Modules for {wildflybrandname}
+To use {brandname} inside applications deployed to {wildflybrandname}, you should install {brandname} modules that:
+
+* Let you deploy applications without packaging {brandname} JAR files in your WAR or EAR file.
+* Allow you to use a {brandname} version that is independent to the one bundled with {wildflybrandname}.
+
+[IMPORTANT]
+====
+{brandname} modules are deprecated and planned for removal. These modules
+provide a temporary solution until {wildflybrandname} directly manages the
+`infinispan` subsystem.
+====
+
+include::{topics}/proc_installing_wildfly_modules.adoc[leveloffset=+1]
+include::{topics}/proc_adding_dependencies_wildfly_modules.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

@@ -1,0 +1,44 @@
+[id='hotrod_percache']
+= Per-cache configuration
+
+Certain aspects of remote caches can be configured for each individual cache:
+
+* force return values
+* on-access creation configuration/template
+* near-caching
+* transaction mode
+
+.Procedure
+
+* Enable _force return values_ just for cache `a-cache`
+
+[source,java]
+----
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+...
+
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder
+  .remoteCache("a-cache")
+    .forceReturnValues(true);
+----
+
+Use wildcard globbing in the remote cache name to enable force return values for all caches that start
+with the string `somecaches`:
+
+[source,java]
+----
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+...
+
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder
+  .remoteCache("somecaches*")
+    .forceReturnValues(true);
+----
+
+[NOTE]
+====
+When using declarative configuration and your cache names contain the `.` character, you must enclose the cache name
+in square brackets, for example `infinispan.client.hotrod.cache.[example.MyCache].template=...`
+====

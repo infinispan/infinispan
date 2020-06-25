@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
@@ -18,7 +19,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -35,7 +36,7 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
    boolean startIndex = true;
    boolean keepIndex = false;
 
-   @BeforeMethod
+   @BeforeClass
    protected void setUpTempDir() {
       tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
    }
@@ -81,7 +82,8 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
             .indexLocation(tmpDirectory).dataLocation(tmpDirectory)
             .maxFileSize(1000);
 
-      store.init(createContext(builder.build()));
+      Configuration c = builder.build();
+      store.init(createContext(c));
       return store;
    }
 

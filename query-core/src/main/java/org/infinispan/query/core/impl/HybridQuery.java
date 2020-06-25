@@ -2,9 +2,7 @@ package org.infinispan.query.core.impl;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
@@ -20,76 +18,34 @@ import org.infinispan.query.dsl.QueryFactory;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public class HybridQuery extends BaseEmbeddedQuery {
+public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
 
+   // An object filter is used to further filter the baseQuery
    protected final ObjectFilter objectFilter;
 
-   protected final Query baseQuery;
+   protected final Query<S> baseQuery;
 
    public HybridQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString, Map<String, Object> namedParameters,
                       ObjectFilter objectFilter,
                       long startOffset, int maxResults,
-                      Query baseQuery) {
+                      Query<?> baseQuery) {
       super(queryFactory, cache, queryString, namedParameters, objectFilter.getProjection(), startOffset, maxResults);
       this.objectFilter = objectFilter;
-      this.baseQuery = baseQuery;
+      this.baseQuery = (Query<S>) baseQuery;
    }
 
    @Override
-   protected Comparator<Comparable[]> getComparator() {
+   protected Comparator<Comparable<?>[]> getComparator() {
       return objectFilter.getComparator();
    }
 
    @Override
-   protected CloseableIterator<ObjectFilter.FilterResult> getIterator() {
-      return new CloseableIterator<ObjectFilter.FilterResult>() {
-
-         private final Iterator<?> it = getBaseIterator();
-
-         private ObjectFilter.FilterResult nextResult = null;
-
-         private boolean isReady = false;
-
-         @Override
-         public void close() {
-         }
-
-         @Override
-         public boolean hasNext() {
-            updateNext();
-            return nextResult != null;
-         }
-
-         @Override
-         public ObjectFilter.FilterResult next() {
-            updateNext();
-            if (nextResult != null) {
-               ObjectFilter.FilterResult next = nextResult;
-               isReady = false;
-               nextResult = null;
-               return next;
-            } else {
-               throw new NoSuchElementException();
-            }
-         }
-
-         private void updateNext() {
-            if (!isReady) {
-               while (it.hasNext()) {
-                  Object next = it.next();
-                  nextResult = objectFilter.filter(next);
-                  if (nextResult != null) {
-                     break;
-                  }
-               }
-               isReady = true;
-            }
-         }
-      };
+   protected CloseableIterator<ObjectFilter.FilterResult> getInternalIterator() {
+      return new FilteringIterator<>(getBaseIterator(), objectFilter::filter);
    }
 
-   protected Iterator<?> getBaseIterator() {
-      return baseQuery.list().iterator();
+   protected CloseableIterator<?> getBaseIterator() {
+      return baseQuery.iterator();
    }
 
    @Override
@@ -100,6 +56,7 @@ public class HybridQuery extends BaseEmbeddedQuery {
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +
+            ", timeout=" + timeout +
             ", baseQuery=" + baseQuery +
             '}';
    }

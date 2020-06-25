@@ -58,7 +58,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
       verifyFindsCar(0, "test2");
    }
 
-   @Test(enabled = false, description = "ISPN-11891")
+   @Test
    public void testOverlappingMassIndexers() {
       Cache<Integer, Car> cache = cache(0);
       IntStream.range(0, 10).forEach(i -> cache.put(i, new Car("whatever", "whatever", 0)));
@@ -73,7 +73,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
 
       latch.countDown();
 
-      assertTrue(isSuccess(first) && isError(second) || isError(first) && isSuccess(second));
+      assertTrue(isSuccess(second) && isError(first) || isSuccess(first) && isError(second));
       assertFalse(massIndexer.isRunning());
 
       CompletionStage<Void> third = massIndexer.run();
@@ -96,7 +96,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
       try {
          FunctionalTestUtils.await(future);
          return true;
-      } catch (Exception e) {
+      } catch (Throwable e) {
          return false;
       }
    }
@@ -105,7 +105,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
       try {
          FunctionalTestUtils.await(future);
          return false;
-      } catch (Error e) {
+      } catch (Throwable e) {
          return Util.getRootCause(e).getClass().equals(MassIndexerAlreadyStartedException.class);
       }
    }

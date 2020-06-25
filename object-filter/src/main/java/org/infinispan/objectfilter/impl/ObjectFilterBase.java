@@ -60,7 +60,7 @@ abstract class ObjectFilterBase<TypeMetadata> implements ObjectFilter {
    }
 
    @Override
-   public Comparator<Comparable[]> getComparator() {
+   public Comparator<Comparable<?>[]> getComparator() {
       return null;
    }
 

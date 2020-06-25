@@ -232,6 +232,15 @@ public class ChannelFactory {
       }
    }
 
+   public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByAddress(byte[] cacheName) {
+      lock.readLock().lock();
+      try {
+         return topologyInfo.getPrimarySegmentsByServer(cacheName);
+      } finally {
+         lock.readLock().unlock();
+      }
+   }
+
    public void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash,
                                   int numKeyOwners, short hashFunctionVersion, int hashSpace,
                                   byte[] cacheName, AtomicInteger topologyId) {

@@ -46,15 +46,13 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
       return c;
    }
 
-   protected CallCountingCQResultListener<Object, Object> createContinuousQuery() {
+   protected CallCountingCQResultListener<Integer, Person> createContinuousQuery() {
       QueryFactory qf = Search.getQueryFactory(cache(0));
 
-      Query query = qf.from(Person.class)
-            .having("age").lte(30)
-            .build();
+      Query<Person> query = qf.create("FROM org.infinispan.query.test.Person WHERE age <= 30");
 
-      CallCountingCQResultListener<Object, Object> listener = new CallCountingCQResultListener<>();
-      ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache(0));
+      CallCountingCQResultListener<Integer, Person> listener = new CallCountingCQResultListener<>();
+      ContinuousQuery<Integer, Person> cq = Search.getContinuousQuery(cache(0));
       cq.addContinuousQueryListener(query, listener);
       return listener;
    }
@@ -67,9 +65,9 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
          cache(i).put(i, value);
       }
 
-      CallCountingCQResultListener<Object, Object> listener = createContinuousQuery();
-      final Map<Object, Integer> joined = listener.getJoined();
-      final Map<Object, Integer> left = listener.getLeft();
+      CallCountingCQResultListener<Integer, Person> listener = createContinuousQuery();
+      final Map<Integer, Integer> joined = listener.getJoined();
+      final Map<Integer, Integer> left = listener.getLeft();
 
       assertEquals(2, joined.size());
       assertEquals(0, left.size());
@@ -111,9 +109,9 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
    }
 
    public void testCQCacheLeavesAndJoins() {
-      CallCountingCQResultListener<Object, Object> listener = createContinuousQuery();
-      final Map<Object, Integer> joined = listener.getJoined();
-      final Map<Object, Integer> left = listener.getLeft();
+      CallCountingCQResultListener<Integer, Person> listener = createContinuousQuery();
+      final Map<Integer, Integer> joined = listener.getJoined();
+      final Map<Integer, Integer> left = listener.getLeft();
 
       assertEquals(0, joined.size());
       assertEquals(0, left.size());
@@ -171,5 +169,4 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
       }
       joined.clear();
    }
-
 }

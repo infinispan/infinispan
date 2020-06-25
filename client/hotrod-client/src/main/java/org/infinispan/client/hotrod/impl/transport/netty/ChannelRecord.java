@@ -26,6 +26,7 @@ public class ChannelRecord extends CompletableFuture<Channel> implements Generic
 
    private final SocketAddress unresolvedAddress;
    private final ChannelPool channelPool;
+   private boolean closed = false;
    private boolean acquired = true;
 
    ChannelRecord(SocketAddress unresolvedAddress, ChannelPool channelPool) {
@@ -57,17 +58,26 @@ public class ChannelRecord extends CompletableFuture<Channel> implements Generic
       channelPool.releaseClosedChannel(future.channel(), this);
    }
 
-   void setAcquired() {
+   synchronized void setAcquired() {
       assert !acquired;
       acquired = true;
    }
 
-   void setIdle() {
-      assert acquired;
-      acquired = false;
+   public synchronized boolean isIdle() {
+      return !acquired;
    }
 
-   public boolean isIdle() {
+   public synchronized boolean setIdleAndIsClosed() {
+      assert acquired;
+      acquired = false;
+
+      return closed;
+   }
+
+   public synchronized boolean closeAndWasIdle() {
+      assert !closed;
+      closed = true;
+
       return !acquired;
    }
 

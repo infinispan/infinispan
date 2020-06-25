@@ -15,7 +15,8 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-      XSiteHotRodCacheOperations.class
+      XSiteHotRodCacheOperations.class,
+      XSiteRestCacheOperations.class
 })
 public class XSiteIT {
    @ClassRule

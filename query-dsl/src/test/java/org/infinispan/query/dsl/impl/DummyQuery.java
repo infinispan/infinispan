@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.OptionalLong;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.Query;
@@ -52,6 +53,11 @@ class DummyQuery<T> implements Query<T> {
    }
 
    @Override
+   public Query<T> timeout(long timeout, TimeUnit timeUnit) {
+      return this;
+   }
+
+   @Override
    public String getQueryString() {
       return null;
    }
@@ -83,7 +89,12 @@ class DummyQuery<T> implements Query<T> {
 
    @Override
    public String[] getProjection() {
-      return new String[0];
+      return null;
+   }
+
+   @Override
+   public boolean hasProjections() {
+      return false;
    }
 
    @Override

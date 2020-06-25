@@ -6,12 +6,16 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.operations.QueryOperation;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Closeables;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.QueryFactory;
@@ -24,6 +28,8 @@ import org.infinispan.query.remote.client.impl.BaseQueryResponse;
  * @since 6.0
  */
 public final class RemoteQuery<T> extends BaseQuery<T> {
+
+   private static final Log log = LogFactory.getLog(RemoteQuery.class);
 
    private final InternalRemoteCache<?, ?> cache;
    private final SerializationContext serializationContext;
@@ -77,7 +83,10 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
 
    @Override
    public CloseableIterator<T> iterator() {
-      throw new UnsupportedOperationException();
+      if (maxResults == -1 && startOffset == 0) {
+         log.warnPerfRemoteIterationWithoutPagination(queryString);
+      }
+      return Closeables.iterator(execute().list().iterator());
    }
 
    @Override
@@ -89,7 +98,7 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
    private BaseQueryResponse<T> executeQuery() {
       validateNamedParameters();
       QueryOperation op = cache.getOperationsFactory().newQueryOperation(this, cache.getDataFormat());
-      return (BaseQueryResponse) await(op.execute());
+      return (BaseQueryResponse<T>) (timeout != -1 ? await(op.execute(), TimeUnit.NANOSECONDS.toMillis(timeout)) : await(op.execute()));
    }
 
    /**
@@ -114,6 +123,7 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
             ", namedParameters=" + namedParameters +
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +
+            ", timeout=" + timeout +
             '}';
    }
 }

@@ -1,0 +1,16 @@
+[id='security']
+= {brandname} Security
+{brandname} provides security for components as well as data across different layers:
+
+* Within the core library to provide role-based access control (RBAC) to CacheManagers, Cache instances, and stored data.
+* Over remote protocols to authenticate client requests and encrypt network traffic.
+* Across nodes in clusters to authenticate new cluster members and encrypt the cluster transport.
+
+The {brandname} core library uses standard Java security libraries such as
+JAAS, JSSE, JCA, JCE, and SASL to ease integration and improve compatibility 
+with custom applications and container environments. For this reason, the
+{brandname} core library provides only interfaces and a set of basic
+implementations.
+
+{brandname} servers support a wide range of security standards and mechanisms
+to readily integrate with enterprise-level security frameworks.

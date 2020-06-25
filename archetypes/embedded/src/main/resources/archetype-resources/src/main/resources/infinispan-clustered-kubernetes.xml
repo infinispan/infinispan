@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+   This is just a very simplistic example configuration file.  For more information, please see
+   https://infinispan.org/docs/stable/ for more configuration details.
+-->
+
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:${infinispan.base.version} http://infinispan.org/schemas/infinispan-config-${infinispan.base.version}.xsd"
+        xmlns="urn:infinispan:config:${infinispan.base.version}">
+
+    <cache-container default-cache="default" statistics="true">
+
+        <transport stack="kubernetes" cluster="mycluster" />
+
+        <distributed-cache name="stockTickers" mode="SYNC">
+            <locking isolation="REPEATABLE_READ" striping="false"/>
+        </distributed-cache>
+
+        <distributed-cache name="wineCache" mode="SYNC">
+            <locking isolation="REPEATABLE_READ" acquire-timeout="500"/>
+            <expiration interval="100"/>
+            <store-as-binary keys="true" values="true"/>
+            <memory>
+                <object size="20000"/>
+            </memory>
+        </distributed-cache>
+
+        <replicated-cache name="another" mode="ASYNC">
+            <expiration lifespan="1000" max-idle="500"/>
+        </replicated-cache>
+
+        <replicated-cache name="default"/>
+
+    </cache-container>
+</infinispan>

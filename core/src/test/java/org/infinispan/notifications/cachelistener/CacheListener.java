@@ -26,7 +26,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
  */
 @Listener
 public class CacheListener {
-   List<Event> events = new ArrayList<Event>();
+   List<Event> events = new ArrayList<>();
    boolean receivedPre;
    boolean receivedPost;
    int invocationCount;

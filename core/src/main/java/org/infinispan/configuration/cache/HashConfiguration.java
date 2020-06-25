@@ -13,6 +13,7 @@ import org.infinispan.commons.configuration.attributes.SimpleInstanceAttributeCo
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.parsing.Element;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
@@ -66,7 +67,9 @@ public class HashConfiguration implements Matchable<HashConfiguration>, Configur
 
    /**
     * The consistent hash factory in use.
+    * @deprecated Since 11.0. Will be removed in 14.0, the segment allocation will no longer be customizable.
     */
+   @Deprecated
    public ConsistentHashFactory<?> consistentHashFactory() {
        return consistentHashFactory.get();
    }
@@ -82,10 +85,12 @@ public class HashConfiguration implements Matchable<HashConfiguration>, Configur
     * Controls the total number of hash space segments (per cluster).
     *
     * <p>A hash space segment is the granularity for key distribution in the cluster: a node can own
-    * (or primary-own) one or more full segments, but not a fraction of a segment. As such, larger
-    * {@code numSegments} values will mean a more even distribution of keys between nodes.
-    * <p>On the other hand, the memory/bandwidth usage of the new consistent hash grows linearly with
-    * {@code numSegments}. So we recommend keeping {@code numSegments <= 10 * clusterSize}.
+    * (or primary-own) one or more full segments, but not a fraction of a segment.
+    * As such, very small {@code numSegments} values (&lt; 10 segments per node) will make
+    * the distribution of keys between nodes more uneven.</p>
+    * <p>The recommended value is 20 * the expected cluster size.</p>
+    * <p>Note: The value returned by {@link ConsistentHash#getNumSegments()} may be different,
+    * e.g. rounded up to a power of 2.</p>
     */
    public int numSegments() {
       return numSegments.get();
@@ -140,11 +145,8 @@ public class HashConfiguration implements Matchable<HashConfiguration>, Configur
          return false;
       HashConfiguration other = (HashConfiguration) obj;
       if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      return true;
+         return other.attributes == null;
+      } else return attributes.equals(other.attributes);
    }
 
    @Override

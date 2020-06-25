@@ -26,29 +26,28 @@ import org.testng.annotations.Test;
 @Test(groups = "profiling", testName = "query.dsl.embedded.ListenerWithDslFilterProfilingTest")
 public class ListenerWithDslFilterProfilingTest extends SingleCacheManagerTest {
 
+   private static final int NUM_ENTRIES = 100000;
+   private static final int NUM_LISTENERS = 1000;
+
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE);
    }
 
    public void testEventFilterPerformance() {
       QueryFactory qf = Search.getQueryFactory(cache());
 
-      Query query = qf.from(Person.class)
-            .having("age").lte(31)
-            .build();
+      Query<Person> query = qf.create("FROM org.infinispan.query.test.Person WHERE age <= 31");
 
-      final int numEntries = 100000;
-      final int numListeners = 1000;
-      List<NoOpEntryListener> listeners = new ArrayList<>(numListeners);
-      for (int i = 0; i < numListeners; i++) {
+      List<NoOpEntryListener> listeners = new ArrayList<>(NUM_LISTENERS);
+      for (int i = 0; i < NUM_LISTENERS; i++) {
          NoOpEntryListener listener = new NoOpEntryListener();
          listeners.add(listener);
          cache().addListener(listener, Search.makeFilter(query), null);
       }
 
       long startTs = System.nanoTime();
-      for (int i = 0; i < numEntries; ++i) {
+      for (int i = 0; i < NUM_ENTRIES; ++i) {
          Person value = new Person();
          value.setName("John");
          value.setAge(i + 25);
@@ -61,7 +60,7 @@ public class ListenerWithDslFilterProfilingTest extends SingleCacheManagerTest {
          cache().removeListener(listener);
       }
 
-      log.infof("ListenerWithDslFilterProfilingTest.testEventFilterPerformance took %d ms\n", (endTs - startTs) / 1000000);
+      log.infof("ListenerWithDslFilterProfilingTest.testEventFilterPerformance took %d us\n", (endTs - startTs) / 1000);
    }
 
    @Listener

@@ -1,13 +1,12 @@
 package org.infinispan.rest.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.PUT;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletionStage;
@@ -26,7 +25,6 @@ import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
@@ -109,29 +107,14 @@ public final class LoggingResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> listLoggers(RestRequest request) {
+      // We only return loggers declared in the configuration
       LoggerContext logContext = (LoggerContext) LogManager.getContext(false);
-      NettyRestResponse.Builder response = new NettyRestResponse.Builder();
-      try {
-         // We only return loggers declared in the configuration
-         Collection<LoggerConfig> loggers = logContext.getConfiguration().getLoggers().values();
-         byte[] resultBytes = invocationHelper.getMapper().writeValueAsBytes(loggers);
-         response.contentType(APPLICATION_JSON_TYPE).entity(resultBytes);
-      } catch (JsonProcessingException e) {
-         response.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
-      }
-      return completedFuture(response.build());
+      return asJsonResponseFuture(logContext.getConfiguration().getLoggers().values(), invocationHelper);
    }
 
    private CompletionStage<RestResponse> listAppenders(RestRequest request) {
       LoggerContext logContext = (LoggerContext) LogManager.getContext(false);
-      NettyRestResponse.Builder response = new NettyRestResponse.Builder();
-      try {
-         byte[] resultBytes = invocationHelper.getMapper().writeValueAsBytes(logContext.getConfiguration().getAppenders());
-         response.contentType(APPLICATION_JSON_TYPE).entity(resultBytes);
-      } catch (JsonProcessingException e) {
-         response.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
-      }
-      return completedFuture(response.build());
+      return asJsonResponseFuture(logContext.getConfiguration().getAppenders(), invocationHelper);
    }
 
    public static class Log4j2LoggerConfigSerializer extends StdSerializer<LoggerConfig> {

@@ -79,7 +79,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
 
     private EmbeddedCacheManager getCacheManager(boolean batchingEnabled) {
        GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
-       globalBuilder.globalState().persistentLocation(TMP_DIR);
+       globalBuilder.globalState().enable().persistentLocation(TMP_DIR);
        globalBuilder.serialization().addContextInitializer(SCI.INSTANCE);
 
        ConfigurationBuilder builder = new ConfigurationBuilder();

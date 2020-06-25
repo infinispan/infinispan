@@ -71,6 +71,7 @@ Optionally set properties in the configuration as follows:
 ----
 <property name="database.max_background_compactions">2</property>
 <property name="data.write_buffer_size">64MB</property>
+<property name="data.compression_per_level">kNoCompression:kNoCompression:kNoCompression:kSnappyCompression:kZSTD:kZSTD</property>
 ----
 
 .Segmentation

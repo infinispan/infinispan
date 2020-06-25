@@ -6,7 +6,7 @@ package org.infinispan.configuration.cache;
  * mode no longer needs to be specified by the user because the system will determine it automatically.
  *
  * @author Paul Ferraro
- * @deprecated since 11. The indexing mode is automatically detected and not configurable anymore (ignored) and will be
+ * @deprecated since 11.0. The indexing mode is automatically detected and not configurable anymore (ignored) and will be
  * completely removed in next major version.
  */
 @Deprecated
@@ -25,7 +25,7 @@ public enum Index {
    /**
     * Only the primary owner of an entry will add it to the index.
     *
-    * @deprecated This mode is no longer supported since version 11. A configuration error will be raised if encountered.
+    * @deprecated This mode is no longer supported since version 11.0. A configuration error will be raised if encountered.
     */
    @Deprecated
    PRIMARY_OWNER;

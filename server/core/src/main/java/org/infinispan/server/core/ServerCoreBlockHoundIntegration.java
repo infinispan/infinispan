@@ -4,7 +4,6 @@ import org.infinispan.commons.internal.CommonsBlockHoundIntegration;
 import org.infinispan.server.core.utils.SslUtils;
 import org.kohsuke.MetaInfServices;
 
-import io.netty.util.concurrent.GlobalEventExecutor;
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
@@ -12,9 +11,6 @@ import reactor.blockhound.integration.BlockHoundIntegration;
 public class ServerCoreBlockHoundIntegration implements BlockHoundIntegration {
    @Override
    public void applyTo(BlockHound.Builder builder) {
-      builder.allowBlockingCallsInside(GlobalEventExecutor.class.getName(), "addTask");
-      builder.allowBlockingCallsInside(GlobalEventExecutor.class.getName(), "takeTask");
-
       // The xerces parser when it finds a parsing error will print to possibly a file output - ignore
       builder.allowBlockingCallsInside("com.sun.org.apache.xerces.internal.util.DefaultErrorHandler", "printError");
       // Nashorn prints to stderr in its constructor
@@ -35,14 +31,6 @@ public class ServerCoreBlockHoundIntegration implements BlockHoundIntegration {
     * @param builder the block hound builder to register methods
     */
    private static void methodsToBeRemoved(BlockHound.Builder builder) {
-      // ProtobufMetadataManagerInterceptor is blocking in quite a few places
-      // https://issues.redhat.com/browse/ISPN-11832
-      try {
-         CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, Class.forName("org.infinispan.query.remote.impl.ProtobufMetadataManagerInterceptor"));
-      } catch (ClassNotFoundException e) {
-         // Just ignore - means that most likely this module isn't present (ie. server/core or server/memcached)
-      }
-
       // ScriptingManger interface is blocking - but relies upon a persistent and clustered cache
       // https://issues.redhat.com/browse/ISPN-11833
       try {

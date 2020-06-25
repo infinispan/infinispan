@@ -63,7 +63,7 @@ public class HotRodCacheContinuousQueries {
       assertEquals(3, remoteCache.size());
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(User.class).having("name").eq("user1").and().having("age").gt(20).build();
+      Query<User> query = qf.create("FROM sample_bank_account.User WHERE name = 'user1' AND age > 20");
 
       final BlockingQueue<Integer> joined = new LinkedBlockingQueue<>();
       final BlockingQueue<Integer> updated = new LinkedBlockingQueue<>();

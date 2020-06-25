@@ -65,8 +65,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    private volatile boolean stopped = false;
    private volatile int firstTopologyAsMember = Integer.MAX_VALUE;
 
-   private final LongAdder syncXsiteReceived = new LongAdder();
-   private final LongAdder asyncXsiteReceived = new LongAdder();
+   private final LongAdder xSiteReceived = new LongAdder();
    private volatile boolean statisticsEnabled = false;
 
    private static int extractCommandTopologyId(SingleRpcCommand command) {
@@ -207,9 +206,9 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    }
 
    @Override
-   public void registerXSiteCommandReceiver(boolean sync) {
+   public void registerXSiteCommandReceiver() {
       if (statisticsEnabled) {
-         (sync ? syncXsiteReceived : asyncXsiteReceived).increment();
+         xSiteReceived.increment();
       }
    }
 
@@ -221,8 +220,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    @Override
    @ManagedOperation(description = "Resets statistics gathered by this component", displayName = "Reset statistics")
    public void resetStatistics() {
-      syncXsiteReceived.reset();
-      asyncXsiteReceived.reset();
+      xSiteReceived.reset();
    }
 
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component",
@@ -238,16 +236,10 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       this.statisticsEnabled = enabled;
    }
 
-   @ManagedAttribute(description = "Returns the number of sync cross-site requests received by this node",
-         displayName = "Sync Cross-Site Requests Received")
-   public long getSyncXSiteRequestsReceived() {
-      return statisticsEnabled ? syncXsiteReceived.sum() : 0;
-   }
-
-   @ManagedAttribute(description = "Returns the number of async cross-site requests received by this node",
-         displayName = "Async Cross-Site Requests Received")
-   public long getAsyncXSiteRequestsReceived() {
-      return statisticsEnabled ? asyncXsiteReceived.sum() : 0;
+   @ManagedAttribute(description = "Returns the number of cross-site requests received by this node",
+         displayName = "Cross-Site Requests Received")
+   public long getXSiteRequestsReceived() {
+      return statisticsEnabled ? xSiteReceived.sum() : 0;
    }
 
    private BlockingRunnable createNonNullReadyActionRunnable(CacheRpcCommand command, Reply reply, int commandTopologyId, boolean sync, ReadyAction readyAction) {

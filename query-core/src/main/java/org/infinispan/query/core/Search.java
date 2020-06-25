@@ -55,7 +55,7 @@ public final class Search {
    /**
     * Create an event filter out of an Ickle query.
     */
-   public static <K, V> CacheEventFilterConverter<K, V, ObjectFilter.FilterResult> makeFilter(Query query) {
+   public static <K, V> CacheEventFilterConverter<K, V, ObjectFilter.FilterResult> makeFilter(Query<?> query) {
       return makeFilter(query.getQueryString(), query.getParameters());
    }
 

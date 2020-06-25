@@ -127,4 +127,9 @@ public class ConsistentHashV2 implements ConsistentHash {
       throw new UnsupportedOperationException();
    }
 
+   @Override
+   public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByServer() {
+      throw new UnsupportedOperationException();
+   }
+
 }

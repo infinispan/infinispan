@@ -63,6 +63,8 @@ public class StringPropertyReplacer {
     * <p/>
     * The property ${/} is replaced with System.getProperty("file.separator")
     * value and the property ${:} is replaced with System.getProperty("path.separator").
+    * <p/>
+    * Environment variables are referenced by the <code>env.</code> prefix, for example ${env.PATH}
     *
     * @param string - the string with possible ${} references
     * @return the input string with all property references replaced if any. If
@@ -110,7 +112,7 @@ public class StringPropertyReplacer {
 
             // Open bracket immediatley after dollar
          else if (c == '{' && state == SEEN_DOLLAR) {
-            buffer.append(string.substring(start, i - 1));
+            buffer.append(string, start, i - 1);
             state = IN_BRACKET;
             start = i - 1;
          }
@@ -137,20 +139,14 @@ public class StringPropertyReplacer {
                   value = PATH_SEPARATOR;
                } else {
                   // check from the properties
-                  if (props != null)
-                     value = props.getProperty(key);
-                  else
-                     value = SecurityActions.getProperty(key);
+                  value = resolveKey(key, props);
 
                   if (value == null) {
                      // Check for a default value ${key:default}
                      int colon = key.indexOf(':');
                      if (colon > 0) {
                         String realKey = key.substring(0, colon);
-                        if (props != null)
-                           value = props.getProperty(realKey);
-                        else
-                           value = SecurityActions.getProperty(realKey);
+                        value = resolveKey(realKey, props);
 
                         if (value == null) {
                            // Check for a composite key, "key1,key2"
@@ -220,21 +216,25 @@ public class StringPropertyReplacer {
          if (comma > 0) {
             // Check the first part
             String key1 = key.substring(0, comma);
-            if (props != null)
-               value = props.getProperty(key1);
-            else
-               value = SecurityActions.getProperty(key1);
+            value = resolveKey(key1, props);
          }
          // Check the second part, if there is one and first lookup failed
          if (value == null && comma < key.length() - 1) {
             String key2 = key.substring(comma + 1);
-            if (props != null)
-               value = props.getProperty(key2);
-            else
-               value = SecurityActions.getProperty(key2);
+            value = resolveKey(key2, props);
          }
       }
       // Return whatever we've found or null
       return value;
+   }
+
+   private static String resolveKey(String key, Properties props) {
+      if (key.startsWith("env.")) {
+         return SecurityActions.getEnv(key.substring(4));
+      } else if (props != null) {
+         return props.getProperty(key);
+      } else {
+         return SecurityActions.getProperty(key);
+      }
    }
 }

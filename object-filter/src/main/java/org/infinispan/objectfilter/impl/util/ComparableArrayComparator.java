@@ -6,7 +6,7 @@ import java.util.Comparator;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class ComparableArrayComparator implements Comparator<Comparable[]> {
+public final class ComparableArrayComparator implements Comparator<Comparable<?>[]> {
 
    private final boolean[] direction;
 
@@ -24,7 +24,7 @@ public final class ComparableArrayComparator implements Comparator<Comparable[]>
    }
 
    @Override
-   public int compare(Comparable[] array1, Comparable[] array2) {
+   public int compare(Comparable<?>[] array1, Comparable<?>[] array2) {
       if (array1 == null || array2 == null) {
          throw new IllegalArgumentException("arguments cannot be null");
       }

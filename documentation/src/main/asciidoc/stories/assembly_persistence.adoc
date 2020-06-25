@@ -17,7 +17,6 @@ frequently used data in-memory and writes older entries to persistent storage.
 
 include::assembly_cache_stores.adoc[leveloffset=+1]
 include::assembly_cache_store_implementations.adoc[leveloffset=+1]
-include::assembly_persistence_spi.adoc[leveloffset=+1]
 include::assembly_migrating_cache_stores.adoc[leveloffset=+1]
 
 

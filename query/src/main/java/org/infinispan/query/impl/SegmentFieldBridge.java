@@ -23,7 +23,7 @@ public class SegmentFieldBridge implements FieldBridge, StringBridge {
    @Override
    public void set(String name, Object value, Document document, LuceneOptions luceneOptions) {
       String providedId = document.get(ID_FIELD);
-      String segment = providedId.substring(providedId.lastIndexOf(":") + 1);
+      String segment = providedId.substring(providedId.lastIndexOf(':') + 1);
       document.add(new StringField(SEGMENT_FIELD, segment, Field.Store.NO));
    }
 

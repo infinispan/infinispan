@@ -42,4 +42,17 @@ public class TestSystemPropertyNames {
     * It should be a file name located in the module server/tests/src/test/resources/configuration or a full path
     */
    public static final String INFINISPAN_TEST_SERVER_LOG_FILE = "org.infinispan.test.server.container.logFile";
+
+   /**
+    * Specifies a comma-separated list to server home path. Only for FORKED
+    */
+   public static final String INFINISPAN_SERVER_HOME = "org.infinispan.test.server.home";
+   /**
+    * The maximum amount of memory the container can use.
+    */
+   public static final String INFINISPAN_TEST_SERVER_CONTAINER_MEMORY = "org.infinispan.test.server.container.memory";
+   /**
+    * The amount of memory this container is allowed to swap to disk
+    */
+   public static final String INFINISPAN_TEST_SERVER_CONTAINER_MEMORY_SWAP = "org.infinispan.test.server.container.memorySwap";
 }

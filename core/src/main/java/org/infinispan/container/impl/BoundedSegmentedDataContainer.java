@@ -60,7 +60,7 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
       }
       DefaultEvictionListener evictionListener = new DefaultEvictionListener();
       evictionCache = applyListener(caffeine, evictionListener, new SegmentMapUpdater()).build();
-      entries = new PeekableTouchableContainerMap<>(evictionCache.asMap());
+      entries = new PeekableTouchableCaffeineMap<>(evictionCache);
    }
 
    public BoundedSegmentedDataContainer(int numSegments, long thresholdSize,
@@ -73,7 +73,7 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
             .maximumWeight(thresholdSize), evictionListener, new SegmentMapUpdater())
             .build();
 
-      entries = new PeekableTouchableContainerMap<>(evictionCache.asMap());
+      entries = new PeekableTouchableCaffeineMap<>(evictionCache);
    }
 
    /**
@@ -116,19 +116,9 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
       return entries;
    }
 
-   // Peek is special so we don't hit the caffeine map for read operations
    @Override
    public InternalCacheEntry<K, V> peek(Object k) {
-      return peek(getSegmentForKey(k), k);
-   }
-
-   @Override
-   public InternalCacheEntry<K, V> peek(int segment, Object k) {
-      ConcurrentMap<K, InternalCacheEntry<K, V>> map = super.getMapForSegment(segment);
-      if (map != null) {
-         return map.get(k);
-      }
-      return null;
+      return peek(-1, k);
    }
 
    @Override

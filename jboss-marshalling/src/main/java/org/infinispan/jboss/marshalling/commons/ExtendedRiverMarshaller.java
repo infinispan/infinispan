@@ -13,7 +13,9 @@ import org.jboss.marshalling.river.RiverMarshallerFactory;
  *
  * @author Galder Zamarreño
  * @since 5.1
+ * @deprecated since 11.0. To be removed in 14.0 ISPN-11947.
  */
+@Deprecated
 public class ExtendedRiverMarshaller extends RiverMarshaller {
 
    private RiverCloseListener listener;

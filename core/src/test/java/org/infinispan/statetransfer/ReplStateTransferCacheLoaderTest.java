@@ -58,7 +58,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
             .memory().storageType(StorageType.BINARY)
             .clustering().remoteTimeout(20000)
             .stateTransfer().timeout(240000).fetchInMemoryState(false).chunkSize(10000)
-            .persistence().addSingleFileStore().location("store0");
+            .persistence().addSingleFileStore().location(new File(tmpDir, "store0").getAbsolutePath());
 
       createCluster(globalBuilder, builder, 1);
       waitForClusterToForm();
@@ -82,7 +82,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
 
       log.info("Adding a new node ..");
       // make sure this node writes in a different location
-      builder.persistence().clearStores().addSingleFileStore().location("store1").fetchPersistentState(true);
+      builder.persistence().clearStores().addSingleFileStore().location(new File(tmpDir, "store0").getAbsolutePath()).fetchPersistentState(true);
 
       addClusterEnabledCacheManager(globalBuilder, builder);
       log.info("Added a new node");

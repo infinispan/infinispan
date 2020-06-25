@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-server-parent</artifactId>
-      <version>11.0.0-SNAPSHOT</version>
+      <version>11.0.1-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -75,22 +75,7 @@
       </dependency>
       <dependency>
          <groupId>org.wildfly.openssl</groupId>
-         <artifactId>wildfly-openssl-java</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.wildfly.openssl</groupId>
-         <artifactId>wildfly-openssl-linux-x86_64</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.wildfly.openssl</groupId>
-         <artifactId>wildfly-openssl-windows-x86_64</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.wildfly.openssl</groupId>
-         <artifactId>wildfly-openssl-macosx-x86_64</artifactId>
+         <artifactId>wildfly-openssl</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>

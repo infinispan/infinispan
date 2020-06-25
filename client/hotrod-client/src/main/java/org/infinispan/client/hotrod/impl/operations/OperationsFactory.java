@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +16,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.iteration.KeyTracker;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -22,6 +24,7 @@ import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.client.hotrod.impl.transaction.operations.PrepareTransactionOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.commons.util.IntSet;
 
 import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
@@ -80,6 +83,10 @@ public class OperationsFactory implements HotRodConstants {
 
    public String getCacheName() {
       return cacheName;
+   }
+
+   public ChannelFactory getChannelFactory() {
+      return channelFactory;
    }
 
    public Codec getCodec() {
@@ -167,11 +174,6 @@ public class OperationsFactory implements HotRodConstants {
             codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg);
    }
 
-   public <K, V> BulkGetOperation<K, V> newBulkGetOperation(int size, DataFormat dataFormat) {
-      return new BulkGetOperation<>(
-            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, size, dataFormat, clientStatistics);
-   }
-
    public <K> BulkGetKeysOperation<K> newBulkGetKeysOperation(int scope, DataFormat dataFormat) {
       return new BulkGetKeysOperation<>(
             codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, scope, dataFormat, clientStatistics);
@@ -217,7 +219,7 @@ public class OperationsFactory implements HotRodConstants {
             codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, this);
    }
 
-   public QueryOperation newQueryOperation(RemoteQuery remoteQuery, DataFormat dataFormat) {
+   public QueryOperation newQueryOperation(RemoteQuery<?> remoteQuery, DataFormat dataFormat) {
       return new QueryOperation(
             codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, remoteQuery, dataFormat);
    }
@@ -280,15 +282,32 @@ public class OperationsFactory implements HotRodConstants {
       return channelFactory.getCacheTopologyInfo(cacheNameBytes);
    }
 
-   public IterationStartOperation newIterationStartOperation(String filterConverterFactory, byte[][] filterParameters, Set<Integer> segments, int batchSize, boolean metadata, DataFormat dataFormat) {
-      return new IterationStartOperation(codec, flags(), cfg, cacheNameBytes, topologyId, filterConverterFactory, filterParameters, segments, batchSize, channelFactory, metadata, dataFormat);
+   /**
+    * Returns a map containing for each address all of its primarily owned segments. If the primary segments are not
+    * known an empty map will be returned instead
+    * @return map containing addresses and their primary segments
+    */
+   public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByAddress() {
+      return channelFactory.getPrimarySegmentsByAddress(cacheNameBytes);
+   }
+
+   public ConsistentHash getConsistentHash() {
+      return channelFactory.getConsistentHash(cacheNameBytes);
+   }
+
+   public int getTopologyId() {
+      return channelFactory.getTopologyId(cacheNameBytes);
+   }
+
+   public IterationStartOperation newIterationStartOperation(String filterConverterFactory, byte[][] filterParameters, IntSet segments, int batchSize, boolean metadata, DataFormat dataFormat, SocketAddress targetAddress) {
+      return new IterationStartOperation(codec, flags(), cfg, cacheNameBytes, topologyId, filterConverterFactory, filterParameters, segments, batchSize, channelFactory, metadata, dataFormat, targetAddress);
    }
 
    public IterationEndOperation newIterationEndOperation(byte[] iterationId, Channel channel) {
       return new IterationEndOperation(codec, flags(), cfg, cacheNameBytes, topologyId, iterationId, channelFactory, channel);
    }
 
-   public <E> IterationNextOperation<E> newIterationNextOperation(byte[] iterationId, Channel channel, KeyTracker segmentKeyTracker, DataFormat dataFormat) {
+   public <K, E> IterationNextOperation<K, E> newIterationNextOperation(byte[] iterationId, Channel channel, KeyTracker segmentKeyTracker, DataFormat dataFormat) {
       return new IterationNextOperation<>(codec, flags(), cfg, cacheNameBytes, topologyId, iterationId, channel, channelFactory, segmentKeyTracker, dataFormat);
    }
 

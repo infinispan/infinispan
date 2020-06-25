@@ -104,7 +104,7 @@ public interface Codec {
       return 0;
    }
 
-   default void writeIteratorStartOperation(ByteBuf buf, Set<Integer> segments, String filterConverterFactory, int batchSize,
+   default void writeIteratorStartOperation(ByteBuf buf, IntSet segments, String filterConverterFactory, int batchSize,
                                             boolean metadata, byte[][] filterParameters) {
       throw new UnsupportedOperationException("This version doesn't support iterating upon entries!");
    }

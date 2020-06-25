@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.util.IntSet;
 
 /**
  * Tracks all keys seen during iteration. Depends on ISPN-5451 to be done more efficiently, by discarding segments as
@@ -23,7 +24,7 @@ class ReplKeyTracker implements KeyTracker {
    }
 
    @Override
-   public void segmentsFinished(byte[] finishedSegments) {
+   public void segmentsFinished(IntSet finishedSegments) {
    }
 
    @Override

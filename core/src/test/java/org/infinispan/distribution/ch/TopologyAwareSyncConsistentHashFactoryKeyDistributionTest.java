@@ -1,9 +1,7 @@
 package org.infinispan.distribution.ch;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
@@ -33,24 +31,21 @@ import org.testng.annotations.Test;
 @Test(testName = "distribution.ch.TopologyAwareSyncConsistentHashFactoryKeyDistributionTest", groups = "profiling")
 public class TopologyAwareSyncConsistentHashFactoryKeyDistributionTest extends SyncConsistentHashFactoryKeyDistributionTest {
 
-   @Override
    protected DefaultConsistentHash createConsistentHash(int numSegments, int numOwners, List<Address> members) {
-      MurmurHash3 hash = MurmurHash3.getInstance();
-      ConsistentHashFactory<DefaultConsistentHash> chf = new TopologyAwareSyncConsistentHashFactory();
-      DefaultConsistentHash ch = chf.create(numOwners, numSegments, members, null);
-      return ch;
+      ConsistentHashFactory<DefaultConsistentHash> chf = createFactory();
+      return chf.create(numOwners, numSegments, members, null);
    }
 
    @Override
-   protected List<Address> createAddresses(int numNodes) {
-      ArrayList<Address> addresses = new ArrayList<Address>(numNodes);
-      for (int i = 0; i < numNodes; i++) {
-         ExtendedUUID topologyAddress = JGroupsTopologyAwareAddress.randomUUID(null, "s" + (i % 2), null, "m" + i);
-         addresses.add(new IndexedTopologyAwareJGroupsAddress(topologyAddress, i));
-      }
-      return addresses;
+   protected ConsistentHashFactory<DefaultConsistentHash> createFactory() {
+      return new TopologyAwareSyncConsistentHashFactory();
    }
 
+   @Override
+   protected Address createSingleAddress(int nodeIndex) {
+      ExtendedUUID uuid = JGroupsTopologyAwareAddress.randomUUID(null, "s" + (nodeIndex % 2), null, "m" + nodeIndex);
+      return new IndexedTopologyAwareJGroupsAddress(uuid, nodeIndex);
+   }
 }
 
 /**

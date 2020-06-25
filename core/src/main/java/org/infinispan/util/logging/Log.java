@@ -1487,9 +1487,9 @@ public interface Log extends BasicLogger {
    @Message(value = "%s cannot be shared", id = 430)
    CacheConfigurationException nonSharedStoreConfiguredAsShared(String storeType);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to validate %s's configuration as the @Store annotation is missing", id = 431)
-   void warnStoreAnnotationMissing(String name);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Unable to validate %s's configuration as the @Store annotation is missing", id = 431)
+//   void warnStoreAnnotationMissing(String name);
 
    @Message(value = "Missing configuration for default cache '%s' declared on container", id = 432)
    CacheConfigurationException missingDefaultCacheDeclaration(String defaultCache);
@@ -1561,10 +1561,6 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Attempt to define configuration for cache %s which already exists", id = 453)
    CacheConfigurationException configAlreadyDefined(String cacheName);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Calling getCache with a cache override is no longer supported. Please invoke createCache first and then getCache. Cache name was %s", id = 454)
-   void warnAttemptToOverrideExistingConfiguration(String cacheName);
 
    @LogMessage(level = ERROR)
    @Message(value = "Failure during leaver transactions cleanup", id = 455)
@@ -1882,7 +1878,7 @@ public interface Log extends BasicLogger {
    void marshallersNotSupported();
 
    @LogMessage(level = WARN)
-   @Message(value = "infinispan-boss-marshalling dependency detected, jboss-marshalling has been deprecated and will be removed in the future", id = 554)
+   @Message(value = "jboss-marshalling is deprecated and planned for removal", id = 554)
    void jbossMarshallingDetected();
 
    @LogMessage(level = ERROR)
@@ -1984,7 +1980,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot configure both maxCount and maxSize in memory configuration", id = 583)
    CacheConfigurationException cannotProvideBothSizeAndCount();
 
-   @Message(value = "The memory configuration(s) %s have been deprecated and cannot be used in conjunction to the new configuration. Please update your code ", id = 584)
+   @Message(value = "The memory attribute(s) %s have been deprecated and cannot be used in conjunction with the new configuration", id = 584)
    CacheConfigurationException cannotUseDeprecatedAndReplacement(String legacyName);
 
    @LogMessage(level = WARN)
@@ -1992,14 +1988,14 @@ public interface Log extends BasicLogger {
    void ignoringSpecificMediaTypes();
 
    @LogMessage(level = WARN)
-   @Message(value = "The memory configuration attribute(s) '%s' have been deprecated. Please update your configuration", id = 586)
-   void warnUsingDeprecatedMemoryConfigs(String config);
+   @Message(value = "The memory configuration element '%s' has been deprecated. Please update your configuration", id = 586)
+   void warnUsingDeprecatedMemoryConfigs(String element);
 
    @Message(value = "Cannot change max-size since max-count is already defined", id = 587)
-   CacheException cannotIncreaseMaxSize();
+   CacheConfigurationException cannotChangeMaxSize();
 
    @Message(value = "Cannot change max-count since max-size is already defined", id = 588)
-   CacheException cannotIncreaseMaxCount();
+   CacheConfigurationException cannotChangeMaxCount();
 
    @Message(value = "A store cannot be configured with both preload and purgeOnStartup", id = 589)
    CacheConfigurationException preloadAndPurgeOnStartupConflict();
@@ -2023,4 +2019,23 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "ClusterLoader has been deprecated and will be removed in a future version with no direct replacement", id = 595)
    void warnUsingDeprecatedClusterLoader();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Indexing auto-config attribute is deprecated. Please check the upgrade guide.", id = 596)
+   void autoConfigDeprecated();
+
+   @Message(value = "Store %s cannot be configured to be transactional as it does not contain the TRANSACTIONAL characteristic", id = 597)
+   CacheConfigurationException storeConfiguredTransactionalButCharacteristicNotPresent(String storeClassName);
+
+   @Message(value = "Store must specify a location when global state is disabled", id = 598)
+   CacheConfigurationException storeLocationRequired();
+
+   @Message(value = "Store '%s' must specify the '%s' attribute when global state is disabled", id = 598)
+   CacheConfigurationException storeLocationRequired(String storeType, String attributeName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Configuration for cache '%s' does not define the encoding for keys or values. " +
+         "If you use operations that require data conversion or queries, you should configure the " +
+         "cache with a specific MediaType for keys or values.", id = 599)
+   void unknownEncoding(String cacheName);
 }

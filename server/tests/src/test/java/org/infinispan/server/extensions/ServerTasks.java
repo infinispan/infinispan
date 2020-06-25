@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
@@ -41,7 +42,8 @@ public class ServerTasks {
 
    @Test
    public void testDistributedServerTaskWithParameters() {
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod().create();
+      // We must utilise the GenericJBossMarshaller due to ISPN-8814
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withMarshaller(GenericJBossMarshaller.class).create();
       List<String> greetings = cache.execute("dist-hello", Collections.singletonMap("greetee", "my friend"));
       assertEquals(2, greetings.size());
       for(String greeting : greetings) {

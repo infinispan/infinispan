@@ -1,0 +1,36 @@
+[id='using_datasources']
+= Using Datasources in JDBC Cache Stores
+Use a shared, managed datasource in your JDBC cache store configuration instead
+of specifying individual connection properties for each cache definition.
+
+.Prerequisites
+
+Create a managed datasource for JDBC cache stores in your {brandname} server
+configuration.
+
+.Procedure
+
+* Reference the JNDI name of the datasource in the JDBC cache store
+configuration of your cache configuration, as in the following example:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<distributed-cache-configuration name="persistent-cache">
+    <persistence>
+        <string-keyed-jdbc-store>
+            <data-source jndi-url="jdbc/datasource"/> <1>
+            <string-keyed-table drop-on-exit="true"
+                          create-on-start="true"
+                          prefix="TBL">
+                <id-column name="ID" type="VARCHAR(255)"/>
+                <data-column name="DATA" type="BINARY"/>
+                <timestamp-column name="TS" type="BIGINT"/>
+                <segment-column name="S" type="INT"/>
+            </string-keyed-table>
+        </string-keyed-jdbc-store>
+    </persistence>
+</distributed-cache-configuration>
+----
+
+<1> Specifies the JNDI name that you provided for the datasource connection in
+your {brandname} server configuration.

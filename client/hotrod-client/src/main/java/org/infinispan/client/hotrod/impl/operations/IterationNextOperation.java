@@ -19,6 +19,8 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -27,7 +29,7 @@ import io.netty.channel.Channel;
  * @author gustavonalle
  * @since 8.0
  */
-public class IterationNextOperation<E> extends HotRodOperation<IterationNextResponse<E>> {
+public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextResponse<K, E>> {
 
    private final byte[] iterationId;
    private final Channel channel;
@@ -35,7 +37,7 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
 
    private byte[] finishedSegments;
    private int entriesSize = -1;
-   private List<Entry<Object, E>> entries;
+   private List<Entry<K, E>> entries;
    private int projectionsSize;
    private int untrackedEntries;
 
@@ -50,7 +52,7 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
    }
 
    @Override
-   public CompletableFuture<IterationNextResponse<E>> execute() {
+   public CompletableFuture<IterationNextResponse<K, E>> execute() {
       if (!channel.isActive()) {
          throw HOTROD.channelInactive(channel.remoteAddress(), channel.remoteAddress());
       }
@@ -65,8 +67,9 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
          finishedSegments = ByteBufUtil.readArray(buf);
          entriesSize = ByteBufUtil.readVInt(buf);
          if (entriesSize == 0) {
-            segmentKeyTracker.segmentsFinished(finishedSegments);
-            complete(new IterationNextResponse(status, Collections.emptyList(), false));
+            IntSet finishedSegmentSet = IntSets.from(finishedSegments);
+            segmentKeyTracker.segmentsFinished(finishedSegmentSet);
+            complete(new IterationNextResponse(status, Collections.emptyList(), finishedSegmentSet, false));
             return;
          }
          entries = new ArrayList<>(entriesSize);
@@ -93,36 +96,37 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
             version = buf.readLong();
          }
          byte[] key = ByteBufUtil.readArray(buf);
-         Object value;
+         E value;
          if (projectionsSize > 1) {
             Object[] projections = new Object[projectionsSize];
             for (int j = 0; j < projectionsSize; j++) {
                projections[j] = unmarshallValue(ByteBufUtil.readArray(buf), status);
             }
-            value = projections;
+            value = (E) projections;
          } else {
             value = unmarshallValue(ByteBufUtil.readArray(buf), status);
          }
          if (meta == 1) {
-            value = new MetadataValueImpl<>(creation, lifespan, lastUsed, maxIdle, version, value);
+            value = (E) new MetadataValueImpl<>(creation, lifespan, lastUsed, maxIdle, version, value);
          }
 
          if (segmentKeyTracker.track(key, status, cfg.getClassWhiteList())) {
-            Object unmarshallKey = dataFormat.keyToObj(key, cfg.getClassWhiteList());
+            K unmarshallKey = dataFormat.keyToObj(key, cfg.getClassWhiteList());
             entries.add(new SimpleEntry<>(unmarshallKey, (E) value));
          } else {
             untrackedEntries++;
          }
          decoder.checkpoint();
       }
-      segmentKeyTracker.segmentsFinished(finishedSegments);
+      IntSet finishedSegmentSet = IntSets.from(finishedSegments);
+      segmentKeyTracker.segmentsFinished(finishedSegmentSet);
       if (HotRodConstants.isInvalidIteration(status)) {
          throw HOTROD.errorRetrievingNext(new String(iterationId, HOTROD_STRING_CHARSET));
       }
-      complete(new IterationNextResponse(status, entries, entriesSize > 0));
+      complete(new IterationNextResponse<>(status, entries, finishedSegmentSet, entriesSize > 0));
    }
 
-   private Object unmarshallValue(byte[] bytes, short status) {
+   private <M> M unmarshallValue(byte[] bytes, short status) {
       return dataFormat.valueToObj(bytes, cfg.getClassWhiteList());
    }
 }

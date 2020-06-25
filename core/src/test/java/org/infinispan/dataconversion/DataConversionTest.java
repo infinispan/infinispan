@@ -26,16 +26,21 @@ import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.notifications.Listener;
@@ -60,12 +65,12 @@ public class DataConversionTest extends AbstractInfinispanTest {
    @Test
    public void testReadUnencoded() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.memory().storageType(StorageType.OFF_HEAP);
+      cfg.memory().storage(StorageType.OFF_HEAP);
 
       withCacheManager(new CacheManagerCallable(
             createCacheManager(TestDataSCI.INSTANCE, cfg)) {
 
-         private final EncoderRegistry registry = cm.getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
+         private final EncoderRegistry registry = TestingUtil.extractGlobalComponent(cm, EncoderRegistry.class);
 
          public Object asStored(Object object) {
             return registry.convert(object, APPLICATION_OBJECT, APPLICATION_PROTOSTREAM);
@@ -136,7 +141,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             ConfigurationBuilder offHeapConfig = new ConfigurationBuilder();
-            offHeapConfig.memory().storageType(StorageType.OFF_HEAP);
+            offHeapConfig.memory().storage(StorageType.OFF_HEAP);
             offHeapConfig.customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class).interceptor(new TestInterceptor(1));
 
             ConfigurationBuilder compatConfig = new ConfigurationBuilder();
@@ -157,42 +162,6 @@ public class DataConversionTest extends AbstractInfinispanTest {
             assertEquals(1, compatCache.get(1));
          }
       });
-   }
-
-   @SuppressWarnings("unused")
-   static class TestInterceptor extends BaseCustomAsyncInterceptor {
-
-      private final int i;
-
-      @Inject ComponentRef<AdvancedCache<?, ?>> cache;
-
-      TestInterceptor(int i) {
-         this.i = i;
-      }
-
-      @Override
-      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
-            throws Throwable {
-
-         DataConversion valueDataConversion = cache.wired().getValueDataConversion();
-         assertNotNull(valueDataConversion);
-         Object value = command.getValue();
-         assertEquals(i, valueDataConversion.fromStorage(value));
-         return invokeNext(ctx, command);
-      }
-   }
-
-   @Listener(observation = POST)
-   @SuppressWarnings("unused")
-   private static class SimpleListener {
-
-      private List<CacheEntryEvent> events = new ArrayList<>();
-
-      @CacheEntryCreated
-      public void cacheEntryCreated(CacheEntryEvent ev) {
-         events.add(ev);
-      }
-
    }
 
    @Test
@@ -237,7 +206,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
          public void call() {
             Cache<String, Map<String, String>> cache = cm.getCache();
 
-            EncoderRegistry encoderRegistry = cache.getAdvancedCache().getComponentRegistry().getComponent(EncoderRegistry.class);
+            EncoderRegistry encoderRegistry = TestingUtil.extractGlobalComponent(cm, EncoderRegistry.class);
             encoderRegistry.registerTranscoder(new ObjectXMLTranscoder());
 
             // Store a map in the cache
@@ -276,7 +245,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(createCacheManager(TestDataSCI.INSTANCE)) {
          @Override
          public void call() {
-            EncoderRegistry encoderRegistry = cm.getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
+            EncoderRegistry encoderRegistry = TestingUtil.extractGlobalComponent(cm, EncoderRegistry.class);
             encoderRegistry.registerTranscoder(new FooBarTranscoder());
             ConfigurationBuilder cfg = new ConfigurationBuilder();
             cfg.encoding().key().mediaType("application/foo");
@@ -334,8 +303,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
             createCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder())) {
          @Override
          public void call() {
-            GlobalComponentRegistry registry = cm.getGlobalComponentRegistry();
-            EncoderRegistry encoderRegistry = registry.getComponent(EncoderRegistry.class);
+            EncoderRegistry encoderRegistry = TestingUtil.extractGlobalComponent(cm, EncoderRegistry.class);
             encoderRegistry.registerEncoder(new GzipEncoder());
 
             AdvancedCache<String, String> cache = cm.<String, String>getCache().getAdvancedCache();
@@ -386,5 +354,59 @@ public class DataConversionTest extends AbstractInfinispanTest {
             testWith(wrapped.getValueDataConversion(), wrappedRegistry);
          }
       });
+   }
+
+   @Test
+   public void testJavaSerialization() throws Exception {
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+      gcb.serialization().marshaller(new JavaSerializationMarshaller());
+      try (DefaultCacheManager manager = new DefaultCacheManager(gcb.build())) {
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.encoding().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE);
+
+         Cache<String, String> cache = manager.createCache("cache", builder.build());
+         cache.put("key", "value");
+
+         JavaSerializationMarshaller marshaller = new JavaSerializationMarshaller();
+         DataContainer<?, ?> dataContainer = cache.getAdvancedCache().getDataContainer();
+         InternalCacheEntry<?, ?> cacheEntry = dataContainer.peek(new WrappedByteArray(marshaller.objectToByteBuffer("key")));
+         assertEquals(new WrappedByteArray(marshaller.objectToByteBuffer("value")), cacheEntry.getValue());
+      }
+   }
+
+   @SuppressWarnings("unused")
+   static class TestInterceptor extends BaseCustomAsyncInterceptor {
+
+      private final int i;
+
+      @Inject ComponentRef<AdvancedCache<?, ?>> cache;
+
+      TestInterceptor(int i) {
+         this.i = i;
+      }
+
+      @Override
+      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+            throws Throwable {
+
+         DataConversion valueDataConversion = cache.wired().getValueDataConversion();
+         assertNotNull(valueDataConversion);
+         Object value = command.getValue();
+         assertEquals(i, valueDataConversion.fromStorage(value));
+         return invokeNext(ctx, command);
+      }
+   }
+
+   @Listener(observation = POST)
+   @SuppressWarnings("unused")
+   private static class SimpleListener {
+
+      private List<CacheEntryEvent> events = new ArrayList<>();
+
+      @CacheEntryCreated
+      public void cacheEntryCreated(CacheEntryEvent ev) {
+         events.add(ev);
+      }
+
    }
 }

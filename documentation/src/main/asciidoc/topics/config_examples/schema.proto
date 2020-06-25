@@ -1,0 +1,12 @@
+<infinispan>
+   <cache-container default-cache="default">
+      <replicated-cache name="default">
+         <indexing>
+            <indexed-entities>
+                <indexed-entity>com.acme.query.test.Car</indexed-entity>
+                <indexed-entity>com.acme.query.test.Truck</indexed-entity>
+            </indexed-entities>
+         </indexing>
+      </replicated-cache>
+   </cache-container>
+</infinispan>

@@ -332,12 +332,27 @@ public class TopologyInfo {
       return node != null ? node.expectedOwnedSegments : 0;
    }
 
+   public int getSiteIndex(Address address) {
+      Site site = addressMap.get(address).getSite();
+      return cluster.sites.indexOf(site);
+   }
+
+   public int getRackIndex(Address address) {
+      Rack rack = addressMap.get(address).getRack();
+      return allRacks.indexOf(rack);
+   }
+
+   public int getMachineIndex(Address address) {
+      Machine machine = addressMap.get(address).getMachine();
+      return allMachines.indexOf(machine);
+   }
+
    /**
     * Base class for locations.
     *
     * <p>Implements Comparable, but locations with equal capacity are equal, so they can't be used as map keys.</p>
     */
-   static abstract class Location implements Comparable<Location> {
+   public static abstract class Location implements Comparable<Location> {
       float totalCapacity;
       int nodeCount;
       float expectedPrimarySegments;
@@ -346,6 +361,8 @@ public class TopologyInfo {
       abstract Collection<? extends Location> getChildren();
 
       abstract String getName();
+
+      abstract String getFullName();
 
       float getCapacityPerNode() {
          return totalCapacity / nodeCount;
@@ -377,11 +394,13 @@ public class TopologyInfo {
 
       @Override
       public String toString() {
-         return getName() + " * " + totalCapacity + ": " + expectedPrimarySegments + "+" + getExpectedBackupSegments();
+         String name = getFullName();
+         return String.format("%s * %f: %.2f+%.2f", name != null ? name : "/", totalCapacity, expectedPrimarySegments,
+                              getExpectedBackupSegments());
       }
    }
 
-   private static class Cluster extends Location {
+   public static class Cluster extends Location {
       final List<Site> sites = new ArrayList<>();
       final Map<String, Site> siteMap = new HashMap<>();
 
@@ -410,9 +429,14 @@ public class TopologyInfo {
       String getName() {
          return "cluster";
       }
+
+      @Override
+      String getFullName() {
+         return "";
+      }
    }
 
-   private static class Site extends Location {
+   public static class Site extends Location {
       final Cluster cluster;
       final String siteId;
 
@@ -449,9 +473,14 @@ public class TopologyInfo {
       String getName() {
          return siteId;
       }
+
+      @Override
+      String getFullName() {
+         return siteId;
+      }
    }
 
-   private static class Rack extends Location {
+   public static class Rack extends Location {
       final Site site;
       final String rackId;
 
@@ -488,9 +517,14 @@ public class TopologyInfo {
       String getName() {
          return rackId;
       }
+
+      @Override
+      String getFullName() {
+         return rackId + '|' + site.siteId;
+      }
    }
 
-   private static class Machine extends Location {
+   public static class Machine extends Location {
       final Rack rack;
       final String machineId;
 
@@ -516,9 +550,14 @@ public class TopologyInfo {
       String getName() {
          return machineId;
       }
+
+      @Override
+      String getFullName() {
+         return machineId + '|' + rack.rackId + '|' + rack.site.siteId;
+      }
    }
 
-   private static class Node extends Location {
+   public static class Node extends Location {
       final Machine machine;
       final Address address;
 
@@ -526,6 +565,18 @@ public class TopologyInfo {
          this.machine = machine;
          this.address = address;
          this.totalCapacity = capacityFactor;
+      }
+
+      public Machine getMachine() {
+         return machine;
+      }
+
+      public Rack getRack() {
+         return machine.rack;
+      }
+
+      public Site getSite() {
+         return machine.rack.site;
       }
 
       @Override
@@ -543,6 +594,12 @@ public class TopologyInfo {
          return address.toString();
       }
 
+      @Override
+      String getFullName() {
+         return address.toString() + '|' + machine.machineId + '|' + machine.rack.rackId + '|' +
+                machine.rack.site.siteId;
+      }
+
       void addPrimarySegments(float segments) {
          expectedPrimarySegments += segments;
          machine.expectedPrimarySegments += segments;
@@ -557,6 +614,11 @@ public class TopologyInfo {
          machine.rack.expectedOwnedSegments += segments;
          machine.rack.site.expectedOwnedSegments += segments;
          machine.rack.site.cluster.expectedOwnedSegments += segments;
+      }
+
+      @Override
+      public String toString() {
+         return address.toString();
       }
    }
 }

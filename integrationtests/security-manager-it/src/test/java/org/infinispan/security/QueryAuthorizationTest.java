@@ -15,6 +15,7 @@ import org.infinispan.query.Search;
 import org.infinispan.query.api.TestEntity;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -30,11 +31,11 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "security.QueryAuthorizationTest")
 public class QueryAuthorizationTest extends SingleCacheManagerTest {
 
-   private Subject ADMIN = TestingUtil.makeSubject("admin");
+   private final Subject ADMIN = TestingUtil.makeSubject("admin");
 
-   private Subject QUERY = TestingUtil.makeSubject("query");
+   private final Subject QUERY = TestingUtil.makeSubject("query");
 
-   private Subject NOQUERY = TestingUtil.makeSubject("noquery");
+   private final Subject NOQUERY = TestingUtil.makeSubject("noquery");
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {
@@ -92,9 +93,10 @@ public class QueryAuthorizationTest extends SingleCacheManagerTest {
       cache.put("jekyll", new TestEntity("Henry", "Jekyll", 1, "dissociate identity disorder"));
       cache.put("hyde", new TestEntity("Edward", "Hyde", 2, "dissociate identity disorder"));
       QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query q = queryFactory.create(String.format("FROM %s where name = 'Henry'", TestEntity.class.getName()));
-      assertEquals(1, q.execute().hitCount().orElse(-1));
-      assertEquals(TestEntity.class, q.list().get(0).getClass());
+      Query<TestEntity> query = queryFactory.create(String.format("FROM %s where name = 'Henry'", TestEntity.class.getName()));
+      QueryResult<TestEntity> queryResult = query.execute();
+      assertEquals(1, queryResult.hitCount().orElse(-1));
+      assertEquals(TestEntity.class, queryResult.list().get(0).getClass());
    }
 
    public void testQuery() throws Exception {

@@ -15,12 +15,12 @@ import org.hibernate.search.stat.Statistics;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.MassIndexer;
+import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.spi.SearchManagerImplementor;
-import org.infinispan.util.concurrent.TimeoutException;
 
 /**
  * Class that is used to build a {@link org.infinispan.query.CacheQuery} based on a Lucene or an Ickle query, only for
@@ -33,7 +33,6 @@ import org.infinispan.util.concurrent.TimeoutException;
  */
 public final class SearchManagerImpl implements SearchManagerImplementor {
 
-   private final AdvancedCache<?, ?> cache;
    private final SearchIntegrator searchFactory;
    private final QueryInterceptor queryInterceptor;
    private final KeyTransformationHandler keyTransformationHandler;
@@ -41,21 +40,16 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
    private final MassIndexer massIndexer;
    private TimeoutExceptionFactory timeoutExceptionFactory;
 
-   public SearchManagerImpl(AdvancedCache<?, ?> cache) {
-      this(cache, ComponentRegistryUtils.getEmbeddedQueryEngine(cache));
-   }
-
    public SearchManagerImpl(AdvancedCache<?, ?> cache, QueryEngine<?> queryEngine) {
       if (cache == null) {
          throw new IllegalArgumentException("cache parameter shall not be null");
       }
-      this.cache = cache;
       this.searchFactory = ComponentRegistryUtils.getSearchIntegrator(cache);
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       this.keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
       this.queryEngine = queryEngine;
       this.massIndexer = (MassIndexer) ComponentRegistryUtils.getIndexer(cache);
-      this.timeoutExceptionFactory = (msg, q) -> new TimeoutException(msg + " \"" + q + '\"');
+      this.timeoutExceptionFactory = (msg, q) -> new SearchTimeoutException(msg + " \"" + q + '\"');
    }
 
    @Override

@@ -32,15 +32,4 @@ class UnwrappingEmbeddedCacheManager extends AbstractDelegatingEmbeddedCacheMana
       return SecurityActions.getUnwrappedCache(cache);
    }
 
-   @Override
-   public <K, V> Cache<K, V> getCache(String cacheName, String configurationName) {
-      Cache<K, V> cache = super.getCache(cacheName, configurationName);
-      return SecurityActions.getUnwrappedCache(cache);
-   }
-
-   @Override
-   public <K, V> Cache<K, V> getCache(String cacheName, String configurationTemplate, boolean createIfAbsent) {
-      Cache<K, V> cache = super.getCache(cacheName, configurationTemplate, createIfAbsent);
-      return SecurityActions.getUnwrappedCache(cache);
-   }
 }

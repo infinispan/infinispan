@@ -2,11 +2,13 @@ package org.infinispan.persistence.support;
 
 import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transaction;
 
@@ -25,7 +27,7 @@ import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.TransactionalCacheWriter;
-import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -33,6 +35,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
 
@@ -246,31 +249,51 @@ public class NonBlockingStoreAdapter<K, V> implements NonBlockingStore<K, V> {
    }
 
    @Override
-   public CompletionStage<Void> bulkWrite(int publisherCount, Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> publisher) {
-      Flowable<MarshallableEntry<? extends K, ? extends V>> meFlowable = Flowable.fromPublisher(publisher)
+   public CompletionStage<Void> batch(int publisherCount, Publisher<NonBlockingStore.SegmentedPublisher<Object>> removePublisher,
+         Publisher<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
+      Flowable<Object> objectFlowable = Flowable.fromPublisher(removePublisher)
             .flatMap(RxJavaInterop.identityFunction(), false, publisherCount);
-      // While bulkUpdate appears to be non blocking - there was no mandate that the operation actually be so.
-      // Thus we run it on a blocking thread just in case
-      return blockingManager.supplyBlocking(() -> writer().bulkUpdate(meFlowable), nextTraceId("bulkWrite"))
+      Flowable<MarshallableEntry<? extends K, ? extends V>> meFlowable = Flowable.fromPublisher(writePublisher)
+            .flatMap(RxJavaInterop.identityFunction(), false, publisherCount);
+
+      return blockingManager.supplyBlocking(() -> {
+         Single<Set<Object>> objectSingle = objectFlowable.collect(Collectors.toSet());
+         objectSingle.subscribe(writer()::deleteBatch);
+         // While bulkUpdate appears to be non blocking - there was no mandate that the operation actually be so.
+         // Thus we run it on a blocking thread just in case
+         return writer().bulkUpdate(meFlowable);
+      }, nextTraceId("batch-update"))
             .thenCompose(Function.identity());
    }
 
    @Override
-   public CompletionStage<Void> bulkDelete(int publisherCount, Publisher<SegmentedPublisher<Object>> publisher) {
-      Flowable<Object> objects = Flowable.fromPublisher(publisher)
-            .flatMap(RxJavaInterop.identityFunction(), false, publisherCount);
-      return blockingManager.runBlocking(() -> {
-         // Using forbidden method only for conversion
-         @SuppressWarnings("checkstyle:ForbiddenMethod")
-         Iterable<Object> iterable = objects.blockingIterable();
-         writer().deleteBatch(iterable);
-      }, nextTraceId("bulkDelete"));
-   }
+   public CompletionStage<Void> prepareWithModifications(Transaction transaction, int publisherCount,
+         Publisher<SegmentedPublisher<Object>> removePublisher, Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
+      Set<Object> affectedKeys = new HashSet<>();
+      BatchModification oldBatchModification = new BatchModification(affectedKeys);
 
-   @Override
-   public CompletionStage<Void> prepareWithModifications(Transaction transaction, BatchModification batchModification) {
+      Flowable.fromPublisher(removePublisher)
+            .subscribe(sp ->
+               Flowable.fromPublisher(sp)
+                     .subscribe(key -> {
+                        affectedKeys.add(key);
+                        oldBatchModification.removeEntry(key);
+                     })
+            );
+
+      Flowable.fromPublisher(writePublisher)
+            .subscribe(sp ->
+                  Flowable.fromPublisher(sp)
+                        .subscribe(me -> {
+                           Object key = me.getKey();
+                           affectedKeys.add(key);
+                           //noinspection unchecked
+                           oldBatchModification.addMarshalledEntry(key, (MarshallableEntry<Object, Object>) me);
+                        })
+            );
+
       return blockingManager.runBlocking(
-            () -> transactionalStore().prepareWithModifications(transaction, batchModification), nextTraceId("prepareWithModifications"));
+            () -> transactionalStore().prepareWithModifications(transaction, oldBatchModification), nextTraceId("prepareWithModifications"));
    }
 
    @Override

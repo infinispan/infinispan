@@ -44,7 +44,9 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
 
    /**
     * The consistent hash factory in use.
+    * @deprecated Since 11.0. Will be removed in 14.0, the segment allocation will no longer be customizable.
     */
+   @Deprecated
    public HashConfigurationBuilder consistentHashFactory(ConsistentHashFactory<? extends ConsistentHash> consistentHashFactory) {
       attributes.attribute(CONSISTENT_HASH_FACTORY).set(consistentHashFactory);
       return this;
@@ -71,10 +73,12 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * Controls the total number of hash space segments (per cluster).
     *
     * <p>A hash space segment is the granularity for key distribution in the cluster: a node can own
-    * (or primary-own) one or more full segments, but not a fraction of a segment. As such, larger
-    * {@code numSegments} values will mean a more even distribution of keys between nodes.
-    * <p>On the other hand, the memory/bandwidth usage of the new consistent hash grows linearly with
-    * {@code numSegments}. So we recommend keeping {@code numSegments <= 10 * clusterSize}.
+    * (or primary-own) one or more full segments, but not a fraction of a segment.
+    * As such, very small {@code numSegments} values (&lt; 10 segments per node) will make
+    * the distribution of keys between nodes more uneven.</p>
+    * <p>The recommended value is 20 * the expected cluster size.</p>
+    * <p>Note: The value returned by {@link ConsistentHash#getNumSegments()} may be different,
+    * e.g. rounded up to a power of 2.</p>
     *
     * @param numSegments the number of hash space segments. Must be strictly positive.
     */

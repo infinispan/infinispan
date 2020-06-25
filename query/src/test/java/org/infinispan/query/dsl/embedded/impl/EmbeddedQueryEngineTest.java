@@ -243,7 +243,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
    }
 
    private <E> Query<E> buildQuery(String queryString) {
-      return qe.buildQuery(null, qe.parse(queryString), null, -1, -1);
+      return (Query<E>) qe.buildQuery(null, qe.parse(queryString), null, -1, -1);
    }
 
    public void testSimpleProjection1() {
@@ -264,107 +264,99 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
    }
 
    public void testGrouping() {
-      Query q = buildQuery("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS " +
+      Query<User> q = buildQuery("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS " +
             "where surname is not null group by name having name >= 'A'");
-      List<User> list = q.list();
+      List<User> list = q.execute().list();
       assertEquals(2, list.size());
    }
 
    public void testNoGroupingOrAggregation() {
-      Query q = buildQuery("from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
+      Query<User> q = buildQuery("from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
       assertTrue(q instanceof EmbeddedLuceneQuery);
-      List<User> list = q.list();
+      List<User> list = q.execute().list();
       assertEquals(3, list.size());
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028516: Cannot have aggregate functions in the GROUP BY clause : SUM.")
    public void testDisallowAggregationInGroupBy() {
-      Query q = buildQuery("select sum(age) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by sum(age) ");
-      q.list();
+      buildQuery("select sum(age) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by sum(age) ");
    }
 
    public void testDuplicatesAcceptedInGroupBy() {
-      Query q = buildQuery("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name, name");
-      List<Object[]> list = q.list();
+      Query<Object[]> q = buildQuery("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name, name");
+      List<Object[]> list = q.execute().list();
       assertEquals(2, list.size());
       assertEquals(1, list.get(0).length);
       assertEquals(1, list.get(1).length);
    }
 
    public void testDuplicatesAcceptedInSelect1() {
-      Query q = buildQuery("select name, name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name");
-      List<Object[]> list = q.list();
+      Query<Object[]> q = buildQuery("select name, name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name");
+      List<Object[]> list = q.execute().list();
       assertEquals(2, list.size());
       assertEquals(2, list.get(0).length);
       assertEquals(2, list.get(1).length);
    }
 
    public void testDuplicatesAcceptedInSelect2() {
-      Query q = buildQuery("select max(name), max(name) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
-      List<Object[]> list = q.list();
+      Query<Object[]> q = buildQuery("select max(name), max(name) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
+      List<Object[]> list = q.execute().list();
       assertEquals(1, list.size());
       assertEquals(2, list.get(0).length);
    }
 
    public void testDuplicatesAcceptedInSelect3() {
-      Query q = buildQuery("select min(name), max(name) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
-      List<Object[]> list = q.list();
+      Query<Object[]> q = buildQuery("select min(name), max(name) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
+      List<Object[]> list = q.execute().list();
       assertEquals(1, list.size());
       assertEquals(2, list.get(0).length);
    }
 
    public void testDuplicatesAcceptedInOrderBy1() {
-      Query q = buildQuery("from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS order by age, age");
-      List<User> list = q.list();
+      Query<User> q = buildQuery("from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS order by age, age");
+      List<User> list = q.execute().list();
       assertEquals(3, list.size());
    }
 
    public void testDuplicatesAcceptedInOrderBy2() {
-      Query q = buildQuery("from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS order by age, name, age");
-      List<User> list = q.list();
+      Query<User> q = buildQuery("from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS order by age, name, age");
+      List<User> list = q.execute().list();
       assertEquals(3, list.size());
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014024: The property path 'addresses.postCode' cannot be used in the ORDER BY clause because it is multi-valued")
    public void testRejectMultivaluedOrderBy() {
-      Query q = buildQuery("from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS u order by u.addresses.postCode");
-      q.list();
+      buildQuery("from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS u order by u.addresses.postCode");
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014023: Using the multi-valued property path 'addresses.postCode' in the GROUP BY clause is not currently supported")
    public void testRejectMultivaluedGroupBy() {
-      Query q = buildQuery("select u.addresses.postCode from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS u group by u.addresses.postCode");
-      q.list();
+      buildQuery("select u.addresses.postCode from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS u group by u.addresses.postCode");
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014026: The expression 'age' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testMissingAggregateInSelect() {
-      Query q = buildQuery("select age from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name");
-      q.list();
+      buildQuery("select age from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name");
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014026: The expression 'age' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testMissingAggregateInOrderBy() {
-      Query q = buildQuery("select name, sum(age) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name order by age");
-      q.list();
+      buildQuery("select name, sum(age) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name order by age");
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028515: Cannot have aggregate functions in the WHERE clause : SUM.")
    public void testDisallowAggregatesInWhereClause() {
-      Query q = buildQuery("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS where sum(age) > 33 group by name");
-      q.list();
+      buildQuery("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS where sum(age) > 33 group by name");
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014026: The expression 'age' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testHavingClauseAllowsAggregationsAndGroupByColumnsOnly() {
-      Query q = buildQuery("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name having age >= 18");
-      q.list();
+      buildQuery("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name having age >= 18");
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014026: The expression 'name' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testDisallowNonAggregatedProjectionWithGlobalAggregation() {
-      Query q = buildQuery("select name, count(name) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
-      q.list();
+      buildQuery("select name, count(name) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
    }
 
    public void testBuildLuceneQuery() {
@@ -377,7 +369,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
    @Test(expectedExceptions = SearchException.class, expectedExceptionsMessageRegExp = "Unable to find field notes in org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS")
    public void testBuildLuceneQueryOnNonIndexedField() {
       IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("select notes from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS where notes like 'TBD%'", qe.getPropertyHelper());
-      IndexedQuery<?> q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
+      qe.buildLuceneQuery(parsingResult, null, -1, -1);
    }
 
    public void testGlobalCount() {
@@ -399,7 +391,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    public void testGlobalSum() {
       Query<Object[]> q = buildQuery("select sum(age) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
-      List<Object[]> list = q.list();
+      List<Object[]> list = q.execute().list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
       assertEquals(66L, list.get(0)[0]);
@@ -407,7 +399,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    public void testGlobalMin() {
       Query<Object[]> q = buildQuery("select min(age) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
-      List<Object[]> list = q.list();
+      List<Object[]> list = q.execute().list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
       assertEquals(22, list.get(0)[0]);
@@ -415,7 +407,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    public void testGlobalMax() {
       Query<Object[]> q = buildQuery("select max(age) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
-      List<Object[]> list = q.list();
+      List<Object[]> list = q.execute().list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
       assertEquals(44, list.get(0)[0]);
@@ -423,7 +415,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    public void testAggregateGroupingField() {
       Query<Object[]> q = buildQuery("select count(name) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name order by count(name)");
-      List<Object[]> list = q.list();
+      List<Object[]> list = q.execute().list();
       assertEquals(2, list.size());
       assertEquals(1, list.get(0).length);
       assertEquals(1L, list.get(0)[0]);
@@ -433,7 +425,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    public void testAggregateEmbedded1() {
       Query<Object[]> q = buildQuery("select max(accountIds) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name order by name");
-      List<Object[]> list = q.list();
+      List<Object[]> list = q.execute().list();
       assertEquals(2, list.size());
       assertEquals(1, list.get(0).length);
       assertEquals(2, list.get(0)[0]);
@@ -443,7 +435,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    public void testAggregateEmbedded2() {
       Query<Object[]> q = buildQuery("select max(u.addresses.postCode) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS u group by u.name order by u.name");
-      List<Object[]> list = q.list();
+      List<Object[]> list = q.execute().list();
       assertEquals(2, list.size());
       assertEquals(1, list.get(0).length);
       assertEquals("X1234", list.get(0)[0]);
@@ -453,8 +445,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Aggregation SUM cannot be applied to property of type java.lang.String")
    public void testIncompatibleAggregator() {
-      Query<Object[]> q = buildQuery("select sum(name) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
-      q.list();
+      buildQuery("select sum(name) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
    }
 
    public void testAggregateNulls() {
@@ -462,13 +453,13 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
             "where surname is not null " +
             "group by name " +
             "having name >= 'A' and count(age) >= 1");
-      List<User> list = q.list();
+      List<User> list = q.execute().list();
       assertEquals(2, list.size());
    }
 
    public void testRenamedFields1() {
-      Query q = buildQuery("select theField from org.infinispan.query.dsl.embedded.impl.model.TheEntity where theField >= 'a' order by theField");
-      List<Object[]> list = q.list();
+      Query<Object[]> q = buildQuery("select theField from org.infinispan.query.dsl.embedded.impl.model.TheEntity where theField >= 'a' order by theField");
+      List<Object[]> list = q.execute().list();
       assertEquals(2, list.size());
       assertEquals(1, list.get(0).length);
       assertEquals("test value 1", list.get(0)[0]);
@@ -476,8 +467,8 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
    }
 
    public void testRenamedFields2() {
-      Query q = buildQuery("select theField from org.infinispan.query.dsl.embedded.impl.model.TheEntity order by theField");
-      List<Object[]> list = q.list();
+      Query<Object[]> q = buildQuery("select theField from org.infinispan.query.dsl.embedded.impl.model.TheEntity order by theField");
+      List<Object[]> list = q.execute().list();
       assertEquals(2, list.size());
       assertEquals(1, list.get(0).length);
       assertEquals("test value 1", list.get(0)[0]);
@@ -485,8 +476,8 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
    }
 
    public void testRenamedFields3() {
-      Query q = buildQuery("select e.embeddedEntity.anotherField from org.infinispan.query.dsl.embedded.impl.model.TheEntity e where e.embeddedEntity.anotherField >= 'a' order by e.theField");
-      List<Object[]> list = q.list();
+      Query<Object[]> q = buildQuery("select e.embeddedEntity.anotherField from org.infinispan.query.dsl.embedded.impl.model.TheEntity e where e.embeddedEntity.anotherField >= 'a' order by e.theField");
+      List<Object[]> list = q.execute().list();
       assertEquals(2, list.size());
       assertEquals(1, list.get(0).length);
       assertEquals("test embedded value 1", list.get(0)[0]);
@@ -494,8 +485,8 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
    }
 
    public void testRenamedFields4() {
-      Query q = buildQuery("select e.embeddedEntity.anotherField from org.infinispan.query.dsl.embedded.impl.model.TheEntity e order by e.theField");
-      List<Object[]> list = q.list();
+      Query<Object[]> q = buildQuery("select e.embeddedEntity.anotherField from org.infinispan.query.dsl.embedded.impl.model.TheEntity e order by e.theField");
+      List<Object[]> list = q.execute().list();
       assertEquals(2, list.size());
       assertEquals(1, list.get(0).length);
       assertEquals("test embedded value 1", list.get(0)[0]);

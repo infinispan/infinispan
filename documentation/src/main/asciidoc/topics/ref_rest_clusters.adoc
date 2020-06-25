@@ -1,10 +1,10 @@
 [id='rest_v2_cluster_stop']
 = Stopping {brandname} Clusters
-Shut down entire {brandname} clusters with `GET` requests.
+Shut down entire {brandname} clusters with `POST` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cluster?action=stop
+POST /rest/v2/cluster?action=stop
 ----
 
 {brandname} responds with `200(OK)` and then performs an orderly shutdown of
@@ -18,7 +18,7 @@ requests and the `?action=stop&server` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cluster?action=stop&server={server1_host}&server={server2_host}
+POST /rest/v2/cluster?action=stop&server={server1_host}&server={server2_host}
 ----
 
 {brandname} responds with `200(OK)`.

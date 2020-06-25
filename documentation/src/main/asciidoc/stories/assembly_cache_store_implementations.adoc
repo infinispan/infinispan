@@ -14,10 +14,8 @@ include::{topics}/ref_cache_store_jpa_example.adoc[leveloffset=+2]
 include::{topics}/ref_cache_store_remote.adoc[leveloffset=+1]
 include::{topics}/ref_cache_store_rocksdb.adoc[leveloffset=+1]
 include::{topics}/ref_cache_store_sifs.adoc[leveloffset=+1]
-include::{topics}/ref_cache_store_custom.adoc[leveloffset=+1]
-include::{topics}/proc_creating_custom_cache_stores.adoc[leveloffset=+2]
-include::{topics}/ref_cache_store_custom_config.adoc[leveloffset=+2]
-include::{topics}/proc_deploying_custom_cache_stores.adoc[leveloffset=+2]
+include::assembly_creating_custom_cache_stores.adoc[leveloffset=+1]
+
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

@@ -1,7 +1,5 @@
 package org.infinispan.query.continuous;
 
-import static org.infinispan.query.dsl.Expression.max;
-import static org.infinispan.query.dsl.Expression.param;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Map;
@@ -45,7 +43,8 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
     */
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN028521:.*")
    public void testDisallowFullTextQuery() {
-      Query query = Search.getQueryFactory(cache()).create("from org.infinispan.query.test.Person where name : 'john'");
+      QueryFactory qf = Search.getQueryFactory(cache());
+      Query<Person> query = qf.create("FROM org.infinispan.query.test.Person WHERE name : 'john'");
 
       ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
       cq.addContinuousQueryListener(query, new CallCountingCQResultListener<>());
@@ -56,12 +55,10 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
     */
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
-      Query query = Search.getQueryFactory(cache()).from(Person.class)
-            .select(max("age"))
-            .having("age").gte(20)
-            .build();
+      QueryFactory qf = Search.getQueryFactory(cache());
+      Query<Object[]> query = qf.create("SELECT MAX(age) FROM org.infinispan.query.test.Person WHERE age >= 20");
 
-      ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
+      ContinuousQuery<Integer, Person> cq = Search.getContinuousQuery(cache());
       cq.addContinuousQueryListener(query, new CallCountingCQResultListener<>());
    }
 
@@ -75,19 +72,17 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
 
       QueryFactory qf = Search.getQueryFactory(cache());
 
-      ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
+      ContinuousQuery<Integer, Person> cq = Search.getContinuousQuery(cache());
 
-      Query query = qf.from(Person.class)
-            .select("age")
-            .having("age").lte(param("ageParam"))
-            .build().setParameter("ageParam", 30);
+      Query<Object[]> query = qf.create("SELECT age FROM org.infinispan.query.test.Person WHERE age <= :ageParam");
+      query.setParameter("ageParam", 30);
 
-      CallCountingCQResultListener<Object, Object> listener = new CallCountingCQResultListener<>();
+      CallCountingCQResultListener<Integer, Person> listener = new CallCountingCQResultListener<>();
       cq.addContinuousQueryListener(query, listener);
 
-      final Map<Object, Integer> joined = listener.getJoined();
-      final Map<Object, Integer> updated = listener.getUpdated();
-      final Map<Object, Integer> left = listener.getLeft();
+      final Map<Integer, Integer> joined = listener.getJoined();
+      final Map<Integer, Integer> updated = listener.getUpdated();
+      final Map<Integer, Integer> left = listener.getLeft();
 
       assertEquals(1, joined.size());
       assertEquals(0, updated.size());
@@ -181,10 +176,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
 
       ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
 
-      Query query = qf.from(Person.class)
-            .select("age")
-            .having("age").lte(param("ageParam"))
-            .build();
+      Query<Object[]> query = qf.create("SELECT age FROM org.infinispan.query.test.Person WHERE age <= :ageParam");
 
       query.setParameter("ageParam", 30);
 
@@ -221,16 +213,11 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       QueryFactory qf = Search.getQueryFactory(cache());
       CallCountingCQResultListener<Object, Object> listener = new CallCountingCQResultListener<>();
 
-      Query query1 = qf.from(Person.class)
-            .having("age").lte(30)
-            .and().having("name").eq("John").or().having("name").eq("Johny")
-            .build();
+      Query<Person> query1 = qf.create("FROM org.infinispan.query.test.Person WHERE (age <= 30 AND name = 'John') OR name = 'Johny'");
       ContinuousQuery<Object, Object> cq1 = Search.getContinuousQuery(cache());
       cq1.addContinuousQueryListener(query1, listener);
 
-      Query query2 = qf.from(Person.class)
-            .having("age").lte(30).or().having("name").eq("Joe")
-            .build();
+      Query<Person> query2 = qf.create("FROM org.infinispan.query.test.Person WHERE age <= 30 OR name = 'Joe'");
       ContinuousQuery<Object, Object> cq2 = Search.getContinuousQuery(cache());
       cq2.addContinuousQueryListener(query2, listener);
 

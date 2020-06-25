@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
@@ -42,8 +43,10 @@ public class RestLoggingResource {
    public void testListAppenders() throws Exception {
       RestClient client = SERVER_TEST.rest().create();
       RestResponse response = sync(client.server().logging().listAppenders());
-      JsonNode appenders = mapper.readTree(response.getBody());
-      assertEquals(2, appenders.size());
+      String body = response.getBody();
+      JsonNode appenders = mapper.readTree(body);
+      int expected = SERVERS.getServerDriver() instanceof ContainerInfinispanServerDriver ? 5 : 2;
+      assertEquals(body,  expected, appenders.size());
    }
 
    @Test
@@ -55,10 +58,10 @@ public class RestLoggingResource {
       response = sync(client.server().logging().listLoggers());
       assertTrue("Logger not found", findLogger(response, "org.infinispan.TESTLOGGER", "WARN", "STDOUT"));
       // Update it
-      response = sync(client.server().logging().setLogger("org.infinispan.TESTLOGGER", "ERROR", "File"));
+      response = sync(client.server().logging().setLogger("org.infinispan.TESTLOGGER", "ERROR", "FILE"));
       assertEquals(204, response.getStatus());
       response = sync(client.server().logging().listLoggers());
-      assertTrue("Logger not found", findLogger(response, "org.infinispan.TESTLOGGER", "ERROR", "File"));
+      assertTrue("Logger not found", findLogger(response, "org.infinispan.TESTLOGGER", "ERROR", "FILE"));
       // Remove it
       response = sync(client.server().logging().removeLogger("org.infinispan.TESTLOGGER"));
       assertEquals(204, response.getStatus());

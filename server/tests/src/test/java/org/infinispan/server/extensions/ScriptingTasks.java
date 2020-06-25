@@ -48,7 +48,7 @@ public class ScriptingTasks {
    @Test
    public void testStreamingScript() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.marshaller(new JavaSerializationMarshaller()).addJavaSerialWhiteList(HashMap.class.getName());
+      builder.addJavaSerialWhiteList(HashMap.class.getName());
 
       org.infinispan.configuration.cache.ConfigurationBuilder cacheBuilder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       cacheBuilder.clustering().cacheMode(CacheMode.DIST_SYNC)
@@ -57,6 +57,7 @@ public class ScriptingTasks {
 
       RemoteCache<String, String> cache = SERVER_TEST.hotrod()
             .withClientConfiguration(builder)
+            .withMarshaller(JavaSerializationMarshaller.class)
             .withServerConfiguration(cacheBuilder)
             .create();
       String scriptName = SERVER_TEST.addScript(cache.getRemoteCacheManager(), "scripts/stream.js");

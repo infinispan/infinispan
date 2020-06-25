@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-server-parent</artifactId>
-      <version>11.0.0-SNAPSHOT</version>
+      <version>11.0.1-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -20,6 +20,7 @@
       <defaultExcludedTestGroup/>
       <org.infinispan.test.server.dir>${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
       <org.infinispan.test.server.lib.dir>${project.build.directory}/testlibs</org.infinispan.test.server.lib.dir>
+      <infinispan.cluster.stack>test-tcp</infinispan.cluster.stack>
    </properties>
 
    <dependencies>
@@ -71,6 +72,18 @@
          <artifactId>h2</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>mysql</groupId>
+         <artifactId>mysql-connector-java</artifactId>
+         <version>${versionx.com.mysqldatabase.mysql}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.postgresql</groupId>
+         <artifactId>postgresql</artifactId>
+         <version>${versionx.com.postgresqldatabase.postgresql}</version>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>
@@ -107,7 +120,7 @@
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${junitListener}</listener>
                </properties>
-               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Dorg.infinispan.test.server.dir=${org.infinispan.test.server.dir} -Djdk.attach.allowAttachSelf=true</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Dorg.infinispan.test.server.dir=${org.infinispan.test.server.dir} -Djdk.attach.allowAttachSelf=true</argLine>
             </configuration>
             <executions>
                <execution>
@@ -128,7 +141,7 @@
             <activeByDefault>false</activeByDefault>
          </activation>
          <properties>
-            <container.argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Dorg.infinispan.test.server.dir=${org.infinispan.test.server.dir}
+            <container.argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Dorg.infinispan.test.server.dir=${org.infinispan.test.server.dir}
                -Djdk.attach.allowAttachSelf=true -Dorg.infinispan.test.server.driver=CONTAINER
             </container.argLine>
          </properties>

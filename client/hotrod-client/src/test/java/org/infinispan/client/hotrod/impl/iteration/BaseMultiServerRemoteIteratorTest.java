@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -130,13 +131,15 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
       assertForAll(values, s -> s.length() == SubstringFilterFactory.DEFAULT_LENGTH);
    }
 
-
    @Test
    public void testFilterBySegment() {
       RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
       populateCache(CACHE_SIZE, this::newAccount, cache);
 
-      Set<Integer> filterBySegments = rangeAsSet(30, 40);
+      CacheTopologyInfo cacheTopologyInfo = cache.getCacheTopologyInfo();
+
+      // Request all segments from one node
+      Set<Integer> filterBySegments = cacheTopologyInfo.getSegmentsPerServer().values().iterator().next();
 
       Set<Entry<Object, Object>> entries = new HashSet<>();
       try (CloseableIterator<Entry<Object, Object>> iterator = cache.retrieveEntries(null, filterBySegments, 10)) {
@@ -152,7 +155,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
    }
 
    @Test
-   public void testRetrieveMetadata() throws Exception {
+   public void testRetrieveMetadata() {
       RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
       cache.put(1, newAccount(1), 1, TimeUnit.DAYS);
       cache.put(2, newAccount(2), 2, TimeUnit.MINUTES, 30, TimeUnit.SECONDS);
@@ -188,7 +191,6 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
             return Integer.toHexString(value);
          }
       }
-
    }
 
    static final class SubstringFilterFactory implements ParamKeyValueFilterConverterFactory<String, String, String> {
@@ -199,7 +201,6 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
       public KeyValueFilterConverter<String, String, String> getFilterConverter(Object[] params) {
          return new SubstringFilterConverter(params);
       }
-
 
       static class SubstringFilterConverter extends AbstractKeyValueFilterConverter<String, String, String> implements Serializable {
 

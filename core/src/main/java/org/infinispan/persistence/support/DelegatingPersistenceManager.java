@@ -3,13 +3,16 @@ package org.infinispan.persistence.support;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
-import javax.transaction.Transaction;
-
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -19,6 +22,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.reactivestreams.Publisher;
 
 @Scope(Scopes.NAMED_CACHE)
@@ -152,31 +156,39 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    }
 
    @Override
-   public CompletionStage<Void> prepareAllTxStores(Transaction transaction, BatchModification batchModification,
-                                                   Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
-      return persistenceManager.prepareAllTxStores(transaction, batchModification, predicate);
+   public CompletionStage<Void> prepareAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext,
+         Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
+      return persistenceManager.prepareAllTxStores(txInvocationContext, predicate);
    }
 
    @Override
-   public CompletionStage<Void> commitAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
-      return persistenceManager.commitAllTxStores(transaction, predicate);
+   public CompletionStage<Void> commitAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext,
+         Predicate<? super StoreConfiguration> predicate) {
+      return persistenceManager.commitAllTxStores(txInvocationContext, predicate);
    }
 
    @Override
-   public CompletionStage<Void> rollbackAllTxStores(Transaction transaction, Predicate<? super StoreConfiguration> predicate) {
-      return persistenceManager.rollbackAllTxStores(transaction, predicate);
+   public CompletionStage<Void> rollbackAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext,
+         Predicate<? super StoreConfiguration> predicate) {
+      return persistenceManager.rollbackAllTxStores(txInvocationContext, predicate);
    }
 
    @Override
-   public <K, V> CompletionStage<Void> writeBatchToAllNonTxStores(Iterable<MarshallableEntry<K, V>> entries,
-                                                           Predicate<? super StoreConfiguration> predicate, long flags) {
-      return persistenceManager.writeBatchToAllNonTxStores(entries, predicate, flags);
+   public CompletionStage<Long> writeMapCommand(PutMapCommand putMapCommand, InvocationContext ctx,
+         BiPredicate<? super PutMapCommand, Object> commandKeyPredicate) {
+      return persistenceManager.writeMapCommand(putMapCommand, ctx, commandKeyPredicate);
    }
 
    @Override
-   public CompletionStage<Void> deleteBatchFromAllNonTxStores(Iterable<Object> keys,
-                                                              Predicate<? super StoreConfiguration> predicate, long flags) {
-      return persistenceManager.deleteBatchFromAllNonTxStores(keys, predicate, flags);
+   public <K, V> CompletionStage<Void> writeEntries(Iterable<MarshallableEntry<K, V>> iterable,
+         Predicate<? super StoreConfiguration> predicate) {
+      return persistenceManager.writeEntries(iterable, predicate);
+   }
+
+   @Override
+   public CompletionStage<Long> performBatch(TxInvocationContext<AbstractCacheTransaction> invocationContext,
+         BiPredicate<? super WriteCommand, Object> commandKeyPredicate) {
+      return persistenceManager.performBatch(invocationContext, commandKeyPredicate);
    }
 
    @Override

@@ -4,7 +4,6 @@ import static org.infinispan.test.TestingUtil.withTx;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -41,14 +40,14 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
       newUser.setGender(User.Gender.MALE);
       newUser.setAge(20);
 
-      List results = withTx(tm(0), (Callable<List>) () -> {
-         Query q = getQueryFactory().from(getModelFactory().getUserImplClass())
+      List<?> results = withTx(tm(0), () -> {
+         Query<?> q = getQueryFactory().from(getModelFactory().getUserImplClass())
                .not().having("age").eq(20)
                .build();
 
          cache(0).put("new_user_" + newUser.getId(), newUser);
 
-         return q.list();
+         return q.execute().list();
       });
 
       cache(0).remove("new_user_" + newUser.getId());
@@ -60,7 +59,7 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
    @Override
    public void testIndexPresence() {
       // this is expected to throw an exception
-      Search.getSearchManager((Cache) getCacheForQuery());
+      Search.getIndexer((Cache<?, ?>) getCacheForQuery());
    }
 
    /**
@@ -70,12 +69,12 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
    public void testAnd5() {
       QueryFactory qf = getQueryFactory();
 
-      Query q = qf.from(getModelFactory().getUserImplClass())
+      Query<User> q = qf.from(getModelFactory().getUserImplClass())
             .having("id").lt(1000)
             .and().having("age").lt(1000)
             .build();
 
-      List<User> list = q.list();
+      List<User> list = q.execute().list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).getId());
    }

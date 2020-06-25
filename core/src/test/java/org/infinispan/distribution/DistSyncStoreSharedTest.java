@@ -1,6 +1,7 @@
 package org.infinispan.distribution;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +11,7 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -30,6 +32,14 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
    public DistSyncStoreSharedTest() {
       testRetVals = true;
       shared = true;
+   }
+
+   @Override
+   protected ConfigurationBuilder buildConfiguration() {
+      ConfigurationBuilder configurationBuilder = super.buildConfiguration();
+      // So we can track persistence manager writes with a shared store
+      configurationBuilder.statistics().enable();
+      return configurationBuilder;
    }
 
    @AfterMethod
@@ -129,9 +139,21 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
             }
             log.debug("Testing " + c);
             assertNumberOfInvocations(store, "write", 4);
-            assert store.contains(key);
+            assertTrue(store.contains(key));
          }
       }
+
+      long persistenceManagerInserts = 0;
+
+      for (Cache<Object, String> c : caches) {
+         persistenceManagerInserts += getCacheWriterInterceptor(c).getWritesToTheStores();
+      }
+
+      assertEquals(expectedWriteCount(), persistenceManagerInserts);
+   }
+
+   protected int expectedWriteCount() {
+      return 4;
    }
 
    public void testRemoveFromNonOwner() throws Exception {

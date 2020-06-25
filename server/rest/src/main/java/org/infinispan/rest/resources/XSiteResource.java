@@ -3,11 +3,11 @@ package org.infinispan.rest.resources;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
-import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.rest.framework.Method.GET;
+import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
+import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.xsite.XSiteAdminOperations.siteStatusToString;
 
 import java.io.IOException;
@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -38,7 +37,6 @@ import org.infinispan.xsite.status.OnlineSiteStatus;
 import org.infinispan.xsite.status.SiteStatus;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -76,22 +74,22 @@ public class XSiteResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder()
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/local/").withAction("clear-push-state-status").handleWith(this::clearPushStateStatus)
+            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/x-site/local/").withAction("clear-push-state-status").handleWith(this::clearPushStateStatus)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/").handleWith(this::backupStatus)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/").withAction("push-state-status").handleWith(this::pushStateStatus)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}").handleWith(this::siteStatus)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("take-offline").handleWith(this::takeSiteOffline)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("bring-online").handleWith(this::bringSiteOnline)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("start-push-state").handleWith(this::startStatePush)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("cancel-push-state").handleWith(this::cancelPushState)
+            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("take-offline").handleWith(this::takeSiteOffline)
+            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("bring-online").handleWith(this::bringSiteOnline)
+            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("start-push-state").handleWith(this::startStatePush)
+            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("cancel-push-state").handleWith(this::cancelPushState)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}/take-offline-config").handleWith(this::getXSiteTakeOffline)
             .invocation().methods(PUT).path("/v2/caches/{cacheName}/x-site/backups/{site}/take-offline-config").handleWith(this::updateTakeOffline)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("cancel-receive-state").handleWith(this::cancelReceiveState)
+            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("cancel-receive-state").handleWith(this::cancelReceiveState)
             .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/").handleWith(this::globalStatus)
-            .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("bring-online").handleWith(this::bringAllOnline)
-            .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("take-offline").handleWith(this::takeAllOffline)
-            .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("start-push-state").handleWith(this::startPushAll)
-            .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("cancel-push-state").handleWith(this::cancelPushAll)
+            .invocation().methods(GET, POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("bring-online").handleWith(this::bringAllOnline)
+            .invocation().methods(GET, POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("take-offline").handleWith(this::takeAllOffline)
+            .invocation().methods(GET, POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("start-push-state").handleWith(this::startPushAll)
+            .invocation().methods(GET, POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("cancel-push-state").handleWith(this::cancelPushAll)
             .create();
    }
 
@@ -128,8 +126,7 @@ public class XSiteResource implements ResourceHandler {
             }
             return GlobalStatus.UNKNOWN;
          }));
-         addPayload(responseBuilder, collect);
-         return responseBuilder.build();
+         return addEntityAsJson(collect, responseBuilder, invocationHelper).build();
       }, invocationHelper.getExecutor());
    }
 
@@ -208,9 +205,10 @@ public class XSiteResource implements ResourceHandler {
          return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND.code()).build());
       }
 
-      addPayload(responseBuilder, new TakeOffline(config));
-
-      return completedFuture(responseBuilder.build());
+      return completedFuture(
+            addEntityAsJson(new TakeOffline(config), responseBuilder, invocationHelper)
+                  .build()
+      );
    }
 
    private CompletionStage<RestResponse> siteStatus(RestRequest request) {
@@ -223,22 +221,18 @@ public class XSiteResource implements ResourceHandler {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build());
       }
 
-      return CompletableFuture.supplyAsync(() -> {
-         Map<Address, String> payload = xsiteAdmin.nodeStatus(site);
-         addPayload(responseBuilder, payload);
-         return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+      return CompletableFuture.supplyAsync(
+            () -> addEntityAsJson(xsiteAdmin.nodeStatus(site), responseBuilder, invocationHelper).build()
+            , invocationHelper.getExecutor());
    }
 
    private <T> CompletionStage<RestResponse> statusOperation(RestRequest request, Function<XSiteAdminOperations, T> op) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       XSiteAdminOperations xsiteAdmin = getxsiteAdmin(request);
 
-      return CompletableFuture.supplyAsync(() -> {
-         T payload = op.apply(xsiteAdmin);
-         addPayload(responseBuilder, payload);
-         return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+      return CompletableFuture.supplyAsync(
+            () -> addEntityAsJson(op.apply(xsiteAdmin), responseBuilder, invocationHelper).build(),
+            invocationHelper.getExecutor());
    }
 
    private XSiteAdminOperations getxsiteAdmin(RestRequest request) {
@@ -265,22 +259,11 @@ public class XSiteResource implements ResourceHandler {
 
       if (globalXSiteAdmin == null) return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
 
-      return CompletableFuture.supplyAsync(() -> {
-         Map<String, String> payload = operation.apply(globalXSiteAdmin, site);
-         addPayload(responseBuilder, payload);
-         return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+      return CompletableFuture.supplyAsync(
+            () -> addEntityAsJson(operation.apply(globalXSiteAdmin, site), responseBuilder, invocationHelper).build(),
+            invocationHelper.getExecutor()
+      );
    }
-
-   private void addPayload(NettyRestResponse.Builder responseBuilder, Object o) {
-      try {
-         byte[] statsResponse = invocationHelper.getMapper().writeValueAsBytes(o);
-         responseBuilder.contentType(APPLICATION_JSON).entity(statsResponse).status(OK);
-      } catch (JsonProcessingException e) {
-         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
-   }
-
 
    private CompletionStage<RestResponse> executeXSiteCacheOp(RestRequest request, BiFunction<XSiteAdminOperations, String, String> xsiteOp) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();

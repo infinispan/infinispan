@@ -3,7 +3,6 @@ package org.infinispan.server.functional;
 import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.functional.ShutdownRestIT.isServerShutdown;
 import static org.infinispan.server.security.Common.sync;
-import static org.junit.Assert.assertFalse;
 
 import java.util.concurrent.CompletionStage;
 
@@ -41,7 +40,7 @@ public class ConcurrentShutdownRestIT {
 
       eventually(() -> isServerShutdown(client0));
       eventually(() -> isServerShutdown(client1));
-      assertFalse(SERVER.getServerDriver().isRunning(0));
-      assertFalse(SERVER.getServerDriver().isRunning(1));
+      eventually(() -> !SERVER.getServerDriver().isRunning(0));
+      eventually(() -> !SERVER.getServerDriver().isRunning(1));
    }
 }

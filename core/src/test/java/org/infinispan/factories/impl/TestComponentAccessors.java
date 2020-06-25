@@ -9,7 +9,8 @@ import org.infinispan.test.RunningComponentRef;
 /**
  * Helper for TestingUtil.inject() and TestingUtil.invokeLifecycle()
  */
-public class TestComponentAccessors {
+public final class TestComponentAccessors {
+
    public static void wire(Object target, Object... components) {
       TestWireContext wireContext = new TestWireContext(components);
       String accessorName = target.getClass().getName();
@@ -50,7 +51,7 @@ public class TestComponentAccessors {
       }
    }
 
-   public static class NamedComponent {
+   public static final class NamedComponent {
       private final String name;
       private final Object component;
 

@@ -22,6 +22,9 @@ import org.infinispan.commons.util.TypedProperties;
  * Configures indexing of entries in the cache for searching.
  */
 public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration implements Matchable<IndexingConfiguration>, ConfigurationInfo {
+   /**
+    * @deprecated since 11.0
+    */
    @Deprecated
    public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder("index", null, Index.class).immutable().build();
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
@@ -29,7 +32,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    public static final AttributeDefinition<Map<Class<?>, Class<?>>> KEY_TRANSFORMERS = AttributeDefinition.builder("key-transformers", null, (Class<Map<Class<?>, Class<?>>>) (Class<?>) Map.class)
          .copier(CollectionAttributeCopier.INSTANCE)
          .initializer(HashMap::new).immutable().build();
-   public static final AttributeDefinition<Set<Class<?>>> INDEXED_ENTITIES = AttributeDefinition.builder("indexed-entities", null, (Class<Set<Class<?>>>) (Class<?>) Set.class)
+   public static final AttributeDefinition<Set<String>> INDEXED_ENTITIES = AttributeDefinition.builder("indexed-entities", null, (Class<Set<String>>) (Class<?>) Set.class)
          .copier(CollectionAttributeCopier.INSTANCE)
          .initializer(HashSet::new).immutable().build();
 
@@ -40,19 +43,27 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    static final ElementDefinition<IndexingConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>(INDEXING.getLocalName());
 
    /**
-    * @deprecated since 11.
+    * @deprecated since 11.0
     */
    @Deprecated
    private final Attribute<Index> index;
+
+   /**
+    * @deprecated since 11.0
+    */
+   @Deprecated
    private final Attribute<Boolean> autoConfig;
+
    private final Attribute<Map<Class<?>, Class<?>>> keyTransformers;
-   private final Attribute<Set<Class<?>>> indexedEntities;
+   private final Attribute<Set<String>> indexedEntities;
+   private final Set<Class<?>> resolvedIndexedClasses;
    private final Attribute<Boolean> enabled;
    private final boolean isVolatile;
 
-   IndexingConfiguration(AttributeSet attributes, boolean isVolatile) {
+   IndexingConfiguration(AttributeSet attributes, boolean isVolatile, Set<Class<?>> resolvedIndexedClasses) {
       super(attributes);
       this.isVolatile = isVolatile;
+      this.resolvedIndexedClasses = resolvedIndexedClasses;
       index = attributes.attribute(INDEX);
       autoConfig = attributes.attribute(AUTO_CONFIG);
       keyTransformers = attributes.attribute(KEY_TRANSFORMERS);
@@ -102,7 +113,9 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
 
    /**
     * Determines if autoconfig is enabled for this IndexingConfiguration.
+    * @deprecated Since 11.0, with no replacement.
     */
+   @Deprecated
    public boolean autoConfig() {
       return autoConfig.get();
    }
@@ -116,10 +129,27 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       return keyTransformers.get();
    }
 
+   /**
+    * The subset of indexed entity classes. This does not include the protobuf types. For the entire set of types use
+    * {@link #indexedEntityTypes()}.
+    *
+    * @deprecated since 11. Usages should be converted to {@link #indexedEntityTypes()} as this method will be removed
+    * in next major version.
+    */
+   @Deprecated
    public Set<Class<?>> indexedEntities() {
+      return resolvedIndexedClasses;
+   }
+
+   /**
+    * The set of fully qualified names of indexed entity types, either Java classes or protobuf type names. This
+    * configuration corresponds to the {@code <indexed-entities>} XML configuration element.
+    */
+   public Set<String> indexedEntityTypes() {
       return indexedEntities.get();
    }
 
+   @Override
    public AttributeSet attributes() {
       return attributes;
    }
@@ -127,8 +157,8 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    /**
     * Check if the indexes can be shared. Currently no index can be shared, so it always returns false. sharing.
     *
-    * @return always false, starting with version 11
-    * @deprecated Since 11 with no replacement; to be removed in next major version.
+    * @return always false, starting with version 11.0
+    * @deprecated Since 11.0 with no replacement; to be removed in next major version.
     */
    @Deprecated
    public final boolean indexShareable() {

@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.function.Function;
 
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
@@ -28,20 +27,19 @@ public class RestRouter {
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
    @Test
-   public void testRestRouting() {
-      Function<String, RestClientConfiguration> cfgFromCtx = c -> new RestClientConfigurationBuilder().contextPath(c).build();
+   public void testRestRouting() throws IOException {
+      Function<String, RestClientConfigurationBuilder> cfgFromCtx = c -> new RestClientConfigurationBuilder().contextPath(c);
 
-      try (RestClient restCtx = RestClient.forConfiguration(cfgFromCtx.apply("/rest"));
-           RestClient invalidCtx = RestClient.forConfiguration(cfgFromCtx.apply("/invalid"));
-           RestClient emptyCtx = RestClient.forConfiguration(cfgFromCtx.apply("/"))) {
+      try (RestClient restCtx = SERVER_TEST.newRestClient(cfgFromCtx.apply("/rest"));
+           RestClient invalidCtx = SERVER_TEST.newRestClient(cfgFromCtx.apply("/invalid"));
+           RestClient emptyCtx = SERVER_TEST.newRestClient(cfgFromCtx.apply("/"))) {
 
          String body = sync(restCtx.server().info()).getBody();
-         assertTrue(body.contains("version"));
+         assertTrue(body, body.contains("version"));
 
          assertEquals(404, sync(emptyCtx.server().info()).getStatus());
 
          assertEquals(404, sync(invalidCtx.server().info()).getStatus());
-      } catch (IOException ignored) {
       }
    }
 }

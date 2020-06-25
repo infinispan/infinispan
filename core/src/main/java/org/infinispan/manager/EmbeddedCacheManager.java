@@ -251,39 +251,6 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    <K, V> Cache<K, V> getCache(String cacheName, boolean createIfAbsent);
 
    /**
-    * Similar to {@link #getCache(String)}, only with an explicit configuration template name.
-    * <p/>
-    * Multiple caches can be created using the same configuration.
-    *
-    * @param cacheName name of cache to retrieve
-    * @param configurationName name of the configuration template to use
-    * @return a cache instance identified by cacheName
-    * @throws org.infinispan.commons.CacheConfigurationException if the configuration does not exist
-    *         or if a configuration named <tt>cacheName</tt> already exists.
-    * @deprecated as of 9.0. Use {@link EmbeddedCacheManager#defineConfiguration(String, String, Configuration)} and
-    * {@link EmbeddedCacheManager#getCache(String)} instead
-    */
-   <K, V> Cache<K, V> getCache(String cacheName, String configurationName);
-
-   /**
-    * Similar to {@link #getCache(String, boolean)}, only with an explicit configuration template name.
-    * <p/>
-    * Multiple caches can be created using the same configuration.
-    *
-    * @param cacheName name of cache to retrieve
-    * @param configurationTemplate name of the configuration template to use
-    * @param createIfAbsent If <tt>true</tt>, this methods works just like {@link #getCache(String)}.
-    *                       If <tt>false</tt>, return the already running cache or <tt>null</tt>.
-    * @return <tt>null</tt> if the cache does not exist and <tt>createIfAbsent == false</tt>,
-    *        otherwise a cache instance identified by cacheName
-    * @throws org.infinispan.commons.CacheConfigurationException if the configuration does not exist
-    *         or if a configuration named <tt>cacheName</tt> already exists.
-    * @deprecated as of 9.0. Use {@link EmbeddedCacheManager#defineConfiguration(String, String, Configuration)} and
-    * {@link EmbeddedCacheManager#getCache(String, boolean)} instead
-    */
-   <K, V> Cache<K, V> getCache(String cacheName, String configurationTemplate, boolean createIfAbsent);
-
-   /**
     * Starts a set of caches in parallel. Infinispan supports both symmetric
     * and asymmetric clusters; that is, multiple nodes having the same or
     * different sets of caches running, respectively. Calling this method on

@@ -6,7 +6,6 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.P
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Predicate;
 
 import javax.transaction.InvalidTransactionException;
 import javax.transaction.SystemException;
@@ -47,6 +46,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.functional.Param;
 import org.infinispan.functional.Param.PersistenceMode;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -54,8 +54,7 @@ import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
-import org.infinispan.persistence.support.BatchModification;
-import org.infinispan.stream.StreamMarshalling;
+import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -115,7 +114,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       return invokeNext(ctx, command);
    }
 
-   protected CompletionStage<Void> commitCommand(TxInvocationContext<?> ctx) throws Throwable {
+   protected InvocationStage commitCommand(TxInvocationContext<AbstractCacheTransaction> ctx) throws Throwable {
       if (!ctx.getCacheTransaction().getAllModifications().isEmpty()) {
          // this is a commit call.
          GlobalTransaction tx = ctx.getGlobalTransaction();
@@ -135,8 +134,8 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    }
 
    private Object afterCommit(InvocationContext context, VisitableCommand command, Object rv) throws Throwable {
-      CompletionStage<Void> commit = commitCommand((TxInvocationContext<?>) context);
-      return commit == null ? rv : asyncValue(commit).thenReturn(context, command, rv);
+      InvocationStage stage = commitCommand((TxInvocationContext<AbstractCacheTransaction>) context);
+      return stage == null ? rv : stage.thenReturn(context, command, rv);
    }
 
    private void resumeRunningTx(Transaction xaTx) throws InvalidTransactionException, SystemException {
@@ -250,30 +249,20 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      if (!isStoreEnabled(command) || ctx.isInTxScope())
+         return invokeNext(ctx, command);
+
       return invokeNextThenApply(ctx, command, handlePutMapCommandReturn);
    }
 
    protected Object handlePutMapCommandReturn(InvocationContext rCtx, PutMapCommand putMapCommand, Object rv) {
-      if (!isStoreEnabled(putMapCommand) || rCtx.isInTxScope())
-         return rv;
+      CompletionStage<Long> putMapStage = persistenceManager.writeMapCommand(putMapCommand, rCtx,
+            ((writeCommand, o) -> isProperWriter(rCtx, writeCommand, o)));
+      if (getStatisticsEnabled()) {
+         putMapStage.thenAccept(cacheStores::getAndAdd);
+      }
 
-
-      CompletionStage<Void> writeStage = CompletionStages.allOf(
-            processIterableBatch(rCtx, putMapCommand, BOTH, key -> !skipSharedStores(rCtx, key, putMapCommand)),
-            processIterableBatch(rCtx, putMapCommand, PRIVATE, key -> skipSharedStores(rCtx, key, putMapCommand)));
-      return delayedValue(writeStage, rv);
-   }
-
-   protected CompletionStage<Void> processIterableBatch(InvocationContext ctx, PutMapCommand cmd, PersistenceManager.AccessMode mode, Predicate<Object> filter) {
-      if (getStatisticsEnabled())
-         cacheStores.addAndGet(cmd.getMap().size());
-
-      Iterable<MarshallableEntry<Object, Object>> iterable = () -> cmd.getMap().keySet().stream()
-            .filter(filter)
-            .map(key -> marshalledEntry(ctx, key))
-            .filter(StreamMarshalling.nonNullPredicate())
-            .iterator();
-      return persistenceManager.writeBatchToAllNonTxStores(iterable, mode, cmd.getFlagsBitSet());
+      return delayedValue(putMapStage, rv);
    }
 
    @Override
@@ -410,40 +399,21 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       });
    }
 
-   protected final CompletionStage<Void> store(TxInvocationContext<?> ctx) throws Throwable {
+   protected final InvocationStage store(TxInvocationContext<AbstractCacheTransaction> ctx) throws Throwable {
       List<WriteCommand> modifications = ctx.getCacheTransaction().getAllModifications();
-      if (modifications.isEmpty()) {
+      int modificationSize = modifications.size();
+      if (modificationSize == 0) {
          if (trace) getLog().trace("Transaction has not logged any modifications!");
-         return CompletableFutures.completedNull();
-      }
-      if (trace) getLog().tracef("Cache loader modification list: %s", modifications);
-
-
-      TxBatchUpdater modsBuilder = TxBatchUpdater.createNonTxStoreUpdater(this, persistenceManager, entryFactory, marshalledEntryFactory);
-      for (WriteCommand cacheCommand : modifications) {
-         if (isStoreEnabled(cacheCommand)) {
-            cacheCommand.acceptVisitor(ctx, modsBuilder);
-         }
-      }
-      BatchModification sharedMods = modsBuilder.getModifications();
-      BatchModification nonSharedMods = modsBuilder.getNonSharedModifications();
-
-      // Performs all the batch writes in parallel
-      CompletionStage<Void> writeStage = CompletionStages.allOf(
-            persistenceManager.writeBatchToAllNonTxStores(sharedMods.getMarshallableEntries(), BOTH, 0),
-            persistenceManager.writeBatchToAllNonTxStores(nonSharedMods.getMarshallableEntries(), PRIVATE, 0),
-            persistenceManager.deleteBatchFromAllNonTxStores(sharedMods.getKeysToRemove(), BOTH, 0),
-            persistenceManager.deleteBatchFromAllNonTxStores(nonSharedMods.getKeysToRemove(), PRIVATE, 0));
-
-      if (trace) {
-         getLog().tracef("Writing shared batch with #entries=%d and non-shared batch with #entries=%d", sharedMods.getMarshallableEntries().size(), nonSharedMods.getMarshallableEntries().size());
-         getLog().tracef("Deleting shared batch with #entries=%d and non-shared batch with #entries=%d", sharedMods.getKeysToRemove().size(), nonSharedMods.getKeysToRemove().size());
+         return null;
       }
 
-      if (getStatisticsEnabled() && modsBuilder.getPutCount() > 0) {
-         cacheStores.getAndAdd(modsBuilder.getPutCount());
+      if (trace) getLog().tracef("Cache store modification list: %s", modifications);
+
+      CompletionStage<Long> batchStage = persistenceManager.performBatch(ctx, ((writeCommand, o) -> isProperWriter(ctx, writeCommand, o)));
+      if (getStatisticsEnabled()) {
+         batchStage.thenAccept(cacheStores::addAndGet);
       }
-      return writeStage;
+      return asyncValue(batchStage);
    }
 
    protected boolean isStoreEnabled(FlagAffectedCommand command) {

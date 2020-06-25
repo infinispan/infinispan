@@ -27,7 +27,7 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
-import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -334,18 +334,17 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
       ConnectableFlowable<Modification> connectableModifications = Flowable.fromIterable(modifications.values())
             .publish();
 
-      // The below two methods may lazily subscribe to the Flowable, thus we must auto connect after both are
+      // The method below may subscribe to the Flowable on a different thread, thus we must auto connect after both are
       // subscribed to (e.g. NonBlockingStoreAdapter subscribes on a blocking thread)
       Flowable<Modification> modificationFlowable = connectableModifications.autoConnect(2);
 
-      CompletionStage<Void> putStage = actual.bulkWrite(segmentCount, modificationFlowable.ofType(PutModification.class)
-            .groupBy(Modification::getSegment, PutModification::<K, V>getEntry)
-            .map(SegmentPublisherWrapper::new));
-      CompletionStage<Void> removeStage = actual.bulkDelete(segmentCount, modificationFlowable.ofType(RemoveModification.class)
-            .groupBy(Modification::getSegment, RemoveModification::getKey)
-            .map(SegmentPublisherWrapper::new));
-
-      return CompletionStages.allOf(removeStage, putStage);
+      return actual.batch(segmentCount,
+            modificationFlowable.ofType(RemoveModification.class)
+                  .groupBy(Modification::getSegment, RemoveModification::getKey)
+                  .map(SegmentPublisherWrapper::wrap),
+            modificationFlowable.ofType(PutModification.class)
+                  .groupBy(Modification::getSegment, PutModification::<K, V>getEntry)
+                  .map(SegmentPublisherWrapper::wrap));
    }
 
    private CompletionStage<Void> getAvailabilityDelayStage() {
@@ -472,24 +471,18 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    }
 
    @Override
-   public CompletionStage<Void> bulkWrite(int publisherCount, Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> publisher) {
+   public CompletionStage<Void> batch(int publisherCount, Publisher<SegmentedPublisher<Object>> removePublisher,
+         Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
       assertNotStopped();
-      Flowable.fromPublisher(publisher)
+      Flowable.fromPublisher(removePublisher)
+            .subscribe(sp ->
+               Flowable.fromPublisher(sp)
+                     .subscribe(key -> submissionFlowable.onNext(new RemoveModification(sp.getSegment(), key)))
+            );
+      Flowable.fromPublisher(writePublisher)
             .subscribe(sp ->
                   Flowable.fromPublisher(sp)
                         .subscribe(me -> submissionFlowable.onNext(new PutModification(sp.getSegment(), me)))
-            );
-      submitBatchIfNecessary();
-      return asyncOrThrottledStage();
-   }
-
-   @Override
-   public CompletionStage<Void> bulkDelete(int publisherCount, Publisher<SegmentedPublisher<Object>> publisher) {
-      assertNotStopped();
-      Flowable.fromPublisher(publisher)
-            .subscribe(sp ->
-               Flowable.fromPublisher(sp)
-                     .subscribe(obj -> submissionFlowable.onNext(new RemoveModification(sp.getSegment(), obj)))
             );
       submitBatchIfNecessary();
       return asyncOrThrottledStage();

@@ -5,7 +5,6 @@ import java.util.function.Supplier;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
-import org.infinispan.configuration.cache.MemoryStorageConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.BoundedSegmentedDataContainer;
 import org.infinispan.container.impl.DefaultDataContainer;
@@ -35,7 +34,6 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
       AutoInstantiableFactory {
 
    @Override
-   @SuppressWarnings("unchecked")
    public Object construct(String componentName) {
       ClusteringConfiguration clusteringConfiguration = configuration.clustering();
 
@@ -45,7 +43,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
       MemoryConfiguration memoryConfiguration = configuration.memory();
       boolean offHeap = memoryConfiguration.isOffHeap();
 
-      EvictionStrategy strategy = memoryConfiguration.evictionStrategy();
+      EvictionStrategy strategy = memoryConfiguration.whenFull();
       //handle case when < 0 value signifies unbounded container or when we are not removal based
       if (strategy.isExceptionBased() || !strategy.isEnabled()) {
          if (offHeap) {
@@ -73,7 +71,8 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          }
       }
 
-      long thresholdSize = memoryConfiguration.size();
+      boolean sizeInBytes = memoryConfiguration.maxSize() != null;
+      long thresholdSize = sizeInBytes ? memoryConfiguration.maxSizeBytes() : memoryConfiguration.maxCount();
 
       DataContainer<?, ?> dataContainer;
       if (offHeap) {
@@ -92,8 +91,13 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          dataContainer = DefaultDataContainer.boundedDataContainer(level, thresholdSize,
                memoryConfiguration.evictionType());
       }
-      memoryConfiguration.heapConfiguration().attributes().attribute(MemoryStorageConfiguration.SIZE).addListener((newSize, old) ->
-            dataContainer.resize(newSize.get()));
+      if (sizeInBytes) {
+         memoryConfiguration.attributes().attribute(MemoryConfiguration.MAX_SIZE)
+                            .addListener((newSize, old) -> dataContainer.resize(memoryConfiguration.maxSizeBytes()));
+      } else {
+         memoryConfiguration.attributes().attribute(MemoryConfiguration.MAX_COUNT)
+                            .addListener((newSize, old) -> dataContainer.resize(newSize.get()));
+      }
       return dataContainer;
    }
 

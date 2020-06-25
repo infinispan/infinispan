@@ -1,9 +1,9 @@
 <infinispan>
    <cache-container default-cache="secured" name="secured">
       <security>
-         <authorization>
-            <identity-role-mapper />
-            <role name="admin" permissions="ALL" />
+         <authorization> <1>
+            <identity-role-mapper /> <2>
+            <role name="admin" permissions="ALL" /> <3>
             <role name="reader" permissions="READ" />
             <role name="writer" permissions="WRITE" />
             <role name="supervisor" permissions="READ WRITE EXEC"/>
@@ -11,9 +11,8 @@
       </security>
       <local-cache name="secured">
          <security>
-            <authorization/>
+            <authorization/> <4>
          </security>
       </local-cache>
    </cache-container>
-
 </infinispan>

@@ -5,13 +5,14 @@ import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
-import java.lang.management.ManagementFactory;
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Set;
@@ -32,7 +33,10 @@ import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.server.core.ServerManagement;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -45,6 +49,11 @@ public class ServerResource implements ResourceHandler {
 
    public ServerResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
+
+      // Register our custom serializers
+      SimpleModule module = new SimpleModule();
+      module.addSerializer(ServerInfo.class, new ServerInfoSerializer());
+      this.invocationHelper.getMapper().registerModule(module);
    }
 
    @Override
@@ -54,7 +63,7 @@ public class ServerResource implements ResourceHandler {
             .invocation().methods(GET).path("/v2/server/config").handleWith(this::config)
             .invocation().methods(GET).path("/v2/server/env").handleWith(this::env)
             .invocation().methods(GET).path("/v2/server/memory").handleWith(this::memory)
-            .invocation().methods(GET).path("/v2/server/").withAction("stop").handleWith(this::stop)
+            .invocation().methods(GET, POST).path("/v2/server/").withAction("stop").handleWith(this::stop)
             .invocation().methods(GET).path("/v2/server/threads").handleWith(this::threads)
             .invocation().methods(GET).path("/v2/server/report").handleWith(this::report)
             .invocation().methods(GET).path("/v2/server/cache-managers").handleWith(this::cacheManagers)
@@ -89,34 +98,27 @@ public class ServerResource implements ResourceHandler {
    private CompletionStage<RestResponse> listIgnored(RestRequest restRequest) {
       String cacheManagerName = restRequest.variables().get("cache-manager");
       DefaultCacheManager cacheManager = invocationHelper.getServer().getCacheManager(cacheManagerName);
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
 
-      if (cacheManager == null) return completedFuture(builder.status(NOT_FOUND).build());
+      if (cacheManager == null) return notFoundResponseFuture();
       CacheIgnoreManager ignoreManager = invocationHelper.getServer().getIgnoreManager(cacheManagerName);
       Set<String> ignored = ignoreManager.getIgnoredCaches();
-      try {
-         byte[] resultBytes = invocationHelper.getMapper().writeValueAsBytes(ignored);
-         builder.contentType(APPLICATION_JSON_TYPE).entity(resultBytes);
-      } catch (JsonProcessingException e) {
-         builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
-      }
-      return completedFuture(builder.build());
+      return asJsonResponseFuture(ignored, invocationHelper);
    }
 
    private CompletionStage<RestResponse> cacheManagers(RestRequest restRequest) {
-      return serializeObject(invocationHelper.getServer().cacheManagerNames());
+      return asJsonResponseFuture(invocationHelper.getServer().cacheManagerNames(), invocationHelper);
    }
 
    private CompletionStage<RestResponse> memory(RestRequest restRequest) {
-      return serializeObject(new JVMMemoryInfoInfo());
+      return asJsonResponseFuture(new JVMMemoryInfoInfo(), invocationHelper);
    }
 
    private CompletionStage<RestResponse> env(RestRequest restRequest) {
-      return serializeObject(ManagementFactory.getRuntimeMXBean().getSystemProperties());
+      return asJsonResponseFuture(System.getProperties(), invocationHelper);
    }
 
    private CompletionStage<RestResponse> info(RestRequest restRequest) {
-      return serializeObject(SERVER_INFO);
+      return asJsonResponseFuture(SERVER_INFO, invocationHelper);
    }
 
    private CompletionStage<RestResponse> threads(RestRequest restRequest) {
@@ -145,20 +147,11 @@ public class ServerResource implements ResourceHandler {
       });
    }
 
-   private CompletionStage<RestResponse> serializeObject(Object object) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-      try {
-         byte[] bytes = invocationHelper.getMapper().writeValueAsBytes(object);
-         responseBuilder.contentType(APPLICATION_JSON).entity(bytes).status(OK);
-      } catch (JsonProcessingException e) {
-         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
-      return completedFuture(responseBuilder.build());
-   }
-
    private CompletionStage<RestResponse> stop(RestRequest restRequest) {
       invocationHelper.getServer().serverStop(Collections.emptyList());
-      return CompletableFuture.completedFuture(new NettyRestResponse.Builder().build());
+
+      return CompletableFuture.completedFuture(new NettyRestResponse.Builder()
+            .status(restRequest.method().equals(POST) ? NO_CONTENT : OK).build());
    }
 
    private CompletionStage<RestResponse> config(RestRequest restRequest) {
@@ -173,6 +166,24 @@ public class ServerResource implements ResourceHandler {
 
       public String getVersion() {
          return version;
+      }
+   }
+
+   static class ServerInfoSerializer extends StdSerializer<ServerInfo> {
+
+      public ServerInfoSerializer() {
+         this(null);
+      }
+
+      public ServerInfoSerializer(Class<ServerInfo> t) {
+         super(t);
+      }
+
+      @Override
+      public void serialize(ServerInfo serverInfo, JsonGenerator json, SerializerProvider serializerProvider) throws IOException {
+         json.writeStartObject();
+         json.writeStringField("version", serverInfo.getVersion());
+         json.writeEndObject();
       }
    }
 }

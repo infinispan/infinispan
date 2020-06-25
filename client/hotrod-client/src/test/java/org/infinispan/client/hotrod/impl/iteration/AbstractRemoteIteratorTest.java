@@ -34,7 +34,7 @@ public interface AbstractRemoteIteratorTest {
       IntStream.range(0, numElements).parallel().forEach(i -> remoteCache.put(i, supplier.apply(i)));
    }
 
-   default <T> void assertForAll(Set<T> elements, Predicate<? super T> condition) {
+   default <T> void assertForAll(Collection<T> elements, Predicate<? super T> condition) {
       assertTrue(elements.stream().allMatch(condition));
    }
 
@@ -59,11 +59,11 @@ public interface AbstractRemoteIteratorTest {
    }
 
    default <K> Set<K> extractKeys(Collection<Map.Entry<Object, Object>> entries) {
-      return entries.stream().map(e -> (K) e.getKey()).collect(Collectors.<K>toSet());
+      return entries.stream().map(e -> (K) e.getKey()).collect(Collectors.toSet());
    }
 
    default <V> Set<V> extractValues(Collection<Map.Entry<Object, Object>> entries) {
-      return entries.stream().map(e -> (V) e.getValue()).collect(Collectors.<V>toSet());
+      return entries.stream().map(e -> (V) e.getValue()).collect(Collectors.toSet());
    }
 
    default byte[] toByteBuffer(Object key, Marshaller marshaller) {
@@ -93,5 +93,4 @@ public interface AbstractRemoteIteratorTest {
       }
       return entries;
    }
-
 }

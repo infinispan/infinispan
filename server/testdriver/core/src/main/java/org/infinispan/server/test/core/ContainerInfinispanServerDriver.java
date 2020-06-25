@@ -62,6 +62,8 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private static final String SHUTDOWN_MESSAGE_REGEX = ".*ISPN080003.*";
    private static final String CLUSTER_VIEW_REGEX = ".*ISPN000094.*(?<=\\()(%d)(?=\\)).*";
    private static final int TIMEOUT_SECONDS = Integer.getInteger(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_TIMEOUT_SECONDS, 45);
+   private static final Long IMAGE_MEMORY = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY, null);
+   private static final Long IMAGE_MEMORY_SWAP = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY_SWAP, null);
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    public static final int JMX_PORT = 9999;
    public static final String JDK_BASE_IMAGE_NAME = "jboss/base-jdk:11";
@@ -90,6 +92,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    @Override
    protected void start(String name, File rootDir, File configurationFile) {
       this.name = name;
+      String jGroupsStack = System.getProperty(Server.INFINISPAN_CLUSTER_STACK);
       // Build a skeleton server layout
       createServerHierarchy(rootDir);
       // Build the command-line that launches the server
@@ -100,6 +103,10 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       args.add("-b");
       args.add("SITE_LOCAL");
       args.add("-Djgroups.bind.address=SITE_LOCAL");
+      if (jGroupsStack != null) {
+         args.add("-j");
+         args.add(jGroupsStack);
+      }
       args.add("-Dinfinispan.cluster.name=" + name);
       args.add("-D" + TEST_HOST_ADDRESS + "=" + testHostAddress.getHostAddress());
       if (configuration.isJMXEnabled()) {
@@ -272,9 +279,17 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
 
       GenericContainer container = new GenericContainer<>(image)
-         .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig().withMounts(
-            Arrays.asList(new Mount().withSource(this.volumes[i]).withTarget(serverPath()).withType(MountType.VOLUME))
-         ));
+         .withCreateContainerCmdModifier(cmd -> {
+            cmd.getHostConfig().withMounts(
+                  Arrays.asList(new Mount().withSource(this.volumes[i]).withTarget(serverPath()).withType(MountType.VOLUME))
+            );
+            if (IMAGE_MEMORY != null) {
+               cmd.getHostConfig().withMemory(IMAGE_MEMORY);
+            }
+            if (IMAGE_MEMORY_SWAP != null) {
+               cmd.getHostConfig().withMemorySwap(IMAGE_MEMORY_SWAP);
+            }
+         });
       // Process any enhancers
       container.withLogConsumer(new JBossLoggingConsumer(LogFactory.getLogger(name)).withPrefix(Integer.toString(i)));
       for (Consumer<OutputFrame> consumer : logConsumers)

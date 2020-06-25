@@ -172,8 +172,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid character '%s' found in token '%s'", id = 933)
    EncodingException invalidCharMediaType(char character, String token);
 
-   @Message(value = "Unsupported content '%s'", id = 934)
-   EncodingException unsupportedContent(Object content);
+   @Message(value = "Errors converting '%s' from '%s' to '%s'", id = 934)
+   EncodingException errorTranscoding(String content, MediaType contentType, MediaType requestType, @Cause Throwable t);
 
    @Message(value = "Invalid Weight '%s'. Supported values are between 0 and 1.0", id = 935)
    EncodingException invalidWeight(Object weight);
@@ -218,6 +218,12 @@ public interface Log extends BasicLogger {
    @Message(value = "Using Java SSL Provider", id = 947)
    void openSSLNotAvailable();
 
+   @Message(value = "Unsupported conversion of '%s' from '%s' to '%s'", id = 948)
+   EncodingException unsupportedConversion(String content, MediaType contentType, MediaType requestType);
+
+   @Message(value = "Unsupported conversion of '%s' to '%s'", id = 949)
+   EncodingException unsupportedConversion(String content, MediaType requestType);
+
    //----- counters exceptions // don't use the same id range ------
 
    @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)
@@ -236,7 +242,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot load %s", id = 29523)
    void cannotLoadMimeTypes(String mimeTypes);
 
-   @Message(value = "Cannot parse %s", id = 29524)
+   @Message(value = "Cannot parse bytes quantity %s", id = 29524)
    IllegalArgumentException cannotParseQuantity(String str);
 
    //----- counters exceptions // don't use the same id range  ------

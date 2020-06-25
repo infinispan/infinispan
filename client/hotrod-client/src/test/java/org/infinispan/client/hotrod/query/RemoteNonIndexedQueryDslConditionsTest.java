@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.query.RemoteNonIndexedQueryDslConditionsTest")
 public class RemoteNonIndexedQueryDslConditionsTest extends RemoteQueryDslConditionsTest {
 
+   @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       return hotRodCacheConfiguration();
    }

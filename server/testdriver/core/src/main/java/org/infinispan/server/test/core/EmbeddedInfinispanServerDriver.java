@@ -38,7 +38,10 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    }
 
    protected int clusterPortOffset() {
-      return configuration.site() == null ? 0 : configuration.sitePortOffset();
+      if (configuration.site() != null)
+         configuration.sitePortOffset();
+
+      return configuration.site() == null ? configuration.getPortOffset() : configuration.sitePortOffset();
    }
 
    @Override
@@ -52,6 +55,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
          properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, new File(rootDir, Server.DEFAULT_SERVER_CONFIG).getAbsolutePath());
          properties.setProperty(Server.INFINISPAN_PORT_OFFSET, Integer.toString(clusterPortOffset() + i * OFFSET_FACTOR));
          properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, name);
+         properties.setProperty(Server.INFINISPAN_CLUSTER_STACK, System.getProperty(Server.INFINISPAN_CLUSTER_STACK));
          properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
          configureSite(properties);
          configuration.properties().forEach((k, v) -> properties.put(k, StringPropertyReplacer.replaceProperties((String) v, properties)));

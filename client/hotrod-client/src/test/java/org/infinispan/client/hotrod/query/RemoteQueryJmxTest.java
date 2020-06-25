@@ -73,22 +73,8 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
          .mBeanServerLookup(mBeanServerLookup);
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
 
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
-
-      cacheManager = TestCacheManagerFactory.createCacheManager(gcb, builder);
-      cacheManager.defineConfiguration(TEST_CACHE_NAME, builder.build());
-      cache = cacheManager.getCache(TEST_CACHE_NAME);
-
+      cacheManager = TestCacheManagerFactory.createCacheManager(gcb, null);
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
-
-      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort()).addContextInitializer(TestDomainSCI.INSTANCE);
-      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-
-      remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
 
       ProtobufMetadataManagerMBean protobufMetadataManagerMBean = JMX.newMBeanProxy(mBeanServer, getProtobufMetadataManagerObjectName(), ProtobufMetadataManagerMBean.class);
       String protofile = Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader());
@@ -96,6 +82,19 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
       assertEquals(protofile, protobufMetadataManagerMBean.getProtofile("sample_bank_account/bank.proto"));
       assertNull(protobufMetadataManagerMBean.getFilesWithErrors());
       assertTrue(Arrays.asList(protobufMetadataManagerMBean.getProtofileNames()).contains("sample_bank_account/bank.proto"));
+
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.indexing().enable()
+             .addIndexedEntity("sample_bank_account.User")
+             .addProperty("default.directory_provider", "local-heap")
+             .addProperty("lucene_version", "LUCENE_CURRENT");
+      cacheManager.defineConfiguration(TEST_CACHE_NAME, builder.build());
+      cache = cacheManager.getCache(TEST_CACHE_NAME);
+
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort()).addContextInitializer(TestDomainSCI.INSTANCE);
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+      remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
       return cacheManager;
    }
 
@@ -120,10 +119,8 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(UserPB.class)
-            .having("addresses.postCode").eq("1231")
-            .build();
-      List<User> list = query.list();
+      Query<User> query = qf.create("FROM sample_bank_account.User u WHERE u.addresses.postCode = '1231'");
+      List<User> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
       assertEquals(UserPB.class, list.get(0).getClass());

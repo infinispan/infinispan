@@ -67,7 +67,7 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
             throw new UnsupportedOperationException("Policy not supported: " + thresholdPolicy);
       }
       evictionCache = applyListener(caffeine, evictionListener, null).build();
-      entries = new PeekableTouchableContainerMap<>(evictionCache.asMap());
+      entries = new PeekableTouchableCaffeineMap<>(evictionCache);
    }
 
    /**
@@ -95,7 +95,7 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
             .maximumWeight(thresholdSize), evictionListener, null)
             .build();
 
-      entries = new PeekableTouchableContainerMap<>(evictionCache.asMap());
+      entries = new PeekableTouchableCaffeineMap<>(evictionCache);
    }
 
    public static <K, V> DefaultDataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries,

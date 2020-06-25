@@ -1,0 +1,45 @@
+[id='configure_eviction_total-{context}']
+= Configuring the Total Number of Entries for {brandname} Caches
+Limit the size of the data container for cache entries to a total number of
+entries.
+
+.Procedure
+
+. Specify the total number of entries that caches can contain before
+{brandname} performs eviction.
++
+* Declaratively: Set the `max-count` attribute.
+* Programmatically: Call the `maxCount()` method.
++
+. Configure an eviction strategy to control how {brandname} removes entries.
++
+* Declaratively: Set the `when-full` attribute.
+* Programmatically: Call the `whenFull()` method.
+
+
+.Declarative example
+
+[source,xml,options="nowrap"]
+----
+<local-cache>
+  <memory max-count="500" when-full="REMOVE"/>
+</local-cache>
+----
+
+.Programmatic example
+
+[source,java,options="nowrap"]
+----
+ConfigurationBuilder cfg = new ConfigurationBuilder();
+
+cfg
+  .memory()
+    .maxCount(500)
+    .whenFull(EvictionStrategy.REMOVE)
+  .build());
+----
+
+.Reference
+
+* link:{configdocroot}[{brandname} Configuration Schema Reference]
+* link:{javadocroot}/org/infinispan/configuration/cache/MemoryConfigurationBuilder.html[org.infinispan.configuration.cache.MemoryConfigurationBuilder]

@@ -117,7 +117,7 @@ public class RemoteQueryStringTest extends QueryStringTest {
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort())
-            .addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSCI.INSTANCE, CUSTOM_ANALYZER_SCI);
+                   .addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSCI.INSTANCE, CUSTOM_ANALYZER_SCI);
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
    }
@@ -125,8 +125,12 @@ public class RemoteQueryStringTest extends QueryStringTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addIndexedEntity("sample_bank_account.User")
+             .addIndexedEntity("sample_bank_account.Account")
+             .addIndexedEntity("sample_bank_account.Transaction")
+             .addIndexedEntity("sample_bank_account.AnalyzerTestEntity")
+             .addProperty("default.directory_provider", "local-heap")
+             .addProperty("lucene_version", "LUCENE_CURRENT");
       return builder;
    }
 
@@ -168,9 +172,9 @@ public class RemoteQueryStringTest extends QueryStringTest {
     */
    @Override
    public void testInstant1() {
-      Query q = createQueryFromString("from " + getModelFactory().getUserTypeName() + " u where u.creationDate = " + Instant.parse("2011-12-03T10:15:30Z").toEpochMilli());
+      Query<User> q = createQueryFromString("from " + getModelFactory().getUserTypeName() + " u where u.creationDate = " + Instant.parse("2011-12-03T10:15:30Z").toEpochMilli());
 
-      List<User> list = q.list();
+      List<User> list = q.execute().list();
       assertEquals(3, list.size());
    }
 
@@ -180,24 +184,24 @@ public class RemoteQueryStringTest extends QueryStringTest {
     */
    @Override
    public void testInstant2() {
-      Query q = createQueryFromString("from " + getModelFactory().getUserTypeName() + " u where u.passwordExpirationDate = " + Instant.parse("2011-12-03T10:15:30Z").toEpochMilli());
+      Query<User> q = createQueryFromString("from " + getModelFactory().getUserTypeName() + " u where u.passwordExpirationDate = " + Instant.parse("2011-12-03T10:15:30Z").toEpochMilli());
 
-      List<User> list = q.list();
+      List<User> list = q.execute().list();
       assertEquals(3, list.size());
    }
 
    public void testCustomFieldAnalyzer() {
-      Query q = createQueryFromString("from sample_bank_account.AnalyzerTestEntity where f1:'test'");
+      Query<AnalyzerTestEntity> q = createQueryFromString("from sample_bank_account.AnalyzerTestEntity where f1:'test'");
 
-      List<AnalyzerTestEntity> list = q.list();
+      List<AnalyzerTestEntity> list = q.execute().list();
       assertEquals(2, list.size());
    }
 
    @Override
    public void testEqNonIndexedType() {
-      Query q = createQueryFromString("from sample_bank_account.NotIndexed where notIndexedField = 'testing 123'");
+      Query<NotIndexed> q = createQueryFromString("from sample_bank_account.NotIndexed where notIndexedField = 'testing 123'");
 
-      List<NotIndexed> list = q.list();
+      List<NotIndexed> list = q.execute().list();
       assertEquals(1, list.size());
       assertEquals("testing 123", list.get(0).notIndexedField);
    }

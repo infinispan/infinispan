@@ -56,7 +56,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       location = CommonsTestingUtil.tmpDirectory(SingleFileStoreStressTest.class);
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalBuilder.globalState().persistentLocation(location);
+      globalBuilder.globalState().enable().persistentLocation(location);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addSingleFileStore().purgeOnStartup(true).segmented(false);

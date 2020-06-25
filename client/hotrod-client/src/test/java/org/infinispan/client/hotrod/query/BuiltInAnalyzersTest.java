@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.query;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -34,19 +35,23 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.indexing().enable()
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addIndexedEntity("TestEntity")
+             .addProperty("default.directory_provider", "local-heap")
+             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      return TestCacheManagerFactory.createServerModeCacheManager(builder);
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
+      Cache<String, String> metadataCache = manager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      String protoFile = Util.getResourceAsString("/analyzers.proto", getClass().getClassLoader());
+      metadataCache.put("analyzers.proto", protoFile);
+      RemoteQueryTestUtils.checkSchemaErrors(metadataCache);
+
+      manager.defineConfiguration("test", builder.build());
+      return manager;
    }
 
    @BeforeClass
    protected void registerProtobufSchema() throws Exception {
       String protoFile = Util.getResourceAsString("/analyzers.proto", getClass().getClassLoader());
-      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("analyzers.proto", protoFile);
-      RemoteQueryTestUtils.checkSchemaErrors(metadataCache);
-
       SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCacheManager);
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("analyzers.proto", protoFile));
       serCtx.registerMarshaller(new TestEntity.TestEntityMarshaller());
@@ -61,7 +66,7 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
 
    @Test
    public void testKeywordAnalyzer() {
-      RemoteCache<Integer, TestEntity> remoteCache = remoteCacheManager.getCache();
+      RemoteCache<Integer, TestEntity> remoteCache = remoteCacheManager.getCache("test");
       TestEntity child = new TestEntity("name", "name", "name",
             "name-with-dashes", "name", "name", null);
 
@@ -78,7 +83,7 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
 
    @Test
    public void testShippedAnalyzers() {
-      RemoteCache<Integer, TestEntity> remoteCache = remoteCacheManager.getCache();
+      RemoteCache<Integer, TestEntity> remoteCache = remoteCacheManager.getCache("test");
       TestEntity testEntity = new TestEntity("Sarah-Jane Lee", "John McDougall", "James Connor",
             "Oswald Lee", "Jason Hawkings", "Gyorgy Constantinides");
       remoteCache.put(1, testEntity);

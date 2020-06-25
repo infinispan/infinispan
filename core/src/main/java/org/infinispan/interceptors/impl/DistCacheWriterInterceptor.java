@@ -6,6 +6,7 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.P
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -14,10 +15,10 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -78,14 +79,13 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
       return invokeNextThenApply(ctx, command, handlePutMapCommandReturn);
    }
 
-   @Override
-   protected Object handlePutMapCommandReturn(InvocationContext rCtx, PutMapCommand cmd, Object rv) {
-      CompletionStage<Void> writeStage = CompletionStages.allOf(
-            processIterableBatch(rCtx, cmd, BOTH, key -> !skipNonPrimary(rCtx, key, cmd) && isProperWriter(rCtx, cmd, key) &&
-                  !skipSharedStores(rCtx, key, cmd)),
-            processIterableBatch(rCtx, cmd, PRIVATE, key -> !skipNonPrimary(rCtx, key, cmd) && isProperWriter(rCtx, cmd, key) &&
-                  skipSharedStores(rCtx, key, cmd)));
-      return delayedValue(writeStage, rv);
+   protected Object handlePutMapCommandReturn(InvocationContext rCtx, PutMapCommand putMapCommand, Object rv) {
+      CompletionStage<Long> putMapStage = persistenceManager.writeMapCommand(putMapCommand, rCtx,
+            ((writeCommand, key) -> !skipNonPrimary(rCtx, key, writeCommand) && isProperWriter(rCtx, writeCommand, key)));
+      if (getStatisticsEnabled()) {
+         putMapStage.thenAccept(cacheStores::getAndAdd);
+      }
+      return delayedValue(putMapStage, rv);
    }
 
    private boolean skipNonPrimary(InvocationContext rCtx, Object key, PutMapCommand command) {
@@ -175,12 +175,14 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
       if (command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK))
          return true;
 
+      int segment = SegmentSpecificCommand.extractSegment(command, key, keyPartitioner);
+      DistributionInfo distributionInfo = dm.getCacheTopology().getSegmentDistribution(segment);
       if (isUsingLockDelegation && ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          // If the originator is a backup, the command will be forwarded back to it, and the value will be stored then
          // (while holding the lock on the primary owner).
-         return dm.getCacheTopology().getDistribution(key).isPrimary();
+         return distributionInfo.isPrimary();
       } else {
-         return dm.getCacheTopology().isWriteOwner(key);
+         return distributionInfo.isWriteOwner();
       }
    }
 }

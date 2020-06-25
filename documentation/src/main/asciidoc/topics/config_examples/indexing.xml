@@ -2,6 +2,9 @@
    <cache-container default-cache="default">
       <replicated-cache name="default">
          <indexing>
+            <indexed-entities>
+               <indexed-entity>com.acme.Book</indexed-entity>
+            </indexed-entities>
             <property name="property.name">some value</property>
          </indexing>
       </replicated-cache>

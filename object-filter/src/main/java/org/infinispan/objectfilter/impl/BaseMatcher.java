@@ -15,8 +15,8 @@ import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.FullTextVisitor;
-import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.dsl.Query;
 import org.jboss.logging.Logger;
@@ -121,7 +121,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    }
 
    @Override
-   public ObjectFilter getObjectFilter(Query query) {
+   public ObjectFilter getObjectFilter(Query<?> query) {
       return getObjectFilter(query.getQueryString(), null);
    }
 
@@ -161,12 +161,12 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    }
 
    @Override
-   public FilterSubscription registerFilter(Query query, FilterCallback callback, Object... eventType) {
+   public FilterSubscription registerFilter(Query<?> query, FilterCallback callback, Object... eventType) {
       return registerFilter(query, callback, false, eventType);
    }
 
    @Override
-   public FilterSubscription registerFilter(Query query, FilterCallback callback, boolean isDeltaFilter, Object... eventType) {
+   public FilterSubscription registerFilter(Query<?> query, FilterCallback callback, boolean isDeltaFilter, Object... eventType) {
       return registerFilter(query.getQueryString(), query.getParameters(), callback, isDeltaFilter, eventType);
    }
 

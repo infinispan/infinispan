@@ -2,10 +2,11 @@ package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
-import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.rest.framework.Method.GET;
+import static org.infinispan.rest.framework.Method.POST;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -27,8 +28,6 @@ import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
@@ -47,11 +46,11 @@ public class SearchAdminResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder()
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/search/indexes").withAction("mass-index").handleWith(this::reindex)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/search/indexes").withAction("clear").handleWith(this::clearIndexes)
+            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/search/indexes").withAction("mass-index").handleWith(this::reindex)
+            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/search/indexes").withAction("clear").handleWith(this::clearIndexes)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/search/indexes/stats").handleWith(this::indexStats)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/search/query/stats").handleWith(this::queryStats)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/search/query/stats").withAction("clear").handleWith(this::clearStats)
+            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/search/query/stats").withAction("clear").handleWith(this::clearStats)
             .create();
    }
 
@@ -77,6 +76,10 @@ public class SearchAdminResource implements ResourceHandler {
 
       if (queryStatistics == null) return completedFuture(responseBuilder.build());
 
+      if(request.method().equals(POST)) {
+         responseBuilder.status(NO_CONTENT);
+      }
+
       queryStatistics.clear();
       return completedFuture(responseBuilder.build());
    }
@@ -92,8 +95,13 @@ public class SearchAdminResource implements ResourceHandler {
       boolean async = asyncParams && supportAsync;
 
       AdvancedCache<?, ?> cache = lookupIndexedCache(request, responseBuilder);
-      if (responseBuilder.getStatus() != OK.code()) {
+      int status = responseBuilder.getStatus();
+      if (status < 200 || status > 299) {
          return completedFuture(responseBuilder.build());
+      }
+
+      if(request.method().equals(POST)) {
+         responseBuilder.status(NO_CONTENT);
       }
 
       Indexer indexer = ComponentRegistryUtils.getIndexer(cache);
@@ -101,8 +109,8 @@ public class SearchAdminResource implements ResourceHandler {
       if (async) {
          try {
             LOG.asyncMassIndexerStarted();
-            op.apply(indexer).whenComplete((v,e) -> {
-               if(e == null) {
+            op.apply(indexer).whenComplete((v, e) -> {
+               if (e == null) {
                   LOG.asyncMassIndexerSuccess();
                } else {
                   LOG.errorExecutingMassIndexer(e.getCause());
@@ -130,13 +138,7 @@ public class SearchAdminResource implements ResourceHandler {
       InfinispanQueryStatisticsInfo searchStats = lookupQueryStatistics(request, responseBuilder);
       if (searchStats == null) return completedFuture(responseBuilder.build());
 
-      try {
-         byte[] bytes = invocationHelper.getMapper().writeValueAsBytes(statExtractor.apply(searchStats));
-         responseBuilder.contentType(APPLICATION_JSON).entity(bytes).status(OK);
-      } catch (JsonProcessingException e) {
-         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
-      return completedFuture(responseBuilder.build());
+      return asJsonResponseFuture(statExtractor.apply(searchStats), responseBuilder, invocationHelper);
    }
 
    private AdvancedCache<?, ?> lookupIndexedCache(RestRequest request, NettyRestResponse.Builder builder) {

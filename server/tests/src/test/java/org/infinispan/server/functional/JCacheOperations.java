@@ -38,7 +38,20 @@ public class JCacheOperations {
       InetAddress serverAddress = SERVERS.getServerDriver().getServerAddress(0);
       properties.put(ConfigurationProperties.SERVER_LIST, serverAddress.getHostAddress() + ":11222");
       properties.put(ConfigurationProperties.CACHE_PREFIX + SERVER_TEST.getMethodName() + ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX, "org.infinispan.DIST_SYNC");
-      File file = new File("target/test-classes/jcache-hotrod-client.properties");
+      doJCacheOperations(properties);
+   }
+
+   @Test
+   public void testJCacheOperationsWildcards() throws IOException {
+      Properties properties = new Properties();
+      InetAddress serverAddress = SERVERS.getServerDriver().getServerAddress(0);
+      properties.put(ConfigurationProperties.SERVER_LIST, serverAddress.getHostAddress() + ":11222");
+      properties.put(ConfigurationProperties.CACHE_PREFIX + '[' + SERVER_TEST.getMethodName().substring(0, 8) + "*]" + ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX, "org.infinispan.DIST_SYNC");
+      doJCacheOperations(properties);
+   }
+
+   private void doJCacheOperations(Properties properties) throws IOException {
+      File file = new File(String.format("target/test-classes/%s-hotrod-client.properties", SERVER_TEST.getMethodName()));
       try (FileOutputStream fos = new FileOutputStream(file)) {
          properties.store(fos, null);
       }

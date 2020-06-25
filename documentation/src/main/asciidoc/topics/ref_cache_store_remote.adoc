@@ -26,14 +26,16 @@ include::code_examples/ConfigRemoteStore.java[]
 
 `RemoteStore` supports segmentation and can publish keys and entries by
 segment, which makes bulk operations more efficient. However, segmentation is
-available with {brandname} Hot Rod protocol version 2.3 or later.
+available only with {brandname} Hot Rod protocol version 2.3 or later.
 
-//dnaro: expand this out. how do you ensure?
 [WARNING]
 ====
-Ensure the number of segments and hash are the same between the Remote cache
-store and {brandname} servers, otherwise bulk operations do not return correct
-results.
+When you enable segmentation for `RemoteStore`, it uses the number of segments
+that you define in your {brandname} server configuration.
+
+If the source cache is segmented and uses a different number of segments than
+`RemoteStore`, then incorrect values are returned for bulk operations. In this
+case, you should disable segmentation for `RemoteStore`.
 ====
 
 .Reference

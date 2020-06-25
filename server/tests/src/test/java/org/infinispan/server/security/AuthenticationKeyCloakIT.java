@@ -28,6 +28,11 @@ public class AuthenticationKeyCloakIT {
          InfinispanServerRuleBuilder.config("configuration/AuthenticationKeyCloakTest.xml")
                                     .build();
 
+   public static final String INFINISPAN_REALM = "infinispan";
+   public static final String INFINISPAN_CLIENT_ID = "infinispan-client";
+   public static final String INFINISPAN_CLIENT_SECRET = "8a43581d-62d7-47dc-9aa4-cd3af24b6083";
+
+
    @ClassRule
    public static KeyCloakServerRule KEYCLOAK = new KeyCloakServerRule("keycloak/infinispan-keycloak-realm.json");
 
@@ -36,12 +41,12 @@ public class AuthenticationKeyCloakIT {
 
    @Test
    public void testHotRodReadWrite() {
-      String token = KEYCLOAK.getAccessTokenForCredentials("infinispan", "infinispan-client", "8a43581d-62d7-47dc-9aa4-cd3af24b6083", "admin", "adminPassword");
+      String token = KEYCLOAK.getAccessTokenForCredentials(INFINISPAN_REALM, INFINISPAN_CLIENT_ID, INFINISPAN_CLIENT_SECRET, "admin", "adminPassword");
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.security().authentication()
             .saslMechanism("OAUTHBEARER")
-            .serverName("infinispan")
+            .serverName(INFINISPAN_REALM)
             .realm("default")
             .token(token);
 
@@ -53,7 +58,7 @@ public class AuthenticationKeyCloakIT {
 
    @Test
    public void testRestReadWrite() {
-      String token = KEYCLOAK.getAccessTokenForCredentials("infinispan", "infinispan-client", "8a43581d-62d7-47dc-9aa4-cd3af24b6083", "admin", "adminPassword");
+      String token = KEYCLOAK.getAccessTokenForCredentials(INFINISPAN_REALM, INFINISPAN_CLIENT_ID, INFINISPAN_CLIENT_SECRET, "admin", "adminPassword");
 
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.security().authentication()

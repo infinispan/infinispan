@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.iteration;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.util.IntSet;
 
 /**
  * @author gustavonalle
@@ -16,7 +17,7 @@ class NoOpSegmentKeyTracker implements KeyTracker {
    }
 
    @Override
-   public void segmentsFinished(byte[] finishedSegments) {
+   public void segmentsFinished(IntSet finishedSegments) {
    }
 
    @Override

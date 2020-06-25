@@ -906,13 +906,14 @@
             </xs:element>
             <xs:element name="indexed-entities" minOccurs="0" maxOccurs="1">
               <xs:annotation>
-                <xs:documentation>Defines the indexed entity classes</xs:documentation>
+                <xs:documentation>Defines the set of indexed type names (fully qualified). If values of types that are not included in this set are put in the cache they will not be indexed.</xs:documentation>
               </xs:annotation>
               <xs:complexType>
                 <xs:sequence>
+                  <!-- TODO [anistor] change minOccurs="1" in version 12 -->
                   <xs:element name="indexed-entity" type="xs:string" minOccurs="0" maxOccurs="unbounded">
                     <xs:annotation>
-                      <xs:documentation>Indexed entity class name</xs:documentation>
+                      <xs:documentation>Indexed entity type name. Must be either a fully qualified Java class name or a protobuf type name.</xs:documentation>
                     </xs:annotation>
                   </xs:element>
                 </xs:sequence>
@@ -934,7 +935,7 @@
           </xs:attribute>
           <xs:attribute name="auto-config" type="xs:boolean" default="${Indexing.autoConfig}">
             <xs:annotation>
-              <xs:documentation>Whether or not to apply automatic index configuration based on cache type</xs:documentation>
+              <xs:documentation>Deprecated since 11.0, with no replacement. Whether or not to apply automatic index configuration based on cache type</xs:documentation>
             </xs:annotation>
           </xs:attribute>
         </xs:complexType>
@@ -1304,7 +1305,7 @@
           <xs:annotation>
             <xs:documentation>
               Deprecated since 11.0. Use instead the 'encoding' element to specify the media type of keys
-              and values, plus the storage attribute as 'heap'.
+              and values, plus the storage attribute as 'HEAP'.
               Store keys and values as instance variables in the Java heap.
               Instances of byte[] are wrapped to ensure equality. This is the
               default storage format.
@@ -1315,7 +1316,7 @@
           <xs:annotation>
             <xs:documentation>
               Deprecated since 11.0. Use instead the 'encoding' element to specify the media type of keys
-              and values, plus the storage attribute as 'heap'.
+              and values, plus the storage attribute as 'HEAP'.
               Store keys and values as bytes in the Java heap. Cache
               entries are serialized to binary representations. Note that
               binary storage violates object equality. This occurs because
@@ -1328,7 +1329,7 @@
           <xs:annotation>
             <xs:documentation>
               Deprecated since 11.0. Use instead the 'encoding' element to specify the media type of keys
-              and values, plus the storage attribute as 'off-heap'.
+              and values, plus the storage attribute as 'OFF_HEAP'.
               Store keys and values as bytes in native memory. Cache
               entries are serialized to binary representations. Temporary
               objects are stored in the Java heap space until processing
@@ -1343,18 +1344,19 @@
     <xs:attribute name="max-size" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          Defines the size of the data container in a byte quantity plus an optional unit.
-          Supported units are B (bytes) KB (kilobytes), MB (megabytes), GB (gigabytes), TB (terabytes),
-          KiB (kibibytes), MiB (mebibytes), GiB (gibibytes) and TiB (tebibytes).
-          Eviction occurs after the approximate memory usage exceeds the maximum size.
+          Defines the size of the data container in bytes. The default unit is
+          B (bytes). You can optionally set one of the following units: KB
+          (kilobytes), MB (megabytes), GB (gigabytes), TB (terabytes), KiB
+          (kibibytes), MiB (mebibytes), GiB (gibibytes) and TiB (tebibytes).
+          Eviction occurs when the approximate memory usage of the data
+          container exceeds the maximum size.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="max-count" type="xs:long" default="-1">
       <xs:annotation>
         <xs:documentation>
-          Defines the size of the data container by a count of entries. Eviction occurs after the container size exceeds
-          the maximum count.
+          Defines the size of the data container by number of entries. Eviction occurs after the container size exceeds the maximum count.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -1372,7 +1374,7 @@
     <xs:attribute name="storage" type="tns:memory-storage" default="HEAP">
       <xs:annotation>
         <xs:documentation>
-          Defines the type of memory used as a storage by the data container.
+          Defines the type of memory that the data container uses as storage.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -1383,14 +1385,31 @@
       <xs:enumeration value="HEAP">
         <xs:annotation>
           <xs:documentation>
-            Entries are stored on the JVM's heap memory.
+            Stores cache entries in JVM heap memory.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="OFF_HEAP">
         <xs:annotation>
           <xs:documentation>
-            Entries are stored in internal memory off the normal Java heap.
+            Stores cache entries as bytes in native memory outside the Java
+            heap.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="OBJECT">
+        <xs:annotation>
+          <xs:documentation>
+            Deprecated, only added in 11.0 to simplify the transition from the &lt;object/&gt; element.
+            Please use HEAP instead.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="BINARY">
+        <xs:annotation>
+          <xs:documentation>
+            Deprecated, only added in 11.0 to simplify the transition from the &lt;binary/&gt; element.
+            Please use HEAP and set the encoding media type instead.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
@@ -1401,8 +1420,7 @@
     <xs:attribute name="size" type="xs:long" default="-1">
       <xs:annotation>
         <xs:documentation>
-          Defines the size of the data container as a long. Eviction occurs
-          when the number of entries exceeds the size.
+          Eviction occurs when the number of entries exceeds the size.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -1548,6 +1566,7 @@
         <xs:attribute name="consistent-hash-factory" type="xs:string">
           <xs:annotation>
             <xs:documentation>
+              Deprecated since 11.0. Will be removed in 14.0, the segment allocation will no longer be customizable.
               The factory to use for generating the consistent hash.
               Must implement `org.infinispan.distribution.ch.ConsistentHashFactory`.
               E.g. `org.infinispan.distribution.ch.impl.SyncConsistentHashFactory` can be used to guarantee

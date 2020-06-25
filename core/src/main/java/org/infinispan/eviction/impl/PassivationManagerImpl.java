@@ -1,7 +1,7 @@
 package org.infinispan.eviction.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.concurrent.CompletionStage;
@@ -119,7 +119,7 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
 
       int count = container.sizeIncludingExpired();
       Iterable<MarshallableEntry<Object, Object>> iterable = () -> new IteratorMapper<>(container.iterator(), e -> marshalledEntryFactory.create((InternalCacheEntry) e));
-      return persistenceManager.writeBatchToAllNonTxStores(iterable, BOTH, 0)
+      return persistenceManager.writeEntries(iterable, PRIVATE)
                                .thenRun(() -> {
                                   long durationMillis = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
                                   if (CONTAINER.isDebugEnabled()) {

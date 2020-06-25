@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 @Test(testName = "client.hotrod.query.RemoteQueryDslConditionsIspnDirTest", groups = "functional")
 public class RemoteQueryDslConditionsIspnDirTest extends RemoteQueryDslConditionsTest {
 
-   protected static final String TEST_CACHE_NAME = "testCache";
+   private static final String TEST_CACHE_NAME = "testCache";
 
    @Override
    protected void createCacheManagers() throws Throwable {

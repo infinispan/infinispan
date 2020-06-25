@@ -39,10 +39,12 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
     * Number of entries to write
     */
    private static final int OBJECT_COUNT = 1_000_000;
+
    /**
     * Number of threads to do the initial load
     */
    private static final int WRITING_THREADS = 5;
+
    /**
     * If should SKIP_INDEX during initial load
     */
@@ -52,11 +54,13 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    private static final String MERGE_FACTOR = "30";
    private static final CacheMode CACHE_MODE = CacheMode.LOCAL;
    private static final IndexManager INDEX_MANAGER = IndexManager.DIRECTORY;
-   private static final Provider DIRECTORY_PROVIDER = Provider.RAM;
+   private static final Provider DIRECTORY_PROVIDER = Provider.LOCAL_HEAP;
+
    /**
     * Hibernate search backend used. Either sync or async (commit every 1s by default)
     */
    private static final WorkerMode WORKER_MODE = WorkerMode.sync;
+
    /**
     * For status report during insertion
     */
@@ -133,7 +137,6 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
       System.out.println("\nIndexing done.");
    }
 
-
    public static void main(String[] args) throws Throwable {
       AsyncMassIndexPerfTest test = new AsyncMassIndexPerfTest();
       TestResourceTracker.testThreadStarted(test.getTestName());
@@ -156,9 +159,9 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    }
 
    private enum Provider {
-      RAM("local-heap"),
-      FILESYSTEM("filesystem"),
-      INFINISPAN("infinispan");
+      LOCAL_HEAP("local-heap"),
+      FILESYSTEM("filesystem");
+
       private final String cfg;
 
       Provider(String cfg) {
@@ -279,7 +282,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
       indexUpdater.flush(Collections.singleton(new PojoIndexedTypeIdentifier(Transaction.class)));
    }
 
-   class StopTimer {
+   static class StopTimer {
       private long start;
       private long elapsed;
 

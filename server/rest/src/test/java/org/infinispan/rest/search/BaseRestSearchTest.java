@@ -16,7 +16,6 @@ import static org.testng.Assert.assertTrue;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
 
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -30,7 +29,6 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.rest.RestTestSCI;
@@ -63,20 +61,48 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    static final ObjectMapper MAPPER = new ObjectMapper();
 
    protected HttpClient client;
-   private List<RestServerHelper> restServers = new ArrayList<>();
+   private final List<RestServerHelper> restServers = new ArrayList<>();
 
    protected int getNumNodes() {
       return 3;
    }
 
    @Override
-   protected void createCacheManagers() {
+   protected void createCacheManagers() throws Exception {
+      // global config
       GlobalConfigurationBuilder globalCfg = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalCfg.serialization().addContextInitializer(RestTestSCI.INSTANCE);
+
+      // test cache config
       ConfigurationBuilder builder = getConfigBuilder();
       builder.statistics().enabled(true);
-      createClusteredCaches(getNumNodes(), globalCfg, builder, isServerMode(), CACHE_NAME, "default");
-      waitForClusterToForm(CACHE_NAME);
+
+      // create a 'default' config which is not indexed
+      ConfigurationBuilder defaultBuilder = new ConfigurationBuilder();
+
+      // start cache managers + default cache
+      createClusteredCaches(getNumNodes(), globalCfg, defaultBuilder, isServerMode(), "default");
+
+      // start rest sever for each cache manager
+      cacheManagers.forEach(cm -> {
+         RestServerHelper restServer = new RestServerHelper(cm);
+         restServer.start(TestResourceTracker.getCurrentTestShortName() + "-" + cm.getAddress());
+         restServers.add(restServer);
+      });
+
+      // start rest client
+      client = new HttpClient();
+      client.start();
+
+      // register protobuf schema
+      String protoFileContents = Util.getResourceAsString(PROTO_FILE_NAME, getClass().getClassLoader());
+      registerProtobuf(PROTO_FILE_NAME, protoFileContents);
+
+      // start indexed test cache that depends on the protobuf schema
+      cacheManagers.forEach(cm -> {
+         cm.defineConfiguration(CACHE_NAME, builder.build());
+         cm.getCache(CACHE_NAME);
+      });
    }
 
    protected boolean isServerMode() {
@@ -102,18 +128,6 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    @BeforeClass
    public void setUp() throws Exception {
-      IntStream.range(0, getNumNodes()).forEach(n -> {
-         EmbeddedCacheManager manager = cacheManagers.get(n);
-         RestServerHelper restServer = new RestServerHelper(manager);
-         restServer.start(TestResourceTracker.getCurrentTestShortName() + "-" + manager.getAddress());
-         restServers.add(restServer);
-      });
-
-      client = new HttpClient();
-      client.start();
-
-      String protoFile = Util.getResourceAsString(PROTO_FILE_NAME, getClass().getClassLoader());
-      registerProtobuf(PROTO_FILE_NAME, protoFile);
       populateData();
    }
 
@@ -304,14 +318,14 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       } else {
          assertEquals(response.getStatus(), OK_200);
          JsonNode stats = MAPPER.readTree(response.getContentAsString());
-         assertTrue(stats.get("search_query_execution_count").asInt() >= 0);
-         assertTrue(stats.get("search_query_total_time").asInt() >= 0);
-         assertTrue(stats.get("search_query_execution_max_time").asInt() >= 0);
-         assertTrue(stats.get("search_query_execution_avg_time").asInt() >= 0);
-         assertTrue(stats.get("object_loading_total_time").asInt() >= 0);
-         assertTrue(stats.get("object_loading_execution_max_time").asInt() >= 0);
-         assertTrue(stats.get("object_loading_execution_avg_time").asInt() >= 0);
-         assertTrue(stats.get("objects_loaded_count").asInt() >= 0);
+         assertTrue(stats.get("search_query_execution_count").asLong() >= 0);
+         assertTrue(stats.get("search_query_total_time").asLong() >= 0);
+         assertTrue(stats.get("search_query_execution_max_time").asLong() >= 0);
+         assertTrue(stats.get("search_query_execution_avg_time").asLong() >= 0);
+         assertTrue(stats.get("object_loading_total_time").asLong() >= 0);
+         assertTrue(stats.get("object_loading_execution_max_time").asLong() >= 0);
+         assertTrue(stats.get("object_loading_execution_avg_time").asLong() >= 0);
+         assertTrue(stats.get("objects_loaded_count").asLong() >= 0);
          assertNotNull(stats.get("search_query_execution_max_time_query_string").asText());
 
          ContentResponse clearResponse = clearStatsRequest.send();
@@ -474,6 +488,5 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       return false;
    }
 
-   abstract ConfigurationBuilder getConfigBuilder();
-
+   protected abstract ConfigurationBuilder getConfigBuilder();
 }

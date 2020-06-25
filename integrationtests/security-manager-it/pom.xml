@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-integrationtests-parent</artifactId>
-      <version>11.0.0-SNAPSHOT</version>
+      <version>11.0.1-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -36,6 +36,11 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>org.antlr</groupId>
+         <artifactId>antlr-runtime</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <scope>test</scope>
@@ -63,7 +68,7 @@
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${testNGListeners}</listener>
                </properties>
-               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs}</argLine>
                <dependenciesToScan>
                   <!-- TestNGSuiteChecksTest -->
                   <dependency>org.infinispan:infinispan-commons-test</dependency>

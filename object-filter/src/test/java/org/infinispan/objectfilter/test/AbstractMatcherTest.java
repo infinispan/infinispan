@@ -78,7 +78,7 @@ public abstract class AbstractMatcherTest {
       return matchCount[0] == 1;
    }
 
-   protected boolean match(Query query, Object obj) {
+   protected boolean match(Query<?> query, Object obj) {
       Matcher matcher = createMatcher();
 
       int[] matchCount = {0};
@@ -338,7 +338,7 @@ public abstract class AbstractMatcherTest {
    public void testOrderBy() throws Exception {
       Matcher matcher = createMatcher();
 
-      List<Comparable[]> sortProjections = new ArrayList<>();
+      List<Comparable<?>[]> sortProjections = new ArrayList<>();
 
       String queryString1 = "from org.infinispan.objectfilter.test.model.Person p where p.age > 18 order by p.name, p.surname";
       FilterSubscription filterSubscription = matcher.registerFilter(queryString1, (userContext, eventType, instance, projection, sortProjection) -> sortProjections.add(sortProjection));
@@ -359,7 +359,7 @@ public abstract class AbstractMatcherTest {
    @Test
    public void testDSL() throws Exception {
       QueryFactory qf = createQueryFactory();
-      Query q = qf.from(Person.class)
+      Query<Person> q = qf.from(Person.class)
             .having("phoneNumbers.number").eq("004012345").build();
       assertTrue(match(q, createPerson1()));
    }
@@ -407,7 +407,7 @@ public abstract class AbstractMatcherTest {
       QueryFactory qf = createQueryFactory();
 
       // use the same '< 1000' predicate on two different attributes to demonstrate they do not interfere (see ISPN-4654)
-      Query q = qf.from(Person.class)
+      Query<Person> q = qf.from(Person.class)
             .having("id").lt(1000)
             .and()
             .having("age").lt(1000)
@@ -428,7 +428,7 @@ public abstract class AbstractMatcherTest {
       QueryFactory qf = createQueryFactory();
 
       // use the same "like 'Jo%'" predicate (in positive and negative form) on the same attribute to demonstrate they do not interfere (see ISPN-4654)
-      Query q = qf.from(Person.class)
+      Query<Person> q = qf.from(Person.class)
             .having("name").like("Jo%")
             .and(qf.not().having("name").like("Jo%").or().having("id").lt(1000))
             .build();
@@ -446,7 +446,7 @@ public abstract class AbstractMatcherTest {
       Object person = createPerson1();
 
       QueryFactory qf = createQueryFactory();
-      Query q = qf.from(Person.class)
+      Query<Person> q = qf.from(Person.class)
             .having("name").eq("John").build();
 
       boolean[] b = new boolean[1];
@@ -468,7 +468,7 @@ public abstract class AbstractMatcherTest {
       Object person = createPerson1();
 
       QueryFactory qf = createQueryFactory();
-      Query q = qf.from(Person.class)
+      Query<Person> q = qf.from(Person.class)
             .having("name").eq("John").build();
 
       ObjectFilter objectFilter = matcher.getObjectFilter(q);

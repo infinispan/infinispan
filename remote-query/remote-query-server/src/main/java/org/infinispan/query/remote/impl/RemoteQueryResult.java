@@ -2,7 +2,7 @@ package org.infinispan.query.remote.impl;
 
 import java.util.List;
 
-public class RemoteQueryResult {
+public final class RemoteQueryResult {
    private final String[] projections;
    private final long totalResults;
    private final List<Object> results;

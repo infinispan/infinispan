@@ -37,7 +37,7 @@ public class CliIT {
          terminal.readln("echo Hi");
          terminal.assertEquals("[disconnected]> echo Hi" + Config.getLineSeparator() + "Hi" + Config.getLineSeparator() + "[disconnected]> ");
          terminal.clear();
-         terminal.readln("connect");
+         terminal.readln("connect " + hostAddress() + ":11222");
          terminal.assertContains("//containers/default]>");
          terminal.clear();
 
@@ -95,16 +95,17 @@ public class CliIT {
 
    @Test
    public void testCliBatch() {
+      System.setProperty("serverAddress", hostAddress());
       AeshTestShell shell = new AeshTestShell();
       CLI.main(shell, new String[]{"-f", this.getClass().getResource("/cli/batch.cli").getPath()});
-      shell.assertContains("Hi CLI");
+      shell.assertContains("Hi CLI running on " + System.getProperty("os.arch"));
       shell.assertContains("batch1");
    }
 
    @Test
    public void testCliBatchPreconnect() {
       AeshTestShell shell = new AeshTestShell();
-      CLI.main(shell, new String[]{"--connect=http://localhost:11222", "-f", this.getClass().getResource("/cli/batch-preconnect.cli").getPath()});
+      CLI.main(shell, new String[]{connectionString(), "-f", this.getClass().getResource("/cli/batch-preconnect.cli").getPath()});
       shell.assertContains("Hi CLI");
       shell.assertContains("batch2");
    }
@@ -112,7 +113,7 @@ public class CliIT {
    @Test
    public void testCliTasks() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{"--connect=http://localhost:11222"});
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{connectionString()});
          terminal.readln("cd tasks");
          terminal.readln("ls");
          terminal.assertContains("@@cache@names");
@@ -125,5 +126,32 @@ public class CliIT {
          terminal.readln("task exec hello -Pgreetee=world");
          terminal.assertContains("\"Hello world\"");
       }
+   }
+
+   @Test
+   public void testCliUploadProtobufSchemas() {
+      try (AeshTestConnection terminal = new AeshTestConnection()) {
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{});
+
+         // connect
+         terminal.readln("connect " + hostAddress() + ":11222");
+         terminal.assertContains("//containers/default]>");
+         terminal.clear();
+
+         // upload
+         terminal.readln("schema --upload="+ this.getClass().getResource("/cli/person.proto").getPath() +" person.proto");
+         terminal.clear();
+         terminal.readln("cd /containers/default/schemas");
+         terminal.readln("ls");
+         terminal.assertContains("person.proto");
+      }
+   }
+
+   private String hostAddress() {
+      return SERVERS.getTestServer().getDriver().getServerAddress(0).getHostAddress();
+   }
+
+   private String connectionString() {
+      return String.format("--connect=http://%s:11222", hostAddress());
    }
 }

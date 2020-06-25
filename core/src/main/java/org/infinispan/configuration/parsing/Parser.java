@@ -148,6 +148,8 @@ public class Parser implements ConfigurationParser {
                if (!reader.getSchema().since(11, 0)) {
                   ignoreAttribute(reader, Attribute.VERSION);
                   break;
+               } else {
+                  throw ParseUtils.unexpectedAttribute(reader, i);
                }
             }
             default: {
@@ -313,19 +315,19 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case CORE_THREADS: {
-               coreThreads = Integer.valueOf(value);
+               coreThreads = Integer.parseInt(value);
                break;
             }
             case MAX_THREADS: {
-               maxThreads = Integer.valueOf(value);
+               maxThreads = Integer.parseInt(value);
                break;
             }
             case QUEUE_LENGTH: {
-               queueLength = Integer.valueOf(value);
+               queueLength = Integer.parseInt(value);
                break;
             }
             case KEEP_ALIVE_TIME: {
-               keepAlive = Long.valueOf(value);
+               keepAlive = Long.parseLong(value);
                break;
             }
             default: {
@@ -422,7 +424,7 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case PRIORITY: {
-               priority = Integer.valueOf(value);
+               priority = Integer.parseInt(value);
                break;
             }
             default: {
@@ -567,7 +569,7 @@ public class Parser implements ConfigurationParser {
    }
 
    private void parseStackFile(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
-      String attributes[] = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.PATH);
+      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.PATH);
       ParseUtils.requireNoContent(reader);
 
       addJGroupsStackFile(holder, attributes[0], attributes[1], reader.getProperties(), reader.getResourceResolver());
@@ -941,6 +943,8 @@ public class Parser implements ConfigurationParser {
                if (!reader.getSchema().since(11, 0)) {
                   ignoreAttribute(reader, Attribute.VERSION);
                   break;
+               } else {
+                  throw ParseUtils.unexpectedAttribute(reader, i);
                }
             }
             default: {
@@ -1011,7 +1015,7 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case LOCK_TIMEOUT: {
-               transport.distributedSyncTimeout(Long.valueOf(value));
+               transport.distributedSyncTimeout(Long.parseLong(value));
                break;
             }
             case NODE_NAME: {
@@ -1035,7 +1039,7 @@ public class Parser implements ConfigurationParser {
             }
             case INITIAL_CLUSTER_SIZE: {
                if (reader.getSchema().since(8, 2)) {
-                  transport.initialClusterSize(Integer.valueOf(value));
+                  transport.initialClusterSize(Integer.parseInt(value));
                } else {
                   throw ParseUtils.unexpectedAttribute(reader, i);
                }
@@ -1319,11 +1323,11 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case TIMEOUT: {
-               backup.replicationTimeout(Long.valueOf(value));
+               backup.replicationTimeout(Long.parseLong(value));
                break;
             }
             case ENABLED: {
-               backup.enabled(Boolean.valueOf(value));
+               backup.enabled(Boolean.parseBoolean(value));
                break;
             }
             case USE_TWO_PHASE_COMMIT: {
@@ -1368,11 +1372,11 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case TAKE_BACKUP_OFFLINE_AFTER_FAILURES: {
-               backup.takeOffline().afterFailures(Integer.valueOf(value));
+               backup.takeOffline().afterFailures(Integer.parseInt(value));
                break;
             }
             case TAKE_BACKUP_OFFLINE_MIN_WAIT: {
-               backup.takeOffline().minTimeToWait(Long.valueOf(value));
+               backup.takeOffline().minTimeToWait(Long.parseLong(value));
                break;
             }
             default: {
@@ -1624,6 +1628,7 @@ public class Parser implements ConfigurationParser {
       }
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
+         CONFIG.warnUsingDeprecatedMemoryConfigs(element.getLocalName());
          switch (element) {
             case OFF_HEAP:
                memoryBuilder.storageType(StorageType.OFF_HEAP);
@@ -1753,10 +1758,11 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case ENABLED:
-               if (Boolean.valueOf(value)) {
+               if (Boolean.parseBoolean(value)) {
                   encoding.key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
                   encoding.value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
                }
+               break;
             case MARSHALLER_CLASS:
                CONFIG.marshallersNotSupported();
                break;
@@ -2074,6 +2080,9 @@ public class Parser implements ConfigurationParser {
             break;
          }
          case CONSISTENT_HASH_FACTORY: {
+            if (reader.getSchema().since(11, 0)) {
+               CONFIG.debug("Consistent hash customization has been deprecated and will be removed");
+            }
             builder.clustering().hash().consistentHashFactory(Util.getInstance(value, classLoader));
             break;
          }
@@ -2415,7 +2424,7 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case MAX_ENTRIES: {
-               storeBuilder.maxEntries(Integer.valueOf(value));
+               storeBuilder.maxEntries(Integer.parseInt(value));
                break;
             }
             case FRAGMENTATION_FACTOR: {
@@ -2450,7 +2459,7 @@ public class Parser implements ConfigurationParser {
             break;
          }
          case READ_ONLY: {
-            storeBuilder.ignoreModifications(Boolean.valueOf(value));
+            storeBuilder.ignoreModifications(Boolean.parseBoolean(value));
             break;
          }
          case PRELOAD: {
@@ -2696,6 +2705,7 @@ public class Parser implements ConfigurationParser {
                selfEnable = false;
                break;
             case AUTO_CONFIG:
+               CONFIG.autoConfigDeprecated();
                builder.indexing().autoConfig(Boolean.parseBoolean(value));
                break;
             default:
@@ -2770,14 +2780,25 @@ public class Parser implements ConfigurationParser {
 
    private void parseIndexedEntities(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ConfigurationBuilder builder) throws XMLStreamException {
       ParseUtils.requireNoAttributes(reader);
+      boolean isProtobufStorage = builder.memory().encoding().value().isProtobufStorage();
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case INDEXED_ENTITY: {
                ParseUtils.requireNoAttributes(reader);
-               String className = reader.getElementText();
-               Class<?> indexedEntity = Util.loadClass(className, holder.getClassLoader());
-               builder.indexing().addIndexedEntity(indexedEntity);
+               String typeName = reader.getElementText();
+               builder.indexing().addIndexedEntity(typeName);
+
+               // Do not attempt to resolve type names to Java Classes if the cache uses Protobuf storage
+               if (!isProtobufStorage) {
+                  try {
+                     Class<?> indexedClass = Util.loadClass(typeName, holder.getClassLoader());
+                     builder.indexing().addIndexedEntity(indexedClass);
+                  } catch (Exception e) {
+                     // ignore
+                  }
+               }
+
                break;
             }
             default: {

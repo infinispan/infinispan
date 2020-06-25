@@ -137,7 +137,7 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
 
    @Override
    public IndexedQuery<E> timeout(long timeout, TimeUnit timeUnit) {
-      // TODO [anistor] see https://issues.jboss.org/browse/ISPN-9469
-      throw new UnsupportedOperationException("Clustered queries do not support timeouts yet.");
+      queryDefinition.setTimeout(timeout, timeUnit);
+      return this;
    }
 }

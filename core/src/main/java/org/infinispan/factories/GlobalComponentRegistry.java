@@ -33,11 +33,9 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.ModuleRepository;
-import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metrics.impl.CacheManagerMetricsRegistration;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
-import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.impl.InternalCacheRegistryImpl;
 import org.infinispan.remoting.transport.Transport;
@@ -128,7 +126,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          basicComponentRegistry.registerComponent(CacheManagerMetricsRegistration.class.getName(), new CacheManagerMetricsRegistration(), true);
          basicComponentRegistry.registerComponent(CacheManagerNotifier.class.getName(), new CacheManagerNotifierImpl(), true);
          basicComponentRegistry.registerComponent(InternalCacheRegistry.class.getName(), new InternalCacheRegistryImpl(), true);
-         basicComponentRegistry.registerComponent(CacheStoreFactoryRegistry.class.getName(), new CacheStoreFactoryRegistry(), true);
          basicComponentRegistry.registerComponent(EntryMergePolicyFactoryRegistry.class.getName(), new EntryMergePolicyFactoryRegistry(), true);
          basicComponentRegistry.registerComponent(GlobalXSiteAdminOperations.class.getName(), new GlobalXSiteAdminOperations(), true);
 
@@ -150,7 +147,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          basicComponentRegistry.getComponent(EventLogManager.class);
          basicComponentRegistry.getComponent(Transport.class);
          basicComponentRegistry.getComponent(ClusterContainerStats.class);
-         basicComponentRegistry.getComponent(EncoderRegistry.class);
          basicComponentRegistry.getComponent(GlobalConfigurationManager.class);
          basicComponentRegistry.getComponent(CacheManagerJmxRegistration.class);
          basicComponentRegistry.getComponent(CacheManagerMetricsRegistration.class);

@@ -1,5 +1,10 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
+import static org.junit.Assert.assertEquals;
+
+import java.util.List;
+import java.util.Map;
+
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.stat.Statistics;
@@ -7,11 +12,6 @@ import org.infinispan.test.hibernate.cache.commons.functional.entities.Person;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.Test;
-
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
 
 public class NonTxQueryTest extends SingleNodeTest {
 
@@ -74,5 +74,4 @@ public class NonTxQueryTest extends SingleNodeTest {
       List<Person> result = (List<Person>) query.list();
       assertEquals(2, result.size());
    }
-
 }

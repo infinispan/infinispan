@@ -29,12 +29,12 @@ import org.infinispan.util.DependencyGraph;
  */
 public final class ModuleRepository {
    private final List<ModuleLifecycle> moduleLifecycles;
-   private final Map<String, ComponentAccessor> components;
+   private final Map<String, ComponentAccessor<?>> components;
    private final Map<String, String> factoryNames;
    private final Map<String, MBeanMetadata> mbeans;
 
    private ModuleRepository(List<ModuleLifecycle> moduleLifecycles,
-                    Map<String, ComponentAccessor> components,
+                    Map<String, ComponentAccessor<?>> components,
                     Map<String, String> factoryNames,
                     Map<String, MBeanMetadata> mbeans) {
       this.moduleLifecycles = moduleLifecycles;
@@ -43,8 +43,12 @@ public final class ModuleRepository {
       this.mbeans = mbeans;
    }
 
+   public static ModuleRepository newModuleRepository(ClassLoader classLoader, GlobalConfiguration globalConfiguration) {
+      return new Builder(classLoader, globalConfiguration).build();
+   }
+
    public ComponentAccessor<Object> getComponentAccessor(String componentClassName) {
-      return components.get(componentClassName);
+      return (ComponentAccessor<Object>) components.get(componentClassName);
    }
 
    public String getFactoryName(String componentName) {
@@ -59,30 +63,23 @@ public final class ModuleRepository {
       return moduleLifecycles;
    }
 
-   /**
-    * Package-private
-    */
-   static final class Builder implements ModuleMetadataBuilder.ModuleBuilder {
-      private final List<ModuleMetadataBuilder> modules;
+   private static final class Builder implements ModuleMetadataBuilder.ModuleBuilder {
       private final List<ModuleLifecycle> moduleLifecycles = new ArrayList<>();
-      private final Map<String, ComponentAccessor> components = new HashMap<>();
+      private final Map<String, ComponentAccessor<?>> components = new HashMap<>();
       private final Map<String, String> factoryNames = new HashMap<>();
       private final Map<String, MBeanMetadata> mbeans = new HashMap<>();
 
-      Builder(ClassLoader classLoader) {
+      private Builder(ClassLoader classLoader, GlobalConfiguration globalConfiguration) {
          Collection<ModuleMetadataBuilder> serviceLoader =
             ServiceFinder.load(ModuleMetadataBuilder.class, ModuleRepository.class.getClassLoader(), classLoader);
-         Map<String, ModuleMetadataBuilder> modules = new HashMap<>();
+         Map<String, ModuleMetadataBuilder> modulesMap = new HashMap<>();
          for (ModuleMetadataBuilder module : serviceLoader) {
-            ModuleMetadataBuilder existing = modules.put(module.getModuleName(), module);
+            ModuleMetadataBuilder existing = modulesMap.put(module.getModuleName(), module);
             if (existing != null) {
                throw new IllegalStateException("Multiple modules registered with name " + module.getModuleName());
             }
          }
-         this.modules = sortModuleDependencies(modules);
-      }
-
-      ModuleRepository build(GlobalConfiguration globalConfiguration) {
+         List<ModuleMetadataBuilder> modules = sortModuleDependencies(modulesMap);
          for (ModuleMetadataBuilder module : modules) {
             // register static metadata
             module.registerMetadata(this);
@@ -95,6 +92,9 @@ public final class ModuleRepository {
                ((DynamicModuleMetadataProvider) moduleLifecycle).registerDynamicMetadata(this, globalConfiguration);
             }
          }
+      }
+
+      private ModuleRepository build() {
          return new ModuleRepository(moduleLifecycles, components, factoryNames, mbeans);
       }
 
@@ -131,7 +131,7 @@ public final class ModuleRepository {
 
       @Override
       public void registerComponentAccessor(String componentClassName, List<String> factoryComponentNames,
-                                            ComponentAccessor accessor) {
+                                            ComponentAccessor<?> accessor) {
          components.put(componentClassName, accessor);
          for (String factoryComponentName : factoryComponentNames) {
             factoryNames.put(factoryComponentName, componentClassName);

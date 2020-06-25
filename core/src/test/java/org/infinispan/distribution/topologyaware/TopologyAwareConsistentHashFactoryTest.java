@@ -503,8 +503,8 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    private void addNode(TestTopologyAwareAddress address,
                         String machineId, String rackId, String siteId) {
       address.setSiteId(siteId);
-      address.setRackId(siteId + rackId);
-      address.setMachineId(siteId + rackId + machineId);
+      address.setRackId(rackId);
+      address.setMachineId(machineId);
       chMembers.add(address);
    }
 
@@ -541,8 +541,8 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
 class TopologyAwareOwnershipStatistics {
    TopologyInfo topologyInfo;
    OwnershipStatistics stats;
-   private int numSegments;
-   private int numOwners;
+   private final int numSegments;
+   private final int numOwners;
 
    public TopologyAwareOwnershipStatistics(DefaultConsistentHash ch) {
       numSegments = ch.getNumSegments();
@@ -625,23 +625,19 @@ class TopologyAwareOwnershipStatistics {
    @Override
    public String toString() {
       StringBuilder sb = new StringBuilder("TopologyAwareOwnershipStatistics{\n");
-      int clusterPrimaryOwned = stats.sumPrimaryOwned();
-      sb.append(String.format("cluster: %d+%d\n", clusterPrimaryOwned, stats.sumOwned() - clusterPrimaryOwned));
+      sb.append(String.format("cluster: %d(%dp)\n", stats.sumOwned(), stats.sumPrimaryOwned()));
       for (String site : topologyInfo.getAllSites()) {
-         int sitePrimaryOwned = getSitePrimaryOwned(site);
-         sb.append(String.format("  %s: %d+%d\n", site, sitePrimaryOwned, getSiteOwned(site) - sitePrimaryOwned));
+         sb.append(String.format("  %s: %d(%dp)\n", site, getSiteOwned(site), getSitePrimaryOwned(site)));
          for (String rack : topologyInfo.getSiteRacks(site)) {
-            int rackPrimaryOwned = getRackPrimaryOwned(site, rack);
-            sb.append(String.format("    %s: %d+%d\n", rack, rackPrimaryOwned,
-                                    getRackOwned(site, rack) - rackPrimaryOwned));
+            sb.append(String.format("    %s: %d(%dp)\n", rack, getRackOwned(site, rack),
+                                    getRackPrimaryOwned(site, rack)));
             for (String machine : topologyInfo.getRackMachines(site, rack)) {
-               int machinePrimaryOwned = getMachinePrimaryOwned(site, rack, machine);
-               sb.append(String.format("      %s: %d+%d\n", machine, machinePrimaryOwned,
-                                       getMachineOwned(site, rack, machine) - machinePrimaryOwned));
+               sb.append(String.format("      %s: %d(%dp)\n", machine, getMachineOwned(site, rack, machine),
+                                       getMachinePrimaryOwned(site, rack, machine)));
                for (Address node : topologyInfo.getMachineNodes(site, rack, machine)) {
-                  int nodePrimaryOwned = stats.getPrimaryOwned(node);
-                  sb.append(String.format("        %s: %d+%d\n", node, nodePrimaryOwned,
-                                          getOwned(node) - nodePrimaryOwned));
+                  sb.append(String.format("        %s: %d(%dp) %.1f(%.1fp)\n", node, getOwned(node),
+                                          stats.getPrimaryOwned(node), topologyInfo.getExpectedOwnedSegments(node),
+                                          topologyInfo.getExpectedPrimarySegments(node)));
                }
             }
          }

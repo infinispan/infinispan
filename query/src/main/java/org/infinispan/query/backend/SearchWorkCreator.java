@@ -10,7 +10,7 @@ import org.hibernate.search.spi.IndexedTypeIdentifier;
  * Creates Work instances that should be performed by Hibernate-Search.
  *
  * @author Marko Luksa
- * @deprecated since 10.1.1. To be removed in version 11 after migrating to Hibernate Search 6.
+ * @deprecated since 10.1.1. To be removed in version 12.0 after migrating to Hibernate Search 6.
  */
 public interface SearchWorkCreator {
 
