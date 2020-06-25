@@ -26,13 +26,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.UserPrincipal;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -1024,26 +1023,13 @@ public final class Util {
    }
 
    private static void recursiveDelete(File f) {
-      File absoluteFile = f.getAbsoluteFile();
-      if (absoluteFile.isDirectory()) {
-         File[] files = absoluteFile.listFiles();
-         if (files != null) {
-            for (File file : files) {
-               recursiveDelete(file);
-            }
-         }
-      }
-      if (!absoluteFile.delete()) {
-         UserPrincipal owner;
-         Set<PosixFilePermission> permissions;
-         try {
-            owner = Files.getOwner(absoluteFile.toPath());
-            permissions = Files.getPosixFilePermissions(absoluteFile.toPath());
-         } catch (Exception e) {
-            owner = null;
-            permissions = Collections.emptySet();
-         }
-         throw new IllegalStateException("Cannot delete " + absoluteFile + " owner=" + owner + " permissions=" + permissions);
+      try {
+         Files.walk(f.toPath())
+                 .sorted(Comparator.reverseOrder())
+                 .map(Path::toFile)
+                 .forEach(File::delete);
+      } catch (Exception e) {
+         throw new IllegalStateException(e);
       }
    }
 
