@@ -243,7 +243,7 @@
                             <goals>
                                 <goal>run</goal>
                             </goals>
-                            <phase>generate-resources</phase>
+                            <phase>process-resources</phase>
                             <configuration>
                                 <target>
                                     <ant antfile="build.xml" inheritRefs="true">
