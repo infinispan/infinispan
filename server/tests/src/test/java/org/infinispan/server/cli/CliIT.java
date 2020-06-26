@@ -1,16 +1,24 @@
 package org.infinispan.server.cli;
 
-import java.net.URL;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 import org.aesh.terminal.utils.Config;
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
+import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.AeshTestShell;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,6 +36,20 @@ public class CliIT {
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
+
+   private static File workingDir;
+
+   @BeforeClass
+   public static void setup() {
+      workingDir = new File(CommonsTestingUtil.tmpDirectory(CliIT.class));
+      Util.recursiveFileRemove(workingDir);
+      workingDir.mkdirs();
+   }
+
+   @AfterClass
+   public static void teardown() {
+      Util.recursiveFileRemove(workingDir);
+   }
 
    @Test
    public void testCliInteractive() {
@@ -55,8 +77,8 @@ public class CliIT {
          terminal.readln("describe k2");
          terminal.assertContains("\"timetoliveseconds\" : [ \"10\" ]");
 
-         terminal.readln("create cache --file=" + this.getClass().getResource("/cli/qcache.xml").getPath() + " qcache");
-         terminal.readln("schema -u=" + this.getClass().getResource("/cli/person.proto").getPath() + " person.proto");
+         terminal.readln("create cache --file=" + getCliResource("qcache.xml").getPath() + " qcache");
+         terminal.readln("schema -u=" + getCliResource("person.proto").getPath() + " person.proto");
          terminal.clear();
          terminal.readln("cd /containers/default/schemas");
          terminal.readln("ls");
@@ -64,7 +86,7 @@ public class CliIT {
          terminal.readln("cache qcache");
          terminal.assertContains("//containers/default/caches/qcache]>");
          for (String person : Arrays.asList("jessicajones", "dannyrandy", "lukecage", "matthewmurdock")) {
-            terminal.readln("put --encoding=application/json --file=" + this.getClass().getResource("/cli/" + person + ".json").getPath() + " " + person);
+            terminal.readln("put --encoding=application/json --file=" + getCliResource(person + ".json").getPath() + " " + person);
          }
          terminal.clear();
          terminal.readln("ls");
@@ -97,7 +119,7 @@ public class CliIT {
    public void testCliBatch() {
       System.setProperty("serverAddress", hostAddress());
       AeshTestShell shell = new AeshTestShell();
-      CLI.main(shell, new String[]{"-f", this.getClass().getResource("/cli/batch.cli").getPath()});
+      CLI.main(shell, new String[]{"-f", getCliResource("batch.cli").getPath()});
       shell.assertContains("Hi CLI running on " + System.getProperty("os.arch"));
       shell.assertContains("batch1");
    }
@@ -105,7 +127,7 @@ public class CliIT {
    @Test
    public void testCliBatchPreconnect() {
       AeshTestShell shell = new AeshTestShell();
-      CLI.main(shell, new String[]{connectionString(), "-f", this.getClass().getResource("/cli/batch-preconnect.cli").getPath()});
+      CLI.main(shell, new String[]{connectionString(), "-f", getCliResource("batch-preconnect.cli").getPath()});
       shell.assertContains("Hi CLI");
       shell.assertContains("batch2");
    }
@@ -121,7 +143,7 @@ public class CliIT {
          terminal.readln("task exec @@cache@names");
          terminal.assertContains("\"___script_cache\"");
          terminal.clear();
-         URL resource = this.getClass().getResource("/cli/hello.js");
+         File resource = getCliResource("hello.js");
          terminal.readln("task upload --file=" + resource.getPath() + " hello");
          terminal.readln("task exec hello -Pgreetee=world");
          terminal.assertContains("\"Hello world\"");
@@ -139,7 +161,7 @@ public class CliIT {
          terminal.clear();
 
          // upload
-         terminal.readln("schema --upload="+ this.getClass().getResource("/cli/person.proto").getPath() +" person.proto");
+         terminal.readln("schema --upload="+ getCliResource("person.proto").getPath() +" person.proto");
          terminal.clear();
          terminal.readln("cd /containers/default/schemas");
          terminal.readln("ls");
@@ -153,5 +175,21 @@ public class CliIT {
 
    private String connectionString() {
       return String.format("--connect=http://%s:11222", hostAddress());
+   }
+
+   private File getCliResource(String resource) {
+      Path dest = workingDir.toPath().resolve(resource);
+      File destFile = dest.toFile();
+      if (destFile.exists())
+         return destFile;
+
+      // Copy jar resources to the local working directory so that the CLI can find the files when the test is executed
+      // by an external module
+      try (InputStream is = getClass().getResourceAsStream("/cli/" + resource)) {
+         Files.copy(is, dest);
+         return dest.toFile();
+      } catch (IOException e) {
+         throw new IllegalStateException(e);
+      }
    }
 }
