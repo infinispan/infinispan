@@ -92,7 +92,7 @@
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
                <groups combine.self="override"/>
-               <excludedGroups combine.self="override"/>
+               <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                <parallel>none</parallel>
                <threadCount>${infinispan.test.parallel.threads}</threadCount>
                <forkCount>1</forkCount>

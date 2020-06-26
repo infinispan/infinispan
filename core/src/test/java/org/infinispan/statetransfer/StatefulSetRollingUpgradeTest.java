@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  * @since 11.0
  */
 @CleanupAfterMethod
-@Test(groups = "functional", testName = "statetransfer.StatefulSetRollingUpgradeTest")
+@Test(groups = {"functional", "unstable"}, testName = "statetransfer.StatefulSetRollingUpgradeTest")
 public class StatefulSetRollingUpgradeTest extends MultipleCacheManagersTest {
 
    private static final String CACHE_NAME = "testCache";
