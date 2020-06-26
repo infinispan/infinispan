@@ -40,7 +40,7 @@ public class CustomStoreOperationsIT {
    @Test
    public void testDefineCustomStoreAndUtilize() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-      configurationBuilder.encoding().mediaType(MediaType.APPLICATION_JBOSS_MARSHALLING_TYPE);
+      configurationBuilder.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
       configurationBuilder.persistence()
             .addStore(CustomStoreConfigurationBuilder.class)
             .customStoreClass(CustomNonBlockingStore.class);
