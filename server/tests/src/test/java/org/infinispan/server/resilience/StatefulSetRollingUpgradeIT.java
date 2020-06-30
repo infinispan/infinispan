@@ -10,7 +10,6 @@ import java.util.stream.IntStream;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
-import org.infinispan.commons.test.categories.Unstable;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
@@ -18,7 +17,6 @@ import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -33,7 +31,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * @since 11.0
  */
 @RunWith(Parameterized.class)
-@Category(Unstable.class)
 public class StatefulSetRollingUpgradeIT {
 
    private static final int NUM_ROLLING_UPGRADES = 4;
