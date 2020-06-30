@@ -354,6 +354,18 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    }
 
    @Test
+   public void testCorsSameOrigin() throws Exception {
+      int port = restServer().getPort();
+      ContentResponse response = client
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches", port))
+            .header(HttpHeader.ORIGIN, "http://origin-host.org")
+            .header(HttpHeader.HOST, "origin-host.org")
+            .send();
+
+      assertThat(response).isOk();
+   }
+
+   @Test
    public void testCORSAllOrigins() throws Exception {
       RestServerHelper restServerHelper = null;
       try {
