@@ -101,6 +101,10 @@
          <artifactId>infinispan-jboss-marshalling</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-anchored-keys</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.wildfly.security</groupId>
          <artifactId>wildfly-elytron</artifactId>
          <exclusions>
