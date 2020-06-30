@@ -24,11 +24,6 @@ import io.netty.handler.codec.TooLongFrameException;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaderValues;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpUtil;
-import io.netty.handler.codec.http.HttpVersion;
-import io.netty.handler.codec.http2.HttpConversionUtil;
 
 /**
  * Netty handler for REST requests.
@@ -126,7 +121,6 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
          try {
             if (throwable == null) {
                NettyRestResponse nettyRestResponse = (NettyRestResponse) restResponse;
-               addCorrelatedHeaders(request, nettyRestResponse.getResponse());
                sendResponse(ctx, request, nettyRestResponse);
             } else {
                handleError(ctx, request, throwable);
@@ -135,18 +129,6 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
             request.release();
          }
       });
-   }
-
-   private void addCorrelatedHeaders(FullHttpRequest request, HttpResponse response) {
-      String streamId = request.headers().get(HttpConversionUtil.ExtensionHeaderNames.STREAM_ID.text());
-      if (streamId != null) {
-         response.headers().add(HttpConversionUtil.ExtensionHeaderNames.STREAM_ID.text(), streamId);
-      }
-      boolean isKeepAlive = HttpUtil.isKeepAlive(request);
-      HttpVersion httpVersion = response.protocolVersion();
-      if ((httpVersion == HttpVersion.HTTP_1_1 || httpVersion == HttpVersion.HTTP_1_0) && isKeepAlive) {
-         response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-      }
    }
 
    @Override

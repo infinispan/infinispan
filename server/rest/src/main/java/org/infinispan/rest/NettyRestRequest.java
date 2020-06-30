@@ -56,7 +56,7 @@ public class NettyRestRequest implements RestRequest {
          if (c == '/') lastSeparatorIdx = i;
          if (c == '?') paramsSeparatorIdx = i;
       }
-      String baseURI = uri.substring(0, lastSeparatorIdx);
+      String baseURI = lastSeparatorIdx == -1 ? uri : uri.substring(0, lastSeparatorIdx);
       String resourceName = uri.substring(lastSeparatorIdx + 1, paramsSeparatorIdx != -1 ? paramsSeparatorIdx : uri.length());
       return baseURI + "/" + resourceName;
    }
