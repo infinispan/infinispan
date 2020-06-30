@@ -76,6 +76,7 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
     */
    protected void configureHttp2(ChannelPipeline pipeline) {
       pipeline.addLast(getHttp11To2ConnectionHandler());
+      pipeline.addLast(new ChunkedWriteHandler());
       pipeline.addLast("rest-handler-http2", new RestRequestHandler(restServer));
    }
 
