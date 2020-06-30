@@ -61,6 +61,7 @@ public class SerializationConfigUtil {
             return majorVersion == 8 ? new Infinispan8Marshaller(userExts) : new Infinispan9Marshaller(userExts);
          case 10:
          case 11:
+         case 12:
             if (props.isTargetStore())
                return null;
 
