@@ -1,15 +1,15 @@
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:11.0 https://infinispan.org/schemas/infinispan-config-11.0.xsd
-                            urn:infinispan:server:11.0 https://infinispan.org/schemas/infinispan-server-11.0.xsd"
-        xmlns="urn:infinispan:config:11.0"
-        xmlns:server="urn:infinispan:server:11.0">
+        xsi:schemaLocation="urn:infinispan:config:12.0 https://infinispan.org/schemas/infinispan-config-12.0.xsd
+                            urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
+        xmlns="urn:infinispan:config:12.0"
+        xmlns:server="urn:infinispan:server:12.0">
 
    <cache-container name="default" statistics="true">
       <transport cluster="${infinispan.cluster.name}" stack="${infinispan.cluster.stack:tcp}" node-name="${infinispan.node.name:}"/>
    </cache-container>
 
-   <server xmlns="urn:infinispan:server:11.0">
+   <server xmlns="urn:infinispan:server:12.0">
       <interfaces>
          <interface name="public">
             <inet-address value="${infinispan.bind.address:127.0.0.1}"/>
