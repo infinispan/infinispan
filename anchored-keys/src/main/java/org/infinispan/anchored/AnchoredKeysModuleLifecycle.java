@@ -5,6 +5,7 @@ import org.infinispan.anchored.impl.AnchorManager;
 import org.infinispan.anchored.impl.AnchoredDistributionInterceptor;
 import org.infinispan.anchored.impl.AnchoredFetchInterceptor;
 import org.infinispan.anchored.impl.AnchoredStateProvider;
+import org.infinispan.commons.logging.Log;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
@@ -28,7 +29,8 @@ import org.infinispan.statetransfer.StateProvider;
 @InfinispanModule(name = "anchored-keys", requiredModules = "core")
 public final class AnchoredKeysModuleLifecycle implements ModuleLifecycle, DynamicModuleMetadataProvider {
 
-   private GlobalComponentRegistry gcr;
+   public static final String ANCHORED_KEYS_FEATURE = "anchored-keys";
+
    private GlobalConfiguration globalConfiguration;
 
    @Override
@@ -37,19 +39,20 @@ public final class AnchoredKeysModuleLifecycle implements ModuleLifecycle, Dynam
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
-      this.gcr = gcr;
       this.globalConfiguration = globalConfiguration;
    }
 
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
-      AnchoredKeysConfiguration anchoredKeysConfiguration =
-            configuration.module(AnchoredKeysConfiguration.class);
+      AnchoredKeysConfiguration anchoredKeysConfiguration = configuration.module(AnchoredKeysConfiguration.class);
       if (anchoredKeysConfiguration == null || !anchoredKeysConfiguration.enabled())
          return;
 
       assert configuration.clustering().cacheMode().isReplicated();
       assert !configuration.clustering().stateTransfer().awaitInitialTransfer();
+
+      if (!globalConfiguration.features().isAvailable(ANCHORED_KEYS_FEATURE))
+         throw Log.CONFIG.featureDisabled(ANCHORED_KEYS_FEATURE);
 
       cr.registerComponent(new AnchorManager(), AnchorManager.class);
 
@@ -68,5 +71,4 @@ public final class AnchoredKeysModuleLifecycle implements ModuleLifecycle, Dynam
       bcr.replaceComponent(StateProvider.class.getName(), new AnchoredStateProvider(), true);
       cr.rewire();
    }
-
 }
