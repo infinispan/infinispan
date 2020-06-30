@@ -5,16 +5,17 @@ import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 
 import java.util.concurrent.TimeUnit;
 
 import org.assertj.core.api.Assertions;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.rest.client.NettyHttpClient;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -66,6 +67,28 @@ public final class Http2Test extends AbstractInfinispanTest {
    @Test
    public void shouldUseHTTP2WithPriorKnowledge() throws Exception {
       clearTextUpgrade(true);
+   }
+
+   @Test
+   public void shouldReportErrorCorrectly() throws Exception {
+      restServer = RestServerHelper.defaultRestServer()
+            .withKeyStore(KEY_STORE_PATH, "secret", "pkcs12")
+            .withTrustStore(KEY_STORE_PATH, "secret", "pkcs12")
+            .start(TestResourceTracker.getCurrentTestShortName());
+
+      RestClientConfigurationBuilder config = new RestClientConfigurationBuilder();
+
+      config.addServer().host(restServer.getHost()).port(restServer.getPort())
+            .protocol(HTTP_20).priorKnowledge(true)
+            .security().ssl().enable()
+            .trustStoreFileName(KEY_STORE_PATH).trustStorePassword("secret".toCharArray()).trustStoreType("pkcs12")
+            .keyStoreFileName(KEY_STORE_PATH).keyStorePassword("secret".toCharArray()).keyStoreType("pkcs12");
+
+      client = NettyHttpClient.forConfiguration(config.build());
+
+      FullHttpRequest getRequest = new DefaultFullHttpRequest(HTTP_1_1, GET, "invalid");
+      FullHttpResponse response = client.sendRequest(getRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
+      Assertions.assertThat(response.status().code()).isEqualTo(404);
    }
 
    @Test
