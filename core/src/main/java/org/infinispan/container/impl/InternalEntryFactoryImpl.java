@@ -232,142 +232,82 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
    }
 
    private InternalCacheEntry updateMetadataUnawareEntry(InternalCacheEntry ice, long lifespan, long maxIdle) {
-      if (ice instanceof ImmortalCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
+      if (lifespan < 0) {
+         if (maxIdle < 0) {
+            // Need extra check because MetadataImmortalCacheEntry extends ImmortalCacheEntry
+            if (ice instanceof ImmortalCacheEntry && !(ice instanceof MetadataImmortalCacheEntry)) {
+               return ice;
+            } else {
+               return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
+            }
+         } else {
+            if (ice instanceof TransientCacheEntry) {
+               ((TransientCacheEntry) ice).setMaxIdle(maxIdle);
                return ice;
             } else {
                return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle, timeService.wallClockTime());
             }
-         } else {
-            if (maxIdle < 0) {
-               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan, timeService.wallClockTime());
-            } else {
-               long ctm = timeService.wallClockTime();
-               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
-            }
          }
-      } else if (ice instanceof MortalCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
-               return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
-            } else {
-               return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle, timeService.wallClockTime());
-            }
-         } else {
-            if (maxIdle < 0) {
+      } else {
+         if (maxIdle < 0) {
+            if (ice instanceof MortalCacheEntry) {
                ((MortalCacheEntry) ice).setLifespan(lifespan);
                return ice;
             } else {
-               long ctm = timeService.wallClockTime();
-               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
-            }
-         }
-      } else if (ice instanceof TransientCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
-               return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
-            } else {
-               ((TransientCacheEntry) ice).setMaxIdle(maxIdle);
-               return ice;
+               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan, timeService.wallClockTime());
             }
          } else {
-            if (maxIdle < 0) {
-               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan, timeService.wallClockTime());
-            } else {
-               long ctm = timeService.wallClockTime();
-               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
-            }
-         }
-      } else if (ice instanceof TransientMortalCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
-               return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
-            } else {
-               return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle, timeService.wallClockTime());
-            }
-         } else {
-            if (maxIdle < 0) {
-               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan, timeService.wallClockTime());
-            } else {
+            if (ice instanceof TransientMortalCacheEntry) {
                TransientMortalCacheEntry transientMortalEntry = (TransientMortalCacheEntry) ice;
                transientMortalEntry.setLifespan(lifespan);
                transientMortalEntry.setMaxIdle(maxIdle);
                return ice;
+            } else {
+               long ctm = timeService.wallClockTime();
+               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
             }
          }
       }
-      return ice;
    }
 
    private InternalCacheEntry updateMetadataAwareEntry(InternalCacheEntry ice, Metadata metadata) {
       long lifespan = metadata.lifespan();
       long maxIdle = metadata.maxIdle();
-      if (ice instanceof MetadataImmortalCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
+      if (lifespan < 0) {
+         if (maxIdle < 0) {
+            if (ice instanceof MetadataImmortalCacheEntry) {
                ice.setMetadata(metadata);
                return ice;
             } else {
-               return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
+               return new MetadataImmortalCacheEntry(ice.getKey(), ice.getValue(), metadata);
             }
          } else {
-            if (maxIdle < 0) {
+            if (ice instanceof MetadataTransientCacheEntry) {
+               ice.setMetadata(metadata);
+               return ice;
+            } else {
+               return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata,
+                                                      timeService.wallClockTime());
+            }
+         }
+      } else {
+         if (maxIdle < 0) {
+            if (ice instanceof MetadataMortalCacheEntry) {
+               ice.setMetadata(metadata);
+               return ice;
+            } else {
                return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
+            }
+         } else {
+            if (ice instanceof MetadataTransientMortalCacheEntry) {
+               ice.setMetadata(metadata);
+               return ice;
             } else {
                long ctm = timeService.wallClockTime();
                return new MetadataTransientMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, ctm, ctm);
-            }
-         }
-      } else if (ice instanceof MetadataMortalCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
-               return new MetadataImmortalCacheEntry(ice.getKey(), ice.getValue(), metadata);
-            } else {
-               return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
-            }
-         } else {
-            if (maxIdle < 0) {
-               ice.setMetadata(metadata);
-               return ice;
-            } else {
-               long ctm = timeService.wallClockTime();
-               return new MetadataTransientMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, ctm, ctm);
-            }
-         }
-      } else if (ice instanceof MetadataTransientCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
-               return new MetadataImmortalCacheEntry(ice.getKey(), ice.getValue(), metadata);
-            } else {
-               ice.setMetadata(metadata);
-               return ice;
-            }
-         } else {
-            if (maxIdle < 0) {
-               return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
-            } else {
-               long ctm = timeService.wallClockTime();
-               return new MetadataTransientMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, ctm, ctm);
-            }
-         }
-      } else if (ice instanceof MetadataTransientMortalCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
-               return new MetadataImmortalCacheEntry(ice.getKey(), ice.getValue(), metadata);
-            } else {
-               return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
-            }
-         } else {
-            if (maxIdle < 0) {
-               return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
-            } else {
-               ice.setMetadata(metadata);
-               return ice;
             }
          }
       }
-      return ice;
    }
 
    /**
@@ -383,17 +323,7 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
     */
    public static boolean isStoreMetadata(Metadata metadata, InternalCacheEntry ice) {
       return metadata != null
-            && (ice == null || isEntryMetadataAware(ice))
             && (metadata.version() != null
                       || !(metadata instanceof EmbeddedMetadata));
    }
-
-
-   private static boolean isEntryMetadataAware(InternalCacheEntry ice) {
-      return ice instanceof MetadataImmortalCacheEntry
-            || ice instanceof MetadataMortalCacheEntry
-            || ice instanceof MetadataTransientCacheEntry
-            || ice instanceof MetadataTransientMortalCacheEntry;
-   }
-
 }
