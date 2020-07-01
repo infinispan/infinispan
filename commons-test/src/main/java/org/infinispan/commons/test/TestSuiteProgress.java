@@ -105,7 +105,8 @@ public class TestSuiteProgress {
          actualColor = color;
          actualReset = RESET;
       }
-      out.printf("%s[OK: %5s, KO: %5s, SKIP: %5s] %s%s%n", actualColor, succeeded.get(), failed.get(), skipped.get(), message, actualReset);
+      // Must format explicitly, see SUREFIRE-1814
+      out.println(String.format("%s[OK: %5s, KO: %5s, SKIP: %5s] %s%s", actualColor, succeeded.get(), failed.get(), skipped.get(), message, actualReset));
       if (t != null) {
          t.printStackTrace(out);
       }
