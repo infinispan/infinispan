@@ -1,15 +1,13 @@
 package org.infinispan.it.endpoints;
 
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertEquals;
 
-import java.io.IOException;
-
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.testng.annotations.Test;
 
@@ -23,7 +21,7 @@ import org.testng.annotations.Test;
 public class ProtoRegistrationJsonTest extends JsonIndexingProtobufStoreTest {
 
    @Override
-   protected RemoteCacheManager createRemoteCacheManager() throws IOException {
+   protected RemoteCacheManager createRemoteCacheManager() {
       SerializationContextInitializer sci = EndpointITSCI.INSTANCE;
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
             .addServer().host("localhost").port(hotRodServer.getPort())
@@ -31,12 +29,9 @@ public class ProtoRegistrationJsonTest extends JsonIndexingProtobufStoreTest {
             .build());
 
       //initialize server-side serialization context via rest endpoint
-      String metadataCacheEndpoint = String.format("http://localhost:%s/rest/v2/caches/%s", restServer.getPort(), PROTOBUF_METADATA_CACHE_NAME);
-      EntityEnclosingMethod put = new PutMethod(metadataCacheEndpoint + "/" + sci.getProtoFileName());
-      put.setRequestEntity(new StringRequestEntity(sci.getProtoFile(), "text/plain", "UTF-8"));
-
-      restClient.executeMethod(put);
-      assertEquals(put.getStatusCode(), HttpStatus.SC_NO_CONTENT);
+      RestEntity protoFile = RestEntity.create(MediaType.TEXT_PLAIN, sci.getProtoFile());
+      RestResponse response = join(restClient.cache(PROTOBUF_METADATA_CACHE_NAME).put(sci.getProtoFileName(), protoFile));
+      assertEquals(response.getStatus(), 204);
 
       return remoteCacheManager;
    }

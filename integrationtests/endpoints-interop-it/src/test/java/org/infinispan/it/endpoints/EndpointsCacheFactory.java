@@ -15,16 +15,19 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 
-import org.apache.commons.httpclient.HttpClient;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
@@ -61,7 +64,8 @@ public class EndpointsCacheFactory<K, V> {
 
    private Cache<K, V> embeddedCache;
    private RemoteCache<K, V> hotrodCache;
-   private HttpClient restClient;
+   private RestClient restClient;
+   private RestCacheClient restCacheClient;
    private MemcachedClient memcachedClient;
    private Transcoder transcoder;
 
@@ -72,7 +76,6 @@ public class EndpointsCacheFactory<K, V> {
    private final int numOwners;
    private final boolean l1Enable;
    private final boolean memcachedWithDecoder;
-   private int restPort;
 
    EndpointsCacheFactory(CacheMode cacheMode) {
       this(cacheMode, DEFAULT_NUM_OWNERS, false);
@@ -204,8 +207,10 @@ public class EndpointsCacheFactory<K, V> {
          rest.start(builder.build(), cacheManager);
          return rest;
       });
-      restPort = restServer.getPort();
-      restClient = new HttpClient();
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      builder.addServer().host(restServer.getHost()).port(restServer.getPort());
+      restClient = RestClient.forConfiguration(builder.build());
+      restCacheClient = restClient.cache(cacheName);
    }
 
    private void createMemcachedCache() throws IOException {
@@ -243,6 +248,7 @@ public class EndpointsCacheFactory<K, V> {
    }
 
    void teardown() {
+      Util.close(restClient);
       killRemoteCacheManager(hotrodClient);
       killServers(hotrod);
       killRestServer(rest);
@@ -273,10 +279,6 @@ public class EndpointsCacheFactory<K, V> {
       return hotrodCache;
    }
 
-   public HttpClient getRestClient() {
-      return restClient;
-   }
-
    public MemcachedClient getMemcachedClient() {
       return memcachedClient;
    }
@@ -285,8 +287,8 @@ public class EndpointsCacheFactory<K, V> {
       return memcached.getPort();
    }
 
-   public String getRestUrl() {
-      return String.format("http://localhost:%s/rest/v2/caches/%s", restPort, cacheName);
+   public RestCacheClient getRestCacheClient() {
+      return restCacheClient;
    }
 
    HotRodServer getHotrodServer() {

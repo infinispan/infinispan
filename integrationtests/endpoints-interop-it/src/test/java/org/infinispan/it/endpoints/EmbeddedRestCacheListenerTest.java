@@ -1,17 +1,12 @@
 package org.infinispan.it.endpoints;
 
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.IOException;
-
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
-import org.apache.commons.httpclient.methods.DeleteMethod;
-import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.Cache;
+import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -39,10 +34,9 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
       EndpointsCacheFactory.killCacheFactories(cacheFactory);
    }
 
-   public void testLoadingAndStoringEventsRest() throws IOException {
+   public void testLoadingAndStoringEventsRest() {
       Cache<String, String> embedded = cacheFactory.getEmbeddedCache();
-      HttpClient remote = cacheFactory.getRestClient();
-      String restUrl = cacheFactory.getRestUrl();
+      RestCacheClient remote = cacheFactory.getRestCacheClient();
 
       TestCacheListener l = new TestCacheListener();
       embedded.addListener(l);
@@ -52,10 +46,8 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
       assertTrue(l.modified.isEmpty());
       assertTrue(l.visited.isEmpty());
 
-      EntityEnclosingMethod put = new PutMethod(restUrl + "/k");
-      put.setRequestEntity(new ByteArrayRequestEntity(
-            "v".getBytes(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
-      remote.executeMethod(put);
+      RestEntity v = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, "v".getBytes());
+      join(remote.put("k", v));
 
       assertEquals(1, l.createdCounter);
       assertEquals("v".getBytes(), (byte[]) l.created.get("k"));
@@ -64,20 +56,16 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
       assertTrue(l.visited.isEmpty());
 
 
-      EntityEnclosingMethod put2 = new PutMethod(restUrl + "/key");
-      put2.setRequestEntity(new ByteArrayRequestEntity(
-            "value".getBytes(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
-      remote.executeMethod(put2);
+      RestEntity value = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, "value".getBytes());
+      join(remote.put("key", value));
 
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
       assertEquals(0, l.modifiedCounter);
       assertTrue(l.visited.isEmpty());
 
-      EntityEnclosingMethod put3 = new PutMethod(restUrl + "/key");
-      put3.setRequestEntity(new ByteArrayRequestEntity(
-            "modifiedValue".getBytes(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
-      remote.executeMethod(put3);
+      RestEntity modifiedValue = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, "modifiedValue".getBytes());
+      join(remote.put("key", modifiedValue));
 
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
@@ -85,10 +73,8 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
       assertEquals("modifiedValue".getBytes(), (byte[]) l.modified.get("key"));
       assertTrue(l.visited.isEmpty());
 
-      EntityEnclosingMethod post = new PutMethod(restUrl + "/k");
-      post.setRequestEntity(new ByteArrayRequestEntity(
-            "replacedValue".getBytes(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
-      remote.executeMethod(post);
+      RestEntity replacedValue = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, "replacedValue".getBytes());
+      join(remote.put("k", replacedValue));
 
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
@@ -99,8 +85,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
       //resetting so don't have to type "== 2" etc. all over again
       l.reset();
 
-      DeleteMethod delete = new DeleteMethod(restUrl + "/key");
-      remote.executeMethod(delete);
+      join(remote.remove("key"));
 
       assertTrue(l.created.isEmpty());
       assertEquals(1, l.removedCounter);
@@ -109,8 +94,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
 
       l.reset();
 
-      GetMethod get = new GetMethod(restUrl + "/k");
-      remote.executeMethod(get);
+      join(remote.get("k"));
 
       assertTrue(l.created.isEmpty());
       assertTrue(l.removed.isEmpty());

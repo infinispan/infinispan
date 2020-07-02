@@ -1,15 +1,12 @@
 package org.infinispan.it.endpoints;
 
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -32,15 +29,13 @@ public class EmbeddedRestHotRodWithStringTest extends AbstractInfinispanTest {
       EndpointsCacheFactory.killCacheFactories(cacheFactory);
    }
 
-   public void testRestPutStringHotRodGet() throws Exception {
+   public void testRestPutStringHotRodGet() {
       final String key = "1";
 
       // 1. Put text content with REST
-      EntityEnclosingMethod put = new PutMethod(cacheFactory.getRestUrl() + "/" + key);
-      put.setRequestEntity(new StringRequestEntity("<hey>ho</hey>", "text/plain", "UTF-8"));
-      HttpClient restClient = cacheFactory.getRestClient();
-      restClient.executeMethod(put);
-      assertEquals(HttpStatus.SC_NO_CONTENT, put.getStatusCode());
+      RestEntity value = RestEntity.create(MediaType.TEXT_PLAIN, "<hey>ho</hey>");
+      RestResponse response = join(cacheFactory.getRestCacheClient().put(key, value));
+      assertEquals(204, response.getStatus());
 
       // 3. Get with Hot Rod
       assertEquals("<hey>ho</hey>", cacheFactory.getHotRodCache().get(key));
@@ -53,10 +48,9 @@ public class EmbeddedRestHotRodWithStringTest extends AbstractInfinispanTest {
       hotRodCache.put(newKey, newValue);
 
       //5. Read with rest
-      HttpMethod get = new GetMethod(cacheFactory.getRestUrl() + "/" + newKey);
-      cacheFactory.getRestClient().executeMethod(get);
-      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
-      assertEquals(newValue, get.getResponseBodyAsString());
+      response = join(cacheFactory.getRestCacheClient().get(newKey));
+      assertEquals(200, response.getStatus());
+      assertEquals(newValue, response.getBody());
    }
 
 }

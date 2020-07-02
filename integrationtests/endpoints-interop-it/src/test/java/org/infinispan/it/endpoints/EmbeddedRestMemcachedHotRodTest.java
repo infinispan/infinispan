@@ -1,22 +1,19 @@
 package org.infinispan.it.endpoints;
 
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotSame;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
-import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -61,31 +58,27 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
       assertEquals("v1", cacheFactory.getEmbeddedCache().get(key));
 
       // 3. Get with REST
-      HttpMethod get = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
-      get.setRequestHeader("Accept", "text/plain");
-      cacheFactory.getRestClient().executeMethod(get);
-      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
-      assertEquals("v1", get.getResponseBodyAsString());
+      RestResponse response = join(cacheFactory.getRestCacheClient().get(key, MediaType.TEXT_PLAIN_TYPE));
+      assertEquals(200, response.getStatus());
+      assertEquals("v1", response.getBody());
 
       // 4. Get with Hot Rod
       assertEquals("v1", cacheFactory.getHotRodCache().get(key));
    }
 
-   public void testEmbeddedPutMemcachedRestHotRodGetTest() throws Exception {
+   public void testEmbeddedPutMemcachedRestHotRodGetTest() {
       final String key = "2";
 
       // 1. Put with Embedded
-      assertEquals(null, cacheFactory.getEmbeddedCache().put(key, "v1"));
+      assertNull(cacheFactory.getEmbeddedCache().put(key, "v1"));
 
       // 2. Get with Memcached
       assertEquals("v1", cacheFactory.getMemcachedClient().get(key));
 
       // 3. Get with REST
-      HttpMethod get = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
-      get.setRequestHeader("Accept", "text/plain");
-      cacheFactory.getRestClient().executeMethod(get);
-      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
-      assertEquals("v1", get.getResponseBodyAsString());
+      RestResponse response = join(cacheFactory.getRestCacheClient().get(key, MediaType.TEXT_PLAIN_TYPE));
+      assertEquals(200, response.getStatus());
+      assertEquals("v1", response.getBody());
 
       // 4. Get with Hot Rod
       assertEquals("v1", cacheFactory.getHotRodCache().get(key));
@@ -95,12 +88,9 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
       final String key = "3";
 
       // 1. Put with REST
-      EntityEnclosingMethod put = new PutMethod(cacheFactory.getRestUrl() + "/" + key);
-      put.setRequestEntity(new ByteArrayRequestEntity(
-            "<hey>ho</hey>".getBytes(), MediaType.TEXT_PLAIN_TYPE));
-      HttpClient restClient = cacheFactory.getRestClient();
-      restClient.executeMethod(put);
-      assertEquals(HttpStatus.SC_NO_CONTENT, put.getStatusCode());
+      RestEntity value = RestEntity.create(MediaType.TEXT_PLAIN, "<hey>ho</hey>");
+      RestResponse response = join(cacheFactory.getRestCacheClient().put(key, value));
+      assertEquals(204, response.getStatus());
 
       // 2. Get with Embedded (given a marshaller, it can unmarshall the result)
       assertEquals("<hey>ho</hey>", cacheFactory.getEmbeddedCache().get(key));
@@ -114,12 +104,12 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
             cacheFactory.getHotRodCache().get(key));
    }
 
-   public void testHotRodPutEmbeddedMemcachedRestGetTest() throws Exception {
+   public void testHotRodPutEmbeddedMemcachedRestGetTest() {
       final String key = "4";
 
       // 1. Put with Hot Rod
       RemoteCache<String, Object> remote = cacheFactory.getHotRodCache();
-      assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
+      assertNull(remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
 
       // 2. Get with Embedded
       assertEquals("v1", cacheFactory.getEmbeddedCache().get(key));
@@ -128,11 +118,9 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
       assertEquals("v1", cacheFactory.getMemcachedClient().get(key));
 
       // 4. Get with REST
-      HttpMethod get = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
-      get.setRequestHeader("Accept", "text/plain");
-      cacheFactory.getRestClient().executeMethod(get);
-      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
-      assertEquals("v1", get.getResponseBodyAsString());
+      RestResponse response = join(cacheFactory.getRestCacheClient().get(key, MediaType.TEXT_PLAIN_TYPE));
+      assertEquals(200, response.getStatus());
+      assertEquals("v1", response.getBody());
    }
 
    public void testEmbeddedReplaceMemcachedCASTest() throws Exception {

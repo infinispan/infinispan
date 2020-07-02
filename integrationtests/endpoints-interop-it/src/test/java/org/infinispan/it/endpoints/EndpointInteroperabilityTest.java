@@ -1,7 +1,6 @@
 package org.infinispan.it.endpoints;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
@@ -13,24 +12,24 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
-import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
-import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCacheManagerAdmin;
+import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.RestClientConfiguration;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.StandardConversions;
@@ -40,6 +39,7 @@ import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.rest.RequestHeader;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
@@ -77,7 +77,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
    private RestServer restServer;
    private HotRodServer hotRodServer;
-   private HttpClient restClient;
+   private RestClient restClient;
    private EmbeddedCacheManager cacheManager;
 
    private RemoteCache<byte[], byte[]> defaultRemoteCache;
@@ -96,7 +96,9 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       builder.port(findFreePort());
       restServer = new RestServer();
       restServer.start(builder.build(), cacheManager);
-      restClient = new HttpClient();
+      RestClientConfigurationBuilder clientBuilder = new RestClientConfigurationBuilder();
+      RestClientConfiguration configuration = clientBuilder.addServer().host(restServer.getHost()).port(restServer.getPort()).build();
+      restClient = RestClient.forConfiguration(configuration);
 
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
@@ -181,7 +183,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testIntegerKeysAndByteArrayValue() throws Exception {
+   public void testIntegerKeysAndByteArrayValue() {
       String integerKeyType = "application/x-java-object; type=java.lang.Integer";
       byte[] value = {12};
       byte[] otherValue = "random".getBytes(UTF_8);
@@ -246,7 +248,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testStringKeysAndStringValues() throws Exception {
+   public void testStringKeysAndStringValues() {
       // Write via Hot Rod (the HR client is configured with a String marshaller)
       stringRemoteCache.put("key", "Hello World");
       assertEquals(stringRemoteCache.get("key"), "Hello World");
@@ -308,7 +310,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testByteArrayKeysAndByteArrayValues() throws Exception {
+   public void testByteArrayKeysAndByteArrayValues() {
       // Write via Hot Rod the byte[] content directly
       byte[] key = new byte[]{0x13, 0x26};
       byte[] value = new byte[]{10, 20};
@@ -330,7 +332,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Write via rest
       new RestRequest().cache(DEFAULT_CACHE_NAME)
-            .key("0x00000001", MediaType.APPLICATION_OCTET_STREAM.withParameter("encoding", "hex").toString())
+            .key("0x00000001", APPLICATION_OCTET_STREAM.withParameter("encoding", "hex").toString())
             .value(value)
             .write();
 
@@ -364,14 +366,14 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testCacheLifecycle() throws Exception {
+   public void testCacheLifecycle() {
       // Write from Hot Rod
       stringRemoteCache.put("key", "Hello World");
       assertEquals(stringRemoteCache.get("key"), "Hello World");
 
       // Read from REST
       RestRequest restRequest = new RestRequest().cache(STRING_CACHE_NAME).key("key").accept(TEXT_PLAIN);
-      assertEquals(restRequest.executeGet().getResponseBodyAsString(), "Hello World");
+      assertEquals(restRequest.executeGet().getBody(), "Hello World");
 
       // Delete the cache
       RemoteCacheManagerAdmin admin = stringRemoteCache.getRemoteCacheManager().administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE);
@@ -379,7 +381,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Check cache not available
       assertClientError(() -> stringRemoteCache.get("key"), "CacheNotFoundException");
-      assertEquals(restRequest.executeGet().getStatusCode(), HttpStatus.SC_NOT_FOUND);
+      assertEquals(restRequest.executeGet().getStatus(), 404);
 
       // Recreate the cache
       RemoteCache<String, String> recreated = admin.getOrCreateCache(stringRemoteCache.getName(), new ConfigurationBuilder()
@@ -392,7 +394,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       assertEquals(recreated.get("key"), "Hello World");
 
       // Read from REST
-      assertEquals(restRequest.executeGet().getResponseBodyAsString(), "Hello World");
+      assertEquals(restRequest.executeGet().getBody(), "Hello World");
    }
 
    private void assertClientError(Runnable runnable, String messagePart) {
@@ -402,10 +404,6 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
          String message = t.getMessage();
          assertTrue(message != null && message.contains(messagePart));
       }
-   }
-
-   private String getEndpoint(String cache) {
-      return String.format("http://localhost:%s/rest/v2/caches/%s", restServer.getPort(), cache);
    }
 
    private String asString(Object content) {
@@ -422,9 +420,11 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       private String keyContentType;
       private MediaType accept;
       private String contentType;
+      private RestCacheClient restCacheClient;
 
       public RestRequest cache(String cacheName) {
          this.cacheName = cacheName;
+         this.restCacheClient = restClient.cache(cacheName);
          return this;
       }
 
@@ -461,39 +461,40 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
          return this;
       }
 
-      void write() throws Exception {
-         EntityEnclosingMethod post = new PostMethod(getEndpoint(this.cacheName) + "/" + this.key);
-         if (this.keyContentType != null) {
-            post.addRequestHeader("Key-Content-Type", this.keyContentType);
-         }
+      void write() {
+         RestEntity restEntity;
          if (this.value instanceof byte[]) {
-            String contentType = this.contentType == null ? APPLICATION_OCTET_STREAM_TYPE : this.contentType;
-            post.setRequestEntity(new ByteArrayRequestEntity((byte[]) this.value, contentType));
+            MediaType contentType = this.contentType == null ? APPLICATION_OCTET_STREAM : MediaType.fromString(this.contentType);
+            restEntity = RestEntity.create(contentType, (byte[]) this.value);
          } else {
             String payload = this.value.toString();
-            String contentType = this.contentType == null ? TEXT_PLAIN_TYPE : this.contentType;
-            post.setRequestEntity(new StringRequestEntity(payload, contentType, UTF_8.toString()));
+            MediaType contentType = this.contentType == null ? TEXT_PLAIN : MediaType.fromString(this.contentType);
+            restEntity = RestEntity.create(contentType, payload);
          }
-         restClient.executeMethod(post);
-         assertEquals(post.getStatusCode(), HttpStatus.SC_NO_CONTENT);
+         RestResponse response;
+         if (this.keyContentType != null) {
+            response = join(restCacheClient.put(this.key.toString(), keyContentType, restEntity));
+         } else {
+            response = join(restCacheClient.put(this.key.toString(), restEntity));
+         }
+         assertEquals(204, response.getStatus());
       }
 
-      HttpMethod executeGet() throws IOException {
-         HttpMethod get = new GetMethod(getEndpoint(this.cacheName) + "/" + this.key);
+      RestResponse executeGet() {
+         Map<String, String> headers = new HashMap<>();
          if (this.accept != null) {
-            get.setRequestHeader(ACCEPT, this.accept.toString());
+            headers.put(RequestHeader.ACCEPT_HEADER.getValue(), this.accept.toString());
          }
          if (keyContentType != null) {
-            get.setRequestHeader("Key-Content-Type", this.keyContentType);
+            headers.put(RequestHeader.KEY_CONTENT_TYPE_HEADER.getValue(), this.keyContentType);
          }
-         restClient.executeMethod(get);
-         return get;
+         return join(restCacheClient.get(this.key.toString(), headers));
       }
 
-      Object read() throws IOException {
-         HttpMethod get = executeGet();
-         assertEquals(get.getStatusCode(), HttpStatus.SC_OK);
-         return get.getResponseBody();
+      Object read() {
+         RestResponse response = executeGet();
+         assertEquals(response.getStatus(), 200);
+         return response.getBodyAsByteArray();
       }
    }
 
@@ -504,6 +505,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       stringRemoteCache.getRemoteCacheManager().stop();
       if (restServer != null) {
          try {
+            restClient.close();
             restServer.stop();
          } catch (Exception ignored) {
          }

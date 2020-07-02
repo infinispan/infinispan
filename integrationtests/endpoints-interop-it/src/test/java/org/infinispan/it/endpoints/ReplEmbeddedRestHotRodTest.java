@@ -1,17 +1,15 @@
 package org.infinispan.it.endpoints;
 
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
-import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
@@ -43,16 +41,13 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
       EndpointsCacheFactory.killCacheFactories(cacheFactory1, cacheFactory2);
    }
 
-   public void testRestPutEmbeddedHotRodGet() throws Exception {
+   public void testRestPutEmbeddedHotRodGet() {
       final String key = "1";
 
       // 1. Put with REST
-      EntityEnclosingMethod put = new PutMethod(cacheFactory1.getRestUrl() + "/" + key);
-      put.setRequestEntity(new ByteArrayRequestEntity(
-            "<hey>ho</hey>".getBytes(), MediaType.TEXT_PLAIN_TYPE));
-      HttpClient restClient = cacheFactory1.getRestClient();
-      restClient.executeMethod(put);
-      assertEquals(HttpStatus.SC_NO_CONTENT, put.getStatusCode());
+      RestEntity value = RestEntity.create(MediaType.TEXT_PLAIN, "<hey>ho</hey>".getBytes());
+      RestResponse response = join(cacheFactory1.getRestCacheClient().put(key, value));
+      assertEquals(204, response.getStatus());
 
       // 2. Get with Embedded
       Cache embeddedCache = cacheFactory2.getEmbeddedCache().getAdvancedCache();
@@ -62,26 +57,24 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
       assertEquals("<hey>ho</hey>", cacheFactory2.getHotRodCache().get(key));
    }
 
-   public void testEmbeddedPutRestHotRodGet() throws Exception {
+   public void testEmbeddedPutRestHotRodGet() {
       final String key = "2";
 
       // 1. Put with Embedded, bypassing all encodings
       Cache cache = cacheFactory2.getEmbeddedCache().getAdvancedCache().withEncoding(IdentityEncoder.class);
-      assertEquals(null, cache.put(key, "v1"));
+      assertNull(cache.put(key, "v1"));
 
       // 2. Get with Hot Rod via remote client, will use the configured encoding
       assertEquals("v1", cacheFactory1.getHotRodCache().get(key));
 
       // 3. Get with REST, specifying the results as 'text'
-      HttpMethod get = new GetMethod(cacheFactory2.getRestUrl() + "/" + key);
-      get.setRequestHeader("Accept", "text/plain");
+      RestResponse response = join(cacheFactory2.getRestCacheClient().get(key, TEXT_PLAIN_TYPE));
 
-      cacheFactory2.getRestClient().executeMethod(get);
-      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
-      assertEquals("v1", get.getResponseBodyAsString());
+      assertEquals(200, response.getStatus());
+      assertEquals("v1", response.getBody());
    }
 
-   public void testHotRodPutEmbeddedRestGet() throws Exception {
+   public void testHotRodPutEmbeddedRestGet() {
       final String key = "3";
 
       // 1. Put with Hot Rod
@@ -93,10 +86,9 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
       assertEquals("v1", embeddedCache.get(key));
 
       // 3. Get with REST
-      HttpMethod get = new GetMethod(cacheFactory2.getRestUrl() + "/" + key);
-      get.setRequestHeader("Accept", "text/plain");
-      cacheFactory2.getRestClient().executeMethod(get);
-      assertEquals(HttpStatus.SC_OK, get.getStatusCode());
-      assertEquals("v1", get.getResponseBodyAsString());
+      RestResponse response = join(cacheFactory2.getRestCacheClient().get(key, TEXT_PLAIN_TYPE));
+
+      assertEquals(200, response.getStatus());
+      assertEquals("v1", response.getBody());
    }
 }

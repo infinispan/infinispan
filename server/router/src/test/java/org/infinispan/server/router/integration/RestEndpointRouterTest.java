@@ -1,10 +1,19 @@
 package org.infinispan.server.router.integration;
 
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.util.concurrent.CompletionStages.join;
 
 import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
 
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestRawClient;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.client.rest.configuration.ServerConfigurationBuilder;
+import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.util.Util;
 import org.infinispan.rest.RestServer;
 import org.infinispan.server.router.Router;
 import org.infinispan.server.router.configuration.builder.RouterConfigurationBuilder;
@@ -12,9 +21,7 @@ import org.infinispan.server.router.router.EndpointRouter;
 import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.rest.RestRouteSource;
 import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
-import org.infinispan.server.router.utils.RestClient;
 import org.infinispan.server.router.utils.RestTestingUtil;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -25,6 +32,7 @@ public class RestEndpointRouterTest {
     private RestServer restServer1;
     private RestServer restServer2;
     private Router router;
+    private RestClient restClient;
 
     @BeforeClass
     public static void beforeClass() {
@@ -38,6 +46,7 @@ public class RestEndpointRouterTest {
 
     @After
     public void tearDown() {
+        Util.close(restClient);
         router.stop();
         restServer1.getCacheManager().stop();
         restServer1.stop();
@@ -79,12 +88,18 @@ public class RestEndpointRouterTest {
         int port = router.getRouter(EndpointRouter.Protocol.REST).get().getPort();
 
         //when
-        RestClient rest1Client = new RestClient("http://127.0.0.1:" + port + "/rest/rest1/v2/caches/").cache("default");
-        RestClient rest2Client = new RestClient("http://127.0.0.1:" + port + "/rest/rest2/v2/caches/").cache("default");
-        rest1Client.put("test", "rest1");
-        rest2Client.put("test", "rest2");
-        String valueReturnedFromRest1 = rest1Client.get("test");
-        String valueReturnedFromRest2 = rest2Client.get("test");
+        ServerConfigurationBuilder builder = new RestClientConfigurationBuilder().addServer().host("127.0.0.1").port(port);
+        restClient = RestClient.forConfiguration(builder.build());
+        RestRawClient rawClient = restClient.raw();
+
+        String path1 = "/rest/rest1/v2/caches/default/test";
+        String path2 = "/rest/rest2/v2/caches/default/test";
+
+        join(rawClient.putValue(path1, emptyMap(), "rest1", TEXT_PLAIN_TYPE));
+        join(rawClient.putValue(path2, emptyMap(), "rest2", TEXT_PLAIN_TYPE));
+
+        String valueReturnedFromRest1 = join(rawClient.get(path1)).getBody();
+        String valueReturnedFromRest2 = join(rawClient.get(path2)).getBody();
 
         //then
         assertThat(valueReturnedFromRest1).isEqualTo("rest1");

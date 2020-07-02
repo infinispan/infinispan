@@ -97,8 +97,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-client-rest</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -1,12 +1,11 @@
 package org.infinispan.marshaller.test;
 
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
-import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
+import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.it.endpoints.EmbeddedRestMemcachedHotRodTest;
 import org.infinispan.it.endpoints.EndpointsCacheFactory;
@@ -33,11 +32,10 @@ public abstract class AbstractInteropTest extends EmbeddedRestMemcachedHotRodTes
 
       // 1. Put with REST
       byte[] bytes = marshaller.objectToByteBuffer(value);
-      EntityEnclosingMethod put = new PutMethod(cacheFactory.getRestUrl() + "/" + key);
-      put.setRequestEntity(new ByteArrayRequestEntity(bytes, marshaller.mediaType().toString()));
-      HttpClient restClient = cacheFactory.getRestClient();
-      restClient.executeMethod(put);
-      assertEquals(HttpStatus.SC_NO_CONTENT, put.getStatusCode());
+
+      RestCacheClient restClient = cacheFactory.getRestCacheClient();
+      RestResponse response = join(restClient.put(key, RestEntity.create(marshaller.mediaType(), bytes)));
+      assertEquals(204, response.getStatus());
 
       // 2. Get with Embedded (given a marshaller, it can unmarshall the result)
       assertEquals(value, cacheFactory.getEmbeddedCache().get(key));
