@@ -1,0 +1,16 @@
+[id='sb_starter_server']
+:context: starter_server
+= Running in Server Mode
+
+Store and retrieve data from remote {brandname} clusters using Hot Rod, a
+custom TCP binary wire protocol.
+
+include::{topics}/proc_configuring_remotecm_bean.adoc[leveloffset=+1]
+include::{topics}/proc_spring_boot_serialization.adoc[leveloffset=+1]
+include::{topics}/ref_remote_custom_beans.adoc[leveloffset=+1]
+include::{topics}/proc_enabling_spring_cache.adoc[leveloffset=+1]
+include::{topics}/proc_exposing_statistics_actuator.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

@@ -1,0 +1,30 @@
+= Setting Up the RemoteCacheManager
+
+. Provide the location for the {brandname} server so the starter can create the `RemoteCacheManager` bean.
++
+The starter first tries to find the server location in
+`hotrod-client.properties` and then from `application.properties`.
++
+. Use the Spring `@Autowired` annotation to include your own custom cache manager class in your application:
++
+[source,java,options="nowrap"]
+----
+include::code_examples/AutowiredRemoteCacheManager.java[]
+----
+
+.Hot Rod client properties
+
+Specify client configuration in `hotrod-client.properties` on your classpath,
+for example:
+
+[source,text,options=nowrap]
+----
+# List Infinispan or Data Grid servers by IP address or hostname at port 11222.
+infinispan.client.hotrod.server_list=127.0.0.1:6667
+----
+
+For more information, see link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[org.infinispan.client.hotrod.configuration].
+
+.Application properties
+
+Configure your project with `application.properties`. See link:#sb_starter_properties[Application Properties] for more information.

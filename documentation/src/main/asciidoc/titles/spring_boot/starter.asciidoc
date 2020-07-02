@@ -1,0 +1,30 @@
+//Directory attributes
+:stories: ../../stories
+:topics: ../topics
+:imagesdir: ../{topics}/images
+
+//Community doc attributes
+include::../{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+:stem: asciimath
+:context: server
+
+= {brandname} Spring Boot Starter
+
+The {brandname} starter provides a set of managed transitive dependencies that
+include everything your Spring Boot project needs to seamlessly interact with
+{brandname}.
+
+[TIP]
+====
+The {brandname} Spring Boot starter gives you a convenient way to get started
+with Spring Boot but is optional. To use {brandname} with Spring Boot you can
+simply add the dependencies you want.
+====
+
+include::stories.adoc[]

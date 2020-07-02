@@ -556,4 +556,20 @@ public class ConfigurationProperties {
    public void setJavaSerialWhitelist(String javaSerialWhitelist) {
       props.setProperty(JAVA_SERIAL_WHITELIST, javaSerialWhitelist);
    }
+
+   public void setTransactionMode(String transactionMode) {
+      props.setProperty(TRANSACTION_MODE, transactionMode);
+   }
+
+   public String getTransactionMode() {
+      return props.getProperty(TRANSACTION_MODE);
+   }
+
+   public void setTransactionTimeout(int transactionTimeout) {
+      props.setProperty(TRANSACTION_TIMEOUT, transactionTimeout);
+   }
+
+   public int getTransactionTimeout() {
+      return props.getIntProperty(TRANSACTION_TIMEOUT, DEFAULT_SO_TIMEOUT);
+   }
 }

@@ -127,6 +127,7 @@
       <module>spring/spring5/spring5-common</module>
       <module>spring/spring5/spring5-embedded</module>
       <module>spring/spring5/spring5-remote</module>
+      <module>spring/spring-boot</module>
       <module>cli/cli-client</module>
       <module>tasks/api</module>
       <module>tasks/manager</module>
@@ -387,6 +388,9 @@
       <versionx.org.springframework.boot.spring-boot-starter-security>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-security>
       <versionx.org.springframework.boot.spring-boot-starter-test>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-test>
       <versionx.org.springframework.boot.spring-boot-starter-web>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-web>
+      <versionx.org.springframework.boot.spring-boot-configuration-processor>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-configuration-processor>
+      <versionx.org.springframework.boot.spring-boot-starter-actuator>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-actuator>
+      <versionx.org.springframework.boot.spring-boot-autoconfigure-processor>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-autoconfigure-processor>
       <versionx.org.springframework.session.spring-session>${version.spring.session}</versionx.org.springframework.session.spring-session>
       <versionx.org.springframework.spring-beans>${version.spring5}</versionx.org.springframework.spring-beans>
       <versionx.org.springframework.spring-context>${version.spring5}</versionx.org.springframework.spring-context>
@@ -396,6 +400,7 @@
       <versionx.org.springframework.spring-jdbc>${version.spring5}</versionx.org.springframework.spring-jdbc>
       <versionx.org.springframework.spring-test>${version.spring5}</versionx.org.springframework.spring-test>
       <versionx.org.testcontainers.testcontainers>1.14.0</versionx.org.testcontainers.testcontainers>
+      <versionx.micrometer>${version.micrometer}</versionx.micrometer>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
       <versionx.org.twdata.maven.mojo-executor>2.3.1</versionx.org.twdata.maven.mojo-executor>
       <versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>
@@ -1194,6 +1199,26 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring5-embedded</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring5-remote</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring-boot-starter-embedded</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring-boot-starter-remote</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-query</artifactId>
             <version>${version.infinispan}</version>
             <classifier>tests</classifier>
@@ -1616,10 +1641,34 @@
             <scope>test</scope>
          </dependency>
          <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <version>${versionx.org.springframework.boot.spring-boot-configuration-processor}</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+            <version>${versionx.org.springframework.boot.spring-boot-starter-actuator}</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure-processor</artifactId>
+            <version>${versionx.org.springframework.boot.spring-boot-autoconfigure-processor}</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
             <groupId>org.springframework.session</groupId>
             <artifactId>spring-session-core</artifactId>
             <version>${versionx.org.springframework.session.spring-session}</version>
             <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-test</artifactId>
+            <version>${versionx.micrometer}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.testcontainers</groupId>
@@ -3098,6 +3147,8 @@
                               <source>${dir.ispn}/spring/spring5/spring5-common/src/main/java</source>
                               <source>${dir.ispn}/spring/spring5/spring5-embedded/src/main/java</source>
                               <source>${dir.ispn}/spring/spring5/spring5-remote/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring-boot/embedded/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring-boot/remote/src/main/java</source>
                               <source>${dir.ispn}/tasks/src/main/java</source>
                               <source>${dir.ispn}/tasks-api/src/main/java</source>
                               <source>${dir.ispn}/tools/src/main/java</source>

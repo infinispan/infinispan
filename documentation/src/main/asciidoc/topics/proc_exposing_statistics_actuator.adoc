@@ -1,0 +1,31 @@
+= Exposing {brandname} Statistics
+
+{brandname} supports the Spring Boot Actuator to expose cache statistics as metrics.
+
+To use the Actuator, add the following to your `pom.xml` file:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/sb_actuator.xml[]
+----
+
+You must then activate statistics for the appropriate cache instances, either programmatically or declaratively.
+
+.Programmatically
+[source,java,options="nowrap"]
+----
+include::code_examples/EnableJmxStatisticsSpringBoot.java[]
+----
+
+.Declaratively
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/jmx_statistics.xml[]
+----
+
+The Spring Boot Actuator registry binds cache instances when your application starts. If you create caches dynamically, you should use the `CacheMetricsRegistrar` bean to bind caches to the Actuator registry, as follows:
+
+[source,java,options="nowrap"]
+----
+include::code_examples/CacheMetricsRegistrar.java[]
+----

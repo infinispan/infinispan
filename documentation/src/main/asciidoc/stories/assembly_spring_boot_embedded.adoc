@@ -1,0 +1,13 @@
+[id='sb_starter_embedded']
+:context: starter_embedded
+= Running in Embedded Mode
+
+Embed the {brandname} library in your project for in-memory data storage.
+
+include::{topics}/proc_adding_embeddedcm_bean.adoc[leveloffset=+1]
+include::{topics}/ref_embedded_custom_beans.adoc[leveloffset=+1]
+include::{topics}/proc_enabling_spring_cache.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

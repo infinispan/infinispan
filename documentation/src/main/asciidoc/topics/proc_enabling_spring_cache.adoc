@@ -1,0 +1,15 @@
+= Enabling Spring Cache Support
+With both embedded and remote {brandname} provides an implementation of Spring Cache that you can enable.
+
+.Procedure
+
+Add the `@EnableCaching` annotation to your application.
+
+If the {brandname} starter detects the:
+
+* `EmbeddedCacheManager` bean, it instantiates a new `SpringEmbeddedCacheManager`.
+* `RemoteCacheManager` bean, it instantiates a new `SpringRemoteCacheManager`.
+
+.Reference
+
+link:https://docs.spring.io/spring/docs/current/spring-framework-reference/html/cache.html[Spring Cache Reference]

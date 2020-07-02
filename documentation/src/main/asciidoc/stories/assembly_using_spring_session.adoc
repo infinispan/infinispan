@@ -1,0 +1,9 @@
+[id='sb_starter_session']
+:context: spring_session
+= Using Spring Session
+
+include::{topics}/proc_enabling_spring_session.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

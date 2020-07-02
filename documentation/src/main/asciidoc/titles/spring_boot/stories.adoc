@@ -1,0 +1,5 @@
+include::{stories}/assembly_create_spring_boot_project.adoc[leveloffset=+1]
+include::{stories}/assembly_spring_boot_embedded.adoc[leveloffset=+1]
+include::{stories}/assembly_spring_boot_remote.adoc[leveloffset=+1]
+include::{stories}/assembly_using_spring_session.adoc[leveloffset=+1]
+include::{stories}/assembly_spring_application_properties.adoc[leveloffset=+1]

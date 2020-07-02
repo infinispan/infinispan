@@ -1,0 +1,16 @@
+= Configuring Marshalling
+Configure {brandname} servers to use Java serialization to marshall objects.
+
+By default {brandname} server uses a ProtoStream serialization library as the
+default marshaller. However, the ProtoStream marshaller is not supported for
+Spring integration. For this reason you should use the Java Serialization Marshaller.
+
+* Specify the following properties in your `application.properties`:
++
+----
+infinispan.remote.marshaller=org.infinispan.commons.marshall.JavaSerializationMarshaller <1>
+infinispan.remote.java-serial-whitelist=your_marshalled_beans_package.* <2>
+----
+
+<1> Use the Java Serialization Marshaller.
+<2> Adds your classes to the serialization whitelist so {brandname} marshalls your objects. You can specify a comma-separated list of fully qualified class names or a regular expression to match classes.

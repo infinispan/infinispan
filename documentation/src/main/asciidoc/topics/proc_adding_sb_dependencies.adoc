@@ -1,0 +1,15 @@
+= Adding Dependencies for Usage Modes
+
+{brandname} provides different dependencies for each usage mode. Add one of the following to your `pom.xml` file:
+
+.Embedded Mode
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/sb_embedded.xml[]
+----
+
+.Remote Client/Server Mode
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/sb_remote.xml[]
+----

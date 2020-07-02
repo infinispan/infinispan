@@ -1,1 +1,1 @@
-<local-cache statistics="true"/>
+<local-cache name="mycache" statistics="true"/>
