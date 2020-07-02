@@ -87,6 +87,8 @@ public class ThreadLeakChecker {
                       "|testcontainers" +
                       "|Okio Watchdog" +
                       "|OkHttp ConnectionPool" +
+                       // OkHttp uses daemon threads for HTTP/2
+                      "|OkHttp Http2Connection" +
                       ").*");
    private static final String ARQUILLIAN_CONSOLE_CONSUMER =
       "org.jboss.as.arquillian.container.managed.ManagedDeployableContainer$ConsoleConsumer";

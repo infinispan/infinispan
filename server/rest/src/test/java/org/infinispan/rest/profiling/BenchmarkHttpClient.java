@@ -1,10 +1,6 @@
 package org.infinispan.rest.profiling;
 
-import static io.netty.buffer.Unpooled.wrappedBuffer;
-import static io.netty.handler.codec.http.HttpMethod.GET;
-import static io.netty.handler.codec.http.HttpMethod.POST;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-
+import java.io.IOException;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ExecutorCompletionService;
@@ -13,12 +9,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Eventually;
-import org.infinispan.rest.client.NettyHttpClient;
 
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.util.CharsetUtil;
 
 /**
@@ -31,13 +28,17 @@ import io.netty.util.CharsetUtil;
  */
 public class BenchmarkHttpClient {
 
-   private final NettyHttpClient nettyHttpClient;
+   private static final RestEntity CACHE_VALUE = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, "test".getBytes(CharsetUtil.UTF_8));
+
+   private final RestCacheClient cacheClient;
 
    private final ExecutorCompletionService executorCompletionService;
    private final ExecutorService executor;
+   private final RestClient client;
 
    public BenchmarkHttpClient(RestClientConfiguration configuration, int threads) {
-      nettyHttpClient = NettyHttpClient.forConfiguration(configuration);
+      client = RestClient.forConfiguration(configuration);
+      cacheClient = client.cache("default");
       executor = Executors.newFixedThreadPool(threads);
       executorCompletionService = new ExecutorCompletionService(executor);
    }
@@ -48,9 +49,8 @@ public class BenchmarkHttpClient {
       for (int i = 0; i < numberOfGets; ++i) {
          String key = r.nextInt(100) < pertentageOfMisses ? nonExistingKey : existingKey;
          executorCompletionService.submit(() -> {
-            FullHttpRequest getRequest = new DefaultFullHttpRequest(HTTP_1_1, GET, "/rest/v2/caches/default/" + key);
             count.incrementAndGet();
-            nettyHttpClient.sendRequest(getRequest).whenComplete((response, e) -> count.decrementAndGet());
+            cacheClient.get(key).whenComplete((resp, e) -> count.decrementAndGet());
             return 1;
          });
       }
@@ -62,18 +62,16 @@ public class BenchmarkHttpClient {
       for (int i = 0; i < numberOfInserts; ++i) {
          String randomKey = UUID.randomUUID().toString();
          executorCompletionService.submit(() -> {
-            FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/v2/caches/default/" + randomKey,
-                  wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
             count.incrementAndGet();
-            nettyHttpClient.sendRequest(putValueInCacheRequest).whenComplete((response, e) -> count.decrementAndGet());
+            cacheClient.post(randomKey, CACHE_VALUE).whenComplete((response, e) -> count.decrementAndGet());
             return 1;
          });
       }
       Eventually.eventually(() -> count.get() == 0);
    }
 
-   public void stop() {
-      nettyHttpClient.stop();
+   public void stop() throws IOException {
+      client.close();
       executor.shutdownNow();
    }
 
