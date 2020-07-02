@@ -1,27 +1,26 @@
 package org.infinispan.rest;
 
-import static io.netty.buffer.Unpooled.wrappedBuffer;
-import static io.netty.handler.codec.http.HttpMethod.GET;
-import static io.netty.handler.codec.http.HttpMethod.POST;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
+import static org.infinispan.util.concurrent.CompletionStages.join;
 
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletionStage;
 
 import org.assertj.core.api.Assertions;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.rest.client.NettyHttpClient;
+import org.infinispan.commons.util.Util;
+import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.util.CharsetUtil;
 
 /**
@@ -34,9 +33,8 @@ import io.netty.util.CharsetUtil;
 public final class Http2Test extends AbstractInfinispanTest {
 
    private static final String KEY_STORE_PATH = Http2Test.class.getClassLoader().getResource("./client.p12").getPath();
-   private static final String CACHE_MANAGER_PATH = "/rest/v2/cache-managers/DefaultCacheManager";
 
-   private NettyHttpClient client;
+   private RestClient client;
    private RestServerHelper restServer;
 
    @AfterMethod(alwaysRun = true)
@@ -44,33 +42,31 @@ public final class Http2Test extends AbstractInfinispanTest {
       if (restServer != null) {
          restServer.stop();
       }
-      if (client != null) {
-         client.stop();
-      }
+      Util.close(client);
    }
 
    @Test
-   public void shouldUseHTTP1WithALPN() throws Exception {
+   public void shouldUseHTTP1WithALPN() {
       secureUpgradeTest(HTTP_11);
    }
 
    @Test
-   public void shouldUseHTTP2WithALPN() throws Exception {
+   public void shouldUseHTTP2WithALPN() {
       secureUpgradeTest(Protocol.HTTP_20);
    }
 
    @Test
-   public void shouldUseHTTP2WithUpgrade() throws Exception {
+   public void shouldUseHTTP2WithUpgrade() {
       clearTextUpgrade(false);
    }
 
    @Test
-   public void shouldUseHTTP2WithPriorKnowledge() throws Exception {
+   public void shouldUseHTTP2WithPriorKnowledge() {
       clearTextUpgrade(true);
    }
 
    @Test
-   public void shouldReportErrorCorrectly() throws Exception {
+   public void shouldReportErrorCorrectly() {
       restServer = RestServerHelper.defaultRestServer()
             .withKeyStore(KEY_STORE_PATH, "secret", "pkcs12")
             .withTrustStore(KEY_STORE_PATH, "secret", "pkcs12")
@@ -82,51 +78,51 @@ public final class Http2Test extends AbstractInfinispanTest {
             .protocol(HTTP_20).priorKnowledge(true)
             .security().ssl().enable()
             .trustStoreFileName(KEY_STORE_PATH).trustStorePassword("secret".toCharArray()).trustStoreType("pkcs12")
-            .keyStoreFileName(KEY_STORE_PATH).keyStorePassword("secret".toCharArray()).keyStoreType("pkcs12");
+            .keyStoreFileName(KEY_STORE_PATH).keyStorePassword("secret".toCharArray()).keyStoreType("pkcs12")
+            .hostnameVerifier((hostname, session) -> true);
 
-      client = NettyHttpClient.forConfiguration(config.build());
+      client = RestClient.forConfiguration(config.build());
 
-      FullHttpRequest getRequest = new DefaultFullHttpRequest(HTTP_1_1, GET, "invalid");
-      FullHttpResponse response = client.sendRequest(getRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
-      Assertions.assertThat(response.status().code()).isEqualTo(404);
+      CompletionStage<RestResponse> response = client.raw().get("/invalid");
+      ResponseAssertion.assertThat(response).isNotFound();
    }
 
    @Test
-   public void shouldUseHTTP1() throws Exception {
+   public void shouldUseHTTP1() {
       restServer = RestServerHelper.defaultRestServer().start(TestResourceTracker.getCurrentTestShortName());
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.addServer().host(restServer.getHost()).port(restServer.getPort()).protocol(HTTP_11);
-      client = NettyHttpClient.forConfiguration(builder.build());
+      client = RestClient.forConfiguration(builder.build());
 
-      FullHttpRequest getRequest = new DefaultFullHttpRequest(HTTP_1_1, GET, CACHE_MANAGER_PATH);
-      FullHttpResponse response = client.sendRequest(getRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
-      Assertions.assertThat(response.status().code()).isEqualTo(200);
+      CompletionStage<RestResponse> response = client.cacheManager("default").info();
+      ResponseAssertion.assertThat(response).isOk();
 
-      FullHttpRequest postRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, restServer.getBasePath() + "/test", wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
-      response = client.sendRequest(postRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
-      Assertions.assertThat(response.status().code()).isEqualTo(204);
+      RestEntity value = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, "test".getBytes(CharsetUtil.UTF_8));
+      response = client.cache("defaultcache").put("test", value);
+      Assertions.assertThat(join(response).getStatus()).isEqualTo(204);
+
       Assertions.assertThat(restServer.getCacheManager().getCache().size()).isEqualTo(1);
    }
 
-   private void clearTextUpgrade(boolean previousKnowledge) throws Exception {
+   private void clearTextUpgrade(boolean previousKnowledge) {
       restServer = RestServerHelper.defaultRestServer().start(TestResourceTracker.getCurrentTestShortName());
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.addServer().host(restServer.getHost()).port(restServer.getPort())
             .priorKnowledge(previousKnowledge).protocol(Protocol.HTTP_20);
 
-      client = NettyHttpClient.forConfiguration(builder.build());
+      client = RestClient.forConfiguration(builder.build());
 
-      FullHttpRequest getRequest = new DefaultFullHttpRequest(HTTP_1_1, GET, CACHE_MANAGER_PATH);
-      FullHttpResponse response = client.sendRequest(getRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
-      Assertions.assertThat(response.status().code()).isEqualTo(200);
+      CompletionStage<RestResponse> response = client.cacheManager("default").info();
+      ResponseAssertion.assertThat(response).isOk();
 
-      FullHttpRequest postRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, restServer.getBasePath() + "/test", wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
-      response = client.sendRequest(postRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
-      Assertions.assertThat(response.status().code()).isEqualTo(204);
+      RestEntity value = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, "test".getBytes(CharsetUtil.UTF_8));
+      response = client.cache("defaultcache").post("test", value);
+
+      Assertions.assertThat(join(response).getStatus()).isEqualTo(204);
       Assertions.assertThat(restServer.getCacheManager().getCache().size()).isEqualTo(1);
    }
 
-   private void secureUpgradeTest(Protocol choice) throws Exception {
+   private void secureUpgradeTest(Protocol choice) {
       //given
       restServer = RestServerHelper.defaultRestServer()
             .withKeyStore(KEY_STORE_PATH, "secret", "pkcs12")
@@ -134,19 +130,16 @@ public final class Http2Test extends AbstractInfinispanTest {
 
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.addServer().host(restServer.getHost()).port(restServer.getPort()).protocol(choice)
-            .security().ssl().trustStoreFileName(KEY_STORE_PATH).trustStorePassword("secret".toCharArray());
+            .security().ssl().trustStoreFileName(KEY_STORE_PATH).trustStorePassword("secret".toCharArray())
+            .hostnameVerifier((hostname, session) -> true);
 
-      client = NettyHttpClient.forConfiguration(builder.build());
+      client = RestClient.forConfiguration(builder.build());
 
-      FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST,
-            restServer.getBasePath() + "/test",
-            wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
-
-      //when
-      FullHttpResponse response = client.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
+      RestEntity value = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, "test".getBytes(CharsetUtil.UTF_8));
+      CompletionStage<RestResponse> response = client.cache("defaultcache").post("test", value);
 
       //then
-      Assertions.assertThat(response.status().code()).isEqualTo(204);
+      ResponseAssertion.assertThat(response).isOk();
       Assertions.assertThat(restServer.getCacheManager().getCache().size()).isEqualTo(1);
    }
 }
