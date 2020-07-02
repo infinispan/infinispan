@@ -104,8 +104,8 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    /**
-    * Used in scattered cache. Specifies how long can be the acquired bias held; while the reads
-    * will never be stale, tracking that information consumes memory on primary owner.
+    * Used in scattered cache. Specifies the duration (in Milliseconds) that acquired bias can be held; while the
+    * reads will never be stale, tracking that information consumes memory on the primary owner.
     */
    public ClusteringConfigurationBuilder biasLifespan(long l, TimeUnit unit) {
       attributes.attribute(BIAS_LIFESPAN).set(unit.toMillis(l));

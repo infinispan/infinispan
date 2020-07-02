@@ -28,6 +28,7 @@ import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
@@ -110,6 +111,15 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public enum ParserVersionCheck {
+      INFINISPAN_120(12, 0) {
+         @Override
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
+            Configuration scattered = getConfiguration(holder, "scattered-cache");
+            assertEquals(1, scattered.clustering().invalidationBatchSize());
+            assertEquals(BiasAcquisition.NEVER, scattered.clustering().biasAcquisition());
+            assertEquals(256, scattered.clustering().biasLifespan());
+         }
+      },
       INFINISPAN_110(11, 0) {
          @Override
          public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {

@@ -1,5 +1,8 @@
 package org.infinispan.configuration.serializing;
 
+import static org.infinispan.configuration.parsing.Attribute.BIAS_ACQUISITION;
+import static org.infinispan.configuration.parsing.Attribute.BIAS_LIFESPAN;
+import static org.infinispan.configuration.parsing.Attribute.INVALIDATION_BATCH_SIZE;
 import static org.infinispan.configuration.serializing.SerializeUtils.writeOptional;
 import static org.infinispan.configuration.serializing.SerializeUtils.writeTypedProperties;
 import static org.infinispan.util.logging.Log.CONFIG;
@@ -245,6 +248,9 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
             case REPL_SYNC:
                writeReplicatedCache(writer, configuration.getKey(), config);
                break;
+            case SCATTERED_SYNC:
+               writeScatteredCache(writer, configuration.getKey(), config);
+               break;
             default:
                break;
          }
@@ -265,7 +271,6 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
             throw CONFIG.unableToInstantiateSerializer(serializedWith.value());
          }
       }
-
    }
 
    private void writeGlobalState(XMLExtendedStreamWriter writer, GlobalConfiguration globalConfiguration)
@@ -377,6 +382,17 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
 
    private void writeInvalidationCache(XMLExtendedStreamWriter writer, String name, Configuration configuration) throws XMLStreamException {
       writer.writeStartElement(Element.INVALIDATION_CACHE);
+      writeCommonClusteredCacheAttributes(writer, configuration);
+      writeCommonCacheAttributesElements(writer, name, configuration);
+      writeExtraConfiguration(writer, configuration.modules());
+      writer.writeEndElement();
+   }
+
+   private void writeScatteredCache(XMLExtendedStreamWriter writer, String name, Configuration configuration) throws XMLStreamException {
+      writer.writeStartElement(Element.SCATTERED_CACHE);
+      writer.writeAttribute(INVALIDATION_BATCH_SIZE, Integer.toString(configuration.clustering().invalidationBatchSize()));
+      writer.writeAttribute(BIAS_ACQUISITION, configuration.clustering().biasAcquisition().toString());
+      writer.writeAttribute(BIAS_LIFESPAN, Long.toString(configuration.clustering().biasLifespan()));
       writeCommonClusteredCacheAttributes(writer, configuration);
       writeCommonCacheAttributesElements(writer, name, configuration);
       writeExtraConfiguration(writer, configuration.modules());

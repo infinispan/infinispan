@@ -1721,12 +1721,29 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="invalidation-batch-size" type="xs:integer" default="128">
+        <xs:attribute name="invalidation-batch-size" type="xs:integer" default="${Clustering.invalidationBatchSize}">
           <xs:annotation>
             <xs:documentation>
               Threshold for sending batch invalidations. Once a node registers more updated keys,
               it sends a batch invalidation to all nodes requesting to remove old versions of the entries.
               The threshold is also used for second batch invalidation of tombstones for removed entries.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="bias-acquisition" type="tns:bias-acquisition" default="${Clustering.biasAcquisition}">
+          <xs:annotation>
+            <xs:documentation>
+              Specifies when is a node allowed to acquire a bias on an entry, serving further reads
+              to the same key locally (despite not being an owner). Acquired bias allows reading data on non-owner,
+              but slows down further writes from other nodes.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="bias-lifespan" type="xs:long" default="${Clustering.biasLifespan}">
+          <xs:annotation>
+            <xs:documentation>
+              Specifies the duration (in Milliseconds) that acquired bias can be held; while the reads will never be stale,
+              tracking that information consumes memory on the primary owner.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
@@ -2624,5 +2641,20 @@
   </xs:attribute>
 
   <xs:attribute name="stack.position" type="xs:string" />
+
+  <xs:simpleType name="bias-acquisition">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="NEVER">
+        <xs:annotation>
+          <xs:documentation>The bias is never acquired.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="ON_WRITE">
+        <xs:annotation>
+          <xs:documentation>Bias is acquired by the writing entry.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
 
 </xs:schema>
