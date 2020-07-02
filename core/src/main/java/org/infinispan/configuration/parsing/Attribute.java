@@ -31,6 +31,8 @@ public enum Attribute {
     AWAIT_INITIAL_TRANSFER,
     BACKUP_FAILURE_POLICY("failure-policy"),
     BEFORE,
+    BIAS_ACQUISITION,
+    BIAS_LIFESPAN,
     BLOCKING_EXECUTOR,
     CAPACITY_FACTOR("capacity"),
     CHUNK_SIZE,

@@ -36,8 +36,10 @@ import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.ClusteringConfigurationBuilder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
@@ -2293,13 +2295,22 @@ public class Parser implements ConfigurationParser {
       String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
       CacheMode baseCacheMode = configuration == null ? CacheMode.SCATTERED_SYNC : CacheMode.SCATTERED_SYNC.toSync(builder.clustering().cacheMode().isSynchronous());
-      builder.clustering().cacheMode(baseCacheMode);
+      ClusteringConfigurationBuilder clusteringBuilder = builder.clustering();
+      clusteringBuilder.cacheMode(baseCacheMode);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case INVALIDATION_BATCH_SIZE: {
-               builder.clustering().invalidationBatchSize(Integer.parseInt(value));
+               clusteringBuilder.invalidationBatchSize(Integer.parseInt(value));
+               break;
+            }
+            case BIAS_ACQUISITION: {
+               clusteringBuilder.biasAcquisition(BiasAcquisition.valueOf(value));
+               break;
+            }
+            case BIAS_LIFESPAN: {
+               clusteringBuilder.biasLifespan(Long.parseLong(value), TimeUnit.MILLISECONDS);
                break;
             }
             default: {
