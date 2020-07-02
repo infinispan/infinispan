@@ -329,8 +329,8 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
          response = join(cacheClient.queryStats());
          stats = MAPPER.readTree(response.getBody());
          ResponseAssertion.assertThat(clearResponse).isOk();
-         assertEquals(stats.get("search_query_execution_count").asInt(), 0);
-         assertEquals(stats.get("search_query_execution_max_time").asInt(), 0);
+         assertEquals(stats.get("search_query_execution_count").asLong(), 0);
+         assertEquals(stats.get("search_query_execution_max_time").asLong(), 0);
       }
    }
 

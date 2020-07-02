@@ -57,7 +57,7 @@ import okhttp3.Response;
  **/
 public class RestClientOkHttp implements RestClient {
    static final MediaType TEXT_PLAIN = MediaType.parse("text/plain; charset=utf-8");
-   static final RequestBody EMPTY_BODY = RequestBody.create(TEXT_PLAIN, "");
+   static final RequestBody EMPTY_BODY = RequestBody.create(null, new byte[0]);
    private final RestClientConfiguration configuration;
    private final OkHttpClient httpClient;
    private final String baseURL;

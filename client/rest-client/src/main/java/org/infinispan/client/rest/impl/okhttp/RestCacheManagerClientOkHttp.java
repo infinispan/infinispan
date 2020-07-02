@@ -1,5 +1,6 @@
 package org.infinispan.client.rest.impl.okhttp;
 
+import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.EMPTY_BODY;
 import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.sanitize;
 
 import java.util.concurrent.CompletionStage;
@@ -91,8 +92,9 @@ public class RestCacheManagerClientOkHttp implements RestCacheManagerClient {
    }
 
    private CompletionStage<RestResponse> executeXSiteOperation(String backup, String operation) {
-      String url = String.format("%s/x-site/backups/%s?action=%s", baseCacheManagerUrl, backup, operation);
-      return client.execute(url);
+      Request.Builder builder = new Request.Builder();
+      builder.post(EMPTY_BODY).url(String.format("%s/x-site/backups/%s?action=%s", baseCacheManagerUrl, backup, operation));
+      return client.execute(builder);
    }
 
    @Override

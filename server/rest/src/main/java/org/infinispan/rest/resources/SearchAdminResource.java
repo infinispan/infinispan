@@ -46,11 +46,11 @@ public class SearchAdminResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder()
-            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/search/indexes").withAction("mass-index").handleWith(this::reindex)
-            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/search/indexes").withAction("clear").handleWith(this::clearIndexes)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").withAction("mass-index").handleWith(this::reindex)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").withAction("clear").handleWith(this::clearIndexes)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/search/indexes/stats").handleWith(this::indexStats)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/search/query/stats").handleWith(this::queryStats)
-            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/search/query/stats").withAction("clear").handleWith(this::clearStats)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/search/query/stats").withAction("clear").handleWith(this::clearStats)
             .create();
    }
 
@@ -76,9 +76,7 @@ public class SearchAdminResource implements ResourceHandler {
 
       if (queryStatistics == null) return completedFuture(responseBuilder.build());
 
-      if(request.method().equals(POST)) {
-         responseBuilder.status(NO_CONTENT);
-      }
+      responseBuilder.status(NO_CONTENT);
 
       queryStatistics.clear();
       return completedFuture(responseBuilder.build());
@@ -100,9 +98,7 @@ public class SearchAdminResource implements ResourceHandler {
          return completedFuture(responseBuilder.build());
       }
 
-      if(request.method().equals(POST)) {
-         responseBuilder.status(NO_CONTENT);
-      }
+      responseBuilder.status(NO_CONTENT);
 
       Indexer indexer = ComponentRegistryUtils.getIndexer(cache);
 

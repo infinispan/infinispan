@@ -1,3 +1,43 @@
+= Upgrading from 11.0 to 12.0
+
+== REST
+
+Some operations that previously supported both `GET` and `POST` now support only `POST`:
+
+* ```/v2/caches/{cacheName}?action=clear```
+* ```/v2/caches/{cacheName}?action=sync-data```
+* ```/v2/caches/{cacheName}?action=disconnect-source```
+* ```/v2/cluster?action=stop```
+* ```/v2/counters/{counterName}?action=reset```
+* ```/v2/counters/{counterName}?action=increment```
+* ```/v2/counters/{counterName}?action=decrement```
+* ```/v2/counters/{counterName}?action=add```
+
+* ```/v2/counters/{counterName}?action=compareAndSet```
+* ```/v2/counters/{counterName}?action=compareAndSwap```
+
+* ```/v2/caches/{cacheName}/search/indexes?action=mass-index```
+* ```/v2/caches/{cacheName}/search/indexes?action=clear```
+* ```/v2/caches/{cacheName}/search/query/stats?action=clear```
+
+* ```/v2/server/?action=stop```
+
+* ```/v2/tasks/{taskName}?action=exec```
+
+* ```/v2/caches/{cacheName}/x-site/local/?action=clear-push-state-status```
+
+* ```/v2/caches/{cacheName}/x-site/backups/{site}?action=take-offline```
+* ```/v2/caches/{cacheName}/x-site/backups/{site}?action=bring-online```
+* ```/v2/caches/{cacheName}/x-site/backups/{site}?action=start-push-state```
+* ```/v2/caches/{cacheName}/x-site/backups/{site}?action=cancel-push-state```
+* ```/v2/caches/{cacheName}/x-site/backups/{site}?action=cancel-receive-state```
+
+* ```/v2/cache-managers/{name}/x-site/backups/{site}?action=bring-online```
+* ```/v2/cache-managers/{name}/x-site/backups/{site}?action=take-offline```
+* ```/v2/cache-managers/{name}/x-site/backups/{site}?action=start-push-state```
+* ```/v2/cache-managers/{name}/x-site/backups/{site}?action=cancel-push-state```
+
+
 = Upgrading from 10.1 to 11.0
 
 == HotRod Client

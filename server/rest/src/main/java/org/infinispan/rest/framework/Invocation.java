@@ -43,4 +43,9 @@ public interface Invocation {
     * @return true whether the invocation can be done anonymously (without auth)
     */
    boolean anonymous();
+
+   /**
+    * @return true if the invocation is deprecated
+    */
+   boolean deprecated();
 }

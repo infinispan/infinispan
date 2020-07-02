@@ -1,5 +1,7 @@
 package org.infinispan.client.rest.impl.okhttp;
 
+import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.EMPTY_BODY;
+
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestLoggingClient;
@@ -29,7 +31,8 @@ public class RestServerClientOkHttp implements RestServerClient {
 
    @Override
    public CompletionStage<RestResponse> stop() {
-      return client.execute(baseServerURL + "?action=stop");
+      Request.Builder builder = new Request.Builder().post(EMPTY_BODY).url(baseServerURL + "?action=stop");
+      return client.execute(builder);
    }
 
    @Override

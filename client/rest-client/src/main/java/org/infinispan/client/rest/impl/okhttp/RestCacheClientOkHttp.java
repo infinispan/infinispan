@@ -42,7 +42,7 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    @Override
    public CompletionStage<RestResponse> clear() {
       Request.Builder builder = new Request.Builder();
-      builder.url(cacheUrl + "?action=clear").get();
+      builder.post(EMPTY_BODY).url(cacheUrl + "?action=clear");
       return client.execute(builder);
    }
 
@@ -64,7 +64,7 @@ public class RestCacheClientOkHttp implements RestCacheClient {
       if (threads != null) {
          sb.append("&threads=").append(threads);
       }
-      builder.url(sb.toString()).get();
+      builder.post(EMPTY_BODY).url(sb.toString());
       return client.execute(builder);
    }
 
@@ -76,7 +76,7 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    @Override
    public CompletionStage<RestResponse> disconnectSource() {
       Request.Builder builder = new Request.Builder();
-      builder.url(cacheUrl + "?action=disconnect-source").get();
+      builder.post(EMPTY_BODY).url(cacheUrl + "?action=disconnect-source");
       return client.execute(builder);
    }
 
@@ -340,7 +340,7 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    @Override
    public CompletionStage<RestResponse> cancelReceiveState(String site) {
       Request.Builder builder = new Request.Builder();
-      builder.url(String.format("%s/x-site/backups/%s?action=%s", cacheUrl, site, "cancel-receive-state"));
+      builder.post(EMPTY_BODY).url(String.format("%s/x-site/backups/%s?action=%s", cacheUrl, site, "cancel-receive-state"));
       return client.execute(builder);
    }
 
@@ -354,7 +354,7 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    @Override
    public CompletionStage<RestResponse> clearPushStateStatus() {
       Request.Builder builder = new Request.Builder();
-      builder.url(String.format("%s/x-site/local?action=clear-push-state-status", cacheUrl));
+      builder.post(EMPTY_BODY).url(String.format("%s/x-site/local?action=clear-push-state-status", cacheUrl));
       return client.execute(builder);
    }
 
@@ -377,7 +377,7 @@ public class RestCacheClientOkHttp implements RestCacheClient {
 
    private CompletionStage<RestResponse> executeXSiteOperation(String site, String action) {
       Request.Builder builder = new Request.Builder();
-      builder.url(String.format("%s/x-site/backups/%s?action=%s", cacheUrl, site, action));
+      builder.post(EMPTY_BODY).url(String.format("%s/x-site/backups/%s?action=%s", cacheUrl, site, action));
       return client.execute(builder);
    }
 
@@ -408,16 +408,17 @@ public class RestCacheClientOkHttp implements RestCacheClient {
 
    private CompletionStage<RestResponse> executeIndexOperation(String action) {
       Request.Builder builder = new Request.Builder();
-      builder.url(String.format("%s/search/indexes?action=%s", cacheUrl, action));
+      builder.post(EMPTY_BODY).url(String.format("%s/search/indexes?action=%s", cacheUrl, action));
       return client.execute(builder);
    }
 
    private CompletionStage<RestResponse> executeSearchStatOperation(String type, String action) {
+      Request.Builder builder = new Request.Builder();
       String url = String.format("%s/search/%s/stats", cacheUrl, type);
       if (action != null) {
          url = url + "?action=" + action;
+         builder.post(EMPTY_BODY);
       }
-      Request.Builder builder = new Request.Builder();
       builder.url(url);
       return client.execute(builder);
    }

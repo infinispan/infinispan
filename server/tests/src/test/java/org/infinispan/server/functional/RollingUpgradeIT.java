@@ -106,7 +106,7 @@ public class RollingUpgradeIT {
 
    protected void disconnectSource(RestClient client) {
       RestResponse response = join(client.cache(CACHE_NAME).disconnectSource());
-      assertEquals(200, response.getStatus());
+      assertEquals(204, response.getStatus());
    }
 
    protected void doRollingUpgrade(RestClient client) {

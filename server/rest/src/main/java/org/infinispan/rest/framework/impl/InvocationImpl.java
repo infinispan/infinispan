@@ -22,14 +22,17 @@ public class InvocationImpl implements Invocation {
    private final String action;
    private final String name;
    private final boolean anonymous;
+   private final boolean deprecated;
 
-   private InvocationImpl(Set<Method> methods, Set<String> paths, Function<RestRequest, CompletionStage<RestResponse>> handler, String action, String name, boolean anonymous) {
+   private InvocationImpl(Set<Method> methods, Set<String> paths, Function<RestRequest,
+         CompletionStage<RestResponse>> handler, String action, String name, boolean anonymous, boolean deprecated) {
       this.methods = methods;
       this.paths = paths;
       this.handler = handler;
       this.action = action;
       this.name = name;
       this.anonymous = anonymous;
+      this.deprecated = deprecated;
    }
 
    public String getAction() {
@@ -62,6 +65,11 @@ public class InvocationImpl implements Invocation {
       return anonymous;
    }
 
+   @Override
+   public boolean deprecated() {
+      return deprecated;
+   }
+
    public static class Builder {
       private final Invocations.Builder parent;
       private Set<Method> methods = new HashSet<>();
@@ -70,6 +78,7 @@ public class InvocationImpl implements Invocation {
       private String action = null;
       private String name = null;
       private boolean anonymous = false;
+      private boolean deprecated = false;
 
       public Builder method(Method method) {
          this.methods.add(method);
@@ -101,6 +110,11 @@ public class InvocationImpl implements Invocation {
          return this;
       }
 
+      public Builder deprecated() {
+         this.deprecated = true;
+         return this;
+      }
+
       public Builder withAction(String action) {
          this.action = action;
          return this;
@@ -119,7 +133,7 @@ public class InvocationImpl implements Invocation {
       }
 
       InvocationImpl build() {
-         return new InvocationImpl(methods, paths, handler, action, name, anonymous);
+         return new InvocationImpl(methods, paths, handler, action, name, anonymous, deprecated);
       }
    }
 
@@ -132,6 +146,7 @@ public class InvocationImpl implements Invocation {
             ", action='" + action + '\'' +
             ", name='" + name + '\'' +
             ", anonymous=" + anonymous +
+            ", deprecated=" + deprecated +
             '}';
    }
 }
