@@ -1,0 +1,33 @@
+= Cache Manager Configuration Beans
+
+You can customize the cache manager with the following configuration beans:
+
+* `InfinispanGlobalConfigurer`
+* `InfinispanCacheConfigurer`
+* `Configuration`
+* `InfinispanConfigurationCustomizer`
+* `InfinispanGlobalConfigurationCustomizer`
++
+[NOTE]
+====
+You can create one `InfinispanGlobalConfigurer` bean only. However you can create multiple configurations with the other beans.
+====
+
+.InfinispanCacheConfigurer Bean
+[source,java,options="nowrap"]
+----
+include::code_examples/InfinispanCacheConfigurer.java[]
+----
+
+.Configuration Bean
+Link the bean name to the cache that it configures, as follows:
+[source,java,options="nowrap"]
+----
+include::code_examples/CacheConfigurationBean.java[]
+----
+
+.Customizer Beans
+[source,java,options="nowrap"]
+----
+include::code_examples/ConfigurationCustomizerBean.java[]
+----

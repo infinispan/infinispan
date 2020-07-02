@@ -195,9 +195,10 @@
       <version.smallrye-metrics>2.4.0</version.smallrye-metrics>
       <version.microprofile-config-api>1.4</version.microprofile-config-api>
       <version.microprofile-metrics-api>2.3</version.microprofile-metrics-api>
-      <version.spring.boot>2.3.0.RELEASE</version.spring.boot>
+      <version.spring.boot>2.3.1.RELEASE</version.spring.boot>
       <version.spring5>5.2.4.RELEASE</version.spring5>
       <version.spring.session>2.3.0.RELEASE</version.spring.session>
+      <version.micrometer>1.5.2</version.micrometer>
 
       <!-- Versions of feature packs we consume: must match expected versions manually for the time being
         See also note in wildfly-modules/provisioning-of-hibernatesearch.xml -->

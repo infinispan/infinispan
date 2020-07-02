@@ -1,0 +1,14 @@
+[id='sb_starter_properties']
+:context: starter_properties
+= Application Properties
+
+Configure your project with `application.properties` or `application.yaml`.
+
+[source,text,options="nowrap"]
+----
+include::{topics}/config_examples/application.properties[]
+----
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="urn:infinispan:config:8.2 http://infinispan.org/schemas/infinispan-config-9.1.xsd"
+            xmlns="urn:infinispan:config:9.1">
+
+    <!--
+    <jgroups>
+        <stack-file name="udp" path="jgroups-udp.xml" />
+        <stack-file name="tcp" path="jgroups-tcp.xml" />
+    </jgroups>
+    -->
+
+    <cache-container default-cache="default-local" statistics="true">
+        <jmx domain="properties.test.spring.infinispan" />
+        <local-cache name="default-local" simple-cache="false">
+            <memory>
+                <object size="2000"/>
+            </memory>
+        </local-cache>
+    </cache-container>
+</infinispan>

@@ -1,0 +1,19 @@
+= Adding the EmbeddedCacheManager Bean 
+
+. Add `infinispan-spring-boot-starter-embedded` to your project's classpath to enable Embedded mode.
++
+This starter operates in Remote Client/Server mode with `infinispan-spring-boot-starter-remote` on the classpath by default.
++
+. Use the Spring `@Autowired` annotation to include an `EmbeddedCacheManager` bean in your Java configuration classes, as in the following example:
++
+[source,java,options="nowrap"]
+----
+include::code_examples/AutowiredEmbeddedCacheManager.java[]
+----
++
+You are now ready to use {brandname} in Embedded Mode. Here is a simple example:
++
+[source,java,options="nowrap"]
+----
+include::code_examples/CacheManagerGetCache.java[]
+----
