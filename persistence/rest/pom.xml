@@ -37,11 +37,6 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>commons-httpclient</groupId>
-         <artifactId>commons-httpclient</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
       </dependency>

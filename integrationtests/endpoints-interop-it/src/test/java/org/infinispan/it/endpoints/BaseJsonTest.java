@@ -6,23 +6,23 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHot
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
+import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.Query;
@@ -48,7 +48,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public abstract class BaseJsonTest extends AbstractInfinispanTest {
 
    RestServer restServer;
-   HttpClient restClient;
+   RestClient restClient;
    private EmbeddedCacheManager cacheManager;
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache<String, CryptoCurrency> remoteCache;
@@ -58,7 +58,7 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
 
    HotRodServer hotRodServer;
 
-   private String restEndpoint;
+   private RestCacheClient restCacheClient;
 
    abstract ConfigurationBuilder getIndexCacheConfiguration();
 
@@ -77,12 +77,11 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
 
       restServer = new RestServer();
       restServer.start(builder.build(), cacheManager);
-      restClient = new HttpClient();
-
+      restClient = RestClient.forConfiguration(new RestClientConfigurationBuilder().addServer().host(restServer.getHost()).port(restServer.getPort()).build());
+      restCacheClient = restClient.cache(CACHE_NAME);
       hotRodServer = startHotRodServer(cacheManager);
       remoteCacheManager = createRemoteCacheManager();
       remoteCache = remoteCacheManager.getCache(CACHE_NAME);
-      restEndpoint = String.format("http://localhost:%s/rest/v2/caches/%s", restServer.getPort(), CACHE_NAME);
    }
 
    protected String getEntityName() {
@@ -93,24 +92,20 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       return getEntityName();
    }
 
-   private void writeCurrencyViaJson(String key, String description, int rank) throws IOException {
-      EntityEnclosingMethod put = new PutMethod(restEndpoint + "/" + key);
+   private void writeCurrencyViaJson(String key, String description, int rank) {
       ObjectNode currency = MAPPER.createObjectNode();
       currency.put(TYPE, getJsonType());
       currency.put("description", description);
       currency.put("rank", rank);
-      put.setRequestEntity(new StringRequestEntity(currency.toString(), "application/json", "UTF-8"));
+      RestEntity value = RestEntity.create(MediaType.APPLICATION_JSON, currency.toString());
+      RestResponse response = join(restCacheClient.put(key, value));
 
-      restClient.executeMethod(put);
-      System.out.println(put.getResponseBodyAsString());
-      assertEquals(put.getStatusCode(), HttpStatus.SC_NO_CONTENT);
+      assertEquals(response.getStatus(), 204);
    }
 
    private CryptoCurrency readCurrencyViaJson(String key) throws IOException {
-      HttpMethod get = new GetMethod(restEndpoint + "/" + key);
-      get.setRequestHeader("Accept", "application/json");
-      restClient.executeMethod(get);
-      String json = get.getResponseBodyAsString();
+      RestResponse response = join(restCacheClient.get(key, MediaType.APPLICATION_JSON_TYPE));
+      String json = response.getBody();
       JsonNode jsonNode = new ObjectMapper().readTree(json);
       JsonNode description = jsonNode.get("description");
       JsonNode rank = jsonNode.get("rank");
@@ -169,6 +164,7 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
 
    @AfterClass
    protected void teardown() {
+      Util.close(restClient);
       remoteCacheManager.stop();
       if (restServer != null) {
          try {

@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.RestServer;
@@ -45,7 +46,8 @@ public class RestServerHelper {
    }
 
    public static RestServerHelper defaultRestServer(ConfigurationBuilder configuration, String... cachesDefined) {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(configuration);
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().cacheManagerName("default");
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(globalBuilder, configuration);
       cacheManager.getClassWhiteList().addClasses(TestClass.class);
       for (String cacheConfiguration : cachesDefined) {
          cacheManager.defineConfiguration(cacheConfiguration, configuration.build());

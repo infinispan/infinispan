@@ -2,7 +2,6 @@ package org.infinispan.rest;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.AUTHORIZATION;
 import static java.util.Collections.singletonMap;
-import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -88,8 +87,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
 
    @Test
    public void shouldAllowHealthAnonymously() {
-      RestResponse response = join(client.raw().get("/rest/v2/cache-managers/DefaultCacheManager/health/status"));
-
+      CompletionStage<RestResponse> response = client.cacheManager("default").healthStatus();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("text/plain");
       ResponseAssertion.assertThat(response).hasReturnedText("HEALTHY");

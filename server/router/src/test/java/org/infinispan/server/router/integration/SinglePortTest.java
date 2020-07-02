@@ -1,27 +1,28 @@
 package org.infinispan.server.router.integration;
 
-import static io.netty.buffer.Unpooled.wrappedBuffer;
-import static io.netty.handler.codec.http.HttpMethod.POST;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletionStage;
 
 import org.assertj.core.api.Assertions;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.RestServer;
-import org.infinispan.rest.client.NettyHttpClient;
+import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -36,18 +37,12 @@ import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
 import org.infinispan.server.router.utils.RestTestingUtil;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.openssl.OpenSSLEngine;
 
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.util.CharsetUtil;
 
 public class SinglePortTest {
@@ -56,11 +51,12 @@ public class SinglePortTest {
     public static final String KEY_STORE_PASSWORD = "secret";
     public static final String TRUST_STORE_PATH = SinglePortTest.class.getClassLoader().getResource("./default_client_truststore.jks").getPath();
     public static final String TRUST_STORE_PASSWORD = "secret";
+    public static final RestEntity VALUE = RestEntity.create(TEXT_PLAIN, "test".getBytes(CharsetUtil.UTF_8));
 
     private Router router;
     private RestServer restServer;
     private HotRodServer hotrodServer;
-    private NettyHttpClient httpClient;
+    private RestClient httpClient;
     private RemoteCacheManager hotRodClient;
 
     @BeforeClass
@@ -74,8 +70,10 @@ public class SinglePortTest {
     }
 
     @After
-    public void afterMethod() {
-        RestTestingUtil.killHttpClient(httpClient);
+    public void afterMethod() throws IOException {
+        if (httpClient != null) {
+            httpClient.close();
+        }
         HotRodClientTestingUtil.killRemoteCacheManager(hotRodClient);
         RestTestingUtil.killRouter(router);
         HotRodClientTestingUtil.killServers(hotrodServer);
@@ -90,7 +88,7 @@ public class SinglePortTest {
     }
 
     @Test
-    public void shouldUpgradeThroughHTTP11UpgradeHeaders() throws Exception {
+    public void shouldUpgradeThroughHTTP11UpgradeHeaders() {
         //given
         restServer = RestTestingUtil.createDefaultRestServer("rest", "default");
 
@@ -113,19 +111,16 @@ public class SinglePortTest {
         //when
         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
         builder.addServer().host("localhost").port(port).protocol(Protocol.HTTP_20);
-        httpClient = NettyHttpClient.forConfiguration(builder.build());
+        httpClient = RestClient.forConfiguration(builder.build());
 
-        FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/v2/caches/default/test",
-              wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
-
-        FullHttpResponse response = httpClient.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
+        CompletionStage<RestResponse> response = httpClient.cache("default").post("test", VALUE);
 
         //then
-        assertThat(response.status()).isEqualTo(HttpResponseStatus.NO_CONTENT);
+        ResponseAssertion.assertThat(response).hasNoContent();
     }
 
     @Test
-    public void shouldUpgradeToHotRodThroughHTTP11UpgradeHeaders() throws Exception {
+    public void shouldUpgradeToHotRodThroughHTTP11UpgradeHeaders() {
         //given
         EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
         // Initialize a transport-less Hot Rod server
@@ -159,17 +154,15 @@ public class SinglePortTest {
         EndpointRouter endpointRouter = router.getRouter(EndpointRouter.Protocol.SINGLE_PORT).get();
         String host = endpointRouter.getHost();
         int port = endpointRouter.getPort();
-        String restPrefix = String.format("/%s/v2/caches/%s", restServer.getConfiguration().contextPath(), cacheManager.getCacheManagerConfiguration().defaultCacheName().get());
 
         // First off we verify that the HTTP side of things works
         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
         builder.addServer().host(host).port(port).protocol(Protocol.HTTP_11);
-        httpClient = NettyHttpClient.forConfiguration(builder.build());
+        httpClient = RestClient.forConfiguration(builder.build());
 
-        DefaultFullHttpRequest request = new DefaultFullHttpRequest(HTTP_1_1, POST, restPrefix + "/key", wrappedBuffer("value".getBytes(CharsetUtil.UTF_8)));
-        request.headers().add(HttpHeaderNames.CONTENT_TYPE, "text/plain");
-        FullHttpResponse response = httpClient.sendRequest(request).toCompletableFuture().get(5, TimeUnit.SECONDS);
-        Assertions.assertThat(response.status()).isEqualTo(HttpResponseStatus.NO_CONTENT);
+        CompletionStage<RestResponse> response = httpClient.cache(cacheManager.getCacheManagerConfiguration().defaultCacheName().get()).post("key", VALUE);
+
+        ResponseAssertion.assertThat(response).hasNoContent();
         Assertions.assertThat(restServer.getCacheManager().getCache().size()).isEqualTo(1);
 
         // Next up, the RemoteCacheManager
@@ -178,7 +171,7 @@ public class SinglePortTest {
         configurationBuilder.addServer().host(host).port(port);
         hotRodClient = new RemoteCacheManager(configurationBuilder.build());
         Object value = hotRodClient.getCache().withDataFormat(DataFormat.builder().keyType(TEXT_PLAIN).valueType(TEXT_PLAIN).build()).get("key");
-        Assertions.assertThat(value).isEqualTo("value");
+        Assertions.assertThat(value).isEqualTo("test");
     }
 
     @Test
@@ -209,16 +202,14 @@ public class SinglePortTest {
         //when
         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
         builder.addServer().host(singlePortRouter.getHost()).port(singlePortRouter.getPort()).protocol(Protocol.HTTP_20)
-              .security().ssl().trustStoreFileName(TRUST_STORE_PATH).trustStorePassword("secret".toCharArray());
-        httpClient = NettyHttpClient.forConfiguration(builder.build());
+              .security().ssl().trustStoreFileName(TRUST_STORE_PATH).trustStorePassword("secret".toCharArray())
+              .hostnameVerifier((hostname, session) -> true);
+        httpClient = RestClient.forConfiguration(builder.build());
 
-        FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/v2/caches/default/test",
-              wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
-
-        FullHttpResponse response = httpClient.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
+        CompletionStage<RestResponse> response = httpClient.cache("default").post("test", VALUE);
 
         //then
-        assertThat(response.status()).isEqualTo(HttpResponseStatus.NO_CONTENT);
+        ResponseAssertion.assertThat(response).hasNoContent();
     }
 
     @Test
