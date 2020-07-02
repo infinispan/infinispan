@@ -103,4 +103,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Ignoring invalid origin '%s' when reading '-D%s'", id = 12025)
    void invalidOrigin(String origin, String prop);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The REST invocation [%s] has been deprecated. Please consult the upgrade guide", id = 12026)
+   void warnDeprecatedCall(String invocation);
 }

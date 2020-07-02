@@ -74,22 +74,22 @@ public class XSiteResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder()
-            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/x-site/local/").withAction("clear-push-state-status").handleWith(this::clearPushStateStatus)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/local/").withAction("clear-push-state-status").handleWith(this::clearPushStateStatus)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/").handleWith(this::backupStatus)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/").withAction("push-state-status").handleWith(this::pushStateStatus)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}").handleWith(this::siteStatus)
-            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("take-offline").handleWith(this::takeSiteOffline)
-            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("bring-online").handleWith(this::bringSiteOnline)
-            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("start-push-state").handleWith(this::startStatePush)
-            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("cancel-push-state").handleWith(this::cancelPushState)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("take-offline").handleWith(this::takeSiteOffline)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("bring-online").handleWith(this::bringSiteOnline)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("start-push-state").handleWith(this::startStatePush)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("cancel-push-state").handleWith(this::cancelPushState)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}/take-offline-config").handleWith(this::getXSiteTakeOffline)
             .invocation().methods(PUT).path("/v2/caches/{cacheName}/x-site/backups/{site}/take-offline-config").handleWith(this::updateTakeOffline)
-            .invocation().methods(GET, POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("cancel-receive-state").handleWith(this::cancelReceiveState)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("cancel-receive-state").handleWith(this::cancelReceiveState)
             .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/").handleWith(this::globalStatus)
-            .invocation().methods(GET, POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("bring-online").handleWith(this::bringAllOnline)
-            .invocation().methods(GET, POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("take-offline").handleWith(this::takeAllOffline)
-            .invocation().methods(GET, POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("start-push-state").handleWith(this::startPushAll)
-            .invocation().methods(GET, POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("cancel-push-state").handleWith(this::cancelPushAll)
+            .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("bring-online").handleWith(this::bringAllOnline)
+            .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("take-offline").handleWith(this::takeAllOffline)
+            .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("start-push-state").handleWith(this::startPushAll)
+            .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("cancel-push-state").handleWith(this::cancelPushAll)
             .create();
    }
 

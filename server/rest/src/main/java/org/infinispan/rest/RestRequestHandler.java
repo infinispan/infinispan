@@ -12,6 +12,7 @@ import javax.security.auth.Subject;
 
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
+import org.infinispan.rest.framework.Invocation;
 import org.infinispan.rest.framework.LookupResult;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.logging.Log;
@@ -66,7 +67,14 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
       try {
          restRequest = new NettyRestRequest(request);
          invocationLookup = restServer.getRestDispatcher().lookupInvocation(restRequest);
+         Invocation invocation = invocationLookup.getInvocation();
+         if(invocation != null && invocation.deprecated()) {
+            logger.warnDeprecatedCall(restRequest.toString());
+         }
       } catch (Exception e) {
+         if(logger.isDebugEnabled()) {
+            logger.debug("Error during REST dispatch", e);
+         }
          NettyRestResponse restResponse = new NettyRestResponse.Builder().status(BAD_REQUEST).build();
          sendResponse(ctx, request, restResponse);
          return;

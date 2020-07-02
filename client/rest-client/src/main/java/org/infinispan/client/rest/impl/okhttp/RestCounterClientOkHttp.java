@@ -1,5 +1,6 @@
 package org.infinispan.client.rest.impl.okhttp;
 
+import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.EMPTY_BODY;
 import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.sanitize;
 
 import java.util.concurrent.CompletionStage;
@@ -64,42 +65,42 @@ public class RestCounterClientOkHttp implements RestCounterClient {
    @Override
    public CompletionStage<RestResponse> add(long delta) {
       Request.Builder builder = new Request.Builder();
-      builder.url(counterUrl + "?action=add&delta=" + delta);
+      builder.url(counterUrl + "?action=add&delta=" + delta).post(EMPTY_BODY);
       return client.execute(builder);
    }
 
    @Override
    public CompletionStage<RestResponse> increment() {
       Request.Builder builder = new Request.Builder();
-      builder.url(counterUrl + "?action=increment");
+      builder.url(counterUrl + "?action=increment").post(EMPTY_BODY);
       return client.execute(builder);
    }
 
    @Override
    public CompletionStage<RestResponse> decrement() {
       Request.Builder builder = new Request.Builder();
-      builder.url(counterUrl + "?action=decrement");
+      builder.url(counterUrl + "?action=decrement").post(EMPTY_BODY);
       return client.execute(builder);
    }
 
    @Override
    public CompletionStage<RestResponse> reset() {
       Request.Builder builder = new Request.Builder();
-      builder.url(counterUrl + "?action=reset");
+      builder.url(counterUrl + "?action=reset").post(EMPTY_BODY);
       return client.execute(builder);
    }
 
    @Override
    public CompletionStage<RestResponse> compareAndSet(long expect, long value) {
       Request.Builder builder = new Request.Builder();
-      builder.url(counterUrl + "?action=compareAndSet&expect=" + expect + "&update=" + value);
+      builder.post(EMPTY_BODY).url(counterUrl + "?action=compareAndSet&expect=" + expect + "&update=" + value);
       return client.execute(builder);
    }
 
    @Override
    public CompletionStage<RestResponse> compareAndSwap(long expect, long value) {
       Request.Builder builder = new Request.Builder();
-      builder.url(counterUrl + "?action=compareAndSwap&expect=" + expect + "&update=" + value);
+      builder.post(EMPTY_BODY).url(counterUrl + "?action=compareAndSwap&expect=" + expect + "&update=" + value);
       return client.execute(builder);
    }
 }

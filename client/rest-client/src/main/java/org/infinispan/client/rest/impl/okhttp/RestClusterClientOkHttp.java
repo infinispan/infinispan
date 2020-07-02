@@ -1,5 +1,7 @@
 package org.infinispan.client.rest.impl.okhttp;
 
+import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.EMPTY_BODY;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -36,7 +38,7 @@ public class RestClusterClientOkHttp implements RestClusterClient {
          sb.append("&server=");
          sb.append(server);
       }
-      builder.url(sb.toString());
+      builder.post(EMPTY_BODY).url(sb.toString());
       return client.execute(builder);
    }
 }

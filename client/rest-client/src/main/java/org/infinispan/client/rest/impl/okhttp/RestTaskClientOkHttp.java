@@ -1,5 +1,6 @@
 package org.infinispan.client.rest.impl.okhttp;
 
+import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.EMPTY_BODY;
 import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.sanitize;
 
 import java.util.Map;
@@ -43,7 +44,7 @@ public class RestTaskClientOkHttp implements RestTaskClient {
          sb.append('=');
          sb.append(sanitize(parameter.getValue().toString()));
       }
-      builder.url(sb.toString());
+      builder.url(sb.toString()).post(EMPTY_BODY);
       return client.execute(builder);
    }
 
