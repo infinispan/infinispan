@@ -125,7 +125,7 @@ public class FieldReferenceProvider {
          case BYTE_STRING:
             return typeFactory.asString();
          default:
-            throw log.typeNotIndexable(type.toString(), name);
+            throw log.fieldTypeNotIndexable(type.toString(), name);
       }
    }
 
