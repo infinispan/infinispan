@@ -8,10 +8,12 @@ import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.parsing.Element;
 
+import java.nio.file.Paths;
+
 public class TemporaryGlobalStatePathConfiguration implements ConfigurationInfo {
 
    public static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", null, String.class)
-         .initializer(() -> SecurityActions.getSystemProperty("java.io.tmpdir"))
+         .initializer(() -> Paths.get(SecurityActions.getSystemProperty("java.io.tmpdir")).toAbsolutePath().toString())
          .immutable().build();
 
    public static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder("relativeTo", null, String.class).immutable().build();

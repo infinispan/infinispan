@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -354,22 +355,22 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                buf.flip();
             }
          }
+      } catch (IOException | ClassNotFoundException e) {
+         throw PERSISTENCE.persistedDataMigrationFailed(e);
+      }
+
+      try {
 
          //close old file
          channel.close();
-         //delete
-         Files.delete(file.toPath());
-         //rename new file
-         if (!newFile.renameTo(file)) {
-            throw new IOException(String.format("Unable to move file \"%s\" to \"%s\"",
-                  newFile.getAbsolutePath(), file.getAbsolutePath()));
-         }
+         //replace old file with the new file
+         Files.move(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
          //reopen the file
          channel = new RandomAccessFile(file, "rw").getChannel();
          //update file position
          filePos = newFilePos;
          PERSISTENCE.persistedDataSuccessfulMigrated();
-      } catch (IOException | ClassNotFoundException e) {
+      } catch (IOException e) {
          throw PERSISTENCE.persistedDataMigrationFailed(e);
       }
    }
