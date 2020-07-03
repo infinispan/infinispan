@@ -1,5 +1,6 @@
 package org.infinispan.query.remote.impl.logging;
 
+import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -73,5 +74,9 @@ public interface Log extends BasicLogger {
    CacheConfigurationException indexingUndeclaredType(String typeName);
 
    @Message(id = 28018, value = "It is not possible to create indexes for a field having type %s. Field: %s.")
-   CacheException typeNotIndexable(String typeName, String fieldName);
+   CacheException fieldTypeNotIndexable(String typeName, String fieldName);
+
+   @LogMessage(level = INFO)
+   @Message(id = 28019, value = "Registering protostream serialization context initializer: %s")
+   void registeringSerializationContextInitializer(String className);
 }

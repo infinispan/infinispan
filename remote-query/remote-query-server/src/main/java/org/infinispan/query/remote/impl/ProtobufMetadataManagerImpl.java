@@ -57,7 +57,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
  * @since 7.0
  */
 @MBean(objectName = ProtobufMetadataManagerConstants.OBJECT_NAME,
-      description = "Component that acts as a manager and persistent container for Protocol Buffers message type definitions in the scope of a CacheManger.")
+      description = "Component that acts as a manager and persistent container for Protocol Buffers schema definitions in the scope of a CacheManger.")
 @Scope(Scopes.GLOBAL)
 public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManager {
 
@@ -95,16 +95,24 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
             getProtobufMetadataCacheConfig(globalConfiguration).build(),
             EnumSet.of(InternalCacheRegistry.Flag.USER, InternalCacheRegistry.Flag.PROTECTED, InternalCacheRegistry.Flag.PERSISTENT));
 
-      processSerializationContextInitializer(ServiceFinder.load(SerializationContextInitializer.class, globalConfiguration.classLoader()));
-      processSerializationContextInitializer(globalConfiguration.serialization().contextInitializers());
+      Collection<SerializationContextInitializer> initializers = globalConfiguration.serialization().contextInitializers();
+      if (initializers == null || initializers.isEmpty()) {
+         initializers = ServiceFinder.load(SerializationContextInitializer.class, globalConfiguration.classLoader());
+      }
+      processSerializationContextInitializer(initializers);
       processProtostreamSerializationContextInitializers(globalConfiguration.classLoader());
    }
 
+   /**
+    * @deprecated Since 10.
+    */
+   @Deprecated
    private void processProtostreamSerializationContextInitializers(ClassLoader classLoader) {
       Collection<ProtostreamSerializationContextInitializer> initializers =
             ServiceFinder.load(ProtostreamSerializationContextInitializer.class, classLoader);
 
       for (ProtostreamSerializationContextInitializer psci : initializers) {
+         log.debugf("Registering ProtostreamSerializationContextInitializer %s", psci.getClass().getName());
          try {
             psci.init(serCtx);
          } catch (Exception e) {
@@ -116,6 +124,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    private void processSerializationContextInitializer(Iterable<SerializationContextInitializer> initializers) {
       if (initializers != null) {
          for (SerializationContextInitializer sci : initializers) {
+            log.registeringSerializationContextInitializer(sci.getClass().getName());
             try {
                sci.registerSchema(serCtx);
                sci.registerMarshallers(serCtx);

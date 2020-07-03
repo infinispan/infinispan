@@ -47,7 +47,7 @@ public class SerializationConfiguration implements ConfigurationInfo {
                })
                .immutable().build();
 
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.SERIALIZATION.getLocalName());
+   private static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.SERIALIZATION.getLocalName());
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(SerializationConfiguration.class, MARSHALLER, ADVANCED_EXTERNALIZERS, SERIALIZATION_CONTEXT_INITIALIZERS);
