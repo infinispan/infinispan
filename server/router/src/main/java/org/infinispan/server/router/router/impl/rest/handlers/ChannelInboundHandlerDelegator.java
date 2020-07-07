@@ -4,7 +4,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Optional;
 
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.rest.Http11RequestHandler;
+import org.infinispan.rest.RestRequestHandler;
 import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.logging.RouterLogger;
 import org.infinispan.server.router.routes.PrefixedRouteSource;
@@ -45,7 +45,7 @@ public class ChannelInboundHandlerDelegator extends SimpleChannelInboundHandler<
             .findAny();
 
       RestServerRouteDestination routeDestination = route.orElseThrow(() -> logger.noRouteFound()).getRouteDestination();
-      Http11RequestHandler restHandler = (Http11RequestHandler) routeDestination.getRestServer().getRestChannelInitializer().getAlpnHandler().getHttp1Handler();
+      RestRequestHandler restHandler = (RestRequestHandler) routeDestination.getRestServer().getRestChannelInitializer().getAlpnHandler().getRestHandler();
 
       //before passing it to REST Handler, we need to replace path. The handler should not be aware of additional context
       //used for multi-tenant prefixes

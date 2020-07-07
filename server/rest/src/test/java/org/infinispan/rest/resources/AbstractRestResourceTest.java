@@ -1,6 +1,11 @@
 package org.infinispan.rest.resources;
 
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
+import static org.infinispan.rest.helper.RestServerHelper.CLIENT_KEY_STORE;
+import static org.infinispan.rest.helper.RestServerHelper.SERVER_KEY_STORE;
+import static org.infinispan.rest.helper.RestServerHelper.STORE_PASSWORD;
+import static org.infinispan.rest.helper.RestServerHelper.STORE_TYPE;
 
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -8,20 +13,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import javax.security.auth.Subject;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -59,16 +64,28 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    private final List<RestServerHelper> restServers = new ArrayList<>(NUM_SERVERS);
 
    protected boolean security;
+   protected Protocol protocol = HTTP_11;
+   protected boolean ssl;
 
    protected CacheIgnoreManager ignoreManager;
 
    @Override
    protected String parameters() {
-      return "[security=" + security + "]";
+      return "[security=" + security + ", protocol=" + protocol.toString() + ", ssl=" + ssl + "]";
    }
 
    protected AbstractRestResourceTest withSecurity(boolean security) {
       this.security = security;
+      return this;
+   }
+
+   protected AbstractRestResourceTest protocol(Protocol protocol) {
+      this.protocol = protocol;
+      return this;
+   }
+
+   protected AbstractRestResourceTest ssl(boolean ssl) {
+      this.ssl = ssl;
       return this;
    }
 
@@ -92,8 +109,8 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
 
    protected void addSecurity(GlobalConfigurationBuilder globalBuilder) {
       globalBuilder.security().authorization().enable().principalRoleMapper(new IdentityRoleMapper())
-                   .role("ADMIN").permission(AuthorizationPermission.ALL)
-                   .role("USER").permission(AuthorizationPermission.WRITE, AuthorizationPermission.READ, AuthorizationPermission.EXEC);
+            .role("ADMIN").permission(AuthorizationPermission.ALL)
+            .role("USER").permission(AuthorizationPermission.WRITE, AuthorizationPermission.READ, AuthorizationPermission.EXEC);
    }
 
    @Override
@@ -120,6 +137,10 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
                BasicAuthenticator basicAuthenticator = new BasicAuthenticator(new SimpleSecurityDomain(USER), REALM);
                restServerHelper.withAuthenticator(basicAuthenticator);
             }
+            if (ssl) {
+               restServerHelper.withKeyStore(SERVER_KEY_STORE, STORE_PASSWORD, STORE_TYPE)
+                     .withTrustStore(SERVER_KEY_STORE, STORE_PASSWORD, STORE_TYPE);
+            }
             restServerHelper.start(TestResourceTracker.getCurrentTestShortName() + "-" + cm.getAddress());
             restServers.add(restServerHelper);
          }
@@ -139,13 +160,10 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    @AfterClass
    public void afterSuite() {
       Subject.doAs(ADMIN_USER, (PrivilegedAction<Void>) () -> {
-         try {
-            client.close();
-         } catch (Exception ignored) {
-         }
          restServers.forEach(RestServerHelper::stop);
          return null;
       });
+      Util.close(client);
    }
 
    @AfterMethod
@@ -170,11 +188,11 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       putInCache(cacheName, key, null, value, contentType);
    }
 
-   void putStringValueInCache(String cacheName, String key, String value) throws InterruptedException, ExecutionException, TimeoutException {
+   void putStringValueInCache(String cacheName, String key, String value) {
       putInCache(cacheName, key, value, "text/plain; charset=utf-8");
    }
 
-   void putJsonValueInCache(String cacheName, String key, String value) throws InterruptedException, ExecutionException, TimeoutException {
+   void putJsonValueInCache(String cacheName, String key, String value) {
       putInCache(cacheName, key, value, "application/json; charset=utf-8");
    }
 
@@ -186,6 +204,15 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
 
    protected RestClientConfigurationBuilder getClientConfig() {
       RestClientConfigurationBuilder clientConfigurationBuilder = new RestClientConfigurationBuilder();
+      if (protocol != null) {
+         clientConfigurationBuilder.protocol(protocol);
+      }
+      if (ssl) {
+         clientConfigurationBuilder.security().ssl().enable()
+               .hostnameVerifier((hostname, session) -> true)
+               .trustStoreFileName(CLIENT_KEY_STORE).trustStorePassword(STORE_PASSWORD).trustStoreType(STORE_TYPE)
+               .keyStoreFileName(CLIENT_KEY_STORE).keyStorePassword(STORE_PASSWORD).keyStoreType(STORE_TYPE);
+      }
       if (isSecurityEnabled()) {
          clientConfigurationBuilder.security().authentication().enable().username("user").password("user");
       }

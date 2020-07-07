@@ -9,6 +9,8 @@ import static io.netty.handler.codec.http.HttpHeaderNames.ACCESS_CONTROL_REQUEST
 import static io.netty.handler.codec.http.HttpHeaderNames.HOST;
 import static io.netty.handler.codec.http.HttpHeaderNames.ORIGIN;
 import static java.util.Collections.singletonMap;
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
@@ -85,13 +87,15 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new CacheResourceTest().withSecurity(false),
-            new CacheResourceTest().withSecurity(true),
+            new CacheResourceTest().withSecurity(false).protocol(HTTP_11).ssl(false),
+            new CacheResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false),
+            new CacheResourceTest().withSecurity(true).protocol(HTTP_11).ssl(true),
+            new CacheResourceTest().withSecurity(true).protocol(HTTP_20).ssl(true),
       };
    }
 
    @Test
-   public void testLegacyPredefinedCache() throws Exception {
+   public void testLegacyPredefinedCache() {
       putStringValueInCache("rest", "k1", "v1");
 
       CompletionStage<RestResponse> response = client.cache("rest").get("k1");
@@ -100,7 +104,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    }
 
    @Test
-   public void shouldReadWriteToLegacyCache() throws Exception {
+   public void shouldReadWriteToLegacyCache() {
       //given
       putStringValueInCache("legacy", "test", "test");
 
@@ -234,7 +238,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    }
 
    @Test
-   public void shouldWriteTextContentWithPjoCache() throws Exception {
+   public void shouldWriteTextContentWithPjoCache() {
       //given
       putStringValueInCache("pojoCache", "key1", "data");
 
@@ -261,7 +265,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    }
 
    @Test
-   public void shouldIgnoreDisabledCaches() throws Exception {
+   public void shouldIgnoreDisabledCaches() {
       putStringValueInCache("default", "K", "V");
       RestCacheClient cacheClient = client.cache("default");
 
@@ -309,7 +313,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    }
 
    @Test
-   public void testCorsGET() throws Exception {
+   public void testCorsGET() {
       int port = restServer().getPort();
 
       putStringValueInCache("default", "test", "test");
@@ -334,7 +338,8 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    @Test
    public void testCorsSameOrigin() {
       Map<String, String> headers = new HashMap<>();
-      headers.put(ORIGIN.toString(), "http://origin-host.org");
+      String scheme = ssl ? "https://" : "http://";
+      headers.put(ORIGIN.toString(), scheme + "origin-host.org");
       headers.put(HOST.toString(), "origin-host.org");
 
       CompletionStage<RestResponse> response = client.raw().get("/rest/v2/caches", headers);
@@ -367,7 +372,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    }
 
    @Test
-   public void testIfModifiedHeaderForCache() throws Exception {
+   public void testIfModifiedHeaderForCache() {
       putStringValueInCache("expiration", "test", "test");
 
       RestCacheClient cacheClient = client.cache("expiration");
@@ -401,7 +406,6 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       String path = String.format("/rest/v2/caches/%s/%s", "default", "k");
       RestResponse response = join(client.raw().get(path, singletonMap(ACCEPT_ENCODING.toString(), "none")));
 
-      System.out.println(response.headers());
       assertThat(response).hasNoContentEncoding();
       assertThat(response).hasContentLength(payload.getBytes().length);
 

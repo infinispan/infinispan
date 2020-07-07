@@ -13,12 +13,6 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaderValues;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpUtil;
-import io.netty.handler.codec.http.HttpVersion;
-import io.netty.handler.codec.http2.HttpConversionUtil;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -52,22 +46,10 @@ public abstract class BaseHttpRequestHandler extends SimpleChannelInboundHandler
 
    void sendResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response) {
       ctx.executor().execute(() -> {
-         addCorrelatedHeaders(request, response.getResponse());
          ResponseWriter.forContent(response.getEntity()).writeResponse(ctx, request, response, checkKeepAlive());
       });
    }
 
-   private void addCorrelatedHeaders(FullHttpRequest request, HttpResponse response) {
-      String streamId = request.headers().get(HttpConversionUtil.ExtensionHeaderNames.STREAM_ID.text());
-      if (streamId != null) {
-         response.headers().add(HttpConversionUtil.ExtensionHeaderNames.STREAM_ID.text(), streamId);
-      }
-      boolean isKeepAlive = HttpUtil.isKeepAlive(request);
-      HttpVersion httpVersion = response.protocolVersion();
-      if ((httpVersion == HttpVersion.HTTP_1_1 || httpVersion == HttpVersion.HTTP_1_0) && isKeepAlive) {
-         response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-      }
-   }
 
    protected boolean checkKeepAlive() {
       return false;
