@@ -104,13 +104,14 @@ public class CorsHandler extends ChannelDuplexHandler {
          // Not a CORS Request, allow it to proceed.
          return true;
       }
-      if(config != null) {
+      if (config != null) {
          // A rule was matched from the configs, so allow it.
          return true;
       }
 
       String scheme = "http";
-      if(ctx.channel().pipeline().get(SslHandler.class) != null) {
+      if (ctx.channel().pipeline().get(SslHandler.class) != null ||
+            ctx.channel().parent().pipeline().get(SslHandler.class) != null) {
          scheme = "https";
       }
 

@@ -1,6 +1,8 @@
 package org.infinispan.rest.resources;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.VOLATILE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
@@ -71,18 +73,20 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new CacheV2ResourceTest().withSecurity(true),
-            new CacheV2ResourceTest().withSecurity(false)
+            new CacheV2ResourceTest().withSecurity(false).protocol(HTTP_11).ssl(false),
+            new CacheV2ResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false),
+            new CacheV2ResourceTest().withSecurity(true).protocol(HTTP_11).ssl(true),
+            new CacheV2ResourceTest().withSecurity(true).protocol(HTTP_20).ssl(true),
       };
    }
 
    private ConfigurationBuilder getIndexedPersistedCache() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.indexing().enable()
-             .addIndexedEntity("Entity")
-             .addProperty("default.directory_provider", "local-heap")
-             .statistics().enable()
-             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
+            .addIndexedEntity("Entity")
+            .addProperty("default.directory_provider", "local-heap")
+            .statistics().enable()
+            .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
       return builder;
    }
 

@@ -2,6 +2,8 @@ package org.infinispan.rest;
 
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
+import static org.infinispan.rest.helper.RestServerHelper.STORE_PASSWORD;
+import static org.infinispan.rest.helper.RestServerHelper.STORE_TYPE;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 
 import java.util.concurrent.CompletionStage;
@@ -68,8 +70,8 @@ public final class Http2Test extends AbstractInfinispanTest {
    @Test
    public void shouldReportErrorCorrectly() {
       restServer = RestServerHelper.defaultRestServer()
-            .withKeyStore(KEY_STORE_PATH, "secret", "pkcs12")
-            .withTrustStore(KEY_STORE_PATH, "secret", "pkcs12")
+            .withKeyStore(KEY_STORE_PATH, STORE_PASSWORD, STORE_TYPE)
+            .withTrustStore(KEY_STORE_PATH, STORE_PASSWORD, STORE_TYPE)
             .start(TestResourceTracker.getCurrentTestShortName());
 
       RestClientConfigurationBuilder config = new RestClientConfigurationBuilder();
@@ -77,8 +79,8 @@ public final class Http2Test extends AbstractInfinispanTest {
       config.addServer().host(restServer.getHost()).port(restServer.getPort())
             .protocol(HTTP_20).priorKnowledge(true)
             .security().ssl().enable()
-            .trustStoreFileName(KEY_STORE_PATH).trustStorePassword("secret".toCharArray()).trustStoreType("pkcs12")
-            .keyStoreFileName(KEY_STORE_PATH).keyStorePassword("secret".toCharArray()).keyStoreType("pkcs12")
+            .trustStoreFileName(KEY_STORE_PATH).trustStorePassword(STORE_PASSWORD).trustStoreType(STORE_TYPE)
+            .keyStoreFileName(KEY_STORE_PATH).keyStorePassword(STORE_PASSWORD).keyStoreType(STORE_TYPE)
             .hostnameVerifier((hostname, session) -> true);
 
       client = RestClient.forConfiguration(config.build());
@@ -125,12 +127,12 @@ public final class Http2Test extends AbstractInfinispanTest {
    private void secureUpgradeTest(Protocol choice) {
       //given
       restServer = RestServerHelper.defaultRestServer()
-            .withKeyStore(KEY_STORE_PATH, "secret", "pkcs12")
+            .withKeyStore(KEY_STORE_PATH, STORE_PASSWORD, STORE_TYPE)
             .start(TestResourceTracker.getCurrentTestShortName());
 
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.addServer().host(restServer.getHost()).port(restServer.getPort()).protocol(choice)
-            .security().ssl().trustStoreFileName(KEY_STORE_PATH).trustStorePassword("secret".toCharArray())
+            .security().ssl().trustStoreFileName(KEY_STORE_PATH).trustStorePassword(STORE_PASSWORD)
             .hostnameVerifier((hostname, session) -> true);
 
       client = RestClient.forConfiguration(builder.build());

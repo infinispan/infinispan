@@ -24,7 +24,6 @@ import static org.infinispan.rest.ResponseHeader.ETAG_HEADER;
 import static org.infinispan.rest.ResponseHeader.EXPIRES_HEADER;
 import static org.infinispan.rest.ResponseHeader.LAST_MODIFIED_HEADER;
 import static org.infinispan.rest.ResponseHeader.WWW_AUTHENTICATE_HEADER;
-import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertEquals;
 
 import java.nio.file.Files;
@@ -37,13 +36,17 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.assertj.core.api.Assertions;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.rest.DateUtils;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -51,14 +54,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ResponseAssertion {
 
-   private RestResponse response;
+   private final RestResponse response;
 
    private ResponseAssertion(RestResponse response) {
-      this.response = response;
+      this.response = Objects.requireNonNull(response, "RestResponse cannot be null!");
    }
 
    public static ResponseAssertion assertThat(CompletionStage<RestResponse> response) {
-      return assertThat(join(response));
+      CompletableFuture<RestResponse> future = response.toCompletableFuture();
+      boolean completed = CompletableFutures.uncheckedAwait(future, 30, TimeUnit.SECONDS);
+      if (!completed) {
+         Assertions.fail("Timeout obtaining responses");
+      }
+      return assertThat(future.getNow(null));
    }
 
    public static ResponseAssertion assertThat(RestResponse response) {
