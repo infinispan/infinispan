@@ -6,6 +6,8 @@ import static org.infinispan.rest.RestChannelInitializer.MAX_INITIAL_LINE_SIZE;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.infinispan.server.core.ProtocolServer;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -18,17 +20,12 @@ import io.netty.handler.codec.http.HttpServerUpgradeHandler;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler.UpgradeCodecFactory;
 import io.netty.handler.codec.http.cors.CorsConfig;
 import io.netty.handler.codec.http2.CleartextHttp2ServerUpgradeHandler;
-import io.netty.handler.codec.http2.DefaultHttp2Connection;
 import io.netty.handler.codec.http2.Http2CodecUtil;
 import io.netty.handler.codec.http2.Http2MultiplexCodec;
 import io.netty.handler.codec.http2.Http2MultiplexCodecBuilder;
 import io.netty.handler.codec.http2.Http2ServerUpgradeCodec;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2StreamFrameToHttpObjectCodec;
-import io.netty.handler.codec.http2.HttpToHttp2ConnectionHandler;
-import io.netty.handler.codec.http2.HttpToHttp2ConnectionHandlerBuilder;
-import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapter;
-import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapterBuilder;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
@@ -46,6 +43,7 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
    private static final int CROSS_ORIGIN_ALT_PORT = 9000;
 
    protected final RestServer restServer;
+   volatile List<CorsConfig> corsRules;
 
    public ALPNHandler(RestServer restServer) {
       super(ApplicationProtocolNames.HTTP_1_1);
@@ -58,40 +56,67 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
    }
 
    public void configurePipeline(ChannelPipeline pipeline, String protocol) {
-      if (ApplicationProtocolNames.HTTP_2.equals(protocol)) {
-         configureHttp2(pipeline);
+      if (ApplicationProtocolNames.HTTP_2.equals(protocol) || ApplicationProtocolNames.HTTP_1_1.equals(protocol)) {
+         configureHttpPipeline(pipeline);
          return;
       }
 
-      if (ApplicationProtocolNames.HTTP_1_1.equals(protocol)) {
-         configureHttp1(pipeline);
+      ProtocolServer<?> protocolServer = getProtocolServer(protocol);
+      if (protocolServer != null) {
+         pipeline.addLast(protocolServer.getInitializer());
          return;
       }
 
       throw new IllegalStateException("unknown protocol: " + protocol);
    }
 
-   /**
-    * Configure pipeline for HTTP/2 after negotiated via ALPN
-    */
-   protected void configureHttp2(ChannelPipeline pipeline) {
-      pipeline.addLast(getHttp11To2ConnectionHandler());
-      pipeline.addLast(new ChunkedWriteHandler());
-      pipeline.addLast("rest-handler-http2", new RestRequestHandler(restServer));
+   protected ProtocolServer<?> getProtocolServer(String protocol) {
+      return null;
    }
 
    /**
-    * Configure pipeline for HTTP/1.1 after negotiated by ALPN
+    * Configure the handlers that should be used for both HTTP 1.1 and HTTP 2.0
     */
-   protected void configureHttp1(ChannelPipeline pipeline) {
+   private void addCommonsHandlers(ChannelPipeline pipeline) {
+      // Handles http content encoding (gzip)
+      pipeline.addLast(new HttpContentCompressor(restServer.getConfiguration().getCompressionLevel()));
+      // Handles chunked data
+      pipeline.addLast(new HttpObjectAggregator(maxContentLength()));
+      // Handles Http/2 headers propagation from request to response
+      pipeline.addLast(new StreamCorrelatorHandler());
+      // Handles CORS
+      pipeline.addLast(new CorsHandler(getCorsConfigs(), true));
+      // Handles the writing of ChunkedInputs
+      pipeline.addLast(new ChunkedWriteHandler());
+      // Handles REST request
+      pipeline.addLast(new RestRequestHandler(restServer));
+   }
+
+   private List<CorsConfig> getCorsConfigs() {
+      List<CorsConfig> rules = corsRules;
+      if (rules == null) {
+         synchronized (this) {
+            rules = corsRules;
+            if (rules == null) {
+               corsRules = new ArrayList<>();
+               corsRules.addAll(CorsUtil.enableAllForSystemConfig());
+               corsRules.addAll(CorsUtil.enableAllForLocalHost(restServer.getPort(), CROSS_ORIGIN_ALT_PORT));
+               corsRules.addAll(restServer.getConfiguration().getCorsRules());
+            }
+         }
+      }
+      return corsRules;
+   }
+
+   protected void configureHttpPipeline(ChannelPipeline pipeline) {
+      //TODO [ISPN-12082]: Rework pipeline removing deprecated codecs
       Http2MultiplexCodec multiplexCodec = Http2MultiplexCodecBuilder.forServer(new ChannelInitializer<Channel>() {
          @Override
          protected void initChannel(Channel channel) {
+            // Creates the HTTP/2 pipeline, where each stream is handled by a sub-channel.
             ChannelPipeline p = channel.pipeline();
             p.addLast(new Http2StreamFrameToHttpObjectCodec(true));
-            p.addLast(new HttpObjectAggregator(maxContentLength()));
-            p.addLast(new ChunkedWriteHandler());
-            p.addLast(new RestRequestHandler(restServer));
+            addCommonsHandlers(p);
          }
       }).initialSettings(Http2Settings.defaultSettings()).build();
 
@@ -102,49 +127,21 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
             return null;
          }
       };
-
+      // handler for clear-text upgrades
       HttpServerCodec httpCodec = new HttpServerCodec(MAX_INITIAL_LINE_SIZE, MAX_HEADER_SIZE, maxContentLength());
       HttpServerUpgradeHandler upgradeHandler = new HttpServerUpgradeHandler(httpCodec, upgradeCodecFactory, maxContentLength());
       CleartextHttp2ServerUpgradeHandler cleartextHttp2ServerUpgradeHandler = new CleartextHttp2ServerUpgradeHandler(httpCodec, upgradeHandler, multiplexCodec);
       pipeline.addLast(cleartextHttp2ServerUpgradeHandler);
 
-      pipeline.addLast(new HttpContentCompressor(restServer.getConfiguration().getCompressionLevel()));
-      pipeline.addLast(new HttpObjectAggregator(maxContentLength()));
-      List<CorsConfig> corsRules = new ArrayList<>();
-      corsRules.addAll(CorsUtil.enableAllForSystemConfig());
-      corsRules.addAll(CorsUtil.enableAllForLocalHost(restServer.getPort(), CROSS_ORIGIN_ALT_PORT));
-      corsRules.addAll(restServer.getConfiguration().getCorsRules());
-      pipeline.addLast(new CorsHandler(corsRules, true));
-      pipeline.addLast(new ChunkedWriteHandler());
-      pipeline.addLast(new Http11RequestHandler(restServer));
+      addCommonsHandlers(pipeline);
    }
 
    protected int maxContentLength() {
       return this.restServer.getConfiguration().maxContentLength() + MAX_INITIAL_LINE_SIZE + MAX_HEADER_SIZE;
    }
 
-   /**
-    * Creates a handler to translates between HTTP/1.x objects and HTTP/2 frames
-    *
-    * @return new instance of {@link HttpToHttp2ConnectionHandler}.
-    */
-   private HttpToHttp2ConnectionHandler getHttp11To2ConnectionHandler() {
-      DefaultHttp2Connection connection = new DefaultHttp2Connection(true);
-
-      InboundHttp2ToHttpAdapter listener = new InboundHttp2ToHttpAdapterBuilder(connection)
-            .propagateSettings(true)
-            .validateHttpHeaders(false)
-            .maxContentLength(maxContentLength())
-            .build();
-
-      return new HttpToHttp2ConnectionHandlerBuilder()
-            .frameListener(listener)
-            .connection(connection)
-            .build();
-   }
-
-   public ChannelHandler getHttp1Handler() {
-      return new Http11RequestHandler(restServer);
+   public ChannelHandler getRestHandler() {
+      return new RestRequestHandler(restServer);
    }
 
    public ApplicationProtocolConfig getAlpnConfiguration() {

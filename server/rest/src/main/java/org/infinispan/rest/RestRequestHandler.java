@@ -1,6 +1,7 @@
 package org.infinispan.rest;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE;
 import static io.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
@@ -21,9 +22,11 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.unix.Errors;
 import io.netty.handler.codec.TooLongFrameException;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpUtil;
 
 /**
  * Netty handler for REST requests.
@@ -55,6 +58,9 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
    @Override
    public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
       restAccessLoggingHandler.preLog(request);
+      if (HttpUtil.is100ContinueExpected(request)) {
+         ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE));
+      }
       if (!Method.contains(request.method().name())) {
          NettyRestResponse restResponse = new NettyRestResponse.Builder().status(FORBIDDEN).build();
          sendResponse(ctx, request, restResponse);
@@ -67,6 +73,9 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
          restRequest = new NettyRestRequest(request);
          invocationLookup = restServer.getRestDispatcher().lookupInvocation(restRequest);
       } catch (Exception e) {
+         if (logger.isDebugEnabled()) {
+            logger.debug("Error during REST dispatch", e);
+         }
          NettyRestResponse restResponse = new NettyRestResponse.Builder().status(BAD_REQUEST).build();
          sendResponse(ctx, request, restResponse);
          return;

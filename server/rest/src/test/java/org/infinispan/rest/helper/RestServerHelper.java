@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.rest.CertificateTest;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.TestClass;
 import org.infinispan.rest.authentication.Authenticator;
@@ -22,6 +23,11 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
  * @author Sebastian Łaskawiec
  */
 public class RestServerHelper {
+
+   public static final String CLIENT_KEY_STORE = CertificateTest.class.getClassLoader().getResource("./client.p12").getPath();
+   public static final String SERVER_KEY_STORE = CertificateTest.class.getClassLoader().getResource("./server.p12").getPath();
+   public static final char[] STORE_PASSWORD = "secret".toCharArray();
+   public static final String STORE_TYPE = "pkcs12";
 
    private final EmbeddedCacheManager cacheManager;
    private final RestServer restServer = new RestServer();
@@ -97,20 +103,20 @@ public class RestServerHelper {
       return String.format("/%s/v2/caches/%s", restServer.getConfiguration().contextPath(), cacheManager.getCacheManagerConfiguration().defaultCacheName().get());
    }
 
-   public RestServerHelper withKeyStore(String keyStorePath, String secret, String type) {
+   public RestServerHelper withKeyStore(String keyStorePath, char[] secret, String type) {
       restServerConfigurationBuilder.ssl().enable();
       restServerConfigurationBuilder.ssl()
             .keyStoreFileName(keyStorePath)
-            .keyStorePassword(secret.toCharArray())
+            .keyStorePassword(secret)
             .keyStoreType(type);
       return this;
    }
 
-   public RestServerHelper withTrustStore(String trustStorePath, String secret, String type) {
+   public RestServerHelper withTrustStore(String trustStorePath, char[] secret, String type) {
       restServerConfigurationBuilder.ssl().enable();
       restServerConfigurationBuilder.ssl()
             .trustStoreFileName(trustStorePath)
-            .trustStorePassword(secret.toCharArray())
+            .trustStorePassword(secret)
             .trustStoreType(type);
       return this;
    }

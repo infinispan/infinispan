@@ -8,7 +8,6 @@ import org.infinispan.rest.ALPNHandler;
 import org.infinispan.rest.RestServer;
 import org.infinispan.server.core.ProtocolServer;
 
-import io.netty.channel.ChannelPipeline;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 
@@ -28,24 +27,9 @@ public class SinglePortUpgradeHandler extends ALPNHandler {
       this.upgradeServers = upgradeServers;
    }
 
-   public void configurePipeline(ChannelPipeline pipeline, String protocol) {
-      if (ApplicationProtocolNames.HTTP_2.equals(protocol)) {
-         configureHttp2(pipeline);
-         return;
-      }
-
-      if (ApplicationProtocolNames.HTTP_1_1.equals(protocol)) {
-         configureHttp1(pipeline);
-         return;
-      }
-
-      ProtocolServer protocolServer = upgradeServers.get(protocol);
-      if (protocolServer != null) {
-         pipeline.addLast(protocolServer.getInitializer());
-         return;
-      }
-
-      throw new IllegalStateException("unknown protocol: " + protocol);
+   @Override
+   protected ProtocolServer<?> getProtocolServer(String protocol) {
+      return upgradeServers.get(protocol);
    }
 
    @Override
