@@ -1,5 +1,8 @@
 package org.infinispan.rest.profiling;
 
+import static org.infinispan.rest.helper.RestServerHelper.STORE_PASSWORD;
+import static org.infinispan.rest.helper.RestServerHelper.STORE_TYPE;
+
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
@@ -78,7 +81,7 @@ public class Http11VsHttp20Benchmark {
 
          restServer = RestServerHelper.defaultRestServer();
          if (useTLS) {
-            restServer.withKeyStore(KEY_STORE_PATH, "secret", "pkcs12");
+            restServer.withKeyStore(KEY_STORE_PATH, STORE_PASSWORD, STORE_TYPE);
          }
          restServer.start(this.getClass().getSimpleName());
          restServer.getCacheManager().getCache().put(EXISTING_KEY, "test");
@@ -86,8 +89,8 @@ public class Http11VsHttp20Benchmark {
          RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
          builder.addServer().host(restServer.getHost()).port(restServer.getPort());
          if (useTLS) {
-            builder.security().ssl().trustStoreFileName(TRUST_STORE_PATH).trustStorePassword("secret".toCharArray())
-                  .keyStoreFileName(KEY_STORE_PATH).keyStorePassword("secret".toCharArray());
+            builder.security().ssl().trustStoreFileName(TRUST_STORE_PATH).trustStorePassword(STORE_PASSWORD)
+                  .keyStoreFileName(KEY_STORE_PATH).keyStorePassword(STORE_PASSWORD);
          }
          builder.protocol(useHttp2 ? Protocol.HTTP_20 : Protocol.HTTP_11);
 
