@@ -1,8 +1,15 @@
 package org.infinispan.persistence.jdbc.impl.table;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -64,5 +71,26 @@ class SybaseTableManager extends AbstractTableManager {
                tableName, config.dataColumnName(), config.timestampColumnName(), config.idColumnName(),
                config.segmentColumnName());
       }
+   }
+
+   @Override
+   protected boolean indexExists(String indexName, Connection conn) throws PersistenceException {
+      ResultSet rs = null;
+      try {
+         DatabaseMetaData meta = conn.getMetaData();
+         rs = meta.getIndexInfo(null, tableName.getSchema(), tableName.getName(), false, false);
+
+         while (rs.next()) {
+            String index = rs.getString("INDEX_NAME");
+            if (index != null && indexName.equalsIgnoreCase(index.replaceAll("\"", ""))) {
+               return true;
+            }
+         }
+      } catch (SQLException e) {
+         throw new PersistenceException(e);
+      } finally {
+         JdbcUtil.safeClose(rs);
+      }
+      return false;
    }
 }
