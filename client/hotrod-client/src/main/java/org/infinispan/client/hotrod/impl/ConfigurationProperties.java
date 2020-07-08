@@ -11,7 +11,6 @@ import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
 import org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder;
-import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.commons.util.TypedProperties;
@@ -470,22 +469,6 @@ public class ConfigurationProperties {
       return props.getProperty(TRANSACTION_MANAGER_LOOKUP, TransactionConfigurationBuilder.defaultTransactionManagerLookup().getClass().getName(), true);
    }
 
-   public void setTransactionManagerLookup(String transactionManagerLookup) {
-      props.setProperty(TRANSACTION_MANAGER_LOOKUP, transactionManagerLookup);
-   }
-
-   public TransactionMode getTransactionMode() {
-      return props.getEnumProperty(TRANSACTION_MODE, TransactionMode.class, TransactionMode.NONE, true);
-   }
-
-   public void setTransactionMode(String transactionMode) {
-      props.setProperty(TRANSACTION_MODE, transactionMode);
-   }
-
-   public void setTransactionTimeout(long transactionTimeout) {
-      props.setProperty(TRANSACTION_TIMEOUT, transactionTimeout);
-   }
-
    public NearCacheMode getNearCacheMode() {
       return props.getEnumProperty(NEAR_CACHE_MODE, NearCacheMode.class, NearCacheMode.DISABLED, true);
    }
@@ -564,10 +547,6 @@ public class ConfigurationProperties {
    public static boolean isVersionPre12(Configuration cfg) {
       String version = cfg.version().toString();
       return Objects.equals(version, "1.0") || Objects.equals(version, "1.1");
-   }
-
-   public long getTransactionTimeout() {
-      return props.getLongProperty(TRANSACTION_TIMEOUT, TransactionConfigurationBuilder.DEFAULT_TIMEOUT);
    }
 
    public String getServerList(){

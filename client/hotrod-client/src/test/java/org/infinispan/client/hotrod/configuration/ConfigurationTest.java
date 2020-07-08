@@ -3,7 +3,10 @@ package org.infinispan.client.hotrod.configuration;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EXECUTOR_FACTORY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_CALLBACK_HANDLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_CLIENT_SUBJECT;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_PASSWORD;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_REALM;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_SERVER_NAME;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_USERNAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_EXHAUSTED_ACTION;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MAX_ACTIVE;
@@ -56,6 +59,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -74,6 +78,7 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.HotRodURI;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.client.hotrod.transaction.lookup.RemoteTransactionManagerLookup;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -496,6 +501,36 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEquals(1, cfg.clusters().size());
       assertEquals(1, cfg.clusters().get(0).getCluster().size());
       assertServer("localhost", 8382, cfg.clusters().get(0).getCluster().get(0));
+   }
+
+   public void testNoTransactionOverwrite() {
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      builder.transaction()
+            .transactionMode(TransactionMode.FULL_XA)
+            .transactionManagerLookup(RemoteTransactionManagerLookup.getInstance())
+            .timeout(1234, TimeUnit.MILLISECONDS);
+      Properties p = new Properties();
+      p.setProperty(SERVER_LIST, "host1:11222; host2:11222");
+      p.setProperty(AUTH_USERNAME, "admin");
+      p.setProperty(AUTH_PASSWORD, "password");
+      p.setProperty(AUTH_REALM, "default");
+      p.setProperty(SASL_MECHANISM, "SCRAM-SHA-512");
+      builder.withProperties(p);
+      Configuration config = builder.build();
+      assertEquals(TransactionMode.FULL_XA, config.transaction().transactionMode());
+      assertEquals(RemoteTransactionManagerLookup.getInstance(), config.transaction().transactionManagerLookup());
+      assertEquals(1234, config.transaction().timeout());
+      assertEquals(2, config.servers().size());
+      assertServer("host1", 11222, config.servers().get(0));
+      assertServer("host2", 11222, config.servers().get(1));
+
+      assertEquals("SCRAM-SHA-512", config.security().authentication().saslMechanism());
+      CallbackHandler ch = config.security().authentication().callbackHandler();
+      assertEquals(BasicCallbackHandler.class, ch.getClass());
+      BasicCallbackHandler bch = (BasicCallbackHandler) ch;
+      assertEquals("admin", bch.getUsername());
+      assertArrayEquals("password".toCharArray(), bch.getPassword());
+      assertEquals("default", bch.getRealm());
    }
 
    private void assertServer(String host, int port, ServerConfiguration serverCfg) {

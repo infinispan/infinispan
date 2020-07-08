@@ -64,7 +64,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final ConnectionPoolConfigurationBuilder connectionPool;
    private int connectionTimeout = ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT;
    @SuppressWarnings("unchecked")
-   private final Class<? extends ConsistentHash> consistentHashImpl[] = new Class[]{
+   private final Class<? extends ConsistentHash>[] consistentHashImpl = new Class[]{
          null, ConsistentHashV2.class, SegmentConsistentHash.class
    };
    private boolean forceReturnValues;
@@ -87,7 +87,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final List<ClusterConfigurationBuilder> clusters = new ArrayList<>();
    private Features features;
    private final List<SerializationContextInitializer> contextInitializers = new ArrayList<>();
-   private Map<String, RemoteCacheConfigurationBuilder> remoteCacheBuilders;
+   private final Map<String, RemoteCacheConfigurationBuilder> remoteCacheBuilders;
 
    public ConfigurationBuilder() {
       this.classLoader = new WeakReference<>(Thread.currentThread().getContextClassLoader());
@@ -120,7 +120,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return this;
    }
 
-   public static final void parseServers(String servers, BiConsumer<String, Integer> c) {
+   public static void parseServers(String servers, BiConsumer<String, Integer> c) {
       for (String server : servers.split(";")) {
          Matcher matcher = ADDRESS_PATTERN.matcher(server.trim());
          if (matcher.matches()) {
@@ -431,7 +431,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
 
       this.batchSize(typed.getIntProperty(ConfigurationProperties.BATCH_SIZE, batchSize, true));
-      transaction.withTransactionProperties(properties);
+      transaction.withTransactionProperties(typed);
       nearCache.withProperties(properties);
 
       Map<String, String> xsiteProperties = typed.entrySet().stream()
@@ -440,9 +440,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
                   e -> ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX_REGEX
                         .matcher((String) e.getKey()).replaceFirst(""),
                   e -> StringPropertyReplacer.replaceProperties((String) e.getValue())));
-      xsiteProperties.entrySet().forEach(entry -> {
-         ClusterConfigurationBuilder cluster = this.addCluster(entry.getKey());
-         parseServers(entry.getValue(), (host, port) -> cluster.addClusterNode(host, port));
+      xsiteProperties.forEach((key, value) -> {
+         ClusterConfigurationBuilder cluster = this.addCluster(key);
+         parseServers(value, cluster::addClusterNode);
       });
 
       Set<String> cachesNames = typed.keySet().stream()
@@ -509,7 +509,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             throw new IllegalArgumentException("Both marshaller and marshallerClass attributes are present, but marshaller is not an instance of marshallerClass");
       }
 
-      Map<String, RemoteCacheConfiguration> remoteCaches = remoteCacheBuilders.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().create()));
+      Map<String, RemoteCacheConfiguration> remoteCaches = remoteCacheBuilders.entrySet().stream().collect(Collectors.toMap(
+            Map.Entry::getKey, e -> e.getValue().create()));
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
                                consistentHashImpl, forceReturnValues, keySizeEstimate, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
