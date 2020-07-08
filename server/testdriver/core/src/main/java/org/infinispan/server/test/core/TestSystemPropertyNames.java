@@ -57,4 +57,8 @@ public class TestSystemPropertyNames {
     * The amount of memory this container is allowed to swap to disk
     */
    public static final String INFINISPAN_TEST_SERVER_CONTAINER_MEMORY_SWAP = PREFIX + "container.memorySwap";
+   /**
+    * LogMessageWaitStrategy pattern to use during container initialization
+    */
+   public static final String INFINISPAN_TEST_CONTAINER_DATABASE_LOG_MESSAGE = "org.infinispan.test.database.container.log.regex";
 }

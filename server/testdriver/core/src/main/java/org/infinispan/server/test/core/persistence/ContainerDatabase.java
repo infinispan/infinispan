@@ -1,5 +1,7 @@
 package org.infinispan.server.test.core.persistence;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -7,7 +9,9 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.StringPropertyReplacer;
+import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 
@@ -34,7 +38,17 @@ public class ContainerDatabase extends Database {
                      .env(env)
                      .build();
             });
-      container = new GenericContainer(image).withExposedPorts(port).waitingFor(Wait.forListeningPort());
+      container = new GenericContainer(image)
+            .withExposedPorts(port)
+            .withPrivilegedMode(true)
+            .waitingFor(Wait.forListeningPort());
+
+      String logMessageWaitStrategy = properties.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_LOG_MESSAGE);
+      if (logMessageWaitStrategy != null) {
+         container.waitingFor(new LogMessageWaitStrategy()
+               .withRegEx(logMessageWaitStrategy)
+               .withStartupTimeout(Duration.of(10, ChronoUnit.MINUTES)));
+      }
    }
 
    @Override
