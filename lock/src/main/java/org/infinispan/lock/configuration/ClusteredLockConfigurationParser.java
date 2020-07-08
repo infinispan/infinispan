@@ -1,5 +1,7 @@
 package org.infinispan.lock.configuration;
 
+import static org.infinispan.lock.configuration.ClusteredLockConfigurationParser.NAMESPACE;
+
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -10,6 +12,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
+import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.lock.logging.Log;
@@ -23,8 +26,10 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices
 @Namespace(root = "clustered-locks")
-@Namespace(uri = "urn:infinispan:config:clustered-locks:*", root = "clustered-locks", since = "9.4")
+@Namespace(uri = NAMESPACE + "*", root = "clustered-locks", since = "9.4")
 public class ClusteredLockConfigurationParser implements ConfigurationParser {
+
+   static final String NAMESPACE = Parser.NAMESPACE + "clustered-locks:";
 
    private static final Log log = LogFactory.getLog(ClusteredLockConfigurationParser.class, Log.class);
 

@@ -1,5 +1,6 @@
 package org.infinispan.persistence.rocksdb.configuration;
 
+import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationParser.NAMESPACE;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import javax.xml.stream.XMLStreamConstants;
@@ -13,8 +14,6 @@ import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
-import org.infinispan.persistence.rocksdb.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -24,10 +23,10 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices
 @Namespace(root = "rocksdb-store")
-@Namespace(uri = "urn:infinispan:config:store:rocksdb:*", root = "rocksdb-store", since = "9.0")
+@Namespace(uri = NAMESPACE + "*", root = "rocksdb-store", since = "9.0")
 public class RocksDBStoreConfigurationParser implements ConfigurationParser {
 
-   private static final Log log = LogFactory.getLog(RocksDBStoreConfigurationParser.class, Log.class);
+   static final String NAMESPACE = Parser.NAMESPACE + "store:rocksdb:";
 
    public RocksDBStoreConfigurationParser() {
    }

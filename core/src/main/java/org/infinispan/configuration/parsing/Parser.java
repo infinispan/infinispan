@@ -1,5 +1,6 @@
 package org.infinispan.configuration.parsing;
 
+import static org.infinispan.configuration.parsing.Parser.NAMESPACE;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
@@ -100,8 +101,10 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices
 @Namespace(root = "infinispan")
-@Namespace(uri = "urn:infinispan:config:*", root = "infinispan")
+@Namespace(uri = NAMESPACE + "*", root = "infinispan")
 public class Parser implements ConfigurationParser {
+
+   public static final String NAMESPACE = "urn:infinispan:config:";
 
    public Parser() {
    }

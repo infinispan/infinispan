@@ -1,5 +1,7 @@
 package org.infinispan.persistence.sifs.configuration;
 
+import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationParser.NAMESPACE;
+
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
@@ -20,10 +22,12 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices
 @Namespace(root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT)
-@Namespace(uri = "urn:infinispan:config:store:soft-index:*",
+@Namespace(uri = NAMESPACE + "*",
       root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT)
 public class SoftIndexFileStoreConfigurationParser implements ConfigurationParser {
    public static final String ROOT_ELEMENT = "soft-index-file-store";
+
+   static final String NAMESPACE = Parser.NAMESPACE + "store:soft-index:";
 
    public SoftIndexFileStoreConfigurationParser() {
    }

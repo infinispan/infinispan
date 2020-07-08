@@ -1,5 +1,6 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationParser.NAMESPACE;
 import static org.infinispan.persistence.remote.logging.Log.CONFIG;
 
 import javax.xml.stream.XMLStreamConstants;
@@ -16,8 +17,6 @@ import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
-import org.infinispan.persistence.remote.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -28,10 +27,10 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices
 @Namespace(root = "remote-store")
-@Namespace(uri = "urn:infinispan:config:store:remote:*", root = "remote-store")
+@Namespace(uri = NAMESPACE + "*", root = "remote-store")
 public class RemoteStoreConfigurationParser implements ConfigurationParser {
 
-   private static final Log log = LogFactory.getLog(RemoteStoreConfigurationParser.class, Log.class);
+   static final String NAMESPACE = Parser.NAMESPACE + "store:remote:";
 
    public RemoteStoreConfigurationParser() {
    }

@@ -1,5 +1,7 @@
 package org.infinispan.persistence.jpa.configuration;
 
+import static org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationParser.NAMESPACE;
+
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
@@ -21,8 +23,11 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices
 
 @Namespace(root = "jpa-store")
-@Namespace(uri = "urn:infinispan:config:store:jpa:*", root = "jpa-store")
+@Namespace(uri = NAMESPACE + "*", root = "jpa-store")
 public class JpaStoreConfigurationParser implements ConfigurationParser {
+
+   static final String NAMESPACE = Parser.NAMESPACE + "store:jpa:";
+
    @Override
    public void readElement(XMLExtendedStreamReader reader,
          ConfigurationBuilderHolder holder) throws XMLStreamException {

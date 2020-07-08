@@ -2,6 +2,7 @@ package org.infinispan.counter.configuration;
 
 import static javax.xml.stream.XMLStreamConstants.START_DOCUMENT;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
+import static org.infinispan.counter.configuration.CounterConfigurationParser.NAMESPACE;
 import static org.infinispan.counter.logging.Log.CONTAINER;
 
 import java.io.BufferedInputStream;
@@ -19,6 +20,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
+import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.parsing.Schema;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
@@ -33,8 +35,10 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices
 @Namespace(root = "counters")
-@Namespace(uri = "urn:infinispan:config:counters:*", root = "counters", since = "9.0")
+@Namespace(uri = NAMESPACE + "*", root = "counters", since = "9.0")
 public class CounterConfigurationParser implements ConfigurationParser {
+
+   static final String NAMESPACE = Parser.NAMESPACE + "counters:";
 
    @Override
    public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder)
