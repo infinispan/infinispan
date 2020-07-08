@@ -1,5 +1,8 @@
 package org.infinispan.client.hotrod.configuration;
 
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRANSACTION_MANAGER_LOOKUP;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRANSACTION_MODE;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRANSACTION_TIMEOUT;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 import static org.infinispan.commons.util.Util.getInstance;
 import static org.infinispan.commons.util.Util.loadClass;
@@ -12,10 +15,10 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * Configures a transactional {@link RemoteCache}.
@@ -70,7 +73,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * It defaults to 1 minute.
     */
    public TransactionConfigurationBuilder timeout(long timeout, TimeUnit timeUnit) {
-      this.timeout = timeUnit.toMillis(timeout);
+      setTimeoutMillis(timeUnit.toMillis(timeout));
       return this;
    }
 
@@ -101,12 +104,23 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    void withTransactionProperties(Properties properties) {
-      ConfigurationProperties cp = new ConfigurationProperties(properties);
-      this.transactionMode = cp.getTransactionMode();
-      String managerLookupClass = cp.getTransactionManagerLookup();
-      if (managerLookupClass != null && !transactionManagerLookup.getClass().getName().equals(managerLookupClass)) {
-         this.transactionManagerLookup = getInstance(loadClass(managerLookupClass, builder.classLoader()));
-      }
-      this.timeout = cp.getTransactionTimeout();
+      TypedProperties typed = TypedProperties.toTypedProperties(properties);
+      transactionMode(typed.getEnumProperty(TRANSACTION_MODE, TransactionMode.class, transactionMode, true));
+      transactionManagerLookup(tlmFromString(typed.getProperty(TRANSACTION_MANAGER_LOOKUP, tlmClass(), true)));
+      setTimeoutMillis(typed.getLongProperty(TRANSACTION_TIMEOUT, timeout, true));
+   }
+
+   private TransactionManagerLookup tlmFromString(String lookupClass) {
+      return lookupClass == null || tlmClass().equals(lookupClass) ?
+            transactionManagerLookup :
+            getInstance(loadClass(lookupClass, builder.classLoader()));
+   }
+
+   private String tlmClass() {
+      return transactionManagerLookup.getClass().getName();
+   }
+
+   private void setTimeoutMillis(long timeout) {
+      this.timeout = timeout;
    }
 }
