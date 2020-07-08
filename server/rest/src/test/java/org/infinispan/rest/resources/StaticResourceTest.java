@@ -14,7 +14,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -27,9 +26,12 @@ import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.DateUtils;
 import org.infinispan.rest.assertion.ResponseAssertion;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -39,6 +41,21 @@ import org.testng.annotations.Test;
 public class StaticResourceTest extends AbstractRestResourceTest {
 
    private static final Map<String, String> NO_COMPRESSION = singletonMap(ACCEPT_ENCODING.toString(), "none");
+   private RestClient noRedirectsClient;
+
+   @BeforeClass(alwaysRun = true)
+   public void createBeforeClass() throws Throwable {
+      super.createBeforeClass();
+      RestClientConfigurationBuilder builder = super.getClientConfig();
+      builder.followRedirects(false).addServer().host(restServer().getHost()).port(restServer().getPort());
+      noRedirectsClient = RestClient.forConfiguration(builder.build());
+   }
+
+   @AfterClass
+   public void afterSuite() {
+      super.afterSuite();
+      Util.close(noRedirectsClient);
+   }
 
    @Override
    protected void defineCaches(EmbeddedCacheManager cm) {
@@ -55,13 +72,6 @@ public class StaticResourceTest extends AbstractRestResourceTest {
       allHeaders.putAll(NO_COMPRESSION);
       RestRawClient rawClient = client.raw();
       return join(rawClient.get(path, allHeaders));
-   }
-
-   @Override
-   protected RestClientConfigurationBuilder getClientConfig() {
-      RestClientConfigurationBuilder builder = super.getClientConfig();
-      builder.followRedirects(true);
-      return builder;
    }
 
    @Override
@@ -152,14 +162,12 @@ public class StaticResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testRedirect() throws IOException {
-      RestClientConfigurationBuilder builder = getClientConfig();
-      builder.followRedirects(false).addServer().host(restServer().getHost()).port(restServer().getPort());
-      try (RestClient restClient = RestClient.forConfiguration(builder.build())) {
-         RestResponse response = join(restClient.raw().get("/"));
-         ResponseAssertion.assertThat(response).isRedirect();
-         assertEquals("/console/welcome", response.headers().get("Location").get(0));
-      }
+   public void testRedirect() {
+      RestResponse response = join(noRedirectsClient.raw().get("/"));
+
+      ResponseAssertion.assertThat(response).isRedirect();
+      ResponseAssertion.assertThat(response).hasNoContent();
+      assertEquals("/console/welcome", response.headers().get("Location").get(0));
    }
 
    private static File getTestFile(String path) {

@@ -31,7 +31,7 @@ class StreamCorrelatorHandler extends ChannelDuplexHandler {
    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
       if (msg instanceof HttpResponse) {
          HttpResponse response = (HttpResponse) msg;
-         if(streamId != null) {
+         if (streamId != null) {
             response.headers().add(STREAM_ID_HEADER, streamId);
          }
       }
