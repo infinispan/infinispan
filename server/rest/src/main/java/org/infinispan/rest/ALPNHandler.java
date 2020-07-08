@@ -16,6 +16,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.HttpServerKeepAliveHandler;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler.UpgradeCodecFactory;
 import io.netty.handler.codec.http.cors.CorsConfig;
@@ -86,6 +87,8 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
       pipeline.addLast(new StreamCorrelatorHandler());
       // Handles CORS
       pipeline.addLast(new CorsHandler(getCorsConfigs(), true));
+      // Handles Keep-alive
+      pipeline.addLast(new HttpServerKeepAliveHandler());
       // Handles the writing of ChunkedInputs
       pipeline.addLast(new ChunkedWriteHandler());
       // Handles REST request
