@@ -13,8 +13,6 @@ import org.infinispan.rest.logging.RestAccessLoggingHandler;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -33,16 +31,16 @@ public enum ResponseWriter {
 
    EMPTY {
       @Override
-      void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response, boolean keepAlive) {
+      void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response) {
          HttpResponse res = response.getResponse();
          HttpUtil.setContentLength(res, 0);
          accessLog.log(ctx, request, response.getResponse());
-         handleKeepAlive(res, ctx.writeAndFlush(response.getResponse()), keepAlive);
+         ctx.writeAndFlush(response.getResponse());
       }
    },
    FULL {
       @Override
-      void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response, boolean keepAlive) {
+      void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response) {
          HttpResponse res = response.getResponse();
          ByteBuf responseContent = ((FullHttpResponse) res).content();
          Object entity = response.getEntity();
@@ -53,12 +51,12 @@ public enum ResponseWriter {
          }
          HttpUtil.setContentLength(res, responseContent.readableBytes());
          accessLog.log(ctx, request, response.getResponse());
-         handleKeepAlive(res, ctx.writeAndFlush(res), keepAlive);
+         ctx.writeAndFlush(res);
       }
    },
    CHUNKED_FILE {
       @Override
-      void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response, boolean keepAlive) {
+      void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response) {
          try (RandomAccessFile randomAccessFile = new RandomAccessFile((File) response.getEntity(), "r")) {
             HttpResponse res = response.getResponse();
             HttpUtil.setContentLength(res, randomAccessFile.length());
@@ -73,7 +71,7 @@ public enum ResponseWriter {
    },
    CHUNKED_STREAM {
       @Override
-      void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response, boolean keepAlive) {
+      void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response) {
          HttpResponse res = response.getResponse();
          res.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
          res.headers().set(CONNECTION, KEEP_ALIVE);
@@ -84,16 +82,9 @@ public enum ResponseWriter {
       }
    };
 
-   void handleKeepAlive(HttpResponse response, ChannelFuture future, boolean keepAlive) {
-      if (!keepAlive) {
-         response.headers().set(CONNECTION, HttpHeaderValues.CLOSE);
-         future.addListener(ChannelFutureListener.CLOSE);
-      }
-   }
-
    final RestAccessLoggingHandler accessLog = new RestAccessLoggingHandler();
 
-   abstract void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response, boolean keepAlive);
+   abstract void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response);
 
    static ResponseWriter forContent(Object content) {
       if (content == null) return EMPTY;

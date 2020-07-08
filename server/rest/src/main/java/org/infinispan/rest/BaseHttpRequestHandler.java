@@ -45,14 +45,7 @@ public abstract class BaseHttpRequestHandler extends SimpleChannelInboundHandler
    }
 
    void sendResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response) {
-      ctx.executor().execute(() -> {
-         ResponseWriter.forContent(response.getEntity()).writeResponse(ctx, request, response, checkKeepAlive());
-      });
-   }
-
-
-   protected boolean checkKeepAlive() {
-      return false;
+      ctx.executor().execute(() -> ResponseWriter.forContent(response.getEntity()).writeResponse(ctx, request, response));
    }
 
    protected abstract Log getLogger();
