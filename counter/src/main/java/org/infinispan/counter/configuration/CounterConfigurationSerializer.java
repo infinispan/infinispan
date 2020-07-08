@@ -8,6 +8,7 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
 import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
 import org.infinispan.configuration.serializing.XMLExtendedStreamWriterImpl;
@@ -24,6 +25,7 @@ public class CounterConfigurationSerializer implements ConfigurationSerializer<C
    public void serialize(XMLExtendedStreamWriter writer, CounterManagerConfiguration configuration)
          throws XMLStreamException {
       writer.writeStartElement(Element.COUNTERS);
+      writer.writeDefaultNamespace(CounterConfigurationParser.NAMESPACE + Version.getMajorMinor());
       configuration.attributes().write(writer);
       writeConfigurations(writer, configuration.counters());
       writer.writeEndElement();

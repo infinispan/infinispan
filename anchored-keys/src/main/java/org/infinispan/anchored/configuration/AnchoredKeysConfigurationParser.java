@@ -1,5 +1,8 @@
 package org.infinispan.anchored.configuration;
 
+
+import static org.infinispan.anchored.configuration.AnchoredKeysConfigurationParser.NAMESPACE;
+
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -7,6 +10,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
+import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.kohsuke.MetaInfServices;
@@ -21,8 +25,11 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices
 @Namespace(root = "anchored-keys")
-@Namespace(uri = "urn:infinispan:config:anchored:*", root = "anchored-keys", since = "11.0")
+@Namespace(uri = NAMESPACE + "*", root = "anchored-keys", since = "11.0")
 public class AnchoredKeysConfigurationParser implements ConfigurationParser {
+
+   static final String PREFIX = "anchored";
+   static final String NAMESPACE = Parser.NAMESPACE + PREFIX + ":";
 
    @Override
    public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {

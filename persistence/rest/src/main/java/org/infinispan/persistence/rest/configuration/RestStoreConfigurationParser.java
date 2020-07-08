@@ -1,5 +1,7 @@
 package org.infinispan.persistence.rest.configuration;
 
+import static org.infinispan.persistence.rest.configuration.RestStoreConfigurationParser.NAMESPACE;
+
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
@@ -24,8 +26,10 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices
 @Namespace(root = "rest-store")
-@Namespace(uri = "urn:infinispan:config:store:rest:*", root = "rest-store")
+@Namespace(uri = NAMESPACE + "*", root = "rest-store")
 public class RestStoreConfigurationParser implements ConfigurationParser {
+
+   static final String NAMESPACE = Parser.NAMESPACE + "store:rest:";
 
    private static final Log log = LogFactory.getLog(RestStoreConfigurationParser.class, Log.class);
 

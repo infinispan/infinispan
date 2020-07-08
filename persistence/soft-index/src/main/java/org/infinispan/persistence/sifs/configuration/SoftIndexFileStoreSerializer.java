@@ -2,6 +2,7 @@ package org.infinispan.persistence.sifs.configuration;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.serializing.AbstractStoreSerializer;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
 import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
@@ -17,6 +18,7 @@ public class SoftIndexFileStoreSerializer extends AbstractStoreSerializer implem
    @Override
    public void serialize(XMLExtendedStreamWriter writer, SoftIndexFileStoreConfiguration configuration) throws XMLStreamException {
       writer.writeStartElement(Element.SOFT_INDEX_FILE_STORE);
+      writer.writeDefaultNamespace(SoftIndexFileStoreConfigurationParser.NAMESPACE + Version.getMajorMinor());
       configuration.attributes().write(writer);
       writeCommonStoreSubAttributes(writer, configuration);
       writeDataElement(writer, configuration);

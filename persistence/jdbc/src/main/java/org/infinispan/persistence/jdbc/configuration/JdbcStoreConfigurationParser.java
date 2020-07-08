@@ -1,5 +1,7 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.infinispan.persistence.jdbc.configuration.JdbcStoreConfigurationParser.NAMESPACE;
+
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
@@ -26,10 +28,12 @@ import org.kohsuke.MetaInfServices;
 @Namespace(root = "string-keyed-jdbc-store")
 @Namespace(root = "binary-keyed-jdbc-store")
 @Namespace(root = "mixed-keyed-jdbc-store")
-@Namespace(uri = "urn:infinispan:config:store:jdbc:*", root = "string-keyed-jdbc-store")
-@Namespace(uri = "urn:infinispan:config:store:jdbc:*", root = "binary-keyed-jdbc-store", until = "9.0")
-@Namespace(uri = "urn:infinispan:config:store:jdbc:*", root = "mixed-keyed-jdbc-store", until = "9.0")
+@Namespace(uri = NAMESPACE + "*", root = "string-keyed-jdbc-store")
+@Namespace(uri = NAMESPACE + "*", root = "binary-keyed-jdbc-store", until = "9.0")
+@Namespace(uri = NAMESPACE + "*", root = "mixed-keyed-jdbc-store", until = "9.0")
 public class JdbcStoreConfigurationParser implements ConfigurationParser {
+
+   static final String NAMESPACE = Parser.NAMESPACE + "store:jdbc:";
 
    public JdbcStoreConfigurationParser() {
    }

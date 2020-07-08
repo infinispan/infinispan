@@ -3,6 +3,7 @@ package org.infinispan.persistence.rocksdb.configuration;
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.serializing.AbstractStoreSerializer;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
 import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
@@ -19,6 +20,7 @@ public class RocksDBStoreConfigurationSerializer extends AbstractStoreSerializer
    public void serialize(XMLExtendedStreamWriter writer, RocksDBStoreConfiguration configuration) throws XMLStreamException {
       AttributeSet attributes = configuration.attributes();
       writer.writeStartElement(Element.ROCKSDB_STORE);
+      writer.writeDefaultNamespace(RocksDBStoreConfigurationParser.NAMESPACE + Version.getMajorMinor());
       configuration.attributes().write(writer);
       writeCommonStoreSubAttributes(writer, configuration);
       if (attributes.attribute(RocksDBStoreConfiguration.COMPRESSION_TYPE).isModified()) {

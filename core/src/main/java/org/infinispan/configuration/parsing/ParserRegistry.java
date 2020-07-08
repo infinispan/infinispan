@@ -261,6 +261,7 @@ public class ParserRegistry implements NamespaceMappingParser {
    public void serialize(XMLExtendedStreamWriter writer, GlobalConfiguration globalConfiguration, Map<String, Configuration> configurations) throws XMLStreamException {
       writer.writeStartDocument();
       writer.writeStartElement("infinispan");
+      writer.writeDefaultNamespace(Parser.NAMESPACE + Version.getMajorMinor());
       Serializer serializer = new Serializer();
       serializer.serialize(writer, new ConfigurationHolder(globalConfiguration, configurations));
       writer.writeEndElement();

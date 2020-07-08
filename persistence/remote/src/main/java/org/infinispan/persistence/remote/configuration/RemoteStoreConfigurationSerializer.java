@@ -5,6 +5,7 @@ import java.util.List;
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.serializing.AbstractStoreSerializer;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
 import org.infinispan.configuration.serializing.SerializeUtils;
@@ -21,6 +22,7 @@ public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer 
    @Override
    public void serialize(XMLExtendedStreamWriter writer, RemoteStoreConfiguration configuration) throws XMLStreamException {
       writer.writeStartElement(Element.REMOTE_STORE);
+      writer.writeDefaultNamespace(RemoteStoreConfigurationParser.NAMESPACE + Version.getMajorMinor());
       configuration.attributes().write(writer);
 
       writeCommonStoreSubAttributes(writer, configuration);
