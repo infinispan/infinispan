@@ -345,6 +345,25 @@
                 <artifactId>infinispan-server-runtime</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-server-testdriver-core</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-server-testdriver-junit4</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-server-testdriver-junit5</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-spring5-common</artifactId>
