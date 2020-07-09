@@ -257,10 +257,9 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    @Override
    public TransactionConfiguration create() {
       boolean batchingEnabled = getBuilder().invocationBatching().isEnabled();
-      if (transactionMode() == null && batchingEnabled)
+      if (transactionMode() == null && batchingEnabled) {
          transactionMode(TransactionMode.TRANSACTIONAL);
-      else if (transactionMode() == null)
-         transactionMode(TransactionMode.NON_TRANSACTIONAL);
+      }
       return new TransactionConfiguration(attributes.protect(), recovery.create(), batchingEnabled);
    }
 
