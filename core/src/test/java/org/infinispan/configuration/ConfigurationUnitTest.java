@@ -5,6 +5,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
@@ -359,6 +360,12 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
             AssertJUnit.assertTrue(cm.getCache().getCacheConfiguration().transaction().recovery().enabled());
          }
       });
+   }
+
+   public void testTransactionConfigurationUnmodified() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      Configuration configuration = builder.build();
+      assertFalse(configuration.transaction().attributes().isModified());
    }
 
    public void testMultipleValidationErrors() {
