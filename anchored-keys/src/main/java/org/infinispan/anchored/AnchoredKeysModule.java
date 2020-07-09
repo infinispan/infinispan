@@ -1,17 +1,16 @@
 package org.infinispan.anchored;
 
-import static org.infinispan.commons.logging.Log.CONFIG;
-
 import org.infinispan.anchored.configuration.AnchoredKeysConfiguration;
 import org.infinispan.anchored.impl.AnchorManager;
 import org.infinispan.anchored.impl.AnchoredDistributionInterceptor;
 import org.infinispan.anchored.impl.AnchoredEntryFactory;
 import org.infinispan.anchored.impl.AnchoredFetchInterceptor;
 import org.infinispan.anchored.impl.AnchoredStateProvider;
+import org.infinispan.commons.logging.Log;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.conflict.MergePolicy;
+import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
@@ -35,15 +34,25 @@ public final class AnchoredKeysModule implements ModuleLifecycle, DynamicModuleM
 
    public static final String ANCHORED_KEYS_FEATURE = "anchored-keys";
 
-   private GlobalConfiguration globalConfiguration;
-
    @Override
    public void registerDynamicMetadata(ModuleMetadataBuilder.ModuleBuilder moduleBuilder, GlobalConfiguration globalConfiguration) {
    }
 
    @Override
-   public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
-      this.globalConfiguration = globalConfiguration;
+   public void creatingConfiguration(GlobalComponentRegistry grc, Configuration configuration) {
+      AnchoredKeysConfiguration anchoredKeysConfiguration = configuration.module(AnchoredKeysConfiguration.class);
+      if (anchoredKeysConfiguration == null || !anchoredKeysConfiguration.enabled()) {
+         return;
+      }
+
+      assert configuration.clustering().cacheMode().isReplicated();
+      assert !configuration.clustering().stateTransfer().awaitInitialTransfer();
+      assert configuration.clustering().partitionHandling().whenSplit() == PartitionHandling.ALLOW_READ_WRITES;
+      assert configuration.clustering().partitionHandling().mergePolicy() == MergePolicy.PREFERRED_NON_NULL;
+
+      if (!grc.getGlobalConfiguration().features().isAvailable(ANCHORED_KEYS_FEATURE)) {
+         throw Log.CONFIG.featureDisabled(ANCHORED_KEYS_FEATURE);
+      }
    }
 
    @Override
@@ -51,14 +60,6 @@ public final class AnchoredKeysModule implements ModuleLifecycle, DynamicModuleM
       AnchoredKeysConfiguration anchoredKeysConfiguration = configuration.module(AnchoredKeysConfiguration.class);
       if (anchoredKeysConfiguration == null || !anchoredKeysConfiguration.enabled())
          return;
-
-      assert configuration.clustering().cacheMode().isReplicated();
-      assert !configuration.clustering().stateTransfer().awaitInitialTransfer();
-      assert configuration.clustering().partitionHandling().whenSplit() == PartitionHandling.ALLOW_READ_WRITES;
-      assert configuration.clustering().partitionHandling().mergePolicy() == MergePolicy.PREFERRED_NON_NULL;
-
-      if (!globalConfiguration.features().isAvailable(ANCHORED_KEYS_FEATURE))
-         throw CONFIG.featureDisabled(ANCHORED_KEYS_FEATURE);
 
       cr.registerComponent(new AnchorManager(), AnchorManager.class);
 

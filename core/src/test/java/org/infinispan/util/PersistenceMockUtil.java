@@ -14,7 +14,6 @@ import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.test.BlockHoundHelper;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -120,8 +119,7 @@ public class PersistenceMockUtil {
       EmbeddedCacheManager cm = mock(EmbeddedCacheManager.class);
       when(cm.getCacheManagerConfiguration()).thenReturn(gc);
       when(cm.getClassAllowList()).thenReturn(new ClassAllowList());
-      GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cm, cachesSet, TestModuleRepository.defaultModuleRepository(),
-                                                                mock(ConfigurationManager.class));
+      GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cm, cachesSet, TestModuleRepository.defaultModuleRepository());
       BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
       gbcr.replaceComponent(TimeService.class.getName(), timeService, true);
       ComponentRegistry registry = new ComponentRegistry(cacheName, configuration, cache, gcr,

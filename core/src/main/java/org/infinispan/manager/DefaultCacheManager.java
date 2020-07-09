@@ -256,14 +256,12 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration,
                               boolean start) {
       globalConfiguration = globalConfiguration == null ? new GlobalConfigurationBuilder().build() : globalConfiguration;
-      this.configurationManager = new ConfigurationManager(globalConfiguration);
       if (defaultConfiguration != null) {
          if (globalConfiguration.defaultCacheName().isPresent()) {
             defaultCacheName = globalConfiguration.defaultCacheName().get();
          } else {
             throw CONFIG.defaultCacheConfigurationWithoutName();
          }
-         configurationManager.putConfiguration(defaultCacheName, defaultConfiguration);
       } else {
          if (globalConfiguration.defaultCacheName().isPresent()) {
             throw CONFIG.missingDefaultCacheDeclaration(globalConfiguration.defaultCacheName().get());
@@ -274,7 +272,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       ModuleRepository moduleRepository = ModuleRepository.newModuleRepository(globalConfiguration.classLoader(), globalConfiguration);
       this.classAllowList = globalConfiguration.serialization().allowList().create();
       this.globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(),
-                                                                 moduleRepository, configurationManager);
+                                                                 moduleRepository);
 
       InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
       this.globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
@@ -286,11 +284,16 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       globalComponentRegistry.registerComponent(stats, CacheContainerStats.class);
 
       health = new HealthImpl(this, globalComponentRegistry.getComponent(InternalCacheRegistry.class));
+      this.configurationManager = globalComponentRegistry.getComponent(ConfigurationManager.class);
       cacheManagerInfo = new CacheManagerInfo(this, configurationManager, internalCacheRegistry);
       globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
 
       this.cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class), null,
                                                             globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
+
+      if (defaultCacheName != null) {
+         configurationManager.registerDefaultConfiguration(defaultCacheName, defaultConfiguration);
+      }
       if (start)
          start();
    }
@@ -365,14 +368,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     */
    public DefaultCacheManager(ConfigurationBuilderHolder holder, boolean start) {
       try {
-         configurationManager = new ConfigurationManager(holder);
-         GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
+         GlobalConfiguration globalConfiguration = holder.getGlobalConfigurationBuilder().build();
          classAllowList = globalConfiguration.serialization().allowList().create();
          defaultCacheName = globalConfiguration.defaultCacheName().orElse(null);
 
          ModuleRepository moduleRepository = ModuleRepository.newModuleRepository(globalConfiguration.classLoader(), globalConfiguration);
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(),
-                                                               moduleRepository, configurationManager);
+                                                               moduleRepository);
 
          InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
          globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
@@ -381,7 +383,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          globalComponentRegistry.registerComponent(stats, CacheContainerStats.class);
 
          health = new HealthImpl(this, internalCacheRegistry);
-         cacheManagerInfo = new CacheManagerInfo(this, getConfigurationManager(), internalCacheRegistry);
+         configurationManager = globalComponentRegistry.getComponent(ConfigurationManager.class);
+         cacheManagerInfo = new CacheManagerInfo(this, configurationManager, internalCacheRegistry);
          globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
 
          authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.cacheManagerName());
@@ -389,6 +392,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
          cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
                                                           null, globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
+         configurationManager.registerConfigurations(holder);
       } catch (CacheConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {
@@ -704,9 +708,15 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          return cache;
       } catch (CacheException e) {
          cacheFuture.completeExceptionally(e);
+         //remove the CompletableFuture in case of failure (example, X-Site check that happens during startup)
+         //to give a change to create the cache properly
+         caches.remove(cacheName, cacheFuture);
          throw e;
       } catch (Throwable t) {
          cacheFuture.completeExceptionally(new CacheException(t));
+         //remove the CompletableFuture in case of failure (example, X-Site check that happens during startup)
+         //to give a change to create the cache properly
+         caches.remove(cacheName, cacheFuture);
          throw t;
       }
    }
@@ -744,6 +754,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       try {
          globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
          globalComponentRegistry.start();
+         configurationManager.removeInvalids();
 
          String nodeName = globalConfiguration.transport().nodeName();
          log.debugf("Started cache manager %s on %s", nodeName, getAddress());

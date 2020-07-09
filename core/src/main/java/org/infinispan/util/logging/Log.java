@@ -2041,4 +2041,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Store %s cannot be configured to be shared as it does not contain the SHARED characteristic", id = 600)
    CacheConfigurationException storeConfiguredSharedButCharacteristicNotPresent(String storeClassName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Configuration '%s' is invalid. Removing it.", id=601)
+   void removedInvalidConfiguration(String configName, @Cause Throwable t);
 }

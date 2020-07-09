@@ -36,4 +36,6 @@ public interface ModuleLifecycle {
     default void cacheStopping(ComponentRegistry cr, String cacheName) {}
 
     default void cacheStopped(ComponentRegistry cr, String cacheName) {}
+
+    default void creatingConfiguration(GlobalComponentRegistry grc, Configuration configuration) {}
 }

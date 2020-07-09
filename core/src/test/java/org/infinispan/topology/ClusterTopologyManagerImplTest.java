@@ -19,7 +19,6 @@ import org.infinispan.commands.topology.RebalanceStartCommand;
 import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
 import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.commands.topology.TopologyUpdateStableCommand;
-import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -70,8 +69,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       GlobalConfiguration gc = GlobalConfigurationBuilder.defaultClusteredBuilder().build();
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
       GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cacheManager, Collections.emptySet(),
-                                                                TestModuleRepository.defaultModuleRepository(),
-                                                                mock(ConfigurationManager.class));
+                                                                TestModuleRepository.defaultModuleRepository());
       BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
 
       CacheManagerNotifierImpl managerNotifier = new CacheManagerNotifierImpl();
@@ -148,8 +146,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       GlobalConfiguration gc = GlobalConfigurationBuilder.defaultClusteredBuilder().build();
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
       GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cacheManager, Collections.emptySet(),
-                                                                TestModuleRepository.defaultModuleRepository(),
-                                                                mock(ConfigurationManager.class));
+                                                                TestModuleRepository.defaultModuleRepository());
       BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
 
       CacheManagerNotifierImpl managerNotifier = new CacheManagerNotifierImpl();

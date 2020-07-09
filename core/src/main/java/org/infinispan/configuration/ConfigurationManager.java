@@ -15,6 +15,10 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 
 /**
  * It manages all the configuration for a specific container.
@@ -25,25 +29,29 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
  * @author Pedro Ruivo
  * @since 8.1
  */
+@Scope(Scopes.GLOBAL)
 public class ConfigurationManager {
-   private final GlobalConfiguration globalConfiguration;
    private final ConcurrentMap<String, Configuration> namedConfiguration;
+   @Inject GlobalComponentRegistry gcr;
 
-
-   public ConfigurationManager(GlobalConfiguration globalConfiguration) {
-      this.globalConfiguration = globalConfiguration;
+   public ConfigurationManager() {
       this.namedConfiguration = new ConcurrentHashMap<>();
    }
 
-   public ConfigurationManager(ConfigurationBuilderHolder holder) {
-      this(holder.getGlobalConfigurationBuilder().build());
-
-      holder.getNamedConfigurationBuilders()
-            .forEach((name, builder) -> namedConfiguration.put(name, builder.build(globalConfiguration)));
+   public GlobalConfiguration getGlobalConfiguration() {
+      return gcr.getGlobalConfiguration();
    }
 
-   public GlobalConfiguration getGlobalConfiguration() {
-      return globalConfiguration;
+   public void registerConfigurations(ConfigurationBuilderHolder holder) {
+      holder.getNamedConfigurationBuilders().forEach((name, builder) -> namedConfiguration.put(name, builder.build(getGlobalConfiguration())));
+   }
+
+   public void registerDefaultConfiguration(String name, Configuration configuration) {
+      namedConfiguration.put(name, configuration);
+   }
+
+   public void removeInvalids() {
+      namedConfiguration.entrySet().removeIf(this::isInvalid);
    }
 
    public Configuration getConfiguration(String cacheName, boolean includeWildcards) {
@@ -89,12 +97,13 @@ public class ConfigurationManager {
    }
 
    public Configuration putConfiguration(String cacheName, Configuration configuration) {
+      gcr.notifyCreatingConfiguration(configuration);
       namedConfiguration.put(cacheName, configuration);
       return configuration;
    }
 
    public Configuration putConfiguration(String cacheName, ConfigurationBuilder builder) {
-      return putConfiguration(cacheName, builder.build(globalConfiguration));
+      return putConfiguration(cacheName, builder.build(getGlobalConfiguration()));
    }
 
    public void removeConfiguration(String cacheName) {
@@ -104,12 +113,23 @@ public class ConfigurationManager {
    public Collection<String> getDefinedCaches() {
       List<String> cacheNames = namedConfiguration.entrySet().stream()
             .filter(entry -> !entry.getValue().isTemplate())
-            .map(entry -> entry.getKey())
+            .map(Map.Entry::getKey)
             .collect(Collectors.toList());
       return Collections.unmodifiableCollection(cacheNames);
    }
 
    public Collection<String> getDefinedConfigurations() {
       return Collections.unmodifiableCollection(namedConfiguration.keySet());
+   }
+
+   private boolean isInvalid(Map.Entry<String, Configuration> entry) {
+      try {
+         gcr.notifyCreatingConfiguration(entry.getValue());
+         return false;
+      } catch (Throwable t) {
+         //it throws an exception if it isn't valid
+         CONFIG.removedInvalidConfiguration(entry.getKey(), t);
+         return true;
+      }
    }
 }

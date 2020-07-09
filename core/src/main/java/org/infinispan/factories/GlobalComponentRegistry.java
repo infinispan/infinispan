@@ -18,6 +18,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.ConfigurationManager;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.conflict.EntryMergePolicyFactoryRegistry;
@@ -101,12 +102,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
     *
     * @param configuration configuration with which this is created
-    * @param configurationManager
     */
    public GlobalComponentRegistry(GlobalConfiguration configuration,
-                                  EmbeddedCacheManager cacheManager,
-                                  Set<String> createdCaches, ModuleRepository moduleRepository,
-                                  ConfigurationManager configurationManager) {
+         EmbeddedCacheManager cacheManager,
+         Set<String> createdCaches, ModuleRepository moduleRepository) {
       super(moduleRepository, true, null);
 
       ClassLoader configuredClassLoader = configuration.classLoader();
@@ -121,8 +120,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(this, GlobalComponentRegistry.class);
          registerComponent(configuration, GlobalConfiguration.class);
          registerComponent(cacheManager, EmbeddedCacheManager.class);
-         basicComponentRegistry.registerComponent(ConfigurationManager.class.getName(), configurationManager, true);
-         basicComponentRegistry.registerComponent(CacheManagerJmxRegistration.class.getName(), new CacheManagerJmxRegistration(), true);
+         basicComponentRegistry
+               .registerComponent(ConfigurationManager.class.getName(), new ConfigurationManager(), true);
+         basicComponentRegistry
+               .registerComponent(CacheManagerJmxRegistration.class.getName(), new CacheManagerJmxRegistration(), true);
          basicComponentRegistry.registerComponent(CacheManagerMetricsRegistration.class.getName(), new CacheManagerMetricsRegistration(), true);
          basicComponentRegistry.registerComponent(CacheManagerNotifier.class.getName(), new CacheManagerNotifierImpl(), true);
          basicComponentRegistry.registerComponent(InternalCacheRegistry.class.getName(), new InternalCacheRegistryImpl(), true);
@@ -325,6 +326,15 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
             log.tracef("Invoking %s.cacheStarted()", l);
          }
          l.cacheStarted(cr, cacheName);
+      }
+   }
+
+   public void notifyCreatingConfiguration(Configuration configuration) {
+      for (ModuleLifecycle l : moduleLifecycles) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Invoking %s.creatingConfiguration()", l);
+         }
+         l.creatingConfiguration(this, configuration);
       }
    }
 

@@ -83,6 +83,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       parserRegistry = new ParserRegistry();
 
       // Start the static caches first
+      configurationManager.removeInvalids();
       Set<String> staticCacheNames = new HashSet<>(configurationManager.getDefinedCaches());
       log.debugf("Starting statically defined caches: %s", staticCacheNames);
       for (String cacheName : configurationManager.getDefinedCaches()) {
@@ -172,20 +173,16 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       if (template == null) {
          // The user has not specified a template, if a cache already exists just return it without checking for compatibility
          if (cacheManager.cacheExists(cacheName))
-            return CompletableFuture.completedFuture(configurationManager.getConfiguration(cacheName, true));
+            return CompletableFuture.completedFuture(getConfiguration(cacheName));
          else {
             Optional<String> defaultCacheName = configurationManager.getGlobalConfiguration().defaultCacheName();
-            if (defaultCacheName.isPresent()) {
-               configuration = configurationManager.getConfiguration(defaultCacheName.get(), true);
-            } else {
-               configuration = null;
-            }
+            configuration = defaultCacheName.map(this::getConfiguration).orElse(null);
          }
          if (configuration == null) {
             configuration = new ConfigurationBuilder().build();
          }
       } else {
-         configuration = configurationManager.getConfiguration(template, true);
+         configuration = getConfiguration(template);
          if (configuration == null) {
             throw CONFIG.undeclaredConfiguration(template, cacheName);
          }
@@ -195,6 +192,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    CompletableFuture<Configuration> createCache(String cacheName, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       localConfigurationManager.validateFlags(flags);
+      //validate configuration before storing in the global state
+      globalComponentRegistry.notifyCreatingConfiguration(configuration);
       try {
          CacheState state = new CacheState(template, parserRegistry.serialize(cacheName, configuration), flags);
          return getStateCache().putIfAbsentAsync(new ScopedState(CACHE_SCOPE, cacheName), state).thenApply((v) -> configuration);
@@ -233,5 +232,9 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    CompletableFuture<Void> removeCacheLocally(String name, CacheState state) {
       return localConfigurationManager.removeCache(name, state.getFlags());
+   }
+
+   private Configuration getConfiguration(String name) {
+      return configurationManager.getConfiguration(name, true);
    }
 }
