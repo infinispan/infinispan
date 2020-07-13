@@ -17,13 +17,13 @@ import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(testName = "client.hotrod.marshall.WhiteListMarshallingTest", groups = {"functional", "smoke"} )
-public class WhiteListMarshallingTest extends SingleHotRodServerTest {
+@Test(testName = "client.hotrod.marshall.AllowListMarshallingTest", groups = {"functional", "smoke"} )
+public class AllowListMarshallingTest extends SingleHotRodServerTest {
 
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      builder.addJavaSerialWhiteList(".*Person.*").marshaller(JavaSerializationMarshaller.class);
+      builder.addJavaSerialAllowList(".*Person.*").marshaller(JavaSerializationMarshaller.class);
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
       return new InternalRemoteCacheManager(builder.build());
    }

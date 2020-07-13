@@ -25,7 +25,7 @@ public class MultimapStoreBucketTest extends AbstractInfinispanTest {
    public void testMultimapWithJavaSerializationMarshaller() throws Exception {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalBuilder.defaultCacheName("test");
-      globalBuilder.serialization().marshaller(new JavaSerializationMarshaller()).whiteList().addClass(SuperPerson.class.getName());
+      globalBuilder.serialization().marshaller(new JavaSerializationMarshaller()).allowList().addClass(SuperPerson.class.getName());
 
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);

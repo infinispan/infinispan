@@ -2,7 +2,7 @@ package org.infinispan.spring.remote.support;
 
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EXECUTOR_FACTORY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RETURN_VALUES;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_WHITELIST;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_ALLOWLIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.NEAR_CACHE_MODE;
@@ -124,7 +124,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest extends AbstractInfinis
       // Explicitly set the expected properties on the client defaults, as otherwise the ProtoStream marshaller is expected
       Properties clientDefaultProps = defaultRemoteCacheManager.getConfiguration().properties();
       clientDefaultProps.setProperty(MARSHALLER, JavaSerializationMarshaller.class.getName());
-      clientDefaultProps.setProperty(JAVA_SERIAL_WHITELIST, InfinispanRemoteCacheManagerFactoryBean.SPRING_JAVA_SERIAL_WHITELIST);
+      clientDefaultProps.setProperty(JAVA_SERIAL_ALLOWLIST, InfinispanRemoteCacheManagerFactoryBean.SPRING_JAVA_SERIAL_ALLOWLIST);
 
       AssertionUtils.assertPropertiesSubset(
               "The configuration properties used by the RemoteCacheManager returned by getObject() should be equal "

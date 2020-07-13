@@ -2,7 +2,7 @@ package org.infinispan.server.core.dataconversion.json;
 
 import java.io.IOException;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 
 /**
- * Jackson TypeIdResolver that checks the serialization whitelist before deserializing JSON types.
+ * Jackson TypeIdResolver that checks the serialization allow list before deserializing JSON types.
  *
  * @since 9.3
  */
@@ -21,11 +21,11 @@ public class SecureTypeIdResolver implements TypeIdResolver {
    protected final static Log logger = LogFactory.getLog(SecureTypeIdResolver.class, Log.class);
 
    private TypeIdResolver internalTypeIdResolver;
-   private final ClassWhiteList classWhiteList;
+   private final ClassAllowList classAllowList;
 
-   SecureTypeIdResolver(TypeIdResolver typeIdResolver, ClassWhiteList classWhiteList) {
+   SecureTypeIdResolver(TypeIdResolver typeIdResolver, ClassAllowList classAllowList) {
       this.internalTypeIdResolver = typeIdResolver;
-      this.classWhiteList = classWhiteList;
+      this.classAllowList = classAllowList;
    }
 
    @Override
@@ -58,7 +58,7 @@ public class SecureTypeIdResolver implements TypeIdResolver {
       JavaType javaType = internalTypeIdResolver.typeFromId(databindContext, id);
       Class<?> clazz = javaType.getRawClass();
       String className = clazz.getName();
-      if (!classWhiteList.isSafeClass(className)) {
+      if (!classAllowList.isSafeClass(className)) {
          throw logger.errorDeserializing(className);
       }
       return javaType;

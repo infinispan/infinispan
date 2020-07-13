@@ -80,10 +80,10 @@ public class JavaSerializationMarshallerTest {
          marshaller.objectFromByteBuffer(bytes);
          Assert.fail("Expected an exception to be thrown when reading the Serialization bytes");
       } catch (CacheException e) {
-         assertTrue(e.getMessage().contains("blocked by deserialization white list"));
+         assertTrue(e.getMessage().contains("blocked by deserialization allow list"));
       }
 
-      marshaller.whiteList.addClasses(CustomClass.class);
+      marshaller.allowList.addClasses(CustomClass.class);
 
       assertNotNull(marshaller.objectFromByteBuffer(bytes));
       isMarshallable(marshaller, new CustomClass());

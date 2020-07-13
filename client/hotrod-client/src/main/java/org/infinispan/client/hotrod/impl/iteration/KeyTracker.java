@@ -2,7 +2,7 @@ package org.infinispan.client.hotrod.impl.iteration;
 
 import java.util.Set;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.util.IntSet;
 
 /**
@@ -11,7 +11,7 @@ import org.infinispan.commons.util.IntSet;
  */
 public interface KeyTracker {
 
-   boolean track(byte[] key, short status, ClassWhiteList whitelist);
+   boolean track(byte[] key, short status, ClassAllowList allowList);
 
    void segmentsFinished(IntSet finishedSegments);
 

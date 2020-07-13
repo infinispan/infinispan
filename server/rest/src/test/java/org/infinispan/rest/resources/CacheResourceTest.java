@@ -444,7 +444,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       byte[] xmlMarshalled = (byte[]) new XMLTranscoder().transcode(value, APPLICATION_OBJECT, APPLICATION_XML);
       byte[] javaMarshalled = new JavaSerializationMarshaller().objectToByteBuffer(value);
 
-      String expectError = "Class '" + value.getClass().getName() + "' blocked by deserialization white list";
+      String expectError = "Class '" + value.getClass().getName() + "' blocked by deserialization allow list";
 
       RestEntity jsonEntity = RestEntity.create(APPLICATION_JSON, jsonMarshalled);
       RestEntity xmlEntity = RestEntity.create(APPLICATION_XML, xmlMarshalled);

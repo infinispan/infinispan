@@ -166,7 +166,7 @@ public class APITest<K, V> extends MultiHotRodServersTest {
       clientBuilder.forceReturnValues(false);
       TransactionSetup.amendJTA(clientBuilder);
       if (useJavaSerialization) {
-         clientBuilder.marshaller(new JavaSerializationMarshaller()).addJavaSerialWhiteList("\\Q[\\ELjava.lang.Object;");
+         clientBuilder.marshaller(new JavaSerializationMarshaller()).addJavaSerialAllowList("\\Q[\\ELjava.lang.Object;");
       }
       return clientBuilder;
    }

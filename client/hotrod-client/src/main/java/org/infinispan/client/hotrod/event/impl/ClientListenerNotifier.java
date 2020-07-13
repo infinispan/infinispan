@@ -23,7 +23,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.TypedProperties;
@@ -47,14 +47,14 @@ public class ClientListenerNotifier {
    private final Codec codec;
    private final Marshaller marshaller;
    private final ChannelFactory channelFactory;
-   private final ClassWhiteList whitelist;
+   private final ClassAllowList allowList;
 
    public ClientListenerNotifier(Codec codec, Marshaller marshaller, ChannelFactory channelFactory,
                                  Configuration configuration) {
       this.codec = codec;
       this.marshaller = marshaller;
       this.channelFactory = channelFactory;
-      this.whitelist = configuration.getClassWhiteList();
+      this.allowList = configuration.getClassAllowList();
 
       TypedProperties defaultAsyncExecutorProperties = configuration.asyncExecutorFactory().properties();
       ConfigurationProperties cp = new ConfigurationProperties(defaultAsyncExecutorProperties);
@@ -209,8 +209,16 @@ public class ClientListenerNotifier {
       return codec;
    }
 
-   public ClassWhiteList whitelist() {
-      return whitelist;
+   public ClassAllowList allowList() {
+      return allowList;
+   }
+
+   /**
+    * @deprecated Use {@link #allowList()} instead. To be removed in 14.0.
+    */
+   @Deprecated
+   public ClassAllowList whitelist() {
+      return allowList();
    }
 
    public ChannelFactory channelFactory() {

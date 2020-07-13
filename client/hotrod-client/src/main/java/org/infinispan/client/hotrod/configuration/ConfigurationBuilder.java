@@ -80,7 +80,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private int valueSizeEstimate = ConfigurationProperties.DEFAULT_VALUE_SIZE;
    private int maxRetries = ConfigurationProperties.DEFAULT_MAX_RETRIES;
    private final NearCacheConfigurationBuilder nearCache;
-   private final List<String> whiteListRegExs = new ArrayList<>();
+   private final List<String> allowListRegExs = new ArrayList<>();
    private int batchSize = ConfigurationProperties.DEFAULT_BATCH_SIZE;
    private final TransactionConfigurationBuilder transaction;
    private final StatisticsConfigurationBuilder statistics;
@@ -338,9 +338,15 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
-   public ConfigurationBuilder addJavaSerialWhiteList(String... regEx) {
-      this.whiteListRegExs.addAll(Arrays.asList(regEx));
+   public ConfigurationBuilder addJavaSerialAllowList(String... regEx) {
+      this.allowListRegExs.addAll(Arrays.asList(regEx));
       return this;
+   }
+
+   @Override
+   @Deprecated
+   public ConfigurationBuilder addJavaSerialWhiteList(String... regEx) {
+      return addJavaSerialAllowList(regEx);
    }
 
    @Override
@@ -424,10 +430,17 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.security.ssl().withProperties(properties);
       this.security.authentication().withProperties(properties);
 
-      String serialWhitelist = typed.getProperty(ConfigurationProperties.JAVA_SERIAL_WHITELIST);
-      if (serialWhitelist != null && !serialWhitelist.isEmpty()) {
-         String[] classes = serialWhitelist.split(",");
-         Collections.addAll(this.whiteListRegExs, classes);
+      String serialAllowList = typed.getProperty(ConfigurationProperties.JAVA_SERIAL_WHITELIST);
+      if (serialAllowList != null && !serialAllowList.isEmpty()) {
+         org.infinispan.commons.logging.Log.CONFIG.deprecatedProperty(ConfigurationProperties.JAVA_SERIAL_WHITELIST, ConfigurationProperties.JAVA_SERIAL_ALLOWLIST);
+         String[] classes = serialAllowList.split(",");
+         Collections.addAll(this.allowListRegExs, classes);
+      }
+
+      serialAllowList = typed.getProperty(ConfigurationProperties.JAVA_SERIAL_ALLOWLIST);
+      if (serialAllowList != null && !serialAllowList.isEmpty()) {
+         String[] classes = serialAllowList.split(",");
+         Collections.addAll(this.allowListRegExs, classes);
       }
 
       this.batchSize(typed.getIntProperty(ConfigurationProperties.BATCH_SIZE, batchSize, true));
@@ -514,7 +527,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
                                consistentHashImpl, forceReturnValues, keySizeEstimate, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
-                               valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create(), statistics.create(), features, contextInitializers, remoteCaches);
+                               valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, allowListRegExs, batchSize, transaction.create(), statistics.create(), features, contextInitializers, remoteCaches);
    }
 
    // Method that handles default marshaller - needed as a placeholder
@@ -563,7 +576,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.valueSizeEstimate = template.valueSizeEstimate();
       this.maxRetries = template.maxRetries();
       this.nearCache.read(template.nearCache());
-      this.whiteListRegExs.addAll(template.serialWhitelist());
+      this.allowListRegExs.addAll(template.serialWhitelist());
       this.transaction.read(template.transaction());
       this.statistics.read(template.statistics());
       this.contextInitializers.clear();

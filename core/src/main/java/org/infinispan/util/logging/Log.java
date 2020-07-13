@@ -1800,7 +1800,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot acquire lock %s as this partition is DEGRADED", id = 528)
    AvailabilityException degradedModeLockUnavailable(Object key);
 
-   @Message(value = "Class '%s' blocked by deserialization white list. Include the class name in the server white list to authorize.", id = 529)
+   @Message(value = "Class '%s' blocked by deserialization allow list. Include the class name in the server allow list to authorize.", id = 529)
    CacheException errorDeserializing(String className);
 
    @LogMessage(level = WARN)

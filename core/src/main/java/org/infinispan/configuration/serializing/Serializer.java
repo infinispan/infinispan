@@ -62,7 +62,7 @@ import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.TemporaryGlobalStatePathConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
-import org.infinispan.configuration.global.WhiteListConfiguration;
+import org.infinispan.configuration.global.AllowListConfiguration;
 import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.configuration.parsing.Parser.TransactionMode;
@@ -447,7 +447,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          SerializationConfiguration config = globalConfiguration.serialization();
          writeAdvancedSerializers(writer, config);
          writeSerializationContextInitializers(writer,config);
-         writeClassWhiteList(writer, config.whiteList());
+         writeClassAllowList(writer, config.allowList());
          writer.writeEndElement();
       }
    }
@@ -476,14 +476,14 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       }
    }
 
-   private void writeClassWhiteList(XMLExtendedStreamWriter writer, WhiteListConfiguration config) throws XMLStreamException {
-      writer.writeStartElement(Element.WHITE_LIST);
-      writeClassWhiteListElements(writer, Element.CLASS, config.getClasses());
-      writeClassWhiteListElements(writer, Element.REGEX, config.getRegexps());
+   private void writeClassAllowList(XMLExtendedStreamWriter writer, AllowListConfiguration config) throws XMLStreamException {
+      writer.writeStartElement(Element.ALLOW_LIST);
+      writeClassAllowListElements(writer, Element.CLASS, config.getClasses());
+      writeClassAllowListElements(writer, Element.REGEX, config.getRegexps());
       writer.writeEndElement();
    }
 
-   private void writeClassWhiteListElements(XMLExtendedStreamWriter writer, Element element, Collection<String> values) throws XMLStreamException {
+   private void writeClassAllowListElements(XMLExtendedStreamWriter writer, Element element, Collection<String> values) throws XMLStreamException {
       for (String value : values) {
          writer.writeStartElement(element);
          writer.writeCharacters(value);

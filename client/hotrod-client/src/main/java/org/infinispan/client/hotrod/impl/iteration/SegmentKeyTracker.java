@@ -11,7 +11,7 @@ import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
@@ -51,11 +51,11 @@ class SegmentKeyTracker implements KeyTracker {
       }
    }
 
-   public boolean track(byte[] key, short status, ClassWhiteList whitelist) {
+   public boolean track(byte[] key, short status, ClassAllowList allowList) {
       if (!trackSegments) return keyOnlyTracker.add(new WrappedByteArray(key));
 
       int segment = HotRodConstants.isObjectStorage(status) ?
-            segmentConsistentHash.getSegment(dataFormat.keyToObj(key, whitelist)) :
+            segmentConsistentHash.getSegment(dataFormat.keyToObj(key, allowList)) :
             segmentConsistentHash.getSegment(key);
       Set<WrappedByteArray> keys = keysPerSegment.get(segment);
       if (keys == null) {

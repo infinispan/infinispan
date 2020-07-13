@@ -12,7 +12,7 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -23,7 +23,7 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
 public class ClientListenerImpl<K, V> implements Publisher {
    private RemoteCache<Object, Object> cache;
    private final ClientKeyValueStoreListener listener;
-   private final ClassWhiteList whitelist = new ClassWhiteList(Collections.singletonList(".*"));
+   private final ClassAllowList whitelist = new ClassAllowList(Collections.singletonList(".*"));
 
    public ClientListenerImpl(RemoteCache cache, ClientKeyValueStoreListener listener) {
       this.cache = cache;

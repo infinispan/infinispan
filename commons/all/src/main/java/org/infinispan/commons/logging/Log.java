@@ -178,8 +178,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid Weight '%s'. Supported values are between 0 and 1.0", id = 935)
    EncodingException invalidWeight(Object weight);
 
-   @Message(value = "Class '%s' blocked by deserialization white list. Adjust the configuration serialization white list regular expression to include this class.", id = 936)
-   CacheException classNotInWhitelist(String className);
+   @Message(value = "Class '%s' blocked by deserialization allow list. Adjust the configuration serialization allow list regular expression to include this class.", id = 936)
+   CacheException classNotInAllowList(String className);
 
    @Message(value = "Invalid media type. Expected '%s' but got '%s'", id = 937)
    EncodingException invalidMediaType(String expected, String actual);
@@ -244,6 +244,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot parse bytes quantity %s", id = 29524)
    IllegalArgumentException cannotParseQuantity(String str);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Property '%s' has been deprecated. Please use '%s' instead.", id = 29525)
+   void deprecatedProperty(String oldName, String newName);
 
    //----- counters exceptions // don't use the same id range  ------
 }

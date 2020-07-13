@@ -8,7 +8,7 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.testng.AssertJUnit.assertArrayEquals;
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Person;
 import org.testng.annotations.BeforeClass;
@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 public class XMLTranscoderTest {
 
    private Person person;
-   private XMLTranscoder xmlTranscoder = new XMLTranscoder(new ClassWhiteList(singletonList(".*")));
+   private XMLTranscoder xmlTranscoder = new XMLTranscoder(new ClassAllowList(singletonList(".*")));
 
    @BeforeClass(alwaysRun = true)
    public void setUp() {

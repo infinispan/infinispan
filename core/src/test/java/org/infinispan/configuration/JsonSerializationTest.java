@@ -472,7 +472,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
             .marshaller(new JavaSerializationMarshaller())
             .addAdvancedExternalizer(1, mapExternalizer)
             .addAdvancedExternalizer(2, opExternalizer)
-            .whiteList()
+            .allowList()
             .addClass(Person.class.getName())
             .addRegexp(regexp).create();
 
@@ -486,12 +486,12 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertEquals(MapExternalizer.class.getName(), externalizerMap.at("1").asString());
       assertEquals(CacheFilters.CacheFiltersExternalizer.class.getName(), externalizerMap.at("2").asString());
 
-      Json whiteList = serialization.at("white-list");
-      Json classes = whiteList.at("classes");
+      Json allowList = serialization.at("allow-list");
+      Json classes = allowList.at("classes");
       assertTrue(classes.isArray());
       assertEquals(Person.class.getName(), classes.asJsonList().iterator().next().asString());
 
-      Json regexps = whiteList.at("regexps");
+      Json regexps = allowList.at("regexps");
       assertTrue(regexps.isArray());
       assertEquals(regexp, regexps.asJsonList().iterator().next().asString());
    }

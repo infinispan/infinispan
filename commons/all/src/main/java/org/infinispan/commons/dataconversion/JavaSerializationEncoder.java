@@ -1,6 +1,6 @@
 package org.infinispan.commons.dataconversion;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 
 /**
@@ -12,8 +12,8 @@ import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 @Deprecated
 public class JavaSerializationEncoder extends MarshallerEncoder {
 
-   public JavaSerializationEncoder(ClassWhiteList classWhiteList) {
-      super(new JavaSerializationMarshaller(classWhiteList));
+   public JavaSerializationEncoder(ClassAllowList classAllowList) {
+      super(new JavaSerializationMarshaller(classAllowList));
    }
 
    @Override

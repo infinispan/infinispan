@@ -2,7 +2,7 @@ package org.infinispan.jboss.marshalling;
 
 import static org.infinispan.util.logging.Log.PERSISTENCE;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -36,9 +36,9 @@ public class JbossMarshallingModule implements ModuleLifecycle {
          ((JBossUserMarshaller) userMarshaller).initialize(gcr);
       } else {
          // Register a JBoss Marshalling transcoder, ignoring any configured externalizers
-         ClassWhiteList classWhiteList = gcr.getComponent(EmbeddedCacheManager.class).getClassWhiteList();
+         ClassAllowList classAllowList = gcr.getComponent(EmbeddedCacheManager.class).getClassAllowList();
          ClassLoader classLoader = globalConfiguration.classLoader();
-         GenericJBossMarshaller jbossMarshaller = new GenericJBossMarshaller(classLoader, classWhiteList);
+         GenericJBossMarshaller jbossMarshaller = new GenericJBossMarshaller(classLoader, classAllowList);
          EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
          encoderRegistry.registerTranscoder(new JBossMarshallingTranscoder(jbossMarshaller));
       }

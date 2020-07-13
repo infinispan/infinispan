@@ -24,7 +24,7 @@ public class JBMARSerializeWithClientPojoTest extends SingleHotRodServerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
-      globalBuilder.serialization().whiteList().addClasses(UserPojo.class, UserPojo.Externalizer.class);
+      globalBuilder.serialization().allowList().addClasses(UserPojo.class, UserPojo.Externalizer.class);
 
       org.infinispan.configuration.cache.ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
@@ -35,7 +35,7 @@ public class JBMARSerializeWithClientPojoTest extends SingleHotRodServerTest {
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      builder.addJavaSerialWhiteList(UserPojo.class.getName()).marshaller(GenericJBossMarshaller.class);
+      builder.addJavaSerialAllowList(UserPojo.class.getName()).marshaller(GenericJBossMarshaller.class);
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
       return new InternalRemoteCacheManager(builder.build());
    }

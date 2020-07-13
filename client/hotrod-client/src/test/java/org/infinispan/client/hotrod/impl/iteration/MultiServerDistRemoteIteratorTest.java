@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IntSet;
@@ -52,7 +52,7 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
       final IntSet finished = IntSets.mutableEmptySet();
 
       @Override
-      public boolean track(byte[] key, short status, ClassWhiteList whitelist) {
+      public boolean track(byte[] key, short status, ClassAllowList allowList) {
          return true;
       }
 

@@ -45,7 +45,14 @@ Some operations that previously supported both `GET` and `POST` now support only
   Please update your configurations accordingly.
 
 == Marshalling
+
+=== Kryo and Protostuff marshaller deprecation
+
 The Kryo and Protostuff marshallers have been deprecated and will be removed in Infinispan 15.0
+
+=== Allow lists
+
+All occurrences of "white list" have been renamed to "allow list".
 
 = Upgrading from 10.1 to 11.0
 
@@ -595,7 +602,7 @@ Iteration in a clustered cache will still show entries that are expired via maxI
 The {brandname} WildFly modules are now located in the `system/add-ons/{moduleprefix}` dir as per the
 link:https://developer.jboss.org/wiki%20/LayeredDistributionsAndModulePathOrganization[WildFly module conventions].
 
-== Deserialization Whitelist
+== Deserialization Allow list
 
 Deserialization of content sent by clients to the server are no longer allowed by default.
 This applies to JSON, XML, and marshalled byte[] that, depending on the cache configuration, will cause the server
@@ -606,10 +613,10 @@ The deserialization needs to be enabled using system properties, ether by class 
 [source]
 ----
 // Comma separated list of fully qualified class names
--Dinfinispan.deserialization.whitelist.classes=java.time.Instant,com.myclass.Entity
+-Dinfinispan.deserialization.allowlist.classes=java.time.Instant,com.myclass.Entity
 
 // Regex expression
--Dinfinispan.deserialization.whitelist.regexps=.*
+-Dinfinispan.deserialization.allowlist.regexps=.*
 ----
 
 = Upgrading from 9.0 to 9.1

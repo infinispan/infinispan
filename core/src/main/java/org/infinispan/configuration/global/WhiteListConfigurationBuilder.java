@@ -1,66 +1,49 @@
 package org.infinispan.configuration.global;
 
-import static org.infinispan.configuration.global.WhiteListConfiguration.CLASSES;
-import static org.infinispan.configuration.global.WhiteListConfiguration.REGEXPS;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.ClassWhiteList;
-import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.ClassAllowList;
 
 /**
- * Configures the {@link org.infinispan.manager.EmbeddedCacheManager} {@link org.infinispan.commons.configuration.ClassWhiteList}.
- *
- * @author Ryan Emerson
- * @since 10.0
+ * @deprecated since 12.0. Use {@link AllowListConfigurationBuilder} through @{@link SerializationConfigurationBuilder#allowList()}. Will be removed in 14.0.
  */
+@Deprecated
 public class WhiteListConfigurationBuilder implements Builder<WhiteListConfiguration> {
+   private final AllowListConfigurationBuilder delegate;
 
-   private final AttributeSet attributes;
-   private final Set<String> classes = new HashSet<>();
-   private final List<String> regexps = new ArrayList<>();
-
-   WhiteListConfigurationBuilder() {
-      attributes = WhiteListConfiguration.attributeDefinitionSet();
+   WhiteListConfigurationBuilder(AllowListConfigurationBuilder delegate) {
+      this.delegate = delegate;
    }
 
    /**
-    * Helper method that allows for registration of a class to the {@link ClassWhiteList}.
+    * Helper method that allows for registration of a class to the {@link ClassAllowList}.
     */
    public <T> WhiteListConfigurationBuilder addClass(String clazz) {
-      this.classes.add(clazz);
+      delegate.addClass(clazz);
       return this;
    }
 
    /**
-    * Helper method that allows for registration of classes to the {@link ClassWhiteList}.
+    * Helper method that allows for registration of classes to the {@link ClassAllowList}.
     */
    public <T> WhiteListConfigurationBuilder addClasses(Class... classes) {
-      List<String> classNames = Arrays.stream(classes).map(Class::getName).collect(Collectors.toList());
-      this.classes.addAll(classNames);
+      delegate.addClasses(classes);
       return this;
    }
 
 
    /**
-    * Helper method that allows for registration of a regexp to the {@link ClassWhiteList}.
+    * Helper method that allows for registration of a regexp to the {@link ClassAllowList}.
     */
    public <T> WhiteListConfigurationBuilder addRegexp(String regex) {
-      this.regexps.add(regex);
+      delegate.addRegexp(regex);
       return this;
    }
 
    /**
-    * Helper method that allows for registration of regexps to the {@link ClassWhiteList}.
+    * Helper method that allows for registration of regexps to the {@link ClassAllowList}.
     */
    public <T> WhiteListConfigurationBuilder addRegexps(String... regexps) {
-      this.regexps.addAll(Arrays.asList(regexps));
+      delegate.addRegexps(regexps);
       return this;
    }
 
@@ -71,19 +54,12 @@ public class WhiteListConfigurationBuilder implements Builder<WhiteListConfigura
 
    @Override
    public WhiteListConfiguration create() {
-      if (!classes.isEmpty())
-         attributes.attribute(CLASSES).set(classes);
-
-      if (!regexps.isEmpty())
-         attributes.attribute(REGEXPS).set(regexps);
-      return new WhiteListConfiguration(attributes.protect());
+      throw new UnsupportedOperationException();
    }
 
    @Override
    public Builder<?> read(WhiteListConfiguration template) {
-      this.attributes.read(template.attributes());
-      this.classes.addAll(template.getClasses());
-      this.regexps.addAll(template.getRegexps());
+      delegate.read(template.delegate);
       return this;
    }
 }

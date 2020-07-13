@@ -79,7 +79,7 @@ public final class LifecycleManager implements ModuleLifecycle {
       initProtobufMetadataManager(bcr);
 
       EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
-      cacheManager.getClassWhiteList()
+      cacheManager.getClassAllowList()
             .addClasses(QueryRequest.class, QueryRequestExternalizer.class);
    }
 

@@ -8,7 +8,7 @@ import java.util.concurrent.CompletionStage;
 import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -149,8 +149,13 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    }
 
    @Override
-   public ClassWhiteList getClassWhiteList() {
-      return cm.getClassWhiteList();
+   public ClassAllowList getClassWhiteList() {
+      return cm.getClassAllowList();
+   }
+
+   @Override
+   public ClassAllowList getClassAllowList() {
+      return cm.getClassAllowList();
    }
 
    @Override

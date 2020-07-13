@@ -57,7 +57,7 @@ public class ExecTest extends MultiHotRodServersTest {
    @Override
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(HotRodServer server) {
       // Remote scripting must use the JavaSerializationMarshaller for now due to IPROTO-118
-      return createHotRodClientConfigurationBuilder(server.getHost(), server.getPort()).marshaller(JavaSerializationMarshaller.class).addJavaSerialWhiteList("java.*");
+      return createHotRodClientConfigurationBuilder(server.getHost(), server.getPort()).marshaller(JavaSerializationMarshaller.class).addJavaSerialAllowList("java.*");
    }
 
    @AfterMethod

@@ -1,6 +1,6 @@
 package org.infinispan.factories;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.BinaryTranscoder;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.DefaultTranscoder;
@@ -45,7 +45,7 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
    public Object construct(String componentName) {
       ClassLoader classLoader = globalConfiguration.classLoader();
       EncoderRegistryImpl encoderRegistry = new EncoderRegistryImpl();
-      ClassWhiteList classWhiteList = embeddedCacheManager.getClassWhiteList();
+      ClassAllowList classAllowList = embeddedCacheManager.getClassAllowList();
       // TODO Move registration to GlobalMarshaller ISPN-9622
       String messageName = PersistenceContextInitializer.getFqTypeName(MarshallableUserObject.class);
       Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
@@ -55,7 +55,7 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       encoderRegistry.registerEncoder(IdentityEncoder.INSTANCE);
       encoderRegistry.registerEncoder(UTF8Encoder.INSTANCE);
 
-      encoderRegistry.registerEncoder(new JavaSerializationEncoder(classWhiteList));
+      encoderRegistry.registerEncoder(new JavaSerializationEncoder(classAllowList));
       encoderRegistry.registerEncoder(new GlobalMarshallerEncoder(globalMarshaller.wired()));
 
       // Default and binary transcoder use the user marshaller to convert data to/from a byte array
@@ -63,7 +63,7 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       encoderRegistry.registerTranscoder(new BinaryTranscoder(userMarshaller));
       // Core transcoders are always available
       encoderRegistry.registerTranscoder(new ProtostreamTranscoder(ctxRegistry, classLoader));
-      encoderRegistry.registerTranscoder(new JavaSerializationTranscoder(classWhiteList));
+      encoderRegistry.registerTranscoder(new JavaSerializationTranscoder(classAllowList));
       // Wraps the GlobalMarshaller so that it can be used as a transcoder
       // Keeps application/x-infinispan-marshalling available for backwards compatibility
       encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(globalMarshaller.wired()));

@@ -5,7 +5,7 @@ import static org.testng.Assert.assertTrue;
 
 import java.util.Collections;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.encoding.impl.JavaSerializationTranscoder;
 import org.infinispan.test.data.Address;
@@ -24,7 +24,7 @@ public class JavaSerializationTranscoderTest extends AbstractTranscoderTest {
       Address address = new Address();
       address.setCity("London");
       dataSrc.setAddress(address);
-      transcoder = new JavaSerializationTranscoder(new ClassWhiteList(Collections.singletonList(".*")));
+      transcoder = new JavaSerializationTranscoder(new ClassAllowList(Collections.singletonList(".*")));
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 

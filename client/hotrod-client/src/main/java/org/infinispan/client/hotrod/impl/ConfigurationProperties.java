@@ -71,6 +71,8 @@ public class ConfigurationProperties {
    public static final String SASL_PROPERTIES_PREFIX = ICH + "sasl_properties";
    public static final Pattern SASL_PROPERTIES_PREFIX_REGEX =
          Pattern.compile('^' + ConfigurationProperties.SASL_PROPERTIES_PREFIX + '.');
+   public static final String JAVA_SERIAL_ALLOWLIST = ICH + "java_serial_allowlist";
+   @Deprecated
    public static final String JAVA_SERIAL_WHITELIST = ICH + "java_serial_whitelist";
    public static final String BATCH_SIZE = ICH + "batch_size";
    // Statistics properties
@@ -553,8 +555,17 @@ public class ConfigurationProperties {
       return props.getProperty(SERVER_LIST);
    }
 
+   /**
+    * @deprecated Use {@link #setJavaSerialAllowList(String)} instead. To be removed in 14.0.
+    * @param javaSerialWhitelist
+    */
+   @Deprecated
    public void setJavaSerialWhitelist(String javaSerialWhitelist) {
-      props.setProperty(JAVA_SERIAL_WHITELIST, javaSerialWhitelist);
+      setJavaSerialAllowList(javaSerialWhitelist);
+   }
+
+   public void setJavaSerialAllowList(String javaSerialAllowlist) {
+      props.setProperty(JAVA_SERIAL_ALLOWLIST, javaSerialAllowlist);
    }
 
    public void setTransactionMode(String transactionMode) {

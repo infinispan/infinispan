@@ -36,7 +36,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
@@ -231,7 +231,7 @@ public class Codec20 implements Codec, HotRodConstants {
    }
 
    @Override
-   public AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassWhiteList whitelist, SocketAddress serverAddress) {
+   public AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassAllowList allowList, SocketAddress serverAddress) {
       short status = buf.readUnsignedByte();
       buf.readUnsignedByte(); // ignore, no topology expected
       ClientEvent.Type eventType;
@@ -258,18 +258,18 @@ public class Codec20 implements Codec, HotRodConstants {
       boolean isRetried = buf.readUnsignedByte() == 1;
       DataFormat dataFormat = listenerDataFormat.apply(listenerId);
       if (isCustom == 1) {
-         final Object eventData = dataFormat.valueToObj(ByteBufUtil.readArray(buf), whitelist);
+         final Object eventData = dataFormat.valueToObj(ByteBufUtil.readArray(buf), allowList);
          return createCustomEvent(listenerId, eventData, eventType, isRetried);
       } else {
          switch (eventType) {
             case CLIENT_CACHE_ENTRY_CREATED:
                long createdDataVersion = buf.readLong();
-               return createCreatedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), whitelist), createdDataVersion, isRetried);
+               return createCreatedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), allowList), createdDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_MODIFIED:
                long modifiedDataVersion = buf.readLong();
-               return createModifiedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), whitelist), modifiedDataVersion, isRetried);
+               return createModifiedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), allowList), modifiedDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_REMOVED:
-               return createRemovedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), whitelist), isRetried);
+               return createRemovedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), allowList), isRetried);
             default:
                throw HOTROD.unknownEvent(eventTypeId);
          }
@@ -277,9 +277,9 @@ public class Codec20 implements Codec, HotRodConstants {
    }
 
    @Override
-   public Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassWhiteList whitelist, Marshaller marshaller) {
+   public Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassAllowList allowList, Marshaller marshaller) {
       if (HotRodConstants.hasPrevious(status)) {
-         return bytes2obj(marshaller, ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), whitelist);
+         return bytes2obj(marshaller, ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), allowList);
       } else {
          return null;
       }

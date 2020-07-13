@@ -21,7 +21,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONTEXT_
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RETURN_VALUES;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUNCTION_PREFIX;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_WHITELIST;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_ALLOWLIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_FILE_NAME;
@@ -64,7 +64,7 @@ import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.configuration.BuiltBy;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Features;
 import org.infinispan.commons.util.TypedProperties;
@@ -100,9 +100,9 @@ public class Configuration {
    private final int maxRetries;
    private final NearCacheConfiguration nearCache;
    private final List<ClusterConfiguration> clusters;
-   private final List<String> serialWhitelist;
+   private final List<String> serialAllowList;
    private final int batchSize;
-   private final ClassWhiteList classWhiteList;
+   private final ClassAllowList classAllowList;
    private final StatisticsConfiguration statistics;
    private final TransactionConfiguration transaction;
    private final Features features;
@@ -114,7 +114,7 @@ public class Configuration {
                         Marshaller marshaller, Class<? extends Marshaller> marshallerClass,
                         ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
                         int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
-                        List<ClusterConfiguration> clusters, List<String> serialWhitelist, int batchSize,
+                        List<ClusterConfiguration> clusters, List<String> serialAllowList, int batchSize,
                         TransactionConfiguration transaction, StatisticsConfiguration statistics, Features features,
                         List<SerializationContextInitializer> contextInitializers,
                         Map<String, RemoteCacheConfiguration> remoteCaches) {
@@ -139,8 +139,8 @@ public class Configuration {
       this.valueSizeEstimate = valueSizeEstimate;
       this.nearCache = nearCache;
       this.clusters = clusters;
-      this.serialWhitelist = serialWhitelist;
-      this.classWhiteList = new ClassWhiteList(serialWhitelist);
+      this.serialAllowList = serialAllowList;
+      this.classAllowList = new ClassAllowList(serialAllowList);
       this.batchSize = batchSize;
       this.transaction = transaction;
       this.statistics = statistics;
@@ -239,12 +239,28 @@ public class Configuration {
       return maxRetries;
    }
 
+   /**
+    * @deprecated Use {@link #serialAllowList()} instead. To be removed in 14.0.
+    */
+   @Deprecated
    public List<String> serialWhitelist() {
-      return serialWhitelist;
+      return serialAllowList();
    }
 
-   public ClassWhiteList getClassWhiteList() {
-      return classWhiteList;
+   public List<String> serialAllowList() {
+      return serialAllowList;
+   }
+
+   /**
+    * @deprecated Use {@link #getClassAllowList()} instead. To be removed in 14.0.
+    */
+   @Deprecated
+   public ClassAllowList getClassWhiteList() {
+      return getClassAllowList();
+   }
+
+   public ClassAllowList getClassAllowList() {
+      return classAllowList;
    }
 
    public int batchSize() {
@@ -310,7 +326,7 @@ public class Configuration {
             + forceReturnValues + ", keySizeEstimate=" + keySizeEstimate + ", marshallerClass=" + marshallerClass + ", marshaller=" + marshaller + ", protocolVersion="
             + protocolVersion + ", servers=" + servers + ", socketTimeout=" + socketTimeout + ", security=" + security + ", tcpNoDelay=" + tcpNoDelay + ", tcpKeepAlive=" + tcpKeepAlive
             + ", valueSizeEstimate=" + valueSizeEstimate + ", maxRetries=" + maxRetries
-            + ", serialWhiteList=" + serialWhitelist
+            + ", serialAllowList=" + serialAllowList
             + ", batchSize=" + batchSize
             + ", nearCache=" + nearCache
             + ", remoteCaches= " + remoteCaches
@@ -415,7 +431,7 @@ public class Configuration {
       for (Map.Entry<String, String> entry : security.authentication().saslProperties().entrySet())
          properties.setProperty(SASL_PROPERTIES_PREFIX + '.' + entry.getKey(), entry.getValue());
 
-      properties.setProperty(JAVA_SERIAL_WHITELIST, String.join(",", serialWhitelist));
+      properties.setProperty(JAVA_SERIAL_ALLOWLIST, String.join(",", serialAllowList));
 
       properties.setProperty(BATCH_SIZE, Integer.toString(batchSize));
 

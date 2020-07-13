@@ -49,7 +49,7 @@ public class EmbeddedMultimapCacheTest extends SingleCacheManagerTest {
       cm.defineConfiguration("test", new ConfigurationBuilder().build());
       MultimapCacheManager multimapCacheManager = EmbeddedMultimapCacheManagerFactory.from(cm);
       multimapCache = multimapCacheManager.get("test");
-      cm.getClassWhiteList().addClasses(SuperPerson.class);
+      cm.getClassAllowList().addClasses(SuperPerson.class);
       return cm;
    }
 

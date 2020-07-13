@@ -16,7 +16,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTI
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MIN_IDLE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECT_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUNCTION_PREFIX;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_WHITELIST;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_ALLOWLIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX_DOMAIN;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX_NAME;
@@ -130,7 +130,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       OPTIONS.put(SASL_PROPERTIES_PREFIX + ".A", c -> c.security().authentication().saslProperties().get("A"));
       OPTIONS.put(SASL_PROPERTIES_PREFIX + ".B", c -> c.security().authentication().saslProperties().get("B"));
       OPTIONS.put(SASL_PROPERTIES_PREFIX + ".C", c -> c.security().authentication().saslProperties().get("C"));
-      OPTIONS.put(JAVA_SERIAL_WHITELIST, Configuration::serialWhitelist);
+      OPTIONS.put(JAVA_SERIAL_ALLOWLIST, Configuration::serialAllowList);
       OPTIONS.put(NEAR_CACHE_MODE, c -> c.nearCache().mode());
       OPTIONS.put(NEAR_CACHE_MAX_ENTRIES, c -> c.nearCache().maxEntries());
       OPTIONS.put(NEAR_CACHE_NAME_PATTERN, c -> c.nearCache().cacheNamePattern().pattern());
@@ -219,7 +219,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
             .serverName("my-server-name")
             .clientSubject(clientSubject)
             .saslProperties(saslProperties)
-            .addJavaSerialWhiteList(".*Person.*", ".*Employee.*")
+            .addJavaSerialAllowList(".*Person.*", ".*Employee.*")
             .nearCache()
             .mode(NearCacheMode.INVALIDATED)
             .maxEntries(10_000)
@@ -282,7 +282,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       p.setProperty(SASL_PROPERTIES_PREFIX + ".A", "1");
       p.setProperty(SASL_PROPERTIES_PREFIX + ".B", "2");
       p.setProperty(SASL_PROPERTIES_PREFIX + ".C", "3");
-      p.setProperty(JAVA_SERIAL_WHITELIST, ".*Person.*,.*Employee.*");
+      p.setProperty(JAVA_SERIAL_ALLOWLIST, ".*Person.*,.*Employee.*");
       p.setProperty(NEAR_CACHE_MODE, NearCacheMode.INVALIDATED.name());
       p.setProperty(NEAR_CACHE_MAX_ENTRIES, "10000");
       p.setProperty(NEAR_CACHE_NAME_PATTERN, "near.*");
@@ -581,7 +581,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEqualsConfig("2", SASL_PROPERTIES_PREFIX + ".B", configuration);
       assertEqualsConfig("3", SASL_PROPERTIES_PREFIX + ".C", configuration);
       assertEqualsConfig(ProtocolVersion.PROTOCOL_VERSION_29, PROTOCOL_VERSION, configuration);
-      assertEqualsConfig(Arrays.asList(".*Person.*", ".*Employee.*"), JAVA_SERIAL_WHITELIST, configuration);
+      assertEqualsConfig(Arrays.asList(".*Person.*", ".*Employee.*"), JAVA_SERIAL_ALLOWLIST, configuration);
       assertEqualsConfig(NearCacheMode.INVALIDATED, NEAR_CACHE_MODE, configuration);
       assertEqualsConfig(10_000, NEAR_CACHE_MAX_ENTRIES, configuration);
       assertEqualsConfig("near.*", NEAR_CACHE_NAME_PATTERN, configuration);

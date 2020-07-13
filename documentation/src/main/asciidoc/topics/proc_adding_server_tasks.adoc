@@ -19,8 +19,8 @@ example.HelloTask
 ----
 +
 . Copy the JAR file to the `{server_home}/server/lib` directory of your {brandname} server.
-. Add your classes to the deserialization whitelist in your {brandname}
-configuration. Alternatively set the whitelist using system properties.
+. Add your classes to the deserialization allow list in your {brandname}
+configuration. Alternatively set the allow list using system properties.
 
 .Reference
 

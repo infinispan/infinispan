@@ -10,7 +10,7 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.AbstractApplicationPublisherBridge;
@@ -30,7 +30,7 @@ public class RemoteApplicationPublishedBridge extends AbstractApplicationPublish
 
    private final DataFormat dataFormat;
 
-   private final ClassWhiteList whitelist = new ClassWhiteList(Collections.singletonList(".*"));
+   private final ClassAllowList allowList = new ClassAllowList(Collections.singletonList(".*"));
 
    public RemoteApplicationPublishedBridge(SpringCache eventSource) {
       super(eventSource);
@@ -67,14 +67,14 @@ public class RemoteApplicationPublishedBridge extends AbstractApplicationPublish
       ByteBuffer rawData = ByteBuffer.wrap(eventData);
       byte[] rawKey = readElement(rawData);
       byte[] rawValue = readElement(rawData);
-      String key = dataFormat.keyToObj(rawKey, whitelist);
+      String key = dataFormat.keyToObj(rawKey, allowList);
       KeyValuePair keyValuePair;
       if (rawValue == null) {
          // This events will hold either an old or a new value almost every time. But there are some corner cases
          // during rebalance where neither a new or an old value will be present. This if handles this case
          keyValuePair = new KeyValuePair<>(key, new MapSession(key));
       } else {
-         keyValuePair = new KeyValuePair<>(key, dataFormat.valueToObj(rawValue, whitelist));
+         keyValuePair = new KeyValuePair<>(key, dataFormat.valueToObj(rawValue, allowList));
       }
       return keyValuePair;
    }

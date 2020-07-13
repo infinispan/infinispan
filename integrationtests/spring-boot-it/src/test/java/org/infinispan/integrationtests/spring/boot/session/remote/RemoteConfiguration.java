@@ -25,7 +25,7 @@ public class RemoteConfiguration {
    public SpringRemoteCacheManagerFactoryBean springCacheManager() {
       SpringRemoteCacheManagerFactoryBean factoryBean = new SpringRemoteCacheManagerFactoryBean();
       factoryBean.setServerList(Arrays.asList(new InetSocketAddress("localhost", SERVER_PORT)));
-      factoryBean.setClassWhiteList(AbstractRemoteCacheManagerFactory.SPRING_JAVA_SERIAL_WHITELIST + ",java.util.*");
+      factoryBean.setClassAllowList(AbstractRemoteCacheManagerFactory.SPRING_JAVA_SERIAL_ALLOWLIST + ",java.util.*");
       return factoryBean;
    }
 }

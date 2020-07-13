@@ -12,7 +12,7 @@ import org.infinispan.client.hotrod.event.impl.AbstractClientEvent;
 import org.infinispan.client.hotrod.event.impl.ExpiredEventImpl;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 
 import io.netty.buffer.ByteBuf;
 
@@ -35,7 +35,7 @@ public class Codec21 extends Codec20 {
    }
 
    @Override
-   public AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassWhiteList whitelist, SocketAddress serverAddress) {
+   public AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassAllowList allowList, SocketAddress serverAddress) {
       short status = buf.readUnsignedByte();
       buf.readUnsignedByte(); // ignore, no topology expected
       ClientEvent.Type eventType;
@@ -64,25 +64,25 @@ public class Codec21 extends Codec20 {
       DataFormat dataFormat = listenerDataFormat.apply(listenerId);
 
       if (isCustom == 1) {
-         final Object eventData = dataFormat.valueToObj(ByteBufUtil.readArray(buf), whitelist);
+         final Object eventData = dataFormat.valueToObj(ByteBufUtil.readArray(buf), allowList);
          return createCustomEvent(listenerId, eventData, eventType, isRetried);
       } else if (isCustom == 2) { // New in 2.1, dealing with raw custom events
          return createCustomEvent(listenerId, ByteBufUtil.readArray(buf), eventType, isRetried); // Raw data
       } else {
          switch (eventType) {
             case CLIENT_CACHE_ENTRY_CREATED:
-               Object createdKey = dataFormat.keyToObj(ByteBufUtil.readArray(buf), whitelist);
+               Object createdKey = dataFormat.keyToObj(ByteBufUtil.readArray(buf), allowList);
                long createdDataVersion = buf.readLong();
                return createCreatedEvent(listenerId, createdKey, createdDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_MODIFIED:
-               Object modifiedKey = dataFormat.keyToObj(ByteBufUtil.readArray(buf), whitelist);
+               Object modifiedKey = dataFormat.keyToObj(ByteBufUtil.readArray(buf), allowList);
                long modifiedDataVersion = buf.readLong();
                return createModifiedEvent(listenerId, modifiedKey, modifiedDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_REMOVED:
-               Object removedKey = dataFormat.keyToObj(ByteBufUtil.readArray(buf), whitelist);
+               Object removedKey = dataFormat.keyToObj(ByteBufUtil.readArray(buf), allowList);
                return createRemovedEvent(listenerId, removedKey, isRetried);
             case CLIENT_CACHE_ENTRY_EXPIRED:
-               Object expiredKey = dataFormat.keyToObj(ByteBufUtil.readArray(buf), whitelist);
+               Object expiredKey = dataFormat.keyToObj(ByteBufUtil.readArray(buf), allowList);
                return createExpiredEvent(listenerId, expiredKey);
             default:
                throw HOTROD.unknownEvent(eventTypeId);

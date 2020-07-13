@@ -129,8 +129,8 @@ public class EndpointsCacheFactory<K, V> {
       return this;
    }
 
-   void addRegexWhiteList(String regex) {
-      cacheManager.getClassWhiteList().addRegexps(regex);
+   void addRegexAllowList(String regex) {
+      cacheManager.getClassAllowList().addRegexps(regex);
    }
 
    private void createRestMemcachedCaches() throws Exception {
@@ -190,7 +190,7 @@ public class EndpointsCacheFactory<K, V> {
       hotrod = server;
       hotrodClient = new RemoteCacheManager(new ConfigurationBuilder()
             .addServers("localhost:" + hotrod.getPort())
-            .addJavaSerialWhiteList(".*Person.*", ".*CustomEvent.*")
+            .addJavaSerialAllowList(".*Person.*", ".*CustomEvent.*")
             .marshaller(marshaller)
             .addContextInitializer(contextInitializer)
             .build());

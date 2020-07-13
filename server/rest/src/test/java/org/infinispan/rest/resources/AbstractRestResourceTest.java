@@ -124,7 +124,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
          for (EmbeddedCacheManager cm : cacheManagers) {
             Set<String> cacheNames = cm.getCacheNames();
             cacheNames.forEach(cm::getCache);
-            cm.getClassWhiteList().addClasses(TestClass.class);
+            cm.getClassAllowList().addClasses(TestClass.class);
             waitForClusterToForm(cacheNames.toArray(new String[0]));
             RestServerHelper restServerHelper = new RestServerHelper(cm);
             if (isSecurityEnabled()) {

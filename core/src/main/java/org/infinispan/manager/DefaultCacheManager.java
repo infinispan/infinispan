@@ -40,7 +40,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.api.Lifecycle;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.configuration.ConfigurationManager;
@@ -155,7 +155,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private volatile ComponentStatus status = ComponentStatus.INSTANTIATED;
 
    private final DefaultCacheManagerAdmin cacheManagerAdmin;
-   private final ClassWhiteList classWhiteList;
+   private final ClassAllowList classAllowList;
    private final CacheManagerInfo cacheManagerInfo;
 
    // Keep the transport around so async view listeners can still see the address after stop
@@ -272,7 +272,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          }
       }
       ModuleRepository moduleRepository = ModuleRepository.newModuleRepository(globalConfiguration.classLoader(), globalConfiguration);
-      this.classWhiteList = globalConfiguration.serialization().whiteList().create();
+      this.classAllowList = globalConfiguration.serialization().allowList().create();
       this.globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(),
                                                                  moduleRepository, configurationManager);
 
@@ -367,7 +367,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       try {
          configurationManager = new ConfigurationManager(holder);
          GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
-         classWhiteList = globalConfiguration.serialization().whiteList().create();
+         classAllowList = globalConfiguration.serialization().allowList().create();
          defaultCacheName = globalConfiguration.defaultCacheName().orElse(null);
 
          ModuleRepository moduleRepository = ModuleRepository.newModuleRepository(globalConfiguration.classLoader(), globalConfiguration);
@@ -402,7 +402,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       this.authzHelper = original.authzHelper;
       this.configurationManager = original.configurationManager;
       this.health = original.health;
-      this.classWhiteList = original.classWhiteList;
+      this.classAllowList = original.classAllowList;
       this.cacheManagerInfo = original.cacheManagerInfo;
       this.cacheManagerAdmin = original.cacheManagerAdmin;
       this.defaultCacheName = original.defaultCacheName;
@@ -1163,8 +1163,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    }
 
    @Override
-   public ClassWhiteList getClassWhiteList() {
-      return classWhiteList;
+   public ClassAllowList getClassWhiteList() {
+      return getClassAllowList();
+   }
+
+   @Override
+   public ClassAllowList getClassAllowList() {
+      return classAllowList;
    }
 
    @Override
