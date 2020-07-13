@@ -54,7 +54,7 @@ public class RestServerHelper {
    public static RestServerHelper defaultRestServer(ConfigurationBuilder configuration, String... cachesDefined) {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().cacheManagerName("default");
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(globalBuilder, configuration);
-      cacheManager.getClassWhiteList().addClasses(TestClass.class);
+      cacheManager.getClassAllowList().addClasses(TestClass.class);
       for (String cacheConfiguration : cachesDefined) {
          cacheManager.defineConfiguration(cacheConfiguration, configuration.build());
       }

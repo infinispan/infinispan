@@ -6,7 +6,7 @@ import static org.infinispan.client.hotrod.marshall.MarshallerUtil.obj2bytes;
 import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.IdentityMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
@@ -98,14 +98,14 @@ public final class DataFormat {
       return obj2bytes(valueMarshaller, value, false, estimateKeySize, estimateValueSize);
    }
 
-   public <T> T keyToObj(byte[] bytes, ClassWhiteList whitelist) {
+   public <T> T keyToObj(byte[] bytes, ClassAllowList allowList) {
       Marshaller keyMarshaller = resolveKeyMarshaller();
-      return bytes2obj(keyMarshaller, bytes, isObjectStorage, whitelist);
+      return bytes2obj(keyMarshaller, bytes, isObjectStorage, allowList);
    }
 
-   public <T> T valueToObj(byte[] bytes, ClassWhiteList whitelist) {
+   public <T> T valueToObj(byte[] bytes, ClassAllowList allowList) {
       Marshaller valueMarshaller = resolveValueMarshaller();
-      return bytes2obj(valueMarshaller, bytes, isObjectStorage, whitelist);
+      return bytes2obj(valueMarshaller, bytes, isObjectStorage, allowList);
    }
 
    @Override

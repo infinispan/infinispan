@@ -15,7 +15,7 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
@@ -40,18 +40,18 @@ public class JsonTranscoder extends OneToManyTranscoder {
    private final ObjectMapper objectMapper;
 
    public JsonTranscoder() {
-      this(JsonTranscoder.class.getClassLoader(), new ClassWhiteList(Collections.emptyList()));
+      this(JsonTranscoder.class.getClassLoader(), new ClassAllowList(Collections.emptyList()));
    }
 
 
-   public JsonTranscoder(ClassWhiteList whiteList) {
-      this(JsonTranscoder.class.getClassLoader(), whiteList);
+   public JsonTranscoder(ClassAllowList allowList) {
+      this(JsonTranscoder.class.getClassLoader(), allowList);
    }
 
-   public JsonTranscoder(ClassLoader classLoader, ClassWhiteList whiteList) {
+   public JsonTranscoder(ClassLoader classLoader, ClassAllowList allowList) {
       super(APPLICATION_JSON, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_UNKNOWN);
       this.objectMapper = new ObjectMapper().setDefaultTyping(
-            new SecureTypeResolverBuilder(ObjectMapper.DefaultTyping.NON_FINAL, whiteList) {
+            new SecureTypeResolverBuilder(ObjectMapper.DefaultTyping.NON_FINAL, allowList) {
                {
                   init(JsonTypeInfo.Id.CLASS, null);
                   inclusion(JsonTypeInfo.As.PROPERTY);

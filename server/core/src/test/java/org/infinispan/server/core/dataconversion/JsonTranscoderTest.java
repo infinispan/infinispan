@@ -15,7 +15,7 @@ import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 import java.nio.charset.Charset;
 import java.util.Collections;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.test.data.Address;
@@ -37,7 +37,7 @@ public class JsonTranscoderTest extends AbstractTranscoderTest {
       Address address = new Address();
       address.setCity("London");
       dataSrc.setAddress(address);
-      transcoder = new JsonTranscoder(new ClassWhiteList(Collections.singletonList(".*")));
+      transcoder = new JsonTranscoder(new ClassAllowList(Collections.singletonList(".*")));
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 

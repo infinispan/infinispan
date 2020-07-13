@@ -346,8 +346,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             }
          }
       }
-      if (!configuration.serialWhitelist().isEmpty()) {
-         marshaller.initialize(configuration.getClassWhiteList());
+      if (!configuration.serialAllowList().isEmpty()) {
+         marshaller.initialize(configuration.getClassAllowList());
       }
       if (marshaller instanceof ProtoStreamMarshaller) {
          SerializationContext ctx = ((ProtoStreamMarshaller) marshaller).getSerializationContext();

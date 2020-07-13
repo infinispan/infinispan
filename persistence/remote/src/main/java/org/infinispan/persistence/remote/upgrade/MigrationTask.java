@@ -81,7 +81,7 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
          ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
          PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
          Set<RemoteStore<Object, Object>> stores = (Set) loaderManager.getStores(RemoteStore.class);
-         Marshaller marshaller = new MigrationMarshaller(cache.getCacheManager().getClassWhiteList());
+         Marshaller marshaller = new MigrationMarshaller(cache.getCacheManager().getClassAllowList());
          listener = new RemoveListener();
          cache.addFilteredListener(listener, new RemovedFilter<>(), null, Util.asSet(CacheEntryRemoved.class));
          byte[] ignoredKey;

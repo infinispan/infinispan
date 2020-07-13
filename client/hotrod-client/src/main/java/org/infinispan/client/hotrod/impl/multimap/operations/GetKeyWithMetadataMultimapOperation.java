@@ -81,7 +81,7 @@ public class GetKeyWithMetadataMultimapOperation<V> extends AbstractKeyOperation
       int size = ByteBufUtil.readVInt(buf);
       Collection<V> values = new ArrayList<>(size);
       for (int i = 0; i < size; ++i) {
-         V value = bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), cfg.getClassWhiteList());
+         V value = bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), cfg.getClassAllowList());
          values.add(value);
       }
       complete(new MetadataCollectionImpl<>(values, creation, lifespan, lastUsed, maxIdle, version));

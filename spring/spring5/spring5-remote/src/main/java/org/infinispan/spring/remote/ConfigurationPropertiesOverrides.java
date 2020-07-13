@@ -2,7 +2,7 @@ package org.infinispan.spring.remote;
 
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EXECUTOR_FACTORY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RETURN_VALUES;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_WHITELIST;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_ALLOWLIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES;
@@ -76,10 +76,10 @@ public class ConfigurationPropertiesOverrides {
    }
 
    /**
-    * @param whiteListRegex
+    * @param allowListRegex
     */
-   public void setClassWhiteList(final String whiteListRegex) {
-      this.overridingProperties.setProperty(JAVA_SERIAL_WHITELIST, whiteListRegex);
+   public void setClassAllowList(final String allowListRegex) {
+      this.overridingProperties.setProperty(JAVA_SERIAL_ALLOWLIST, allowListRegex);
    }
 
    /**

@@ -20,7 +20,7 @@ import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.protocol.Codec25;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -106,11 +106,11 @@ public class ClientListenerRetryTest extends MultiHotRodServersTest {
       private final IOException failWith = new IOException("Connection reset by peer");
 
       @Override
-      public AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassWhiteList whitelist, SocketAddress serverAddress) {
+      public AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassAllowList allowList, SocketAddress serverAddress) {
          if (failure) {
             throw new TransportException(failWith, serverAddress);
          }
-         return super.readCacheEvent(buf, listenerDataFormat, eventTypeId, whitelist, serverAddress);
+         return super.readCacheEvent(buf, listenerDataFormat, eventTypeId, allowList, serverAddress);
       }
 
       private void induceFailure() {

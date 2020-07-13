@@ -63,7 +63,7 @@ public class GetKeyMultimapOperation<V> extends AbstractKeyOperation<Collection<
          result = new HashSet<>(size);
       }
       while (result.size() < size) {
-         V value = bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), cfg.getClassWhiteList());
+         V value = bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), cfg.getClassAllowList());
          result.add(value);
          decoder.checkpoint();
       }

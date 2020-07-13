@@ -15,6 +15,7 @@ public enum Element {
     // KEEP THESE IN ALPHABETICAL ORDER!
 
     ADVANCED_EXTERNALIZER,
+    ALLOW_LIST,
     ASYNC,
     AUTHORIZATION,
     BACKUP,
@@ -114,6 +115,7 @@ public enum Element {
     VALUE_DATA_TYPE("value"),
     VERSIONING,
     VOLATILE_CONFIGURATION_STORAGE,
+    @Deprecated
     WHITE_LIST,
     WRITE_BEHIND,
     ;

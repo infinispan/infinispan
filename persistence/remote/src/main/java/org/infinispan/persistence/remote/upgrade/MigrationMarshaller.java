@@ -1,6 +1,6 @@
 package org.infinispan.persistence.remote.upgrade;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.jboss.marshalling.commons.AbstractJBossMarshaller;
 import org.infinispan.jboss.marshalling.commons.CheckedClassResolver;
 
@@ -13,9 +13,9 @@ import org.infinispan.jboss.marshalling.commons.CheckedClassResolver;
  */
 public class MigrationMarshaller extends AbstractJBossMarshaller {
 
-   public MigrationMarshaller(ClassWhiteList classWhiteList) {
+   public MigrationMarshaller(ClassAllowList classAllowList) {
       super();
-      baseCfg.setClassResolver(new CheckedClassResolver(classWhiteList, this.getClass().getClassLoader()));
+      baseCfg.setClassResolver(new CheckedClassResolver(classAllowList, this.getClass().getClassLoader()));
    }
 
 }

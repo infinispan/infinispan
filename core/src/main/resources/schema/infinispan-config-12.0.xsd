@@ -599,10 +599,10 @@
           </xs:attribute>
         </xs:complexType>
       </xs:element>
-      <xs:element name="white-list" minOccurs="0">
+      <xs:element name="allow-list" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
-            Enables individual classes or regular expressions to be added to the EmbeddedCacheManager white list.
+            Enables individual classes or regular expressions to be added to the EmbeddedCacheManager allow list.
           </xs:documentation>
         </xs:annotation>
         <xs:complexType>
@@ -610,14 +610,14 @@
             <xs:element name="class" type="xs:string" minOccurs="0" maxOccurs="unbounded">
               <xs:annotation>
                 <xs:documentation>
-                  FQN of the class to be added to the whitelist.
+                  FQN of the class to be added to the allowlist.
                 </xs:documentation>
               </xs:annotation>
             </xs:element>
             <xs:element name="regex" type="xs:string" minOccurs="0" maxOccurs="unbounded">
               <xs:annotation>
                 <xs:documentation>
-                  Regex pattern used to determine if a class is a member of the whitelist.
+                  Regex pattern used to determine if a class is a member of the allowlist.
                 </xs:documentation>
               </xs:annotation>
             </xs:element>

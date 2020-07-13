@@ -2,7 +2,7 @@ package org.infinispan.spring.remote.session;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.infinispan.spring.remote.AbstractRemoteCacheManagerFactory.SPRING_JAVA_SERIAL_WHITELIST;
+import static org.infinispan.spring.remote.AbstractRemoteCacheManagerFactory.SPRING_JAVA_SERIAL_ALLOWLIST;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
@@ -42,7 +42,7 @@ public class RemoteApplicationPublishedBridgeTest extends InfinispanApplicationP
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host("localhost").port(hotrodServer.getPort())
             .marshaller(new JavaSerializationMarshaller())
-            .addJavaSerialWhiteList(SPRING_JAVA_SERIAL_WHITELIST.split(","));
+            .addJavaSerialAllowList(SPRING_JAVA_SERIAL_ALLOWLIST.split(","));
       remoteCacheManager = new RemoteCacheManager(builder.build());
    }
 

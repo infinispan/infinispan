@@ -22,12 +22,12 @@ import org.infinispan.protostream.SerializationContextInitializer;
  */
 public class SerializationConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<SerializationConfiguration> {
    private final AttributeSet attributes;
-   private final WhiteListConfigurationBuilder whiteListBuilder;
+   private final AllowListConfigurationBuilder allowListBuilder;
    private Map<Integer, AdvancedExternalizer<?>> advancedExternalizers = new HashMap<>();
 
    SerializationConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
-      this.whiteListBuilder = new WhiteListConfigurationBuilder();
+      this.allowListBuilder = new AllowListConfigurationBuilder();
       this.attributes = SerializationConfiguration.attributeDefinitionSet();
    }
 
@@ -125,8 +125,16 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       return this;
    }
 
+   public AllowListConfigurationBuilder allowList() {
+      return allowListBuilder;
+   }
+
+   /**
+    * @deprecated since 12.0. Use {@link #allowList()} instead. To be removed in 14.0.
+    */
+   @Deprecated
    public WhiteListConfigurationBuilder whiteList() {
-      return whiteListBuilder;
+      return new WhiteListConfigurationBuilder(allowListBuilder);
    }
 
    @Override
@@ -138,7 +146,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    public
    SerializationConfiguration create() {
       if (!advancedExternalizers.isEmpty()) attributes.attribute(ADVANCED_EXTERNALIZERS).set(advancedExternalizers);
-      return new SerializationConfiguration(attributes.protect(), whiteListBuilder.create());
+      return new SerializationConfiguration(attributes.protect(), allowListBuilder.create());
    }
 
    @Override
@@ -146,7 +154,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    SerializationConfigurationBuilder read(SerializationConfiguration template) {
       this.attributes.read(template.attributes());
       this.advancedExternalizers = template.advancedExternalizers();
-      this.whiteListBuilder.read(template.whiteList());
+      this.allowListBuilder.read(template.allowList());
       return this;
    }
 

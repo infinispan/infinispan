@@ -191,10 +191,10 @@
  *          <td>Whether to {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#forceReturnValues(boolean) return&nbsp;values} for puts/removes</td>
  *       </tr>
  *       <tr>
- *          <td><b>infinispan.client.hotrod.java_serial_whitelist</b></td>
+ *          <td><b>infinispan.client.hotrod.java_serial_allowlist</b></td>
  *          <td>String</td>
  *          <td>N/A</td>
- *          <td>A {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#addJavaSerialWhiteList(String...) class&nbsp;whitelist} which are trusted for unmarshalling.</td>
+ *          <td>A {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#addJavaSerialAllowList(String...) class&nbsp;allowList} which are trusted for unmarshalling.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.hash_function_impl.2</b></td>

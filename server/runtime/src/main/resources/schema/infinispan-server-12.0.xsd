@@ -449,7 +449,7 @@
             <![CDATA[
                 The configuration of the SASL authentication layer for this server.
 
-                The optional nested "include-mechanisms" element contains a whitelist of allowed SASL mechanism names.
+                The optional nested "include-mechanisms" element contains a list of allowed SASL mechanism names.
                 No mechanisms will be allowed which are not present in this list.
 
                 The optional nested "qop" element contains a list of quality-of-protection values, in decreasing order

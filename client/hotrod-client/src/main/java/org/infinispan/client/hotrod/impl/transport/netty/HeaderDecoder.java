@@ -154,7 +154,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                AbstractClientEvent cacheEvent;
                try {
                   cacheEvent = codec.readCacheEvent(in, listenerNotifier::getCacheDataFormat,
-                        receivedOpCode, configuration.getClassWhiteList(), ctx.channel().remoteAddress());
+                        receivedOpCode, configuration.getClassAllowList(), ctx.channel().remoteAddress());
                } catch (Signal signal) {
                   throw signal;
                } catch (Throwable t) {

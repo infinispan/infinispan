@@ -214,6 +214,12 @@ public interface ConfigurationChildBuilder {
     * List of regular expressions for classes that can be deserialized using standard Java deserialization
     * when reading data that might have been stored with a different endpoint, e.g. REST.
     */
+   ConfigurationBuilder addJavaSerialAllowList(String... regEx);
+
+   /**
+    * @deprecated Use {@link #addJavaSerialAllowList(String...)} instead. To be removed in 14.0.
+    */
+   @Deprecated
    ConfigurationBuilder addJavaSerialWhiteList(String... regEx);
 
    /**

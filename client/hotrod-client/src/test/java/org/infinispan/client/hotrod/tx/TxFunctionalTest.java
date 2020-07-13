@@ -448,7 +448,7 @@ public class TxFunctionalTest<K, V> extends MultiHotRodServersTest {
    }
 
    protected void modifyGlobalConfiguration(GlobalConfigurationBuilder builder) {
-      builder.serialization().marshaller(new JavaSerializationMarshaller()).whiteList().addClasses(Object[].class);
+      builder.serialization().marshaller(new JavaSerializationMarshaller()).allowList().addClasses(Object[].class);
    }
 
    protected final RemoteCache<K, V> remoteCache(int index) {
@@ -464,7 +464,7 @@ public class TxFunctionalTest<K, V> extends MultiHotRodServersTest {
       TransactionSetup.amendJTA(clientBuilder);
       clientBuilder.transaction().transactionMode(transactionMode);
       if (useJavaSerialization) {
-         clientBuilder.marshaller(new JavaSerializationMarshaller()).addJavaSerialWhiteList("\\Q[\\ELjava.lang.Object;");
+         clientBuilder.marshaller(new JavaSerializationMarshaller()).addJavaSerialAllowList("\\Q[\\ELjava.lang.Object;");
       }
       return clientBuilder;
    }

@@ -9,7 +9,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Collections;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
@@ -22,19 +22,19 @@ import org.infinispan.commons.io.ByteBufferImpl;
  */
 public class JavaSerializationMarshaller extends AbstractMarshaller {
 
-   final ClassWhiteList whiteList;
+   final ClassAllowList allowList;
 
    public JavaSerializationMarshaller() {
-      this(new ClassWhiteList(Collections.emptyList()));
+      this(new ClassAllowList(Collections.emptyList()));
    }
 
-   public JavaSerializationMarshaller(ClassWhiteList whiteList) {
-      this.whiteList = whiteList;
+   public JavaSerializationMarshaller(ClassAllowList allowList) {
+      this.allowList = allowList;
    }
 
    @Override
-   public void initialize(ClassWhiteList classWhiteList) {
-      this.whiteList.read(classWhiteList);
+   public void initialize(ClassAllowList classAllowList) {
+      this.allowList.read(classAllowList);
    }
 
    @Override
@@ -49,7 +49,7 @@ public class JavaSerializationMarshaller extends AbstractMarshaller {
 
    @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
-      try (ObjectInputStream ois = new CheckedInputStream(new ByteArrayInputStream(buf), whiteList)) {
+      try (ObjectInputStream ois = new CheckedInputStream(new ByteArrayInputStream(buf), allowList)) {
          return ois.readObject();
       }
    }

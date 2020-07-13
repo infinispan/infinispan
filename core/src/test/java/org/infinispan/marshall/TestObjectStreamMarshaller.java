@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
@@ -46,8 +46,8 @@ public class TestObjectStreamMarshaller implements PersistenceMarshaller {
       marshaller = (PersistenceMarshallerImpl) cacheManager.getCache().getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
    }
 
-   public ClassWhiteList getWhiteList() {
-      return cacheManager.getClassWhiteList();
+   public ClassAllowList getAllowList() {
+      return cacheManager.getClassAllowList();
    }
 
    @Override

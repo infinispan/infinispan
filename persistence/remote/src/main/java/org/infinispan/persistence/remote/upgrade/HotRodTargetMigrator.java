@@ -22,7 +22,7 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
@@ -60,14 +60,14 @@ public class HotRodTargetMigrator implements TargetMigrator {
    @Override
    public long synchronizeData(Cache<Object, Object> cache, int readBatch, int threads) throws CacheException {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
-      ClassWhiteList whiteList = cache.getCacheManager().getClassWhiteList();
+      ClassAllowList allowList = cache.getCacheManager().getClassAllowList();
       PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
       Set<RemoteStore> stores = loaderManager.getStores(RemoteStore.class);
       String cacheName = cache.getName();
       if (stores.size() != 1) {
          throw log.couldNotMigrateData(cacheName);
       }
-      Marshaller marshaller = new MigrationMarshaller(whiteList);
+      Marshaller marshaller = new MigrationMarshaller(allowList);
 
       RemoteStore store = stores.iterator().next();
       final RemoteCache<Object, Object> remoteSourceCache = store.getRemoteCache();

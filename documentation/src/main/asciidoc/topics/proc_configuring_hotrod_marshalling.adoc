@@ -6,7 +6,7 @@ Configure Hot Rod clients to use custom marshallers.
 
 . Implement the `org.infinispan.commons.marshall.Marshaller` interface.
 . Specify the fully qualified name of your class in your Hot Rod client configuration.
-. Add your Java classes to the {brandname} deserialization whitelist.
+. Add your Java classes to the {brandname} deserialization allow list.
 +
 In the following example, only classes with fully qualified names that contain
 `Person` or `Employee` are allowed:
@@ -15,7 +15,7 @@ In the following example, only classes with fully qualified names that contain
 ----
 ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
 clientBuilder.marshaller("org.infinispan.example.marshall.CustomMarshaller")
-  .addJavaSerialWhiteList(".*Person.*", ".*Employee.*");
+  .addJavaSerialAllowList(".*Person.*", ".*Employee.*");
   ...
 ----
 
@@ -23,4 +23,4 @@ clientBuilder.marshaller("org.infinispan.example.marshall.CustomMarshaller")
 
 * link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[org.infinispan.commons.marshall.Marshaller]
 * link:{dev_docs}#custom_marshallers[Using Custom Marshallers]
-* link:{dev_docs}#deserialization_whitelist[Adding Java Classes to Deserialization White Lists]
+* link:{dev_docs}#deserialization_allowlist[Adding Java Classes to Deserialization Allow Lists]

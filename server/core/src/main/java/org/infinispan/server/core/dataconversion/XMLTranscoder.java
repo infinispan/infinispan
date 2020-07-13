@@ -17,7 +17,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
@@ -118,17 +118,17 @@ public class XMLTranscoder extends OneToManyTranscoder {
    }
 
    public XMLTranscoder() {
-      this(XMLTranscoder.class.getClassLoader(), new ClassWhiteList(Collections.emptyList()));
+      this(XMLTranscoder.class.getClassLoader(), new ClassAllowList(Collections.emptyList()));
    }
 
-   public XMLTranscoder(ClassWhiteList classWhiteList) {
-      this(XMLTranscoder.class.getClassLoader(), classWhiteList);
+   public XMLTranscoder(ClassAllowList classAllowList) {
+      this(XMLTranscoder.class.getClassLoader(), classAllowList);
    }
 
-   public XMLTranscoder(ClassLoader classLoader, ClassWhiteList whiteList) {
+   public XMLTranscoder(ClassLoader classLoader, ClassAllowList allowList) {
       super(APPLICATION_XML, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_UNKNOWN);
       XStreamHolder.XStream.addPermission(NoTypePermission.NONE);
-      XStreamHolder.XStream.addPermission(type -> whiteList.isSafeClass(type.getName()));
+      XStreamHolder.XStream.addPermission(type -> allowList.isSafeClass(type.getName()));
       XStreamHolder.XStream.setClassLoader(classLoader);
    }
 

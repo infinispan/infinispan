@@ -81,7 +81,7 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       clientBuilder.marshaller(new GenericJBossMarshaller());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
-      cacheManagers.forEach(c -> c.getClassWhiteList().addRegexps(".*"));
+      cacheManagers.forEach(c -> c.getClassAllowList().addRegexps(".*"));
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

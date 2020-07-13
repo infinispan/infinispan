@@ -1,6 +1,6 @@
 package org.infinispan.jboss.marshalling.commons;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 
 /**
  * A marshaller that makes use of <a href="http://www.jboss.org/jbossmarshalling">JBoss Marshalling</a>
@@ -21,24 +21,24 @@ public final class GenericJBossMarshaller extends AbstractJBossMarshaller {
       this(classLoader, null);
    }
 
-   public GenericJBossMarshaller(ClassWhiteList classWhiteList) {
-      this(null, classWhiteList);
+   public GenericJBossMarshaller(ClassAllowList classAllowList) {
+      this(null, classAllowList);
    }
 
-   public GenericJBossMarshaller(ClassLoader classLoader, ClassWhiteList classWhiteList) {
+   public GenericJBossMarshaller(ClassLoader classLoader, ClassAllowList classAllowList) {
       super();
       if (classLoader == null) {
          classLoader = getClass().getClassLoader();
       }
-      baseCfg.setClassResolver(classWhiteList == null ?
+      baseCfg.setClassResolver(classAllowList == null ?
             new DefaultContextClassResolver(classLoader) :
-            new CheckedClassResolver(classWhiteList, classLoader)
+            new CheckedClassResolver(classAllowList, classLoader)
       );
    }
 
    @Override
-   public void initialize(ClassWhiteList classWhiteList) {
+   public void initialize(ClassAllowList classAllowList) {
       ClassLoader classLoader = ((DefaultContextClassResolver) baseCfg.getClassResolver()).getClassLoader();
-      baseCfg.setClassResolver(new CheckedClassResolver(classWhiteList, classLoader));
+      baseCfg.setClassResolver(new CheckedClassResolver(classAllowList, classLoader));
    }
 }

@@ -69,7 +69,7 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
       if (trace) {
          log.tracef("Received version: %d", version);
       }
-      V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), cfg.getClassWhiteList());
+      V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), cfg.getClassAllowList());
       statsDataRead(true);
       complete(new MetadataValueImpl<V>(creation, lifespan, lastUsed, maxIdle, version, value));
    }

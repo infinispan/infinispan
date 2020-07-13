@@ -78,7 +78,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
          @Override
          public void call() {
-            cm.getClassWhiteList().addClasses(Person.class);
+            cm.getClassAllowList().addClasses(Person.class);
             Cache<String, Person> cache = cm.getCache();
 
             Person value = new Person();
@@ -173,7 +173,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Cache<String, Person> cache = cm.getCache();
-            cm.getClassWhiteList().addClasses(Person.class);
+            cm.getClassAllowList().addClasses(Person.class);
             // Obtain cache with custom valueEncoder
             Cache storeMarshalled = cache.getAdvancedCache().withEncoding(JavaSerializationEncoder.class);
 

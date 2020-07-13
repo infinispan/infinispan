@@ -48,7 +48,7 @@ public class ScriptingTasks {
    @Test
    public void testStreamingScript() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.addJavaSerialWhiteList(HashMap.class.getName());
+      builder.addJavaSerialAllowList(HashMap.class.getName());
 
       org.infinispan.configuration.cache.ConfigurationBuilder cacheBuilder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       cacheBuilder.clustering().cacheMode(CacheMode.DIST_SYNC)

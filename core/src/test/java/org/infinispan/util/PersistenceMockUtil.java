@@ -9,7 +9,7 @@ import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.test.BlockHoundHelper;
 import org.infinispan.commons.test.CommonsTestingUtil;
@@ -51,7 +51,7 @@ public class PersistenceMockUtil {
       private final Class<?> testClass;
       private final Configuration configuration;
       private final PersistenceMarshaller persistenceMarshaller;
-      private ClassWhiteList classWhiteList;
+      private ClassAllowList classAllowList;
       private TimeService timeService = AbstractInfinispanTest.TIME_SERVICE;
       private KeyPartitioner keyPartitioner = SingleSegmentKeyPartitioner.getInstance();
 
@@ -66,8 +66,8 @@ public class PersistenceMockUtil {
          return this;
       }
 
-      public InvocationContextBuilder setClassWhiteList(ClassWhiteList classWhiteList) {
-         this.classWhiteList = classWhiteList;
+      public InvocationContextBuilder setClassAllowList(ClassAllowList classAllowList) {
+         this.classAllowList = classAllowList;
          return this;
       }
 
@@ -77,7 +77,7 @@ public class PersistenceMockUtil {
       }
 
       public InitializationContext build() {
-         Cache mockCache = mockCache(testClass.getSimpleName(), configuration, timeService, classWhiteList);
+         Cache mockCache = mockCache(testClass.getSimpleName(), configuration, timeService, classAllowList);
          BlockingManager blockingManager = new BlockingManagerImpl();
          TestingUtil.inject(blockingManager,
                new TestComponentAccessors.NamedComponent(KnownComponentNames.BLOCKING_EXECUTOR, BlockHoundHelper.allowBlockingExecutor()),
@@ -101,14 +101,14 @@ public class PersistenceMockUtil {
    }
 
    public static InitializationContext createContext(Class<?> testClass, Configuration configuration, PersistenceMarshaller marshaller,
-                                                     TimeService timeService, ClassWhiteList whiteList) {
+                                                     TimeService timeService, ClassAllowList allowList) {
       return new InvocationContextBuilder(testClass, configuration, marshaller)
             .setTimeService(timeService)
-            .setClassWhiteList(whiteList)
+            .setClassAllowList(allowList)
             .build();
    }
 
-   private static Cache mockCache(String nodeName, Configuration configuration, TimeService timeService, ClassWhiteList whiteList) {
+   private static Cache mockCache(String nodeName, Configuration configuration, TimeService timeService, ClassAllowList allowList) {
       String cacheName = "mock-cache";
       AdvancedCache cache = mock(AdvancedCache.class, RETURNS_DEEP_STUBS);
 
@@ -119,7 +119,7 @@ public class PersistenceMockUtil {
       Set<String> cachesSet = new HashSet<>();
       EmbeddedCacheManager cm = mock(EmbeddedCacheManager.class);
       when(cm.getCacheManagerConfiguration()).thenReturn(gc);
-      when(cm.getClassWhiteList()).thenReturn(new ClassWhiteList());
+      when(cm.getClassAllowList()).thenReturn(new ClassAllowList());
       GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cm, cachesSet, TestModuleRepository.defaultModuleRepository(),
                                                                 mock(ConfigurationManager.class));
       BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
@@ -129,7 +129,7 @@ public class PersistenceMockUtil {
 
       when(cache.getClassLoader()).thenReturn(PersistenceMockUtil.class.getClassLoader());
       when(cache.getCacheManager().getCacheManagerConfiguration()).thenReturn(gc);
-      when(cache.getCacheManager().getClassWhiteList()).thenReturn(whiteList);
+      when(cache.getCacheManager().getClassAllowList()).thenReturn(allowList);
       when(cache.getName()).thenReturn(cacheName);
       when(cache.getAdvancedCache()).thenReturn(cache);
       when(cache.getComponentRegistry()).thenReturn(registry);

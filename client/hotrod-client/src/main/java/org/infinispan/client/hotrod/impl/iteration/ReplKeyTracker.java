@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod.impl.iteration;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.IntSet;
 
@@ -19,7 +19,7 @@ class ReplKeyTracker implements KeyTracker {
    private Set<WrappedByteArray> keys = new HashSet<>();
 
    @Override
-   public boolean track(byte[] key, short status, ClassWhiteList whitelist) {
+   public boolean track(byte[] key, short status, ClassAllowList allowList) {
       return keys.add(new WrappedByteArray(key));
    }
 

@@ -89,7 +89,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
       SerializationConfiguration serializationConfig = globalConfig.serialization();
       Marshaller marshaller = serializationConfig.marshaller();
       if (marshaller != null) {
-         marshaller.initialize(gcr.getCacheManager().getClassWhiteList());
+         marshaller.initialize(gcr.getCacheManager().getClassAllowList());
          return marshaller;
       }
       return null;

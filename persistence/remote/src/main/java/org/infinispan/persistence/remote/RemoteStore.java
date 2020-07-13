@@ -16,7 +16,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
@@ -102,8 +102,8 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
       } else if (configuration.hotRodWrapping()) {
          marshaller = new HotRodEntryMarshaller(ctx.getByteBufferFactory());
       } else if (configuration.rawValues()) {
-         ClassWhiteList whiteList = ctx.getCache().getCacheManager().getClassWhiteList();
-         marshaller = new GenericJBossMarshaller(Thread.currentThread().getContextClassLoader(), whiteList);
+         ClassAllowList allowList = ctx.getCache().getCacheManager().getClassAllowList();
+         marshaller = new GenericJBossMarshaller(Thread.currentThread().getContextClassLoader(), allowList);
       } else {
          marshaller = ctx.getPersistenceMarshaller();
       }

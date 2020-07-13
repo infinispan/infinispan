@@ -33,7 +33,7 @@ public abstract class AbstractRemoteCacheManagerFactory {
 
    protected static final Log logger = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   public static final String SPRING_JAVA_SERIAL_WHITELIST = "java.util.HashMap,java.time.*,org.springframework.*,org.infinispan.spring.remote.*";
+   public static final String SPRING_JAVA_SERIAL_ALLOWLIST = "java.util.HashMap,java.time.*,org.springframework.*,org.infinispan.spring.remote.*";
 
    protected boolean startAutomatically = true;
 
@@ -99,16 +99,16 @@ public abstract class AbstractRemoteCacheManagerFactory {
       }
 
       if (!configurationPropertiesOverrides.containsProperty(ConfigurationProperties.JAVA_SERIAL_WHITELIST)) {
-         String whiteList;
-         String userWhiteList = properties.getProperty(ConfigurationProperties.JAVA_SERIAL_WHITELIST);
-         if (userWhiteList == null || userWhiteList.isEmpty()) {
-            whiteList = String.join(",", SPRING_JAVA_SERIAL_WHITELIST);
+         String allowList;
+         String userAllowList = properties.getProperty(ConfigurationProperties.JAVA_SERIAL_WHITELIST);
+         if (userAllowList == null || userAllowList.isEmpty()) {
+            allowList = String.join(",", SPRING_JAVA_SERIAL_ALLOWLIST);
          } else {
-            Set<String> userRegexSet = new HashSet<>(Arrays.asList(SPRING_JAVA_SERIAL_WHITELIST.split(",")));
-            Collections.addAll(userRegexSet, userWhiteList.split(","));
-            whiteList = String.join(",", userRegexSet);
+            Set<String> userRegexSet = new HashSet<>(Arrays.asList(SPRING_JAVA_SERIAL_ALLOWLIST.split(",")));
+            Collections.addAll(userRegexSet, userAllowList.split(","));
+            allowList = String.join(",", userRegexSet);
          }
-         properties.setProperty(ConfigurationProperties.JAVA_SERIAL_WHITELIST, whiteList);
+         properties.setProperty(ConfigurationProperties.JAVA_SERIAL_ALLOWLIST, allowList);
       }
    }
 
@@ -164,7 +164,7 @@ public abstract class AbstractRemoteCacheManagerFactory {
    }
 
    /**
-    * @param TransportFactory
+    * @param transportFactory
     * @see ConfigurationPropertiesOverrides#setTransportFactory(String)
     */
    @Deprecated
@@ -188,11 +188,21 @@ public abstract class AbstractRemoteCacheManagerFactory {
    }
 
    /**
-    * @param whiteListRegex
-    * @see ConfigurationPropertiesOverrides#setClassWhiteList(String)
+    * @param allowListRegex
+    * @see ConfigurationPropertiesOverrides#setClassAllowList(String)
     */
-   public void setClassWhiteList(final String whiteListRegex) {
-      this.configurationPropertiesOverrides.setClassWhiteList(whiteListRegex);
+   public void setClassAllowList(final String allowListRegex) {
+      this.configurationPropertiesOverrides.setClassAllowList(allowListRegex);
+   }
+
+   /**
+    * @param allowListRegex
+    * @see ConfigurationPropertiesOverrides#setClassAllowList(String)
+    * @deprecated Use {@link #setClassAllowList(String)} instead. Will be removed in 14.0.
+    */
+   @Deprecated
+   public void setClassWhiteList(final String allowListRegex) {
+      setClassAllowList(allowListRegex);
    }
 
    /**

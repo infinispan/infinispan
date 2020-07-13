@@ -2,7 +2,7 @@ package org.infinispan.server.core;
 
 import java.util.EnumSet;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.configuration.cache.CacheMode;
@@ -41,14 +41,14 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       cacheRegistry.registerInternalCache(SERVER_STATE_CACHE, getServerStateCacheConfig(globalConfiguration).build(),
             EnumSet.of(InternalCacheRegistry.Flag.PERSISTENT));
 
-      ClassWhiteList classWhiteList = gcr.getComponent(EmbeddedCacheManager.class).getClassWhiteList();
+      ClassAllowList classAllowList = gcr.getComponent(EmbeddedCacheManager.class).getClassAllowList();
       ClassLoader classLoader = globalConfiguration.classLoader();
 
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
-      JsonTranscoder jsonTranscoder = new JsonTranscoder(classLoader, classWhiteList);
+      JsonTranscoder jsonTranscoder = new JsonTranscoder(classLoader, classAllowList);
 
       encoderRegistry.registerTranscoder(jsonTranscoder);
-      encoderRegistry.registerTranscoder(new XMLTranscoder(classLoader, classWhiteList));
+      encoderRegistry.registerTranscoder(new XMLTranscoder(classLoader, classAllowList));
 
       // Allow transcoding between JBoss Marshalling and JSON
       if (encoderRegistry.isConversionSupported(MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_JBOSS_MARSHALLING)) {

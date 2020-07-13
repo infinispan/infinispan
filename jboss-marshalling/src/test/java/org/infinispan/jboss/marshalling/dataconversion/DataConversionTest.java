@@ -41,7 +41,7 @@ public class DataConversionTest extends org.infinispan.dataconversion.DataConver
             EncoderRegistry encoderRegistry = registry.getComponent(EncoderRegistry.class);
             encoderRegistry.registerEncoder(encoder);
 
-            cm.getClassWhiteList().addClasses(Person.class);
+            cm.getClassAllowList().addClasses(Person.class);
             Cache<byte[], byte[]> cache = cm.getCache();
 
             // Write encoded content to the cache

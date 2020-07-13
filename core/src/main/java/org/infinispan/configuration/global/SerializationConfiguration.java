@@ -57,16 +57,16 @@ public class SerializationConfiguration implements ConfigurationInfo {
    private final Attribute<Marshaller> marshaller;
    private final Attribute<List<SerializationContextInitializer>> contextInitializers;
    private final AttributeSet attributes;
-   private final WhiteListConfiguration whiteListConfig;
+   private final AllowListConfiguration allowListConfig;
    private final List<ConfigurationInfo> subElements;
 
-   SerializationConfiguration(AttributeSet attributes, WhiteListConfiguration whiteListConfig) {
+   SerializationConfiguration(AttributeSet attributes, AllowListConfiguration allowListConfig) {
       this.attributes = attributes.checkProtection();
       this.marshaller = attributes.attribute(MARSHALLER);
       this.advancedExternalizers = attributes.attribute(ADVANCED_EXTERNALIZERS);
       this.contextInitializers = attributes.attribute(SERIALIZATION_CONTEXT_INITIALIZERS);
-      this.whiteListConfig = whiteListConfig;
-      this.subElements = Collections.singletonList(whiteListConfig);
+      this.allowListConfig = allowListConfig;
+      this.subElements = Collections.singletonList(allowListConfig);
    }
 
    @Override
@@ -100,8 +100,13 @@ public class SerializationConfiguration implements ConfigurationInfo {
       return attributes;
    }
 
+   public AllowListConfiguration allowList() {
+      return allowListConfig;
+   }
+
+   @Deprecated
    public WhiteListConfiguration whiteList() {
-      return whiteListConfig;
+      return new WhiteListConfiguration(allowListConfig);
    }
 
    @Override

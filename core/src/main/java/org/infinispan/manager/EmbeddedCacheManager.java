@@ -8,7 +8,7 @@ import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.Lifecycle;
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -341,7 +341,10 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
       throw new UnsupportedOperationException();
    }
 
-   ClassWhiteList getClassWhiteList();
+   @Deprecated
+   ClassAllowList getClassWhiteList();
+
+   ClassAllowList getClassAllowList();
 
    Subject getSubject();
 

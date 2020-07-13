@@ -2,7 +2,7 @@ package org.infinispan.commons.marshall;
 
 import java.io.IOException;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 
@@ -25,10 +25,10 @@ import net.jcip.annotations.ThreadSafe;
 public interface Marshaller {
 
    /**
-    * An optional method which allows an implementation to respect the {@link ClassWhiteList} associated with the
+    * An optional method which allows an implementation to respect the {@link ClassAllowList} associated with the
     * context, for example the EmbeddedCacheManager or RemoteCacheManager.
     */
-   default void initialize(ClassWhiteList classWhiteList) {
+   default void initialize(ClassAllowList classAllowList) {
       // no-op
    }
 

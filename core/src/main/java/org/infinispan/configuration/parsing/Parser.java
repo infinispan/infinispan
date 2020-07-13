@@ -65,7 +65,7 @@ import org.infinispan.configuration.global.ThreadPoolBuilderAdapter;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.ThreadsConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
-import org.infinispan.configuration.global.WhiteListConfigurationBuilder;
+import org.infinispan.configuration.global.AllowListConfigurationBuilder;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.eviction.EvictionStrategy;
@@ -172,9 +172,15 @@ public class Parser implements ConfigurationParser {
                parseSerializationContextInitializer(reader, holder.getClassLoader(), builder.serialization());
                break;
             }
-            case WHITE_LIST: {
+            case WHITE_LIST:
+               if (reader.getSchema().since(12, 0)) {
+                  throw ParseUtils.unexpectedElement(reader, element);
+               } else {
+                  CONFIG.elementDeprecatedUseOther(Element.WHITE_LIST, Element.ALLOW_LIST);
+               }
+            case ALLOW_LIST: {
                if (reader.getSchema().since(10, 0)) {
-                  parseWhiteList(reader, builder.serialization().whiteList());
+                  parseAllowList(reader, builder.serialization().allowList());
                   break;
                } else {
                   throw ParseUtils.unexpectedElement(reader);
@@ -207,7 +213,7 @@ public class Parser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseWhiteList(final XMLExtendedStreamReader reader, final WhiteListConfigurationBuilder builder) throws XMLStreamException {
+   private void parseAllowList(final XMLExtendedStreamReader reader, final AllowListConfigurationBuilder builder) throws XMLStreamException {
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {

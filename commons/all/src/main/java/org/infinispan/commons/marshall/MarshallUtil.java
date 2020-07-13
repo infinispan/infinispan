@@ -502,17 +502,17 @@ public class MarshallUtil {
     * Checks whether class name is matched by the class name white list regular expressions provided.
     *
     * @param className class to verify
-    * @param whitelist list of regular expressions to match class name against
+    * @param allowList list of regular expressions to match class name against
     * @return true if the class matched at least one of the regular expressions,
     *         false otherwise
     */
-   public static boolean isSafeClass(String className, List<String> whitelist) {
-      for (String whiteRegExp : whitelist) {
+   public static boolean isSafeClass(String className, List<String> allowList) {
+      for (String whiteRegExp : allowList) {
          Pattern whitePattern = Pattern.compile(whiteRegExp);
          Matcher whiteMatcher = whitePattern.matcher(className);
          if (whiteMatcher.find()) {
             if (log.isTraceEnabled())
-               log.tracef("Whitelist match: '%s'", className);
+               log.tracef("Allowlist match: '%s'", className);
 
             return true;
          }

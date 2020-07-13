@@ -178,8 +178,14 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
+   public ConfigurationBuilder addJavaSerialAllowList(String... regExs) {
+      return builder.addJavaSerialAllowList(regExs);
+   }
+
+   @Override
+   @Deprecated
    public ConfigurationBuilder addJavaSerialWhiteList(String... regExs) {
-      return builder.addJavaSerialWhiteList(regExs);
+      return builder.addJavaSerialAllowList(regExs);
    }
 
    @Override
