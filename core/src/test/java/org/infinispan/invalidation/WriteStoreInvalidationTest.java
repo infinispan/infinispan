@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -27,9 +28,34 @@ public class WriteStoreInvalidationTest extends MultipleCacheManagersTest {
 
    private static final String cacheName = "inval-write-cache-store";
 
+   private boolean transactional;
+
+   public WriteStoreInvalidationTest transactional(boolean transactional) {
+      this.transactional = transactional;
+      return this;
+   }
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new WriteStoreInvalidationTest().transactional(true),
+            new WriteStoreInvalidationTest().transactional(false),
+      };
+   }
+
+   @Override
+   protected String[] parameterNames() {
+      return concat(super.parameterNames(), "transactional");
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return concat(super.parameterValues(), transactional);
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, false);
+      ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, transactional);
       cb.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true)
             .storeName(getClass().getSimpleName());
       createClusteredCaches(2, cacheName, cb);
@@ -60,6 +86,19 @@ public class WriteStoreInvalidationTest extends MultipleCacheManagersTest {
 
       assertEquals(changedValue, cache(0, cacheName).get(key));
       assertStoreStats(store0, 3, 2, 0);
+   }
+
+   public void testWriteAndRemoveOnVariousNodes() {
+      Cache<String, String> cache0 = cache(0, cacheName);
+      Cache<String, String> cache1 = cache(0, cacheName);
+
+      assertNull(cache0.put(key, "foo"));
+
+      assertEquals("foo", cache1.get(key));
+
+      assertEquals("foo", cache1.put(key, "bar"));
+
+      assertEquals("bar", cache0.get(key));
    }
 
    private void assertStoreStats(DummyInMemoryStore store, int loads, int writes, int deletes) {
