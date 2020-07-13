@@ -28,6 +28,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -137,6 +138,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private volatile AutoCloseable availabilityTask;
    private volatile String unavailableExceptionMessage;
 
+   // Writes to an invalidation cache skip the shared check
+   private boolean isInvalidationCache;
    private boolean allSegmentedOrShared;
 
    private int segmentCount;
@@ -179,6 +182,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
       preloaded = false;
       segmentCount = configuration.clustering().hash().numSegments();
+
+      isInvalidationCache = configuration.clustering().cacheMode().isInvalidation();
 
       long stamp = lock.writeLock();
       try {
@@ -1094,7 +1099,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                .map(SegmentPublisherWrapper::wrap);
          flowable = filterSharedSegments(flowable, null, shared);
       } else {
-         if (shared) {
+         if (shared && !isInvalidationCache) {
             keyRemoveFlowable = keyRemoveFlowable.filter(k ->
                   distributionManager.getCacheTopology().getDistribution(k).isPrimary());
          }
@@ -1139,7 +1144,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          // The writeCount will be decremented for each grouping of values ignored
          flowable = filterSharedSegments(flowable, writeCount, shared);
       } else {
-         if (shared) {
+         if (shared && !isInvalidationCache) {
             entryWriteFlowable = entryWriteFlowable.filter(me ->
                   distributionManager.getCacheTopology().getDistribution(me.getKey()).isPrimary());
          }
@@ -1162,7 +1167,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    private <I> Flowable<NonBlockingStore.SegmentedPublisher<I>> filterSharedSegments(
          Flowable<NonBlockingStore.SegmentedPublisher<I>> flowable, ByRef.Long writeCount, boolean shared) {
-      if (!shared) {
+      if (!shared || isInvalidationCache) {
          return flowable;
       }
       return flowable.map(sp -> {
@@ -1205,6 +1210,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          MVCCEntry<K, V> entry = acquireKeyFromContext(ctx, writeCommand, key, commandKeyPredicate);
          return entry != null ? Flowable.just(entry) : Flowable.empty();
       } else {
+         if (writeCommand instanceof InvalidateCommand) {
+            return Flowable.empty();
+         }
          // Assume multiple key command
          return Flowable.fromIterable(writeCommand.getAffectedKeys())
                .concatMapMaybe(key -> {
