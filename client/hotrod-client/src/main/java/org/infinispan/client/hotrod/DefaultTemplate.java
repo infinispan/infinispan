@@ -14,6 +14,7 @@ public enum DefaultTemplate {
    DIST_ASYNC("org.infinispan.DIST_ASYNC"),
    INVALIDATION_SYNC("org.infinispan.INVALIDATION_SYNC"),
    INVALIDATION_ASYNC("org.infinispan.INVALIDATION_ASYNC"),
+   PROTOBUF_DIST_SYNC("example.PROTOBUF_DIST"),
    SCATTERED_SYNC("org.infinispan.SCATTERED_SYNC")
    ;
 
