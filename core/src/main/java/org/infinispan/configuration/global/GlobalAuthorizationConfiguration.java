@@ -12,6 +12,7 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ClassAttributeSerializer;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
@@ -29,7 +30,7 @@ import org.infinispan.security.audit.NullAuditLogger;
  */
 public class GlobalAuthorizationConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
-   public static final AttributeDefinition<AuditLogger> AUDIT_LOGGER = AttributeDefinition.builder("auditLogger", (AuditLogger) new NullAuditLogger()).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
+   public static final AttributeDefinition<AuditLogger> AUDIT_LOGGER = AttributeDefinition.builder("auditLogger", (AuditLogger) new NullAuditLogger()).copier(IdentityAttributeCopier.INSTANCE).serializer(ClassAttributeSerializer.INSTANCE).immutable().build();
 
    public static final AttributeDefinition<Map<String, Role>> ROLES = AttributeDefinition.<Map<String, Role>>builder("roles", new HashMap<>())
          .serializer(new AttributeSerializer<Map<String, Role>, GlobalAuthorizationConfiguration, ConfigurationBuilderInfo>() {

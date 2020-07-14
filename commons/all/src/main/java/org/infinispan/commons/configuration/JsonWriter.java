@@ -11,21 +11,22 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.dataconversion.internal.Json;
 
 /**
  * @since 10.0
  */
 public class JsonWriter {
 
-   static {
-      Json.setGlobalFactory(new JsonCustomFactory());
+   public String toJSON(ConfigurationInfo configurationInfo) {
+      return toJsonObject(configurationInfo).toString();
    }
 
-   public String toJSON(ConfigurationInfo configurationInfo) {
+   public Json toJsonObject(ConfigurationInfo configurationInfo) {
       ConfigurationInfo configInfo = Objects.requireNonNull(configurationInfo, "expect a non-null configuration object");
       Json json = Json.object();
       writeElement(json, configInfo, true);
-      return json.toString();
+      return json;
    }
 
    void writeElement(Json parent, ConfigurationInfo element, boolean renderName) {

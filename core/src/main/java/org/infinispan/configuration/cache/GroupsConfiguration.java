@@ -33,6 +33,10 @@ public class GroupsConfiguration implements Matchable<GroupsConfiguration>, Conf
                List<String> values = (List<String>) attrValue;
                return values.stream().map(v -> Util.getInstance(v, builderInfo.getClass().getClassLoader())).collect(Collectors.toList());
             }
+            @Override
+            public Object getSerializationValue(Attribute<List<Grouper<?>>> attribute, GroupsConfiguration configurationElement) {
+               return attribute.get().stream().map(g -> g.getClass().getName()).collect(Collectors.toList());
+            }
          })
          .immutable().build();
    static final ElementDefinition ELEMENT_DEFINTION = new DefaultElementDefinition(GROUPS.getLocalName());

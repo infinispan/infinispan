@@ -7,6 +7,7 @@ import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ClassAttributeSerializer;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
@@ -19,7 +20,8 @@ import org.infinispan.remoting.transport.Transport;
 public class JGroupsConfiguration implements ConfigurationInfo {
 
    static final AttributeDefinition<Transport> TRANSPORT = AttributeDefinition
-         .builder("transport", null, Transport.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
+         .builder("transport", null, Transport.class).serializer(ClassAttributeSerializer.INSTANCE)
+         .copier(IdentityAttributeCopier.INSTANCE).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(JGroupsConfiguration.class, TRANSPORT);

@@ -6,6 +6,7 @@ import java.util.List;
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ClassAttributeSerializer;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.server.configuration.Element;
@@ -22,7 +23,7 @@ public class LdapRealmConfiguration implements ConfigurationInfo {
          .build();
    static final AttributeDefinition<Boolean> DIRECT_EVIDENCE_VERIFICATION = AttributeDefinition.builder("directEvidenceVerification", null, Boolean.class).build();
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
-   static final AttributeDefinition<NameRewriter> NAME_REWRITER = AttributeDefinition.builder("nameRewriter", null, NameRewriter.class).build();
+   static final AttributeDefinition<NameRewriter> NAME_REWRITER = AttributeDefinition.builder("nameRewriter", null, NameRewriter.class).serializer(ClassAttributeSerializer.INSTANCE).build();
    static final AttributeDefinition<String> PRINCIPAL = AttributeDefinition.builder("principal", null, String.class).build();
    static final AttributeDefinition<Integer> PAGE_SIZE = AttributeDefinition.builder("pageSize", 50, Integer.class).build();
    static final AttributeDefinition<String> RDN_IDENTIFIER = AttributeDefinition.builder("rdnIdentifier", null, String.class).build();

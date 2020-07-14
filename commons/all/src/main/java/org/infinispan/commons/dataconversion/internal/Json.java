@@ -1,4 +1,4 @@
-package org.infinispan.commons.configuration;
+package org.infinispan.commons.dataconversion.internal;
 
 /*
  * Copyright (C) 2011 Miami-Dade County.
@@ -38,9 +38,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
+import org.infinispan.commons.configuration.JsonWriter;
+import org.infinispan.commons.dataconversion.MediaType;
 //import java.util.function.Function;
 
 /**
@@ -237,8 +241,8 @@ import java.util.regex.Pattern;
  *
  * <p>
  * Since version 1.3, mJson supports JSON Schema, draft 4. A schema is represented by the internal
- * class {@link mjson.Json.Schema}. To perform a validation, you have a instantiate a <code>Json.Schema</code>
- * using the factory method {@link mjson.Json.Schema} and then call its <code>validate</code> method
+ * class {@link Json.Schema}. To perform a validation, you have a instantiate a <code>Json.Schema</code>
+ * using the factory method {@link Json.Schema} and then call its <code>validate</code> method
  * on a JSON instance:
  * </p>
  *
@@ -251,11 +255,21 @@ import java.util.regex.Pattern;
  * Json errors = schema.validate(inputJson);
  * for (Json error : errors.asJsonList())
  * System.out.println("Validation error " + err);
- * </code></pre>
+ *</code></pre>
+ * <h2>
+ * Infinispan changes on top of 1.4.2:
+ * </h2>
+ * <p><ul>
+ * <li>Added support for pretty printing {@link Json#toPrettyString()}
+ * <li>Added support for {@link RawJson} as a specialized {@link StringJson}
+ * <li>Usage of {@link LinkedHashMap} internally for {@link ObjectJson} for predictable iteration
+ * <li>Support for {@link Class}, {@link Properties}, {@link Enum} for {@link DefaultFactory#make(Object)}
+ * <li>Support from internal Infinispan classes for {@link DefaultFactory#make(Object)}: {@link MediaType}, {@link JsonSerialization}, {@link ConfigurationInfo}
+ *  </ul></p>
  * @author Borislav Iordanov
- * @version 2.0.0
+ * @version 1.4.2
  */
-class Json implements java.io.Serializable, Iterable<Json> {
+public class Json implements java.io.Serializable {
    private static final long serialVersionUID = 1L;
 
    /**
@@ -321,6 +335,8 @@ class Json implements java.io.Serializable, Iterable<Json> {
        * @return A JSON element with the given string as a value.
        */
       Json string(String value);
+
+      Json raw(String value);
 
       /**
        * Construct and return a JSON number. The resulting value must return
@@ -424,25 +440,6 @@ class Json implements java.io.Serializable, Iterable<Json> {
        * @return A newly created <code>Json</code> conforming to this schema.
        */
       //Json generate(Json options);
-   }
-
-   @Override
-   public Iterator<Json> iterator() {
-      return new Iterator<Json>() {
-         @Override
-         public boolean hasNext() {
-            return false;
-         }
-
-         @Override
-         public Json next() {
-            return null;
-         }
-
-         @Override
-         public void remove() {
-         }
-      };
    }
 
    static String fetchContent(URL url) {
@@ -697,7 +694,7 @@ class Json implements java.io.Serializable, Iterable<Json> {
                else
                   errors = maybeError(errors, S.apply(param.at(i)));
                if (uniqueitems != null && uniqueitems && param.asJsonList().lastIndexOf(param.at(i)) > i)
-                  errors = maybeError(errors, Json.make("ElementDefinition " + param.at(i) + " is duplicate in array."));
+                  errors = maybeError(errors, Json.make("Element " + param.at(i) + " is duplicate in array."));
                if (errors != null && !errors.asJsonList().isEmpty())
                   break;
             }
@@ -850,7 +847,7 @@ class Json implements java.io.Serializable, Iterable<Json> {
             for (Json option : theenum.asJsonList())
                if (param.equals(option))
                   return null;
-            return Json.array().add("ElementDefinition " + param.toString(maxchars) +
+            return Json.array().add("Element " + param.toString(maxchars) +
                   " doesn't match any of enumerated possibilities " + theenum);
          }
       }
@@ -863,7 +860,7 @@ class Json implements java.io.Serializable, Iterable<Json> {
             for (Instruction I : alternates)
                if (I.apply(param) == null)
                   return null;
-            return Json.array().add("ElementDefinition " + param.toString(maxchars) +
+            return Json.array().add("Element " + param.toString(maxchars) +
                   " must conform to at least one of available sub-schemas " +
                   schema.toString(maxchars));
          }
@@ -884,7 +881,7 @@ class Json implements java.io.Serializable, Iterable<Json> {
                   errors.add(result);
             }
             if (matches != 1) {
-               return Json.array().add("ElementDefinition " + param.toString(maxchars) +
+               return Json.array().add("Element " + param.toString(maxchars) +
                      " must conform to exactly one of available sub-schemas, but not more " +
                      schema.toString(maxchars)).add(errors);
             } else
@@ -905,7 +902,7 @@ class Json implements java.io.Serializable, Iterable<Json> {
             if (I.apply(param) != null)
                return null;
             else
-               return Json.array().add("ElementDefinition " + param.toString(maxchars) +
+               return Json.array().add("Element " + param.toString(maxchars) +
                      " must NOT conform to the schema " + schema.toString(maxchars));
          }
       }
@@ -1143,8 +1140,11 @@ class Json implements java.io.Serializable, Iterable<Json> {
    }
 
    public static class DefaultFactory implements Factory {
+
+      static final JsonWriter configurationWriter = new JsonWriter();
+
       public Json nil() {
-         return Json.topnull;
+         return new NullJson();
       }
 
       public Json bool(boolean x) {
@@ -1153,6 +1153,10 @@ class Json implements java.io.Serializable, Iterable<Json> {
 
       public Json string(String x) {
          return new StringJson(x, null);
+      }
+
+      public Json raw(String x) {
+         return new RawJson(x, null);
       }
 
       public Json number(Number x) {
@@ -1169,11 +1173,22 @@ class Json implements java.io.Serializable, Iterable<Json> {
 
       public Json make(Object anything) {
          if (anything == null)
-            return topnull;
+            return nil();
+         else if (anything instanceof Properties) {
+            Properties properties = (Properties) anything;
+            Json O = object();
+            for (Map.Entry<?, ?> x : properties.entrySet())
+               O.set(x.getKey().toString(), factory().make(x.getValue()));
+            return O;
+         }
          else if (anything instanceof Json)
             return (Json) anything;
          else if (anything instanceof String)
             return factory().string((String) anything);
+         else if (anything instanceof JsonSerialization)
+            return ((JsonSerialization) anything).toJson();
+         else if (anything instanceof Class<?>)
+            return factory().string(((Class<?>) anything).getName());
          else if (anything instanceof Collection<?>) {
             Json L = array();
             for (Object x : (Collection<?>) anything)
@@ -1188,6 +1203,13 @@ class Json implements java.io.Serializable, Iterable<Json> {
             return factory().bool((Boolean) anything);
          else if (anything instanceof Number)
             return factory().number((Number) anything);
+         else if (anything instanceof Enum) {
+            return factory().string(anything.toString());
+         } else if (anything instanceof ConfigurationInfo) {
+            return configurationWriter.toJsonObject((ConfigurationInfo) anything);
+         }  else if (anything instanceof MediaType) {
+            return factory().string(anything.toString());
+         }
          else if (anything.getClass().isArray()) {
             Class<?> comp = anything.getClass().getComponentType();
             if (!comp.isPrimitive())
@@ -1367,7 +1389,7 @@ class Json implements java.io.Serializable, Iterable<Json> {
 
    /**
     * <p>
-    * Exposes some internal methods that are useful for {@link org.sharegov.mjson.Json.Factory} implementations
+    * Exposes some internal methods that are useful for {@link Json.Factory} implementations
     * or other extension/layers of the library.
     * </p>
     *
@@ -1396,26 +1418,6 @@ class Json implements java.io.Serializable, Iterable<Json> {
          return Json.resolvePointer(pointer, element);
       }
    }
-
-   static class JsonSingleValueIterator implements Iterator<Json> {
-      private boolean retrieved = false;
-
-      @Override
-      public boolean hasNext() {
-         return !retrieved;
-      }
-
-      @Override
-      public Json next() {
-         retrieved = true;
-         return null;
-      }
-
-      @Override
-      public void remove() {
-      }
-   }
-
 
    /**
     * <p>
@@ -1466,6 +1468,10 @@ class Json implements java.io.Serializable, Iterable<Json> {
       return toString();
    }
 
+   public String toPrettyString() {
+      return toString();
+   }
+
    /**
     * <p>Explicitly set the parent of this element. The parent is presumably an array
     * or an object. Normally, there's no need to call this method as the parent is
@@ -1483,6 +1489,7 @@ class Json implements java.io.Serializable, Iterable<Json> {
     * @return the <code>Json</code> entity, if any, enclosing this
     * <code>Json</code>. The returned value can be <code>null</code> or
     * a <code>Json</code> object or list, but not one of the primitive types.
+    * @deprecated This method is problematic and underused and it will be soon removed.
     */
    public final Json up() {
       return enclosing;
@@ -1515,7 +1522,7 @@ class Json implements java.io.Serializable, Iterable<Json> {
     * Return the specified property of a <code>Json</code> object or <code>null</code>
     * if there's no such property. This method applies only to Json objects.
     * </p>
-    * @param The property name.
+    * @param property the property name.
     * @return The JSON element that is the value of that property.
     */
    public Json at(String property) {
@@ -1940,6 +1947,10 @@ class Json implements java.io.Serializable, Iterable<Json> {
       return false;
    }
 
+   public boolean isRaw() {
+      return false;
+   }
+
    /**
     * @return <code>true</code> if this is a <code>Json</code> object entity
     * and <code>false</code> otherwise.
@@ -2049,21 +2060,7 @@ class Json implements java.io.Serializable, Iterable<Json> {
       public boolean equals(Object x) {
          return x instanceof NullJson;
       }
-
-      @Override
-      public Iterator<Json> iterator() {
-         return new JsonSingleValueIterator() {
-            @Override
-            public Json next() {
-               super.next();
-               return NullJson.this;
-            }
-         };
-      }
-
    }
-
-   static NullJson topnull = new NullJson();
 
    /**
     * <p>
@@ -2155,18 +2152,6 @@ class Json implements java.io.Serializable, Iterable<Json> {
       public boolean equals(Object x) {
          return x instanceof BooleanJson && ((BooleanJson) x).val == val;
       }
-
-      @Override
-      public Iterator<Json> iterator() {
-         return new JsonSingleValueIterator() {
-            @Override
-            public Json next() {
-               super.next();
-               return BooleanJson.this;
-            }
-         };
-      }
-
    }
 
    static class StringJson extends Json {
@@ -2253,18 +2238,37 @@ class Json implements java.io.Serializable, Iterable<Json> {
       public boolean equals(Object x) {
          return x instanceof StringJson && ((StringJson) x).val.equals(val);
       }
+   }
 
-      @Override
-      public Iterator<Json> iterator() {
-         return new JsonSingleValueIterator() {
-            @Override
-            public Json next() {
-               super.next();
-               return StringJson.this;
-            }
-         };
+   static class RawJson extends StringJson {
+      public RawJson(String val, Json e) {
+         super(val, e);
       }
 
+      public String toString() {
+         return val;
+      }
+
+      @Override
+      public String toPrettyString() {
+         return toPrettyStringImpl(1);
+      }
+
+      String toPrettyStringImpl(int ident) {
+         Json x = Json.read(this.val);
+         if (x.isObject()) {
+            return ((ObjectJson) x).toPrettyStringImpl(ident);
+         }
+         if (x.isArray()) {
+            return ((ArrayJson) x).toPrettyStringImpl(ident);
+         }
+         return x.toPrettyString();
+      }
+
+      @Override
+      public boolean isRaw() {
+         return true;
+      }
    }
 
    static class NumberJson extends Json {
@@ -2340,18 +2344,6 @@ class Json implements java.io.Serializable, Iterable<Json> {
       public boolean equals(Object x) {
          return x instanceof NumberJson && val.doubleValue() == ((NumberJson) x).val.doubleValue();
       }
-
-      @Override
-      public Iterator<Json> iterator() {
-         return new JsonSingleValueIterator() {
-            @Override
-            public Json next() {
-               super.next();
-               return NumberJson.this;
-            }
-         };
-      }
-
    }
 
    static class ArrayJson extends Json {
@@ -2366,10 +2358,6 @@ class Json implements java.io.Serializable, Iterable<Json> {
          super(e);
       }
 
-      @Override
-      public Iterator<Json> iterator() {
-         return L.iterator();
-      }
 
       public Json dup() {
          ArrayJson j = new ArrayJson();
@@ -2550,6 +2538,21 @@ class Json implements java.io.Serializable, Iterable<Json> {
          return toStringImpl(maxCharacters, new IdentityHashMap<Json, Json>());
       }
 
+      String toPrettyStringImpl(int ident) {
+         StringBuilder sb = new StringBuilder("[ ");
+         for (Iterator<Json> i = L.iterator(); i.hasNext(); ) {
+            Json value = i.next();
+            String s = value.isObject() ? ((ObjectJson) value).toPrettyStringImpl(ident)
+                  : value.isArray() ? ((ArrayJson) value).toPrettyStringImpl(ident)
+                  : value.toString();
+            sb.append(s);
+            if (i.hasNext())
+               sb.append(",");
+         }
+         sb.append(" ]");
+         return sb.toString();
+      }
+
       String toStringImpl(int maxCharacters, Map<Json, Json> done) {
          StringBuilder sb = new StringBuilder("[");
          for (Iterator<Json> i = L.iterator(); i.hasNext(); ) {
@@ -2594,11 +2597,6 @@ class Json implements java.io.Serializable, Iterable<Json> {
       private static final long serialVersionUID = 1L;
 
       Map<String, Json> object = new LinkedHashMap<>();
-
-      @Override
-      public Iterator<Json> iterator() {
-         return object.values().iterator();
-      }
 
       ObjectJson() {
       }
@@ -2717,6 +2715,41 @@ class Json implements java.io.Serializable, Iterable<Json> {
 
       public String toString(int maxCharacters) {
          return toStringImpl(maxCharacters, new IdentityHashMap<Json, Json>());
+      }
+
+      public String toPrettyString() {
+         return toPrettyStringImpl(1);
+      }
+
+      String toPrettyStringImpl(int ident) {
+         StringBuilder sb = new StringBuilder("{");
+         sb.append("\n");
+
+         for (Iterator<Map.Entry<String, Json>> i = object.entrySet().iterator(); i.hasNext(); ) {
+            Map.Entry<String, Json> x = i.next();
+            for (int j = 0; j < ident; j++) sb.append("  ");
+            sb.append('"');
+            sb.append(escaper.escapeJsonString(x.getKey()));
+            sb.append('"');
+            sb.append(" : ");
+            String s = x.getValue().isObject() ? ((ObjectJson) x.getValue()).toPrettyStringImpl(ident + 1)
+                  : x.getValue().isArray() ? ((ArrayJson) x.getValue()).toPrettyStringImpl(ident + 1)
+                  : x.getValue().isRaw() ? ((RawJson) x.getValue()).toPrettyStringImpl(ident + 1)
+                  : x.getValue().toString();
+            sb.append(s);
+            if (i.hasNext()) {
+               sb.append(",");
+               sb.append("\n");
+            }
+
+         }
+
+         sb.append("\n");
+         ident -= 1;
+         for (int j = 0; j < ident; j++) sb.append("  ");
+
+         sb.append("}");
+         return sb.toString();
       }
 
       String toStringImpl(int maxCharacters, Map<Json, Json> done) {
