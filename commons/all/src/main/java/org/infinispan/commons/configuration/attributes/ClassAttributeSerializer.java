@@ -18,4 +18,12 @@ public class ClassAttributeSerializer<T, U extends ConfigurationInfo, B extends 
       return Util.getInstance(attrValue.toString(), builderInfo.getClass().getClassLoader());
    }
 
+   @Override
+   public Object getSerializationValue(Attribute<T> attribute, U configurationElement) {
+      T attributeValue = attribute.get();
+      if (attributeValue == null) {
+         return null;
+      }
+      return attributeValue.getClass().getName();
+   }
 }

@@ -6,6 +6,7 @@ import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ClassAttributeSerializer;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.executors.ExecutorFactory;
@@ -13,7 +14,7 @@ import org.infinispan.executors.DefaultExecutorFactory;
 
 public class ExecutorFactoryConfiguration extends AbstractTypedPropertiesConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<ExecutorFactory> EXECUTOR_FACTORY = AttributeDefinition.builder("executorFactory", null, ExecutorFactory.class)
-         .initializer(DefaultExecutorFactory::new).xmlName("factory").immutable().build();
+         .initializer(DefaultExecutorFactory::new).serializer(ClassAttributeSerializer.INSTANCE).xmlName("factory").immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ExecutorFactoryConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), EXECUTOR_FACTORY);
