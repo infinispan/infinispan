@@ -13,7 +13,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,6 +34,7 @@ import org.infinispan.client.hotrod.query.RemoteQueryTestUtils;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AbstractMarshaller;
@@ -49,11 +49,6 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Tests for the Hot Rod client using multiple data formats when interacting with the server.
@@ -141,13 +136,13 @@ public class DataFormatTest extends SingleHotRodServerTest {
       assertArrayEquals(protostreamMarshalledQuote, (byte[]) allEntries.get(1));
 
       // Read value as JSON in the byte[] form, using the same key
-      ObjectNode expectedJson = new ObjectMapper().createObjectNode().put("_type", "string").put("_value", quote);
+      Json expectedJson = Json.object("_type", "string").set("_value", quote);
       Object asJSon = remoteCache.withDataFormat(DataFormat.builder().valueType(APPLICATION_JSON).build()).get(1);
 
-      assertEquals(expectedJson, new ObjectMapper().readTree((byte[]) asJSon));
+      assertEquals(expectedJson, Json.read(new String((byte[]) asJSon)));
 
-      ObjectNode asJsonNode = (ObjectNode) remoteCache
-            .withDataFormat(DataFormat.builder().valueType(APPLICATION_JSON).valueMarshaller(new JacksonMarshaller()).build())
+      Json asJsonNode = (Json) remoteCache
+            .withDataFormat(DataFormat.builder().valueType(APPLICATION_JSON).valueMarshaller(new JsonMarshaller()).build())
             .get(1);
 
       assertEquals(expectedJson, asJsonNode);
@@ -159,8 +154,8 @@ public class DataFormatTest extends SingleHotRodServerTest {
       assertArrayEquals(protostreamMarshalledQuote, ((byte[]) raw));
 
       // Iterate values converting to JsonNode objects
-      asJsonNode = (ObjectNode) remoteCache
-            .withDataFormat(DataFormat.builder().valueType(APPLICATION_JSON).valueMarshaller(new JacksonMarshaller()).build())
+      asJsonNode = (Json) remoteCache
+            .withDataFormat(DataFormat.builder().valueType(APPLICATION_JSON).valueMarshaller(new JsonMarshaller()).build())
             .values().iterator().next();
 
       assertEquals(expectedJson, asJsonNode);
@@ -241,9 +236,9 @@ public class DataFormatTest extends SingleHotRodServerTest {
 
       // Write using JSON
       IntStream.range(50, 100).forEach(i -> {
-         ObjectNode key = new ObjectMapper().createObjectNode().put("_type", "org.infinispan.test.client.DataFormatTest.ComplexKey")
-               .put("id", i)
-               .put("ratio", i);
+         Json key = Json.object("_type", "org.infinispan.test.client.DataFormatTest.ComplexKey")
+               .set("id", i)
+               .set("ratio", i);
          newEntries.put(key.toString(), UUID.randomUUID().toString());
       });
       jsonCache.putAll(newEntries);
@@ -303,7 +298,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
    }
 
    @Test
-   public void testJsonFromDefaultCache() throws JsonProcessingException {
+   public void testJsonFromDefaultCache()  {
       RemoteCache<String, String> schemaCache = remoteCacheManager.getCache(PROTOBUF_METADATA_CACHE_NAME);
       schemaCache.put("schema.proto", "message M { optional string json_key = 1; }");
       RemoteQueryTestUtils.checkSchemaErrors(schemaCache);
@@ -318,8 +313,8 @@ public class DataFormatTest extends SingleHotRodServerTest {
       cache.put(1, value);
 
       String valueAsJson = cache.get(1);
-      JsonNode node = new ObjectMapper().readTree(valueAsJson);
-      assertEquals("json_value", node.get("json_key").asText());
+      Json node = Json.read(valueAsJson);
+      assertEquals("json_value", node.at("json_key").asString());
    }
 
    private byte[] marshall(Object o) throws Exception {
@@ -330,27 +325,24 @@ public class DataFormatTest extends SingleHotRodServerTest {
          includeClasses = ComplexKey.class,
          schemaFileName = "test.client.DataFormatTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.client.DataFormatTest",
-         service = false
+         schemaPackageName = "org.infinispan.test.client.DataFormatTest"
    )
    interface SCI extends SerializationContextInitializer {
       SCI INSTANCE = new SCIImpl();
    }
 }
 
-class JacksonMarshaller extends AbstractMarshaller {
-
-   private static final ObjectMapper MAPPER = new ObjectMapper();
+class JsonMarshaller extends AbstractMarshaller {
 
    @Override
-   protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
-      byte[] bytes = MAPPER.writeValueAsBytes(o);
+   protected ByteBuffer objectToBuffer(Object o, int estimatedSize) {
+      byte[] bytes = Json.make(o).asString().getBytes(UTF_8);
       return ByteBufferImpl.create(bytes);
    }
 
    @Override
-   public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException {
-      return MAPPER.readTree(buf);
+   public Object objectFromByteBuffer(byte[] buf, int offset, int length) {
+      return Json.read(new String(buf, offset, length, UTF_8));
    }
 
    @Override

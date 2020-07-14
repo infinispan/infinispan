@@ -95,7 +95,7 @@ public class CliIT {
          }
          terminal.clear();
          terminal.readln("query \"from org.infinispan.rest.search.entity.Person p where p.gender = 'MALE'\"");
-         terminal.assertContains("\"total_results\" : 3,");
+         terminal.assertContains("\"total_results\":3,");
 
          terminal.clear();
          terminal.readln("create counter --type=strong --storage=PERSISTENT --upper-bound=100 cnt1");
@@ -161,7 +161,7 @@ public class CliIT {
          terminal.clear();
 
          // upload
-         terminal.readln("schema --upload="+ getCliResource("person.proto").getPath() +" person.proto");
+         terminal.readln("schema --upload=" + getCliResource("person.proto").getPath() + " person.proto");
          terminal.clear();
          terminal.readln("cd /containers/default/schemas");
          terminal.readln("ls");

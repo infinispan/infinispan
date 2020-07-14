@@ -14,6 +14,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
@@ -128,13 +129,13 @@ public class SearchAdminResource implements ResourceHandler {
       }).thenApply(v -> responseBuilder.build());
    }
 
-   private CompletionStage<RestResponse> showStats(RestRequest request, Function<InfinispanQueryStatisticsInfo, Object> statExtractor) {
+   private CompletionStage<RestResponse> showStats(RestRequest request, Function<InfinispanQueryStatisticsInfo, JsonSerialization> statExtractor) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
       InfinispanQueryStatisticsInfo searchStats = lookupQueryStatistics(request, responseBuilder);
       if (searchStats == null) return completedFuture(responseBuilder.build());
 
-      return asJsonResponseFuture(statExtractor.apply(searchStats), responseBuilder, invocationHelper);
+      return asJsonResponseFuture(statExtractor.apply(searchStats).toJson(), responseBuilder);
    }
 
    private AdvancedCache<?, ?> lookupIndexedCache(RestRequest request, NettyRestResponse.Builder builder) {

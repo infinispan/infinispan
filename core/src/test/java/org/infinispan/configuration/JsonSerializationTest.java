@@ -21,12 +21,12 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.configuration.JsonWriter;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -74,18 +74,13 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 @Test(testName = "configuration.JsonSerializationTest", groups = "functional")
 public class JsonSerializationTest extends AbstractInfinispanTest {
 
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
-   private JsonReader jsonReader = new JsonReader();
-   private JsonWriter jsonWriter = new JsonWriter();
+   private final JsonReader jsonReader = new JsonReader();
+   private final JsonWriter jsonWriter = new JsonWriter();
 
    @Test
    public void testMinimalCacheConfiguration() {
@@ -213,41 +208,42 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testMinimalCacheManager() throws IOException {
+   public void testMinimalCacheManager() {
       GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().build();
 
       String json = jsonWriter.toJSON(globalConfiguration);
-      JsonNode jsonNode = new ObjectMapper().readTree(json);
+      Json jsonNode = Json.read(json);
 
-      JsonNode cacheContainer = jsonNode.get("infinispan").get("cache-container");
-      assertEquals("DefaultCacheManager", cacheContainer.get("name").asText());
+      Json cacheContainer = jsonNode.at("infinispan").at("cache-container");
+      assertEquals("DefaultCacheManager", cacheContainer.at("name").asString());
    }
 
    @Test
-   public void testClusteredCacheManager() throws IOException {
+   public void testClusteredCacheManager() {
       GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().clusteredDefault().build();
 
+
       String json = jsonWriter.toJSON(globalConfiguration);
-      JsonNode jsonNode = new ObjectMapper().readTree(json);
+      Json jsonNode = Json.read(json);
 
-      JsonNode cacheContainer = jsonNode.get("infinispan").get("cache-container");
-      assertEquals("DefaultCacheManager", cacheContainer.get("name").asText());
+      Json cacheContainer = jsonNode.at("infinispan").at("cache-container");
+      assertEquals("DefaultCacheManager", cacheContainer.at("name").asString());
 
-      JsonNode jgroups = jsonNode.get("infinispan").get("jgroups");
-      assertEquals("org.infinispan.remoting.transport.jgroups.JGroupsTransport", jgroups.get("transport").asText());
+      Json jgroups = jsonNode.at("infinispan").at("jgroups");
+      assertEquals("org.infinispan.remoting.transport.jgroups.JGroupsTransport", jgroups.at("transport").asString());
    }
 
    @Test
-   public void testGlobalAuthorization() throws IOException {
+   public void testGlobalAuthorization() {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().clusteredDefault();
       builder.security().authorization().principalRoleMapper(new DummyRoleMapper()).create();
 
       String toJSON = jsonWriter.toJSON(builder.build());
 
-      JsonNode node = new ObjectMapper().readTree(toJSON);
-      JsonNode authz = node.get("infinispan").get("cache-container").get("security").get("authorization");
+      Json node = Json.read(toJSON);
+      Json authz = node.at("infinispan").at("cache-container").at("security").at("authorization");
 
-      assertEquals(DummyRoleMapper.class.getName(), authz.get("custom-role-mapper").get("class").asText());
+      assertEquals(DummyRoleMapper.class.getName(), authz.at("custom-role-mapper").at("class").asString());
    }
 
    @Test
@@ -259,50 +255,50 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       GlobalConfiguration configuration = holder.getGlobalConfigurationBuilder().build();
 
       String toJSON = jsonWriter.toJSON(configuration);
-      JsonNode node = new ObjectMapper().readTree(toJSON);
+      Json node = Json.read(toJSON);
 
-      JsonNode infinispan = node.get("infinispan");
-      JsonNode threads = infinispan.get("threads");
-      JsonNode cacheContainer = infinispan.get("cache-container");
-      JsonNode globalSecurity = cacheContainer.get("security");
+      Json infinispan = node.at("infinispan");
+      Json threads = infinispan.at("threads");
+      Json cacheContainer = infinispan.at("cache-container");
+      Json globalSecurity = cacheContainer.at("security");
 
-      ArrayNode threadFactories = (ArrayNode) threads.get("thread-factory");
-      assertEquals(5, threadFactories.size());
-      Iterator<JsonNode> elements = threadFactories.elements();
+      Json threadFactories = threads.at("thread-factory");
+      assertEquals(5, threadFactories.asList().size());
+      Iterator<Json> elements = threadFactories.asJsonList().iterator();
       assertThreadFactory(elements.next(), "listener-factory", "infinispan", "AsyncListenerThread", "1");
       assertThreadFactory(elements.next(), "blocking-factory", "infinispan", "BlockingThread", "1");
       assertThreadFactory(elements.next(), "non-blocking-factory", "infinispan", "NonBlockingThread", "1");
       assertThreadFactory(elements.next(), "expiration-factory", "infinispan", "ExpirationThread", "1");
       assertThreadFactory(elements.next(), "replication-queue-factory", "infinispan", "ReplicationQueueThread", "1");
 
-      ArrayNode boundedThreadPools = (ArrayNode) threads.get("blocking-bounded-queue-thread-pool");
-      elements = boundedThreadPools.elements();
-      assertEquals(3, boundedThreadPools.size());
+      Json boundedThreadPools = threads.at("blocking-bounded-queue-thread-pool");
+      elements = boundedThreadPools.asJsonList().iterator();
+      assertEquals(3, boundedThreadPools.asList().size());
       assertBoundedThreadPool(elements.next(), "listener", "listener-factory", "5", "0", "10000", "0");
       assertBoundedThreadPool(elements.next(), "blocking", "blocking-factory", "6", "0", "10001", "0");
       assertBoundedThreadPool(elements.next(), "non-blocking", "non-blocking-factory", "5", "5", "10000", "0");
 
-      ArrayNode scheduledThreadPools = (ArrayNode) threads.get("scheduled-thread-pool");
-      elements = scheduledThreadPools.elements();
-      assertEquals(2, scheduledThreadPools.size());
+      Json scheduledThreadPools = threads.at("scheduled-thread-pool");
+      elements = scheduledThreadPools.asJsonList().iterator();
+      assertEquals(2, scheduledThreadPools.asList().size());
       assertScheduledThreadPool(elements.next(), "expiration", "expiration-factory");
       assertScheduledThreadPool(elements.next(), "replication-queue", "replication-queue-factory");
 
-      assertEquals("DefaultCacheManager", cacheContainer.get("name").asText());
-      assertEquals("default", cacheContainer.get("default-cache").asText());
-      assertEquals("REGISTER", cacheContainer.get("shutdown-hook").asText());
-      assertTrue(cacheContainer.get("statistics").asBoolean());
-      assertEquals("listener", cacheContainer.get("listener-executor").asText());
-      assertNull(cacheContainer.get("async-executor"));
-      assertEquals("non-blocking", cacheContainer.get("non-blocking-executor").asText());
-      assertEquals("blocking", cacheContainer.get("blocking-executor").asText());
+      assertEquals("DefaultCacheManager", cacheContainer.at("name").asString());
+      assertEquals("default", cacheContainer.at("default-cache").asString());
+      assertEquals("REGISTER", cacheContainer.at("shutdown-hook").asString());
+      assertTrue(cacheContainer.at("statistics").asBoolean());
+      assertEquals("listener", cacheContainer.at("listener-executor").asString());
+      assertNull(cacheContainer.at("async-executor"));
+      assertEquals("non-blocking", cacheContainer.at("non-blocking-executor").asString());
+      assertEquals("blocking", cacheContainer.at("blocking-executor").asString());
 
-      JsonNode authorization = globalSecurity.get("authorization");
-      assertEquals("org.infinispan.security.audit.NullAuditLogger", authorization.get("audit-logger").asText());
-      JsonNode roleMapper = authorization.get("identity-role-mapper");
+      Json authorization = globalSecurity.at("authorization");
+      assertEquals("org.infinispan.security.audit.NullAuditLogger", authorization.at("audit-logger").asString());
+      Json roleMapper = authorization.at("identity-role-mapper");
       assertNotNull(roleMapper);
-      assertEquals(0, roleMapper.size());
-      JsonNode roles = authorization.get("roles");
+      assertEquals(0, roleMapper.asMap().size());
+      Json roles = authorization.at("roles");
       assertRole(roles, "vavasour", "READ", "WRITE");
       assertRole(roles, "peasant", "READ");
       assertRole(roles, "king", "ALL");
@@ -316,16 +312,16 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       GlobalConfiguration configuration = holder.getGlobalConfigurationBuilder().build();
 
       String toJSON = jsonWriter.toJSON(configuration);
-      JsonNode node = new ObjectMapper().readTree(toJSON);
+      Json node = Json.read(toJSON);
 
-      JsonNode infinispan = node.get("infinispan");
-      JsonNode jgroups = infinispan.get("jgroups");
+      Json infinispan = node.at("infinispan");
+      Json jgroups = infinispan.at("jgroups");
 
-      assertEquals(JGroupsTransport.class.getName(), jgroups.get("transport").asText());
+      assertEquals(JGroupsTransport.class.getName(), jgroups.at("transport").asString());
 
-      JsonNode stackFile = jgroups.get("stack-file");
-      assertEquals(8, stackFile.size());
-      Iterator<JsonNode> stackFiles = stackFile.elements();
+      Json stackFile = jgroups.at("stack-file");
+      assertEquals(8, stackFile.asList().size());
+      Iterator<Json> stackFiles = stackFile.asJsonList().iterator();
       assertStackFile(stackFiles.next(), "tcp", "default-configs/default-jgroups-tcp.xml");
       assertStackFile(stackFiles.next(), "udp", "default-configs/default-jgroups-udp.xml");
       assertStackFile(stackFiles.next(), "kubernetes", "default-configs/default-jgroups-kubernetes.xml");
@@ -335,77 +331,77 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertStackFile(stackFiles.next(), "udp-test", "stacks/udp.xml");
       assertStackFile(stackFiles.next(), "tcp-test", "stacks/tcp_mping/tcp1.xml");
 
-      JsonNode stack = jgroups.get("stack");
-      assertEquals(5, stack.size());
+      Json stack = jgroups.at("stack");
+      assertEquals(5, stack.asList().size());
 
-      JsonNode mping = stack.elements().next();
-      assertEquals(14, mping.size());
-      assertEquals("mping", mping.get("name").asText());
+      Json mping = stack.asJsonList().iterator().next();
+      assertEquals(14, mping.asMap().size());
+      assertEquals("mping", mping.at("name").asString());
 
-      ObjectNode tcp = (ObjectNode) mping.get("TCP");
-      assertEquals(9, tcp.size());
-      assertEquals("7800", tcp.get("bind_port").asText());
-      assertEquals("30", tcp.get("port_range").asText());
-      assertEquals("20000000", tcp.get("recv_buf_size").asText());
-      assertEquals("640000", tcp.get("send_buf_size").asText());
-      assertEquals("300", tcp.get("sock_conn_timeout").asText());
-      assertEquals("no-bundler", tcp.get("bundler_type").asText());
-      assertEquals("0", tcp.get("thread_pool.min_threads").asText());
-      assertEquals("25", tcp.get("thread_pool.max_threads").asText());
-      assertEquals("5000", tcp.get("thread_pool.keep_alive_time").asText());
+      Json tcp = mping.at("TCP");
+      assertEquals(9, tcp.asMap().size());
+      assertEquals("7800", tcp.at("bind_port").asString());
+      assertEquals("30", tcp.at("port_range").asString());
+      assertEquals("20000000", tcp.at("recv_buf_size").asString());
+      assertEquals("640000", tcp.at("send_buf_size").asString());
+      assertEquals("300", tcp.at("sock_conn_timeout").asString());
+      assertEquals("no-bundler", tcp.at("bundler_type").asString());
+      assertEquals("0", tcp.at("thread_pool.min_threads").asString());
+      assertEquals("25", tcp.at("thread_pool.max_threads").asString());
+      assertEquals("5000", tcp.at("thread_pool.keep_alive_time").asString());
 
-      ObjectNode fdSock = (ObjectNode) mping.get("FD_SOCK");
-      assertEquals(0, fdSock.size());
+      Json fdSock =  mping.at("FD_SOCK");
+      assertEquals(0, fdSock.asMap().size());
    }
 
-   private void assertRole(JsonNode role, String roleName, String... roles) {
-      ArrayNode roleNode = (ArrayNode) role.get(roleName);
+   private void assertRole(Json role, String roleName, String... roles) {
+      Json roleNode = role.at(roleName);
       Set<String> expected = Arrays.stream(roles).collect(Collectors.toSet());
       Set<String> nodeRoles = asSet(roleNode);
       assertEquals(expected, nodeRoles);
    }
 
-   private void assertStackFile(JsonNode node, String name, String path) {
-      assertEquals(node.get("name").asText(), name);
-      assertEquals(node.get("path").asText(), path);
+   private void assertStackFile(Json node, String name, String path) {
+      assertEquals(node.at("name").asString(), name);
+      assertEquals(node.at("path").asString(), path);
    }
 
-   private void assertThreadFactory(JsonNode node, String name, String groupName, String pattern, String prio) {
-      assertEquals(node.get("name").asText(), name);
-      assertEquals(node.get("group-name").asText(), groupName);
-      assertEquals(node.get("thread-name-pattern").asText(), pattern);
-      assertEquals(node.get("priority").asText(), prio);
+   private void assertThreadFactory(Json node, String name, String groupName, String pattern, String prio) {
+      assertEquals(node.at("name").asString(), name);
+      assertEquals(node.at("group-name").asString(), groupName);
+      assertEquals(node.at("thread-name-pattern").asString(), pattern);
+      assertEquals(node.at("priority").asString(), prio);
    }
 
-   private void assertBoundedThreadPool(JsonNode node, String name, String threadFactory, String maxThreads,
+   private void assertBoundedThreadPool(Json node, String name, String threadFactory, String maxThreads,
                                         String coreThreads, String queueLength, String keepAliveTime) {
-      assertEquals(node.get("name").asText(), name);
-      assertEquals(node.get("thread-factory").asText(), threadFactory);
-      assertEquals(node.get("max-threads").asText(), maxThreads);
-      assertEquals(node.get("core-threads").asText(), coreThreads);
-      assertEquals(node.get("queue-length").asText(), queueLength);
-      assertEquals(node.get("keep-alive-time").asText(), keepAliveTime);
+      assertEquals(node.at("name").asString(), name);
+      assertEquals(node.at("thread-factory").asString(), threadFactory);
+      assertEquals(node.at("max-threads").asString(), maxThreads);
+      assertEquals(node.at("core-threads").asString(), coreThreads);
+      assertEquals(node.at("queue-length").asString(), queueLength);
+      assertEquals(node.at("keep-alive-time").asString(), keepAliveTime);
    }
 
-   private void assertScheduledThreadPool(JsonNode node, String name, String threadFactory) {
-      assertEquals(node.get("name").asText(), name);
-      assertEquals(node.get("thread-factory").asText(), threadFactory);
+   private void assertScheduledThreadPool(Json node, String name, String threadFactory) {
+      assertEquals(node.at("name").asString(), name);
+      assertEquals(node.at("thread-factory").asString(), threadFactory);
    }
 
    @Test
-   public void testWithDefaultCache() throws IOException {
+   public void testWithDefaultCache() {
       GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder()
             .cacheManagerName("my-cm").defaultCacheName("default-one").build();
       String json = jsonWriter.toJSON(globalConfiguration);
 
-      JsonNode jsonNode = new ObjectMapper().readTree(json);
-      JsonNode cacheContainer = jsonNode.get("infinispan").get("cache-container");
-      assertEquals("my-cm", cacheContainer.get("name").asText());
-      assertEquals("default-one", cacheContainer.get("default-cache").asText());
+      Json jsonNode = Json.read(json);
+      Json cacheContainer = jsonNode.at("infinispan").at("cache-container");
+      assertEquals("my-cm", cacheContainer.at("name").asString());
+      assertEquals("default-one", cacheContainer.at("default-cache").asString());
    }
 
    @Test
-   public void testWithSecurity() throws IOException {
+   public void testWithSecurity() {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
       builder.security().authorization().enabled(true).principalRoleMapper(new IdentityRoleMapper())
             .role("role1").permission("ADMIN").permission("READ")
@@ -413,25 +409,25 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
 
       GlobalConfiguration configuration = builder.build();
       String actual = jsonWriter.toJSON(configuration);
-      JsonNode jsonNode = new ObjectMapper().readTree(actual);
+      Json jsonNode = Json.read(actual);
 
-      JsonNode cacheContainer = jsonNode.get("infinispan").get("cache-container");
-      assertEquals("DefaultCacheManager", cacheContainer.get("name").asText());
+      Json cacheContainer = jsonNode.at("infinispan").at("cache-container");
+      assertEquals("DefaultCacheManager", cacheContainer.at("name").asString());
 
-      JsonNode roles = cacheContainer.get("security").get("authorization").get("roles");
-      assertEquals(2, roles.size());
+      Json roles = cacheContainer.at("security").at("authorization").at("roles");
+      assertEquals(2, roles.asMap().size());
 
-      ArrayNode role1 = (ArrayNode) roles.get("role1");
-      assertEquals(2, role1.size());
+      Json role1 = roles.at("role1");
+      assertEquals(2, role1.asList().size());
       assertEquals(newSet("ADMIN", "READ"), asSet(role1));
 
-      ArrayNode role2 = (ArrayNode) roles.get("role2");
-      assertEquals(1, role2.size());
+      Json role2 =  roles.at("role2");
+      assertEquals(1, role2.asList().size());
       assertEquals(newSet("WRITE"), asSet(role2));
    }
 
    @Test
-   public void testGlobalState() throws IOException {
+   public void testGlobalState() {
       GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().globalState().enable()
             .persistentLocation("/tmp/location")
             .sharedPersistentLocation("/tmp/shared")
@@ -440,17 +436,17 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
 
       String json = jsonWriter.toJSON(globalConfiguration);
 
-      JsonNode jsonNode = new ObjectMapper().readTree(json);
+      Json jsonNode = Json.read(json);
 
-      JsonNode cacheContainer = jsonNode.get("infinispan").get("cache-container");
-      assertEquals("DefaultCacheManager", cacheContainer.get("name").asText());
-      JsonNode globalState = cacheContainer.get("global-state");
-      assertEquals("/tmp/location", globalState.get("persistent-location").get("path").asText());
-      assertEquals("/tmp/shared", globalState.get("shared-persistent-location").get("path").asText());
-      assertEquals("/tmp/temp", globalState.get("temporary-location").get("path").asText());
-      JsonNode storageConfig = globalState.get("volatile-configuration-storage");
+      Json cacheContainer = jsonNode.at("infinispan").at("cache-container");
+      assertEquals("DefaultCacheManager", cacheContainer.at("name").asString());
+      Json globalState = cacheContainer.at("global-state");
+      assertEquals("/tmp/location", globalState.at("persistent-location").at("path").asString());
+      assertEquals("/tmp/shared", globalState.at("shared-persistent-location").at("path").asString());
+      assertEquals("/tmp/temp", globalState.at("temporary-location").at("path").asString());
+      Json storageConfig = globalState.at("volatile-configuration-storage");
       assertNotNull(storageConfig);
-      assertEquals(0, storageConfig.size());
+      assertEquals(0, storageConfig.asMap().size());
 
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
       builder.globalState().enable()
@@ -459,16 +455,15 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
             .configurationStorageSupplier(TestStorage::new).create();
 
       json = jsonWriter.toJSON(builder.build());
-      System.out.println(json);
-      jsonNode = new ObjectMapper().readTree(json);
+      jsonNode = Json.read(json);
 
-      JsonNode cfgStorage = jsonNode.get("infinispan").get("cache-container").get("global-state").get("custom-configuration-storage");
+      Json cfgStorage = jsonNode.at("infinispan").at("cache-container").at("global-state").at("custom-configuration-storage");
       assertNotNull(cfgStorage);
-      assertNotNull(TestStorage.class.getName(), cfgStorage.get("class"));
+      assertNotNull(TestStorage.class.getName(), cfgStorage.at("class"));
    }
 
    @Test
-   public void testSerializationConfig() throws IOException {
+   public void testSerializationConfig() {
       final String regexp = "org.infinispan.test.*";
       AdvancedExternalizer<?> mapExternalizer = new MapExternalizer();
       AdvancedExternalizer<?> opExternalizer = new CacheFilters.CacheFiltersExternalizer();
@@ -484,51 +479,51 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       GlobalConfiguration globalConfiguration = globalConfigurationBuilder.build();
       String json = jsonWriter.toJSON(globalConfiguration);
 
-      JsonNode node = new ObjectMapper().readTree(json);
-      JsonNode serialization = node.get("infinispan").get("cache-container").get("serialization");
-      assertEquals(JavaSerializationMarshaller.class.getName(), serialization.get("marshaller").asText());
-      JsonNode externalizerMap = serialization.get("advanced-externalizer");
-      assertEquals(MapExternalizer.class.getName(), externalizerMap.get("1").asText());
-      assertEquals(CacheFilters.CacheFiltersExternalizer.class.getName(), externalizerMap.get("2").asText());
+      Json node = Json.read(json);
+      Json serialization = node.at("infinispan").at("cache-container").at("serialization");
+      assertEquals(JavaSerializationMarshaller.class.getName(), serialization.at("marshaller").asString());
+      Json externalizerMap = serialization.at("advanced-externalizer");
+      assertEquals(MapExternalizer.class.getName(), externalizerMap.at("1").asString());
+      assertEquals(CacheFilters.CacheFiltersExternalizer.class.getName(), externalizerMap.at("2").asString());
 
-      JsonNode whiteList = serialization.get("white-list");
-      JsonNode classes = whiteList.get("classes");
+      Json whiteList = serialization.at("white-list");
+      Json classes = whiteList.at("classes");
       assertTrue(classes.isArray());
-      assertEquals(Person.class.getName(), classes.iterator().next().asText());
+      assertEquals(Person.class.getName(), classes.asJsonList().iterator().next().asString());
 
-      JsonNode regexps = whiteList.get("regexps");
+      Json regexps = whiteList.at("regexps");
       assertTrue(regexps.isArray());
-      assertEquals(regexp, regexps.iterator().next().asText());
+      assertEquals(regexp, regexps.asJsonList().iterator().next().asString());
    }
 
    @Test
-   public void testJmx() throws IOException {
+   public void testJmx() {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
       builder.cacheContainer().statistics(true)
-             .jmx().enabled(true)
-             .domain("x")
-             .mBeanServerLookup(mBeanServerLookup)
-             .addProperty("prop1", "val1")
-             .addProperty("prop2", "val2");
+            .jmx().enabled(true)
+            .domain("x")
+            .mBeanServerLookup(mBeanServerLookup)
+            .addProperty("prop1", "val1")
+            .addProperty("prop2", "val2");
 
       GlobalConfiguration configuration = builder.build();
 
       String toJSON = jsonWriter.toJSON(configuration);
 
-      JsonNode node = new ObjectMapper().readTree(toJSON);
-      JsonNode cacheContainer = node.get("infinispan").get("cache-container");
-      JsonNode jmx = cacheContainer.get("jmx");
+      Json node = Json.read(toJSON);
+      Json cacheContainer = node.at("infinispan").at("cache-container");
+      Json jmx = cacheContainer.at("jmx");
 
-      assertTrue(cacheContainer.get("statistics").asBoolean());
-      assertTrue(jmx.get("enabled").asBoolean());
-      assertEquals("x", jmx.get("domain").asText());
-      assertEquals(TestMBeanServerLookup.class.getName(), jmx.get("mbean-server-lookup").asText());
-      assertEquals("val1", jmx.get("properties").get("prop1").asText());
-      assertEquals("val2", jmx.get("properties").get("prop2").asText());
+      assertTrue(cacheContainer.at("statistics").asBoolean());
+      assertTrue(jmx.at("enabled").asBoolean());
+      assertEquals("x", jmx.at("domain").asString());
+      assertEquals(TestMBeanServerLookup.class.getName(), jmx.at("mbean-server-lookup").asString());
+      assertEquals("val1", jmx.at("properties").at("prop1").asString());
+      assertEquals("val2", jmx.at("properties").at("prop2").asString());
    }
 
-   private Set<String> asSet(ArrayNode node) {
-      return StreamSupport.stream(node.spliterator(), false).map(JsonNode::asText).collect(Collectors.toSet());
+   private Set<String> asSet(Json node) {
+      return node.asJsonList().stream().map(Json::asString).collect(Collectors.toSet());
    }
 
    private Set<String> newSet(String... values) {

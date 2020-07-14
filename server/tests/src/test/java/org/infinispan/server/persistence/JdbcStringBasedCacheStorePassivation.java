@@ -15,6 +15,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.Database;
@@ -26,10 +27,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Tests String-based jdbc cache store under the following circumstances:
@@ -197,11 +194,10 @@ public class JdbcStringBasedCacheStorePassivation {
     }
 
     //TODO replace with cache.withFlags(Flag.SKIP_CACHE_LOAD).size() with ISPN-12040
-    private int getNumberOfEntriesInMemory(String cacheName) throws JsonProcessingException {
+    private int getNumberOfEntriesInMemory(String cacheName) {
         RestClient client = SERVER_TEST.rest().withClientConfiguration(new RestClientConfigurationBuilder()).get();
         RestResponse response = sync(client.cache(cacheName).stats());
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode jsonNode = mapper.readTree(response.getBody());
-        return jsonNode.get("current_number_of_entries_in_memory").asInt();
+        Json jsonNode = Json.read(response.getBody());
+        return jsonNode.at("current_number_of_entries_in_memory").asInteger();
     }
 }

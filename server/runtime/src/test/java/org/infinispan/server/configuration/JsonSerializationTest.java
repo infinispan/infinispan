@@ -12,9 +12,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import org.infinispan.commons.configuration.JsonWriter;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -23,18 +23,13 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.server.Server;
 import org.junit.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-
 /**
  * @since 10.0
  */
 public class JsonSerializationTest {
 
-   private FileLookup fileLookup = FileLookupFactory.newInstance();
-   private ObjectMapper objectMapper = new ObjectMapper();
-   private Properties properties = new Properties();
+   private final FileLookup fileLookup = FileLookupFactory.newInstance();
+   private final Properties properties = new Properties();
 
    private ServerConfiguration parse() throws Exception {
       properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, System.getProperty("build.directory") + "/test-classes/configuration");
@@ -53,298 +48,296 @@ public class JsonSerializationTest {
       JsonWriter writer = new JsonWriter();
       String json = writer.toJSON(serverConfiguration);
 
-      JsonNode serverNode = objectMapper.readTree(json).get("server");
+      Json serverNode = Json.read(json).at("server");
 
-      JsonNode interfaces = serverNode.get("interfaces").get("interface");
-      assertEquals(2, interfaces.size());
+      Json interfaces = serverNode.at("interfaces").at("interface");
+      assertEquals(2, interfaces.asList().size());
 
-      JsonNode interface1 = interfaces.get(0);
-      JsonNode interface2 = interfaces.get(1);
-      JsonNode address1 = interface1.get("loopback");
-      JsonNode address2 = interface2.get("loopback");
-      assertEquals("default", interface1.get("name").asText());
-      assertEquals(0, address1.size());
-      assertEquals("another", interface2.get("name").asText());
-      assertEquals(0, address2.size());
+      Json interface1 = interfaces.at(0);
+      Json interface2 = interfaces.at(1);
+      Json address1 = interface1.at("loopback");
+      Json address2 = interface2.at("loopback");
+      assertEquals("default", interface1.at("name").asString());
+      assertEquals(0, address1.asMap().size());
+      assertEquals("another", interface2.at("name").asString());
+      assertEquals(0, address2.asMap().size());
 
-      JsonNode socketBindings = serverNode.get("socket-bindings");
-      assertEquals("default", socketBindings.get("default-interface").asText());
-      assertEquals(0, socketBindings.get("port-offset").asInt());
+      Json socketBindings = serverNode.at("socket-bindings");
+      assertEquals("default", socketBindings.at("default-interface").asString());
+      assertEquals(0, socketBindings.at("port-offset").asInteger());
 
-      JsonNode socketBinding = socketBindings.get("socket-binding");
-      assertEquals(5, socketBinding.size());
+      Json socketBinding = socketBindings.at("socket-binding");
+      assertEquals(5, socketBinding.asList().size());
 
-      Iterator<JsonNode> bindings = socketBinding.elements();
-      JsonNode binding1 = bindings.next();
-      assertEquals("default", binding1.get("name").asText());
-      assertEquals(11222, binding1.get("port").asInt());
-      JsonNode binding2 = bindings.next();
-      assertEquals("hotrod", binding2.get("name").asText());
-      assertEquals(11223, binding2.get("port").asInt());
-      JsonNode binding3 = bindings.next();
-      assertEquals("memcached", binding3.get("name").asText());
-      assertEquals(11221, binding3.get("port").asInt());
-      JsonNode binding4 = bindings.next();
-      assertEquals("memcached-2", binding4.get("name").asText());
-      assertEquals(12221, binding4.get("port").asInt());
-      JsonNode binding5 = bindings.next();
-      assertEquals("rest", binding5.get("name").asText());
-      assertEquals(8080, binding5.get("port").asInt());
+      Iterator<Json> bindings = socketBinding.asJsonList().iterator();
+      Json binding1 = bindings.next();
+      assertEquals("default", binding1.at("name").asString());
+      assertEquals(11222, binding1.at("port").asInteger());
+      Json binding2 = bindings.next();
+      assertEquals("hotrod", binding2.at("name").asString());
+      assertEquals(11223, binding2.at("port").asInteger());
+      Json binding3 = bindings.next();
+      assertEquals("memcached", binding3.at("name").asString());
+      assertEquals(11221, binding3.at("port").asInteger());
+      Json binding4 = bindings.next();
+      assertEquals("memcached-2", binding4.at("name").asString());
+      assertEquals(12221, binding4.at("port").asInteger());
+      Json binding5 = bindings.next();
+      assertEquals("rest", binding5.at("name").asString());
+      assertEquals(8080, binding5.at("port").asInteger());
 
-      JsonNode securityRealms = serverNode.get("security").get("security-realms");
-      assertEquals(1, securityRealms.size());
+      Json securityRealms = serverNode.at("security").at("security-realms");
+      assertEquals(1, securityRealms.asMap().size());
 
-      JsonNode securityRealm = securityRealms.get("security-realm");
-      assertEquals("default", securityRealm.get("name").asText());
+      Json securityRealm = securityRealms.at("security-realm");
+      assertEquals("default", securityRealm.at("name").asString());
 
-      JsonNode ssl = securityRealm.get("server-identities").get("ssl");
-      JsonNode keyStore = ssl.get("keystore");
-      assertEquals("ServerConfigurationParserTest-keystore.pfx", keyStore.get("path").asText());
-      assertEquals(properties.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH), keyStore.get("relative-to").asText());
-      assertEquals("***", keyStore.get("keystore-password").asText());
-      assertEquals("server", keyStore.get("alias").asText());
-      assertEquals("***", keyStore.get("key-password").asText());
-      assertEquals("localhost", keyStore.get("generate-self-signed-certificate-host").asText());
-      JsonNode engine = ssl.get("engine");
-      JsonNode protocols = engine.get("enabled-protocols");
-      Iterator<JsonNode> protocolItems = protocols.elements();
-      assertEquals("TLSV1.1", protocolItems.next().asText());
-      assertEquals("TLSV1.2", protocolItems.next().asText());
-      assertEquals("TLSV1.3", protocolItems.next().asText());
-      JsonNode cipherSuites = engine.get("enabled-ciphersuites");
-      assertEquals("DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256", cipherSuites.asText());
+      Json ssl = securityRealm.at("server-identities").at("ssl");
+      Json keyStore = ssl.at("keystore");
+      assertEquals("ServerConfigurationParserTest-keystore.pfx", keyStore.at("path").asString());
+      assertEquals(properties.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH), keyStore.at("relative-to").asString());
+      assertEquals("***", keyStore.at("keystore-password").asString());
+      assertEquals("server", keyStore.at("alias").asString());
+      assertEquals("***", keyStore.at("key-password").asString());
+      assertEquals("localhost", keyStore.at("generate-self-signed-certificate-host").asString());
+      Json engine = ssl.at("engine");
+      Json protocols = engine.at("enabled-protocols");
+      Iterator<Json> protocolItems = protocols.asJsonList().iterator();
+      assertEquals("TLSV1.1", protocolItems.next().asString());
+      assertEquals("TLSV1.2", protocolItems.next().asString());
+      assertEquals("TLSV1.3", protocolItems.next().asString());
+      Json cipherSuites = engine.at("enabled-ciphersuites");
+      assertEquals("DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256", cipherSuites.asString());
 
-      JsonNode kerberos = securityRealm.get("server-identities").get("kerberos");
-      assertEquals("keytab", kerberos.get("keytab-path").asText());
-      assertEquals(properties.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH), kerberos.get("relative-to").asText());
+      Json kerberos = securityRealm.at("server-identities").at("kerberos");
+      assertEquals("keytab", kerberos.at("keytab-path").asString());
+      assertEquals(properties.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH), kerberos.at("relative-to").asString());
 
-      JsonNode filesystemRealm = securityRealm.get("filesystem-realm");
-      assertEquals("security", filesystemRealm.get("path").asText());
-      assertEquals(3, filesystemRealm.get("levels").asInt());
-      assertFalse(filesystemRealm.get("encoded").asBoolean());
-      assertEquals(properties.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH), filesystemRealm.get("relative-to").asText());
+      Json filesystemRealm = securityRealm.at("filesystem-realm");
+      assertEquals("security", filesystemRealm.at("path").asString());
+      assertEquals(3, filesystemRealm.at("levels").asInteger());
+      assertFalse(filesystemRealm.at("encoded").asBoolean());
+      assertEquals(properties.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH), filesystemRealm.at("relative-to").asString());
 
-      JsonNode ldapRealm = securityRealm.get("ldap-realm");
-      assertEquals("ldap", ldapRealm.get("name").asText());
-      assertEquals("ldap://${org.infinispan.test.host.address}:10389", ldapRealm.get("url").asText());
-      assertEquals("uid=admin,ou=People,dc=infinispan,dc=org", ldapRealm.get("principal").asText());
-      assertEquals("***", ldapRealm.get("credential").asText());
+      Json ldapRealm = securityRealm.at("ldap-realm");
+      assertEquals("ldap", ldapRealm.at("name").asString());
+      assertEquals("ldap://${org.infinispan.test.host.address}:10389", ldapRealm.at("url").asString());
+      assertEquals("uid=admin,ou=People,dc=infinispan,dc=org", ldapRealm.at("principal").asString());
+      assertEquals("***", ldapRealm.at("credential").asString());
 
-      /*JsonNode ldapNameRewriter = ldapRealm.get("name-rewriter");
-      JsonNode ldapRegexPrincipalTransformer = ldapNameRewriter.get("regex-principal-transformer");
-      assertEquals("uid", ldapRegexPrincipalTransformer.get("name").asText());
-      assertEquals("uid", ldapRegexPrincipalTransformer.get("pattern").asText());
-      assertEquals("uid", ldapRegexPrincipalTransformer.get("replacement").asText());*/
+      /*Json ldapNameRewriter = ldapRealm.at("name-rewriter");
+      Json ldapRegexPrincipalTransformer = ldapNameRewriter.at("regex-principal-transformer");
+      assertEquals("uid", ldapRegexPrincipalTransformer.at("name").asString());
+      assertEquals("uid", ldapRegexPrincipalTransformer.at("pattern").asString());
+      assertEquals("uid", ldapRegexPrincipalTransformer.at("replacement").asString());*/
 
-      JsonNode ldapIdentityMapping = ldapRealm.get("identity-mapping");
-      assertEquals("uid", ldapIdentityMapping.get("rdn-identifier").asText());
-      assertEquals("ou=People,dc=infinispan,dc=org", ldapIdentityMapping.get("search-base-dn").asText());
-      JsonNode attributeMapping = ldapIdentityMapping.get("attribute-mapping");
-      JsonNode attributes = attributeMapping.get("attribute");
-      assertEquals(3, attributes.size());
-      Iterator<JsonNode> elements = attributes.elements();
-      JsonNode attribute1 = elements.next();
-      assertEquals("cn", attribute1.get("from").asText());
-      assertEquals("Roles", attribute1.get("to").asText());
-      assertEquals("(&(objectClass=groupOfNames)(member={1}))", attribute1.get("filter").asText());
-      assertEquals("ou=Roles,dc=infinispan,dc=org", attribute1.get("filter-dn").asText());
-      JsonNode attribute2 = elements.next();
-      assertEquals("cn2", attribute2.get("from").asText());
-      assertEquals("Roles2", attribute2.get("to").asText());
-      assertEquals("(&(objectClass=GroupOfUniqueNames)(member={0}))", attribute2.get("filter").asText());
-      assertEquals("ou=People,dc=infinispan,dc=org", attribute2.get("filter-dn").asText());
-      JsonNode attribute3 = elements.next();
-      assertEquals("memberOf", attribute3.get("reference").asText());
-      assertEquals("Roles3", attribute3.get("to").asText());
-      JsonNode userPasswordMapping = ldapIdentityMapping.get("user-password-mapper");
-      assertEquals("userPassword", userPasswordMapping.get("from").asText());
-      assertFalse(userPasswordMapping.get("verifiable").asBoolean());
-      assertFalse(userPasswordMapping.get("writable").asBoolean());
+      Json ldapIdentityMapping = ldapRealm.at("identity-mapping");
+      assertEquals("uid", ldapIdentityMapping.at("rdn-identifier").asString());
+      assertEquals("ou=People,dc=infinispan,dc=org", ldapIdentityMapping.at("search-base-dn").asString());
+      Json attributeMapping = ldapIdentityMapping.at("attribute-mapping");
+      Json attributes = attributeMapping.at("attribute");
+      assertEquals(3, attributes.asList().size());
+      Iterator<Json> elements = attributes.asJsonList().iterator();
+      Json attribute1 = elements.next();
+      assertEquals("cn", attribute1.at("from").asString());
+      assertEquals("Roles", attribute1.at("to").asString());
+      assertEquals("(&(objectClass=groupOfNames)(member={1}))", attribute1.at("filter").asString());
+      assertEquals("ou=Roles,dc=infinispan,dc=org", attribute1.at("filter-dn").asString());
+      Json attribute2 = elements.next();
+      assertEquals("cn2", attribute2.at("from").asString());
+      assertEquals("Roles2", attribute2.at("to").asString());
+      assertEquals("(&(objectClass=GroupOfUniqueNames)(member={0}))", attribute2.at("filter").asString());
+      assertEquals("ou=People,dc=infinispan,dc=org", attribute2.at("filter-dn").asString());
+      Json attribute3 = elements.next();
+      assertEquals("memberOf", attribute3.at("reference").asString());
+      assertEquals("Roles3", attribute3.at("to").asString());
+      Json userPasswordMapping = ldapIdentityMapping.at("user-password-mapper");
+      assertEquals("userPassword", userPasswordMapping.at("from").asString());
+      assertFalse(userPasswordMapping.at("verifiable").asBoolean());
+      assertFalse(userPasswordMapping.at("writable").asBoolean());
 
-      JsonNode localRealm = securityRealm.get("local-realm");
-      assertEquals("test-local", localRealm.get("name").asText());
+      Json localRealm = securityRealm.at("local-realm");
+      assertEquals("test-local", localRealm.at("name").asString());
 
-      JsonNode propertiesRealm = securityRealm.get("properties-realm");
-      assertEquals("Roles", propertiesRealm.get("groups-attribute").asText());
-      JsonNode userProperties = propertiesRealm.get("user-properties");
-      assertEquals("ServerConfigurationParserTest-user.properties", userProperties.get("path").asText());
-      assertEquals("digest", userProperties.get("digest-realm-name").asText());
-      assertEquals(properties.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH), userProperties.get("relative-to").asText());
-      assertTrue(userProperties.get("plain-text").asBoolean());
-      JsonNode groupProperties = propertiesRealm.get("group-properties");
-      assertEquals(properties.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH), groupProperties.get("relative-to").asText());
-      assertEquals("ServerConfigurationParserTest-group.properties", groupProperties.get("path").asText());
+      Json propertiesRealm = securityRealm.at("properties-realm");
+      assertEquals("Roles", propertiesRealm.at("groups-attribute").asString());
+      Json userProperties = propertiesRealm.at("user-properties");
+      assertEquals("ServerConfigurationParserTest-user.properties", userProperties.at("path").asString());
+      assertEquals("digest", userProperties.at("digest-realm-name").asString());
+      assertEquals(properties.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH), userProperties.at("relative-to").asString());
+      assertTrue(userProperties.at("plain-text").asBoolean());
+      Json groupProperties = propertiesRealm.at("group-properties");
+      assertEquals(properties.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH), groupProperties.at("relative-to").asString());
+      assertEquals("ServerConfigurationParserTest-group.properties", groupProperties.at("path").asString());
 
-      JsonNode tokenRealm = securityRealm.get("token-realm");
-      assertEquals("token-test", tokenRealm.get("name").asText());
-      assertEquals("username-claim", tokenRealm.get("principal-claim").asText());
-      JsonNode oath = tokenRealm.get("oauth2-introspection");
-      assertEquals("ANY", oath.get("host-name-verification-policy").asText());
-      assertEquals("http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect", oath.get("introspection-url").asText());
-      assertEquals("infinispan-server", oath.get("client-id").asText());
-      assertEquals("***", oath.get("client-secret").asText());
+      Json tokenRealm = securityRealm.at("token-realm");
+      assertEquals("token-test", tokenRealm.at("name").asString());
+      assertEquals("username-claim", tokenRealm.at("principal-claim").asString());
+      Json oath = tokenRealm.at("oauth2-introspection");
+      assertEquals("ANY", oath.at("host-name-verification-policy").asString());
+      assertEquals("http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect", oath.at("introspection-url").asString());
+      assertEquals("infinispan-server", oath.at("client-id").asString());
+      assertEquals("***", oath.at("client-secret").asString());
 
-      JsonNode trustStoreRealm = securityRealm.get("truststore-realm");
-      assertEquals("truststore.p12", trustStoreRealm.get("path").asText());
-      assertEquals("SunJSSE", trustStoreRealm.get("provider").asText());
-      assertEquals(properties.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH), trustStoreRealm.get("relative-to").asText());
-      assertEquals("***", trustStoreRealm.get("keystore-password").asText());
+      Json trustStoreRealm = securityRealm.at("truststore-realm");
+      assertEquals("truststore.p12", trustStoreRealm.at("path").asString());
+      assertEquals("SunJSSE", trustStoreRealm.at("provider").asString());
+      assertEquals(properties.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH), trustStoreRealm.at("relative-to").asString());
+      assertEquals("***", trustStoreRealm.at("keystore-password").asString());
 
-      JsonNode endpoints = serverNode.get("endpoints");
-      assertEquals("default", endpoints.get("socket-binding").asText());
-      assertEquals("default", endpoints.get("security-realm").asText());
+      Json endpoints = serverNode.at("endpoints");
+      assertEquals("default", endpoints.at("socket-binding").asString());
+      assertEquals("default", endpoints.at("security-realm").asString());
 
-      JsonNode hotrodConnector = endpoints.get("hotrod-connector");
-      JsonNode restConnector = endpoints.get("rest-connector");
-      JsonNode memcachedConnector = endpoints.get("memcached-connector");
+      Json hotrodConnector = endpoints.at("hotrod-connector");
+      Json restConnector = endpoints.at("rest-connector");
+      Json memcachedConnector = endpoints.at("memcached-connector");
       assertHotRodConnector(hotrodConnector);
       assertRestConnector(restConnector);
       assertMemcachedConnector(memcachedConnector);
    }
 
-   private void assertHotRodConnector(JsonNode hotrodConnector) {
-      assertEquals("hotrod", hotrodConnector.get("name").asText());
-      assertEquals(23, hotrodConnector.get("io-threads").asInt());
-      assertFalse(hotrodConnector.get("tcp-nodelay").asBoolean());
-      assertEquals(20, hotrodConnector.get("worker-threads").asInt());
-      assertFalse(hotrodConnector.get("tcp-keepalive").asBoolean());
-      assertEquals(10, hotrodConnector.get("send-buffer-size").asInt());
-      assertEquals(20, hotrodConnector.get("receive-buffer-size").asInt());
-      assertEquals(2, hotrodConnector.get("idle-timeout").asInt());
-      assertEquals("hotrod", hotrodConnector.get("socket-binding").asText());
-      assertEquals("external", hotrodConnector.get("external-host").asText());
-      assertEquals(12345, hotrodConnector.get("external-port").asInt());
+   private void assertHotRodConnector(Json hotrodConnector) {
+      assertEquals("hotrod", hotrodConnector.at("name").asString());
+      assertEquals(23, hotrodConnector.at("io-threads").asInteger());
+      assertFalse(hotrodConnector.at("tcp-nodelay").asBoolean());
+      assertEquals(20, hotrodConnector.at("worker-threads").asInteger());
+      assertFalse(hotrodConnector.at("tcp-keepalive").asBoolean());
+      assertEquals(10, hotrodConnector.at("send-buffer-size").asInteger());
+      assertEquals(20, hotrodConnector.at("receive-buffer-size").asInteger());
+      assertEquals(2, hotrodConnector.at("idle-timeout").asInteger());
+      assertEquals("hotrod", hotrodConnector.at("socket-binding").asString());
+      assertEquals("external", hotrodConnector.at("external-host").asString());
+      assertEquals(12345, hotrodConnector.at("external-port").asInteger());
 
-      JsonNode topologyCache = hotrodConnector.get("topology-state-transfer");
-      assertFalse(topologyCache.get("await-initial-retrieval").asBoolean());
-      assertFalse(topologyCache.get("lazy-retrieval").asBoolean());
-      assertEquals(12, topologyCache.get("lock-timeout").asInt());
-      assertEquals(13, topologyCache.get("replication-timeout").asInt());
+      Json topologyCache = hotrodConnector.at("topology-state-transfer");
+      assertFalse(topologyCache.at("await-initial-retrieval").asBoolean());
+      assertFalse(topologyCache.at("lazy-retrieval").asBoolean());
+      assertEquals(12, topologyCache.at("lock-timeout").asInteger());
+      assertEquals(13, topologyCache.at("replication-timeout").asInteger());
 
-      JsonNode authentication = hotrodConnector.get("authentication");
-      assertEquals("default", authentication.get("security-realm").asText());
+      Json authentication = hotrodConnector.at("authentication");
+      assertEquals("default", authentication.at("security-realm").asString());
 
-      JsonNode sasl = authentication.get("sasl");
-      assertEquals("localhost", sasl.get("server-name").asText());
+      Json sasl = authentication.at("sasl");
+      assertEquals("localhost", sasl.at("server-name").asString());
 
-      Iterator<JsonNode> mechanisms = sasl.get("mechanisms").elements();
-      assertEquals("GSSAPI", mechanisms.next().asText());
-      assertEquals("DIGEST-MD5", mechanisms.next().asText());
-      assertEquals("PLAIN", mechanisms.next().asText());
+      Iterator<Json> mechanisms = sasl.at("mechanisms").asJsonList().iterator();
+      assertEquals("GSSAPI", mechanisms.next().asString());
+      assertEquals("DIGEST-MD5", mechanisms.next().asString());
+      assertEquals("PLAIN", mechanisms.next().asString());
 
-      Iterator<JsonNode> qop = sasl.get("qop").elements();
-      assertEquals("auth", qop.next().asText());
-      assertEquals("auth-conf", qop.next().asText());
+      Iterator<Json> qop = sasl.at("qop").asJsonList().iterator();
+      assertEquals("auth", qop.next().asString());
+      assertEquals("auth-conf", qop.next().asString());
 
-      Iterator<JsonNode> strength = sasl.get("strength").elements();
-      assertEquals("high", strength.next().asText());
-      assertEquals("medium", strength.next().asText());
-      assertEquals("low", strength.next().asText());
+      Iterator<Json> strength = sasl.at("strength").asJsonList().iterator();
+      assertEquals("high", strength.next().asString());
+      assertEquals("medium", strength.next().asString());
+      assertEquals("low", strength.next().asString());
 
-      JsonNode policy = sasl.get("policy");
-      assertFalse(policy.get("forward-secrecy").get("value").asBoolean());
-      assertTrue(policy.get("no-active").get("value").asBoolean());
-      assertTrue(policy.get("no-anonymous").get("value").asBoolean());
-      assertFalse(policy.get("no-dictionary").get("value").asBoolean());
-      assertTrue(policy.get("no-plain-text").get("value").asBoolean());
-      assertTrue(policy.get("pass-credentials").get("value").asBoolean());
+      Json policy = sasl.at("policy");
+      assertFalse(policy.at("forward-secrecy").at("value").asBoolean());
+      assertTrue(policy.at("no-active").at("value").asBoolean());
+      assertTrue(policy.at("no-anonymous").at("value").asBoolean());
+      assertFalse(policy.at("no-dictionary").at("value").asBoolean());
+      assertTrue(policy.at("no-plain-text").at("value").asBoolean());
+      assertTrue(policy.at("pass-credentials").at("value").asBoolean());
 
-      JsonNode extraProperties = sasl.get("property");
-      assertEquals("value1", extraProperties.get("prop1").asText());
-      assertEquals("value2", extraProperties.get("prop2").asText());
-      assertEquals("value3", extraProperties.get("prop3").asText());
+      Json extraProperties = sasl.at("property");
+      assertEquals("value1", extraProperties.at("prop1").asString());
+      assertEquals("value2", extraProperties.at("prop2").asString());
+      assertEquals("value3", extraProperties.at("prop3").asString());
 
-      JsonNode encryption = hotrodConnector.get("encryption");
-      assertTrue(encryption.get("require-ssl-client-auth").asBoolean());
-      assertEquals("default", encryption.get("security-realm").asText());
+      Json encryption = hotrodConnector.at("encryption");
+      assertTrue(encryption.at("require-ssl-client-auth").asBoolean());
+      assertEquals("default", encryption.at("security-realm").asString());
 
-      JsonNode sni = encryption.get("sni");
-      assertEquals(2, sni.size());
-      Iterator<JsonNode> elements = sni.elements();
-      JsonNode sni1 = elements.next();
-      assertEquals("sni-host-1", sni1.get("host-name").asText());
-      assertEquals("default", sni1.get("security-realm").asText());
-      JsonNode sni2 = elements.next();
-      assertEquals("sni-host-2", sni2.get("host-name").asText());
-      assertEquals("default", sni2.get("security-realm").asText());
+      Json sni = encryption.at("sni");
+      assertEquals(2, sni.asList().size());
+      Iterator<Json> elements = sni.asJsonList().iterator();
+      Json sni1 = elements.next();
+      assertEquals("sni-host-1", sni1.at("host-name").asString());
+      assertEquals("default", sni1.at("security-realm").asString());
+      Json sni2 = elements.next();
+      assertEquals("sni-host-2", sni2.at("host-name").asString());
+      assertEquals("default", sni2.at("security-realm").asString());
    }
 
-   private void assertRestConnector(JsonNode restConnector) {
-      assertEquals("rest", restConnector.get("socket-binding").asText());
-      assertEquals(11, restConnector.get("io-threads").asInt());
-      assertEquals(3, restConnector.get("worker-threads").asInt());
-      assertEquals("rest", restConnector.get("name").asText());
-      assertEquals("rest", restConnector.get("context-path").asText());
-      assertEquals("NEVER", restConnector.get("extended-headers").asText());
-      assertEquals(3, restConnector.get("max-content-length").asInt());
-      assertEquals(3, restConnector.get("compression-level").asInt());
+   private void assertRestConnector(Json restConnector) {
+      assertEquals("rest", restConnector.at("socket-binding").asString());
+      assertEquals(11, restConnector.at("io-threads").asInteger());
+      assertEquals(3, restConnector.at("worker-threads").asInteger());
+      assertEquals("rest", restConnector.at("name").asString());
+      assertEquals("rest", restConnector.at("context-path").asString());
+      assertEquals("NEVER", restConnector.at("extended-headers").asString());
+      assertEquals(3, restConnector.at("max-content-length").asInteger());
+      assertEquals(3, restConnector.at("compression-level").asInteger());
 
-      JsonNode authentication = restConnector.get("authentication");
-      assertEquals("default", authentication.get("security-realm").asText());
-      JsonNode mechanisms = authentication.get("mechanisms");
-      assertEquals(6, mechanisms.size());
+      Json authentication = restConnector.at("authentication");
+      assertEquals("default", authentication.at("security-realm").asString());
+      Json mechanisms = authentication.at("mechanisms");
+      assertEquals(6, mechanisms.asList().size());
 
-      Iterator<JsonNode> items = mechanisms.elements();
-      assertEquals("DIGEST", items.next().asText());
-      assertEquals("BASIC", items.next().asText());
+      Iterator<Json> items = mechanisms.asJsonList().iterator();
+      assertEquals("DIGEST", items.next().asString());
+      assertEquals("BASIC", items.next().asString());
 
-      JsonNode corsRules = restConnector.get("cors-rules").get("cors-rule");
-      assertEquals(2, corsRules.size());
-      Iterator<JsonNode> rules = corsRules.elements();
-      JsonNode rule1 = rules.next();
-      assertEquals("rule1", rule1.get("name").asText());
-      assertTrue(rule1.get("allow-credentials").asBoolean());
-      assertEquals(1, rule1.get("max-age-seconds").asInt());
-      assertStringArray(asList("origin1", "origin2"), rule1.get("allowed-origins"));
-      assertStringArray(asList("GET", "POST"), rule1.get("allowed-methods"));
-      assertStringArray(singletonList("Accept"), rule1.get("allowed-headers"));
-      assertStringArray(asList("Accept", "Content-Type"), rule1.get("expose-headers"));
+      Json corsRules = restConnector.at("cors-rules").at("cors-rule");
+      assertEquals(2, corsRules.asList().size());
+      Iterator<Json> rules = corsRules.asJsonList().iterator();
+      Json rule1 = rules.next();
+      assertEquals("rule1", rule1.at("name").asString());
+      assertTrue(rule1.at("allow-credentials").asBoolean());
+      assertEquals(1, rule1.at("max-age-seconds").asInteger());
+      assertStringArray(asList("origin1", "origin2"), rule1.at("allowed-origins"));
+      assertStringArray(asList("GET", "POST"), rule1.at("allowed-methods"));
+      assertStringArray(singletonList("Accept"), rule1.at("allowed-headers"));
+      assertStringArray(asList("Accept", "Content-Type"), rule1.at("expose-headers"));
 
-      JsonNode rule2 = rules.next();
-      assertEquals("rule2", rule2.get("name").asText());
-      assertStringArray(singletonList("*"), rule2.get("allowed-origins"));
-      assertStringArray(asList("GET", "POST"), rule2.get("allowed-methods"));
-      assertNull(rule2.get("allowed-headers"));
-      assertNull(rule2.get("expose-headers"));
+      Json rule2 = rules.next();
+      assertEquals("rule2", rule2.at("name").asString());
+      assertStringArray(singletonList("*"), rule2.at("allowed-origins"));
+      assertStringArray(asList("GET", "POST"), rule2.at("allowed-methods"));
+      assertNull(rule2.at("allowed-headers"));
+      assertNull(rule2.at("expose-headers"));
 
-      JsonNode encryption = restConnector.get("encryption");
-      assertFalse(encryption.get("require-ssl-client-auth").asBoolean());
-      assertEquals("default", encryption.get("security-realm").asText());
+      Json encryption = restConnector.at("encryption");
+      assertFalse(encryption.at("require-ssl-client-auth").asBoolean());
+      assertEquals("default", encryption.at("security-realm").asString());
 
-      JsonNode sni = encryption.get("sni");
-      assertEquals(2, sni.size());
-      Iterator<JsonNode> elements = sni.elements();
-      JsonNode sni1 = elements.next();
-      assertEquals("sni-host-3", sni1.get("host-name").asText());
-      assertEquals("default", sni1.get("security-realm").asText());
-      JsonNode sni2 = elements.next();
-      assertEquals("sni-host-4", sni2.get("host-name").asText());
-      assertEquals("default", sni2.get("security-realm").asText());
+      Json sni = encryption.at("sni");
+      assertEquals(2, sni.asList().size());
+      Iterator<Json> elements = sni.asJsonList().iterator();
+      Json sni1 = elements.next();
+      assertEquals("sni-host-3", sni1.at("host-name").asString());
+      assertEquals("default", sni1.at("security-realm").asString());
+      Json sni2 = elements.next();
+      assertEquals("sni-host-4", sni2.at("host-name").asString());
+      assertEquals("default", sni2.at("security-realm").asString());
    }
 
-   private void assertMemcachedConnector(JsonNode memcachedConnector) {
-      assertEquals("memcached", memcachedConnector.get("name").asText());
-      assertEquals("memcached", memcachedConnector.get("socket-binding").asText());
-      assertEquals(1, memcachedConnector.get("io-threads").asInt());
-      assertEquals(160, memcachedConnector.get("worker-threads").asInt());
-      assertEquals(1, memcachedConnector.get("idle-timeout").asInt());
-      assertTrue(memcachedConnector.get("tcp-nodelay").asBoolean());
-      assertTrue(memcachedConnector.get("tcp-keepalive").asBoolean());
-      assertEquals(3, memcachedConnector.get("send-buffer-size").asInt());
-      assertEquals(3, memcachedConnector.get("receive-buffer-size").asInt());
-      assertEquals("string", memcachedConnector.get("cache").asText());
-      assertEquals("application/json", memcachedConnector.get("client-encoding").asText());
+   private void assertMemcachedConnector(Json memcachedConnector) {
+      assertEquals("memcached", memcachedConnector.at("name").asString());
+      assertEquals("memcached", memcachedConnector.at("socket-binding").asString());
+      assertEquals(1, memcachedConnector.at("io-threads").asInteger());
+      assertEquals(160, memcachedConnector.at("worker-threads").asInteger());
+      assertEquals(1, memcachedConnector.at("idle-timeout").asInteger());
+      assertTrue(memcachedConnector.at("tcp-nodelay").asBoolean());
+      assertTrue(memcachedConnector.at("tcp-keepalive").asBoolean());
+      assertEquals(3, memcachedConnector.at("send-buffer-size").asInteger());
+      assertEquals(3, memcachedConnector.at("receive-buffer-size").asInteger());
+      assertEquals("string", memcachedConnector.at("cache").asString());
+      assertEquals("application/json", memcachedConnector.at("client-encoding").asString());
    }
 
-   private void assertMemcachedConnector2(JsonNode memcachedConnector) {
-      assertEquals("memcached-2", memcachedConnector.get("name").asText());
-      assertEquals("memcached-2", memcachedConnector.get("socket-binding").asText());
+   private void assertMemcachedConnector2(Json memcachedConnector) {
+      assertEquals("memcached-2", memcachedConnector.at("name").asString());
+      assertEquals("memcached-2", memcachedConnector.at("socket-binding").asString());
    }
 
-   private void assertStringArray(List<String> expected, JsonNode actual) {
-      ArrayNode arrayNode = (ArrayNode) actual;
-      List<String> elements = StreamSupport
-            .stream(arrayNode.spliterator(), false).map(JsonNode::asText).collect(Collectors.toList());
+   private void assertStringArray(List<String> expected, Json actual) {
+      List<String> elements = actual.asJsonList().stream().map(Json::asString).collect(Collectors.toList());
       assertEquals(expected, elements);
    }
 }

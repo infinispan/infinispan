@@ -13,6 +13,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestTaskClient;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
@@ -22,14 +23,8 @@ import org.infinispan.tasks.spi.TaskEngine;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 @Test(groups = "functional", testName = "rest.TasksResourceTest")
 public class TasksResourceTest extends AbstractRestResourceTest {
-
-   private ObjectMapper mapper = new ObjectMapper();
 
    @Override
    protected void defineCaches(EmbeddedCacheManager cm) {
@@ -53,36 +48,36 @@ public class TasksResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testTaskList() throws Exception {
+   public void testTaskList() {
       RestTaskClient taskClient = client.tasks();
 
       RestResponse response = join(taskClient.list(ALL));
       ResponseAssertion.assertThat(response).isOk();
 
-      JsonNode jsonNode = mapper.readTree(response.getBody());
-      assertEquals(4, jsonNode.size());
-      JsonNode task = jsonNode.get(0);
-      assertEquals("Dummy", task.get("type").asText());
-      assertEquals("ONE_NODE", task.get("execution_mode").asText());
-      assertEquals("DummyRole", task.get("allowed_role").asText());
+      Json jsonNode = Json.read(response.getBody());
+      assertEquals(4, jsonNode.asList().size());
+      Json task = jsonNode.at(0);
+      assertEquals("Dummy", task.at("type").asString());
+      assertEquals("ONE_NODE", task.at("execution_mode").asString());
+      assertEquals("DummyRole", task.at("allowed_role").asString());
    }
 
    @Test
-   public void testTaskExec() throws Exception {
+   public void testTaskExec() {
       RestTaskClient taskClient = client.tasks();
       RestResponse response = join(taskClient.exec("SUCCESSFUL_TASK"));
       ResponseAssertion.assertThat(response).isOk();
-      JsonNode jsonNode = mapper.readTree(response.getBody());
-      assertEquals("result", jsonNode.asText());
+      Json jsonNode = Json.read(response.getBody());
+      assertEquals("result", jsonNode.asString());
    }
 
    @Test
-   public void testParameterizedTaskExec() throws JsonProcessingException {
+   public void testParameterizedTaskExec() {
       RestTaskClient taskClient = client.tasks();
       CompletionStage<RestResponse> response = taskClient.exec("PARAMETERIZED_TASK", singletonMap("parameter", "Hello"));
       ResponseAssertion.assertThat(response).isOk();
-      JsonNode jsonNode = mapper.readTree(join(response).getBody());
-      assertEquals("Hello", jsonNode.asText());
+      Json jsonNode = Json.read(join(response).getBody());
+      assertEquals("Hello", jsonNode.asString());
    }
 
    @Test
@@ -104,7 +99,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
 
       response = taskClient.exec("hello", Collections.singletonMap("greetee", "Friend"));
       ResponseAssertion.assertThat(response).isOk();
-      JsonNode jsonNode = mapper.readTree(join(response).getBody());
-      assertEquals("Hello Friend", jsonNode.asText());
+      Json jsonNode = Json.read(join(response).getBody());
+      assertEquals("Hello Friend", jsonNode.asString());
    }
 }

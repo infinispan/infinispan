@@ -5,18 +5,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.List;
+
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @since 11.0
@@ -29,28 +28,26 @@ public class RestLoggingResource {
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
-   private final ObjectMapper mapper = new ObjectMapper();
-
    @Test
-   public void testListLoggers() throws Exception {
+   public void testListLoggers() {
       RestClient client = SERVER_TEST.rest().create();
       RestResponse response = sync(client.server().logging().listLoggers());
-      JsonNode loggers = mapper.readTree(response.getBody());
-      assertTrue(loggers.size() > 0);
+      Json loggers = Json.read(response.getBody());
+      assertTrue(loggers.asJsonList().size() > 0);
    }
 
    @Test
-   public void testListAppenders() throws Exception {
+   public void testListAppenders() {
       RestClient client = SERVER_TEST.rest().create();
       RestResponse response = sync(client.server().logging().listAppenders());
       String body = response.getBody();
-      JsonNode appenders = mapper.readTree(body);
+      Json appenders = Json.read(body);
       int expected = SERVERS.getServerDriver() instanceof ContainerInfinispanServerDriver ? 5 : 2;
-      assertEquals(body,  expected, appenders.size());
+      assertEquals(body, expected, appenders.asMap().size());
    }
 
    @Test
-   public void testManipulateLogger() throws Exception {
+   public void testManipulateLogger() {
       RestClient client = SERVER_TEST.rest().create();
       // Create the logger
       RestResponse response = sync(client.server().logging().setLogger("org.infinispan.TESTLOGGER", "WARN", "STDOUT"));
@@ -69,16 +66,16 @@ public class RestLoggingResource {
       assertFalse("Logger should not be found", findLogger(response, "org.infinispan.TESTLOGGER", "ERROR"));
    }
 
-   private boolean findLogger(RestResponse response, String name, String level, String... appenders) throws JsonProcessingException {
-      JsonNode loggers = mapper.readTree(response.getBody());
-      for (int i = 0; i < loggers.size(); i++) {
-         JsonNode logger = loggers.get(i);
-         if (name.equals(logger.get("name").asText())) {
-            assertEquals(level, logger.get("level").asText());
-            JsonNode loggerAppenders = logger.get("appenders");
+   private boolean findLogger(RestResponse response, String name, String level, String... appenders) {
+      Json loggers = Json.read(response.getBody());
+      for (int i = 0; i < loggers.asJsonList().size(); i++) {
+         Json logger = loggers.at(i);
+         if (name.equals(logger.at("name").asString())) {
+            assertEquals(level, logger.at("level").asString());
+            List<Json> loggerAppenders = logger.at("appenders").asJsonList();
             assertEquals(appenders.length, loggerAppenders.size());
             for (int j = 0; j < appenders.length; j++) {
-               assertEquals(appenders[j], loggerAppenders.get(j).asText());
+               assertEquals(appenders[j], loggerAppenders.get(j).asString());
             }
             return true;
          }

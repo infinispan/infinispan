@@ -44,6 +44,7 @@ import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -59,8 +60,6 @@ import org.infinispan.server.core.dataconversion.JsonTranscoder;
 import org.infinispan.server.core.dataconversion.XMLTranscoder;
 import org.testng.annotations.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Test(groups = "functional", testName = "rest.CacheResourceTest")
 public class CacheResourceTest extends BaseCacheResourceTest {
@@ -416,7 +415,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    }
 
    @Test
-   public void testReplaceExistingObject() throws Exception {
+   public void testReplaceExistingObject() {
       String initialJson = "{\"" + TYPE + "\":\"org.infinispan.rest.TestClass\",\"name\":\"test\"}";
       String changedJson = "{\"" + TYPE + "\":\"org.infinispan.rest.TestClass\",\"name\":\"test2\"}";
 
@@ -428,8 +427,8 @@ public class CacheResourceTest extends BaseCacheResourceTest {
 
       response = join(client.cache("objectCache").get("key", APPLICATION_JSON_TYPE));
 
-      JsonNode jsonNode = new ObjectMapper().readTree(response.getBody());
-      assertEquals(jsonNode.get("name").asText(), "test2");
+      Json jsonNode = Json.read(response.getBody());
+      assertEquals(jsonNode.at("name").asString(), "test2");
    }
 
    private RestResponse writeJsonToCache(String key, String json, String cacheName) {

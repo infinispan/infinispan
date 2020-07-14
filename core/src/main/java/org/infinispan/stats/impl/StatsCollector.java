@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -365,6 +366,11 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
 
    public void recordRemoveMisses(int removes) {
       this.removeMisses.add(removes);
+   }
+
+   @Override
+   public Json toJson() {
+      throw new UnsupportedOperationException();
    }
 
    @DefaultFactoryFor(classes = StatsCollector.class)

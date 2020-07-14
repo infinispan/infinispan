@@ -5,6 +5,8 @@ import java.util.Set;
 
 import org.hibernate.search.jmx.StatisticsInfoMBean;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -19,7 +21,7 @@ import org.infinispan.query.Indexer;
  * @since 6.1
  */
 @MBean(objectName = "Statistics", description = "Statistics for index based query")
-public final class InfinispanQueryStatisticsInfo implements StatisticsInfoMBean {
+public final class InfinispanQueryStatisticsInfo implements StatisticsInfoMBean, JsonSerialization {
 
    private final SearchIntegrator searchIntegrator;
    private final Indexer massIndexer;
@@ -146,7 +148,12 @@ public final class InfinispanQueryStatisticsInfo implements StatisticsInfoMBean 
       return indexStatistics;
    }
 
-   public final class IndexStatistics {
+   @Override
+   public Json toJson() {
+      return null;
+   }
+
+   public final class IndexStatistics implements JsonSerialization {
 
       public Set<String> getIndexedClassNames() {
          return InfinispanQueryStatisticsInfo.this.getIndexedClassNames();
@@ -167,9 +174,18 @@ public final class InfinispanQueryStatisticsInfo implements StatisticsInfoMBean 
       public boolean getReindexing() {
          return massIndexer.isRunning();
       }
+
+      @Override
+      public Json toJson() {
+         return Json.object()
+               .set("indexed_class_names", Json.make(getIndexedClassNames()))
+               .set("indexed_entities_count", Json.make(getIndexedEntitiesCount()))
+               .set("index_sizes", Json.make(getIndexSizes()))
+               .set("reindexing", getReindexing());
+      }
    }
 
-   public final class QueryStatistics {
+   public final class QueryStatistics implements JsonSerialization {
 
       public long getSearchQueryExecutionCount() {
          return InfinispanQueryStatisticsInfo.this.getSearchQueryExecutionCount();
@@ -205,6 +221,20 @@ public final class InfinispanQueryStatisticsInfo implements StatisticsInfoMBean 
 
       public long getObjectsLoadedCount() {
          return InfinispanQueryStatisticsInfo.this.getObjectsLoadedCount();
+      }
+
+      @Override
+      public Json toJson() {
+         return Json.object()
+               .set("search_query_execution_count", getSearchQueryExecutionCount())
+               .set("search_query_total_time", getSearchQueryTotalTime())
+               .set("search_query_execution_max_time", getSearchQueryExecutionMaxTime())
+               .set("search_query_execution_avg_time", getSearchQueryExecutionAvgTime())
+               .set("object_loading_total_time", getObjectLoadingTotalTime())
+               .set("object_loading_execution_max_time", getObjectLoadingExecutionMaxTime())
+               .set("object_loading_execution_avg_time", getObjectLoadingExecutionAvgTime())
+               .set("objects_loaded_count", getObjectsLoadedCount())
+               .set("search_query_execution_max_time_query_string", getSearchQueryExecutionMaxTimeQueryString());
       }
    }
 }

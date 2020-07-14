@@ -40,6 +40,7 @@ import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -48,9 +49,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Test embedded caches, Hot Rod, and REST endpoints.
@@ -62,8 +60,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
    private static final DateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
-
-   private static final ObjectMapper MAPPER = new ObjectMapper();
 
    EndpointsCacheFactory<String, Object> cacheFactory;
 
@@ -378,9 +374,9 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
    }
 
    private String asJson(Person p) {
-      ObjectNode person = MAPPER.createObjectNode();
-      person.put(TYPE, p.getClass().getName());
-      person.put("name", p.name);
+      Json person = Json.object();
+      person.set(TYPE, p.getClass().getName());
+      person.set("name", p.name);
       return person.toString();
    }
 

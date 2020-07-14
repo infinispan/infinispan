@@ -8,13 +8,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.infinispan.commons.dataconversion.internal.Json;
 
 /**
  * @since 9.4
  */
-@JsonPropertyOrder({TOTAL_RESULTS, HITS})
-public class ProjectedJsonResult extends BaseJsonQueryResult {
+public class ProjectedJsonResult extends JsonQueryResponse {
 
    private final List<JsonProjection> hits;
 
@@ -33,5 +32,14 @@ public class ProjectedJsonResult extends BaseJsonQueryResult {
 
    public List<JsonProjection> getHits() {
       return hits;
+   }
+
+   @Override
+   public Json toJson() {
+      Json object = Json.object();
+      object.set(TOTAL_RESULTS, getTotalResults());
+      Json array = Json.array();
+      hits.forEach(h -> array.add(Json.factory().raw(h.toJson().toString())));
+      return object.set(HITS, array);
    }
 }

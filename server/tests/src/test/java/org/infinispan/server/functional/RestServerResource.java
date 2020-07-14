@@ -7,11 +7,11 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
@@ -19,10 +19,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.testcontainers.shaded.com.google.common.collect.Sets;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 
 /**
  * @since 10.0
@@ -35,26 +31,24 @@ public class RestServerResource {
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
-   private final ObjectMapper mapper = new ObjectMapper();
-
    @Test
-   public void testConfig() throws Exception {
+   public void testConfig() {
       RestClient client = SERVER_TEST.rest().create();
       RestResponse restResponse = sync(client.server().configuration());
       assertEquals(200, restResponse.getStatus());
-      JsonNode configNode = mapper.readTree(restResponse.getBody());
+      Json configNode = Json.read(restResponse.getBody());
 
-      JsonNode server = configNode.get("server");
-      JsonNode interfaces = server.get("interfaces");
-      JsonNode security = server.get("security");
-      JsonNode endpoints = server.get("endpoints");
+      Json server = configNode.at("server");
+      Json interfaces = server.at("interfaces");
+      Json security = server.at("security");
+      Json endpoints = server.at("endpoints");
 
       String inetAddress = SERVERS.getServerDriver() instanceof ContainerInfinispanServerDriver ? "SITE_LOCAL" : "127.0.0.1";
-      assertEquals(inetAddress, interfaces.get("interface").get("inet-address").get("value").asText());
-      assertEquals("default", security.get("security-realms").get("security-realm").get("name").asText());
-      assertEquals("hotrod", endpoints.get("hotrod-connector").get("name").asText());
-      assertEquals("rest", endpoints.get("rest-connector").get("name").asText());
-      assertEquals("memcachedCache", endpoints.get("memcached-connector").get("cache").asText());
+      assertEquals(inetAddress, interfaces.at("interface").at("inet-address").at("value").asString());
+      assertEquals("default", security.at("security-realms").at("security-realm").at("name").asString());
+      assertEquals("hotrod", endpoints.at("hotrod-connector").at("name").asString());
+      assertEquals("rest", endpoints.at("rest-connector").at("name").asString());
+      assertEquals("memcachedCache", endpoints.at("memcached-connector").at("cache").asString());
    }
 
    @Test
@@ -68,43 +62,43 @@ public class RestServerResource {
    }
 
    @Test
-   public void testInfo() throws Exception {
+   public void testInfo() {
       RestClient client = SERVER_TEST.rest().create();
       RestResponse restResponse = sync(client.server().info());
       String body = restResponse.getBody();
       assertEquals(200, restResponse.getStatus());
-      JsonNode infoNode = mapper.readTree(body);
-      assertNotNull(infoNode.get("version"));
+      Json infoNode = Json.read(body);
+      assertNotNull(infoNode.at("version"));
    }
 
    @Test
-   public void testMemory() throws Exception {
+   public void testMemory() {
       RestClient client = SERVER_TEST.rest().create();
       RestResponse restResponse = sync(client.server().memory());
       assertEquals(200, restResponse.getStatus());
-      JsonNode infoNode = mapper.readTree(restResponse.getBody());
-      JsonNode memory = infoNode.get("heap");
-      assertTrue(memory.get("used").asInt() > 0);
-      assertTrue(memory.get("committed").asInt() > 0);
+      Json infoNode = Json.read(restResponse.getBody());
+      Json memory = infoNode.at("heap");
+      assertTrue(memory.at("used").asInteger() > 0);
+      assertTrue(memory.at("committed").asInteger() > 0);
    }
 
    @Test
-   public void testEnv() throws Exception {
+   public void testEnv() {
       RestClient client = SERVER_TEST.rest().create();
       RestResponse restResponse = sync(client.server().env());
       assertEquals(200, restResponse.getStatus());
-      JsonNode infoNode = mapper.readTree(restResponse.getBody());
-      JsonNode osVersion = infoNode.get("os.version");
-      assertEquals(System.getProperty("os.version"), osVersion.asText());
+      Json infoNode = Json.read(restResponse.getBody());
+      Json osVersion = infoNode.at("os.version");
+      assertEquals(System.getProperty("os.version"), osVersion.asString());
    }
 
    @Test
-   public void testCacheManagerNames() throws Exception {
+   public void testCacheManagerNames() {
       RestClient client = SERVER_TEST.rest().create();
       RestResponse restResponse = sync(client.cacheManagers());
       assertEquals(200, restResponse.getStatus());
-      ArrayNode cacheManagers = (ArrayNode) mapper.readTree(restResponse.getBody());
-      Set<String> cmNames = StreamSupport.stream(cacheManagers.spliterator(), false).map(JsonNode::asText).collect(Collectors.toSet());
+      Json cacheManagers = Json.read(restResponse.getBody());
+      Set<String> cmNames = cacheManagers.asJsonList().stream().map(Json::asString).collect(Collectors.toSet());
 
       assertEquals(cmNames, Sets.newHashSet("default"));
    }

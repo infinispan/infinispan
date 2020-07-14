@@ -42,6 +42,7 @@ import java.util.function.Function;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -459,6 +460,12 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    private static CacheMode getCacheMode(Cache cache) {
       return cache.getCacheConfiguration().clustering().cacheMode();
+   }
+
+   @Override
+   public Json toJson() {
+      //TODO
+      throw new UnsupportedOperationException();
    }
 
    private static class DistributedCacheStatsCallable implements Function<EmbeddedCacheManager, Map<String, Number>> {

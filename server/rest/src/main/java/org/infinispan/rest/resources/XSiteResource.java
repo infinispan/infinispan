@@ -1,6 +1,5 @@
 package org.infinispan.rest.resources;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -10,7 +9,6 @@ import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.xsite.XSiteAdminOperations.siteStatusToString;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -21,6 +19,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.InvocationHelper;
@@ -36,8 +37,6 @@ import org.infinispan.xsite.status.OfflineSiteStatus;
 import org.infinispan.xsite.status.OnlineSiteStatus;
 import org.infinispan.xsite.status.SiteStatus;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
@@ -46,6 +45,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * @since 10.0
  */
 public class XSiteResource implements ResourceHandler {
+   public static final String AFTER_FAILURES_FIELD = "after_failures";
+   public static final String MIN_WAIT_FIELD = "min_wait";
 
    private static final BiFunction<XSiteAdminOperations, String, String> TAKE_OFFLINE = XSiteAdminOperations::takeSiteOffline;
    private static final BiFunction<XSiteAdminOperations, String, String> BRING_ONLINE = XSiteAdminOperations::bringSiteOnline;
@@ -126,7 +127,7 @@ public class XSiteResource implements ResourceHandler {
             }
             return GlobalStatus.UNKNOWN;
          }));
-         return addEntityAsJson(collect, responseBuilder, invocationHelper).build();
+         return addEntityAsJson(Json.make(collect), responseBuilder).build();
       }, invocationHelper.getExecutor());
    }
 
@@ -172,22 +173,30 @@ public class XSiteResource implements ResourceHandler {
       if (current == null) {
          return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND.code()).build());
       }
-      byte[] byteContent = request.contents().rawContent();
-      if (byteContent == null || byteContent.length == 0) {
+      String content = request.contents().asString();
+      if (content == null || content.isEmpty()) {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.BAD_REQUEST.code()).build());
       }
 
-      TakeOffline takeOffline;
+      int afterFailures, minWait;
       try {
-         takeOffline = invocationHelper.getMapper().readValue(byteContent, TakeOffline.class);
-      } catch (IOException e) {
-         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.BAD_REQUEST).build());
+         Json json = Json.read(content);
+         Json minWaitValue = json.at(MIN_WAIT_FIELD);
+         Json afterFailuresValue = json.at(AFTER_FAILURES_FIELD);
+         if (minWaitValue == null || afterFailuresValue == null) {
+            return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.BAD_REQUEST).build());
+         }
+         minWait = minWaitValue.asInteger();
+         afterFailures = afterFailuresValue.asInteger();
+      } catch (Exception e) {
+         Throwable rootCause = Util.getRootCause(e);
+         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity(rootCause.getMessage()).build());
       }
-      if (takeOffline.afterFailures == current.afterFailures() && takeOffline.minWait == current.minTimeToWait()) {
+      if (afterFailures == current.afterFailures() && minWait == current.minTimeToWait()) {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_MODIFIED.code()).build());
       }
       return CompletableFuture.supplyAsync(() -> {
-         String status = xsiteAdmin.amendTakeOffline(site, takeOffline.afterFailures, takeOffline.minWait);
+         String status = xsiteAdmin.amendTakeOffline(site, afterFailures, minWait);
          if (!status.equals(XSiteAdminOperations.SUCCESS)) {
             responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).entity(site);
          }
@@ -205,9 +214,7 @@ public class XSiteResource implements ResourceHandler {
          return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND.code()).build());
       }
 
-      return completedFuture(
-            addEntityAsJson(new TakeOffline(config), responseBuilder, invocationHelper)
-                  .build()
+      return completedFuture(addEntityAsJson(new TakeOffline(config), responseBuilder).build()
       );
    }
 
@@ -222,7 +229,7 @@ public class XSiteResource implements ResourceHandler {
       }
 
       return CompletableFuture.supplyAsync(
-            () -> addEntityAsJson(xsiteAdmin.nodeStatus(site), responseBuilder, invocationHelper).build()
+            () -> addEntityAsJson(Json.make(xsiteAdmin.nodeStatus(site)), responseBuilder).build()
             , invocationHelper.getExecutor());
    }
 
@@ -231,7 +238,7 @@ public class XSiteResource implements ResourceHandler {
       XSiteAdminOperations xsiteAdmin = getxsiteAdmin(request);
 
       return CompletableFuture.supplyAsync(
-            () -> addEntityAsJson(op.apply(xsiteAdmin), responseBuilder, invocationHelper).build(),
+            () -> addEntityAsJson(Json.make(op.apply(xsiteAdmin)), responseBuilder).build(),
             invocationHelper.getExecutor());
    }
 
@@ -260,7 +267,7 @@ public class XSiteResource implements ResourceHandler {
       if (globalXSiteAdmin == null) return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
 
       return CompletableFuture.supplyAsync(
-            () -> addEntityAsJson(operation.apply(globalXSiteAdmin, site), responseBuilder, invocationHelper).build(),
+            () -> addEntityAsJson(Json.make(operation.apply(globalXSiteAdmin, site)), responseBuilder).build(),
             invocationHelper.getExecutor()
       );
    }
@@ -284,15 +291,14 @@ public class XSiteResource implements ResourceHandler {
       }, invocationHelper.getExecutor());
    }
 
-   @SuppressWarnings("unused")
-   private static class GlobalStatus {
+   private static class GlobalStatus implements JsonSerialization {
       static final GlobalStatus OFFLINE = new GlobalStatus("offline", null, null);
       static final GlobalStatus ONLINE = new GlobalStatus("online", null, null);
       static final GlobalStatus UNKNOWN = new GlobalStatus("unknown", null, null);
 
-      private String status;
-      private List<?> online;
-      private List<?> offline;
+      private final String status;
+      private final List<?> online;
+      private final List<?> offline;
 
       GlobalStatus(String status, List<?> online, List<?> offline) {
          this.status = status;
@@ -304,48 +310,35 @@ public class XSiteResource implements ResourceHandler {
          return new GlobalStatus("mixed", online, offline);
       }
 
-      public String getStatus() {
-         return status;
-      }
-
-      @JsonInclude(NON_NULL)
-      public List<?> getOnline() {
-         return online;
-      }
-
-      @JsonInclude(NON_NULL)
-      public List<?> getOffline() {
-         return offline;
+      @Override
+      public Json toJson() {
+         Json json = Json.object().set("status", this.status);
+         if (online != null) {
+            List<String> onLines = online.stream().map(Object::toString).collect(Collectors.toList());
+            json.set("online", Json.make(onLines));
+         }
+         if (offline != null) {
+            List<String> offLines = offline.stream().map(Object::toString).collect(Collectors.toList());
+            json.set("offline", Json.make(offLines));
+         }
+         return json;
       }
    }
 
-   @SuppressWarnings("unused")
-   private static class TakeOffline {
-      private int afterFailures;
-      private long minWait;
-
-      public void setAfterFailures(int afterFailures) {
-         this.afterFailures = afterFailures;
-      }
-
-      public void setMinWait(long minWait) {
-         this.minWait = minWait;
-      }
-
-      TakeOffline() {
-      }
+   private static class TakeOffline implements JsonSerialization {
+      private final int afterFailures;
+      private final long minWait;
 
       TakeOffline(TakeOfflineConfiguration config) {
          this.afterFailures = config.afterFailures();
          this.minWait = config.minTimeToWait();
       }
 
-      public int getAfterFailures() {
-         return afterFailures;
-      }
-
-      public long getMinWait() {
-         return minWait;
+      @Override
+      public Json toJson() {
+         return Json.object()
+               .set(AFTER_FAILURES_FIELD, afterFailures)
+               .set(MIN_WAIT_FIELD, minWait);
       }
    }
 }

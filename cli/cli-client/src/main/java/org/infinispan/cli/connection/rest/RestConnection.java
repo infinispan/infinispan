@@ -80,9 +80,7 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.ServerConfiguration;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.dataconversion.MediaType;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.infinispan.commons.dataconversion.internal.Json;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -91,7 +89,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class RestConnection implements Connection, Closeable {
    public static String PROTOBUF_METADATA_CACHE_NAME = "___protobuf_metadata";
    private final RestClientConfigurationBuilder builder;
-   private final ObjectMapper mapper;
 
    private Resource activeResource;
 
@@ -107,7 +104,6 @@ public class RestConnection implements Connection, Closeable {
 
    public RestConnection(RestClientConfigurationBuilder builder) {
       this.builder = builder;
-      this.mapper = new ObjectMapper();
    }
 
    @Override
@@ -170,17 +166,21 @@ public class RestConnection implements Connection, Closeable {
             return (T) response.getBodyAsStream();
          } else if (returnClass == String.class) {
             if (MediaType.APPLICATION_JSON.equals(response.contentType())) {
-               Object object = mapper.readValue(response.getBody(), Object.class);
-               return (T) mapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
+               Json json = Json.read(response.getBody());
+               return (T) json.toPrettyString();
             } else {
                return (T) response.getBody();
             }
          } else {
-            return mapper.readValue(response.getBody(), returnClass);
+            if (returnClass == Map.class) {
+               return (T) Json.read(response.getBody()).asMap();
+            }
+            if (returnClass == List.class) {
+               return (T) Json.read(response.getBody()).asList();
+            }
          }
-      } else {
-         return null;
       }
+      return null;
    }
 
    private RestResponse handleResponseStatus(RestResponse response) throws IOException {
@@ -311,18 +311,17 @@ public class RestConnection implements Connection, Closeable {
                      break;
                   }
                   case Create.Counter.CMD: {
-                     ObjectNode counter = mapper.createObjectNode();
-                     ObjectNode node = counter
-                           .putObject(command.option(Create.Counter.COUNTER_TYPE) + "-counter")
-                           .put(Create.Counter.INITIAL_VALUE, command.longOption(Create.Counter.INITIAL_VALUE))
-                           .put(Create.Counter.CONCURRENCY_LEVEL, command.intOption(Create.Counter.CONCURRENCY_LEVEL))
-                           .put(Create.Counter.STORAGE, command.option(Create.Counter.STORAGE));
+                     Json counterBody = Json.object()
+                           .set(Create.Counter.INITIAL_VALUE, command.longOption(Create.Counter.INITIAL_VALUE))
+                           .set(Create.Counter.CONCURRENCY_LEVEL, command.intOption(Create.Counter.CONCURRENCY_LEVEL))
+                           .set(Create.Counter.STORAGE, command.option(Create.Counter.STORAGE));
                      if (command.hasOption(Create.Counter.UPPER_BOUND)) {
-                        node.put(Create.Counter.UPPER_BOUND, command.longOption(Create.Counter.UPPER_BOUND));
+                        counterBody.set(Create.Counter.UPPER_BOUND, command.longOption(Create.Counter.UPPER_BOUND));
                      }
                      if (command.hasOption(Create.Counter.LOWER_BOUND)) {
-                        node.put(Create.Counter.LOWER_BOUND, command.longOption(Create.Counter.LOWER_BOUND));
+                        counterBody.set(Create.Counter.LOWER_BOUND, command.longOption(Create.Counter.LOWER_BOUND));
                      }
+                     Json counter = Json.object().set(command.option(Create.Counter.COUNTER_TYPE) + "-counter", counterBody);
                      response = client.counter(command.arg(CliCommand.NAME)).create(RestEntity.create(MediaType.APPLICATION_JSON, counter.toString()));
                      break;
                   }
@@ -602,7 +601,7 @@ public class RestConnection implements Connection, Closeable {
                case QUIET:
                   break;
                case HEADERS:
-                  sb.append(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(parseHeaders(r)));
+                  sb.append(Json.make(parseHeaders(r)).toPrettyString());
                   break;
             }
          }
@@ -653,7 +652,7 @@ public class RestConnection implements Connection, Closeable {
    @Override
    public Collection<String> getAvailableSchemas(String container) throws IOException {
       List<String> schemas = new ArrayList<>();
-      getCacheKeys(container, PROTOBUF_METADATA_CACHE_NAME).forEach(s -> schemas.add(s));
+      getCacheKeys(container, PROTOBUF_METADATA_CACHE_NAME).forEach(schemas::add);
       return schemas;
    }
 
@@ -669,7 +668,7 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
-   public Collection<String> getAvailableSites(String container, String cache) throws IOException {
+   public Collection<String> getAvailableSites(String container, String cache) {
       CompletionStage<RestResponse> response = client.cache(cache).xsiteBackups();
       return null;
    }
@@ -702,7 +701,7 @@ public class RestConnection implements Connection, Closeable {
    @Override
    public String describeKey(String container, String cache, String key) throws IOException {
       Map<String, List<String>> headers = parseHeaders(fetch(() -> client.cache(cache).head(key)));
-      return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(headers);
+      return Json.make(headers).toPrettyString();
    }
 
    @Override

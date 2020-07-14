@@ -4,15 +4,15 @@ import static org.infinispan.query.remote.json.JSONConstants.HIT;
 
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.dataconversion.internal.Json;
 
 /**
  * @since 9.4
  */
-public class JsonProjection {
+public class JsonProjection implements JsonSerialization {
 
-   @JsonProperty(HIT)
-   private Map<String, Object> value;
+   private final Map<String, Object> value;
 
    JsonProjection(Map<String, Object> value) {
       this.value = value;
@@ -20,5 +20,10 @@ public class JsonProjection {
 
    public Map<String, Object> getValue() {
       return value;
+   }
+
+   @Override
+   public Json toJson() {
+      return Json.object().set(HIT, Json.make(value));
    }
 }

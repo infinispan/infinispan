@@ -14,7 +14,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
@@ -30,8 +32,6 @@ import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 import org.infinispan.rest.operations.exceptions.NoKeyException;
 import org.infinispan.util.concurrent.CompletableFutures;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.rxjava3.core.Flowable;
 
@@ -43,11 +43,8 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public class ProtobufResource extends BaseCacheResource implements ResourceHandler {
 
-   private final ObjectMapper objectMapper;
-
    public ProtobufResource(InvocationHelper invocationHelper) {
       super(invocationHelper);
-      objectMapper = invocationHelper.getMapper();
    }
 
    @Override
@@ -55,37 +52,35 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       return new Invocations.Builder()
             // Key related operations
             .invocation().methods(GET).path("/v2/schemas").handleWith(this::getSchemasNames)
-            .invocation().methods(POST).path("/v2/schemas/{schemaName}").handleWith(r -> createOrReplace(r,true))
-            .invocation().methods(PUT).path("/v2/schemas/{schemaName}").handleWith(r -> createOrReplace(r,false))
+            .invocation().methods(POST).path("/v2/schemas/{schemaName}").handleWith(r -> createOrReplace(r, true))
+            .invocation().methods(PUT).path("/v2/schemas/{schemaName}").handleWith(r -> createOrReplace(r, false))
             .invocation().methods(GET).path("/v2/schemas/{schemaName}").handleWith(this::getSchema)
             .invocation().method(DELETE).path("/v2/schemas/{schemaName}").handleWith(this::deleteSchema)
             .create();
    }
 
    private CompletionStage<RestResponse> getSchemasNames(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
             .getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, request);
 
       return CompletableFuture.supplyAsync(() ->
-          Flowable.fromIterable(cache.keySet())
-               .filter(key -> !((String)key).endsWith(ProtobufMetadataManager.ERRORS_KEY_SUFFIX))
-               .map(key -> {
-                  String error = (String) cache
-                        .get(key + ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
-                  ProtoSchema protoSchema = new ProtoSchema();
-                  protoSchema.name = (String) key;
-                  if (error != null) {
-                     protoSchema.error = createErrorContent(protoSchema.name, error);
-                  }
-                  return protoSchema;
-               })
-                .sorted(Comparator.comparing(s -> s.name))
-                .collect(Collectors.toList())
-                .map(protoSchemas -> asJsonResponse(protoSchemas, invocationHelper))
-                .toCompletionStage()
-      , invocationHelper.getExecutor())
+                  Flowable.fromIterable(cache.keySet())
+                        .filter(key -> !((String) key).endsWith(ProtobufMetadataManager.ERRORS_KEY_SUFFIX))
+                        .map(key -> {
+                           String error = (String) cache
+                                 .get(key + ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
+                           ProtoSchema protoSchema = new ProtoSchema();
+                           protoSchema.name = (String) key;
+                           if (error != null) {
+                              protoSchema.error = createErrorContent(protoSchema.name, error);
+                           }
+                           return protoSchema;
+                        })
+                        .sorted(Comparator.comparing(s -> s.name))
+                        .collect(Collectors.toList())
+                        .map(protoSchemas -> asJsonResponse(Json.make(protoSchemas)))
+                        .toCompletionStage()
+            , invocationHelper.getExecutor())
             .thenCompose(Function.identity());
    }
 
@@ -128,7 +123,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
             if (validationError != null) {
                protoSchema.error = createErrorContent(schemaName, (String) validationError);
             }
-            addEntityAsJson(protoSchema, builder, invocationHelper);
+            addEntityAsJson(protoSchema, builder);
          }
          return builder.build();
       });
@@ -147,7 +142,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       return restCacheManager.getPrivilegedInternalEntry(cache, schemaName, true).thenApply(entry -> {
          NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-         if(entry == null) {
+         if (entry == null) {
             responseBuilder.status(HttpResponseStatus.NOT_FOUND.code());
          } else {
             responseBuilder.status(HttpResponseStatus.OK.code());
@@ -169,10 +164,10 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
 
          if (entry instanceof InternalCacheEntry) {
-               responseBuilder.status(HttpResponseStatus.NO_CONTENT.code());
-               return restCacheManager.remove(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, schemaName,
-                     MediaType.MATCH_ALL, request)
-                     .thenApply(v -> responseBuilder.build());
+            responseBuilder.status(HttpResponseStatus.NO_CONTENT.code());
+            return restCacheManager.remove(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, schemaName,
+                  MediaType.MATCH_ALL, request)
+                  .thenApply(v -> responseBuilder.build());
          }
          return CompletableFuture.completedFuture(responseBuilder.build());
       });
@@ -193,12 +188,23 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       return schemaName.endsWith(ProtobufMetadataManager.PROTO_KEY_SUFFIX) ? schemaName : schemaName + ProtobufMetadataManager.PROTO_KEY_SUFFIX;
    }
 
-   static class ValidationError {
+   static class ValidationError implements JsonSerialization {
       public String message;
       public String cause;
+
+      @Override
+      public Json toJson() {
+         return Json.object().set("message", message).set("cause", cause);
+      }
    }
-   static class ProtoSchema {
+
+   static class ProtoSchema implements JsonSerialization {
       public String name;
       public ValidationError error;
+
+      @Override
+      public Json toJson() {
+         return Json.object("name", name).set("error", error == null ? null : error.toJson());
+      }
    }
 }

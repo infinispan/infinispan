@@ -4,7 +4,10 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
-public interface Task {
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.dataconversion.internal.Json;
+
+public interface Task extends JsonSerialization {
    /**
     * Provides a name for the task. This is the name by which the task will be executed.
     * Make sure the name is unique for each task.
@@ -48,5 +51,15 @@ public interface Task {
     */
    default Optional<String> getAllowedRole() {
       return Optional.empty();
+   }
+
+   @Override
+   default Json toJson() {
+      return Json.object()
+            .set("name", getName())
+            .set("type", getType())
+            .set("parameters", Json.make(getParameters()))
+            .set("execution_mode", getExecutionMode().toString())
+            .set("allowed_role", getAllowedRole().orElse(null));
    }
 }

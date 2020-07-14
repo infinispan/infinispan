@@ -1,38 +1,27 @@
 package org.infinispan.query.remote.json;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.query.remote.json.JSONConstants.CAUSE;
-import static org.infinispan.query.remote.json.JSONConstants.ERROR;
 import static org.infinispan.query.remote.json.JSONConstants.MESSAGE;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.dataconversion.internal.Json;
 
-@JsonPropertyOrder({MESSAGE, CAUSE})
-@JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.NAME)
-@JsonTypeName(ERROR)
-public class JsonQueryErrorResult extends JsonQueryResponse {
-
-   @JsonProperty(MESSAGE)
-   private String message;
-
-   @JsonProperty(CAUSE)
-   private String cause;
+public class JsonQueryErrorResult implements JsonSerialization {
+   private final String message;
+   private final String cause;
 
    public JsonQueryErrorResult(String message, String cause) {
       this.message = message;
       this.cause = cause;
    }
 
-   public JsonQueryErrorResult() {
+   @Override
+   public Json toJson() {
+      return Json.object().set(JSONConstants.ERROR, Json.object().set(MESSAGE, message).set(CAUSE, cause));
    }
 
-   public String getMessage() {
-      return message;
-   }
-
-   public String getCause() {
-      return cause;
+   public byte[] asBytes() {
+      return toJson().toString().getBytes(UTF_8);
    }
 }

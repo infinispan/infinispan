@@ -7,20 +7,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.rest.helper.RestResponses;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * @since 10.0
@@ -83,9 +81,7 @@ public class IgnoreCaches {
    }
 
    private Set<String> getIgnoredCaches(RestClient client, String cacheManagerName) {
-      JsonNode body = RestResponses.jsonResponseBody(client.server().listIgnoredCaches(cacheManagerName));
-      Set<String> res = new HashSet<>();
-      body.elements().forEachRemaining(n -> res.add(n.asText()));
-      return res;
+      Json body = RestResponses.jsonResponseBody(client.server().listIgnoredCaches(cacheManagerName));
+      return body.asJsonList().stream().map(Json::asString).collect(Collectors.toSet());
    }
 }

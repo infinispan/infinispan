@@ -6,14 +6,10 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.rest.InvocationHelper;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.RestResponse;
-import org.infinispan.rest.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -24,8 +20,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * @since 11.0
  */
 class ResourceUtil {
-   private final static Log logger = LogFactory.getLog(ResourceUtil.class, Log.class);
-
    static CompletableFuture<RestResponse> notFoundResponseFuture() {
       return CompletableFuture.completedFuture(
             new NettyRestResponse.Builder()
@@ -34,38 +28,27 @@ class ResourceUtil {
       );
    }
 
-   static RestResponse asJsonResponse(Object o, InvocationHelper invocationHelper) {
-      return addEntityAsJson(o, new NettyRestResponse.Builder(), invocationHelper).build();
+   static NettyRestResponse.Builder addEntityAsJson(Json json, NettyRestResponse.Builder responseBuilder) {
+      responseBuilder.contentType(APPLICATION_JSON);
+      return responseBuilder.entity(json.toString()).status(OK);
    }
 
-   static CompletableFuture<RestResponse> asJsonResponseFuture(Object o, InvocationHelper invocationHelper) {
-      return completedFuture(asJsonResponse(o, invocationHelper));
+   static RestResponse asJsonResponse(Json json) {
+      return addEntityAsJson(json, new NettyRestResponse.Builder()).build();
    }
 
-   static CompletableFuture<RestResponse> asJsonResponseFuture(Object o, NettyRestResponse.Builder responseBuilder, InvocationHelper invocationHelper) {
-      RestResponse response = addEntityAsJson(o, responseBuilder, invocationHelper).build();
+   static CompletableFuture<RestResponse> asJsonResponseFuture(Json json) {
+      return completedFuture(asJsonResponse(json));
+   }
+
+   static CompletableFuture<RestResponse> asJsonResponseFuture(Json json, NettyRestResponse.Builder responseBuilder) {
+      RestResponse response = addEntityAsJson(json, responseBuilder).build();
       return completedFuture(response);
    }
 
-   static NettyRestResponse.Builder addEntityAsJson(Object o, NettyRestResponse.Builder responseBuilder, InvocationHelper invocationHelper) {
+   static NettyRestResponse.Builder addEntityAsJson(JsonSerialization o, NettyRestResponse.Builder responseBuilder) {
       responseBuilder.contentType(APPLICATION_JSON);
-      ObjectMapper mapper = invocationHelper.getMapper();
-      try {
-         byte[] bytes = mapper.writeValueAsBytes(o);
-         return responseBuilder.entity(bytes).status(OK);
-      } catch (JsonProcessingException e) {
-         logger.error(e);
-         Object entity = createJsonErrorResponse(mapper, e);
-         return responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(entity);
-      }
+      return responseBuilder.entity(o.toJson().toString()).status(OK);
    }
 
-   private static Object createJsonErrorResponse(ObjectMapper mapper, JsonProcessingException e) {
-      try {
-         return mapper.writeValueAsBytes(new JsonErrorResponseEntity("Unable to convert response object to json", e.getMessage()));
-      } catch (JsonProcessingException jpe) {
-         logger.error(jpe);
-         return jpe.getMessage();
-      }
-   }
 }

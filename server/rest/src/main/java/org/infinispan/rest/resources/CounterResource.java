@@ -12,13 +12,13 @@ import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.StrongCounter;
@@ -37,8 +37,6 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -93,16 +91,12 @@ public class CounterResource implements ResourceHandler {
          responseBuilder.entity("Configuration not provided");
          return completedFuture(responseBuilder.build());
       }
-      try {
-         CounterConfiguration configuration = createCounterConfiguration(contents);
-         if (configuration == null) {
-            responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity("Invalid configuration");
-            return completedFuture(responseBuilder.build());
-         }
-         return counterManager.defineCounterAsync(counterName, configuration).thenApply(r -> responseBuilder.build());
-      } catch (IOException e) {
-         throw new RestResponseException(e.getCause());
+      CounterConfiguration configuration = createCounterConfiguration(contents);
+      if (configuration == null) {
+         responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity("Invalid configuration");
+         return completedFuture(responseBuilder.build());
       }
+      return counterManager.defineCounterAsync(counterName, configuration).thenApply(r -> responseBuilder.build());
    }
 
    private CompletionStage<RestResponse> deleteCounter(RestRequest request) {
@@ -163,7 +157,7 @@ public class CounterResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> getCounterNames(RestRequest request) throws RestResponseException {
-      return asJsonResponseFuture(counterManager.getCounterNames(), invocationHelper);
+      return asJsonResponseFuture(Json.make(counterManager.getCounterNames()));
    }
 
    private CompletionStage<RestResponse> incrementCounter(RestRequest request) {
@@ -197,7 +191,7 @@ public class CounterResource implements ResourceHandler {
          StrongCounter strongCounter = checkForStrongCounter(counterName, responseBuilder);
          if (strongCounter == null) return completedFuture(responseBuilder.build());
          return strongCounter.addAndGet(delta)
-               .thenApply(value -> addEntityAsJson(value, responseBuilder, invocationHelper).build());
+               .thenApply(value -> addEntityAsJson(Json.make(value), responseBuilder).build());
       }
    }
 
@@ -209,8 +203,8 @@ public class CounterResource implements ResourceHandler {
       return executeCounterCAS(request, StrongCounter::compareAndSwap);
    }
 
-   private CounterConfiguration createCounterConfiguration(String json) throws IOException {
-      JsonNode jsonNode = invocationHelper.getMapper().readValue(json, JsonNode.class);
+   private CounterConfiguration createCounterConfiguration(String json) {
+      Json jsonNode = Json.read(json);
       boolean strongCounter = jsonNode.has("strong-counter");
       boolean weakCounter = jsonNode.has("weak-counter");
 
@@ -254,7 +248,7 @@ public class CounterResource implements ResourceHandler {
       if (strongCounter == null) return completedFuture(responseBuilder.build());
       CompletableFuture<T> opResult = invocation.apply(strongCounter, expect, update);
 
-      return opResult.thenCompose(value -> asJsonResponseFuture(value, invocationHelper));
+      return opResult.thenCompose(value -> asJsonResponseFuture(Json.make(value)));
    }
 
    @FunctionalInterface
@@ -268,7 +262,7 @@ public class CounterResource implements ResourceHandler {
       StrongCounter strongCounter = checkForStrongCounter(counterName, responseBuilder);
       if (strongCounter == null) return notFoundResponseFuture();
       return op.apply(strongCounter)
-            .thenCompose(value -> asJsonResponseFuture(value, responseBuilder, invocationHelper));
+            .thenCompose(value -> asJsonResponseFuture(Json.make(value), responseBuilder));
    }
 
    private CompletionStage<WeakCounter> getWeakCounter(String name) {

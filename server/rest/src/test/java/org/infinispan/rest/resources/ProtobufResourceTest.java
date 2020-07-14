@@ -12,14 +12,12 @@ import javax.security.auth.Subject;
 
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestSchemaClient;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Test(groups = "functional", testName = "rest.ProtobufResourceTest")
 public class ProtobufResourceTest extends AbstractRestResourceTest {
@@ -42,12 +40,12 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
       });
    }
 
-   public void listSchemasWhenEmpty() throws Exception {
+   public void listSchemasWhenEmpty() {
       CompletionStage<RestResponse> response = client.schemas().names();
 
       ResponseAssertion.assertThat(response).isOk();
-      JsonNode jsonNode = new ObjectMapper().readTree(join(response).getBody());
-      assertEquals(0, jsonNode.size());
+      Json jsonNode = Json.read(join(response).getBody());
+      assertEquals(0, jsonNode.asList().size());
    }
 
    @Test
@@ -76,10 +74,10 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
             + " Syntax error in error.proto at 3:8: unexpected label: messoge";
 
       ResponseAssertion.assertThat(response).isOk();
-      JsonNode jsonNode = new ObjectMapper().readTree(response.getBody());
-      assertEquals("error.proto", jsonNode.get("name").asText());
-      assertEquals("Schema error.proto has errors", jsonNode.get("error").get("message").asText());
-      assertEquals(cause, jsonNode.get("error").get("cause").asText());
+      Json jsonNode = Json.read(response.getBody());
+      assertEquals("error.proto", jsonNode.at("name").asString());
+      assertEquals("Schema error.proto has errors", jsonNode.at("error").at("message").asString());
+      assertEquals(cause, jsonNode.at("error").at("cause").asString());
 
       // Read adding .proto should also work
       response = join(schemaClient.get("error"));
@@ -98,8 +96,8 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
       RestResponse response = join(schemaClient.post("person", personProto));
       ResponseAssertion.assertThat(response).isOk();
 
-      JsonNode jsonNode = new ObjectMapper().readTree(response.getBody());
-      assertTrue(jsonNode.get("error").isNull());
+      Json jsonNode = Json.read(response.getBody());
+      assertTrue(jsonNode.at("error").isNull());
 
       // Read
       response = join(schemaClient.get("person"));
@@ -150,25 +148,23 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
       RestResponse response = join(schemaClient.names());
 
       ResponseAssertion.assertThat(response).isOk();
-      ObjectMapper objectMapper = new ObjectMapper();
-      JsonNode jsonNode = objectMapper.readTree(response.getBody());
-      assertEquals(3, jsonNode.size());
-      assertEquals("dancers.proto", jsonNode.get(0).get("name").asText());
-      assertEquals("people.proto", jsonNode.get(1).get("name").asText());
-      assertEquals("users.proto", jsonNode.get(2).get("name").asText());
+      Json jsonNode = Json.read(response.getBody());
+      assertEquals(3, jsonNode.asList().size());
+      assertEquals("dancers.proto", jsonNode.at(0).at("name").asString());
+      assertEquals("people.proto", jsonNode.at(1).at("name").asString());
+      assertEquals("users.proto", jsonNode.at(2).at("name").asString());
    }
 
-   private void checkListProtobufEndpointUrl(String fileName, String errorMessage) throws Exception {
+   private void checkListProtobufEndpointUrl(String fileName, String errorMessage) {
       RestSchemaClient schemaClient = client.schemas();
 
       RestResponse response = join(schemaClient.names());
 
-      ObjectMapper objectMapper = new ObjectMapper();
-      JsonNode jsonNode = objectMapper.readTree(response.getBody());
-      assertEquals(1, jsonNode.size());
-      assertEquals(fileName, jsonNode.get(0).get("name").asText());
+      Json jsonNode = Json.read(response.getBody());
+      assertEquals(1, jsonNode.asList().size());
+      assertEquals(fileName, jsonNode.at(0).at("name").asString());
 
-      assertEquals("Schema error.proto has errors", jsonNode.get(0).get("error").get("message").asText());
-      assertEquals(errorMessage, jsonNode.get(0).get("error").get("cause").asText());
+      assertEquals("Schema error.proto has errors", jsonNode.at(0).at("error").at("message").asString());
+      assertEquals(errorMessage, jsonNode.at(0).at("error").at("cause").asString());
    }
 }

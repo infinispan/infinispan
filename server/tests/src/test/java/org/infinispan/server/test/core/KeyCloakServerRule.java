@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.test.TestingUtil;
 import org.junit.rules.TestRule;
@@ -24,8 +25,6 @@ import org.junit.runners.model.Statement;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -92,9 +91,8 @@ public class KeyCloakServerRule implements TestRule {
          form.put("password", Collections.singletonList(password));
          form.put("grant_type", Collections.singletonList("password"));
          RestResponse response = c.raw().postForm(url, Collections.singletonMap("Content-Type", "application/x-www-form-urlencoded"), form).toCompletableFuture().get(5, TimeUnit.SECONDS);
-         ObjectMapper mapper = new ObjectMapper();
-         Map<String, String> map = mapper.readValue(response.getBody(), Map.class);
-         return map.get("access_token");
+         Map<String, Json> map = Json.read(response.getBody()).asJsonMap();
+         return map.get("access_token").asString();
       } catch (Exception e) {
          throw new RuntimeException(e);
       }

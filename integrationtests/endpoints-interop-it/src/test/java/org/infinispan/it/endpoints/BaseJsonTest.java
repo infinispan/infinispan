@@ -9,7 +9,7 @@ import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertEquals;
 
-import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.infinispan.client.hotrod.DataFormat;
@@ -22,6 +22,7 @@ import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -34,10 +35,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Base class for Json reading/writing/querying across multiple endpoints.
@@ -52,7 +49,6 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
    private EmbeddedCacheManager cacheManager;
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache<String, CryptoCurrency> remoteCache;
-   private static final ObjectMapper MAPPER = new ObjectMapper();
 
    private static final String CACHE_NAME = "indexed";
 
@@ -93,27 +89,27 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
    }
 
    private void writeCurrencyViaJson(String key, String description, int rank) {
-      ObjectNode currency = MAPPER.createObjectNode();
-      currency.put(TYPE, getJsonType());
-      currency.put("description", description);
-      currency.put("rank", rank);
+      Json currency = Json.object();
+      currency.set(TYPE, getJsonType());
+      currency.set("description", description);
+      currency.set("rank", rank);
       RestEntity value = RestEntity.create(MediaType.APPLICATION_JSON, currency.toString());
       RestResponse response = join(restCacheClient.put(key, value));
 
       assertEquals(response.getStatus(), 204);
    }
 
-   private CryptoCurrency readCurrencyViaJson(String key) throws IOException {
+   private CryptoCurrency readCurrencyViaJson(String key) {
       RestResponse response = join(restCacheClient.get(key, MediaType.APPLICATION_JSON_TYPE));
       String json = response.getBody();
-      JsonNode jsonNode = new ObjectMapper().readTree(json);
-      JsonNode description = jsonNode.get("description");
-      JsonNode rank = jsonNode.get("rank");
-      return new CryptoCurrency(description.asText(), rank.intValue());
+      Json jsonNode = Json.read(json);
+      Json description = jsonNode.at("description");
+      Json rank = jsonNode.at("rank");
+      return new CryptoCurrency(description.asString(), rank.asInteger());
    }
 
    @Test
-   public void testRestOnly() throws Exception {
+   public void testRestOnly() {
       writeCurrencyViaJson("DASH", "Dash", 7);
       writeCurrencyViaJson("IOTA", "Iota", 8);
       writeCurrencyViaJson("XMR", "Monero", 9);
@@ -125,7 +121,7 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testHotRodInteroperability() throws Exception {
+   public void testHotRodInteroperability() {
       remoteCache.clear();
       // Put object via Hot Rod
       remoteCache.put("BTC", new CryptoCurrency("Bitcoin", 1));
@@ -158,8 +154,8 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       // Read as JSON from the Hot Rod client
       Object jsonResult = remoteCache.withDataFormat(DataFormat.builder().valueType(MediaType.APPLICATION_JSON).build()).get("LTC");
 
-      JsonNode jsonNode = new ObjectMapper().readTree((byte[]) jsonResult);
-      assertEquals(jsonNode.get("description").asText(), "Litecoin");
+      Json jsonNode = Json.read(new String((byte[]) jsonResult, StandardCharsets.UTF_8));
+      assertEquals(jsonNode.at("description").asString(), "Litecoin");
    }
 
    @AfterClass

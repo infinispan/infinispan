@@ -1,12 +1,14 @@
 package org.infinispan.stats;
 
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+
 /**
  * Stats.
  *
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface Stats {
+public interface Stats extends JsonSerialization {
 
    /**
     * @return Number of seconds since cache started.

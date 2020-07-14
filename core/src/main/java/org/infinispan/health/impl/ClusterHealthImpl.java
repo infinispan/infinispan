@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.HealthStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -50,14 +51,24 @@ class ClusterHealthImpl implements ClusterHealth {
    @Override
    public int getNumberOfNodes() {
       return Optional.ofNullable(cacheManager.getMembers()).orElse(Collections.emptyList())
-                     .size();
+            .size();
    }
 
    @Override
    public List<String> getNodeNames() {
       return Optional.ofNullable(cacheManager.getMembers()).orElse(Collections.emptyList())
-                     .stream()
-                     .map(Object::toString)
-                     .collect(Collectors.toList());
+            .stream()
+            .map(Object::toString)
+            .collect(Collectors.toList());
+   }
+
+
+   @Override
+   public Json toJson() {
+      return Json.object()
+            .set("cluster_name", getClusterName())
+            .set("health_status", getHealthStatus())
+            .set("number_of_nodes", getNumberOfNodes())
+            .set("node_names", Json.make(getNodeNames()));
    }
 }

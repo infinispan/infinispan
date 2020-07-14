@@ -10,12 +10,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.testng.annotations.Test;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Tests for search over rest for indexed caches.
@@ -42,8 +41,8 @@ public class IndexedRestSearchTest extends BaseRestSearchTest {
 
       RestResponse response = join(get("10", "application/json"));
 
-      JsonNode person = MAPPER.readTree(response.getBody());
-      assertEquals("Surname", person.get("surname").asText());
+      Json person = Json.read(response.getBody());
+      assertEquals("Surname", person.at("surname").asString());
    }
 
    @Test
