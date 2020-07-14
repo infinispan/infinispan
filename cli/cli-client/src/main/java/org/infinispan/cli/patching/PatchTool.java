@@ -1,5 +1,6 @@
 package org.infinispan.cli.patching;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.cli.logging.Messages.MSG;
 
 import java.io.File;
@@ -33,12 +34,9 @@ import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
-
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 
 /**
  * Creates/installs/removes patches
@@ -51,18 +49,12 @@ public class PatchTool {
    public static final int BUFFER_SIZE = 8192;
    public static final String PATCHES_DIR = ".patches";
    public static final String PATCHES_FILE = "patches.json";
-   private final ObjectMapper mapper;
    private final PrintStream out;
    private final PrintStream err;
 
    public PatchTool(PrintStream out, PrintStream err) {
       this.out = out;
       this.err = err;
-      this.mapper = new ObjectMapper();
-      SimpleModule module = new SimpleModule();
-      module.addSerializer(PatchOperation.class, new PatchOperation.PatchOperationSerializer());
-      module.addDeserializer(PatchOperation.class, new PatchOperation.PatchOperationDeserializer());
-      this.mapper.registerModule(module);
    }
 
    public void createPatch(String qualifier, Path patch, Path target, Path... sources) throws IOException {
@@ -309,8 +301,8 @@ public class PatchTool {
    private List<PatchInfo> getInstalledPatches(Path target) {
       Path patchesFile = target.resolve(PATCHES_DIR).resolve(PATCHES_FILE);
       try (InputStream is = Files.newInputStream(patchesFile, StandardOpenOption.READ)) {
-         JavaType patchInfoList = mapper.getTypeFactory().constructCollectionType(List.class, PatchInfo.class);
-         return mapper.readValue(is, patchInfoList);
+         Json read = Json.read(Util.read(is));
+         return read.asJsonList().stream().map(PatchInfo::fromJson).collect(Collectors.toList());
       } catch (NoSuchFileException e) {
          return new ArrayList<>();
       } catch (IOException e) {
@@ -320,7 +312,8 @@ public class PatchTool {
 
    private void writeInstalledPatches(Path target, List<PatchInfo> patches) {
       try (OutputStream os = Files.newOutputStream(Files.createDirectories(target.resolve(PATCHES_DIR)).resolve(PATCHES_FILE), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-         mapper.writeValue(os, patches);
+         String json = Json.make(patches).toString();
+         os.write(json.getBytes(UTF_8));
       } catch (IOException e) {
          throw MSG.patchCannotWritePatchesFile(e);
       }
@@ -372,7 +365,8 @@ public class PatchTool {
       // Write out the JSON patch file
       Path patchPath = zipfs.getPath("patch-" + patchInfo.getSourceVersion() + "_" + patchInfo.getTargetVersion() + ".json");
       try (OutputStream os = Files.newOutputStream(patchPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-         mapper.writerWithDefaultPrettyPrinter().writeValue(os, patchInfo);
+         String json = patchInfo.toJson().toPrettyString();
+         os.write(json.getBytes(UTF_8));
       }
    }
 
@@ -410,7 +404,8 @@ public class PatchTool {
       List<PatchInfo> infos = new ArrayList<>(paths.size());
       for (Path path : paths) {
          try (InputStream is = Files.newInputStream(path, StandardOpenOption.READ)) {
-            infos.add(mapper.readValue(is, PatchInfo.class));
+            Json json = Json.read(Util.read(is));
+            infos.add(PatchInfo.fromJson(json));
          }
       }
       return infos;

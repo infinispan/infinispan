@@ -1,6 +1,5 @@
 package org.infinispan.rest;
 
-
 import java.util.concurrent.Executor;
 
 import org.infinispan.commons.configuration.JsonReader;
@@ -11,15 +10,10 @@ import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.core.ServerManagement;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-
 /**
  * @since 10.0
  */
 public class InvocationHelper {
-   private final ObjectMapper mapper= new ObjectMapper();
    private final ParserRegistry parserRegistry = new ParserRegistry();
    private final JsonReader jsonReader = new JsonReader();
    private final JsonWriter jsonWriter = new JsonWriter();
@@ -36,11 +30,6 @@ public class InvocationHelper {
       this.configuration = configuration;
       this.server = server;
       this.executor = executor;
-      this.mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE).registerModule(new Jdk8Module());
-   }
-
-   public ObjectMapper getMapper() {
-      return mapper;
    }
 
    public ParserRegistry getParserRegistry() {

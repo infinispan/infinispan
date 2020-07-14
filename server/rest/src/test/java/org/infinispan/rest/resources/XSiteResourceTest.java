@@ -23,6 +23,8 @@ import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -30,15 +32,12 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.ControlledTransport;
 import org.infinispan.rest.helper.RestServerHelper;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * @since 10.0
@@ -53,8 +52,8 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
    private static final String CACHE_2 = "CACHE_2";
    private static final String CACHE_MANAGER = "default";
 
-   private Map<String, RestServerHelper> restServerPerSite = new HashMap<>(2);
-   private Map<String, RestClient> clientPerSite = new HashMap<>(2);
+   private final Map<String, RestServerHelper> restServerPerSite = new HashMap<>(2);
+   private final Map<String, RestClient> clientPerSite = new HashMap<>(2);
 
    protected int defaultNumberOfSites() {
       return 3;
@@ -149,8 +148,8 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
    public void testBackups() {
       RestCacheClient cache = getCacheClient(LON);
 
-      JsonNode status = jsonResponseBody(cache.xsiteBackups());
-      assertEquals(ONLINE, status.get(NYC).asText());
+      Json status = jsonResponseBody(cache.xsiteBackups());
+      assertEquals(ONLINE, status.at(NYC).asString());
    }
 
    @Test
@@ -202,14 +201,14 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
 
       controllerTransport.stopBlocking();
 
-      JsonNode status = jsonResponseBody(cache.pushStateStatus());
-      assertEquals("CANCELED", status.get(NYC).asText());
+      Json status = jsonResponseBody(cache.pushStateStatus());
+      assertEquals("CANCELED", status.at(NYC).asString());
 
       // Clear status
       assertSuccessful(cache.clearPushStateStatus());
 
       status = jsonResponseBody(cache.pushStateStatus());
-      assertTrue(status.isEmpty());
+      assertTrue(status.asMap().isEmpty());
 
       assertSuccessful(cache.cancelReceiveState(NYC));
    }
@@ -218,17 +217,17 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
    public void testTakeOfflineConfig() {
       RestCacheClient cacheClient = getCacheClient(LON);
 
-      JsonNode takeOfflineConfig = jsonResponseBody(cacheClient.getXSiteTakeOfflineConfig(NYC));
+      Json takeOfflineConfig = jsonResponseBody(cacheClient.getXSiteTakeOfflineConfig(NYC));
 
-      assertEquals(0, takeOfflineConfig.get("after_failures").asInt());
-      assertEquals(0, takeOfflineConfig.get("min_wait").asInt());
+      assertEquals(0, takeOfflineConfig.at("after_failures").asInteger());
+      assertEquals(0, takeOfflineConfig.at("min_wait").asInteger());
 
       assertNoContent(cacheClient.updateXSiteTakeOfflineConfig(NYC, 5, 1000));
 
       takeOfflineConfig = jsonResponseBody(cacheClient.getXSiteTakeOfflineConfig(NYC));
 
-      assertEquals(5, takeOfflineConfig.get("after_failures").asInt());
-      assertEquals(1000, takeOfflineConfig.get("min_wait").asInt());
+      assertEquals(5, takeOfflineConfig.at("after_failures").asInteger());
+      assertEquals(1000, takeOfflineConfig.at("min_wait").asInteger());
    }
 
    @Test
@@ -246,10 +245,10 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
 
       assertSuccessful(restClient.cache(CACHE_2).takeSiteOffline(NYC));
 
-      JsonNode json = jsonResponseBody(restClient.cacheManager(CACHE_MANAGER).backupStatuses());
-      assertEquals(json.get(NYC).get("status").asText(), "mixed");
-      assertEquals(json.get(NYC).get("online").elements().next().asText(), CACHE_1);
-      assertEquals(json.get(NYC).get("offline").elements().next().asText(), CACHE_2);
+      Json json = jsonResponseBody(restClient.cacheManager(CACHE_MANAGER).backupStatuses());
+      assertEquals(json.at(NYC).at("status").asString(), "mixed");
+      assertEquals(json.at(NYC).at("online").asJsonList().iterator().next().asString(), CACHE_1);
+      assertEquals(json.at(NYC).at("offline").asJsonList().iterator().next().asString(), CACHE_2);
 
       assertSuccessful(restClient.cache(CACHE_2).bringSiteOnline(NYC));
 
@@ -264,13 +263,13 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
 
       assertSuccessful(restCacheManagerClient.takeOffline(SFO));
 
-      JsonNode json = jsonResponseBody(restCacheManagerClient.backupStatuses());
-      assertEquals(json.get(SFO).get("status").asText(), "offline");
+      Json json = jsonResponseBody(restCacheManagerClient.backupStatuses());
+      assertEquals(json.at(SFO).at("status").asString(), "offline");
 
       assertSuccessful(restCacheManagerClient.bringBackupOnline(SFO));
 
       json = jsonResponseBody(restCacheManagerClient.backupStatuses());
-      assertEquals(json.get(SFO).get("status").asText(), "online");
+      assertEquals(json.at(SFO).at("status").asString(), "online");
    }
 
    @Test
@@ -286,8 +285,8 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
 
       // Take SFO offline for all caches
       assertSuccessful(restClientLon.cacheManager(CACHE_MANAGER).takeOffline(SFO));
-      JsonNode backupStatuses = jsonResponseBody(restClientLon.cacheManager(CACHE_MANAGER).backupStatuses());
-      assertEquals("offline", backupStatuses.get(SFO).get("status").asText());
+      Json backupStatuses = jsonResponseBody(restClientLon.cacheManager(CACHE_MANAGER).backupStatuses());
+      assertEquals("offline", backupStatuses.at(SFO).at("status").asString());
 
       // Write to the caches
       int entries = 10;
@@ -318,8 +317,8 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
    }
 
    private String pushStateStatus(RestCacheClient cacheClient, String siteName) {
-      JsonNode json = jsonResponseBody(cacheClient.pushStateStatus());
-      return json.get(siteName).asText();
+      Json json = jsonResponseBody(cacheClient.pushStateStatus());
+      return json.at(siteName).asString();
    }
 
    @Test
@@ -343,11 +342,11 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       controlledTransport.stopBlocking();
 
       // Verify that push was cancelled for both caches
-      JsonNode pushStatusCache1 = jsonResponseBody(cache1Lon.pushStateStatus());
-      JsonNode pushStatusCache2 = jsonResponseBody(cache2Lon.pushStateStatus());
+      Json pushStatusCache1 = jsonResponseBody(cache1Lon.pushStateStatus());
+      Json pushStatusCache2 = jsonResponseBody(cache2Lon.pushStateStatus());
 
-      assertEquals("CANCELED", pushStatusCache1.get(SFO).asText());
-      assertEquals("CANCELED", pushStatusCache2.get(SFO).asText());
+      assertEquals("CANCELED", pushStatusCache1.at(SFO).asString());
+      assertEquals("CANCELED", pushStatusCache2.at(SFO).asString());
    }
 
    private int getCacheSize(RestCacheClient cacheClient) {
@@ -387,13 +386,13 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       RestCacheClient cacheClient = getCacheClient(site);
       String cacheManagerAddress = getFirstCacheManagerAddress(site);
 
-      JsonNode json = jsonResponseBody(cacheClient.backupStatus(backup));
-      return json.get(cacheManagerAddress).asText();
+      Json json = jsonResponseBody(cacheClient.backupStatus(backup));
+      return json.at(cacheManagerAddress).asString();
    }
 
    private void assertAllSitesOnline(RestClient restClient, String... sites) {
-      JsonNode json = jsonResponseBody(restClient.cacheManager(CACHE_MANAGER).backupStatuses());
-      Arrays.stream(sites).forEach(s -> assertEquals(json.get(s).get("status").asText(), "online"));
+      Json json = jsonResponseBody(restClient.cacheManager(CACHE_MANAGER).backupStatuses());
+      Arrays.stream(sites).forEach(s -> assertEquals(json.at(s).at("status").asString(), "online"));
    }
 
    @Override
@@ -401,9 +400,9 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       // LON backs-up to SFO, NYC
       ConfigurationBuilder builder = defaultConfigurationForSite(0);
       builder.sites().addBackup().site(siteName(1)).strategy(BackupConfiguration.BackupStrategy.SYNC)
-             .stateTransfer().chunkSize(5);
+            .stateTransfer().chunkSize(5);
       builder.sites().addBackup().site(siteName(2)).strategy(BackupConfiguration.BackupStrategy.SYNC)
-             .stateTransfer().chunkSize(5);
+            .stateTransfer().chunkSize(5);
       defineInSite(site(0), CACHE_1, builder.build());
       defineInSite(site(0), CACHE_2, builder.build());
       defineInSite(site(2), CACHE_1, builder.build());
@@ -416,9 +415,9 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       // NYC backs up to LON, SFO
       builder = defaultConfigurationForSite(1);
       builder.sites().addBackup().site(siteName(0)).strategy(BackupConfiguration.BackupStrategy.SYNC)
-             .stateTransfer().chunkSize(5);
+            .stateTransfer().chunkSize(5);
       builder.sites().addBackup().site(siteName(2)).strategy(BackupConfiguration.BackupStrategy.SYNC)
-             .stateTransfer().chunkSize(5);
+            .stateTransfer().chunkSize(5);
       defineInSite(site(1), CACHE_1, builder.build());
       defineInSite(site(1), CACHE_2, builder.build());
       site(1).waitForClusterToForm(CACHE_1);

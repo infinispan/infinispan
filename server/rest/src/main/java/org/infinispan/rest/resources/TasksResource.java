@@ -17,6 +17,7 @@ import javax.security.auth.Subject;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.StandardConversions;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
@@ -56,7 +57,7 @@ public class TasksResource implements ResourceHandler {
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);
       List<Task> tasks = userOnly ? taskManager.getUserTasks() : taskManager.getTasks();
-      return asJsonResponseFuture(tasks, invocationHelper);
+      return asJsonResponseFuture(Json.make(tasks));
    }
 
    private CompletionStage<RestResponse> createScriptTask(RestRequest request) {
@@ -94,7 +95,7 @@ public class TasksResource implements ResourceHandler {
          if (result instanceof byte[]) {
             builder.contentType(TEXT_PLAIN_TYPE).entity(result);
          } else {
-            addEntityAsJson(result, builder, invocationHelper);
+            addEntityAsJson(Json.make(result), builder);
          }
          return builder.build();
       });

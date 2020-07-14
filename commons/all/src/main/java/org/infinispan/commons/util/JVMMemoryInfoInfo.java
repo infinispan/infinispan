@@ -10,11 +10,14 @@ import java.lang.management.MemoryUsage;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.dataconversion.internal.Json;
+
 /**
  * @since 10.0
  */
 @SuppressWarnings("unused")
-public final class JVMMemoryInfoInfo {
+public final class JVMMemoryInfoInfo implements JsonSerialization {
 
    private static MemoryMXBean memoryMBean;
    private static List<MemoryPoolMXBean> memoryPoolMBeans;
@@ -48,7 +51,24 @@ public final class JVMMemoryInfoInfo {
       return memoryMBean.getNonHeapMemoryUsage();
    }
 
-   private static class BufferPool {
+   private static Json asJson(MemoryUsage usage) {
+      return Json.object("init", usage.getInit())
+            .set("used", usage.getUsed())
+            .set("committed", usage.getCommitted())
+            .set("max", usage.getMax());
+   }
+
+   @Override
+   public Json toJson() {
+      return Json.object()
+            .set("memory_pools", Json.make(getMemoryPools()))
+            .set("gc", Json.make(getGc()))
+            .set("buffer_pools", Json.make(getBufferPools()))
+            .set("heap", asJson(getHeap()))
+            .set("non_heap", asJson(getNonHeap()));
+   }
+
+   private static class BufferPool implements JsonSerialization {
       private final long memoryUsed;
       private final String name;
       private final long totalCapacity;
@@ -76,9 +96,18 @@ public final class JVMMemoryInfoInfo {
       public long getCount() {
          return count;
       }
+
+      @Override
+      public Json toJson() {
+         return Json.object()
+               .set("name", name)
+               .set("memory_used", memoryUsed)
+               .set("total_capacity", totalCapacity)
+               .set("count", count);
+      }
    }
 
-   private static class MemoryPool {
+   private static class MemoryPool implements JsonSerialization {
       private final String name;
       private final MemoryType type;
       private final MemoryUsage usage;
@@ -106,9 +135,18 @@ public final class JVMMemoryInfoInfo {
       public MemoryUsage getPeakUsage() {
          return peakUsage;
       }
+
+      @Override
+      public Json toJson() {
+         return Json.object()
+               .set("name", name)
+               .set("type", type)
+               .set("usage", asJson(usage))
+               .set("peak_usage", asJson(peakUsage));
+      }
    }
 
-   private static class MemoryManager {
+   private static class MemoryManager implements JsonSerialization {
       private final String name;
       private final String[] memoryPoolNames;
       private final boolean valid;
@@ -141,6 +179,16 @@ public final class JVMMemoryInfoInfo {
 
       public boolean isValid() {
          return valid;
+      }
+
+      @Override
+      public Json toJson() {
+         return Json.object()
+               .set("name", name)
+               .set("valid", valid)
+               .set("collection_count", collectionCount)
+               .set("collection_time", collectionTime)
+               .set("memory_pool_names", Json.make(getMemoryPoolNames()));
       }
    }
 

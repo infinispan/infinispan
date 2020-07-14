@@ -5,29 +5,24 @@ import static org.infinispan.query.remote.json.JSONConstants.OFFSET;
 import static org.infinispan.query.remote.json.JSONConstants.QUERY_MODE;
 import static org.infinispan.query.remote.json.JSONConstants.QUERY_STRING;
 
-import org.infinispan.query.dsl.IndexedQueryMode;
+import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.query.dsl.IndexedQueryMode;
 
 /**
  * @since 9.4
  */
-public class JsonQueryRequest {
+public class JsonQueryRequest implements JsonSerialization {
 
    private static final Integer DEFAULT_OFFSET = 0;
    private static final Integer DEFAULT_MAX_RESULTS = 10;
 
-   @JsonProperty(QUERY_STRING)
    private final String query;
-
-   @JsonProperty(OFFSET)
    private final Integer startOffset;
-
-   @JsonProperty(MAX_RESULTS)
    private final Integer maxResults;
-
-   @JsonProperty(QUERY_MODE)
-   private IndexedQueryMode queryMode;
+   private final IndexedQueryMode queryMode;
 
    public JsonQueryRequest(String query, Integer startOffset, Integer maxResults, IndexedQueryMode queryMode) {
       this.query = query;
@@ -58,5 +53,24 @@ public class JsonQueryRequest {
 
    public IndexedQueryMode getQueryMode() {
       return queryMode;
+   }
+
+   @Override
+   public Json toJson() {
+      throw new UnsupportedOperationException();
+   }
+
+   public static JsonQueryRequest fromJson(String json) {
+      Map<String, Json> properties = Json.read(json).asJsonMap();
+      Json queryValue = properties.get(QUERY_STRING);
+      Json offsetValue = properties.get(OFFSET);
+      Json maxResultsValue = properties.get(MAX_RESULTS);
+      Json queryModeValue = properties.get(QUERY_MODE);
+
+      String query = queryValue != null ? queryValue.asString() : null;
+      Integer offset = offsetValue != null ? offsetValue.asInteger() : null;
+      Integer maxResults = maxResultsValue != null ? maxResultsValue.asInteger() : null;
+      IndexedQueryMode queryMode = queryModeValue != null ? IndexedQueryMode.valueOf(queryModeValue.asString()) : null;
+      return new JsonQueryRequest(query, offset, maxResults, queryMode);
    }
 }

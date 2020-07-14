@@ -45,12 +45,9 @@ import java.util.stream.Collectors;
 import org.assertj.core.api.Assertions;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.rest.DateUtils;
 import org.infinispan.util.concurrent.CompletableFutures;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ResponseAssertion {
 
@@ -292,13 +289,8 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion hasNoErrors() {
-      ObjectMapper mapper = new ObjectMapper();
-      try {
-         JsonNode node = mapper.readTree(response.getBody());
-         Assertions.assertThat(node.get("error").isNull()).isTrue();
-      } catch (JsonProcessingException e) {
-         Assertions.fail("Response has errors: " + response.getBody());
-      }
+      Json node = Json.read(response.getBody());
+      Assertions.assertThat(node.at("error").isNull()).isTrue();
       return this;
    }
 }

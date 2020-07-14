@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -42,7 +43,7 @@ public class LoginResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> loginConfiguration(RestRequest restRequest) {
       Map<String, String> loginConfiguration = invocationHelper.getServer().getLoginConfiguration();
-      return asJsonResponseFuture(loginConfiguration, invocationHelper);
+      return asJsonResponseFuture(Json.make(loginConfiguration));
    }
 
    private CompletionStage<RestResponse> login(RestRequest restRequest) {

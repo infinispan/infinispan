@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
@@ -634,5 +635,35 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
          }
       }
       return stats;
+   }
+
+   @Override
+   public Json toJson() {
+      return Json.object()
+            .set("statistics_enabled", statisticsEnabled)
+            .set("number_of_entries", getNumberOfEntries())
+            .set("hit_ratio", getHitRatio())
+            .set("read_write_ratio", getReadWriteRatio())
+            .set("time_since_start", getTimeSinceStart())
+            .set("time_since_reset", getTimeSinceReset())
+            .set("current_number_of_entries", getCurrentNumberOfEntries())
+            .set("current_number_of_entries_in_memory", getCurrentNumberOfEntriesInMemory())
+            .set("total_number_of_entries", getTotalNumberOfEntries())
+            .set("off_heap_memory_used", getOffHeapMemoryUsed())
+            .set("data_memory_used", getDataMemoryUsed())
+            .set("stores", getStores())
+            .set("retrievals", getRetrievals())
+            .set("hits", getHits())
+            .set("misses", getMisses())
+            .set("remove_hits", getRemoveHits())
+            .set("remove_misses", getRemoveMisses())
+            .set("evictions", getEvictions())
+            .set("average_read_time", getAverageReadTime())
+            .set("average_read_time_nanos", getAverageReadTimeNanos())
+            .set("average_write_time", getAverageWriteTime())
+            .set("average_write_time_nanos", getAverageWriteTimeNanos())
+            .set("average_remove_time", getAverageRemoveTime())
+            .set("average_remove_time_nanos", getAverageRemoveTimeNanos())
+            .set("required_minimum_number_of_nodes", getRequiredMinimumNumberOfNodes());
    }
 }

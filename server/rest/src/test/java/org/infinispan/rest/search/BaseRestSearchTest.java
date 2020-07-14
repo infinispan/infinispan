@@ -15,7 +15,9 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
@@ -24,6 +26,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.impl.okhttp.StringRestEntityOkHttp;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -41,11 +44,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 /**
  * Base class for query over Rest tests.
  *
@@ -58,7 +56,6 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    private static final String CACHE_NAME = "search-rest";
    private static final String PROTO_FILE_NAME = "person.proto";
-   static final ObjectMapper MAPPER = new ObjectMapper();
 
    protected RestClient client;
    protected RestCacheClient cacheClient;
@@ -158,46 +155,49 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    @Test(dataProvider = "HttpMethodProvider")
    public void shouldReturnEmptyResults(Method method) throws Exception {
-      JsonNode query = query("from org.infinispan.rest.search.entity.Person p where p.name = 'nobody'", method);
+      Json query = query("from org.infinispan.rest.search.entity.Person p where p.name = 'nobody'", method);
 
       assertZeroHits(query);
    }
 
    @Test(dataProvider = "HttpMethodProvider")
    public void testSimpleQuery(Method method) throws Exception {
-      JsonNode queryResult = query("from org.infinispan.rest.search.entity.Person p where p.surname = 'Cage'", method);
-      assertEquals(queryResult.get("total_results").intValue(), 1);
+      Json queryResult = query("from org.infinispan.rest.search.entity.Person p where p.surname = 'Cage'", method);
+      assertEquals(queryResult.at("total_results").asInteger(), 1);
 
-      ArrayNode hits = (ArrayNode) queryResult.get("hits");
-      assertEquals(hits.size(), 1);
+      Json hits = queryResult.at("hits");
+      List<Json> jsonHits = hits.asJsonList();
+      assertEquals(jsonHits.size(), 1);
 
-      JsonNode result = hits.iterator().next();
-      JsonNode firstHit = result.get(HIT);
-      assertEquals(firstHit.get("id").intValue(), 2);
-      assertEquals(firstHit.get("name").asText(), "Luke");
-      assertEquals(firstHit.get("surname").asText(), "Cage");
+      Json result = jsonHits.iterator().next();
+      Json firstHit = result.at(HIT);
+      assertEquals(firstHit.at("id").asInteger(), 2);
+      assertEquals(firstHit.at("name").asString(), "Luke");
+      assertEquals(firstHit.at("surname").asString(), "Cage");
    }
 
    @Test(dataProvider = "HttpMethodProvider")
    public void testMultiResultQuery(Method method) throws Exception {
-      JsonNode results = query("from org.infinispan.rest.search.entity.Person p where p.id < 5 and p.gender = 'MALE'", method);
+      Json results = query("from org.infinispan.rest.search.entity.Person p where p.id < 5 and p.gender = 'MALE'", method);
 
-      assertEquals(results.get(TOTAL_RESULTS).intValue(), 3);
+      assertEquals(results.at(TOTAL_RESULTS).asInteger(), 3);
 
-      ArrayNode hits = (ArrayNode) results.get("hits");
-      assertEquals(hits.size(), 3);
+      Json hits = results.at("hits");
+      assertEquals(hits.asList().size(), 3);
    }
 
    @Test(dataProvider = "HttpMethodProvider")
    public void testProjections(Method method) throws Exception {
-      JsonNode results = query("Select name, surname from org.infinispan.rest.search.entity.Person", method);
+      Json results = query("Select name, surname from org.infinispan.rest.search.entity.Person", method);
 
-      assertEquals(results.get(TOTAL_RESULTS).intValue(), ENTRIES);
+      assertEquals(results.at(TOTAL_RESULTS).asInteger(), ENTRIES);
 
-      List<JsonNode> names = results.findValues("name");
-      List<JsonNode> surnames = results.findValues("surname");
-      List<JsonNode> streets = results.findValues("street");
-      List<JsonNode> gender = results.findValues("gender");
+      Json hits = results.at("hits");
+
+      List<?> names = findValues(hits, "name");
+      List<?> surnames = findValues(hits, "surname");
+      List<?> streets = findValues(hits, "street");
+      List<?> gender = findValues(hits, "gender");
 
       assertEquals(10, names.size());
       assertEquals(10, surnames.size());
@@ -205,36 +205,44 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       assertEquals(0, gender.size());
    }
 
+   private List<?> findValues(Json hits, String fieldName) {
+      return hits.asJsonList().stream()
+            .map(j -> j.at("hit"))
+            .map(h -> h.asMap().get(fieldName))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+   }
+
    @Test(dataProvider = "HttpMethodProvider")
    public void testGrouping(Method method) throws Exception {
-      JsonNode results = query("select p.gender, count(p.name) from org.infinispan.rest.search.entity.Person p where p.id < 5 group by p.gender order by p.gender", method);
+      Json results = query("select p.gender, count(p.name) from org.infinispan.rest.search.entity.Person p where p.id < 5 group by p.gender order by p.gender", method);
 
-      assertEquals(results.get(TOTAL_RESULTS).intValue(), 2);
+      assertEquals(results.at(TOTAL_RESULTS).asInteger(), 2);
 
-      ArrayNode hits = (ArrayNode) results.get("hits");
+      Json hits = results.at("hits");
 
-      JsonNode males = hits.get(0);
-      assertEquals(males.path(HIT).path("name").intValue(), 3);
+      Json males = hits.at(0);
+      assertEquals(males.at(HIT).at("name").asInteger(), 3);
 
-      JsonNode females = hits.get(1);
-      assertEquals(females.path(HIT).path("name").intValue(), 1);
+      Json females = hits.at(1);
+      assertEquals(females.at(HIT).at("name").asInteger(), 1);
    }
 
    @Test(dataProvider = "HttpMethodProvider")
    public void testOffset(Method method) throws Exception {
       String q = "select p.name from org.infinispan.rest.search.entity.Person p where p.id < 5 order by p.name desc";
-      JsonNode results = query(q, method, 2, 2);
+      Json results = query(q, method, 2, 2);
 
-      assertEquals(results.get("total_results").intValue(), 4);
-      ArrayNode hits = (ArrayNode) results.get("hits");
-      assertEquals(hits.size(), 2);
+      assertEquals(results.at("total_results").asInteger(), 4);
+      Json hits = results.at("hits");
+      assertEquals(hits.asList().size(), 2);
 
-      assertEquals(hits.get(0).path(HIT).path("name").asText(), "Jessica");
-      assertEquals(hits.get(1).path(HIT).path("name").asText(), "Danny");
+      assertEquals(hits.at(0).at(HIT).at("name").asString(), "Jessica");
+      assertEquals(hits.at(1).at(HIT).at("name").asString(), "Danny");
    }
 
    @Test(dataProvider = "HttpMethodProvider")
-   public void testIncompleteSearch(Method method) throws Exception {
+   public void testIncompleteSearch(Method method) {
       String searchUrl = getPath();
       CompletionStage<RestResponse> response;
       if (method.equals(POST)) {
@@ -245,9 +253,9 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
       ResponseAssertion.assertThat(response).isBadRequest();
       String contentAsString = join(response).getBody();
-      JsonNode jsonNode = MAPPER.readTree(contentAsString);
+      Json jsonNode = Json.read(contentAsString);
 
-      assertTrue(jsonNode.get("error").path("message").asText().contains("Invalid search request"));
+      assertTrue(jsonNode.at("error").at("message").asString().contains("Invalid search request"));
    }
 
    @Test
@@ -266,8 +274,8 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       ResponseAssertion.assertThat(fromBrowser).isOk();
       ResponseAssertion.assertThat(fromBrowser).hasContentType(APPLICATION_JSON_TYPE);
 
-      JsonNode person = MAPPER.readTree(fromBrowser.getBody());
-      assertEquals(person.get("id").intValue(), 2);
+      Json person = Json.read(fromBrowser.getBody());
+      assertEquals(person.at("id").asInteger(), 2);
    }
 
    @Test
@@ -279,8 +287,8 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    }
 
    private int getCount() throws Exception {
-      JsonNode results = query("from org.infinispan.rest.search.entity.Person", GET);
-      return results.get("total_results").asInt();
+      Json results = query("from org.infinispan.rest.search.entity.Person", GET);
+      return results.at("total_results").asInteger();
    }
 
    @Test
@@ -314,23 +322,23 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
          ResponseAssertion.assertThat(response).isBadRequest();
       } else {
          ResponseAssertion.assertThat(response).isOk();
-         JsonNode stats = MAPPER.readTree(response.getBody());
-         assertTrue(stats.get("search_query_execution_count").asLong() >= 0);
-         assertTrue(stats.get("search_query_total_time").asLong() >= 0);
-         assertTrue(stats.get("search_query_execution_max_time").asLong() >= 0);
-         assertTrue(stats.get("search_query_execution_avg_time").asLong() >= 0);
-         assertTrue(stats.get("object_loading_total_time").asLong() >= 0);
-         assertTrue(stats.get("object_loading_execution_max_time").asLong() >= 0);
-         assertTrue(stats.get("object_loading_execution_avg_time").asLong() >= 0);
-         assertTrue(stats.get("objects_loaded_count").asLong() >= 0);
-         assertNotNull(stats.get("search_query_execution_max_time_query_string").asText());
+         Json stats = Json.read(response.getBody());
+         assertTrue(stats.at("search_query_execution_count").asLong() >= 0);
+         assertTrue(stats.at("search_query_total_time").asLong() >= 0);
+         assertTrue(stats.at("search_query_execution_max_time").asLong() >= 0);
+         assertTrue(stats.at("search_query_execution_avg_time").asLong() >= 0);
+         assertTrue(stats.at("object_loading_total_time").asLong() >= 0);
+         assertTrue(stats.at("object_loading_execution_max_time").asLong() >= 0);
+         assertTrue(stats.at("object_loading_execution_avg_time").asLong() >= 0);
+         assertTrue(stats.at("objects_loaded_count").asLong() >= 0);
+         assertNotNull(stats.at("search_query_execution_max_time_query_string").asString());
 
          RestResponse clearResponse = join(cacheClient.clearQueryStats());
          response = join(cacheClient.queryStats());
-         stats = MAPPER.readTree(response.getBody());
+         stats = Json.read(response.getBody());
          ResponseAssertion.assertThat(clearResponse).isOk();
-         assertEquals(stats.get("search_query_execution_count").asLong(), 0);
-         assertEquals(stats.get("search_query_execution_max_time").asLong(), 0);
+         assertEquals(stats.at("search_query_execution_count").asLong(), 0);
+         assertEquals(stats.at("search_query_execution_max_time").asLong(), 0);
       }
    }
 
@@ -342,13 +350,13 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
          ResponseAssertion.assertThat(response).isBadRequest();
       } else {
          ResponseAssertion.assertThat(response).isOk();
-         JsonNode stats = MAPPER.readTree(response.getBody());
-         ArrayNode indexClassNames = (ArrayNode) stats.get("indexed_class_names");
+         Json stats = Json.read(response.getBody());
+         Json indexClassNames = stats.at("indexed_class_names");
          String indexedClass = ProtobufValueWrapper.class.getName();
 
-         assertEquals(indexClassNames.get(0).asText(), indexedClass);
-         assertNotNull(stats.get("indexed_entities_count"));
-         assertTrue(stats.get("index_sizes").get(CACHE_NAME + "_protobuf").asInt() > 0);
+         assertEquals(indexClassNames.at(0).asString(), indexedClass);
+         assertNotNull(stats.at("indexed_entities_count"));
+         assertTrue(stats.at("index_sizes").at(CACHE_NAME + "_protobuf").asInteger() > 0);
       }
    }
 
@@ -359,10 +367,10 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    }
 
    protected void populateData() {
-      ObjectNode person1 = createPerson(1, "Jessica", "Jones", "46th St", "NY 10036", "FEMALE", 1111, 2222, 3333);
-      ObjectNode person2 = createPerson(2, "Luke", "Cage", "Malcolm X Boulevard", "NY 11221", "MALE", 4444, 5555);
-      ObjectNode person3 = createPerson(3, "Matthew", "Murdock", "57th St", "NY 10019", "MALE");
-      ObjectNode person4 = createPerson(4, "Danny", "Randy", "Vanderbilt Av.", "NY 10017", "MALE", 2122561084);
+      Json person1 = createPerson(1, "Jessica", "Jones", "46th St", "NY 10036", "FEMALE", 1111, 2222, 3333);
+      Json person2 = createPerson(2, "Luke", "Cage", "Malcolm X Boulevard", "NY 11221", "MALE", 4444, 5555);
+      Json person3 = createPerson(3, "Matthew", "Murdock", "57th St", "NY 10019", "MALE");
+      Json person4 = createPerson(4, "Danny", "Randy", "Vanderbilt Av.", "NY 10017", "MALE", 2122561084);
 
       index(1, person1.toString());
       index(2, person2.toString());
@@ -371,7 +379,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
       for (int i = 5; i <= ENTRIES; i++) {
          String text = "Generic" + i;
-         ObjectNode generic = createPerson(i, text, text, text, text, "MALE", 2122561084);
+         Json generic = createPerson(i, text, text, text, text, "MALE", 2122561084);
          index(i, generic.toString());
       }
 
@@ -402,25 +410,28 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       return client.raw().get(path, Collections.singletonMap(RequestHeader.ACCEPT_HEADER.getValue(), accept));
    }
 
-   protected ObjectNode createPerson(int id, String name, String surname, String street, String postCode, String gender, int... phoneNumbers) {
-      ObjectNode person = MAPPER.createObjectNode();
-      person.put(TYPE, "org.infinispan.rest.search.entity.Person");
-      person.put("id", id);
-      person.put("name", name);
-      person.put("surname", surname);
-      person.put("gender", gender);
+   protected Json createPerson(int id, String name, String surname, String street, String postCode, String gender, int... phoneNumbers) {
+      Json person = Json.object();
+      person.set(TYPE, "org.infinispan.rest.search.entity.Person");
+      person.set("id", id);
+      person.set("name", name);
+      person.set("surname", surname);
+      person.set("gender", gender);
 
-      ObjectNode address = person.putObject("address");
-      if (needType()) address.put(TYPE, "org.infinispan.rest.search.entity.Address");
-      address.put("street", street);
-      address.put("postCode", postCode);
+      Json address = Json.object();
+      if (needType()) address.set(TYPE, "org.infinispan.rest.search.entity.Address");
+      address.set("street", street);
+      address.set("postCode", postCode);
 
-      ArrayNode numbers = person.putArray("phoneNumbers");
+      person.set("address", address);
+
+      Json numbers = Json.array();
       for (int phone : phoneNumbers) {
-         ObjectNode number = numbers.addObject();
-         if (needType()) number.put(TYPE, "org.infinispan.rest.search.entity.PhoneNumber");
-         number.put("number", phone);
+         Json number = Json.object();
+         if (needType()) number.set(TYPE, "org.infinispan.rest.search.entity.PhoneNumber");
+         number.set("number", phone);
       }
+      person.set("phoneNumbers", numbers);
       return person;
    }
 
@@ -429,22 +440,22 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       ResponseAssertion.assertThat(response).hasNoErrors();
    }
 
-   private void assertZeroHits(JsonNode queryResponse) {
-      ArrayNode hits = (ArrayNode) queryResponse.get("hits");
-      assertEquals(hits.size(), 0);
+   private void assertZeroHits(Json queryResponse) {
+      Json hits = queryResponse.at("hits");
+      assertEquals(hits.asList().size(), 0);
    }
 
-   private JsonNode query(String q, Method method) throws Exception {
+   private Json query(String q, Method method) throws Exception {
       return query(q, method, 0, 10);
    }
 
    private CompletionStage<RestResponse> executeQueryRequest(Method method, String q, int offset, int maxResults) throws Exception {
       String path = getPath();
       if (method == POST) {
-         ObjectNode queryReq = MAPPER.createObjectNode();
-         queryReq.put("query", q);
-         queryReq.put("offset", offset);
-         queryReq.put("max_results", maxResults);
+         Json queryReq = Json.object();
+         queryReq.set("query", q);
+         queryReq.set("offset", offset);
+         queryReq.set("max_results", maxResults);
          return client.raw().post(path, queryReq.toString(), APPLICATION_JSON_TYPE);
       }
       String queryReq = path + "&query=" + URLEncoder.encode(q, "UTF-8") +
@@ -453,11 +464,11 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       return client.raw().get(queryReq);
    }
 
-   private JsonNode query(String q, Method method, int offset, int maxResults) throws Exception {
+   private Json query(String q, Method method, int offset, int maxResults) throws Exception {
       CompletionStage<RestResponse> response = executeQueryRequest(method, q, offset, maxResults);
       ResponseAssertion.assertThat(response).isOk();
       String contentAsString = join(response).getBody();
-      return MAPPER.readTree(contentAsString);
+      return Json.read(contentAsString);
    }
 
    protected boolean needType() {

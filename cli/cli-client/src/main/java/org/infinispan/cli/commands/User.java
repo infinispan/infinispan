@@ -16,11 +16,8 @@ import org.aesh.readline.Prompt;
 import org.infinispan.cli.completers.EncryptionAlgorithmCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.user.UserTool;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.kohsuke.MetaInfServices;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -306,13 +303,8 @@ public class User extends CliCommand {
          } else {
             items = userTool.listUsers();
          }
-         ObjectWriter json = new ObjectMapper().writerWithDefaultPrettyPrinter();
-         try {
-            invocation.getShell().writeln(json.writeValueAsString(items));
-            return CommandResult.SUCCESS;
-         } catch (JsonProcessingException e) {
-            return CommandResult.FAILURE;
-         }
+         invocation.getShell().writeln(Json.make(items).toString());
+         return CommandResult.SUCCESS;
       }
    }
 

@@ -8,6 +8,7 @@ import static org.infinispan.query.remote.json.JSONConstants.QUERY_MODE;
 import static org.infinispan.query.remote.json.JSONConstants.QUERY_STRING;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -19,7 +20,6 @@ import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.remote.impl.RemoteQueryManager;
 import org.infinispan.query.remote.json.JsonQueryErrorResult;
-import org.infinispan.query.remote.json.JsonQueryReader;
 import org.infinispan.query.remote.json.JsonQueryRequest;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
@@ -95,7 +95,7 @@ class CacheResourceQueryAction {
       ContentSource contents = restRequest.contents();
       byte[] byteContent = contents.rawContent();
       if (byteContent == null || byteContent.length == 0) throw new IOException();
-      return JsonQueryReader.getQueryFromJSON(byteContent);
+      return JsonQueryRequest.fromJson(new String(byteContent, StandardCharsets.UTF_8));
    }
 
    private String getParameterValue(RestRequest restRequest, String name) {

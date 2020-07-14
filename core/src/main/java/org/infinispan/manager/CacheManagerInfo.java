@@ -7,6 +7,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.ConfigurationManager;
@@ -17,7 +19,7 @@ import org.infinispan.remoting.transport.Transport;
 /**
  * @since 10.0
  */
-public class CacheManagerInfo {
+public class CacheManagerInfo implements JsonSerialization {
 
    public static final List<String> LOCAL_NODE = Collections.singletonList("local");
    private final DefaultCacheManager cacheManager;
@@ -116,7 +118,28 @@ public class CacheManagerInfo {
       return cacheManager.getAddress() == null ? "local" : cacheManager.getAddress().toString();
    }
 
-   static class BasicCacheInfo {
+   @Override
+   public Json toJson() {
+      return Json.object()
+            .set("version", getVersion())
+            .set("name", getName())
+            .set("coordinator", isCoordinator())
+            .set("cache_configuration_names", Json.make(getCacheConfigurationNames()))
+            .set("cluster_name", getClusterName())
+            .set("physical_addresses", getPhysicalAddresses())
+            .set("coordinator_address", getCoordinatorAddress())
+            .set("cache_manager_status", getCacheManagerStatus())
+            .set("created_cache_count", getCreatedCacheCount())
+            .set("running_cache_count", getRunningCacheCount())
+            .set("node_address", getNodeAddress())
+            .set("cluster_members", Json.make(getClusterMembers()))
+            .set("cluster_members_physical_addresses", Json.make(getClusterMembersPhysicalAddresses()))
+            .set("cluster_size", getClusterSize())
+            .set("defined_caches", Json.make(getDefinedCaches()))
+            .set("local_site", getLocalSite());
+   }
+
+   static class BasicCacheInfo implements JsonSerialization {
       String name;
       boolean started;
 
@@ -131,6 +154,11 @@ public class CacheManagerInfo {
 
       public boolean isStarted() {
          return started;
+      }
+
+      @Override
+      public Json toJson() {
+         return Json.object("name", name).set("started", started);
       }
    }
 }

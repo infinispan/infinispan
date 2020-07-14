@@ -6,12 +6,11 @@ import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.rest.RestCacheClient;
@@ -22,6 +21,7 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.impl.okhttp.StringRestEntityOkHttp;
 import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
@@ -29,12 +29,8 @@ import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @since 11.0
@@ -43,7 +39,6 @@ public class RollingUpgradeIT {
    protected static final String CACHE_NAME = "rolling";
    private static final int ENTRIES = 50;
    public static final JsonWriter JSON_WRITER = new JsonWriter();
-   public static final ObjectMapper MAPPER = new ObjectMapper();
 
    private Cluster source, target;
 
@@ -69,7 +64,7 @@ public class RollingUpgradeIT {
    }
 
    @Test
-   public void testRollingUpgrade() throws IOException {
+   public void testRollingUpgrade() {
       RestClient restClientSource = source.getClient();
       RestClient restClientTarget = target.getClient();
 
@@ -114,11 +109,11 @@ public class RollingUpgradeIT {
       assertEquals(response.getBody(), 200, response.getStatus());
    }
 
-   private String getPersonName(String id, RestClient client) throws IOException {
+   private String getPersonName(String id, RestClient client) {
       RestResponse resp = join(client.cache(CACHE_NAME).get(id));
       String body = resp.getBody();
       assertEquals(body, 200, resp.getStatus());
-      return MAPPER.readTree(body).get("name").asText();
+      return Json.read(body).at("name").asString();
    }
 
    public void populateCluster(RestClient client) {
@@ -203,15 +198,8 @@ public class RollingUpgradeIT {
 
       Set<String> getMembers() {
          String response = join(getClient().cacheManager("default").info()).getBody();
-         try {
-            JsonNode jsonNode = MAPPER.readTree(response);
-            Set<String> names = new HashSet<>();
-            jsonNode.get("cluster_members").elements().forEachRemaining(n -> names.add(n.asText()));
-            return names;
-         } catch (IOException e) {
-            Assert.fail(e.getMessage());
-         }
-         return null;
+         Json jsonNode = Json.read(response);
+         return jsonNode.at("cluster_members").asJsonList().stream().map(Json::asString).collect(Collectors.toSet());
       }
 
       RestClient getClient() {

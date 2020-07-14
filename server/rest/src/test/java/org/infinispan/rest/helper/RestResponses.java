@@ -4,10 +4,9 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.Exceptions;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A utility for managing {@link RestResponse}s in tests.
@@ -16,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @since 10.1
  */
 public class RestResponses {
-   private static final ObjectMapper MAPPER = new ObjectMapper();
 
    public static void assertSuccessful(CompletionStage<RestResponse> responseStage) {
       assertStatus(200, responseStage);
@@ -44,8 +42,8 @@ public class RestResponses {
       }
    }
 
-   public static JsonNode jsonResponseBody(CompletionStage<RestResponse> responseCompletionStage) {
-      return Exceptions.unchecked(() -> MAPPER.readTree(responseBody(responseCompletionStage)));
+   public static Json jsonResponseBody(CompletionStage<RestResponse> responseCompletionStage) {
+      return Exceptions.unchecked(() -> Json.read(responseBody(responseCompletionStage)));
    }
 
    private static <T> T sync(CompletionStage<T> stage) {

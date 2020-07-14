@@ -1,22 +1,16 @@
 package org.infinispan.cli.patching;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.dataconversion.internal.Json;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
  **/
-public class PatchOperation {
+public class PatchOperation implements JsonSerialization {
 
    public static final String ACTION = "action";
    public static final String PATH = "path";
@@ -108,58 +102,42 @@ public class PatchOperation {
       return sb.toString();
    }
 
-   public static class PatchOperationSerializer extends StdSerializer<PatchOperation> {
-
-      public PatchOperationSerializer() {
-         this(null);
-      }
-
-      public PatchOperationSerializer(Class<PatchOperation> t) {
-         super(t);
-      }
-
-      @Override
-      public void serialize(PatchOperation operation, JsonGenerator json, SerializerProvider serializerProvider) throws IOException {
-         json.writeStartObject();
-         json.writeStringField(ACTION, operation.action.name());
-         if (operation.path != null) {
-            json.writeStringField(PATH, operation.path.toString());
-            json.writeStringField(DIGEST, operation.digest);
-            json.writeStringField(PERMISSIONS, operation.permissions);
-         }
-         if (operation.newPath != null) {
-            json.writeStringField(NEW_PATH, operation.newPath.toString());
-         }
-         if (operation.newDigest != null) {
-            json.writeStringField(NEW_DIGEST, operation.newDigest);
-         }
-         if (operation.newPermissions != null) {
-            json.writeStringField(NEW_PERMISSIONS, operation.newPermissions);
-         }
-         json.writeEndObject();
+   public static PatchOperation fromJson(Json json) {
+      Action action = Action.valueOf(json.at(ACTION).asString());
+      switch (action) {
+         case ADD:
+            return add(Paths.get(json.at(NEW_PATH).asString()), json.at(NEW_DIGEST).asString(), json.at(NEW_PERMISSIONS).asString());
+         case REMOVE:
+            return remove(Paths.get(json.at(PATH).asString()), json.at(DIGEST).asString(), json.at(PERMISSIONS).asString());
+         case HARD_REPLACE:
+            return replace(false, Paths.get(json.at(PATH).asString()), json.at(DIGEST).asString(), json.at(PERMISSIONS).asString(), json.at(NEW_DIGEST).asString(), json.at(NEW_PERMISSIONS).asString());
+         case SOFT_REPLACE:
+            return replace(true, Paths.get(json.at(PATH).asString()), json.at(DIGEST).asString(), json.at(PERMISSIONS).asString(), json.at(NEW_DIGEST).asString(), json.at(NEW_PERMISSIONS).asString());
+         case UPGRADE:
+            return upgrade(Paths.get(json.at(PATH).asString()), json.at(DIGEST).asString(), json.at(PERMISSIONS).asString(), Paths.get(json.at(NEW_PATH).asString()), json.at(NEW_DIGEST).asString(), json.at(NEW_PERMISSIONS).asString());
+         default:
+            throw new IllegalArgumentException(action.name());
       }
    }
 
-   public static class PatchOperationDeserializer extends JsonDeserializer<PatchOperation> {
 
-      @Override
-      public PatchOperation deserialize(JsonParser parser, DeserializationContext ctx) throws IOException {
-         JsonNode node = parser.getCodec().readTree(parser);
-         Action action = Action.valueOf(node.get(ACTION).asText());
-         switch (action) {
-            case ADD:
-               return add(Paths.get(node.get(NEW_PATH).asText()), node.get(NEW_DIGEST).asText(), node.get(NEW_PERMISSIONS).asText());
-            case REMOVE:
-               return remove(Paths.get(node.get(PATH).asText()), node.get(DIGEST).asText(), node.get(PERMISSIONS).asText());
-            case HARD_REPLACE:
-               return replace(false, Paths.get(node.get(PATH).asText()), node.get(DIGEST).asText(), node.get(PERMISSIONS).asText(), node.get(NEW_DIGEST).asText(), node.get(NEW_PERMISSIONS).asText());
-            case SOFT_REPLACE:
-               return replace(true, Paths.get(node.get(PATH).asText()), node.get(DIGEST).asText(), node.get(PERMISSIONS).asText(), node.get(NEW_DIGEST).asText(), node.get(NEW_PERMISSIONS).asText());
-            case UPGRADE:
-               return upgrade(Paths.get(node.get(PATH).asText()), node.get(DIGEST).asText(), node.get(PERMISSIONS).asText(), Paths.get(node.get(NEW_PATH).asText()), node.get(NEW_DIGEST).asText(), node.get(NEW_PERMISSIONS).asText());
-            default:
-               throw new IllegalArgumentException(action.name());
-         }
+   @Override
+   public Json toJson() {
+      Json result = Json.object().set(ACTION, action.name());
+      if (path != null) {
+         result.set(PATH, path.toString());
+         result.set(DIGEST, digest);
+         result.set(PERMISSIONS, permissions);
       }
+      if (newPath != null) {
+         result.set(NEW_PATH, newPath.toString());
+      }
+      if (newDigest != null) {
+         result.set(NEW_DIGEST, newDigest);
+      }
+      if (newPermissions != null) {
+         result.set(NEW_PERMISSIONS, newPermissions);
+      }
+      return result;
    }
 }

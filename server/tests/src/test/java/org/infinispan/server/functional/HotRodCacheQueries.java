@@ -20,6 +20,7 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
@@ -33,9 +34,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -192,8 +190,8 @@ public class HotRodCacheQueries {
 
       RestResponse response = sync(restClient.cache(SERVER_TEST.getMethodName()).query(query));
 
-      JsonNode results = new ObjectMapper().readTree(response.getBody());
-      assertEquals(1, results.get("total_results").asInt());
+      Json results = Json.read(response.getBody());
+      assertEquals(1, results.at("total_results").asInteger());
    }
 
    @Test

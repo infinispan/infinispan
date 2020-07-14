@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.query.remote.impl.RemoteQueryManager.QUERY_REQUEST_TYPE;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,7 +57,7 @@ class JsonQuerySerializer implements QuerySerializer<JsonQueryResponse> {
 
    @Override
    public byte[] encodeQueryResponse(Object queryResponse, MediaType destinationType) {
-      return ((JsonQueryResponse) queryResponse).asBytes();
+      return ((JsonQueryResponse) queryResponse).toJson().toString().getBytes(StandardCharsets.UTF_8);
    }
 
 }

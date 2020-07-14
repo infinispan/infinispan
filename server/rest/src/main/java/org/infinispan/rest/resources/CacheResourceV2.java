@@ -30,8 +30,10 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.StandardConversions;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -55,8 +57,6 @@ import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.stats.Stats;
 import org.infinispan.upgrade.RollingUpgradeManager;
-
-import com.fasterxml.jackson.annotation.JsonRawValue;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -274,7 +274,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       String cacheName = request.variables().get("cacheName");
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       Stats stats = cache.getAdvancedCache().getStats();
-      return asJsonResponseFuture(stats, invocationHelper);
+      return asJsonResponseFuture(stats.toJson());
    }
 
    private CompletionStage<RestResponse> getAllDetails(RestRequest request) {
@@ -313,8 +313,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.statistics = statistics;
       fullDetail.queryable = queryable;
 
-      return addEntityAsJson(fullDetail, new NettyRestResponse.Builder(), invocationHelper)
-            .build();
+      return addEntityAsJson(fullDetail.toJson(), new NettyRestResponse.Builder()).build();
    }
 
    private InfinispanQueryStatisticsInfo.IndexStatistics getIndexStatistics(Cache<?, ?> cache) {
@@ -354,19 +353,17 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
 
-      return cache.sizeAsync()
-            .thenApply(size -> asJsonResponse(size, invocationHelper));
+      return cache.sizeAsync().thenApply(size -> asJsonResponse(Json.make(size)));
    }
 
    private CompletionStage<RestResponse> getCacheNames(RestRequest request) throws RestResponseException {
       Collection<String> cacheNames = invocationHelper.getRestCacheManager().getCacheNames();
-      return asJsonResponseFuture(cacheNames, invocationHelper);
+      return asJsonResponseFuture(Json.make(cacheNames));
    }
 
-   static class CacheFullDetail {
+   private static class CacheFullDetail implements JsonSerialization {
       public Stats stats;
       public int size;
-      @JsonRawValue
       public String configuration;
       public boolean rehashInProgress;
       public boolean bounded;
@@ -378,5 +375,23 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       public boolean indexingInProgress;
       public boolean statistics;
       public boolean queryable;
+
+      @Override
+      public Json toJson() {
+         return Json.object()
+               .set("stats", stats.toJson())
+               .set("size", size)
+               .set("configuration", Json.factory().raw(configuration))
+               .set("rehash_in_progress", rehashInProgress)
+               .set("bounded", bounded)
+               .set("indexed", indexed)
+               .set("persistent", persistent)
+               .set("transactional", transactional)
+               .set("secured", secured)
+               .set("has_remote_backup", hasRemoteBackup)
+               .set("indexing_in_progress", indexingInProgress)
+               .set("statistics", statistics)
+               .set("queryable", queryable);
+      }
    }
 }

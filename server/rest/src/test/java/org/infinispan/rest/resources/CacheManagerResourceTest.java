@@ -11,7 +11,6 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,6 +21,7 @@ import java.util.stream.Collectors;
 import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.configuration.JsonWriter;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -33,17 +33,11 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.testng.annotations.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-
 @Test(groups = "functional", testName = "rest.CacheManagerResourceTest")
 public class CacheManagerResourceTest extends AbstractRestResourceTest {
 
-   private Configuration cache1Config;
    private Configuration cache2Config;
-   private ObjectMapper mapper = new ObjectMapper();
-   private JsonWriter jsonWriter = new JsonWriter();
+   private final JsonWriter jsonWriter = new JsonWriter();
    private Configuration templateConfig;
    private RestCacheManagerClient cacheManagerClient;
 
@@ -63,7 +57,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
 
    @Override
    protected void defineCaches(EmbeddedCacheManager cm) {
-      cache1Config = getCache1Config();
+      Configuration cache1Config = getCache1Config();
       cache2Config = getCache2Config();
       ConfigurationBuilder templateConfigBuilder = new ConfigurationBuilder();
       templateConfigBuilder.template(true).clustering().cacheMode(LOCAL).encoding().key().mediaType(TEXT_PLAIN_TYPE);
@@ -86,17 +80,17 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testHealth() throws Exception {
+   public void testHealth() {
       RestResponse response = join(cacheManagerClient.health());
       ResponseAssertion.assertThat(response).isOk();
 
-      JsonNode jsonNode = mapper.readTree(response.getBody());
-      JsonNode clusterHealth = jsonNode.get("cluster_health");
-      assertEquals(clusterHealth.get("health_status").asText(), "HEALTHY");
-      assertEquals(clusterHealth.get("number_of_nodes").asInt(), 2);
-      assertEquals(clusterHealth.get("node_names").size(), 2);
+      Json jsonNode = Json.read(response.getBody());
+      Json clusterHealth = jsonNode.at("cluster_health");
+      assertEquals(clusterHealth.at("health_status").asString(), "HEALTHY");
+      assertEquals(clusterHealth.at("number_of_nodes").asInteger(), 2);
+      assertEquals(clusterHealth.at("node_names").asJsonList().size(), 2);
 
-      ArrayNode cacheHealth = (ArrayNode) jsonNode.get("cache_health");
+      Json cacheHealth = jsonNode.at("cache_health");
       List<String> cacheNames = extractCacheNames(cacheHealth);
       assertTrue(cacheNames.contains("cache1"));
       assertTrue(cacheNames.contains("cache2"));
@@ -107,7 +101,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testCacheConfigs() throws Exception {
+   public void testCacheConfigs() {
       String accept = "text/plain; q=0.9, application/json; q=0.6";
 
       RestResponse response = join(cacheManagerClient.cacheConfigurations(accept));
@@ -115,7 +109,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
 
       String json = response.getBody();
-      ArrayNode jsonNode = (ArrayNode) mapper.readTree(json);
+      Json jsonNode = Json.read(json);
       Map<String, String> cachesAndConfig = cacheAndConfig(jsonNode);
 
       assertEquals(cachesAndConfig.get("template"), jsonWriter.toJSON(templateConfig));
@@ -124,7 +118,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testCacheConfigsTemplates() throws Exception {
+   public void testCacheConfigsTemplates() {
       String accept = "text/plain; q=0.9, application/json; q=0.6";
 
       RestResponse response = join(cacheManagerClient.templates(accept));
@@ -132,7 +126,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
 
       String json = response.getBody();
-      ArrayNode jsonNode = (ArrayNode) mapper.readTree(json);
+      Json jsonNode = Json.read(json);
       Map<String, String> cachesAndConfig = cacheAndConfig(jsonNode);
 
       assertEquals(cachesAndConfig.get("template"), jsonWriter.toJSON(templateConfig));
@@ -141,71 +135,71 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testCaches() throws Exception {
+   public void testCaches() {
       RestResponse response = join(cacheManagerClient.caches());
       ResponseAssertion.assertThat(response).isOk();
 
       String json = response.getBody();
-      JsonNode jsonNode = mapper.readTree(json);
-      List<String> names = asText(jsonNode.findValues("name"));
+      Json jsonNode = Json.read(json);
+      List<String> names = find(jsonNode, "name");
       Set<String> expectedNames = Util.asSet("defaultcache", "cache1", "cache2");
 
       assertEquals(expectedNames, new HashSet<>(names));
 
-      List<String> status = asText(jsonNode.findValues("status"));
+      List<String> status = find(jsonNode, "status");
       assertTrue(status.contains("RUNNING"));
 
-      List<String> types = asText(jsonNode.findValues("type"));
+      List<String> types = find(jsonNode, "type");
       assertTrue(types.contains("local-cache"));
       assertTrue(types.contains("distributed-cache"));
 
-      List<String> simpleCaches = asText(jsonNode.findValues("simple_cache"));
+      List<String> simpleCaches = find(jsonNode, "simple_cache");
       assertTrue(simpleCaches.contains("false"));
 
-      List<String> transactional = asText(jsonNode.findValues("transactional"));
+      List<String> transactional = find(jsonNode, "transactional");
       assertTrue(transactional.contains("false"));
 
-      List<String> persistent = asText(jsonNode.findValues("persistent"));
+      List<String> persistent = find(jsonNode, "persistent");
       assertTrue(persistent.contains("false"));
 
-      List<String> bounded = asText(jsonNode.findValues("bounded"));
+      List<String> bounded = find(jsonNode, "bounded");
       assertTrue(bounded.contains("false"));
 
-      List<String> secured = asText(jsonNode.findValues("secured"));
+      List<String> secured = find(jsonNode, "secured");
       assertTrue(secured.contains("false"));
 
-      List<String> indexed = asText(jsonNode.findValues("indexed"));
+      List<String> indexed = find(jsonNode, "indexed");
       assertTrue(indexed.contains("false"));
 
-      List<String> hasRemoteBackup = asText(jsonNode.findValues("has_remote_backup"));
+      List<String> hasRemoteBackup = find(jsonNode, "has_remote_backup");
       assertTrue(hasRemoteBackup.contains("false"));
 
-      List<String> health = asText(jsonNode.findValues("health"));
+      List<String> health = find(jsonNode, "health");
 
       assertTrue(health.contains("HEALTHY"));
    }
 
    @Test
-   public void testCachesWithIgnoreCache() throws Exception {
+   public void testCachesWithIgnoreCache() {
       ignoreManager.ignoreCache("cache1");
 
       RestResponse response = join(cacheManagerClient.caches());
       ResponseAssertion.assertThat(response).isOk();
 
       String json = response.getBody();
-      JsonNode jsonNode = mapper.readTree(json);
-      List<String> names = asText(jsonNode.findValues("name"));
+      Json jsonNode = Json.read(json);
+      List<String> names = find(jsonNode, "name");
       Set<String> expectedNames = Util.asSet("defaultcache", "cache1", "cache2");
 
       assertEquals(expectedNames, new HashSet<>(names));
 
-      List<String> status = asText(jsonNode.findValues("status"));
+      List<String> status = find(jsonNode, "status");
       assertTrue(status.contains("RUNNING"));
       assertTrue(status.contains("IGNORED"));
    }
 
-   private List<String> asText(List<JsonNode> values) {
-      return values.stream().map(JsonNode::asText).collect(Collectors.toList());
+   private List<String> find(Json array, String name) {
+      return array.asJsonList().stream().map(j -> j.at(name).getValue().toString()).collect(Collectors.toList());
    }
 
    @Test
@@ -236,48 +230,46 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testInfo() throws Exception {
+   public void testInfo() {
       RestResponse response = join(cacheManagerClient.info());
 
       ResponseAssertion.assertThat(response).isOk();
 
       String json = response.getBody();
-      JsonNode cmInfo = mapper.readTree(json);
+      Json cmInfo = Json.read(json);
 
-      assertFalse(cmInfo.get("version").asText().isEmpty());
-      assertEquals(2, cmInfo.get("cluster_members").size());
-      assertEquals(2, cmInfo.get("cluster_members_physical_addresses").size());
-      assertEquals("LON-1", cmInfo.get("local_site").asText());
+      assertFalse(cmInfo.at("version").asString().isEmpty());
+      assertEquals(2, cmInfo.at("cluster_members").asList().size());
+      assertEquals(2, cmInfo.at("cluster_members_physical_addresses").asList().size());
+      assertEquals("LON-1", cmInfo.at("local_site").asString());
    }
 
    @Test
-   public void testStats() throws Exception {
+   public void testStats() {
       RestResponse response = join(cacheManagerClient.stats());
 
       ResponseAssertion.assertThat(response).isOk();
 
       String json = response.getBody();
-      JsonNode cmStats = mapper.readTree(json);
+      Json cmStats = Json.read(json);
 
-      assertTrue(cmStats.get("statistics_enabled").asBoolean());
-      assertEquals(0, cmStats.get("stores").asInt());
-      assertEquals(0, cmStats.get("number_of_entries").asInt());
+      assertTrue(cmStats.at("statistics_enabled").asBoolean());
+      assertEquals(0, cmStats.at("stores").asInteger());
+      assertEquals(0, cmStats.at("number_of_entries").asInteger());
 
       cacheManagers.iterator().next().getCache("cache1").put("key", "value");
-      cmStats = mapper.readTree(join(cacheManagerClient.stats()).getBody());
-      assertEquals(1, cmStats.get("stores").asInt());
-      assertEquals(1, cmStats.get("number_of_entries").asInt());
+      cmStats = Json.read(join(cacheManagerClient.stats()).getBody());
+      assertEquals(1, cmStats.at("stores").asInteger());
+      assertEquals(1, cmStats.at("number_of_entries").asInteger());
    }
 
-   private Map<String, String> cacheAndConfig(ArrayNode list) {
+   private Map<String, String> cacheAndConfig(Json list) {
       Map<String, String> result = new HashMap<>();
-      list.elements().forEachRemaining(node -> result.put(node.get("name").asText(), node.get("configuration").toString()));
+      list.asJsonList().forEach(node -> result.put(node.at("name").asString(), node.at("configuration").toString()));
       return result;
    }
 
-   private List<String> extractCacheNames(ArrayNode cacheStatuses) {
-      List<String> names = new ArrayList<>();
-      cacheStatuses.elements().forEachRemaining(n -> names.add(n.get("cache_name").asText()));
-      return names;
+   private List<String> extractCacheNames(Json cacheStatuses) {
+      return cacheStatuses.asJsonList().stream().map(j -> j.at("cache_name").asString()).collect(Collectors.toList());
    }
 }

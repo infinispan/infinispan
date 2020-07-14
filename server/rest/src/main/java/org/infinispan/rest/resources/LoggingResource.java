@@ -6,8 +6,9 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
-import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletionStage;
 
@@ -15,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -23,11 +25,6 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -42,11 +39,6 @@ public final class LoggingResource implements ResourceHandler {
 
    public LoggingResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
-      // Register our custom serializers
-      SimpleModule module = new SimpleModule();
-      module.addSerializer(LoggerConfig.class, new Log4j2LoggerConfigSerializer());
-      module.addSerializer(Appender.class, new Log4j2AppenderSerializer());
-      this.invocationHelper.getMapper().registerModule(module);
    }
 
    @Override
@@ -109,53 +101,27 @@ public final class LoggingResource implements ResourceHandler {
    private CompletionStage<RestResponse> listLoggers(RestRequest request) {
       // We only return loggers declared in the configuration
       LoggerContext logContext = (LoggerContext) LogManager.getContext(false);
-      return asJsonResponseFuture(logContext.getConfiguration().getLoggers().values(), invocationHelper);
+      Json loggerConfigs = jsonLoggerConfigs(logContext.getConfiguration().getLoggers().values());
+      return asJsonResponseFuture(loggerConfigs);
+   }
+
+   private Json jsonLoggerConfigs(Collection<LoggerConfig> loggerConfigs) {
+      Json array = Json.array();
+      for (LoggerConfig loggerConfig : loggerConfigs) {
+         Json jsonLoggerConfig = Json.object();
+         jsonLoggerConfig.set("name", loggerConfig.getName());
+         jsonLoggerConfig.set("level", loggerConfig.getLevel().toString());
+         jsonLoggerConfig.set("appenders", Json.make(loggerConfig.getAppenders().keySet()));
+         array.add(jsonLoggerConfig);
+      }
+      return array;
    }
 
    private CompletionStage<RestResponse> listAppenders(RestRequest request) {
       LoggerContext logContext = (LoggerContext) LogManager.getContext(false);
-      return asJsonResponseFuture(logContext.getConfiguration().getAppenders(), invocationHelper);
-   }
-
-   public static class Log4j2LoggerConfigSerializer extends StdSerializer<LoggerConfig> {
-
-      public Log4j2LoggerConfigSerializer() {
-         this(null);
-      }
-
-      public Log4j2LoggerConfigSerializer(Class<LoggerConfig> t) {
-         super(t);
-      }
-
-      @Override
-      public void serialize(LoggerConfig logger, JsonGenerator json, SerializerProvider serializerProvider) throws IOException {
-         json.writeStartObject();
-         json.writeStringField("name", logger.getName());
-         json.writeStringField("level", logger.getLevel().name());
-         json.writeArrayFieldStart("appenders");
-         for (String appender : logger.getAppenders().keySet()) {
-            json.writeString(appender);
-         }
-         json.writeEndArray();
-         json.writeEndObject();
-      }
-   }
-
-   public static class Log4j2AppenderSerializer extends StdSerializer<Appender> {
-
-      public Log4j2AppenderSerializer() {
-         this(null);
-      }
-
-      public Log4j2AppenderSerializer(Class<Appender> t) {
-         super(t);
-      }
-
-      @Override
-      public void serialize(Appender appender, JsonGenerator json, SerializerProvider serializerProvider) throws IOException {
-         json.writeStartObject();
-         json.writeStringField("name", appender.getName());
-         json.writeEndObject();
-      }
+      Map<String, Appender> appendersMap = logContext.getConfiguration().getAppenders();
+      Json jsonMap = Json.object();
+      appendersMap.forEach((key, value) -> jsonMap.set(key, Json.object().set("name", value.getName())));
+      return asJsonResponseFuture(jsonMap);
    }
 }

@@ -29,7 +29,9 @@ import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.JsonWriter;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -52,9 +54,6 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.CacheIgnoreManager;
-import org.infinispan.stats.CacheContainerStats;
-
-import com.fasterxml.jackson.annotation.JsonRawValue;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.rxjava3.core.Flowable;
@@ -116,7 +115,7 @@ public class CacheManagerResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
-      return asJsonResponseFuture(cacheManager.getCacheManagerInfo(), responseBuilder, invocationHelper);
+      return asJsonResponseFuture(cacheManager.getCacheManagerInfo().toJson(), responseBuilder);
    }
 
    private CompletionStage<RestResponse> getConfig(RestRequest request) {
@@ -150,8 +149,7 @@ public class CacheManagerResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
-      CacheContainerStats stats = cacheManager.getStats();
-      return asJsonResponseFuture(stats, responseBuilder, invocationHelper);
+      return asJsonResponseFuture(cacheManager.getStats().toJson(), responseBuilder);
    }
 
 
@@ -179,7 +177,7 @@ public class CacheManagerResource implements ResourceHandler {
                      () -> healthInfo.clusterHealth.getHealthStatus().toString()))
                .status(OK);
       } else {
-         addEntityAsJson(healthInfo, responseBuilder, invocationHelper);
+         addEntityAsJson(healthInfo.toJson(), responseBuilder);
       }
       return completedFuture(responseBuilder.build());
    }
@@ -196,7 +194,7 @@ public class CacheManagerResource implements ResourceHandler {
 
 
       Set<String> ignoredCaches = cacheIgnoreManager.getIgnoredCaches();
-      for(CacheHealth ch: SecurityActions.getHealth(subjectCacheManager).getCacheHealth(cacheNames)) {
+      for (CacheHealth ch : SecurityActions.getHealth(subjectCacheManager).getCacheHealth(cacheNames)) {
          cachesHealth.put(ch.getCacheName(), ch.getStatus());
       }
 
@@ -221,11 +219,11 @@ public class CacheManagerResource implements ResourceHandler {
                cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
 
                // If the cache is ignored, status is IGNORED
-               if(ignoredCaches.contains(cacheName)) {
+               if (ignoredCaches.contains(cacheName)) {
                   cacheInfo.status = "IGNORED";
                } else {
                   // This action will fail for ignored caches
-                  Cache cache =  restCacheManager.getCache(cacheName, request);
+                  Cache cache = restCacheManager.getCache(cacheName, request);
                   cacheInfo.status = cache.getStatus().toString();
                }
                return cacheInfo;
@@ -235,7 +233,7 @@ public class CacheManagerResource implements ResourceHandler {
                List<CacheInfo> sortedCacheInfos = cacheInfos.stream()
                      .sorted(Comparator.comparing(c -> c.name))
                      .collect(Collectors.toList());
-               return (RestResponse) addEntityAsJson(sortedCacheInfos, responseBuilder, invocationHelper).build();
+               return (RestResponse) addEntityAsJson(Json.make(sortedCacheInfos), responseBuilder).build();
             })
             .toCompletionStage();
    }
@@ -259,7 +257,7 @@ public class CacheManagerResource implements ResourceHandler {
             .sorted(Comparator.comparing(c -> c.name))
             .collect(Collectors.toList());
 
-      return asJsonResponseFuture(configurations, responseBuilder, invocationHelper);
+      return asJsonResponseFuture(Json.make(configurations), responseBuilder);
    }
 
    private CompletionStage<RestResponse> getAllCachesConfigurationTemplates(RestRequest request) {
@@ -280,7 +278,7 @@ public class CacheManagerResource implements ResourceHandler {
             .sorted(Comparator.comparing(c -> c.name))
             .collect(Collectors.toList());
 
-      return asJsonResponseFuture(configurations, responseBuilder, invocationHelper);
+      return asJsonResponseFuture(Json.make(configurations), responseBuilder);
    }
 
 
@@ -309,7 +307,7 @@ public class CacheManagerResource implements ResourceHandler {
 
    }
 
-   class HealthInfo {
+   static class HealthInfo implements JsonSerialization {
       private final ClusterHealth clusterHealth;
       private final List<CacheHealth> cacheHealth;
 
@@ -318,36 +316,32 @@ public class CacheManagerResource implements ResourceHandler {
          this.cacheHealth = cacheHealth;
       }
 
-      public ClusterHealth getClusterHealth() {
-         return clusterHealth;
-      }
-
-      public List<CacheHealth> getCacheHealth() {
-         return cacheHealth;
+      @Override
+      public Json toJson() {
+         return Json.object()
+               .set("cluster_health", clusterHealth.toJson())
+               .set("cache_health", Json.make(cacheHealth));
       }
    }
 
-   class NamedCacheConfiguration {
+   static class NamedCacheConfiguration implements JsonSerialization {
       String name;
+      String configuration;
 
-      Object configuration;
-
-      NamedCacheConfiguration(String name, Object configuration) {
+      NamedCacheConfiguration(String name, String configuration) {
          this.name = name;
          this.configuration = configuration;
       }
 
-      public String getName() {
-         return name;
-      }
-
-      @JsonRawValue
-      public Object getConfiguration() {
-         return configuration;
+      @Override
+      public Json toJson() {
+         return Json.object()
+               .set("name", name)
+               .set("configuration", Json.factory().raw(configuration));
       }
    }
 
-   class CacheInfo {
+   static class CacheInfo implements JsonSerialization {
       public String status;
       public String name;
       public String type;
@@ -359,6 +353,22 @@ public class CacheManagerResource implements ResourceHandler {
       public boolean secured;
       public boolean hasRemoteBackup;
       public HealthStatus health;
+
+      @Override
+      public Json toJson() {
+         return Json.object()
+               .set("status", status)
+               .set("name", name)
+               .set("type", type)
+               .set("simple_cache", simpleCache)
+               .set("transactional", transactional)
+               .set("persistent", persistent)
+               .set("bounded", bounded)
+               .set("secured", secured)
+               .set("indexed", indexed)
+               .set("has_remote_backup", hasRemoteBackup)
+               .set("health", health);
+      }
    }
 
 }

@@ -16,14 +16,12 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Tests the microprofile metrics exporter.
@@ -38,8 +36,6 @@ public class RestMetricsResource {
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-   private final ObjectMapper mapper = new ObjectMapper();
 
    @Test
    public void testOpenMetrics() {
@@ -62,28 +58,28 @@ public class RestMetricsResource {
    }
 
    @Test
-   public void testBaseAndVendorMetrics() throws Exception {
+   public void testBaseAndVendorMetrics() {
       RestMetricsClient metricsClient = SERVER_TEST.rest().create().metrics();
 
       RestResponse response = sync(metricsClient.metrics("base/classloader.loadedClasses.count"));
       assertEquals(200, response.getStatus());
 
-      JsonNode loadedClassesCountNode = mapper.readTree(response.getBody());
-      assertTrue(loadedClassesCountNode.hasNonNull("classloader.loadedClasses.count"));
-      int loadedClassesCount = loadedClassesCountNode.get("classloader.loadedClasses.count").asInt();
+      Json loadedClassesCountNode = Json.read(response.getBody());
+      assertNotNull(loadedClassesCountNode.asJsonMap().get("classloader.loadedClasses.count"));
+      int loadedClassesCount = loadedClassesCountNode.at("classloader.loadedClasses.count").asInteger();
       assertTrue(loadedClassesCount > 0);
 
       response = sync(metricsClient.metrics("vendor/memoryPool.Metaspace.usage"));
       assertEquals(200, response.getStatus());
 
-      JsonNode memoryPoolMetaspaceUsageNode = mapper.readTree(response.getBody());
-      assertTrue(memoryPoolMetaspaceUsageNode.hasNonNull("memoryPool.Metaspace.usage"));
-      int metaspaceUsage = memoryPoolMetaspaceUsageNode.get("memoryPool.Metaspace.usage").asInt();
+      Json memoryPoolMetaspaceUsageNode = Json.read(response.getBody());
+      assertNotNull(memoryPoolMetaspaceUsageNode.asJsonMap().get("memoryPool.Metaspace.usage"));
+      int metaspaceUsage = memoryPoolMetaspaceUsageNode.at("memoryPool.Metaspace.usage").asInteger();
       assertTrue(metaspaceUsage > 0);
    }
 
    @Test
-   public void testMicroprofileMetrics() throws Exception {
+   public void testMicroprofileMetrics() {
       RestClient client = SERVER_TEST.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
@@ -95,16 +91,16 @@ public class RestMetricsResource {
       assertEquals(MediaType.APPLICATION_JSON, response.contentType());
 
       String metricsJson = response.getBody();
-      JsonNode node = mapper.readTree(metricsJson);
-      assertNotNull(node.get("base"));
-      assertNotNull(node.get("vendor"));
-      assertNotNull(node.get("application"));
+      Json node = Json.read(metricsJson);
+      assertNotNull(node.at("base"));
+      assertNotNull(node.at("vendor"));
+      assertNotNull(node.at("application"));
       assertTrue(metricsJson.contains(metricName));
 
       response = sync(metricsClient.metrics("vendor/" + metricName));
       assertEquals(200, response.getStatus());
 
-      long totalStoresBefore = streamNodeFields(mapper.readTree(response.getBody()))
+      long totalStoresBefore = streamNodeFields(Json.read(response.getBody()))
             .map(e -> e.getValue().asLong())
             .reduce(0L, Long::sum);
 
@@ -122,7 +118,7 @@ public class RestMetricsResource {
       assertEquals(200, response.getStatus());
 
       String metricJson = response.getBody();
-      long totalStoresAfter = streamNodeFields(mapper.readTree(metricJson))
+      long totalStoresAfter = streamNodeFields(Json.read(metricJson))
             .map(e -> e.getValue().asLong())
             .reduce(0L, Long::sum);
 
@@ -139,7 +135,7 @@ public class RestMetricsResource {
    }
 
    @Test
-   public void testMicroprofileTimerMetrics() throws Exception {
+   public void testMicroprofileTimerMetrics() {
       RestClient client = SERVER_TEST.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
@@ -150,7 +146,7 @@ public class RestMetricsResource {
       assertEquals(200, response.getStatus());
       assertEquals(MediaType.APPLICATION_JSON, response.contentType());
 
-      long meanStoreTimesBefore = streamNodeFields(mapper.readTree(response.getBody()).get(metricName))
+      long meanStoreTimesBefore = streamNodeFields(Json.read(response.getBody()).at(metricName))
             .filter(e -> e.getKey().startsWith("mean;"))
             .map(e -> e.getValue().asLong())
             .reduce(0L, Long::sum);
@@ -168,7 +164,7 @@ public class RestMetricsResource {
       response = sync(metricsClient.metrics("vendor/" + metricName));
       assertEquals(200, response.getStatus());
 
-      long meanStoreTimesAfter = streamNodeFields(mapper.readTree(response.getBody()).get(metricName))
+      long meanStoreTimesAfter = streamNodeFields(Json.read(response.getBody()).at(metricName))
             .filter(e -> e.getKey().startsWith("mean;"))
             .map(e -> e.getValue().asLong())
             .reduce(0L, Long::sum);
@@ -177,7 +173,7 @@ public class RestMetricsResource {
    }
 
    @Test
-   public void testMicroprofileMetricsMetadata() throws Exception {
+   public void testMicroprofileMetricsMetadata() {
       RestClient client = SERVER_TEST.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
@@ -193,10 +189,10 @@ public class RestMetricsResource {
       // get one
       response = sync(metricsClient.metricsMetadata("vendor/" + metricName));
       assertEquals(200, response.getStatus());
-      JsonNode node = mapper.readTree(response.getBody());
-      assertNotNull(node.get(metricName));
-      assertEquals("gauge", node.get(metricName).get("type").asText());
-      assertEquals("stores", node.get(metricName).get("displayName").asText());
+      Json node = Json.read(response.getBody());
+      assertNotNull(node.at(metricName));
+      assertEquals("gauge", node.at(metricName).at("type").asString());
+      assertEquals("stores", node.at(metricName).at("displayName").asString());
 
       // delete cache and check that the metric is gone
       sync(client.cache(SERVER_TEST.getMethodName()).delete());
@@ -207,10 +203,10 @@ public class RestMetricsResource {
    /**
     * Stream over the fields of a given JsonNode.
     */
-   private static Stream<Map.Entry<String, JsonNode>> streamNodeFields(JsonNode node) {
+   private static Stream<Map.Entry<String, Json>> streamNodeFields(Json node) {
       if (node == null) {
          throw new IllegalArgumentException("Input node cannot be null");
       }
-      return StreamSupport.stream(Spliterators.spliteratorUnknownSize(node.fields(), Spliterator.IMMUTABLE), false);
+      return StreamSupport.stream(Spliterators.spliteratorUnknownSize(node.asJsonMap().entrySet().iterator(), Spliterator.IMMUTABLE), false);
    }
 }

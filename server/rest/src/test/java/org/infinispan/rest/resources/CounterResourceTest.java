@@ -14,6 +14,7 @@ import org.infinispan.client.rest.RestCounterClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.configuration.JsonWriter;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
@@ -23,9 +24,6 @@ import org.infinispan.counter.configuration.AbstractCounterConfiguration;
 import org.infinispan.counter.configuration.ConvertUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Test(groups = "functional", testName = "rest.CounterResourceTest")
 public class CounterResourceTest extends AbstractRestResourceTest {
@@ -46,7 +44,7 @@ public class CounterResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testWeakCounterLifecycle() throws Exception {
+   public void testWeakCounterLifecycle() {
       CounterConfiguration counterConfig = CounterConfiguration.builder(CounterType.WEAK)
             .initialValue(5).storage(Storage.VOLATILE).concurrencyLevel(6).build();
       createCounter("sample-counter", counterConfig);
@@ -54,11 +52,11 @@ public class CounterResourceTest extends AbstractRestResourceTest {
       RestCounterClient counterClient = client.counter("sample-counter");
 
       RestResponse response = join(counterClient.configuration(APPLICATION_JSON_TYPE));
-      JsonNode jsonNode = new ObjectMapper().readTree(response.getBody());
-      JsonNode config = jsonNode.get("weak-counter");
-      assertEquals(config.get("initial-value").asInt(), 5);
-      assertEquals(config.get("storage").asText(), "VOLATILE");
-      assertEquals(config.get("concurrency-level").asInt(), 6);
+      Json jsonNode = Json.read(response.getBody());
+      Json config = jsonNode.at("weak-counter");
+      assertEquals(config.at("initial-value").asInteger(), 5);
+      assertEquals(config.at("storage").asString(), "VOLATILE");
+      assertEquals(config.at("concurrency-level").asInteger(), 6);
 
       response = join(counterClient.delete());
       assertThat(response).isOk();
@@ -138,8 +136,7 @@ public class CounterResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testCounterNames() throws Exception {
-      ObjectMapper objectMapper = new ObjectMapper();
+   public void testCounterNames() {
       String name = "weak-one-%d";
       for (int i = 0; i < 5; i++) {
          createCounter(String.format(name, i), CounterConfiguration.builder(CounterType.WEAK).initialValue(5).build());
@@ -147,11 +144,12 @@ public class CounterResourceTest extends AbstractRestResourceTest {
 
       RestResponse response = join(client.counters());
       assertThat(response).isOk();
-      JsonNode jsonNode = objectMapper.readTree(response.getBody());
+      Json jsonNode = Json.read(response.getBody());
       Collection<String> counterNames = EmbeddedCounterManagerFactory.asCounterManager(cacheManagers.get(0)).getCounterNames();
-      assertEquals(counterNames.size(), jsonNode.size());
-      for (int i = 0; i < jsonNode.size(); i++) {
-         assertTrue(counterNames.contains(jsonNode.get(i).asText()));
+      int size = jsonNode.asList().size();
+      assertEquals(counterNames.size(), size);
+      for (int i = 0; i < size; i++) {
+         assertTrue(counterNames.contains(jsonNode.at(i).asString()));
       }
    }
 

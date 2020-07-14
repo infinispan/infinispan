@@ -9,13 +9,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestTaskClient.ResultType;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
@@ -23,8 +23,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.JsonNode;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -88,14 +88,14 @@ public class RestOperations {
 
 
    @Test
-   public void taskFilter() throws Exception {
+   public void taskFilter() {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.protocol(protocol);
       RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
 
       RestResponse tasks = sync(client.tasks().list(ResultType.USER));
-      JsonNode taskListNode = new ObjectMapper().readTree(tasks.getBody());
+      List<Json> taskListNode = Json.read(tasks.getBody()).asJsonList();
 
-      taskListNode.forEach(n -> assertFalse(n.get("name").asText().startsWith("@@")));
+      taskListNode.forEach(n -> assertFalse(n.at("name").asString().startsWith("@@")));
    }
 }
