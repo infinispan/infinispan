@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import org.apache.logging.log4j.spi.AbstractLogger;
 import org.infinispan.commons.internal.CommonsBlockHoundIntegration;
 import org.infinispan.commons.test.PolarionJUnitXMLWriter;
 import org.infinispan.commons.test.TestResourceTracker;
@@ -39,6 +40,9 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
       }
 
       builder.allowBlockingCallsInside(CoreTestBlockHoundIntegration.class.getName(), "writeJUnitReport");
+
+      // Ignore log4j2 blocking
+      builder.allowBlockingCallsInside(AbstractLogger.class.getName(), "logMessage");
 
       builder.blockingMethodCallback(bm -> {
          String testName = TestResourceTracker.getCurrentTestName();

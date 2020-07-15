@@ -19,7 +19,11 @@ import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
 import org.jgroups.JChannel;
+import org.jgroups.blocks.cs.TcpConnection;
 import org.jgroups.fork.ForkChannel;
+import org.jgroups.protocols.UNICAST3;
+import org.jgroups.protocols.pbcast.GMS;
+import org.jgroups.util.TimeScheduler3;
 import org.kohsuke.MetaInfServices;
 
 import reactor.blockhound.BlockHound;
@@ -70,9 +74,21 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
 
       questionableMethodsAllowedToBlock(builder);
 
+      jgroups(builder);
+   }
+
+   private void jgroups(BlockHound.Builder builder) {
       // Just ignore jgroups for now and assume it is non blocking
       builder.allowBlockingCallsInside(JChannel.class.getName(), "send");
       builder.allowBlockingCallsInside(ForkChannel.class.getName(), "send");
+      // Sometimes JGroups sends messages or does other blocking stuff without going through the channel
+      builder.allowBlockingCallsInside(TcpConnection.class.getName(), "connect");
+      builder.allowBlockingCallsInside(TcpConnection.class.getName(), "send");
+      builder.allowBlockingCallsInside(TcpConnection.class.getName() + "$Receiver", "run");
+      // Blocking internals
+      builder.allowBlockingCallsInside(TimeScheduler3.class.getName(), "add");
+      builder.allowBlockingCallsInside(GMS.class.getName(), "process");
+      builder.allowBlockingCallsInside(UNICAST3.class.getName(), "triggerXmit");
    }
 
    /**
