@@ -2757,28 +2757,10 @@
          </properties>
       </profile>
       <profile>
-         <id>test-CI</id>
-         <activation>
-            <activeByDefault>true</activeByDefault>
-         </activation>
-         <properties>
-            <defaultTestNGGroups>functional,unit,xsite,arquillian</defaultTestNGGroups>
-            <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
-         </properties>
-      </profile>
-      <profile>
-         <id>test-functional</id>
-         <properties>
-            <defaultTestNGGroups>functional</defaultTestNGGroups>
-            <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
-         </properties>
-      </profile>
-      <profile>
          <id>smoke</id>
          <properties>
             <defaultTestNGGroups>smoke</defaultTestNGGroups>
             <defaultJUnitGroups>org.infinispan.commons.test.categories.Smoke</defaultJUnitGroups>
-            <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
          </properties>
       </profile>
       <profile>
@@ -2789,7 +2771,6 @@
             <!-- empty since we are not going to exclude any group -->
             <defaultExcludedTestNGGroups/>
             <defaultExcludedJUnitGroups/>
-            <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
          </properties>
          <build>
             <plugins>
@@ -2798,7 +2779,7 @@
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
                      <systemPropertyVariables>
-                        <log4j.configurationFile>log4j2-trace.xml</log4j.configurationFile>
+                        <log4j.configurationFile>${infinispan.root}/etc/log4j2-trace.xml</log4j.configurationFile>
                      </systemPropertyVariables>
                   </configuration>
                </plugin>
@@ -2813,25 +2794,6 @@
             <defaultExcludedTestNGGroups/>
             <defaultExcludedJUnitGroups/>
             <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
-            <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
-         </properties>
-      </profile>
-      <profile>
-         <id>test-unit</id>
-         <properties>
-            <defaultTestNGGroups>unit</defaultTestNGGroups>
-         </properties>
-      </profile>
-      <profile>
-         <id>test-jgroups</id>
-         <properties>
-            <defaultTestNGGroups>jgroups</defaultTestNGGroups>
-         </properties>
-      </profile>
-      <profile>
-         <id>test-transaction</id>
-         <properties>
-            <defaultTestNGGroups>transaction</defaultTestNGGroups>
          </properties>
       </profile>
       <profile>
@@ -2899,7 +2861,6 @@
          </activation>
          <properties>
             <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
-            <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
          </properties>
       </profile>
       <profile>
