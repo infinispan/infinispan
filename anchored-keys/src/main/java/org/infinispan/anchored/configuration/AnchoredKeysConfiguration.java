@@ -6,6 +6,7 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.commons.util.Experimental;
 import org.infinispan.configuration.serializing.SerializedWith;
 
 /**
@@ -18,6 +19,7 @@ import org.infinispan.configuration.serializing.SerializedWith;
  * @since 11
  * @author Dan Berindei
  */
+@Experimental
 @SerializedWith(AnchoredKeysConfigurationSerializer.class)
 @BuiltBy(AnchoredKeysConfigurationBuilder.class)
 public class AnchoredKeysConfiguration implements ConfigurationInfo {

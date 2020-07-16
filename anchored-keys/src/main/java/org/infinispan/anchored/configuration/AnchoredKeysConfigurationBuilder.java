@@ -3,6 +3,7 @@ package org.infinispan.anchored.configuration;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.Experimental;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 
@@ -21,6 +22,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
  * @since 11
  * @author Dan Berindei
  */
+@Experimental
 public class AnchoredKeysConfigurationBuilder implements Builder<AnchoredKeysConfiguration> {
    private final AttributeSet attributes;
    private final ConfigurationBuilder rootBuilder;
