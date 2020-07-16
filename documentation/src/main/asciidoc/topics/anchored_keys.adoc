@@ -1,0 +1,178 @@
+[[anchored_keys_module]]
+= Anchored Keys module
+
+{brandname} version 11 introduces an experimental module that allows scaling up a cluster
+and adding new nodes without expensive *state transfer*.
+
+
+== Background
+
+For background, the preferred way to scale up the storage capacity of a {brandname} cluster
+is to use distributed caches.
+A distributed cache stores each key/value pair on `num-owners` nodes,
+and each node can compute the location of a key (aka the key owners) directly.
+
+{brandname} achieves this by statically mapping cache keys to `num-segments` *consistent hash segments*,
+and then dynamically mapping segments to nodes based on the cache's *topology*
+(roughly the current plus the historical membership of the cache).
+Whenever a new node joins the cluster, the cache is *rebalanced*, and the new node replaces an existing node
+as the owner of some segments.
+The key/value pairs in those segments are copied to the new node and removed from the no-longer-owner node
+via *state transfer*.
+
+NOTE: Because the allocation of segments to nodes is based on random UUIDs generated at start time,
+it is common (though less so after
+link:https://issues.redhat.com/browse/ISPN-11679[ISPN-11679]
+), for segments to also move from one old node to another old node.
+
+
+== Architecture
+
+The basic idea is to skip the static mapping of keys to segments and to map keys directly to nodes.
+
+When a key/value pair is inserted into the cache,
+the newest member becomes the **anchor owner** of that key, and the only node storing the actual value.
+In order to make the anchor location available without an extra remote lookup,
+all the other nodes store a reference to the anchor owner.
+
+That way, when another node joins, it only needs to receive the location information from the existing nodes,
+and values can stay on the anchor owner, minimizing the amount of traffic.
+
+
+== Limitations
+
+Only one node can be added at a time::
+An external actor (e.g. a Kubernetes/OpenShift operator, or a human administrator)
+must monitor the load on the current nodes, and add a new node whenever the newest node
+is close to "full".
+
+NOTE: Because the anchor owner information is replicated on all the nodes, and values are never moved off a node,
+the memory usage of each node will keep growing as new entries and nodes are added.
+
+There is no redundancy::
+Every value is only stored on a single node.
+When a node crashes or even stops gracefully, the values stored on that node are lost.
+
+Transactions are not supported::
+A later version may add transaction support, but the fact that any node stop or crash
+loses entries makes transactions a lot less valuable compared to a distributed cache.
+
+Hot Rod clients do not know the anchor owner::
+Hot Rod clients cannot use the topology information from the servers to locate the anchor owner.
+Instead, the server receiving a Hot Rod get request must make an additional request to the anchor owner
+in order to retrieve the value.
+
+
+== Configuration
+
+The module is still very young and does not yet support many Infinispan features.
+
+Eventually, if it proves useful, it may become another cache mode, just like scattered caches.
+For now, configuring a cache with anchored keys requires a replicated cache with a custom element `anchored-keys`:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+      xmlns="urn:infinispan:config:{schemaversion}"
+      xmlns:anchored="urn:infinispan:config:anchored:{schemaversion}"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:{schemaversion}
+            https://infinispan.org/schemas/infinispan-config-{schemaversion}.xsd
+            urn:infinispan:config:anchored:{schemaversion}
+            https://infinispan.org/schemas/infinispan-anchored-config-{schemaversion}.xsd">
+
+    <cache-container default-cache="default">
+        <transport/>
+        <replicated-cache name="default">
+            <anchored:anchored-keys/>
+        </replicated-cache>
+    </cache-container>
+
+</infinispan>
+----
+
+When the `<anchored-keys/>` element is present, the module automatically enables anchored keys
+and makes some required configuration changes:
+
+* Disables `await-initial-transfer`
+* Enables conflict resolution with the equivalent of
++
+`<partition-handling when-split="ALLOW_READ_WRITES" merge-policy="PREFER_NON_NULL"/>`
+
+The cache will fail to start if these attributes are explicitly set to other values,
+if state transfer is disabled, or if transactions are enabled.
+
+
+== Implementation status
+
+Basic operations are implemented: `put`, `putIfAbsent`, `get`, `replace`, `remove`, `putAll`, `getAll`.
+
+
+=== Functional commands
+The `FunctionalMap` API is not implemented.
+
+Other operations that rely on the functional API's implementation do not work either: `merge`, `compute`,
+`computeIfPresent`, `computeIfAbsent`.
+
+=== Partition handling
+When a node crashes, surviving nodes do not remove anchor references pointing to that node.
+In theory, this could allow merges to skip conflict resolution, but currently the `PREFERRED_NON_NULL`
+merge policy is configured automatically and cannot be changed.
+
+=== Listeners
+Cluster listeners and client listeners are implemented and receive the correct notifications.
+
+Non-clustered embedded listeners currently receive notifications on all the nodes, not just the node
+where the value is stored.
+
+
+== Performance considerations
+
+=== Client/Server Latency
+The client always contacts the primary owner, so any read has a
+`(N-1)/N` probability of requiring a unicast RPC from the primary to the anchor owner.
+
+Writes require the primary to send the value to one node and the anchor address
+to all the other nodes, which is currently done with `N-1` unicast RPCs.
+
+In theory we could send in parallel one unicast RPC for the value and one multicast RPC for the address,
+but that would need additional logic to ignore the address on the anchor owner
+and with TCP multicast RPCs are implemented as parallel unicasts anyway.
+
+
+=== Memory overhead
+Compared to a distributed cache with one owner, an anchored-keys cache
+contains copies of all the keys and their locations, plus the overhead of the cache itself.
+
+Therefore, a node with anchored-keys caches should stop accepting new entries when it has less than
+`(<key size> + <per-key overhead>) * <number of entries not yet inserted>` bytes available.
+
+NOTE: The number of entries not yet inserted is obviously very hard to estimate.
+In the future we may provide a way to limit the overhead of key location information,
+e.g. by using a distributed cache.
+
+The per-key overhead is lowest for off-heap storage, around 63 bytes:
+8 bytes for the entry reference in `MemoryAddressHash.memory`,
+29 bytes for the off-heap entry header,
+and 26 bytes for the serialized `RemoteMetadata` with the owner's address.
+
+The per-key overhead of the ConcurrentHashMap-based on-heap cache,
+assuming a 64-bit JVM with compressed OOPS, would be around 92 bytes:
+32 bytes for `ConcurrentHashMap.Node`, 32 bytes for `MetadataImmortalCacheEntry`,
+24 bytes for `RemoteMetadata`, and 4 bytes in the `ConcurrentHashMap.table` array.
+
+
+=== State transfer
+State transfer does not transfer values, only keys and anchor owner information.
+
+Assuming that the values are much bigger compared to the keys,
+state transfer for an anchored keys cache should also be much faster
+compared to the state transfer of a distributed cache of a similar size.
+But for small values, there may not be a visible improvement.
+
+The initial state transfer does not block a joiner from starting,
+because it will just ask another node for the anchor owner.
+However, the remote lookups can be expensive, especially in embedded mode,
+but also in server mode, if the client is not `HASH_DISTRIBUTION_AWARE`.
+
