@@ -34,7 +34,10 @@ public class AnchoredKeysConfigurationParser implements ConfigurationParser {
       Element element = Element.forName(reader.getLocalName());
       switch (element) {
       case ANCHORED_KEYS: {
-         parseAnchoredKeys(reader, builder.addModule(AnchoredKeysConfigurationBuilder.class));
+         AnchoredKeysConfigurationBuilder anchoredBuilder = builder.addModule(AnchoredKeysConfigurationBuilder.class);
+         // Do not require an explicit enabled="true" attribute
+         anchoredBuilder.enabled(true);
+         parseAnchoredKeys(reader, anchoredBuilder);
          break;
       }
       default: {
