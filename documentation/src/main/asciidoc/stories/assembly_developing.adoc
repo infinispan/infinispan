@@ -21,7 +21,9 @@ include::{topics}/execute_grid.adoc[leveloffset=+0]
 include::{topics}/streams.adoc[leveloffset=+0]
 include::{topics}/jcache.adoc[leveloffset=+0]
 include::{topics}/multimapcache.adoc[leveloffset=+0]
-
+ifndef::productized[]
+include::{topics}/anchored_keys.adoc[leveloffset=+0]
+endif::productized[]
 
 
 // Restore the parent context.
