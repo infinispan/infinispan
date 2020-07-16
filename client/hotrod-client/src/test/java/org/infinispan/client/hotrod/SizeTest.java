@@ -64,6 +64,24 @@ public class SizeTest extends MultiHotRodServersTest {
       assertEquals(SIZE, clients.get(0).getCache(cacheName).size());
    }
 
+   public void testPersistentSizeWithFlag() {
+      String cacheName = "persistent-size-with-flag";
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
+      int evictionSize = 2;
+      builder.memory().maxCount(evictionSize);
+      builder.persistence()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .storeName(getClass().getName())
+            .purgeOnStartup(true);
+      defineInAll(cacheName, builder);
+      RemoteCache<Integer, Integer> remoteCache = clients.get(0).getCache(cacheName);
+      assertEquals(0, remoteCache.size());
+      populateCache(remoteCache);
+      assertEquals(SIZE, remoteCache.size());
+
+      assertEquals(evictionSize, remoteCache.withFlags(Flag.SKIP_CACHE_LOAD).size());
+   }
+
    private void populateCache(String cacheName) {
       for (int i = 0; i < SIZE; i++) {
          clients.get(i % NUM_SERVERS).getCache(cacheName).put(i, i);
