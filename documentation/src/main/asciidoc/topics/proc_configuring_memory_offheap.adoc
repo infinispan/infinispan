@@ -13,30 +13,21 @@ cache entries in Protobuf format with the `application/x-protostream` encoding.
 To store cache entries in off-heap memory, configure {brandname} in one of the
 following ways:
 
-* Declaratively: Set the `storage="OFF_HEAP"` attribute to the `memory` element.
+* Declaratively: Add the `storage="OFF_HEAP"` attribute to the `memory` element.
 * Programmatically: Call the `storage(OFF_HEAP)` method in the `MemoryConfigurationBuilder` class.
 
 .Declarative example
 
 [source,xml,options="nowrap"]
 ----
-<local-cache name="off_heap_binary">
-  <memory storage="OFF_HEAP" max-size="1.5GB" when-full="REMOVE"/>
-</local-cache>
+include::config_examples/max_size_offheap.xml[]
 ----
 
 .Programmatic example
 
 [source,java,options="nowrap"]
 ----
-ConfigurationBuilder cfg = new ConfigurationBuilder();
-
-cfg
-  .memory()
-    .storage(StorageType.OFF_HEAP)
-    .maxCount(500)
-    .whenFull(EvictionStrategy.REMOVE)
-  .build());
+include::code_examples/MaxCountOffHeap.java[]
 ----
 
 * link:{configdocroot}[{brandname} Configuration Schema Reference]
