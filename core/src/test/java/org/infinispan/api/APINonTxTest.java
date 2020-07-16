@@ -690,8 +690,15 @@ public class APINonTxTest extends SingleCacheManagerTest {
       cache.put("es", "hola");
 
       assertEquals("hola guy", cache.merge("es", "guy", mappingFunction, 1_000_000, TimeUnit.SECONDS));
+      CacheEntry<Object,  Object> entry = cache.getAdvancedCache().getCacheEntry("es");
+      assertEquals("hola guy", entry.getValue());
+      assertEquals(1_000_000_000, entry.getLifespan());
 
-      assertEquals("hola guy and good bye", cache.merge("es", "and good bye", mappingFunction, 1_000_000, TimeUnit.SECONDS, -1, TimeUnit.SECONDS));
+
+      assertEquals("hola guy and good bye", cache.merge("es", "and good bye", mappingFunction, 1_100_000, TimeUnit.SECONDS, -1, TimeUnit.SECONDS));
+      entry = cache.getAdvancedCache().getCacheEntry("es");
+      assertEquals("hola guy and good bye", entry.getValue());
+      assertEquals(1_100_000_000, entry.getLifespan());
    }
 
    public void testForEach() {
@@ -734,10 +741,17 @@ public class APINonTxTest extends SingleCacheManagerTest {
    public void testComputeIfAbsentWithExpirationParameters() {
       Function<Object, String> mappingFunction = k -> k + " world";
       assertEquals("hello world", cache.computeIfAbsent("hello", mappingFunction, 1_000_000, TimeUnit.SECONDS));
-      assertEquals("hello world", cache.get("hello"));
+      CacheEntry<Object,  Object> entry = cache.getAdvancedCache().getCacheEntry("hello");
+      assertEquals("hello world", entry.getValue());
+      assertEquals(1_000_000_000, entry.getLifespan());
 
-      assertEquals("hello world", cache.computeIfAbsent("hello", mappingFunction, 1_000_000, TimeUnit.SECONDS,
+      assertEquals("hello world", cache.computeIfAbsent("hello", mappingFunction, 1_100_000, TimeUnit.SECONDS,
             -1, TimeUnit.SECONDS));
+
+      entry = cache.getAdvancedCache().getCacheEntry("hello");
+      assertEquals("hello world", entry.getValue());
+      // The computeIfAbsent will fail, leaving the expiration the same
+      assertEquals(1_000_000_000, entry.getLifespan());
    }
 
    public void testComputeIfPresent() {
@@ -767,10 +781,14 @@ public class APINonTxTest extends SingleCacheManagerTest {
       cache.put("es", "hola");
 
       assertEquals("hello_es:hola", cache.computeIfPresent("es", mappingFunction, 1_000_000, TimeUnit.SECONDS));
-      assertEquals("hello_es:hola", cache.get("es"));
+      CacheEntry<Object,  Object> entry = cache.getAdvancedCache().getCacheEntry("es");
+      assertEquals("hello_es:hola", entry.getValue());
+      assertEquals(1_000_000_000, entry.getLifespan());
 
-      assertEquals("hello_es:hello_es:hola", cache.computeIfPresent("es", mappingFunction, 1_000_000, TimeUnit.SECONDS, -1, TimeUnit.SECONDS));
-      assertEquals("hello_es:hello_es:hola", cache.get("es"));
+      assertEquals("hello_es:hello_es:hola", cache.computeIfPresent("es", mappingFunction, 1_100_000, TimeUnit.SECONDS, -1, TimeUnit.SECONDS));
+      entry = cache.getAdvancedCache().getCacheEntry("es");
+      assertEquals("hello_es:hello_es:hola", entry.getValue());
+      assertEquals(1_100_000_000, entry.getLifespan());
    }
 
    public void testCompute() {
@@ -805,11 +823,15 @@ public class APINonTxTest extends SingleCacheManagerTest {
       cache.put("es", "hola");
 
       assertEquals("hello_es:hola", cache.compute("es", mappingFunction, 1_000_000, TimeUnit.SECONDS));
-      assertEquals("hello_es:hola", cache.get("es"));
+      CacheEntry<Object,  Object> entry = cache.getAdvancedCache().getCacheEntry("es");
+      assertEquals("hello_es:hola", entry.getValue());
+      assertEquals(1_000_000_000, entry.getLifespan());
 
-      assertEquals("hello_es:hello_es:hola", cache.compute("es", mappingFunction, 1_000_000, TimeUnit.SECONDS,
+      assertEquals("hello_es:hello_es:hola", cache.compute("es", mappingFunction, 1_100_000, TimeUnit.SECONDS,
             -1, TimeUnit.SECONDS));
-      assertEquals("hello_es:hello_es:hola", cache.get("es"));
+      entry = cache.getAdvancedCache().getCacheEntry("es");
+      assertEquals("hello_es:hello_es:hola", entry.getValue());
+      assertEquals(1_100_000_000, entry.getLifespan());
    }
 
    public void testReplaceAll() {
