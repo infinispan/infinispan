@@ -12,10 +12,12 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.kohsuke.MetaInfServices;
 
 /**
- * MyParserExtension. This is a simple extension parser which parses modules in the "urn:infinispan:config:mymodule" namespace
+ * Anchored keys parser extension.
  *
- * @author Tristan Tarrant
- * @since 5.2
+ * This extension parses elements in the "urn:infinispan:config:anchored" namespace
+ *
+ * @author Dan Berindei
+ * @since 11
  */
 @MetaInfServices
 @Namespace(root = "anchored-keys")
