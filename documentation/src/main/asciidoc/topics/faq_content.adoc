@@ -77,22 +77,12 @@ A less common use case is adding clusterability and high availability to framewo
 Since {brandname} exposes a distributed data structure, frameworks and libraries that also need to be clustered can easily achieve this by embedding {brandname} and delegating all state management to {brandname}.
 This way, any framework can easily be clustered by letting {brandname} do all the heavy lifting.
 
-=== How is {brandname} related to JBoss Cache?
-Certain design ideas and indeed some code have been borrowed from link:http://www.jboss.org/jbosscache/[JBoss Cache] 3.x, however JBoss Cache is in no way a dependency.
-{brandname} is a complete, separate and standalone project.
-Some may consider this a fork, but the people behind {brandname} and JBoss Cache see it as an evolution, since all future effort will be on {brandname} and not JBoss Cache.
-
 === What version of Java does {brandname} need to run? Does {brandname} need an application server to run?
 All that is needed is a Java 8 compatible JVM.
 An application server is _not_ a requirement.
 
 === Will there be a POJO Cache replacement in {brandname}?
 Yes, and this is called link:http://hibernate.org/ogm/[Hibernate OGM] .
-
-=== How come {brandname}'s first release is 4.0.0?  This sounds weird!
-We didn't want to release {brandname} as a 1.0, as in all fairness it is not a virgin codebase.
-A lot of the code, designs and ideas in {brandname} are from JBoss Cache, and has been tried and tested, proven in high stress environments.
-{brandname} should thus be viewed as a mature and stable platform and not a new, experimental one.
 
 === How is this related to JSR 107, the JCACHE specification?
 {brandname} core engineers are on the link:http://jcp.org/en/jsr/detail?id=107[JSR 107] expert group and starting with version 7.0.0, {brandname} provides a certified compatible implementation of version 1.0.0 of the specification.
@@ -330,11 +320,6 @@ JGroups, which is the underlying group communication library to interconnect {br
 *  LINK_LOCAL : use a 169.x.x.x, 254.0.0.0 address. I've never used this, but this would be for traffic only within 1 box
 *  NON_LOOPBACK : use the first address found on an interface (which is up), which is not a 127.x.x.x address
 
-=== Demo questions
-
-==== When using the GUI Demo, I've just put an entry in the cache with lifespan of -1. Why do I see it as having a lifespan of 60,000?
-This is probably a L1 caching event.  When you put an entry in the cache, the entry is mapped to specific nodes in a cluster using a consistent hashing algorithm.  This means that key K could map on to caches A  and B  (or however many owners you have configured).  If you happen to have done the cache.put(K, V) on cache C , however, K  still maps to A  and B  (and will be added to caches A  and B  with their proper lifespans), but it will also be put in cache C's L1 cache.
-
 === Third Party Container questions
 
 ==== Can I use {brandname} on Google App Engine for Java?
@@ -371,62 +356,39 @@ Instead, this code should have been written as:
 include::code_examples/ABCMarshallingExternalizer.java[]
 ----
 
-==== During state transfer, the state receiver logs an EOFException when applying state saying "Read past end of file". Should I worry about this?
-It depends on whether the state provider encountered an error or not when generating the state.
-For example, sometimes the state provider might already be providing state to another node, so when the node requests the state, the state generator might log:
+==== Why am I getting a `StreamCorruptedException` during unmarshalling?
+You may be modifying your object after inserting it in the cache.
+Infinispan assumes that once it was given an object (be it a key or a value), it can access that object on any thread,
+without any synchronization.
 
+If you receive a `StreamCorruptedException` during unmarshalling, or a `ConcurrentModificationException`
+during marshalling, you should check that your application never modifies an object after passing it to
+`cache.put(key, value)` or after reading it from the cache with `cache.get(key)`.
+
+The simplest fix is to configure the cache to store keys and values in binary form, e.g.
+
+[source,xml]
 ----
-ERROR [org.infinispan.remoting.transport.jgroups.JGroupsTransport] (STREAMING_STATE_TRANSFER-sender-1,{brandname}-Cluster,NodeJ-2368:) Caught while responding to state transfer request
-org.infinispan.statetransfer.StateTransferException: java.util.concurrent.TimeoutException: Could not obtain exclusive processing lock
-     at org.infinispan.statetransfer.StateTransferManagerImpl.generateState(StateTransferManagerImpl.java:175)
-     at org.infinispan.remoting.InboundInvocationHandlerImpl.generateState(InboundInvocationHandlerImpl.java:119)
-     at org.infinispan.remoting.transport.jgroups.JGroupsTransport.getState(JGroupsTransport.java:586)
-     at org.jgroups.blocks.MessageDispatcher$ProtocolAdapter.handleUpEvent(MessageDispatcher.java:691)
-     at org.jgroups.blocks.MessageDispatcher$ProtocolAdapter.up(MessageDispatcher.java:772)
-     at org.jgroups.JChannel.up(JChannel.java:1465)
-     at org.jgroups.stack.ProtocolStack.up(ProtocolStack.java:954)
-     at org.jgroups.protocols.pbcast.FLUSH.up(FLUSH.java:478)
-     at org.jgroups.protocols.pbcast.STREAMING_STATE_TRANSFER$StateProviderHandler.process(STREAMING_STATE_TRANSFER.java:653)
-     at org.jgroups.protocols.pbcast.STREAMING_STATE_TRANSFER$StateProviderThreadSpawner$1.run(STREAMING_STATE_TRANSFER.java:582)
-     at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
-     at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
-     at java.lang.Thread.run(Thread.java:680)
-Caused by: java.util.concurrent.TimeoutException: Could not obtain exclusive processing lock
-     at org.infinispan.remoting.transport.jgroups.JGroupsDistSync.acquireProcessingLock(JGroupsDistSync.java:71)
-     at org.infinispan.statetransfer.StateTransferManagerImpl.generateTransactionLog(StateTransferManagerImpl.java:202)
-     at org.infinispan.statetransfer.StateTransferManagerImpl.generateState(StateTransferManagerImpl.java:165)
-     ... 12 more
+<infinispan>
+  <cache-container>
+    <distributed-cache name="myCache" mode="SYNC">
+      <encoding media-type="application/x-protostream"/>
+    </distributed-cache>
+  </cache-container>
+</infinispan>
 ----
 
-This exception is basically saying that the state generator was not able to generate the transaction log and so the output to which it was writing is closed.
-In this situation, it's common to see the state receiver log an EOFException , as shown below, when trying to read the transaction log because the sender did not write the transaction log:
+The downside is that `cache.get(key)` is now more expensive, because it has to unmarshall the value every time.
+If the performance hit is not acceptable, you must instead modify your application
+to make a copy of the object in the cache and modify the copy, e.g.
 
-
+[source,java]
 ----
-TRACE [org.infinispan.marshall.VersionAwareMarshaller] (Incoming-2,{brandname}-Cluster,NodeI-38030:) Log exception reported
-java.io.EOFException: Read past end of file
-     at org.jboss.marshalling.AbstractUnmarshaller.eofOnRead(AbstractUnmarshaller.java:184)
-     at org.jboss.marshalling.AbstractUnmarshaller.readUnsignedByteDirect(AbstractUnmarshaller.java:319)
-     at org.jboss.marshalling.AbstractUnmarshaller.readUnsignedByte(AbstractUnmarshaller.java:280)
-     at org.jboss.marshalling.river.RiverUnmarshaller.doReadObject(RiverUnmarshaller.java:207)
-     at org.jboss.marshalling.AbstractUnmarshaller.readObject(AbstractUnmarshaller.java:85)
-     at org.infinispan.marshall.jboss.GenericJBossMarshaller.objectFromObjectStream(GenericJBossMarshaller.java:175)
-     at org.infinispan.marshall.VersionAwareMarshaller.objectFromObjectStream(VersionAwareMarshaller.java:184)
-     at org.infinispan.statetransfer.StateTransferManagerImpl.processCommitLog(StateTransferManagerImpl.java:228)
-     at org.infinispan.statetransfer.StateTransferManagerImpl.applyTransactionLog(StateTransferManagerImpl.java:250)
-     at org.infinispan.statetransfer.StateTransferManagerImpl.applyState(StateTransferManagerImpl.java:320)
-     at org.infinispan.remoting.InboundInvocationHandlerImpl.applyState(InboundInvocationHandlerImpl.java:102)
-     at org.infinispan.remoting.transport.jgroups.JGroupsTransport.setState(JGroupsTransport.java:603)
-        ...
+Pojo value = cache.get(key);
+Pojo modifiedValue = new Pojo(value);
+modifiedValue.setProperty(newPropertyValue);
+cache.put(key, modifiedValue);
 ----
-
-The current logic is for the state receiver to back off in these scenarios and retry after a few seconds. Quite often, after the retry the state generator might have already finished dealing with the other node and hence the state receiver will be able to fully receive the state.
-
-==== Why am I getting invalid data passed to readExternal?
-If you are using Cache.putAsync() you may find your object is modified after serialization starts, thus corrupting the datastream passed to readExternal . To solve this, make sure you synchronize access to the object.
-
-.Read More
-NOTE: You can read more about this issue in link:http://community.jboss.org/message/609040[this forum thread] .
 
 === Tuning questions
 ==== When running {brandname} under load, I see RejectedExecutionException, how can I fix it?
