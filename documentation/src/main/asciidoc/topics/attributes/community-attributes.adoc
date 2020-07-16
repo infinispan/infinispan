@@ -92,8 +92,11 @@
 //Cross-Site REPL
 :xsite_docs: ../xsite/xsite.html
 
+//Memcached
+:memcached_docs: ../memcached/memcached.html
+
 //SB Starter
-:sb_starter: https://infinispan.org/infinispan-spring-boot/master/spring_boot_starter.html
+:sb_starter: ../spring_boot/starter.html
 
 //JGroups
 :jgroups_docs: http://www.jgroups.org/manual4/index.html

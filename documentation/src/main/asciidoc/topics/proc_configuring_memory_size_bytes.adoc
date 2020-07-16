@@ -1,23 +1,14 @@
 [id='configure_eviction_size-{context}']
 = Configuring the Maximum Amount of Memory for {brandname} Caches
 Limit the size of the data container for cache entries to a maximum amount of
-memory. Performing eviction based on the maximum amount of memory requires you
-to use a binary-based storage format for the data container.
+memory.
 
 .Procedure
 
 . Configure your {brandname} cache to use a storage format that supports binary encoding.
 +
-[NOTE]
-====
-To guarantee the format that {brandname} uses to store your data, you should
-always specify an encoding for caches.
-
-Alternatively, you can define a global marshaller with the `serialization`
-element in a declarative configuration or by calling the `serialization()` 
-method in the `GlobalConfigurationBuilder` class. In this case, {brandname}
-encodes entries as the MediaType for the global marshaller.
-====
+You must use a binary storage format to perform eviction based on the maximum
+amount of memory.
 +
 . Configure the maximum amount of memory, in bytes, that caches can use before
 {brandname} performs eviction.
@@ -36,25 +27,14 @@ encodes entries as the MediaType for the global marshaller.
 
 [source,xml,options="nowrap"]
 ----
-<local-cache name="off_heap_binary">
-  <encoding media-type="application/x-protostream"/>
-  <memory max-size="1.5GB" when-full="REMOVE"/>
-</local-cache>
+include::config_examples/max_memory.xml[]
 ----
 
 .Programmatic example
 
 [source,java,options="nowrap"]
 ----
-ConfigurationBuilder cfg = new ConfigurationBuilder();
-
-cfg
-  .encoding()
-    .mediaType("application/x-protostream")
-  .memory()
-    .maxSize("1.5GB")
-    .whenFull("REMOVE")
-  .build());
+include::code_examples/MaxSizeMemory.java[]
 ----
 
 .Reference

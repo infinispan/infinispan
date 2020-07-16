@@ -1,9 +1,8 @@
 [id='evict_expire']
-= Eviction and Expiration Overview
-Eviction and expiration are two strategies that have similar results in that
-they remove old, unused entries. Although eviction and expiration are similar,
-they have some important differences that you should take into account when
-planning your configuration.
+= Configuring Eviction and Expiration
+Eviction and expiration are two strategies for cleaning the data container by
+removing old, unused entries. Although eviction and expiration are similar,
+they have some important differences.
 
 * [*] Eviction lets {brandname} control the size of the data container by removing entries when the container becomes larger than a configured threshold.
 
