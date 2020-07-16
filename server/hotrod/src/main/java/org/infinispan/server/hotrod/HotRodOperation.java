@@ -29,7 +29,7 @@ public enum HotRodOperation {
    PING(0x17, 0x18, EnumSet.noneOf(OpReqs.class), DecoderRequirements.HEADER),
    STATS(0x15, 0x16, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER),
    CLEAR(0x13, 0x14, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER),
-   SIZE(0x29, 0x2A, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER),
+   SIZE(0x29, 0x2A, EnumSet.of(OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD), DecoderRequirements.HEADER),
    AUTH_MECH_LIST(0x21, 0x22, EnumSet.noneOf(OpReqs.class), DecoderRequirements.HEADER),
 
    // Operation(s) that end after Custom Header is read
