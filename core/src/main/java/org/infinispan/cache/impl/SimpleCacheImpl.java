@@ -1452,7 +1452,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
          V oldValue = getValue(oldEntry);
          V newValue = remappingFunction.apply(k, oldValue);
-         return getUpdatedEntry(k, oldEntry, factory, oldValue, newValue, ref, hasListeners);
+         return getUpdatedEntry(k, oldEntry, factory, oldValue, newValue, metadata, ref, hasListeners);
       });
       return notifyAndReturn(ref, hasListeners, metadata);
    }
@@ -1485,7 +1485,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
          V oldValue = getValue(oldEntry);
          V newValue = oldValue == null ? value : remappingFunction.apply(oldValue, value);
-         return getUpdatedEntry(k, oldEntry, factory, oldValue, newValue, ref, hasListeners);
+         return getUpdatedEntry(k, oldEntry, factory, oldValue, newValue, metadata, ref, hasListeners);
       });
       return notifyAndReturn(ref, hasListeners, metadata);
    }
@@ -1508,7 +1508,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       return newValue;
    }
 
-   private InternalCacheEntry<K, V> getUpdatedEntry(K k, InternalCacheEntry<K, V> oldEntry, InternalEntryFactory factory, V oldValue, V newValue, CacheEntryChange<K, V> ref, boolean hasListeners) {
+   private InternalCacheEntry<K, V> getUpdatedEntry(K k, InternalCacheEntry<K, V> oldEntry, InternalEntryFactory factory, V oldValue, V newValue, Metadata metadata, CacheEntryChange<K, V> ref, boolean hasListeners) {
       if (newValue == null) {
          if (oldValue != null) {
             if (hasListeners) {
@@ -1519,18 +1519,18 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
          return null;
       } else if (oldValue == null) {
          if (hasListeners) {
-            CompletionStages.join(cacheNotifier.notifyCacheEntryCreated(k, newValue, defaultMetadata, true, ImmutableContext.INSTANCE, null));
+            CompletionStages.join(cacheNotifier.notifyCacheEntryCreated(k, newValue, metadata, true, ImmutableContext.INSTANCE, null));
          }
          ref.set(k, newValue, null, null);
-         return factory.create(k, newValue, defaultMetadata);
+         return factory.create(k, newValue, metadata);
       } else if (Objects.equals(oldValue, newValue)) {
          return oldEntry;
       } else {
          if (hasListeners) {
-            CompletionStages.join(cacheNotifier.notifyCacheEntryModified(k, newValue, defaultMetadata, oldValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null));
+            CompletionStages.join(cacheNotifier.notifyCacheEntryModified(k, newValue, metadata, oldValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null));
          }
          ref.set(k, newValue, oldValue, oldEntry.getMetadata());
-         return factory.update(oldEntry, newValue, defaultMetadata);
+         return factory.update(oldEntry, newValue, metadata);
       }
    }
 
