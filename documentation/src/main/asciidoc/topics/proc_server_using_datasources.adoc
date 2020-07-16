@@ -18,7 +18,7 @@ configuration of your cache configuration, as in the following example:
 <distributed-cache-configuration name="persistent-cache" xmlns:jdbc="urn:infinispan:config:store:jdbc:{schemaversion}">
     <persistence>
         <jdbc:string-keyed-jdbc-store>
-            <jdbc:data-source jndi-url="jdbc/postgres"/>
+            <jdbc:data-source jndi-url="jdbc/postgres"/> <1>
             <jdbc:string-keyed-table drop-on-exit="true"
                           create-on-start="true"
                           prefix="TBL">
