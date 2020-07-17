@@ -20,6 +20,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.util.OS;
 
 /**
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
@@ -47,7 +48,8 @@ public class ForkedServer {
    }
 
    private ForkedServer callInitScript() {
-      commands.add(serverHome + "/bin/server.sh");
+      String extension = OS.getCurrentOs() == OS.WINDOWS ? ".bat" : ".sh";
+      commands.add(serverHome + String.format("/bin/server%s", extension));
       return this;
    }
 
