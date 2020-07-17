@@ -1,7 +1,6 @@
 package org.infinispan.server.functional;
 
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
-import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DRIVER;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
@@ -28,6 +27,7 @@ import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationB
 import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.ServerRunMode;
+import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -184,9 +184,12 @@ public class RollingUpgradeIT {
       RestClient client;
 
       Cluster(ClusterConfiguration simpleConfiguration) {
-         String driverProperty = System.getProperties().getProperty(INFINISPAN_TEST_SERVER_DRIVER);
-         if (driverProperty != null)
-            simpleConfiguration.properties().setProperty(INFINISPAN_TEST_SERVER_DRIVER, driverProperty);
+         Properties sysProps = System.getProperties();
+         for (String prop : sysProps.stringPropertyNames()) {
+            if (prop.startsWith(TestSystemPropertyNames.PREFIX)) {
+               simpleConfiguration.properties().put(prop,  sysProps.getProperty(prop));
+            }
+         }
          this.driver = ServerRunMode.DEFAULT.newDriver(simpleConfiguration);
       }
 
