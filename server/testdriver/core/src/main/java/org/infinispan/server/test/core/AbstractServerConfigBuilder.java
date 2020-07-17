@@ -30,9 +30,14 @@ public abstract class AbstractServerConfigBuilder<T> {
    protected AbstractServerConfigBuilder(String configurationFile, boolean defaultFile) {
       this.configurationFile = configurationFile;
       this.defaultFile = defaultFile;
-      this.properties = new Properties(System.getProperties()); // set the defaults
-      // also copy org.infinispan properties
-      System.getProperties().entrySet().stream().filter(e -> e.getKey().toString().startsWith("org.infinispan")).forEach(e -> properties.put(e.getKey(), e.getValue()));
+
+      this.properties = new Properties();
+      Properties sysProps = System.getProperties();
+      for (String prop : sysProps.stringPropertyNames()) {
+         if (prop.startsWith("org.infinispan")) {
+            properties.put(prop,  sysProps.getProperty(prop));
+         }
+      }
    }
 
    protected InfinispanServerTestConfiguration createServerTestConfiguration() {
