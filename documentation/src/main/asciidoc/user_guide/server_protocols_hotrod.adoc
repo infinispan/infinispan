@@ -1116,14 +1116,44 @@ transcoders from protobuf format to most common formats like JSON and POJO.
 
 When using filters/converters with those caches, and it's desirable to use filter/converters with Java Objects rather binary prototobuf data, it's necessary to deploy the extra protostream marshallers so that the server can unmarshall the data before filtering/converting. To do so, follow these steps:
 
-1. Create a jar and include an implementation of the interface `org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer`, adding extra marshallers and
-optionally extra protobuf files to the cache manager's Serialization context.
-2. Create a `META-INF/services/org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer` file
-within the JAR file containing the fully qualified class name of the `ProtostreamSerializationContextInitializer` class implementation.
-3. Create a  META-INF/MANIFEST.MF with `Dependencies: org.infinispan.protostream, org.infinispan.remote-query.client`
-4. Deploy the JAR file in the {brandname} Server in the `standalone/deployments` folder
-5. Configure this deployment in the desired cache manager:
-
+. Create a JAR file that includes an implementation of the following interface:
++
+----
+org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer
+----
++
+Your implementation should add extra marshallers and optional Protobuf (`.proto`) files to the `Serialization` context for the Cache Manager.
++
+. Create the following file inside your JAR file:
++
+----
+META-INF/services/org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer
+----
++
+This file should contain the fully qualified class name of your `ProtostreamSerializationContextInitializer` implementation.
++
+. Create a `META-INF/MANIFEST.MF` file inside your JAR file that contains the following:
++
+----
+Dependencies: org.infinispan.protostream, org.infinispan.remote-query.client
+----
++
+. Update your JBoss deployment structure file, `jboss-deployment-structure.xml`, to include the following content so that {brandname} Server can access your custom classes:
++
+----
+<jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.2">
+     <deployment>
+      <dependencies>
+         <module name="org.infinispan.protostream" />
+         <module name="org.infinispan.remote-query.client" services="import"/>
+      </dependencies>
+   </deployment>
+</jboss-deployment-structure>
+----
++
+. Deploy the JAR file to {brandname} Server by adding it to the `standalone/deployments` folder.
+. Configure the deployment in the appropriate Cache Manager as follows:
++
 [source,xml]
 ----
 <cache-container name="local" default-cache="default">
@@ -1134,9 +1164,11 @@ within the JAR file containing the fully qualified class name of the `Protostrea
 </cache-container>
 ----
 
-WARNING: The deployment must be available during the server startup!
-
-
+[IMPORTANT]
+====
+JAR files that deploy custom classes to {brandname} Server must be available at
+startup. You cannot deploy JARs to running server instances.
+====
 
 ==== Listener State Handling
 
