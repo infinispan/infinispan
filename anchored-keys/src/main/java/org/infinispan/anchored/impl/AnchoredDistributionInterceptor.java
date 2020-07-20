@@ -113,6 +113,28 @@ public class AnchoredDistributionInterceptor extends NonTxDistributionIntercepto
       return super.handleReadWriteManyCommand(ctx, command, wrappedHelper);
    }
 
+   @Override
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      if (command.isForwarded()) {
+         assert command.getMetadata() == null || command.getMetadata().version() == null;
+
+         HashMap<Object, Object> valueMap = new HashMap<>();
+         for (Map.Entry<?, ?> entry : command.getMap().entrySet()) {
+            Object key = entry.getKey();
+            CacheEntry ctxEntry = ctx.lookupEntry(key);
+            if (ctxEntry != null && entry.getValue() instanceof RemoteMetadata) {
+               RemoteMetadata entryMetadata = (RemoteMetadata) entry.getValue();
+               ctxEntry.setMetadata(entryMetadata);
+               valueMap.put(key, null);
+            } else {
+               valueMap.put(key, entry.getValue());
+            }
+         }
+         command.setMap(valueMap);
+      }
+      return super.visitPutMapCommand(ctx, command);
+   }
+
    Address getKeyWriter(CacheEntry<?, ?> contextEntry) {
       // Use the existing location, or the one set by AnchoredFetchInterceptor
       Address location = ((AnchoredReadCommittedEntry) contextEntry).getLocation();

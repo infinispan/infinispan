@@ -117,6 +117,9 @@ public class AnchoredKeysOperationsTest extends AbstractAnchoredKeysTest {
          Object returnValue = op.perform(originator, key);
          assertEquals(op.getReturnValue(), returnValue);
          assertValue(key, op.getValue());
+         if (op.getValue() != null) {
+            assertLocation(key, address(2), op.getValue());
+         }
       }
    }
 
@@ -124,7 +127,7 @@ public class AnchoredKeysOperationsTest extends AbstractAnchoredKeysTest {
       List<MagicKey> keys = new ArrayList<>();
       Map<MagicKey, Object> data = new HashMap<>();
       for (int i = 0; i < caches().size(); i++) {
-         MagicKey key = new MagicKey("key" + i, cache(i));
+         MagicKey key = new MagicKey("key-" + i, cache(i));
          String value = "value-" + i;
          keys.add(key);
          data.put(key, value);
@@ -140,6 +143,7 @@ public class AnchoredKeysOperationsTest extends AbstractAnchoredKeysTest {
          cache.putAll(data);
 
          data.forEach(this::assertValue);
+         data.forEach((key, value) -> assertLocation(key, address(2), value));
          assertEquals(data, cache.getAdvancedCache().getAll(data.keySet()));
          assertEquals(data.keySet(), cache.keySet());
          assertEquals(new HashSet<>(data.values()), new HashSet<>(cache.values()));
