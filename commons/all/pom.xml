@@ -120,12 +120,6 @@
             <filtering>true</filtering>
             <includes>
                <include>features.xml</include>
-            </includes>
-         </resource>
-         <resource>
-            <directory>${project.basedir}/src/main/resources</directory>
-            <filtering>true</filtering>
-            <includes>
                <include>META-INF/infinispan-version.properties</include>
             </includes>
          </resource>

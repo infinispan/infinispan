@@ -147,18 +147,11 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
    }
 
    private CompletionStage<Void> fetchSingleContextValue(InvocationContext ctx, DataCommand command, boolean isWrite) {
-      DistributionInfo distributionInfo =
-            distributionManager.getCacheTopology().getSegmentDistribution(command.getSegment());
-      if (isWrite && !shouldLoad(ctx, command, distributionInfo)) {
-         // Reads always load the value on the originator, writes usually don't
-         return CompletableFutures.completedNull();
-      }
-
       K key = (K) command.getKey();
       CacheEntry<?, ?> ctxEntry = ((SingleKeyNonTxInvocationContext) ctx).getCacheEntry();
 
       CompletionStage<CacheEntry<K, V>> stage =
-            fetchContextValue(command, key, ctxEntry, command.getSegment(), isWrite);
+            fetchContextValue(ctx, command, key, ctxEntry, command.getSegment(), isWrite);
       if (stage == null)
          return CompletableFutures.completedNull();
 
@@ -177,8 +170,9 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
       ctx.forEachEntry((key, ctxEntry) -> {
          // TODO Group keys by anchor location and use ClusteredGetAllCommand
          DistributionInfo distributionInfo = distributionManager.getCacheTopology().getDistribution(key);
-         CompletionStage<CacheEntry<K, V>> stage =
-               fetchContextValue(command, (K) key, ctxEntry, distributionInfo.segmentId(), isWrite);
+         CompletionStage<CacheEntry<K, V>> stage;
+         // Some writes don't need to fetch the previous value on the backup owners and/or the originator
+         stage = fetchContextValue(ctx, command, (K) key, ctxEntry, distributionInfo.segmentId(), isWrite);
          stages.add(stage);
          if (stage != null) {
             fetchStage.dependsOn(stage);
@@ -198,8 +192,8 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
       });
    }
 
-   private CompletionStage<CacheEntry<K, V>> fetchContextValue(FlagAffectedCommand command, K key,
-                                                               CacheEntry<?, ?> ctxEntry, int segment,
+   private CompletionStage<CacheEntry<K, V>> fetchContextValue(InvocationContext ctx, FlagAffectedCommand command,
+                                                               K key, CacheEntry<?, ?> ctxEntry, int segment,
                                                                boolean isWrite) {
       if (ctxEntry.getValue() != null) {
          // The key exists and the anchor location is the local node
@@ -217,6 +211,12 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
             ((AnchoredReadCommittedEntry) ctxEntry).setLocation(newLocation);
          }
 
+         DistributionInfo distributionInfo =
+               distributionManager.getCacheTopology().getSegmentDistribution(segment);
+         // Some writes don't need to fetch the previous value on the backup owners and/or the originator
+         if (isWrite && !shouldLoad(ctx, command, distributionInfo)) {
+            return null;
+         }
          return getRemoteValue(keyLocation, key, segment, isWrite);
       } else {
          // The key does not exist in the cache
