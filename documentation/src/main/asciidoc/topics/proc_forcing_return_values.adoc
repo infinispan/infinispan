@@ -1,7 +1,9 @@
 [id='hotrod_return_values']
 = Forcing Return Values
-Method calls that modify entries can return previous values for keys, for
-example:
+To avoid sending data unnecessarily, write operations on remote caches return
+`null` instead of previous values.
+
+For example, the following method calls do not return previous values for keys:
 
 [source,java]
 ----
@@ -9,12 +11,13 @@ V remove(Object key);
 V put(K key, V value);
 ----
 
-To reduce the amount of data sent across the network, `RemoteCache` operations
-always return `null` values.
+You can change this default behavior with the `FORCE_RETURN_VALUE` flag so your
+invocations return previous values.
 
 .Procedure
 
-* Use the `FORCE_RETURN_VALUE` flag for invocations that need return values.
+* Use the `FORCE_RETURN_VALUE` flag to get previous values instead of `null` as
+in the following example:
 
 [source,java]
 ----

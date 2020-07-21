@@ -15,19 +15,19 @@ configuration of your cache configuration, as in the following example:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<distributed-cache-configuration name="persistent-cache">
+<distributed-cache-configuration name="persistent-cache" xmlns:jdbc="urn:infinispan:config:store:jdbc:{schemaversion}">
     <persistence>
-        <string-keyed-jdbc-store>
-            <data-source jndi-url="jdbc/datasource"/> <1>
-            <string-keyed-table drop-on-exit="true"
+        <jdbc:string-keyed-jdbc-store>
+            <jdbc:data-source jndi-url="jdbc/postgres"/>
+            <jdbc:string-keyed-table drop-on-exit="true"
                           create-on-start="true"
                           prefix="TBL">
-                <id-column name="ID" type="VARCHAR(255)"/>
-                <data-column name="DATA" type="BINARY"/>
-                <timestamp-column name="TS" type="BIGINT"/>
-                <segment-column name="S" type="INT"/>
-            </string-keyed-table>
-        </string-keyed-jdbc-store>
+                <jdbc:id-column name="ID" type="VARCHAR(255)"/>
+                <jdbc:data-column name="DATA" type="BYTEA"/>
+                <jdbc:timestamp-column name="TS" type="BIGINT"/>
+                <jdbc:segment-column name="S" type="INT"/>
+            </jdbc:string-keyed-table>
+        </jdbc:string-keyed-jdbc-store>
     </persistence>
 </distributed-cache-configuration>
 ----
