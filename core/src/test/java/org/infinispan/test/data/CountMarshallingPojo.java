@@ -1,7 +1,8 @@
 package org.infinispan.test.data;
 
+import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.logging.Log;
@@ -15,40 +16,52 @@ import org.infinispan.util.logging.LogFactory;
 public class CountMarshallingPojo {
    private static final Log log = LogFactory.getLog(CountMarshallingPojo.class);
 
-   private static final AtomicInteger marshallCount = new AtomicInteger();
-   private static final AtomicInteger unmarshallCount = new AtomicInteger();
+   private static final Map<String, Integer> marshallCount = new ConcurrentHashMap<>();
+   private static final Map<String, Integer> unmarshallCount = new ConcurrentHashMap<>();
+
+   private String name;
    private int value;
 
-   public static void reset() {
-      marshallCount.set(0);
-      unmarshallCount.set(0);
+   public static void reset(String name) {
+      marshallCount.put(name, 0);
+      unmarshallCount.put(name, 0);
    }
 
-   public static int getMarshallCount() {
-      return marshallCount.get();
+   public static int getMarshallCount(String name) {
+      return marshallCount.getOrDefault(name, 0);
    }
 
-   public static int getUnmarshallCount() {
-      return unmarshallCount.get();
+   public static int getUnmarshallCount(String name) {
+      return unmarshallCount.getOrDefault(name, 0);
    }
 
-   public CountMarshallingPojo() {
+   CountMarshallingPojo() {
    }
 
-   public CountMarshallingPojo(int value) {
+   public CountMarshallingPojo(String name, int value) {
+      this.name = name;
       this.value = value;
    }
 
    @ProtoField(number = 1, defaultValue = "0")
    int getValue() {
-      int serCount = marshallCount.incrementAndGet();
-      log.trace("marshallCount=" + serCount);
       return value;
    }
 
    void setValue(int i) {
       this.value = i;
-      int deserCount = unmarshallCount.incrementAndGet();
+   }
+
+   @ProtoField(number = 2)
+   String getName() {
+      int serCount = marshallCount.merge(name, 1, Integer::sum);
+      log.trace("marshallCount=" + serCount);
+      return name;
+   }
+
+   void setName(String name) {
+      this.name = name;
+      int deserCount = unmarshallCount.merge(this.name, 1, Integer::sum);
       log.trace("unmarshallCount=" + deserCount);
    }
 
@@ -68,7 +81,8 @@ public class CountMarshallingPojo {
    @Override
    public String toString() {
       return "CountMarshallingPojo{" +
-            "value=" + value +
-            '}';
+             "name=" + name +
+             ", value=" + value +
+             '}';
    }
 }

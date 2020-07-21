@@ -19,6 +19,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "marshall.InvalidatedMarshalledValueTest")
 public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
+   private static final String POJO_NAME = InvalidatedMarshalledValueTest.class.getName();
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -26,14 +27,15 @@ public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
       invlSync.memory().storageType(StorageType.BINARY);
 
       createClusteredCaches(2, "invlSync", TestDataSCI.INSTANCE, invlSync);
-      CountMarshallingPojo.reset();
    }
 
    public void testModificationsOnSameCustomKey() {
+      CountMarshallingPojo.reset(POJO_NAME);
+
       Cache<CountMarshallingPojo, String> cache1 = cache(0, "invlSync");
       Cache<CountMarshallingPojo, String> cache2 = cache(1, "invlSync");
 
-      CountMarshallingPojo key = new CountMarshallingPojo();
+      CountMarshallingPojo key = new CountMarshallingPojo(POJO_NAME, 1);
       cache2.put(key, "1");
       cache1.put(key, "2");
       // Marshalling is done eagerly now, so no need for extra serialization checks
@@ -44,7 +46,9 @@ public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
    }
 
    private void assertSerializationCounts(int expectedSerializationCount, int expectedDeserializationCount) {
-      assertEquals("Wrong marshall count", expectedSerializationCount, CountMarshallingPojo.getMarshallCount());
-      assertEquals("Wrong unmarshall count", expectedDeserializationCount, CountMarshallingPojo.getUnmarshallCount());
+      assertEquals("Wrong marshall count", expectedSerializationCount, CountMarshallingPojo.getMarshallCount(
+            POJO_NAME));
+      assertEquals("Wrong unmarshall count", expectedDeserializationCount, CountMarshallingPojo.getUnmarshallCount(
+            POJO_NAME));
    }
 }

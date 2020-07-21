@@ -4,6 +4,7 @@ import static org.infinispan.test.TestingUtil.createMapEntry;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -35,7 +37,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
@@ -56,6 +57,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "marshall.core.StoreAsBinaryTest")
 public class StoreAsBinaryTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(StoreAsBinaryTest.class);
+   private static final String POJO_NAME = StoreAsBinaryTest.class.getName();
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -72,7 +74,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
 
    @BeforeMethod
    public void resetSerializationCounts() {
-      CountMarshallingPojo.reset();
+      CountMarshallingPojo.reset(POJO_NAME);
    }
 
    public void testNonMarshallable() {
@@ -85,25 +87,25 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
    }
 
    public void testReleaseObjectValueReferences() {
-      Cache<String, Object> cache1 = cache(0, "replSync");
-      Cache<String, Object> cache2 = cache(1, "replSync");
+      Cache<String, CountMarshallingPojo> cache1 = cache(0, "replSync");
+      Cache<String, CountMarshallingPojo> cache2 = cache(1, "replSync");
 
       assertTrue(cache1.isEmpty());
-      CountMarshallingPojo value = new CountMarshallingPojo();
+      CountMarshallingPojo value = new CountMarshallingPojo(POJO_NAME, 1);
       cache1.put("key", value);
       assertTrue(cache1.containsKey("key"));
 
-      DataContainer dc1 = extractComponent(cache1, InternalDataContainer.class);
+      DataContainer<?, ?> dc1 = extractComponent(cache1, InternalDataContainer.class);
 
-      InternalCacheEntry ice = dc1.get(boxKey(cache1, "key"));
+      InternalCacheEntry<?, ?> ice = dc1.peek(boxKey(cache1, "key"));
       Object o = ice.getValue();
       assertTrue(o instanceof WrappedByteArray);
       assertEquals(value, cache1.get("key"));
       assertEquals(value, unboxValue(cache1, o));
 
       // now on cache 2
-      DataContainer dc2 = TestingUtil.extractComponent(cache2, InternalDataContainer.class);
-      ice = dc2.get(boxKey(cache2, "key"));
+      DataContainer<?, ?> dc2 = TestingUtil.extractComponent(cache2, InternalDataContainer.class);
+      ice = dc2.peek(boxKey(cache2, "key"));
       o = ice.getValue();
 
       assertTrue(o instanceof WrappedByteArray);
@@ -111,37 +113,40 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       assertEquals(value, unboxValue(cache2, o));
    }
 
-   private Object boxKey(Cache cache, Object key) {
-      EncoderCache c = (EncoderCache) cache;
+   private Object boxKey(Cache<?, ?> cache, Object key) {
+      EncoderCache<?, ?> c = (EncoderCache<?, ?>) cache;
       return c.keyToStorage(key);
    }
 
-   private Object unboxKey(Cache cache, Object key) {
-      EncoderCache c = (EncoderCache) cache;
+   private Object unboxKey(Cache<?, ?> cache, Object key) {
+      EncoderCache<?, ?> c = (EncoderCache<?, ?>) cache;
       return c.keyFromStorage(key);
    }
 
-   private Object unboxValue(Cache cache, Object value) {
-      EncoderCache c = (EncoderCache) cache;
+   private Object unboxValue(Cache<?, ?> cache, Object value) {
+      EncoderCache<?, ?> c = (EncoderCache<?, ?>) cache;
       return c.valueFromStorage(value);
    }
 
    public void testReleaseObjectKeyReferences() {
       Cache<Object, String> cache1 = cache(0, "replSync");
       Cache<Object, String> cache2 = cache(1, "replSync");
-      CountMarshallingPojo key = new CountMarshallingPojo();
+      CountMarshallingPojo key = new CountMarshallingPojo(POJO_NAME, 1);
       cache1.put(key, "value");
 
       DataContainer<Object, String> dc1 = extractComponent(cache1, InternalDataContainer.class);
 
-      Object o = dc1.iterator().next().getKey();
-
+      Object firstKeyStorage = dc1.iterator().next().getKey();
+      Object firstKey = cache1.getAdvancedCache().getKeyDataConversion().fromStorage(firstKeyStorage);
+      assertEquals(key, firstKey);
       assertEquals("value", cache1.get(key));
 
 
       // now on cache 2
       DataContainer<Object, String> dc2 = extractComponent(cache2, InternalDataContainer.class);
-      o = dc2.iterator().next().getKey();
+      firstKeyStorage = dc2.iterator().next().getKey();
+      firstKey = cache1.getAdvancedCache().getKeyDataConversion().fromStorage(firstKeyStorage);
+      assertEquals(key, firstKey);
       assertEquals("value", cache2.get(key));
    }
 
@@ -149,7 +154,10 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       Cache<Object, Object> cache1 = cache(0, "replSync");
       Cache<Object, Object> cache2 = cache(1, "replSync");
 
-      CountMarshallingPojo key1 = new CountMarshallingPojo(1), value1 = new CountMarshallingPojo(11), key2 = new CountMarshallingPojo(2), value2 = new CountMarshallingPojo(22);
+      CountMarshallingPojo key1 = new CountMarshallingPojo(POJO_NAME, 1);
+      CountMarshallingPojo value1 = new CountMarshallingPojo(POJO_NAME, 11);
+      CountMarshallingPojo key2 = new CountMarshallingPojo(POJO_NAME, 2);
+      CountMarshallingPojo value2 = new CountMarshallingPojo(POJO_NAME, 22);
       String key3 = "3", value3 = "three";
       cache1.put(key1, value1);
       cache1.put(key2, value2);
@@ -172,12 +180,12 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       for (Object key : keys) assertTrue(expKeys.remove(key));
       assertTrue("Did not see keys " + expKeys + " in iterator!", expKeys.isEmpty());
 
-      Collection values = cache2.values();
+      Collection<Object> values = cache2.values();
       for (Object key : values) assertTrue(expValues.remove(key));
       assertTrue("Did not see keys " + expValues + " in iterator!", expValues.isEmpty());
 
       Set<Map.Entry<Object, Object>> entries = cache2.entrySet();
-      for (Map.Entry entry : entries) {
+      for (Map.Entry<Object, Object> entry : entries) {
          assertTrue(expKeyEntries.remove(entry.getKey()));
          assertTrue(expValueEntries.remove(entry.getValue()));
       }
@@ -333,7 +341,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       m.put(key3, value3);
       cache(0, "replSync").putAll(m);
 
-      List<Map.Entry> entryCollection = new ArrayList<>(2);
+      List<Map.Entry<Object, Object>> entryCollection = new ArrayList<>(2);
 
       entryCollection.add(createMapEntry(key1, value1));
       entryCollection.add(createMapEntry(key3, value3));
@@ -392,7 +400,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       m.put(key3, value3);
       cache(0, "replSync").putAll(m);
 
-      List<Map.Entry> entryCollection = new ArrayList<>(3);
+      List<Map.Entry<Object, Object>> entryCollection = new ArrayList<>(3);
 
       entryCollection.add(createMapEntry(key1, value1));
       entryCollection.add(createMapEntry(key3, value3));
@@ -445,33 +453,33 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       expValues.add(value2);
       expValues.add(value3);
 
-      Set expKeyEntries = ObjectDuplicator.duplicateSet(expKeys);
-      Set expValueEntries = ObjectDuplicator.duplicateSet(expValues);
+      Set<Object> expKeyEntries = ObjectDuplicator.duplicateSet(expKeys);
+      Set<Object> expValueEntries = ObjectDuplicator.duplicateSet(expValues);
 
       Set<Object> keys = cache(0, "replSync").keySet();
       for (Object key : keys) {
-         assert expKeys.remove(key);
+         assertTrue(expKeys.remove(key));
       }
-      assert expKeys.isEmpty() : "Did not see keys " + expKeys + " in iterator!";
+      assertTrue("Did not see keys " + expKeys + " in iterator!", expKeys.isEmpty());
 
       Collection<Object> values = cache(0, "replSync").values();
       for (Object value : values) {
-         assert expValues.remove(value);
+         assertTrue(expValues.remove(value));
       }
-      assert expValues.isEmpty() : "Did not see keys " + expValues + " in iterator!";
+      assertTrue("Did not see keys " + expValues + " in iterator!", expValues.isEmpty());
 
       Set<Map.Entry<Object, Object>> entries = cache(0, "replSync").entrySet();
-      for (Map.Entry entry : entries) {
-         assert expKeyEntries.remove(entry.getKey());
-         assert expValueEntries.remove(entry.getValue());
+      for (Map.Entry<Object, Object> entry : entries) {
+         assertTrue(expKeyEntries.remove(entry.getKey()));
+         assertTrue(expValueEntries.remove(entry.getValue()));
       }
-      assert expKeyEntries.isEmpty() : "Did not see keys " + expKeyEntries + " in iterator!";
-      assert expValueEntries.isEmpty() : "Did not see keys " + expValueEntries + " in iterator!";
+      assertTrue("Did not see keys " + expKeyEntries + " in iterator!", expKeyEntries.isEmpty());
+      assertTrue("Did not see keys " + expValueEntries + " in iterator!", expValueEntries.isEmpty());
    }
 
    public void testEqualsAndHashCode() throws Exception {
       StreamingMarshaller marshaller = extractGlobalMarshaller(manager(0));
-      CountMarshallingPojo pojo = new CountMarshallingPojo();
+      CountMarshallingPojo pojo = new CountMarshallingPojo(POJO_NAME, 1);
       WrappedBytes wb = new WrappedByteArray(marshaller.objectToByteBuffer(pojo));
       WrappedBytes wb2 = new WrappedByteArray(marshaller.objectToByteBuffer(pojo));
       assertEquals(wb2.hashCode(), wb.hashCode());
@@ -502,7 +510,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       Cache<Object, Object> cache1 = cache(0, "replSync2");
       Cache<Object, Object> cache2 = cache(1, "replSync2");
 
-      CountMarshallingPojo pojo = new CountMarshallingPojo();
+      CountMarshallingPojo pojo = new CountMarshallingPojo(POJO_NAME, 1);
       cache1.put("key", pojo);
 
       assertEquals(pojo, cache2.get("key"));
@@ -514,7 +522,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       MockListener l = new MockListener();
       cache1.addListener(l);
       try {
-         CountMarshallingPojo pojo = new CountMarshallingPojo();
+         CountMarshallingPojo pojo = new CountMarshallingPojo(POJO_NAME, 1);
          cache1.put("key", pojo);
          assertTrue("received " + l.newValue.getClass().getName(), l.newValue instanceof CountMarshallingPojo);
       } finally {
@@ -528,7 +536,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       MockListener l = new MockListener();
       cache2.addListener(l);
       try {
-         CountMarshallingPojo pojo = new CountMarshallingPojo();
+         CountMarshallingPojo pojo = new CountMarshallingPojo(POJO_NAME, 1);
          cache1.put("key", pojo);
          assertTrue(l.newValue instanceof CountMarshallingPojo);
       } finally {
@@ -539,40 +547,40 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
    public void testEvictWithMarshalledValueKey() {
       Cache<Object, Object> cache1 = cache(0, "replSync");
       cache(1, "replSync");
-      CountMarshallingPojo pojo = new CountMarshallingPojo();
+      CountMarshallingPojo pojo = new CountMarshallingPojo(POJO_NAME, 1);
       cache1.put(pojo, pojo);
       cache1.evict(pojo);
-      assertTrue(!cache1.containsKey(pojo));
+      assertFalse(cache1.containsKey(pojo));
    }
 
    public void testModificationsOnSameCustomKey() {
       Cache<Object, Object> cache1 = cache(0, "replSync");
       Cache<Object, Object> cache2 = cache(1, "replSync");
 
-      CountMarshallingPojo key1 = new CountMarshallingPojo();
+      CountMarshallingPojo key1 = new CountMarshallingPojo(POJO_NAME, 1);
       log.trace("First put");
       cache1.put(key1, "1");
 
       log.trace("Second put");
-      CountMarshallingPojo key2 = new CountMarshallingPojo();
+      CountMarshallingPojo key2 = new CountMarshallingPojo(POJO_NAME, 1);
       assertEquals("1", cache2.put(key2, "2"));
    }
 
    public void testReturnValueDeserialization() {
-      Cache<Object, Object> cache1 = cache(0, "replSync");
+      Cache<String, CountMarshallingPojo> cache1 = cache(0, "replSync");
       cache(1, "replSync");
 
-      CountMarshallingPojo v1 = new CountMarshallingPojo(1);
+      CountMarshallingPojo v1 = new CountMarshallingPojo(POJO_NAME, 1);
       cache1.put("1", v1);
-      CountMarshallingPojo previous = (CountMarshallingPojo) cache1.put("1", new CountMarshallingPojo(2));
+      CountMarshallingPojo previous = cache1.put("1", new CountMarshallingPojo(POJO_NAME, 2));
       assertEquals(v1, previous);
    }
 
    public void testGetCacheEntryWithFlag() {
-      Cache<Object, Object> cache1 = cache(0, "replSync");
+      Cache<CountMarshallingPojo, String> cache1 = cache(0, "replSync");
       cache(1, "replSync");
 
-      CountMarshallingPojo key1 = new CountMarshallingPojo();
+      CountMarshallingPojo key1 = new CountMarshallingPojo(POJO_NAME, 1);
       cache1.put(key1, "1");
 
       assertEquals("1", cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).getCacheEntry(key1).getValue());
@@ -583,12 +591,12 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       Object newValue;
 
       @CacheEntryModified
-      public void modified(CacheEntryModifiedEvent e) {
+      public void modified(CacheEntryModifiedEvent<Object, Object> e) {
          if (!e.isPre()) newValue = e.getValue();
       }
 
       @CacheEntryCreated
-      public void created(CacheEntryCreatedEvent e) {
+      public void created(CacheEntryCreatedEvent<Object, Object> e) {
          if (!e.isPre()) newValue = e.getValue();
       }
    }
