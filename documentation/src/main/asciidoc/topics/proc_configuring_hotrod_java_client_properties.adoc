@@ -18,6 +18,6 @@ include::code_examples/HotRodClientProperties.java[]
 
 .Reference
 
-* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html#package.description[org.infinispan.client.hotrod.configuration] lists and describes Hot Rod client properties.
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod Client Configuration]
 * link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html#RemoteCacheManager-java.net.URL-[org.infinispan.client.hotrod.RemoteCacheManager]
 * link:https://docs.oracle.com/javase/tutorial/essential/environment/sysprop.html[Java system properties]

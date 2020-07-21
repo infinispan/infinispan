@@ -6,8 +6,8 @@ entries to make space when adding new entries.
 [IMPORTANT]
 ====
 Eviction removes entries from memory but not from persistent cache stores. To
-prevent data loss, you should always configure a persistent cache store if you
-enable eviction.
+ensure that entries remain available after {brandname} evicts them, you should
+configure a persistent cache store.
 ====
 
 {brandname} eviction relies on two configurations:
