@@ -4,7 +4,7 @@ When Hot Rod Java clients attempt to access caches that do not exist, they
 return `null` for `getCache("$cacheName")` invocations.
 
 You can change this default behavior so that clients automatically create
-caches on first access using caches configuration templates or {brandname}
+caches on first access using default configuration templates or {brandname}
 cache definitions in XML format.
 
 .Programmatic procedure
@@ -21,7 +21,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 
 ConfigurationBuilder builder = new ConfigurationBuilder();
 builder.remoteCache("my-cache") <1>
-    .templateName("org.infinispan.DIST_SYNC")
+    .templateName(DefaultTemplate.DIST_SYNC)
 builder.remoteCache("another-cache") <2>
     .configuration("<infinispan><cache-container><distributed-cache name=\"another-cache\"/></cache-container></infinispan>");
 builder.remoteCache("my-other-cache") <3>
@@ -50,5 +50,6 @@ infinispan.client.hotrod.cache.my-other-cache.configuration_uri=file:/path/to/co
 
 .Reference
 
-* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[`RemoteCacheManager` Javadoc]
-* link:{javadocroot}/org/infinispan/client/hotrod/configuration/RemoteCacheConfigurationBuilder.html[`RemoteCacheConfigurationBuilder` Javadoc]
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod Client Configuration]
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/RemoteCacheConfigurationBuilder.html[org.infinispan.client.hotrod.configuration.RemoteCacheConfigurationBuilder]
+* link:{javadocroot}/org/infinispan/client/hotrod/DefaultTemplate.html[org.infinispan.client.hotrod.DefaultTemplate]
