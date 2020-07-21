@@ -155,7 +155,8 @@ public final class LifecycleManager implements ModuleLifecycle {
                   .withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class);
             KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
             searchMappingHolder.setEntityLoader(new EntityLoader(cache, keyTransformationHandler));
-            SerializationContextSearchMapping.acquire(serCtx).buildMapping(searchMappingHolder);
+            SerializationContextSearchMapping.acquire(serCtx).buildMapping(searchMappingHolder,
+                  cache.getCacheConfiguration().indexing().indexedEntityTypes());
          }
 
          RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr);

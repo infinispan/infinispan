@@ -1,6 +1,7 @@
 package org.infinispan.query.remote.impl.mapping;
 
 import java.util.Arrays;
+import java.util.Set;
 
 import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.ProgrammaticMappingConfigurationContext;
 import org.infinispan.Cache;
@@ -30,7 +31,6 @@ public class SerializationContextSearchMapping {
    }
 
    public void updateSearchMappingHolders(EmbeddedCacheManager cacheManager) {
-      // TODO ISPN-11479 Avoid to define all types for all caches
       for (String cacheName : cacheManager.getCacheConfigurationNames()) {
          if (Arrays.asList(EXCLUDE_CACHE_NAMES).contains(cacheName)) {
             continue;
@@ -46,12 +46,12 @@ public class SerializationContextSearchMapping {
          Cache<Object, Object> cache = cacheManager.getCache(cacheName);
          SearchMappingHolder searchMappingHolder = ComponentRegistryUtils.getSearchMappingHolder(cache);
          if (searchMappingHolder != null) {
-            buildMapping(searchMappingHolder);
+            buildMapping(searchMappingHolder, cache.getCacheConfiguration().indexing().indexedEntityTypes());
          }
       }
    }
 
-   public void buildMapping(SearchMappingHolder mappingHolder) {
+   public void buildMapping(SearchMappingHolder mappingHolder, Set<String> indexedEntityTypes) {
       GlobalReferenceHolder globalReferenceHolder = new GlobalReferenceHolder(serializationContext.getGenericDescriptors());
 
       ProtobufBootstrapIntrospector introspector = new ProtobufBootstrapIntrospector();
@@ -63,14 +63,25 @@ public class SerializationContextSearchMapping {
          return;
       }
 
+      boolean existIndexedEntities = false;
       for (GlobalReferenceHolder.RootMessageInfo rootMessage : globalReferenceHolder.getRootMessages()) {
-         programmaticMapping.type(rootMessage.getFullName())
-               .binder(new ProtobufMessageBinder(globalReferenceHolder, rootMessage.getFullName()))
+         String fullName = rootMessage.getFullName();
+         if (!indexedEntityTypes.contains(fullName)) {
+            continue;
+         }
+
+         existIndexedEntities = true;
+
+         programmaticMapping.type(fullName)
+               .binder(new ProtobufMessageBinder(globalReferenceHolder, fullName))
                .routingKeyBinder(new CacheRoutingKeyBridge.Binder())
                .indexed().index(rootMessage.getIndexName());
 
-         builder.addEntityType(byte[].class, rootMessage.getFullName());
+         builder.addEntityType(byte[].class, fullName);
       }
-      mappingHolder.build();
+
+      if (existIndexedEntities) {
+         mappingHolder.build();
+      }
    }
 }
