@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.apache.lucene.document.Document;
 import org.hibernate.search.bridge.LuceneOptions;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ProtobufParser;
@@ -48,10 +49,9 @@ final class IndexingWrappedMessageTagHandler extends WrappedMessageTagHandler {
          // not all message types are annotated for indexing
          if (indexingMetadata != null && indexingMetadata.isIndexed()) {
             // must ensure it's one of the declared indexed types
-            // TODO [anistor] This error will happen in 12
-            //if (!indexedTypes.contains(descriptor.getFullName())) {
-            //   throw new CacheConfigurationException("Type " + descriptor.getFullName() + " was not declared as an indexed entity");
-            //}
+            if (!indexedTypes.contains(descriptor.getFullName())) {
+               throw new CacheConfigurationException("Type " + descriptor.getFullName() + " was not declared as an indexed entity");
+            }
 
             try {
                ProtobufParser.INSTANCE.parse(new IndexingTagHandler(descriptor, document), descriptor, messageBytes);
