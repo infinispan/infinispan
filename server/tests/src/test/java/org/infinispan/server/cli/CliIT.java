@@ -62,7 +62,9 @@ public class CliIT {
          terminal.readln("connect " + hostAddress() + ":11222");
          terminal.assertContains("//containers/default]>");
          terminal.clear();
-
+         terminal.readln("stats");
+         terminal.assertContains("required_minimum_number_of_nodes");
+         terminal.clear();
          terminal.readln("create cache --template=org.infinispan.DIST_SYNC dcache");
          terminal.readln("cd caches/dcache");
          terminal.assertContains("//containers/default/caches/dcache]>");
@@ -98,6 +100,9 @@ public class CliIT {
          terminal.assertContains("\"total_results\":3,");
 
          terminal.clear();
+
+         terminal.readln("stats");
+         terminal.assertContains("required_minimum_number_of_nodes");
          terminal.readln("create counter --type=strong --storage=PERSISTENT --upper-bound=100 cnt1");
          terminal.readln("cd /containers/default/counters/cnt1");
          terminal.readln("describe");
