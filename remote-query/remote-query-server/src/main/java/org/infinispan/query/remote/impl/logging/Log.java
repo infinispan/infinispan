@@ -2,6 +2,7 @@ package org.infinispan.query.remote.impl.logging;
 
 import static org.jboss.logging.Logger.Level.WARN;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
@@ -67,8 +68,7 @@ public interface Log extends BasicLogger {
          "Please configure the cache encoding as 'application/x-protostream' or 'application/x-java-object'")
    void warnNoMediaType(String cacheName);
 
-   //TODO [anistor] This warning will become ERROR in version 12
-   @LogMessage(level = WARN)
-   @Message(id = 28017, value = "Type '%s' was not declared as an indexed entity. Please include it in the indexing configuration of your cache.")
-   void indexingUndeclaredType(String typeName);
+   @Message(id = 28017, value = "Type '%s' was not declared as an indexed entity. " +
+         "Please declare it in the indexing configuration of your cache and ensure the type is defined by a schema before this cache is started.")
+   CacheConfigurationException indexingUndeclaredType(String typeName);
 }
