@@ -52,6 +52,8 @@ public class RemoteStoreWrapperTest extends AbstractInfinispanTest {
       ConfigurationBuilder clientBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       clientBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class)
          .hotRodWrapping(true)
+         // LOCAL cache doesn't have segments
+         .segmented(false)
          .addServer()
             .host(sourceServer.getHost())
             .port(sourceServer.getPort());

@@ -48,6 +48,8 @@ public class GetWithMetadataTest extends AbstractInfinispanTest {
             .addStore(RemoteStoreConfigurationBuilder.class)
             .remoteCacheName(CACHE_NAME)
             .hotRodWrapping(true)
+            // Store cannot be segmented as the remote cache is LOCAL and it doesn't report its segments?
+            .segmented(false)
             .addServer()
             .host("localhost")
             .port(sourcePort)

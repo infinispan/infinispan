@@ -49,7 +49,8 @@ public class CustomLoaderNonNullWithExpirationTest extends SingleCacheManagerTes
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      builder.persistence().addStore(SimpleLoaderConfigurationBuilder.class);
+      builder.persistence().addStore(SimpleLoaderConfigurationBuilder.class)
+            .segmented(false);
       // Effectively disabling reaper
       builder.expiration().wakeUpInterval(1, TimeUnit.DAYS);
 

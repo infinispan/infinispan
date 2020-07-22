@@ -145,6 +145,7 @@ public class RollingUpgradeIT {
             .remoteCacheName(CACHE_NAME)
             .hotRodWrapping(true)
             .protocolVersion(ProtocolVersion.PROTOCOL_VERSION_25)
+            .shared(true)
             .addServer()
             .host(source.driver.getServerAddress(0).getHostAddress())
             .port(11222);

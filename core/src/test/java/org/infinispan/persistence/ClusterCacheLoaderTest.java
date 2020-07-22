@@ -32,10 +32,12 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
       registerCacheManager(cacheManager1, cacheManager2);
 
       ConfigurationBuilder config1 = getDefaultClusteredCacheConfig(cacheMode, false);
-      config1.persistence().addClusterLoader();
+      config1.persistence().addClusterLoader()
+            .segmented(false);
 
       ConfigurationBuilder config2 = getDefaultClusteredCacheConfig(cacheMode, false);
-      config2.persistence().addClusterLoader();
+      config2.persistence().addClusterLoader()
+            .segmented(false);
       config2.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
 
       cacheManager1.defineConfiguration("clusteredCl", config1.build());
@@ -59,6 +61,7 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
 
       assertNull(cache1.get("key"));
       assertNull(cache2.get("key"));
+
       writer.write(MarshalledEntryUtil.create("key", "value", cache2));
       assertEquals(writer.loadEntry("key").getValue(), "value");
       assertEquals(cache1.get("key"), "value");

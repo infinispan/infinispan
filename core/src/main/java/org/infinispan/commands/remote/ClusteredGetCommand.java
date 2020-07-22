@@ -17,6 +17,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -42,7 +43,7 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
 
    //only used by extended statistics. this boolean is local.
    private boolean isWrite;
-   private int segment;
+   private Integer segment;
 
    private ClusteredGetCommand() {
       super(null, EnumUtil.EMPTY_BIT_SET); // For command id uniqueness test
@@ -52,11 +53,11 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
       super(cacheName, EnumUtil.EMPTY_BIT_SET);
    }
 
-   public ClusteredGetCommand(Object key, ByteString cacheName, int segment, long flags) {
+   public ClusteredGetCommand(Object key, ByteString cacheName, Integer segment, long flags) {
       super(cacheName, flags);
       this.key = key;
       this.isWrite = false;
-      if (segment < 0) {
+      if (segment != null && segment < 0) {
          throw new IllegalArgumentException("Segment must 0 or greater!");
       }
       this.segment = segment;
@@ -72,7 +73,13 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
       // CACHE_MODE_LOCAL is not used as it can be used when we want to ignore the ownership with respect to reads
       long flagBitSet = EnumUtil.bitSetOf(Flag.SKIP_REMOTE_LOOKUP);
-      GetCacheEntryCommand command = componentRegistry.getCommandsFactory().buildGetCacheEntryCommand(key, segment,
+      int segmentToUse;
+      if (segment != null) {
+         segmentToUse = segment;
+      } else {
+         segmentToUse = componentRegistry.getComponent(KeyPartitioner.class).getSegment(key);
+      }
+      GetCacheEntryCommand command = componentRegistry.getCommandsFactory().buildGetCacheEntryCommand(key, segmentToUse,
             EnumUtil.mergeBitSets(flagBitSet, getFlagsBitSet()));
       command.setTopologyId(topologyId);
       InvocationContextFactory icf = componentRegistry.getInvocationContextFactory().running();
@@ -109,14 +116,22 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
-      UnsignedNumeric.writeUnsignedInt(output, segment);
+      if (segment != null) {
+         output.writeBoolean(true);
+         UnsignedNumeric.writeUnsignedInt(output, segment);
+      } else {
+         output.writeBoolean(false);
+      }
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
-      segment = UnsignedNumeric.readUnsignedInt(input);
+      boolean hasSegment = input.readBoolean();
+      if (hasSegment) {
+         segment = UnsignedNumeric.readUnsignedInt(input);
+      }
       setFlagsBitSet(input.readLong());
    }
 

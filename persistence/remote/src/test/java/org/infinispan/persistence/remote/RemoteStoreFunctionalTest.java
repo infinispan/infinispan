@@ -32,6 +32,8 @@ public class RemoteStoreFunctionalTest extends BaseStoreFunctionalTest {
          .addStore(RemoteStoreConfigurationBuilder.class)
             .remoteCacheName("")
             .preload(preload)
+            // local cache encoding is object where as server is protostream so we can't be segmented
+            .segmented(false)
             .addServer()
                .host("localhost")
                .port(hrServer.getPort());

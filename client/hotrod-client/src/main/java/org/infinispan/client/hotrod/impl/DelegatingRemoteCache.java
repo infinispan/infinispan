@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -18,6 +19,7 @@ import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
@@ -349,5 +351,10 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    @Override
    public boolean isObjectStorage() {
       return delegate.isObjectStorage();
+   }
+
+   @Override
+   public CompletionStage<PingResponse> ping() {
+      return delegate.ping();
    }
 }

@@ -404,11 +404,11 @@ public interface CommandsFactory {
    /**
     * Builds a ClusteredGetCommand, which is a remote lookup command
     * @param key key to look up
-    * @param segment the segment for the key
+    * @param segment the segment for the key or null if it should be computed on the remote node
     * @param flagsBitSet Command flags provided by cache
     * @return a ClusteredGetCommand
     */
-   ClusteredGetCommand buildClusteredGetCommand(Object key, int segment, long flagsBitSet);
+   ClusteredGetCommand buildClusteredGetCommand(Object key, Integer segment, long flagsBitSet);
 
    /**
     * Builds a ClusteredGetAllCommand, which is a remote lookup command

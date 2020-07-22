@@ -13,7 +13,7 @@ import io.netty.buffer.ByteBuf;
  */
 public class Codec27 extends Codec26 {
 
-   public static final String EMPTY_VAUE_CONVERTER = "org.infinispan.server.hotrod.HotRodServer$ToEmptyBytesKeyValueFilterConverter";
+   public static final String EMPTY_VALUE_CONVERTER = "org.infinispan.server.hotrod.HotRodServer$ToEmptyBytesKeyValueFilterConverter";
 
    @Override
    public HeaderParams writeHeader(ByteBuf buf, HeaderParams params) {
@@ -25,6 +25,6 @@ public class Codec27 extends Codec26 {
          IntSet segments, int batchSize) {
       return new IteratorMapper<>(remoteCache.retrieveEntries(
             // Use the ToEmptyBytesKeyValueFilterConverter to remove value payload
-            EMPTY_VAUE_CONVERTER, segments, batchSize), e -> (K) e.getKey());
+            EMPTY_VALUE_CONVERTER, segments, batchSize), e -> (K) e.getKey());
    }
 }

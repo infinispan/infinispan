@@ -49,11 +49,11 @@ public interface Log extends BasicLogger {
    @Message(value = "RemoteStore only supports segmentation when using at least protocol version %s or higher", id = 10008)
    CacheConfigurationException segmentationNotSupportedInThisVersion(ProtocolVersion version);
 
-   @Message(value = "A segmented RemoteStore must be shared in a cache that is clustered", id = 10009)
-   CacheConfigurationException segmentationRequiresBeingShared();
+   @Message(value = "A RemoteStore must be shared in a cache that is clustered", id = 10009)
+   CacheConfigurationException clusteredRequiresBeingShared();
 
-   @Message(value = "Segmentation is not supported for a RemoteStore when the configured segments %d do not match the remote servers amount %d", id = 10010)
-   CacheConfigurationException segmentationRequiresEqualSegments(int cacheSegmentCount, int serverSegmentCount);
+   @Message(value = "Segmentation is not supported for a RemoteStore when the configured segments %d do not match the remote servers amount %s", id = 10010)
+   CacheConfigurationException segmentationRequiresEqualSegments(int cacheSegmentCount, Integer serverSegmentCount);
 
    @Message(value = "Segmentation is not supported for a RemoteStore when the configured key media type %s does not match the remote servers key media type %s", id = 10011)
    CacheConfigurationException segmentationRequiresEqualMediaTypes(MediaType cacheMediaType, MediaType serverMediaType);

@@ -7,6 +7,17 @@ public class JStoreAdapterConfigurationBuilder extends AbstractStoreConfiguratio
 
    public JStoreAdapterConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, JStoreAdapterConfiguration.attributeDefinitionSet());
+
+      // JCache doesn't support segmentation
+      segmented(false);
+   }
+
+   @Override
+   public JStoreAdapterConfigurationBuilder segmented(boolean b) {
+      if (b) {
+         throw new UnsupportedOperationException("JCache does not support being segmented!");
+      }
+      return super.segmented(b);
    }
 
    @Override

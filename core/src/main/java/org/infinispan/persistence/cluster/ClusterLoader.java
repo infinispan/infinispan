@@ -14,6 +14,7 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -61,7 +62,8 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
       if (!isCacheReady()) return null;
 
       ClusteredGetCommand clusteredGetCommand = commandsFactory.buildClusteredGetCommand(key,
-            keyPartitioner.getSegment(key), EnumUtil.bitSetOf(Flag.SKIP_OWNERSHIP_CHECK));
+            Configurations.needSegments(cache.getCacheConfiguration()) ? keyPartitioner.getSegment(key) : null,
+            EnumUtil.bitSetOf(Flag.SKIP_OWNERSHIP_CHECK));
 
       Collection<Response> responses;
       try {
