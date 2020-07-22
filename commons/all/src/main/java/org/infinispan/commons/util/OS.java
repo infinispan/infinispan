@@ -8,7 +8,7 @@ package org.infinispan.commons.util;
  * @since 9.2
  */
 public enum OS {
-   UNIX, WINDOWS, SOLARIS, LINUX;
+   UNIX, WINDOWS, SOLARIS, LINUX, MAC_OS;
 
    public static OS getCurrentOs() {
       String os = System.getProperty("os.name").toLowerCase();
@@ -18,6 +18,8 @@ public enum OS {
          return SOLARIS;
       } else if (os.contains("linux")) {
          return LINUX;
+      } else if (os.toLowerCase().contains("mac os")) {
+         return MAC_OS;
       } else {
          return UNIX;
       }

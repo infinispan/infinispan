@@ -554,14 +554,22 @@ public class Server implements ServerManagement, AutoCloseable {
    @Override
    public CompletionStage<Path> getServerReport() {
       OS os = OS.getCurrentOs();
-      if (os != OS.LINUX) {
-         return CompletableFutures.completedExceptionFuture(log.serverReportUnavailable(os));
+      String reportFile = "bin/%s";
+      switch (os) {
+         case LINUX:
+            reportFile = String.format(reportFile, "report.sh");
+            break;
+         case MAC_OS:
+            reportFile = String.format(reportFile, "report-osx.sh");
+            break;
+         default:
+            return CompletableFutures.completedExceptionFuture(log.serverReportUnavailable(os));
       }
       long pid = ProcessInfo.getInstance().getPid();
       Path home = serverHome.toPath();
       Path root = serverRoot.toPath();
       ProcessBuilder builder = new ProcessBuilder();
-      builder.command("sh", "-c", home.resolve("bin/report.sh").toString(), Long.toString(pid), root.toString());
+      builder.command("sh", "-c", home.resolve(reportFile).toString(), Long.toString(pid), root.toString());
       return blockingManager.supplyBlocking(() -> {
          try {
             Process process = builder.start();
