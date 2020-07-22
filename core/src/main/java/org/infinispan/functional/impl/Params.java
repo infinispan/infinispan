@@ -129,7 +129,7 @@ public final class Params {
             flagsBitSet |= FlagBitSets.SKIP_LOCKING;
             break;
          case TRY_LOCK:
-            flagsBitSet |= FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT;
+            flagsBitSet |= FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT | FlagBitSets.FAIL_SILENTLY;
             break;
       }
       switch (executionMode) {

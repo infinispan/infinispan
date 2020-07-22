@@ -64,7 +64,9 @@ public abstract class BaseRegion implements Region, InfinispanBaseRegion {
 		this.tm = transactionManager;
 		this.factory = factory;
 		this.localAndSkipLoadCache = cache.withFlags(
-				Flag.CACHE_MODE_LOCAL, Flag.ZERO_LOCK_ACQUISITION_TIMEOUT,
+				Flag.CACHE_MODE_LOCAL,
+				Flag.FAIL_SILENTLY,
+				Flag.ZERO_LOCK_ACQUISITION_TIMEOUT,
 				Flag.SKIP_CACHE_LOAD
 		);
 	}
