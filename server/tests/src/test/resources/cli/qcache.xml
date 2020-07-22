@@ -1,6 +1,6 @@
 <infinispan>
    <cache-container>
-      <distributed-cache name="qcache">
+      <distributed-cache name="qcache" statistics="true">
          <encoding>
             <key media-type="application/x-protostream"/>
             <value media-type="application/x-protostream"/>

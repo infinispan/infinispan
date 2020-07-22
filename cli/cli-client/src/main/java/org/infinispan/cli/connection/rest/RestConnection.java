@@ -508,6 +508,7 @@ public class RestConnection implements Connection, Closeable {
                   String name = resource.getName();
                   throw MSG.invalidResource(name.isEmpty() ? "/" : name);
                }
+               break;
             }
             case Logging.CMD: {
                switch (command.arg(Logging.TYPE)) {
