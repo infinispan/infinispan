@@ -66,7 +66,7 @@ public class LockingInterceptor extends NonTransactionalLockingInterceptor {
    protected final InvocationFinallyFunction<DataWriteCommand> invokeNextAndUnlock = (rCtx, dataWriteCommand, rv, throwable) -> {
       if (throwable != null) {
          lockManager.unlockAll(rCtx);
-         if (throwable instanceof TimeoutException && dataWriteCommand.hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT)) {
+         if (throwable instanceof TimeoutException && dataWriteCommand.hasAnyFlag(FlagBitSets.FAIL_SILENTLY)) {
             dataWriteCommand.fail();
             return null;
          }

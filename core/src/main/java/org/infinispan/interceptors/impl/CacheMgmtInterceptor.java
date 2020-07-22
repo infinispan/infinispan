@@ -366,6 +366,10 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         // FAIL_SILENTLY makes the return value null
+         if (rv == null && !rCommand.isSuccessful() && rCommand.hasAnyFlag(FlagBitSets.FAIL_SILENTLY))
+            return null;
+
          long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
          StripeB stripe = counters.stripeForCurrentThread();
          StatsEnvelope<?> envelope = (StatsEnvelope<?>) rv;
