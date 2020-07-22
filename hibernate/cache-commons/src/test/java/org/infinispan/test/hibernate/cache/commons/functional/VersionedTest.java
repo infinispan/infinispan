@@ -281,7 +281,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
 
       TIME_SERVICE.advance(1);
       Future<Boolean> addFuture = executor.submit(() -> withTxSessionApply(s -> {
-         collectionUpdateTestInterceptor.updateLatch.await();
+         awaitOrThrow(collectionUpdateTestInterceptor.updateLatch);
          Item item = s.load(Item.class, itemId);
          OtherItem otherItem = new OtherItem();
          otherItem.setName("Other 2");
@@ -319,7 +319,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
          if (command.hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT)) {
             if (firstPutFromLoad.compareAndSet(true, false)) {
                updateLatch.countDown();
-               putFromLoadLatch.await();
+               awaitOrThrow(putFromLoadLatch);
             }
          }
          return super.visitReadWriteKeyCommand(ctx, command);

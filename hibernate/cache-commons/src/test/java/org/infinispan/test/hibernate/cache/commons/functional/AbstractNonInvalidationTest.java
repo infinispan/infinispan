@@ -47,7 +47,7 @@ import static org.junit.Assert.assertTrue;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
-   protected static final int WAIT_TIMEOUT = 2000;
+   protected static final int WAIT_TIMEOUT = 20; // seconds
    protected static final ControlledTimeService TIME_SERVICE = new ControlledTimeService();
 
    protected long TIMEOUT;
