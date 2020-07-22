@@ -344,7 +344,10 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
             .fetchInMemoryState(true)
             .timeout(distSyncTimeout + configuration.topologyReplTimeout());
       } else {
-         builder.persistence().addClusterLoader().remoteCallTimeout(configuration.topologyReplTimeout());
+         builder.persistence()
+               .addClusterLoader()
+                  .segmented(false)
+               .remoteCallTimeout(configuration.topologyReplTimeout());
       }
 
       return builder;

@@ -317,7 +317,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public ClusteredGetCommand buildClusteredGetCommand(Object key, int segment, long flagsBitSet) {
+   public ClusteredGetCommand buildClusteredGetCommand(Object key, Integer segment, long flagsBitSet) {
       return actual.buildClusteredGetCommand(key, segment, flagsBitSet);
    }
 

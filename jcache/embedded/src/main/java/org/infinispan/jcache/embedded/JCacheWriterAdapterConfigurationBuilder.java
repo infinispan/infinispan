@@ -7,6 +7,17 @@ public class JCacheWriterAdapterConfigurationBuilder extends AbstractStoreConfig
 
    public JCacheWriterAdapterConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, JCacheWriterAdapterConfiguration.attributeDefinitionSet());
+
+      // JCache doesn't support segmentation
+      segmented(false);
+   }
+
+   @Override
+   public JCacheWriterAdapterConfigurationBuilder segmented(boolean b) {
+      if (b) {
+         throw new UnsupportedOperationException("JCache does not support being segmented!");
+      }
+      return super.segmented(b);
    }
 
    @Override

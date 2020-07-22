@@ -28,7 +28,8 @@ public class ClusteredCacheLoaderInvalidationTest extends MultipleCacheManagersT
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, false);
-      cb.persistence().addStore(ClusterLoaderConfigurationBuilder.class);
+      cb.persistence().addStore(ClusterLoaderConfigurationBuilder.class)
+            .segmented(false);
       createClusteredCaches(2, cacheName, cb);
    }
 

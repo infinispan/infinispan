@@ -107,6 +107,7 @@ class TestCluster {
       private char[] trustStorePassword;
       private char[] keyStorePassword;
       private String keyStoreFileName;
+      private boolean segmented;
 
       Builder setNumMembers(int numMembers) {
          this.numMembers = numMembers;
@@ -176,7 +177,12 @@ class TestCluster {
                if (builder.keyStoreFileName != null) {
                   store.remoteSecurity().ssl().keyStoreFileName(builder.keyStoreFileName).keyStorePassword(builder.keyStorePassword);
                }
-               if (protocolVersion.compareTo(PROTOCOL_VERSION_23) < 0) {
+               if (builder.segmented) {
+                  if (protocolVersion.compareTo(PROTOCOL_VERSION_23) < 0) {
+                     throw new AssertionError("Protocol version less than 2.3 cannot be segmented");
+                  }
+                  store.segmented(true);
+               } else {
                   store.segmented(false);
                }
             }
@@ -199,6 +205,11 @@ class TestCluster {
       Builder withSSLKeyStore(String keyStoreFileName, char[] keyStorePassword) {
          this.keyStoreFileName = keyStoreFileName;
          this.keyStorePassword = keyStorePassword;
+         return this;
+      }
+
+      Builder segmented(boolean segmented) {
+         this.segmented = segmented;
          return this;
       }
 

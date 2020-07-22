@@ -8,16 +8,15 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
@@ -129,6 +128,14 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       store.startAndWait(createContext(configuration));
    }
 
+   protected Object keyToStorage(Object key) {
+      return key;
+   }
+
+   protected Object valueToStorage(Object value) {
+      return value;
+   }
+
    protected void setConfiguration(Configuration configuration) {
       this.configuration = configuration;
       this.segmentCount = configuration.clustering().hash().numSegments();
@@ -179,23 +186,16 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       return value;
    }
 
-   /**
-    * Overridden in stores which accept only certain value types
-    */
-   protected String unwrap(Object wrapped) {
-      return (String) wrapped;
-   }
-
    public void testLoadAndStoreImmortal() throws PersistenceException {
       assertIsEmpty();
       store.write(marshalledEntry("k", "v"));
 
-      MarshallableEntry entry = store.loadEntry("k");
-      assertEquals("v", unwrap(entry.getValue()));
+      MarshallableEntry entry = store.loadEntry(keyToStorage("k"));
+      assertEquals(valueToStorage("v"), entry.getValue());
       assertTrue("Expected an immortalEntry",
                  entry.getMetadata() == null || entry.expiryTime() == -1 || entry.getMetadata().maxIdle() == -1);
       assertContains("k", true);
-      assertFalse(store.delete("k2"));
+      assertFalse(store.delete(keyToStorage("k2")));
    }
 
    public void testLoadAndStoreWithLifespan() throws Exception {
@@ -207,7 +207,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       store.write(marshalledEntry(se));
 
       assertContains("k", true);
-      assertCorrectExpiry(store.loadEntry("k"), "v", lifespan, -1, false);
+      assertCorrectExpiry(store.loadEntry(keyToStorage("k")), "v", lifespan, -1, false);
       assertCorrectExpiry(TestingUtil.allEntries(store, segments).iterator().next(), "v", lifespan, -1, false);
       timeService.advance(lifespan + 1);
 
@@ -225,7 +225,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
    private void assertCorrectExpiry(MarshallableEntry me, String value, long lifespan, long maxIdle, boolean expired) {
       assertNotNull(String.valueOf(me), me);
-      assertEquals(me + ".getValue()", value, unwrap(me.getValue()));
+      assertEquals(me + ".getValue()", valueToStorage(value), me.getValue());
 
       if (lifespan > -1) {
          assertNotNull(me + ".getMetadata()", me.getMetadata());
@@ -252,7 +252,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       store.write(marshalledEntry(se));
 
       assertContains("k", true);
-      assertCorrectExpiry(store.loadEntry("k"), "v", -1, idle, false);
+      assertCorrectExpiry(store.loadEntry(keyToStorage("k")), "v", -1, idle, false);
       assertCorrectExpiry(TestingUtil.allEntries(store, segments).iterator().next(), "v", -1, idle, false);
       timeService.advance(idle + 1);
 
@@ -273,7 +273,8 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    }
 
    protected void assertEventuallyExpires(final String key) throws Exception {
-      eventually(() -> store.loadEntry(key) == null);
+      Object storageKey = keyToStorage(key);
+      eventually(() -> store.loadEntry(storageKey) == null);
    }
 
    /* Override if the store cannot purge all expired entries upon request */
@@ -282,7 +283,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    }
 
    protected void purgeExpired(String... expiredKeys) {
-      final Set<String> expired = new HashSet<>(Arrays.asList(expiredKeys));
+      final Set<Object> expired = Stream.of(expiredKeys).map(this::keyToStorage).collect(Collectors.toSet());
       List<MarshallableEntry<Object, Object>> expiredList = store.purge();
 
       expiredList.removeIf(me -> expired.remove(me.getKey()));
@@ -307,7 +308,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       store.write(marshalledEntry(se));
 
       assertContains("k", true);
-      assertCorrectExpiry(store.loadEntry("k"), "v", lifespan, idle, false);
+      assertCorrectExpiry(store.loadEntry(keyToStorage("k")), "v", lifespan, idle, false);
       assertCorrectExpiry(TestingUtil.allEntries(store, segments).iterator().next(), "v", lifespan, idle, false);
       timeService.advance(idle + 1);
 
@@ -337,7 +338,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       store.write(marshalledEntry(se));
 
       assertContains("k", true);
-      assertCorrectExpiry(store.loadEntry("k"), "v", lifespan, idle, false);
+      assertCorrectExpiry(store.loadEntry(keyToStorage("k")), "v", lifespan, idle, false);
       assertCorrectExpiry(TestingUtil.allEntries(store, segments).iterator().next(), "v", lifespan, idle, false);
 
       idle = 4000;
@@ -387,17 +388,17 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
       startStore(store);
       assertExpired(se1, true);
-      assertNull(store.loadEntry("k1"));
+      assertNull(store.loadEntry(keyToStorage("k1")));
       assertContains("k1", false);
       assertExpired(se2, false);
-      assertNotNull(store.loadEntry("k2"));
+      assertNotNull(store.loadEntry(keyToStorage("k2")));
       assertContains("k2", true);
-      assertEquals("v2", unwrap(store.loadEntry("k2").getValue()));
+      assertEquals(valueToStorage("v2"), store.loadEntry(keyToStorage("k2")).getValue());
       assertExpired(se3, true);
-      assertNull(store.loadEntry("k3"));
+      assertNull(store.loadEntry(keyToStorage("k3")));
       assertContains("k3", false);
       assertExpired(se4, true);
-      assertNull(store.loadEntry("k4"));
+      assertNull(store.loadEntry(keyToStorage("k4")));
       assertContains("k4", false);
    }
 
@@ -411,7 +412,9 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       Set<MarshallableEntry<Object, Object>> set = TestingUtil.allEntries(store, segments);
 
       assertSize(set, 3);
-      Set<String> expected = new HashSet<>(Arrays.asList("k1", "k2", "k3"));
+      Set<Object> expected = Stream.of("k1", "k2", "k3")
+            .map(this::keyToStorage)
+            .collect(Collectors.toSet());
       for (MarshallableEntry se : set) {
          assertTrue(expected.remove(se.getKey()));
       }
@@ -432,7 +435,9 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
       assertSize(set, 4);
 
-      Set<String> expected = new HashSet<>(Arrays.asList("k1", "k2", "k3", "k4"));
+      Set<Object> expected = Stream.of("k1", "k2", "k3", "k4")
+            .map(this::keyToStorage)
+            .collect(Collectors.toSet());
 
       for (MarshallableEntry se : set) {
          assertTrue(expected.remove(se.getKey()));
@@ -440,13 +445,13 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
       assertEmpty(expected, true);
 
-      store.delete("k1");
-      store.delete("k2");
-      store.delete("k3");
+      store.delete(keyToStorage("k1"));
+      store.delete(keyToStorage("k2"));
+      store.delete(keyToStorage("k3"));
 
       set = TestingUtil.allEntries(store, segments);
       assertSize(set, 1);
-      assertEquals("k4", set.iterator().next().getKey());
+      assertEquals(keyToStorage("k4"), set.iterator().next().getKey());
 
       assertEquals(1, store.publishKeysWait(segments, null).size());
    }
@@ -526,11 +531,13 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       s = allEntries(store, segments, k -> true);
       assertSize(s, 5);
 
-      s = allEntries(store, segments, k -> !"k3".equals(k));
+      Object storedK3 = keyToStorage("k3");
+
+      s = allEntries(store, segments, k -> !storedK3.equals(k));
       assertSize(s, 4);
 
       for (MarshallableEntry me : s) {
-         assertFalse(me.getKey().equals("k3"));
+         assertFalse(me.getKey().equals(storedK3));
       }
    }
 
@@ -538,12 +545,12 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       assertIsEmpty();
       InternalCacheEntry ice = internalCacheEntry("k1", "v1", -1);
       store.write(marshalledEntry(ice));
-      assertEquals("v1", unwrap(store.loadEntry("k1").getValue()));
+      assertEquals(valueToStorage("v1"), store.loadEntry(keyToStorage("k1")).getValue());
 
       InternalCacheEntry ice2 = internalCacheEntry("k1", "v2", -1);
       store.write(marshalledEntry(ice2));
 
-      assertEquals("v2", unwrap(store.loadEntry("k1").getValue()));
+      assertEquals(valueToStorage("v2"), store.loadEntry(keyToStorage("k1")).getValue());
    }
 
    public void testReplaceExpiredEntry() throws Exception {
@@ -552,23 +559,24 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       InternalCacheEntry ice = internalCacheEntry("k1", "v1", lifespan);
       assertExpired(ice, false);
       store.write(marshalledEntry(ice));
-      assertEquals("v1", unwrap(store.loadEntry("k1").getValue()));
+      Object storedKey = keyToStorage("k1");
+      assertEquals("v1", store.loadEntry(storedKey).getValue());
 
       timeService.advance(lifespan + 1);
       assertExpired(ice, true);
 
-      assertNull(store.loadEntry("k1"));
+      assertNull(store.loadEntry(storedKey));
 
       InternalCacheEntry ice2 = internalCacheEntry("k1", "v2", lifespan);
       assertExpired(ice2, false);
       store.write(marshalledEntry(ice2));
 
-      assertEquals("v2", unwrap(store.loadEntry("k1").getValue()));
+      assertEquals(valueToStorage("v2"), store.loadEntry(storedKey).getValue());
 
       timeService.advance(lifespan + 1);
       assertExpired(ice2, true);
 
-      assertNull(store.loadEntry("k1"));
+      assertNull(store.loadEntry(storedKey));
    }
 
    public void testLoadAndStoreBytesValues() throws PersistenceException, IOException, InterruptedException {
@@ -591,7 +599,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       MarshallableEntry entry = store.loadEntry(key);
       assertTrue("Expected an immortalEntry",
                  entry.getMetadata() == null || entry.expiryTime() == -1 || entry.getMetadata().maxIdle() == -1);
-      assertContains(key, true);
+      assertTrue(store.contains(key));
 
       assertFalse(store.delete(key2));
       assertTrue(store.delete(key));
@@ -615,7 +623,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
    public void testEmptyWriteAndDeleteBatchIterable() {
       assertIsEmpty();
-      assertNull("should not be present in the store", store.loadEntry(0));
+      assertNull("should not be present in the store", store.loadEntry(keyToStorage(0)));
       store.batchUpdate(1, Flowable.empty(), Flowable.empty());
 
       assertEquals(0, store.sizeWait(segments));
@@ -623,21 +631,21 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
    private void testBatch(int numberOfEntries, Runnable createBatch) {
       assertIsEmpty();
-      assertNull("should not be present in the store", store.loadEntry(0));
+      assertNull("should not be present in the store", store.loadEntry(keyToStorage(0)));
 
       createBatch.run();
 
       Set<MarshallableEntry<Object, Object>> set = TestingUtil.allEntries(store, segments);
       assertSize(set, numberOfEntries);
-      assertNotNull(store.loadEntry("56"));
+      assertNotNull(store.loadEntry(keyToStorage("56")));
 
       int batchSize = numberOfEntries / 2;
-      List<Object> keys = IntStream.range(0, batchSize).mapToObj(Integer::toString).collect(Collectors.toList());
+      List<Object> keys = IntStream.range(0, batchSize).mapToObj(Integer::toString).map(this::keyToStorage).collect(Collectors.toList());
       store.batchUpdate(segmentCount, TestingUtil.multipleSegmentPublisher(Flowable.fromIterable(keys),
             Function.identity(), keyPartitioner), Flowable.empty());
       set = TestingUtil.allEntries(store, segments);
       assertSize(set, batchSize);
-      assertNull(store.loadEntry("20"));
+      assertNull(store.loadEntry(keyToStorage("20")));
    }
 
    public void testIsAvailable() {
@@ -653,19 +661,26 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    }
 
    protected final void assertContains(Object k, boolean expected) {
-      assertEquals("contains(" + k + ")", expected, store.contains(k));
+      Object transformedKey = keyToStorage(k);
+      assertEquals("contains(" + transformedKey + ")", expected, store.contains(transformedKey));
    }
 
    protected final <K> InternalCacheEntry<K, Object> internalCacheEntry(K key, Object value, long lifespan) {
-      return TestInternalCacheEntryFactory.create(factory, key, wrap(key, value), lifespan);
+      Object transformedKey = keyToStorage(key);
+      Object transformedValue = valueToStorage(value);
+      return TestInternalCacheEntryFactory.create(factory, (K) transformedKey, wrap(transformedKey, transformedValue), lifespan);
    }
 
    private InternalCacheEntry<Object, Object> internalCacheEntry(String key, String value, long lifespan, long idle) {
-      return TestInternalCacheEntryFactory.create(factory, key, wrap(key, value), lifespan, idle);
+      Object transformedKey = keyToStorage(key);
+      Object transformedValue = valueToStorage(value);
+      return TestInternalCacheEntryFactory.create(factory, transformedKey, wrap(transformedKey, transformedValue), lifespan, idle);
    }
 
    private MarshallableEntry<Object, Object> marshalledEntry(String key, String value) {
-      return MarshalledEntryUtil.create(key, wrap(key, value), getMarshaller());
+      Object transformedKey = keyToStorage(key);
+      Object transformedValue = valueToStorage(value);
+      return MarshalledEntryUtil.create(transformedKey, wrap(transformedKey, transformedValue), getMarshaller());
    }
 
    protected final MarshallableEntry<Object, Object> marshalledEntry(InternalCacheEntry entry) {

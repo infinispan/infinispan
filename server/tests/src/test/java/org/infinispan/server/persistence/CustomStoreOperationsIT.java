@@ -43,6 +43,7 @@ public class CustomStoreOperationsIT {
       configurationBuilder.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
       configurationBuilder.persistence()
             .addStore(CustomStoreConfigurationBuilder.class)
+            .segmented(false)
             .customStoreClass(CustomNonBlockingStore.class);
       RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(configurationBuilder).create();
 

@@ -1,10 +1,11 @@
 package org.infinispan.persistence.remote;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.IOException;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -15,7 +16,6 @@ import org.infinispan.persistence.BaseNonBlockingStoreTest;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.SecurityConfigurationBuilder;
 import org.infinispan.persistence.spi.NonBlockingStore;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -76,6 +76,8 @@ public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
             .addStore(RemoteStoreConfigurationBuilder.class)
             .remoteCacheName(REMOTE_CACHE)
             .shared(true)
+            // Store cannot be segmented as the remote cache is LOCAL and it doesn't report its segments?
+            .segmented(false)
             .remoteSecurity();
       remoteSecurity
             .ssl().enable()
@@ -113,21 +115,16 @@ public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
    }
 
    @Override
+   protected Object keyToStorage(Object key) {
+      try {
+         return new WrappedByteArray(marshaller.objectToByteBuffer(key));
+      } catch (IOException | InterruptedException e) {
+         throw new AssertionError(e);
+      }
+   }
+
+   @Override
    protected boolean storePurgesAllExpired() {
       return false;
-   }
-
-   @Override
-   public void testLoadAll() throws PersistenceException {
-   }
-
-   @Override
-   public void testReplaceExpiredEntry() throws Exception {
-      store.write(marshalledEntry(internalCacheEntry("k1", "v1", 100l)));
-      timeService.advance(1101);
-      assertNull(store.loadEntry("k1"));
-      long start = System.currentTimeMillis();
-      store.write(marshalledEntry(internalCacheEntry("k1", "v2", 100l)));
-      assertTrue(store.loadEntry("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100));
    }
 }

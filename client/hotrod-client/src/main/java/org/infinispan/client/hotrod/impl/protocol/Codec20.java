@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod.impl.protocol;
 import static org.infinispan.client.hotrod.impl.Util.await;
 import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.limitedHexDump;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
-import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
 
 import java.lang.annotation.Annotation;
 import java.net.InetSocketAddress;
@@ -279,7 +278,7 @@ public class Codec20 implements Codec, HotRodConstants {
    @Override
    public Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassAllowList allowList, Marshaller marshaller) {
       if (HotRodConstants.hasPrevious(status)) {
-         return bytes2obj(marshaller, ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), allowList);
+         return dataFormat.valueToObj(ByteBufUtil.readArray(buf), allowList);
       } else {
          return null;
       }

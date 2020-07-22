@@ -437,7 +437,8 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    public void testExceptionOnCacheManagerStop() {
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.persistence().addStore(UnreliableCacheStoreConfigurationBuilder.class);
+      c.persistence().addStore(UnreliableCacheStoreConfigurationBuilder.class)
+            .segmented(false);
       EmbeddedCacheManager cm = createCacheManager(c);
       try {
          assertEquals(ComponentStatus.RUNNING, cm.getStatus());

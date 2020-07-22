@@ -305,7 +305,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public ClusteredGetCommand buildClusteredGetCommand(Object key, int segment, long flagsBitSet) {
+   public ClusteredGetCommand buildClusteredGetCommand(Object key, Integer segment, long flagsBitSet) {
       return new ClusteredGetCommand(key, cacheName, segment, flagsBitSet);
    }
 

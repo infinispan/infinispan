@@ -108,6 +108,7 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       return this;
    }
 
+   @Deprecated
    @Override
    public RemoteStoreConfigurationBuilder hotRodWrapping(boolean hotRodWrapping) {
       attributes.attribute(HOTROD_WRAPPING).set(hotRodWrapping);
@@ -139,6 +140,7 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       return this;
    }
 
+   @Deprecated
    @Override
    public RemoteStoreConfigurationBuilder rawValues(boolean rawValues) {
       attributes.attribute(RAW_VALUES).set(rawValues);

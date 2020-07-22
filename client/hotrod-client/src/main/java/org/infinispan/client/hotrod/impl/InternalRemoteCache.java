@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl;
 
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import javax.management.ObjectName;
 
@@ -10,6 +11,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
@@ -55,4 +57,6 @@ public interface InternalRemoteCache<K, V> extends RemoteCache<K, V> {
    K keyAsObjectIfNeeded(Object key);
 
    byte[] keyToBytes(Object o);
+
+   CompletionStage<PingResponse> ping();
 }

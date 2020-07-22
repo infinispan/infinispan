@@ -129,6 +129,10 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       return forceReturnValues.get();
    }
 
+   /**
+    * @deprecated since 12.0 - Automatic media type detection in remote store makes this option redundant
+    */
+   @Deprecated
    public boolean hotRodWrapping() {
       return hotRodWrapping.get();
    }
@@ -145,6 +149,10 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       return protocolVersion.get();
    }
 
+   /**
+    * @deprecated since 12.0 - This option can still be needed when retrieving from a preexisting remote cache
+    */
+   @Deprecated
    public boolean rawValues() {
       return rawValues.get();
    }
