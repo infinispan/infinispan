@@ -147,11 +147,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    public TransactionMode transactionMode() {
-      if (attributes.attribute(TRANSACTION_MODE).isModified()) {
-         return attributes.attribute(TRANSACTION_MODE).get();
-      } else {
-         return null;
-      }
+      return attributes.attribute(TRANSACTION_MODE).get();
    }
 
    /**
@@ -243,7 +239,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       if (!attributes.attribute(NOTIFICATIONS).get() && !getBuilder().template()) {
          CONFIG.transactionNotificationsDisabled();
       }
-      if (attributes.attribute(TRANSACTION_MODE).get() == TransactionMode.TRANSACTIONAL && !cacheMode.isSynchronous()) {
+      if (attributes.attribute(TRANSACTION_MODE).get().isTransactional() && !cacheMode.isSynchronous()) {
          throw CONFIG.unsupportedAsyncCacheMode(cacheMode);
       }
       recovery.validate();
@@ -256,11 +252,8 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    public TransactionConfiguration create() {
-      boolean batchingEnabled = getBuilder().invocationBatching().isEnabled();
-      if (transactionMode() == null && batchingEnabled) {
-         transactionMode(TransactionMode.TRANSACTIONAL);
-      }
-      return new TransactionConfiguration(attributes.protect(), recovery.create(), batchingEnabled);
+      boolean invocationBatching = builder.invocationBatching().isEnabled();
+      return new TransactionConfiguration(attributes.protect(), recovery.create(), invocationBatching);
    }
 
    @Override
