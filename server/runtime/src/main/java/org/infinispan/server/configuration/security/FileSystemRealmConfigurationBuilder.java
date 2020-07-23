@@ -77,7 +77,7 @@ public class FileSystemRealmConfigurationBuilder implements Builder<FileSystemRe
          Boolean encoded = attributes.attribute(ENCODED).get();
          Path filesystemPath = new File(ParseUtils.resolvePath(path, relativeTo)).toPath();
          this.securityRealm = new FileSystemSecurityRealm(filesystemPath, NameRewriter.IDENTITY_REWRITER, levels, encoded);
-         realmBuilder.domainBuilder().addRealm(name, securityRealm).build();
+         realmBuilder.addRealm(name, securityRealm);
       }
       return securityRealm;
    }

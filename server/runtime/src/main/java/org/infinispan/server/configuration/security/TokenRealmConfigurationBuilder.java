@@ -13,7 +13,6 @@ import org.wildfly.security.auth.realm.token.TokenSecurityRealm;
 import org.wildfly.security.auth.realm.token.TokenValidator;
 import org.wildfly.security.auth.realm.token.validator.JwtValidator;
 import org.wildfly.security.auth.realm.token.validator.OAuth2IntrospectValidator;
-import org.wildfly.security.auth.server.SecurityDomain;
 
 /**
  * @since 10.0
@@ -70,7 +69,6 @@ public class TokenRealmConfigurationBuilder implements Builder<TokenRealmConfigu
          if (!oauth2Configuration.isChanged() && !jwtConfiguration.isChanged()) {
             return null;
          }
-         SecurityDomain.Builder domainBuilder = realmBuilder.domainBuilder();
          String name = attributes.attribute(NAME).get();
          TokenValidator validator;
          if (oauth2Configuration.isChanged()) {
@@ -82,7 +80,7 @@ public class TokenRealmConfigurationBuilder implements Builder<TokenRealmConfigu
          }
          tokenRealmBuilder.validator(validator);
          securityRealm = tokenRealmBuilder.build();
-         domainBuilder.addRealm(name, securityRealm).setRoleDecoder(new KeycloakRoleDecoder()).build();
+         realmBuilder.addRealm(name, securityRealm, b -> b.setRoleDecoder(new KeycloakRoleDecoder()));
          realmBuilder.addFeature(ServerSecurityRealm.Feature.TOKEN);
       }
       return securityRealm;

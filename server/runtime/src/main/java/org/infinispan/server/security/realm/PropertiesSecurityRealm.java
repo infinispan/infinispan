@@ -7,12 +7,13 @@ import java.io.InputStream;
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Properties;
+import java.util.function.Consumer;
 
 import org.infinispan.server.Server;
 import org.wildfly.security.auth.SupportLevel;
+import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
 
@@ -20,7 +21,7 @@ import org.wildfly.security.evidence.Evidence;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class PropertiesSecurityRealm implements SecurityRealm {
+public class PropertiesSecurityRealm implements CacheableSecurityRealm {
    private final File usersFile;
    private final File groupsFile;
    private final boolean plainText;
@@ -94,5 +95,10 @@ public class PropertiesSecurityRealm implements SecurityRealm {
          // Ignore
       }
       return p.isEmpty();
+   }
+
+   @Override
+   public void registerIdentityChangeListener(Consumer<Principal> listener) {
+      delegate.registerIdentityChangeListener(listener);
    }
 }

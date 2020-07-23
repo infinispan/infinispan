@@ -14,7 +14,6 @@ import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.server.Server;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
-import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.keystore.KeyStoreUtil;
 import org.wildfly.security.provider.util.ProviderUtil;
 import org.wildfly.security.ssl.SSLContextBuilder;
@@ -80,11 +79,7 @@ public class TrustStoreRealmConfigurationBuilder implements Builder<TrustStoreRe
             for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
                if (trustManager instanceof X509TrustManager) {
                   sslContextBuilder.setTrustManager((X509TrustManager) trustManager);
-                  SecurityDomain.Builder domainBuilder = securityRealmBuilder.domainBuilder();
-                  domainBuilder.addRealm(name, new KeyStoreBackedSecurityRealm(keyStore)).build();
-                  if (domainBuilder.getDefaultRealmName() == null) {
-                     domainBuilder.setDefaultRealmName(name);
-                  }
+                  securityRealmBuilder.addRealm(name, new KeyStoreBackedSecurityRealm(keyStore));
                   securityRealmBuilder.addFeature(ServerSecurityRealm.Feature.TRUST);
                   break;
                }

@@ -17,12 +17,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -31,6 +33,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -52,7 +55,7 @@ import org.wildfly.security.password.spec.PasswordSpec;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
  */
-public class EncryptedPropertiesSecurityRealm implements SecurityRealm {
+public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm {
 
    private static final String COMMENT_PREFIX1 = "#";
    private static final String COMMENT_PREFIX2 = "!";
@@ -65,6 +68,7 @@ public class EncryptedPropertiesSecurityRealm implements SecurityRealm {
    private final boolean plainText;
    private final String groupsAttribute;
    private final AtomicReference<LoadedState> loadedState = new AtomicReference<>();
+   private Set<Consumer<Principal>> listeners = new LinkedHashSet<>();
 
    private EncryptedPropertiesSecurityRealm(Builder builder) {
       plainText = builder.plainText;
@@ -276,6 +280,10 @@ public class EncryptedPropertiesSecurityRealm implements SecurityRealm {
                         }
 
                         accounts.put(username, new AccountEntry(username, credentials, groups.getProperty(username)));
+                        // Notify any caching layer that the principal has been reloaded
+                        for(Consumer<Principal> listener : listeners) {
+                           listener.accept(new NamePrincipal(username));
+                        }
                      }
                   }
                }
@@ -317,6 +325,11 @@ public class EncryptedPropertiesSecurityRealm implements SecurityRealm {
     */
    public static Builder builder() {
       return new Builder();
+   }
+
+   @Override
+   public void registerIdentityChangeListener(Consumer<Principal> listener) {
+      listeners.add(listener);
    }
 
    /**

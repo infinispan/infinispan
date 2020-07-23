@@ -12,7 +12,6 @@ import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
 import org.wildfly.security.auth.server.NameRewriter;
-import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
 
 /**
@@ -158,13 +157,8 @@ public class LdapRealmConfigurationBuilder implements Builder<LdapRealmConfigura
             ldapRealmBuilder.setNameRewriter(attributes.attribute(LdapRealmConfiguration.NAME_REWRITER).get());
          }
          String name = attributes.attribute(LdapRealmConfiguration.NAME).get();
-         SecurityDomain.Builder domainBuilder = realmBuilder.domainBuilder();
-
          securityRealm = ldapRealmBuilder.build();
-         domainBuilder.addRealm(name, securityRealm).build();
-         if (domainBuilder.getDefaultRealmName() == null) {
-            domainBuilder.setDefaultRealmName(name);
-         }
+         realmBuilder.addRealm(name, securityRealm);
          realmBuilder.addFeature(ServerSecurityRealm.Feature.PASSWORD);
       }
       return securityRealm;

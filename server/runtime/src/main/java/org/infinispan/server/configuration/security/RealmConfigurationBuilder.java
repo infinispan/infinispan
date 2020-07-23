@@ -1,7 +1,11 @@
 package org.infinispan.server.configuration.security;
 
+import static org.infinispan.server.configuration.security.RealmConfiguration.CACHE_LIFESPAN;
+import static org.infinispan.server.configuration.security.RealmConfiguration.CACHE_MAX_SIZE;
+
 import java.security.GeneralSecurityException;
 import java.util.EnumSet;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
@@ -10,8 +14,15 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.security.ServerSecurityRealm;
+import org.infinispan.server.security.realm.CachingModifiableSecurityRealm;
+import org.infinispan.server.security.realm.CachingSecurityRealm;
 import org.wildfly.security.auth.permission.LoginPermission;
+import org.wildfly.security.auth.realm.CacheableSecurityRealm;
+import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.cache.LRURealmIdentityCache;
+import org.wildfly.security.cache.RealmIdentityCache;
 import org.wildfly.security.permission.PermissionVerifier;
 import org.wildfly.security.ssl.SSLContextBuilder;
 
@@ -37,6 +48,7 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    private Supplier<Boolean> httpChallengeReadiness = () -> true;
    private ServerSecurityRealm serverSecurityRealm = null;
    private EnumSet<ServerSecurityRealm.Feature> features = EnumSet.noneOf(ServerSecurityRealm.Feature.class);
+   private RealmIdentityCache cache;
 
    RealmConfigurationBuilder(String name, RealmsConfigurationBuilder realmsBuilder) {
       this.realmsBuilder = realmsBuilder;
@@ -58,6 +70,16 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
 
    SecurityDomain.Builder domainBuilder() {
       return domainBuilder;
+   }
+
+   public RealmConfigurationBuilder cacheMaxSize(int size) {
+      this.attributes.attribute(CACHE_MAX_SIZE).set(size);
+      return this;
+   }
+
+   public RealmConfigurationBuilder cacheLifespan(long lifespan) {
+      this.attributes.attribute(CACHE_LIFESPAN).set(lifespan);
+      return this;
    }
 
    public FileSystemRealmConfigurationBuilder fileSystemConfiguration() {
@@ -156,5 +178,37 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
 
    public void addFeature(ServerSecurityRealm.Feature feature) {
       features.add(feature);
+   }
+
+   private SecurityRealm cacheable(SecurityRealm realm) {
+      int maxEntries = attributes.attribute(CACHE_MAX_SIZE).get();
+      if (maxEntries > 0 && realm instanceof CacheableSecurityRealm) {
+         if (cache == null) {
+            cache = new LRURealmIdentityCache(maxEntries, attributes.attribute(CACHE_LIFESPAN).get());
+         }
+         if (realm instanceof ModifiableSecurityRealm) {
+            return new CachingModifiableSecurityRealm((CacheableSecurityRealm) realm, cache);
+         } else {
+            return new CachingSecurityRealm((CacheableSecurityRealm) realm, cache);
+         }
+      } else {
+         return realm;
+      }
+   }
+
+   public void addRealm(String realmName, SecurityRealm realm) {
+      addRealm(realmName, realm, null);
+   }
+
+   public void addRealm(String realmName, SecurityRealm realm, Consumer<SecurityDomain.RealmBuilder> realmBuilderConsumer) {
+      SecurityDomain.RealmBuilder realmBuilder = domainBuilder.addRealm(realmName, cacheable(realm));
+      if (realmBuilderConsumer != null) {
+         realmBuilderConsumer.accept(realmBuilder);
+      }
+      // Build with realm with the side-effect of adding itself to the parent
+      realmBuilder.build();
+      if (domainBuilder.getDefaultRealmName() == null) {
+         domainBuilder.setDefaultRealmName(realmName);
+      }
    }
 }
