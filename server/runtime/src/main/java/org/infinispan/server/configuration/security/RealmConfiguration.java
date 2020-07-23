@@ -15,9 +15,11 @@ import org.infinispan.server.configuration.Element;
  */
 public class RealmConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
+   static final AttributeDefinition<Integer> CACHE_MAX_SIZE = AttributeDefinition.builder("cacheMaxSize", 256).build();
+   static final AttributeDefinition<Long> CACHE_LIFESPAN = AttributeDefinition.builder("lifespan", -1l).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(RealmConfiguration.class, NAME);
+      return new AttributeSet(RealmConfiguration.class, NAME, CACHE_MAX_SIZE, CACHE_LIFESPAN);
    }
 
    private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.SECURITY_REALM.toString());

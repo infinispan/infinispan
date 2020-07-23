@@ -944,6 +944,20 @@
          <xs:element type="tns:security-realm-truststore" name="truststore-realm" minOccurs="0"/>
       </xs:sequence>
       <xs:attribute name="name" type="xs:string" use="required"/>
+      <xs:attribute name="cache-max-size" type="xs:int" default="256">
+         <xs:annotation>
+            <xs:documentation>
+               The maximum size for the identity cache for this realm. If the size is less than 1, the cache will be disabled. Defaults to 256.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="cache-lifespan" type="xs:long" default="-1">
+         <xs:annotation>
+            <xs:documentation>
+               The lifespan of entries in the identity cache after which they expire and are reloaded from the realm provider. Defaults to -1 (never expires).
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="security-realm-authentication">

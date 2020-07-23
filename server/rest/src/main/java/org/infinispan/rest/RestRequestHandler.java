@@ -94,11 +94,17 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
          // Ensure that the authorization header, if needed, has not changed
          String authz = request.headers().get(HttpHeaderNames.AUTHORIZATION);
          if (Objects.equals(authz, authorization)) {
+            if (logger.isTraceEnabled()) {
+               logger.tracef("Authorization header match, skipping authentication for %s", request);
+            }
             restRequest.setSubject(subject);
             handleRestRequest(ctx, restRequest, invocationLookup);
             return;
          } else {
             // Invalidate and force re-authentication
+            if (logger.isTraceEnabled()) {
+               logger.tracef("Authorization header mismatch:\n%s\n%s", authz, authorization);
+            }
             subject = null;
             authorization = null;
          }

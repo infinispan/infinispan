@@ -8,7 +8,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.infinispan.server.security.realm.PropertiesSecurityRealm;
-import org.wildfly.security.auth.server.SecurityDomain;
 
 public class PropertiesRealmConfigurationBuilder implements Builder<PropertiesRealmConfiguration> {
 
@@ -50,11 +49,7 @@ public class PropertiesRealmConfigurationBuilder implements Builder<PropertiesRe
          boolean plainText = userProperties.plainText();
          String realmName = userProperties.digestRealmName();
          PropertiesSecurityRealm propertiesSecurityRealm = new PropertiesSecurityRealm(usersFile, groupsFile, plainText, groupsAttribute, realmName);
-         SecurityDomain.Builder domainBuilder = realmBuilder.domainBuilder();
-         domainBuilder.addRealm(realmName, propertiesSecurityRealm).build();
-         if (domainBuilder.getDefaultRealmName() == null) {
-            domainBuilder.setDefaultRealmName(realmName);
-         }
+         realmBuilder.addRealm(realmName, propertiesSecurityRealm);
          this.securityRealm = propertiesSecurityRealm;
          this.realmBuilder.setHttpChallengeReadiness(() -> !propertiesSecurityRealm.isEmpty());
          realmBuilder.addFeature(ServerSecurityRealm.Feature.PASSWORD);
