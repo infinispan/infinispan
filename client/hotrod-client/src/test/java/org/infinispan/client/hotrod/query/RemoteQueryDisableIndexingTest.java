@@ -95,6 +95,9 @@ public class RemoteQueryDisableIndexingTest extends AbstractQueryDslTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.indexing().enable()
+            .addIndexedEntity("sample_bank_account.User")
+            .addIndexedEntity("sample_bank_account.Account")
+            .addIndexedEntity("sample_bank_account.Transaction")
             .addProperty("directory.type", "local-heap");
       return builder;
    }
