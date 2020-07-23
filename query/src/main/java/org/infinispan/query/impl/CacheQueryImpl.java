@@ -7,7 +7,6 @@ import org.apache.lucene.search.Explanation;
 import org.hibernate.search.backend.lucene.LuceneExtension;
 import org.hibernate.search.backend.lucene.search.query.LuceneSearchQuery;
 import org.hibernate.search.engine.search.query.SearchQuery;
-import org.hibernate.search.engine.search.query.SearchResult;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.FetchOptions;
@@ -39,9 +38,6 @@ public class CacheQueryImpl<E> implements IndexedQuery<E> {
    protected final PartitionHandlingSupport partitionHandlingSupport;
    protected QueryDefinition queryDefinition;
 
-   // caching result size, since Search 6 doesn't do that
-   private Long resultSize;
-
    public CacheQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache) {
       this.queryDefinition = queryDefinition;
       this.cache = cache;
@@ -60,10 +56,6 @@ public class CacheQueryImpl<E> implements IndexedQuery<E> {
     */
    @Override
    public int getResultSize() {
-      if (resultSize != null) {
-         return Math.toIntExact(resultSize);
-      }
-
       partitionHandlingSupport.checkCacheAvailable();
       return Math.toIntExact(queryDefinition.getSearchQuery().build().fetchTotalHitCount());
    }
@@ -112,10 +104,9 @@ public class CacheQueryImpl<E> implements IndexedQuery<E> {
       partitionHandlingSupport.checkCacheAvailable();
       SearchQuery<?> searchQuery = queryDefinition.getSearchQuery().build();
 
-      SearchResult<?> searchResult = searchQuery.fetch(queryDefinition.getFirstResult(), queryDefinition.getMaxResults());
-      resultSize = searchResult.totalHitCount();
+      List<?> searchResult = searchQuery.fetchHits(queryDefinition.getFirstResult(), queryDefinition.getMaxResults());
 
-      return (List<E>) searchResult.getHits();
+      return (List<E>) searchResult;
    }
 
    public Explanation explain(String id) {
