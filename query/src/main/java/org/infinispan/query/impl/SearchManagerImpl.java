@@ -6,12 +6,12 @@ import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.MassIndexer;
+import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
-import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 
 /**
@@ -23,7 +23,7 @@ import org.infinispan.search.mapper.mapping.SearchMappingHolder;
  * @author Marko Luksa
  * @since 4.0
  */
-public final class SearchManagerImpl implements SearchManagerImplementor {
+public final class SearchManagerImpl implements SearchManager {
 
    private final SearchMappingHolder searchMappingHolder;
    private final QueryInterceptor queryInterceptor;
@@ -42,7 +42,6 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
       this.massIndexer = (MassIndexer) ComponentRegistryUtils.getIndexer(cache);
    }
 
-   @Override
    public <E> CacheQuery<E> getQuery(SearchQueryBuilder searchQuery) {
       return queryEngine.buildCacheQuery(searchQuery);
    }
@@ -62,7 +61,6 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
       return getQuery(queryString, null);
    }
 
-   @Override
    public <E> CacheQuery<E> getQuery(QueryDefinition queryDefinition, IndexedQueryMode indexedQueryMode) {
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
       return queryEngine.buildCacheQuery(queryDefinition, indexedQueryMode, asyncExecutor);
@@ -83,7 +81,7 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
       if (SearchMappingHolder.class.isAssignableFrom(cls)) {
          return (T) this.searchMappingHolder;
       }
-      if (SearchManagerImplementor.class.isAssignableFrom(cls)) {
+      if (SearchManagerImpl.class.isAssignableFrom(cls)) {
          return (T) this;
       } else {
          throw new IllegalArgumentException("Cannot unwrap a SearchManagerImpl into a '" + cls.getName() + "'");
