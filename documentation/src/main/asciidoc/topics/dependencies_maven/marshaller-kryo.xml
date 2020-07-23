@@ -1,5 +1,0 @@
-<dependency>
-  <groupId>org.infinispan</groupId>
-  <artifactId>infinispan-marshaller-kryo</artifactId>
-  <version>${version.infinispan}</version>
-</dependency>

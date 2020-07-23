@@ -24,8 +24,6 @@ can use.
 include::{topics}/proc_using_protostream_marshaller.adoc[leveloffset=+1]
 include::{topics}/proc_using_jboss_marshaller.adoc[leveloffset=+1]
 include::{topics}/proc_using_java_serialization.adoc[leveloffset=+1]
-include::{topics}/proc_using_kyro_marshaller.adoc[leveloffset=+1]
-include::{topics}/proc_using_protostuff_marshaller.adoc[leveloffset=+1]
 include::{topics}/proc_using_custom_marshallers.adoc[leveloffset=+1]
 include::{topics}/proc_adding_deserialization_whitelist.adoc[leveloffset=+1]
 include::{topics}/proc_storing_deserialized_objects.adoc[leveloffset=+1]

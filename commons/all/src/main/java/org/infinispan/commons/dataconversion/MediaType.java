@@ -70,8 +70,6 @@ public final class MediaType {
     */
    @Deprecated
    public static final String APPLICATION_INFINISPAN_BINARY_TYPE = "application/x-infinispan-binary";
-   public static final String APPLICATION_PROTOSTUFF_TYPE = "application/x-protostuff";
-   public static final String APPLICATION_KRYO_TYPE = "application/x-kryo";
    public static final String MATCH_ALL_TYPE = "*/*";
 
    // OpenMetrics aka Prometheus content type
@@ -97,8 +95,6 @@ public final class MediaType {
    public static final MediaType TEXT_HTML = fromString(TEXT_HTML_TYPE);
    public static final MediaType IMAGE_GIF = fromString(IMAGE_GIF_TYPE);
    public static final MediaType IMAGE_JPEG = fromString(IMAGE_JPEG_TYPE);
-   public static final MediaType APPLICATION_PROTOSTUFF = fromString(APPLICATION_PROTOSTUFF_TYPE);
-   public static final MediaType APPLICATION_KRYO = fromString(APPLICATION_KRYO_TYPE);
    /**
     * @deprecated Since 11.0, will be removed in 14.0. No longer used for BINARY storage.
     */

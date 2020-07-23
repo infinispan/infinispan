@@ -67,8 +67,8 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       // Wraps the GlobalMarshaller so that it can be used as a transcoder
       // Keeps application/x-infinispan-marshalling available for backwards compatibility
       encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(globalMarshaller.wired()));
-      // Make the user marshaller's media type available as well
-      // As custom marshaller modules like Kryo and Protostuff do not define their own transcoder
+      // Make the user marshaller's media type available as well so that custom marshaller's do not need to define their
+      // own transcoder unless desired
       encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(userMarshaller));
 
       encoderRegistry.registerWrapper(ByteArrayWrapper.INSTANCE);
