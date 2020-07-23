@@ -58,7 +58,6 @@ import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.QueryDefinition;
 import org.infinispan.query.impl.SearchManagerImpl;
 import org.infinispan.query.logging.Log;
-import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.util.function.SerializableFunction;
@@ -84,7 +83,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    /**
     * Optional, lazily acquired. This is {@code null} if the cache is not actually indexed.
     */
-   private SearchManagerImplementor searchManager;
+   private SearchManagerImpl searchManager;
 
    /**
     * Optional, lazily acquired form the {@link SearchManager}. This is {@code null} if the cache is not actually indexed.
@@ -102,7 +101,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       this.isIndexed = isIndexed;
    }
 
-   protected SearchManagerImplementor getSearchManager() {
+   protected SearchManagerImpl getSearchManager() {
       if (!isIndexed) {
          throw new IllegalStateException("Cache is not indexed");
       }
