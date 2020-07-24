@@ -8,20 +8,5 @@
 <server-provisioning xmlns="urn:wildfly:server-provisioning:1.2" copy-module-artifacts="true" exclude-dependencies="true">
 	<feature-packs>
 		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack" version="${project.version}" />
-
-		<feature-pack
-				groupId="org.hibernate"
-				artifactId="hibernate-search-jbossmodules-engine"
-				version="${version.hibernate.search}" />
-
-		<feature-pack
-				groupId="org.hibernate.lucene-jbossmodules"
-				artifactId="lucene-jbossmodules"
-				version="${version.lucene.featurepack}"/>
-
-		<feature-pack
-				groupId="org.hibernate.gson-jbossmodules"
-				artifactId="gson-jbossmodules"
-				version="${version.gson.featurepack}"/>
 	</feature-packs>
 </server-provisioning>

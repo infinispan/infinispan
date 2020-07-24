@@ -65,6 +65,18 @@
                     <groupId>org.infinispan</groupId>
                     <artifactId>infinispan-hibernate-cache-spi</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.hibernate</groupId>
+                    <artifactId>hibernate-search-engine</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.hibernate</groupId>
+                    <artifactId>hibernate-search-serialization-avro</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.hibernate</groupId>
+                    <artifactId>hibernate-search-backend-jms</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 
@@ -134,23 +146,6 @@
             <artifactId>cache-api</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.hibernate.gson-jbossmodules</groupId>
-            <artifactId>gson-jbossmodules</artifactId>
-            <type>zip</type>
-        </dependency>
-
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-search-jbossmodules-engine</artifactId>
-            <type>zip</type>
-        </dependency>
-
-        <dependency>
-            <groupId>org.hibernate.lucene-jbossmodules</groupId>
-            <artifactId>lucene-jbossmodules</artifactId>
-            <type>zip</type>
-        </dependency>
     </dependencies>
 
     <build>

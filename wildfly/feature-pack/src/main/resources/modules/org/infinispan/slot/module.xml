@@ -20,10 +20,10 @@
       <artifact name="${org.infinispan:infinispan-multimap}"/>
       <artifact name="${org.infinispan:infinispan-objectfilter}"/>
       <artifact name="${org.infinispan:infinispan-persistence-soft-index}"/>
-      <artifact name="${org.infinispan:infinispan-query}"/>
-      <artifact name="${org.infinispan:infinispan-query-core}"/>
-      <artifact name="${org.infinispan:infinispan-query-dsl}"/>
-      <artifact name="${org.infinispan:infinispan-remote-query-client}"/>
+<!--      <artifact name="${org.infinispan:infinispan-query}"/>-->
+<!--      <artifact name="${org.infinispan:infinispan-query-core}"/>-->
+<!--      <artifact name="${org.infinispan:infinispan-query-dsl}"/>-->
+<!--      <artifact name="${org.infinispan:infinispan-remote-query-client}"/>-->
       <artifact name="${org.infinispan.protostream:protostream}"/>
       <artifact name="${org.infinispan:infinispan-jboss-marshalling}"/>
 
@@ -46,9 +46,6 @@
 
       <artifact name="${org.rocksdb:rocksdbjni}"/>
 
-      <artifact name="${org.hibernate:hibernate-search-engine}"/>
-      <artifact name="${org.hibernate.common:hibernate-commons-annotations}"/>
-      <artifact name="${org.hibernate:hibernate-search-engine}"/>
       <artifact name="${org.jboss.marshalling:jboss-marshalling-river}"/>
       <artifact name="${org.jboss.threads:jboss-threads}"/>
       <artifact name="${commons-io:commons-io}"/>
@@ -96,9 +93,5 @@
       <module name="org.wildfly.security.elytron" services="import"/>
       <module name="org.hibernate"/>
 
-      <!-- Hibernate Search -->
-      <module name="org.apache.lucene" slot="@lucene.module.slot@"/>
-      <module name="org.hibernate.search.engine" slot="@hibernate.search.module.slot@" export="true"/>
-      <module name="com.google.code.gson" slot="@gson.module.slot@" optional="true"/>
    </dependencies>
 </module>
