@@ -11,7 +11,10 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.DocumentId;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.helper.SearchMappingHelper;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingHolder;
+
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,14 +24,22 @@ import org.junit.Test;
  */
 public class HibernateSearchPropertyHelperTest {
 
+   private SearchMapping searchMapping;
    private HibernateSearchPropertyHelper propertyHelper;
 
    @Before
    public void setup() {
       SearchMappingHolder mappingHolder = mock(SearchMappingHolder.class);
-      when(mappingHolder.getSearchMapping()).thenReturn(
-            SearchMappingHelper.createSearchMappingForTests(TestEntity.class));
+      searchMapping = SearchMappingHelper.createSearchMappingForTests(TestEntity.class);
+      when(mappingHolder.getSearchMapping()).thenReturn(searchMapping);
       propertyHelper = new HibernateSearchPropertyHelper(mappingHolder, new ReflectionEntityNamesResolver(null));
+   }
+
+   @After
+   public void cleanUp() {
+      if ( searchMapping != null ) {
+         searchMapping.close();
+      }
    }
 
    private Object convertToPropertyType(Class<?> type, String propertyName, String value) {
