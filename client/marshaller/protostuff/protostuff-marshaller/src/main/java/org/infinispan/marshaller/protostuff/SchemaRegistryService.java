@@ -8,7 +8,9 @@ package org.infinispan.marshaller.protostuff;
  *
  * @author Ryan Emerson
  * @since 9.0
+ * @deprecated since 12.0 without a direct replacement, will be removed in 15.0 ISPN-12152
  */
+@Deprecated
 public interface SchemaRegistryService {
    /**
     * This method should be where all Custom schemas are registered.

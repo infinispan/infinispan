@@ -1,5 +1,7 @@
 [id='protostuff_marshalling']
 = Using the Protostuff Marshaller
+NOTE: The Protostuff marshaller has been deprecated in 12.0 and will be removed with no direct replacement in Infinispan 15.0
+
 {brandname} provides a marshalling implementation that uses Protostuff
 libraries.
 

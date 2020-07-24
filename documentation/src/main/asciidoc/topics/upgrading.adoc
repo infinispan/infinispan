@@ -44,6 +44,9 @@ Some operations that previously supported both `GET` and `POST` now support only
   Starting with version 12 this results in a fatal error preventing the cache to start.
   Please update your configurations accordingly.
 
+== Marshalling
+The Kryo and Protostuff marshallers have been deprecated and will be removed in Infinispan 15.0
+
 = Upgrading from 10.1 to 11.0
 
 == HotRod Client
