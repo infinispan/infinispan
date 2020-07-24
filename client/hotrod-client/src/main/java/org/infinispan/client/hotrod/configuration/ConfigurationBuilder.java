@@ -231,12 +231,14 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    @Override
    public ConfigurationBuilder marshaller(String marshaller) {
       this.marshallerClass = Util.loadClass(marshaller, this.classLoader());
+      this.marshaller = marshallerClass == null ? null : Util.getInstance(marshallerClass);
       return this;
    }
 
    @Override
    public ConfigurationBuilder marshaller(Class<? extends Marshaller> marshaller) {
       this.marshallerClass = marshaller;
+      this.marshaller = marshallerClass == null ? null : Util.getInstance(marshallerClass);
       return this;
    }
 
