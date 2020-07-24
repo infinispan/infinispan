@@ -229,15 +229,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
-   public ConfigurationBuilder marshaller(String marshaller) {
-      this.marshallerClass = Util.loadClass(marshaller, this.classLoader());
-      this.marshaller = marshallerClass == null ? null : Util.getInstance(marshallerClass);
-      return this;
+   public ConfigurationBuilder marshaller(String marshallerClassName) {
+      return marshaller(marshallerClassName == null ? null : Util.loadClass(marshallerClassName, classLoader()));
    }
 
    @Override
-   public ConfigurationBuilder marshaller(Class<? extends Marshaller> marshaller) {
-      this.marshallerClass = marshaller;
+   public ConfigurationBuilder marshaller(Class<? extends Marshaller> marshallerClass) {
+      this.marshallerClass = marshallerClass;
       this.marshaller = marshallerClass == null ? null : Util.getInstance(marshallerClass);
       return this;
    }
