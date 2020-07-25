@@ -41,7 +41,6 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
-import org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer;
 import org.infinispan.query.remote.client.impl.MarshallerRegistration;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.query.remote.impl.logging.Log;
@@ -100,25 +99,6 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
          initializers = ServiceFinder.load(SerializationContextInitializer.class, globalConfiguration.classLoader());
       }
       processSerializationContextInitializer(initializers);
-      processProtostreamSerializationContextInitializers(globalConfiguration.classLoader());
-   }
-
-   /**
-    * @deprecated Since 10.
-    */
-   @Deprecated
-   private void processProtostreamSerializationContextInitializers(ClassLoader classLoader) {
-      Collection<ProtostreamSerializationContextInitializer> initializers =
-            ServiceFinder.load(ProtostreamSerializationContextInitializer.class, classLoader);
-
-      for (ProtostreamSerializationContextInitializer psci : initializers) {
-         log.debugf("Registering ProtostreamSerializationContextInitializer %s", psci.getClass().getName());
-         try {
-            psci.init(serCtx);
-         } catch (Exception e) {
-            throw log.errorInitializingSerCtx(e);
-         }
-      }
    }
 
    private void processSerializationContextInitializer(Iterable<SerializationContextInitializer> initializers) {
