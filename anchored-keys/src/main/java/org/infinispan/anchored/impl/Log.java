@@ -1,14 +1,8 @@
 package org.infinispan.anchored.impl;
 
-import java.io.IOException;
-
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.util.logging.LogFactory;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
-import org.jboss.logging.annotations.Cause;
-import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
