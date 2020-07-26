@@ -418,6 +418,8 @@
                 <groupId>org.infinispan.protostream</groupId>
                 <artifactId>protostream-processor</artifactId>
                 <version>${version.protostream}</version>
+                <!-- compile-only dependency -->
+                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
