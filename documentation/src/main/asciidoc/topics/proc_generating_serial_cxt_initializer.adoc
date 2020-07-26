@@ -1,8 +1,7 @@
 [id='generating_proto_marshallers']
 = Generating Serialization Context Initializers
-{brandname} provides an `protostream-processor` artifact that can generate
-`.proto` schemas and `SerializationContextInitializer` implementations from
-annotated Java classes.
+{brandname} provides a `protostream-processor` artifact which is a Java annotation processor that can generate
+`.proto` schemas, marshallers and `SerializationContextInitializer` implementations from annotated Java classes.
 
 .Procedure
 
