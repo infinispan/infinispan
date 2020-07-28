@@ -2600,6 +2600,7 @@ public class Parser implements ConfigurationParser {
       Boolean preload = null;
       Boolean shared = null;
       Boolean transactional = null;
+      Boolean segmented = null;
       Object store = null;
 
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -2635,6 +2636,9 @@ public class Parser implements ConfigurationParser {
             case TRANSACTIONAL:
                transactional = Boolean.parseBoolean(value);
                break;
+            case SEGMENTED:
+               segmented = Boolean.parseBoolean(value);
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
@@ -2655,6 +2659,8 @@ public class Parser implements ConfigurationParser {
                sfs.shared(shared);
             if (transactional != null)
                sfs.transactional(transactional);
+            if (segmented != null)
+               sfs.segmented(segmented);
             parseStoreElements(reader, sfs);
          } else if (store instanceof ClusterLoader) {
             ClusterLoaderConfigurationBuilder cscb = builder.persistence().addClusterLoader();
@@ -2691,6 +2697,8 @@ public class Parser implements ConfigurationParser {
                configBuilder.shared(shared);
             if (transactional != null)
                configBuilder.transactional(transactional);
+            if (segmented != null)
+               configBuilder.segmented(segmented);
 
             parseStoreElements(reader, configBuilder);
          }
