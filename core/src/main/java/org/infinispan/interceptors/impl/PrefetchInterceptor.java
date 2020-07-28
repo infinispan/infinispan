@@ -50,6 +50,7 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -362,7 +363,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       }
    }
 
-   protected Object handleWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected Object handleWriteCommand(InvocationContext ctx, DataWriteCommand command) {
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          ctx.removeLookedUpEntry(command.getKey());
       }
@@ -386,6 +387,11 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      return handleWriteCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
       return handleWriteCommand(ctx, command);
    }
 

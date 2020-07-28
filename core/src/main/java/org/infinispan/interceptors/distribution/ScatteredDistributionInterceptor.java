@@ -45,6 +45,7 @@ import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -677,6 +678,11 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    }
 
    @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) throws Throwable {
+      return handleWriteCommand(ctx, command);
+   }
+
+   @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
    }
@@ -1262,6 +1268,11 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       }
 
       @Override
+      public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
+         return handleDataWriteCommand(ctx, command);
+      }
+
+      @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          return handleDataWriteCommand(ctx, command);
       }
@@ -1402,6 +1413,11 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         return handleDataWriteCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
          return handleDataWriteCommand(ctx, command);
       }
 

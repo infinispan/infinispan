@@ -39,17 +39,15 @@ import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.GroupingInterceptor;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
-import org.infinispan.interceptors.impl.NonTxIracLocalSiteInterceptor;
 import org.infinispan.interceptors.impl.IsMarshallableInterceptor;
+import org.infinispan.interceptors.impl.NonTxIracLocalSiteInterceptor;
 import org.infinispan.interceptors.impl.NonTxIracRemoteSiteInterceptor;
 import org.infinispan.interceptors.impl.NotificationInterceptor;
 import org.infinispan.interceptors.impl.OptimisticTxIracLocalSiteInterceptor;
-import org.infinispan.interceptors.impl.OptimisticTxIracRemoteSiteInterceptor;
 import org.infinispan.interceptors.impl.PassivationCacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.PassivationClusteredCacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.PassivationWriterInterceptor;
 import org.infinispan.interceptors.impl.PessimisticTxIracLocalInterceptor;
-import org.infinispan.interceptors.impl.PessimisticTxIracRemoteSiteInterceptor;
 import org.infinispan.interceptors.impl.PrefetchInterceptor;
 import org.infinispan.interceptors.impl.RetryingEntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.ScatteredCacheWriterInterceptor;
@@ -112,8 +110,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
    private AsyncInterceptorChain buildInterceptorChain() {
       TransactionMode transactionMode = configuration.transaction().transactionMode();
-      boolean needsVersionAwareComponents = transactionMode.isTransactional() &&
-              Configurations.isTxVersioned(configuration);
+      boolean needsVersionAwareComponents = Configurations.isTxVersioned(configuration);
 
       AsyncInterceptorChain interceptorChain = new AsyncInterceptorChainImpl(componentRegistry);
 
@@ -164,7 +161,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       if (transactionMode.isTransactional())
          interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor<>(), TxInterceptor.class), false);
 
-      //the total order protocol doesn't need locks
       if (!cacheMode.isScattered()) {
          if (transactionMode.isTransactional()) {
             if (configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC) {
@@ -321,18 +317,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       if (cacheMode.isClustered()) {
          //local caches not involved in Cross Site Replication
-         if (transactionMode == TransactionMode.TRANSACTIONAL) {
-            if (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
-               interceptorChain.appendInterceptor(createInterceptor(new OptimisticTxIracRemoteSiteInterceptor(),
-                     OptimisticTxIracRemoteSiteInterceptor.class), false);
-            } else {
-               interceptorChain.appendInterceptor(createInterceptor(new PessimisticTxIracRemoteSiteInterceptor(),
-                     PessimisticTxIracRemoteSiteInterceptor.class), false);
-            }
-         } else {
-            interceptorChain.appendInterceptor(
-                  createInterceptor(new NonTxIracRemoteSiteInterceptor(), NonTxIracRemoteSiteInterceptor.class), false);
-         }
+         interceptorChain.appendInterceptor(
+               createInterceptor(new NonTxIracRemoteSiteInterceptor(needsVersionAwareComponents), NonTxIracRemoteSiteInterceptor.class), false);
       }
 
       AsyncInterceptor callInterceptor = createInterceptor(new CallInterceptor(), CallInterceptor.class);

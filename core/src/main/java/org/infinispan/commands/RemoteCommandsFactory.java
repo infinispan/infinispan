@@ -73,6 +73,7 @@ import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -259,6 +260,9 @@ public class RemoteCommandsFactory {
                break;
             case CacheAvailabilityUpdateCommand.COMMAND_ID:
                command = new CacheAvailabilityUpdateCommand();
+               break;
+            case IracPutKeyValueCommand.COMMAND_ID:
+               command = new IracPutKeyValueCommand();
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

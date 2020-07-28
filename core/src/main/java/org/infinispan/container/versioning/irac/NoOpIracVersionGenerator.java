@@ -29,6 +29,12 @@ public class NoOpIracVersionGenerator implements IracVersionGenerator {
    }
 
    @Override
+   public IracMetadata mergeVersion(int segment, IracEntryVersion localVersion, IracEntryVersion remoteVersion,
+         String siteName) {
+      throw new IllegalStateException(); //if we don't have IRAC enabled, this shouldn't be invoked.
+   }
+
+   @Override
    public void updateVersion(int segment, IracEntryVersion remoteVersion) {
       //no-op
    }

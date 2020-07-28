@@ -25,6 +25,12 @@ public class ControlledIracVersionGenerator implements IracVersionGenerator {
    }
 
    @Override
+   public IracMetadata mergeVersion(int segment, IracEntryVersion localVersion, IracEntryVersion remoteVersion,
+         String siteName) {
+      return actual.mergeVersion(segment, localVersion, remoteVersion, siteName);
+   }
+
+   @Override
    public void updateVersion(int segment, IracEntryVersion remoteVersion) {
       actual.updateVersion(segment, remoteVersion);
    }

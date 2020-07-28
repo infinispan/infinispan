@@ -67,7 +67,6 @@ import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.ThreadsConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.configuration.global.AllowListConfigurationBuilder;
-import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
@@ -89,6 +88,7 @@ import org.infinispan.security.mappers.CommonNameRoleMapper;
 import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.xsite.spi.XSiteMergePolicy;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.kohsuke.MetaInfServices;
 
@@ -1270,19 +1270,25 @@ public class Parser implements ConfigurationParser {
       }
    }
 
-   private void parseBackups(XMLExtendedStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
+   private void parseBackups(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
       // If backups is present then remove any existing backups as they were added by the default config.
       builder.sites().backups().clear();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         if (attribute == Attribute.MERGE_POLICY) {
+            builder.sites().mergePolicy(XSiteMergePolicy.instanceFromString(value, holder.getClassLoader()));
+         } else {
+            throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case BACKUP: {
-               this.parseBackup(reader, builder);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedElement(reader);
-            }
+         if (element == Element.BACKUP) {
+            this.parseBackup(reader, builder);
+         } else {
+            throw ParseUtils.unexpectedElement(reader);
          }
       }
    }
@@ -1306,7 +1312,7 @@ public class Parser implements ConfigurationParser {
             }
             case MERGE_POLICY: {
                MergePolicy mp = MergePolicy.fromString(value);
-               EntryMergePolicy mergePolicy = mp == MergePolicy.CUSTOM ? Util.getInstance(value, holder.getClassLoader()) : mp;
+               org.infinispan.conflict.EntryMergePolicy mergePolicy = mp == MergePolicy.CUSTOM ? Util.getInstance(value, holder.getClassLoader()) : mp;
                ph.mergePolicy(mergePolicy);
                break;
             }
@@ -1562,7 +1568,7 @@ public class Parser implements ConfigurationParser {
             break;
          }
          case BACKUPS: {
-            this.parseBackups(reader, builder);
+            this.parseBackups(reader, holder);
             break;
          }
          case BACKUP_FOR: {

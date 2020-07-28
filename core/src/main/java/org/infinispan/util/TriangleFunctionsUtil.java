@@ -23,6 +23,7 @@ import org.infinispan.commands.triangle.SingleKeyBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -110,6 +111,12 @@ public final class TriangleFunctionsUtil {
    public static BackupWriteCommand backupFrom(CommandsFactory factory, PutKeyValueCommand command) {
       SingleKeyBackupWriteCommand cmd = factory.buildSingleKeyBackupWriteCommand();
       cmd.setPutKeyValueCommand(command);
+      return cmd;
+   }
+
+   public static BackupWriteCommand backupFrom(CommandsFactory factory, IracPutKeyValueCommand command) {
+      SingleKeyBackupWriteCommand cmd = factory.buildSingleKeyBackupWriteCommand();
+      cmd.setIracPutKeyValueCommand(command);
       return cmd;
    }
 

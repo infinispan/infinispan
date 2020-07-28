@@ -21,6 +21,7 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -35,25 +36,27 @@ import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.statetransfer.AllOwnersLostException;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
-   private static final Log log = LogFactory.getLog(PartitionHandlingInterceptor.class);
 
    @Inject PartitionHandlingManager partitionHandlingManager;
 
-   private InvocationFinallyAction<DataCommand> handleDataReadReturn = this::handleDataReadReturn;
-   private InvocationFinallyAction<GetAllCommand> handleGetAllCommandReturn = this::handleGetAllCommandReturn;
-   private InvocationSuccessAction<VisitableCommand> postTxCommandCheck = this::postTxCommandCheck;
+   private final InvocationFinallyAction<DataCommand> handleDataReadReturn = this::handleDataReadReturn;
+   private final InvocationFinallyAction<GetAllCommand> handleGetAllCommandReturn = this::handleGetAllCommandReturn;
+   private final InvocationSuccessAction<VisitableCommand> postTxCommandCheck = this::postTxCommandCheck;
 
-   private boolean performPartitionCheck(InvocationContext ctx, FlagAffectedCommand command) {
+   private boolean performPartitionCheck(FlagAffectedCommand command) {
       return !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.PUT_FOR_STATE_TRANSFER);
    }
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
+      return handleSingleWrite(ctx, command);
+   }
+
+   @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
       return handleSingleWrite(ctx, command);
    }
 
@@ -82,25 +85,25 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
       return handleSingleWrite(ctx, command);
    }
 
-   protected Object handleSingleWrite(InvocationContext ctx, DataWriteCommand command) throws Throwable {
-      if (performPartitionCheck(ctx, command)) {
+   protected Object handleSingleWrite(InvocationContext ctx, DataWriteCommand command) {
+      if (performPartitionCheck(command)) {
          partitionHandlingManager.checkWrite(command.getKey());
       }
-      return handleDefault(ctx, command);
+      return invokeNext(ctx, command);
    }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      if (performPartitionCheck(ctx, command)) {
+      if (performPartitionCheck(command)) {
          for (Object k : command.getAffectedKeys())
             partitionHandlingManager.checkWrite(k);
       }
-      return handleDefault(ctx, command);
+      return invokeNext(ctx, command);
    }
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      if (performPartitionCheck(ctx, command)) {
+      if (performPartitionCheck(command)) {
          partitionHandlingManager.checkClear();
       }
       return handleDefault(ctx, command);
@@ -108,7 +111,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
-      if (performPartitionCheck(ctx, command)) {
+      if (performPartitionCheck(command)) {
          partitionHandlingManager.checkBulkRead();
       }
       return handleDefault(ctx, command);
@@ -116,7 +119,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      if (performPartitionCheck(ctx, command)) {
+      if (performPartitionCheck(command)) {
          partitionHandlingManager.checkBulkRead();
       }
       return handleDefault(ctx, command);
@@ -129,8 +132,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public final Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
-         throws Throwable {
+   public final Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
       return handleDataReadCommand(ctx, command);
    }
 
@@ -138,8 +140,8 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
       return invokeNextAndFinally(ctx, command, handleDataReadReturn);
    }
 
-   private void handleDataReadReturn(InvocationContext rCtx, DataCommand dataCommand, Object rv, Throwable t) throws Throwable {
-      if (!performPartitionCheck(rCtx, dataCommand))
+   private void handleDataReadReturn(InvocationContext rCtx, DataCommand dataCommand, Object rv, Throwable t) {
+      if (!performPartitionCheck(dataCommand))
          return;
 
       if (t != null) {
@@ -200,9 +202,9 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
       return invokeNextAndFinally(ctx, command, handleGetAllCommandReturn);
    }
 
-   private void handleGetAllCommandReturn(InvocationContext rCtx, GetAllCommand getAllCommand, Object rv, Throwable t) throws Throwable {
+   private void handleGetAllCommandReturn(InvocationContext rCtx, GetAllCommand getAllCommand, Object rv, Throwable t) {
       if (t != null) {
-         if (t instanceof RpcException && performPartitionCheck(rCtx, getAllCommand)) {
+         if (t instanceof RpcException && performPartitionCheck(getAllCommand)) {
             // We must have received an AvailabilityException from one of the owners.
             // There is no way to verify the cause here, but there isn't any other way to get an invalid
             // get response.
@@ -210,7 +212,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
          }
       }
 
-      if (!performPartitionCheck(rCtx, getAllCommand))
+      if (!performPartitionCheck(getAllCommand))
          return;
 
       // We do the availability check after the read, because the cache may have entered degraded mode

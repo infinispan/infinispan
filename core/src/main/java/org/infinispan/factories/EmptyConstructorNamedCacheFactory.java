@@ -229,7 +229,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
                 NoOpIracVersionGenerator.getInstance();
       } else if (componentName.equals(BackupReceiver.class.getName())) {
          return configuration.clustering().cacheMode().isClustered() ?
-               new ClusteredCacheBackupReceiver(configuration, componentRegistry.getCacheName()) :
+               new ClusteredCacheBackupReceiver(componentRegistry.getCacheName()) :
                null;
       } else if (componentName.equals(StorageConfigurationManager.class.getName())) {
          return new StorageConfigurationManager();

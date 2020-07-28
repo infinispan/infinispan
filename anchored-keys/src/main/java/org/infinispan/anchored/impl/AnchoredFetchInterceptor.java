@@ -22,6 +22,7 @@ import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -107,6 +108,11 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
       return asyncInvokeNext(ctx, command, fetchAllContextValues(ctx, command, true));
+   }
+
+   @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
+      return asyncInvokeNext(ctx, command, fetchSingleContextValue(ctx, command, true));
    }
 
    @Override

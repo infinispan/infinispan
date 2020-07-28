@@ -10,6 +10,7 @@ import org.infinispan.test.data.DelayedMarshallingPojo;
 import org.infinispan.test.data.Key;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.data.Value;
+import org.infinispan.xsite.irac.IracCustomConflictTest;
 
 @AutoProtoSchemaBuilder(
       // TODO re-evaluate use of Person where Value is more appropriate
@@ -21,7 +22,8 @@ import org.infinispan.test.data.Value;
             MagicKey.class,
             CountMarshallingPojo.class,
             Person.class,
-            Value.class
+            Value.class,
+            IracCustomConflictTest.MySortedSet.class,
       },
       schemaFileName = "test.core.proto",
       schemaFilePath = "proto/generated",

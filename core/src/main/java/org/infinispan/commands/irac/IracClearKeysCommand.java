@@ -47,14 +47,6 @@ public class IracClearKeysCommand extends IracUpdateKeyCommand {
 
    }
 
-   public Object getKey() {
-      return null;
-   }
-
-   public IracClearKeysCommand copyForCacheName(ByteString cacheName) {
-      return new IracClearKeysCommand(cacheName);
-   }
-
    @Override
    public boolean isClear() {
       return true;

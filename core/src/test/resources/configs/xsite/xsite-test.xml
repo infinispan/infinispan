@@ -29,6 +29,26 @@
                     failure-policy-class="org.infinispan.xsite.CountingCustomFailurePolicy" timeout="160000"/>
          </backups>
       </distributed-cache>
+      <distributed-cache name="conflictResolver" configuration="base">
+         <backups merge-policy="PREFER_NON_NULL">
+            <backup site="NYC2" strategy="ASYNC"/>
+         </backups>
+      </distributed-cache>
+      <distributed-cache name="conflictResolver2" configuration="base">
+         <backups merge-policy="PREFER_NULL">
+            <backup site="NYC2" strategy="ASYNC"/>
+         </backups>
+      </distributed-cache>
+      <distributed-cache name="conflictResolver3" configuration="base">
+         <backups merge-policy="ALWAYS_REMOVE">
+            <backup site="NYC2" strategy="ASYNC"/>
+         </backups>
+      </distributed-cache>
+      <distributed-cache name="customConflictResolver" configuration="base">
+         <backups merge-policy="org.infinispan.xsite.CustomXSiteEntryMergePolicy">
+            <backup site="NYC2" strategy="ASYNC"/>
+         </backups>
+      </distributed-cache>
    </cache-container>
 
 </infinispan>

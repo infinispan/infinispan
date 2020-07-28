@@ -2062,6 +2062,14 @@
         </xs:annotation>
       </xs:element>
     </xs:sequence>
+    <xs:attribute name="merge-policy" type="tns:xsite-merge-policy" default="${Sites.merge-policy}">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies the fully qualified name of a class that implements the XSiteEntryMergePolicy interface or any of
+          the alias. Use if for ASYNC strategy backup.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="backup">
@@ -2673,6 +2681,41 @@
       <xs:enumeration value="ON_WRITE">
         <xs:annotation>
           <xs:documentation>Bias is acquired by the writing entry.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="xsite-merge-policy">
+    <xs:union memberTypes="tns:xsite-merge-policy-defaults xs:string"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="xsite-merge-policy-defaults">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="DEFAULT">
+        <xs:annotation>
+          <xs:documentation>In case of conflict, it chooses the entry for the site's name with lower lexicographically
+            order.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="PREFER_NON_NULL">
+        <xs:annotation>
+          <xs:documentation>In case of conflict and one of the entries is null, it chooses the non-null entry. If both
+            non-null, it uses the DEFAULT.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="PREFER_NULL">
+        <xs:annotation>
+          <xs:documentation>In case of conflict and one of the entries is null, it chooses the null entry. If both
+            non-null, it uses the DEFAULT.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="ALWAYS_REMOVE">
+        <xs:annotation>
+          <xs:documentation>In case of any conflict, the entry is removed from both sites.</xs:documentation>
         </xs:annotation>
       </xs:enumeration>
     </xs:restriction>

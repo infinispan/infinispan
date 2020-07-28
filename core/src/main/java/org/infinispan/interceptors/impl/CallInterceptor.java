@@ -56,9 +56,11 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -284,11 +286,11 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          e.setEvicted(true);
       }
 
-      return performRemove(e, ctx, valueMatcher, key, prevValue, optionalValue, notifyRemove, command);
+      return performRemove(e, ctx, valueMatcher, key, prevValue, optionalValue, command.getMetadata(), notifyRemove, command);
    }
 
-   protected Object performRemove(MVCCEntry e, InvocationContext ctx, ValueMatcher valueMatcher, Object key,
-         Object prevValue, Object optionalValue, boolean notifyRemove, RemoveCommand command) {
+   protected Object performRemove(MVCCEntry<?, ?> e, InvocationContext ctx, ValueMatcher valueMatcher, Object key,
+         Object prevValue, Object optionalValue, Metadata commandMetadata, boolean notifyRemove, DataWriteCommand command) {
 
       CompletionStage<Void> stage = notifyRemove ?
             cacheNotifier.notifyCacheEntryRemoved(key, prevValue, e.getMetadata(), true, ctx, command) : null;
@@ -296,7 +298,6 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       e.setRemoved(true);
       e.setChanged(true);
       e.setValue(null);
-      Metadata commandMetadata = command.getMetadata();
       if (commandMetadata != null) {
          e.setMetadata(commandMetadata);
       }
@@ -312,6 +313,24 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       updateStoreFlags(command, e);
 
       return delayedValue(stage, returnValue);
+   }
+
+   @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
+      Object key = command.getKey();
+      ValueMatcher valueMatcher = command.getValueMatcher();
+      Metadata metadata = command.getMetadata();
+      //noinspection unchecked
+      MVCCEntry<Object, Object> e = (MVCCEntry<Object, Object>) ctx.lookupEntry(key);
+
+      if (e == null) {
+         throw new IllegalStateException("Not wrapped");
+      }
+
+      return command.isRemove() ?
+            performRemove(e, ctx, valueMatcher, key, null, null, metadata, true, command) :
+            performPut(e, ctx, valueMatcher, key, command.getValue(), metadata, command, false);
+
    }
 
    @Override
@@ -530,6 +549,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
       Object key = command.getKey();
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+      Metadata metadata = command.getMetadata();
       if (e != null && !e.isRemoved()) {
          Object prevValue = e.getValue();
          Object optionalValue = command.getValue();
@@ -539,7 +559,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          if (lifespan == null) {
             if (valueMatcher.matches(prevValue, optionalValue, null)) {
                e.setExpired(true);
-               return performRemove(e, ctx, valueMatcher, key, prevValue, optionalValue, false, command);
+               return performRemove(e, ctx, valueMatcher, key, prevValue, optionalValue, metadata,false, command);
             }
          } else if (versionFromEntry(e) == nonExistentVersion) {
             // If there is no metadata and no value that means it is gone currently or not shown due to expired
@@ -547,7 +567,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
             // If we have a value though we should verify it matches the value as well
             if (optionalValue == null || valueMatcher.matches(prevValue, optionalValue, null)) {
                e.setExpired(true);
-               return performRemove(e, ctx, valueMatcher, key, prevValue, optionalValue, false, command);
+               return performRemove(e, ctx, valueMatcher, key, prevValue, optionalValue, metadata, false, command);
             }
          } else if (e.getLifespan() > 0 && e.getLifespan() == lifespan) {
             // If the entries lifespan is not positive that means it can't expire so don't even try to remove it
@@ -563,7 +583,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
                            e.getCreated(), timeService.wallClockTime());
                   }
                   e.setExpired(true);
-                  return performRemove(e, ctx, valueMatcher, key, prevValue, optionalValue, false, command);
+                  return performRemove(e, ctx, valueMatcher, key, prevValue, optionalValue, metadata, false, command);
                } else if (trace) {
                   log.tracef("Cannot remove entry due to it not being expired - this can be caused by different " +
                         "clocks on nodes or a concurrent write");

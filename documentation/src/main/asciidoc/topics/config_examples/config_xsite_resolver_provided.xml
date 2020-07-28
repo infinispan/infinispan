@@ -1,0 +1,5 @@
+<distributed-cache name="eu-customers">
+   <backups merge-policy="ALWAYS_REMOVE">
+      <backup site="LON" strategy="ASYNC"/>
+   </backups>
+</distributed-cache>

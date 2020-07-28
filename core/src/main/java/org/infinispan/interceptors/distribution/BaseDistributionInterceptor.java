@@ -202,8 +202,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       entryFactory.wrapExternalEntry(ctx, key, ice, true, isWrite);
    }
 
-   protected final Object handleNonTxWriteCommand(InvocationContext ctx, AbstractDataWriteCommand command)
-         throws Throwable {
+   protected final Object handleNonTxWriteCommand(InvocationContext ctx, AbstractDataWriteCommand command) {
       Object key = command.getKey();
       CacheEntry entry = ctx.lookupEntry(key);
 

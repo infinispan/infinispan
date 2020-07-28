@@ -8,6 +8,7 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -47,6 +48,12 @@ public class BatchingInterceptor extends DDAsyncInterceptor {
       return command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ) ?
             invokeNext(ctx, command) :
             handleDefault(ctx, command);
+   }
+
+   @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
+      //IRAC updates aren't transactional
+      return invokeNext(ctx, command);
    }
 
    /**

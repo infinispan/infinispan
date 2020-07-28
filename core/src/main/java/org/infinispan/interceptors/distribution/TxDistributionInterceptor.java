@@ -41,6 +41,7 @@ import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -147,6 +148,11 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       }
 
       return handleTxWriteCommand(ctx, command, command.getKey());
+   }
+
+   @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
+      return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override

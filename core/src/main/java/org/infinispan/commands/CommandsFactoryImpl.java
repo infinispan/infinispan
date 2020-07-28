@@ -78,6 +78,7 @@ import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -733,5 +734,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public IracStateResponseCommand buildIracStateResponseCommand(Object key, Object lockOwner, IracMetadata tombstone) {
       return new IracStateResponseCommand(cacheName, key, lockOwner, tombstone);
+   }
+
+   @Override
+   public IracPutKeyValueCommand buildIracPutKeyValueCommand(Object key, int segment, Object value, Metadata metadata,
+         PrivateMetadata privateMetadata) {
+      return new IracPutKeyValueCommand(key, segment, generateUUID(false), value, metadata, privateMetadata);
    }
 }

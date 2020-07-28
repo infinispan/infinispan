@@ -3,7 +3,6 @@ package org.infinispan.xsite;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.irac.IracUpdateKeyCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
@@ -56,14 +55,6 @@ public interface BackupReceiver {
     * @return A {@link CompletionStage} that is completed when the cache is cleared.
     */
    CompletionStage<Void> clearKeys();
-
-   /**
-    * Forwards the {@link IracUpdateKeyCommand} to the primary owner.
-    *
-    * @param command The {@link IracUpdateKeyCommand} to forward.
-    * @return A {@link CompletionStage} that is completed when the primary owner completes the request.
-    */
-   CompletionStage<Void> forwardToPrimary(IracUpdateKeyCommand command);
 
    /**
     * It handles starting the state transfer from a remote site. The command must be broadcast to the entire cluster in

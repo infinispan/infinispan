@@ -23,13 +23,12 @@ public abstract class IracUpdateKeyCommand extends XSiteReplicateCommand {
    @Override
    public final CompletionStage<Void> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
       assert !preserveOrder : "IRAC Update Command sent asynchronously!";
-      return receiver.forwardToPrimary(this);
+      return executeOperation(receiver);
    }
-
 
    @Override
    public final CompletionStage<?> invokeAsync(ComponentRegistry registry) {
-      return executeOperation(registry.getBackupReceiver().running());
+      throw new IllegalStateException(); //should never be invoked.
    }
 
    @Override
@@ -37,11 +36,7 @@ public abstract class IracUpdateKeyCommand extends XSiteReplicateCommand {
       return false;
    }
 
-   public abstract Object getKey();
-
    public abstract CompletionStage<Void> executeOperation(BackupReceiver receiver);
-
-   public abstract IracUpdateKeyCommand copyForCacheName(ByteString cacheName);
 
    public boolean isClear() {
       return false; //by default

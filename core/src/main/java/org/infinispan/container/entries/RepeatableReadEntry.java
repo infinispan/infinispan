@@ -3,8 +3,6 @@ package org.infinispan.container.entries;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.SKIP_LOOKUP;
 
 import org.infinispan.metadata.Metadata;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * An extension of {@link ReadCommittedEntry} that provides Repeatable Read semantics
@@ -12,18 +10,10 @@ import org.infinispan.util.logging.LogFactory;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
-public class RepeatableReadEntry extends ReadCommittedEntry {
-   private static final Log log = LogFactory.getLog(RepeatableReadEntry.class);
-   private static final boolean trace = log.isTraceEnabled();
+public class RepeatableReadEntry<K, V> extends ReadCommittedEntry<K, V> {
 
-   /* Value before the last modification. Serves as the previous value when the operation is retried */
-   protected Object oldValue;
-   protected Metadata oldMetadata;
-
-   public RepeatableReadEntry(Object key, Object value, Metadata metadata) {
+   public RepeatableReadEntry(K key, V value, Metadata metadata) {
       super(key, value, metadata);
-      this.oldValue = value;
-      this.oldMetadata = metadata;
    }
 
    @Override
@@ -37,15 +27,15 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
    }
 
    @Override
-   public RepeatableReadEntry clone() {
-      return (RepeatableReadEntry) super.clone();
+   public RepeatableReadEntry<K, V> clone() {
+      return (RepeatableReadEntry<K, V>) super.clone();
    }
 
    @Override
-   public final Object setValue(Object value) {
-      super.setValue(value);
+   public final V setValue(V value) {
+      V prev = super.setValue(value);
       setSkipLookup(true);
-      return oldValue;
+      return prev;
    }
 
    @Override
@@ -55,23 +45,11 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
    }
 
    @Override
-   public void updatePreviousValue() {
-      oldValue = value;
-      oldMetadata = metadata;
-   }
-
-   public Object getOldValue() {
-      return oldValue;
-   }
-
-   public Metadata getOldMetadata() {
-      return oldMetadata;
-   }
-
    public void setRead() {
       setFlag(Flags.READ);
    }
 
+   @Override
    public boolean isRead() {
       return isFlagSet(Flags.READ);
    }

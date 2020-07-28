@@ -11,10 +11,11 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
@@ -34,7 +35,7 @@ import org.infinispan.util.logging.LogFactory;
  * by primary owner.
  */
 public class UnorderedDistributionInterceptor extends NonTxDistributionInterceptor {
-	private static Log log = LogFactory.getLog(UnorderedDistributionInterceptor.class);
+	private static final Log log = LogFactory.getLog(UnorderedDistributionInterceptor.class);
 
 	@Inject DistributionManager distributionManager;
 	private boolean isReplicated;
@@ -50,12 +51,17 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
 	}
 
 	@Override
+	public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
+		return handleDataWriteCommand(ctx, command);
+	}
+
+	@Override
 	public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) {
 		return handleDataWriteCommand(ctx, command);
 	}
 
 	private Object handleDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
-		if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+		if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
 			// for state-transfer related writes
 			return invokeNext(ctx, command);
 		}
