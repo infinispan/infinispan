@@ -22,12 +22,12 @@ import org.infinispan.util.logging.LogFactory;
  * @author Manik Surtani
  * @since 5.1
  */
-public class VersionedRepeatableReadEntry extends RepeatableReadEntry {
+public class VersionedRepeatableReadEntry<K, V> extends RepeatableReadEntry<K, V> {
 
    private static final Log log = LogFactory.getLog(VersionedRepeatableReadEntry.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   public VersionedRepeatableReadEntry(Object key, Object value, Metadata metadata) {
+   public VersionedRepeatableReadEntry(K key, V value, Metadata metadata) {
       super(key, value, metadata);
    }
 
@@ -39,8 +39,8 @@ public class VersionedRepeatableReadEntry extends RepeatableReadEntry {
     * @param versionGenerator generator to generate a new version if needed
     * @return whether a write skew occurred for this entry
     */
-   public CompletionStage<Boolean> performWriteSkewCheck(EntryLoader entryLoader, int segment,
-                                        TxInvocationContext ctx, EntryVersion versionSeen,
+   public CompletionStage<Boolean> performWriteSkewCheck(EntryLoader<K, V> entryLoader, int segment,
+                                        TxInvocationContext<?> ctx, EntryVersion versionSeen,
                                         VersionGenerator versionGenerator) {
       if (versionSeen == null) {
          if (trace) {
@@ -84,10 +84,10 @@ public class VersionedRepeatableReadEntry extends RepeatableReadEntry {
       return InequalVersionComparisonResult.EQUAL == result;
    }
 
-   private CompletionStage<IncrementableEntryVersion> getCurrentEntryVersion(EntryLoader entryLoader, int segment, TxInvocationContext ctx, VersionGenerator versionGenerator) {
+   private CompletionStage<IncrementableEntryVersion> getCurrentEntryVersion(EntryLoader<K, V> entryLoader, int segment, TxInvocationContext<?> ctx, VersionGenerator versionGenerator) {
       // TODO: persistence should be more orthogonal to any entry type - this should be handled in interceptor
       // on origin, the version seen is acquired without the lock, so we have to retrieve it again
-      CompletionStage<InternalCacheEntry> entry = entryLoader.loadAndStoreInDataContainer(ctx, getKey(), segment, null);
+      CompletionStage<InternalCacheEntry<K, V>> entry = entryLoader.loadAndStoreInDataContainer(ctx, getKey(), segment, null);
 
       return entry.thenApply(ice -> {
          if (ice == null) {
@@ -110,7 +110,7 @@ public class VersionedRepeatableReadEntry extends RepeatableReadEntry {
    }
 
    @Override
-   public VersionedRepeatableReadEntry clone() {
-      return (VersionedRepeatableReadEntry) super.clone();
+   public VersionedRepeatableReadEntry<K, V> clone() {
+      return (VersionedRepeatableReadEntry<K, V>) super.clone();
    }
 }

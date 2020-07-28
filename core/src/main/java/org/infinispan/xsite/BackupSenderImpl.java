@@ -34,6 +34,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -387,6 +388,12 @@ public class BackupSenderImpl implements BackupSender {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
          failurePolicy.handlePutFailure(site, command.getKey(), command.getValue(), command.isPutIfAbsent());
+         return null;
+      }
+
+      @Override
+      public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
+         //no-op
          return null;
       }
 

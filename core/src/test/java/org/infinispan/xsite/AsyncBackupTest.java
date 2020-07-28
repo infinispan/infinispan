@@ -17,6 +17,7 @@ import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -257,6 +258,12 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         return handle(ctx, command);
+      }
+
+      @Override
+      public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command)
+            throws Throwable {
          return handle(ctx, command);
       }
 

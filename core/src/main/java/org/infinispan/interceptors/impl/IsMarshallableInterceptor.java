@@ -6,6 +6,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -46,6 +47,17 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (isUsingAsyncStore(ctx, command)) {
          checkMarshallable(command.getValue());
+      }
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
+      if (isUsingAsyncStore(ctx, command)) {
+         checkMarshallable(command.getKey());
+         checkMarshallable(command.getValue());
+         checkMarshallable(command.getMetadata());
+         checkMarshallable(command.getInternalMetadata());
       }
       return invokeNext(ctx, command);
    }

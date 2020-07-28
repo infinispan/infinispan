@@ -9,6 +9,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -68,6 +69,19 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
             return rv;
 
          return delayedValue(storeEntry(rCtx, key, putKeyValueCommand), rv);
+      });
+   }
+
+   @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
+      return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
+         Object key = cmd.getKey();
+         if (!isStoreEnabled(cmd) || !cmd.isSuccessful())
+            return rv;
+         if (!isProperWriter(rCtx, cmd, cmd.getKey()))
+            return rv;
+
+         return delayedValue(storeEntry(rCtx, key, cmd), rv);
       });
    }
 
@@ -177,7 +191,8 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
 
       int segment = SegmentSpecificCommand.extractSegment(command, key, keyPartitioner);
       DistributionInfo distributionInfo = dm.getCacheTopology().getSegmentDistribution(segment);
-      if (isUsingLockDelegation && ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
+      boolean nonTx = isUsingLockDelegation || command.hasAnyFlag(FlagBitSets.IRAC_UPDATE);
+      if (nonTx && ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          // If the originator is a backup, the command will be forwarded back to it, and the value will be stored then
          // (while holding the lock on the primary owner).
          return distributionInfo.isPrimary();

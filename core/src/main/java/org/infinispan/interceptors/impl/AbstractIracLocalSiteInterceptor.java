@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.impl;
 
 import static org.infinispan.metadata.impl.PrivateMetadata.getBuilder;
+import static org.infinispan.util.IracUtils.setIracMetadata;
 
 import java.util.stream.Stream;
 
@@ -22,7 +23,7 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
-import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogSupplier;
 
 /**
  * A {@link DDAsyncInterceptor} with common code for all the IRAC related interceptors.
@@ -30,7 +31,7 @@ import org.infinispan.util.logging.Log;
  * @author Pedro Ruivo
  * @since 11.0
  */
-public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncInterceptor {
+public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncInterceptor implements LogSupplier {
 
    @Inject ClusteringDependentLogic clusteringDependentLogic;
    @Inject IracVersionGenerator iracVersionGenerator;
@@ -63,17 +64,6 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
       command.setInternalMetadata(key, interMetadata);
    }
 
-   private static void updateCacheEntryMetadata(CacheEntry<?, ?> entry, IracMetadata iracMetadata) {
-      PrivateMetadata internalMetadata = getBuilder(entry.getInternalMetadata())
-            .iracMetadata(iracMetadata)
-            .build();
-      entry.setInternalMetadata(internalMetadata);
-   }
-
-   abstract boolean isTraceEnabled();
-
-   abstract Log getLog();
-
    protected Ownership getOwnership(int segment) {
       return getDistributionInfo(segment).writeOwnership();
    }
@@ -84,10 +74,6 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
 
    protected DistributionInfo getDistributionInfo(int segment) {
       return getCacheTopology().getSegmentDistribution(segment);
-   }
-
-   protected DistributionInfo getDistributionInfo(Object key) {
-      return getCacheTopology().getDistribution(key);
    }
 
    protected boolean isWriteOwner(StreamData data) {
@@ -113,15 +99,7 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
          }
          return;
       }
-      setIracMetadata(entry, metadata);
-   }
-
-   protected final void setIracMetadata(CacheEntry<?, ?> entry, IracMetadata metadata) {
-      if (entry.isRemoved()) {
-         updateEntryForRemove(entry, metadata);
-      } else {
-         updateEntryForWrite(entry, metadata);
-      }
+      setIracMetadata(entry, metadata, iracVersionGenerator, this);
    }
 
    protected Stream<StreamData> streamKeysFromModifications(WriteCommand[] mods) {
@@ -135,33 +113,6 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
 
    protected Stream<StreamData> streamKeysFromCommand(WriteCommand command) {
       return command.getAffectedKeys().stream().map(key -> new StreamData(key, command, getSegment(command, key)));
-   }
-
-   private void updateEntryForRemove(CacheEntry<?, ?> entry, IracMetadata metadata) {
-      final Object key = entry.getKey();
-      logTombstoneAssociated(key, metadata);
-      assert metadata != null : "[IRAC] Metadata must not be null!";
-      iracVersionGenerator.storeTombstone(key, metadata);
-   }
-
-   private void updateEntryForWrite(CacheEntry<?, ?> entry, IracMetadata metadata) {
-      final Object key = entry.getKey();
-      logIracMetadataAssociated(key, metadata);
-      assert metadata != null : "[IRAC] Metadata must not be null!";
-      updateCacheEntryMetadata(entry, metadata);
-      iracVersionGenerator.removeTombstone(key);
-   }
-
-   private void logIracMetadataAssociated(Object key, IracMetadata metadata) {
-      if (isTraceEnabled()) {
-         getLog().tracef("[IRAC] IracMetadata %s associated with key '%s'", metadata, key);
-      }
-   }
-
-   private void logTombstoneAssociated(Object key, IracMetadata metadata) {
-      if (isTraceEnabled()) {
-         getLog().tracef("[IRAC] Store tombstone %s for key '%s'", metadata, key);
-      }
    }
 
    static class StreamData {

@@ -39,6 +39,7 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -337,12 +338,16 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public final Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
-         throws Throwable {
+   public final Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, wrapEntryIfNeeded(ctx, command));
    }
 
-   private CompletionStage<Void> wrapEntryIfNeeded(InvocationContext ctx, AbstractDataWriteCommand command) throws Throwable {
+   @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, wrapEntryIfNeeded(ctx, command));
+   }
+
+   protected CompletionStage<Void> wrapEntryIfNeeded(InvocationContext ctx, AbstractDataWriteCommand command) {
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getKey());
       }

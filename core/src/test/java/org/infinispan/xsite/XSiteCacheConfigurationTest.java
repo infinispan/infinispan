@@ -137,4 +137,11 @@ public class XSiteCacheConfigurationTest {
       builder.sites().backupFor().remoteCache("remote").remoteSite(LON);
       builder.build();
    }
+
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: The XSiteEntryMergePolicy is missing! Must be non-null.")
+   public void testNullXSiteEntryMergePolicy() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.sites().mergePolicy(null);
+      builder.build();
+   }
 }

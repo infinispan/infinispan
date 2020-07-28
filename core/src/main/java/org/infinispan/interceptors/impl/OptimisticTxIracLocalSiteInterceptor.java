@@ -80,12 +80,12 @@ public class OptimisticTxIracLocalSiteInterceptor extends AbstractIracLocalSiteI
    }
 
    @Override
-   boolean isTraceEnabled() {
+   public boolean isTraceEnabled() {
       return trace;
    }
 
    @Override
-   Log getLog() {
+   public Log getLog() {
       return log;
    }
 

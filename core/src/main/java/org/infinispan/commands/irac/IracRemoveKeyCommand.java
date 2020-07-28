@@ -60,18 +60,6 @@ public class IracRemoveKeyCommand extends IracUpdateKeyCommand {
       this.iracMetadata = IracMetadata.readFrom(input);
    }
 
-
-   public IracRemoveKeyCommand copyForCacheName(ByteString cacheName) {
-      IracRemoveKeyCommand command = new IracRemoveKeyCommand(cacheName);
-      command.key = key;
-      command.iracMetadata = iracMetadata;
-      return command;
-   }
-
-   public Object getKey() {
-      return key;
-   }
-
    @Override
    public String toString() {
       return "IracRemoveKeyCommand{" +

@@ -1,5 +1,6 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.SitesConfiguration.MERGE_POLICY;
 import static org.infinispan.configuration.cache.SitesConfiguration.DISABLE_BACKUPS;
 import static org.infinispan.configuration.cache.SitesConfiguration.IN_USE_BACKUP_SITES;
 import static org.infinispan.util.logging.Log.CONFIG;
@@ -16,6 +17,8 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.Element;
+import org.infinispan.xsite.spi.XSiteMergePolicy;
+import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -58,7 +61,7 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
    }
 
    @Override
-   public ElementDefinition getElementDefinition() {
+   public ElementDefinition<?> getElementDefinition() {
       return SitesConfiguration.ELEMENT_DEFINITION;
    }
 
@@ -90,6 +93,24 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
       return backupForBuilder;
    }
 
+   /**
+    * Configures the {@link XSiteEntryMergePolicy} to be used.
+    * <p>
+    * {@link XSiteEntryMergePolicy} is invoked when a conflicts is detected between 2 sites. A conflict happens when a
+    * key is updated concurrently in 2 sites.
+    * <p>
+    * {@link XSiteMergePolicy} enum contains implementation available to be used.
+    *
+    * @param mergePolicy The {@link XSiteEntryMergePolicy} implementation to use.
+    * @return {@code this}.
+    * @see XSiteEntryMergePolicy
+    * @see XSiteMergePolicy
+    */
+   public SitesConfigurationBuilder mergePolicy(XSiteEntryMergePolicy<?, ?> mergePolicy) {
+      attributes.attribute(MERGE_POLICY).set(mergePolicy);
+      return this;
+   }
+
    @Override
    public void validate() {
       backupForBuilder.validate();
@@ -107,6 +128,10 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
       //we have backups configured. check if we have a clustered cache
       if (!backupNames.isEmpty() && !builder.clustering().cacheMode().isClustered()) {
          throw CONFIG.xsiteInLocalCache();
+      }
+
+      if (attributes.attribute(MERGE_POLICY).get() == null) {
+         throw CONFIG.missingXSiteEntryMergePolicy();
       }
 
       for (String site : attributes.attribute(IN_USE_BACKUP_SITES).get()) {

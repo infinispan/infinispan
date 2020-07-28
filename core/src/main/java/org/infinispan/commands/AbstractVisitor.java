@@ -29,6 +29,7 @@ import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -84,6 +85,11 @@ public abstract class AbstractVisitor implements Visitor {
 
    @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+      return handleDefault(ctx, command);
+   }
+
+   @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 

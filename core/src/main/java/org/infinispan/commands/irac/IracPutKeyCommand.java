@@ -80,17 +80,4 @@ public class IracPutKeyCommand extends IracUpdateKeyCommand {
             ", cacheName=" + cacheName +
             '}';
    }
-
-   public Object getKey() {
-      return key;
-   }
-
-   public IracPutKeyCommand copyForCacheName(ByteString cacheName) {
-      IracPutKeyCommand command = new IracPutKeyCommand(cacheName);
-      command.key = key;
-      command.value = value;
-      command.metadata = metadata;
-      command.iracMetadata = iracMetadata;
-      return command;
-   }
 }

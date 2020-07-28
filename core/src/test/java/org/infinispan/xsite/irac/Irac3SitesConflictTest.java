@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.TestOperation;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
@@ -34,27 +35,27 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
    }
 
    public void testPutIfAbsent(Method method) {
-      doTest(method, Operations.PUT_IF_ABSENT);
+      doTest(method, TestOperation.PUT_IF_ABSENT);
    }
 
    public void testPut(Method method) {
-      doTest(method, Operations.PUT);
+      doTest(method, TestOperation.PUT);
    }
 
    public void testReplace(Method method) {
-      doTest(method, Operations.REPLACE);
+      doTest(method, TestOperation.REPLACE);
    }
 
    public void testConditionalReplace(Method method) {
-      doTest(method, Operations.REPLACE_IF);
+      doTest(method, TestOperation.REPLACE_CONDITIONAL);
    }
 
    public void testRemove(Method method) {
-      doTest(method, Operations.REMOVE);
+      doTest(method, TestOperation.REMOVE);
    }
 
    public void testConditionalRemove(Method method) {
-      doTest(method, Operations.REMOVE_IF);
+      doTest(method, TestOperation.REMOVE_CONDITIONAL);
    }
 
    @Override
@@ -106,12 +107,12 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
       }
    }
 
-   private void doTest(Method method, TestConfig testConfig) {
+   private void doTest(Method method, TestOperation testConfig) {
       final String key = TestingUtil.k(method, 0);
-      final String initialValue = testConfig.needsInitialValue() ? TestingUtil.v(method, 0) : null;
+      final String initialValue = testConfig.requiresPreviousValue() ? TestingUtil.v(method, 0) : null;
 
       //init cache if needed!
-      if (testConfig.needsInitialValue()) {
+      if (testConfig.requiresPreviousValue()) {
          cache(siteName(0), 0).put(key, initialValue);
       }
       eventuallyAssertInAllSitesAndCaches(cache -> Objects.equals(initialValue, cache.get(key)));
@@ -123,13 +124,13 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
       String[] finalValues = new String[N_SITES];
       for (int i = 0; i < N_SITES; ++i) {
          String newValue = TestingUtil.v(method, (i + 1) * 2);
-         if ((testConfig == Operations.REMOVE_IF || testConfig == Operations.REMOVE) && i > 0) {
+         if ((testConfig == TestOperation.REMOVE_CONDITIONAL || testConfig == TestOperation.REMOVE) && i > 0) {
             //to make sure remove works, we remove from LON only since it is the winning site.
             //the other sites put other value.
             cache(siteName(i), 0).put(key, newValue);
             finalValues[i] = newValue;
          } else {
-            finalValues[i] = testConfig.perform(cache(siteName(i), 0), key, initialValue, newValue);
+            finalValues[i] = testConfig.execute(cache(siteName(i), 0), key, initialValue, newValue);
          }
       }
 
@@ -144,94 +145,5 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
 
       String expectedFinalValue = finalValues[0];
       eventuallyAssertInAllSitesAndCaches(cache -> Objects.equals(expectedFinalValue, cache.get(key)));
-   }
-
-
-   private enum Operations implements TestConfig {
-      PUT_IF_ABSENT {
-         @Override
-         public boolean needsInitialValue() {
-            return false;
-         }
-
-         @Override
-         public String perform(Cache<String, String> cache, String key, String prevValue, String newValue) {
-            AssertJUnit.assertNull(prevValue);
-            String prev = cache.putIfAbsent(key, newValue);
-            AssertJUnit.assertNull(prev); //putIfAbsent must succeed.
-            return newValue;
-         }
-      },
-      PUT {
-         @Override
-         public boolean needsInitialValue() {
-            return false;
-         }
-
-         @Override
-         public String perform(Cache<String, String> cache, String key, String prevValue, String newValue) {
-            AssertJUnit.assertNull(prevValue);
-            cache.put(key, newValue);
-            return newValue;
-         }
-      },
-      REPLACE {
-         @Override
-         public boolean needsInitialValue() {
-            return true;
-         }
-
-         @Override
-         public String perform(Cache<String, String> cache, String key, String prevValue, String newValue) {
-            AssertJUnit.assertNotNull(prevValue);
-            cache.replace(key, newValue);
-            return newValue;
-         }
-      },
-      REPLACE_IF {
-         @Override
-         public boolean needsInitialValue() {
-            return true;
-         }
-
-         @Override
-         public String perform(Cache<String, String> cache, String key, String prevValue, String newValue) {
-            AssertJUnit.assertNotNull(prevValue);
-            cache.replace(key, prevValue, newValue);
-            return newValue;
-         }
-      },
-      REMOVE {
-         @Override
-         public boolean needsInitialValue() {
-            return true;
-         }
-
-         @Override
-         public String perform(Cache<String, String> cache, String key, String prevValue, String newValue) {
-            AssertJUnit.assertNotNull(prevValue);
-            cache.remove(key);
-            return null;
-         }
-      },
-      REMOVE_IF {
-         @Override
-         public boolean needsInitialValue() {
-            return true;
-         }
-
-         @Override
-         public String perform(Cache<String, String> cache, String key, String prevValue, String newValue) {
-            AssertJUnit.assertNotNull(prevValue);
-            cache.remove(key, prevValue);
-            return null;
-         }
-      }
-   }
-
-   interface TestConfig {
-      boolean needsInitialValue();
-
-      String perform(Cache<String, String> cache, String key, String prevValue, String newValue);
    }
 }

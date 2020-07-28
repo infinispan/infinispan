@@ -30,6 +30,7 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -183,28 +184,17 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, putKeyValueCommand, rv) -> {
-         if (!isStoreEnabled(putKeyValueCommand) || rCtx.isInTxScope() || !putKeyValueCommand.isSuccessful())
-            return rv;
-         if (!isProperWriter(rCtx, putKeyValueCommand, putKeyValueCommand.getKey()))
-            return rv;
-
-         Object key = putKeyValueCommand.getKey();
-         return delayedValue(storeEntry(rCtx, key, putKeyValueCommand), rv);
-      });
+      return visitDataWriteCommandToStore(ctx, command);
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, replaceCommand, rv) -> {
-         if (!isStoreEnabled(replaceCommand) || rCtx.isInTxScope() || !replaceCommand.isSuccessful())
-            return rv;
-         if (!isProperWriter(rCtx, replaceCommand, replaceCommand.getKey()))
-            return rv;
+      return visitDataWriteCommandToStore(ctx, command);
+   }
 
-         Object key = replaceCommand.getKey();
-         return delayedValue(storeEntry(rCtx, key, replaceCommand), rv);
-      });
+   @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
+      return visitDataWriteCommandToStore(ctx, command);
    }
 
    @Override
@@ -485,5 +475,17 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    protected boolean skipSharedStores(InvocationContext ctx, Object key, FlagAffectedCommand command) {
       return !ctx.isOriginLocal() ||
             command.hasAnyFlag(FlagBitSets.SKIP_SHARED_CACHE_STORE);
+   }
+
+   private Object visitDataWriteCommandToStore(InvocationContext ctx, DataWriteCommand command) {
+      return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
+         if (!isStoreEnabled(cmd) || rCtx.isInTxScope() || !cmd.isSuccessful())
+            return rv;
+         if (!isProperWriter(rCtx, cmd, cmd.getKey()))
+            return rv;
+
+         Object key = cmd.getKey();
+         return delayedValue(storeEntry(rCtx, key, cmd), rv);
+      });
    }
 }

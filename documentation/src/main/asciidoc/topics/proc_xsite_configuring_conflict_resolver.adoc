@@ -1,0 +1,27 @@
+:XSiteEntryMergePolicyClass: link:{javadocroot}/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[XSiteEntryMergePolicy]
+:XSiteMergePolicyClass: link:{javadocroot}/org/infinispan/xsite/spi/XSiteMergePolicy.html[XSiteMergePolicy]
+
+[id='configure_conflict_resolver-{context}']
+= Configuring Cross-Site Conflict Resolution
+
+Specify the algorithm name of the implementation to use when conflict happens.
+
+.Procedure
+* Use `merge-policy` to configure the conflict resolution algorithm.
+
+.Using {brandname} algorithm
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_xsite_resolver_provided.xml[]
+----
+
+.Using a custom implementation
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_xsite_resolver_custom.xml[]
+----
+
+.Reference
+* {XSiteEntryMergePolicyClass}
+* {XSiteMergePolicyClass}
+* link:{configdocroot}[{brandname} Configuration Schema]

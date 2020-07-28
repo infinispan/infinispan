@@ -27,6 +27,21 @@ public interface IracVersionGenerator extends Lifecycle {
    IracMetadata generateNewMetadata(int segment);
 
    /**
+    * Creates a new {@link IracMetadata} with the merged {@link IracEntryVersion} from locally stored value and remote
+    * value.
+    * <p>
+    * It also updates the version to ensure {@link #generateNewMetadata(int)} generates a new version higher than both.
+    *
+    * @param segment       The segment.
+    * @param localVersion  The {@link IracEntryVersion} stored locally.
+    * @param remoteVersion The {@link IracEntryVersion} received from the remote site.
+    * @param siteName      The site name to store in {@link IracMetadata}.
+    * @return The {@link IracMetadata} instance.
+    */
+   IracMetadata mergeVersion(int segment, IracEntryVersion localVersion, IracEntryVersion remoteVersion,
+         String siteName);
+
+   /**
     * Updates the version for the {@code segment} with a new {@code remoteVersion} seen.
     * <p>
     * This method should merge both the current version internally stored and the {@code remoteVersion} to achieve an

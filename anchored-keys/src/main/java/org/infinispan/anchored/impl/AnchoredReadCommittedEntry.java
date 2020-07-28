@@ -20,10 +20,10 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author Dan Berindei
  * @since 11
  */
-public class AnchoredReadCommittedEntry extends ReadCommittedEntry {
+public class AnchoredReadCommittedEntry<K, V> extends ReadCommittedEntry<K, V> {
    private Address location;
 
-   public AnchoredReadCommittedEntry(Object key, Object value, Metadata metadata) {
+   public AnchoredReadCommittedEntry(K key, V value, Metadata metadata) {
       super(key, value, metadata);
    }
 
@@ -45,7 +45,7 @@ public class AnchoredReadCommittedEntry extends ReadCommittedEntry {
 
    public static void setMissingLocation(CacheEntry<?, ?> cacheEntry, Address location) {
       if (cacheEntry instanceof AnchoredReadCommittedEntry) {
-         AnchoredReadCommittedEntry anchoredEntry = (AnchoredReadCommittedEntry) cacheEntry;
+         AnchoredReadCommittedEntry<?, ?> anchoredEntry = (AnchoredReadCommittedEntry<?, ?>) cacheEntry;
          if (anchoredEntry.getLocation() == null) {
             anchoredEntry.setLocation(location);
          }
@@ -53,10 +53,10 @@ public class AnchoredReadCommittedEntry extends ReadCommittedEntry {
    }
 
    @Override
-   public void commit(DataContainer container) {
+   public void commit(DataContainer<K,V> container) {
       if (isChanged() && !isRemoved()) {
          // Entry created/modified: only store the key location
-         Object newValue = location != null ? null : value;
+         V newValue = location != null ? null : value;
          Metadata newMetadata = location != null ? new RemoteMetadata(location, null) : metadata;
          container.put(key, newValue, newMetadata);
       } else {
@@ -65,10 +65,10 @@ public class AnchoredReadCommittedEntry extends ReadCommittedEntry {
    }
 
    @Override
-   public CompletionStage<Void> commit(int segment, InternalDataContainer container) {
+   public CompletionStage<Void> commit(int segment, InternalDataContainer<K, V> container) {
       if (isChanged() && !isRemoved()) {
          // Entry created/modified: only store the key location
-         Object newValue = location != null ? null : value;
+         V newValue = location != null ? null : value;
          Metadata newMetadata = location != null ? new RemoteMetadata(location, null) : metadata;
          container.put(segment, key, newValue, newMetadata, internalMetadata, created, lastUsed);
          return CompletableFutures.completedNull();

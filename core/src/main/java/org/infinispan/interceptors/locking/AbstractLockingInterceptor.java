@@ -29,6 +29,7 @@ import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -76,7 +77,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
-         // Cache.putForExternalRead() is non-transactional
+      // Cache.putForExternalRead() is non-transactional
          return visitNonTxDataWriteCommand(ctx, command);
       }
       return visitDataWriteCommand(ctx, command);
@@ -100,6 +101,11 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
+      return visitNonTxDataWriteCommand(ctx, command);
    }
 
    @Override

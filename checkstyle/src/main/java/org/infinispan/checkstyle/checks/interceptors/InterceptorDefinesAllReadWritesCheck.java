@@ -10,6 +10,7 @@ public class InterceptorDefinesAllReadWritesCheck extends AbstractInterceptorChe
    // sense to define them.
    private static final Set<String> WRITE_METHODS = new HashSet<>(Arrays.asList(
          "visitPutKeyValueCommand",
+         "visitIracPutKeyValueCommand",
          "visitRemoveCommand",
          "visitReplaceCommand",
          "visitPutMapCommand", // PutMapCommand should load previous values unless IGNORE_RETURN_VALUE flag is set.

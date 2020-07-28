@@ -9,12 +9,15 @@ import java.util.function.Function;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.ByteString;
@@ -56,6 +59,15 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    }
 
    public void setPutKeyValueCommand(PutKeyValueCommand command) {
+      this.operation = Operation.WRITE;
+      setCommonAttributesFromCommand(command);
+      this.key = command.getKey();
+      this.valueOrFunction = command.getValue();
+      this.metadata = command.getMetadata();
+      this.internalMetadata = command.getInternalMetadata();
+   }
+
+   public void setIracPutKeyValueCommand(IracPutKeyValueCommand command) {
       this.operation = Operation.WRITE;
       setCommonAttributesFromCommand(command);
       this.key = command.getKey();
@@ -158,8 +170,9 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
             command = new RemoveCommand(key, null, segmentId, getFlags(), getCommandInvocationId());
             break;
          case WRITE:
-            command = new PutKeyValueCommand(key, valueOrFunction, false, metadata, segmentId, getTopologyId(),
-                  getCommandInvocationId());
+            command = EnumUtil.containsAny(getFlags(), FlagBitSets.IRAC_UPDATE) ?
+                  new IracPutKeyValueCommand(key, segmentId, getCommandInvocationId(), valueOrFunction, metadata, internalMetadata) :
+                  new PutKeyValueCommand(key, valueOrFunction, false, metadata, segmentId, getFlags(), getCommandInvocationId());
             break;
          case COMPUTE:
             command = new ComputeCommand(key, (BiFunction) valueOrFunction, false, segmentId, getFlags(),

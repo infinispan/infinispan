@@ -28,21 +28,25 @@ import org.infinispan.util.logging.LogFactory;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
-public class ReadCommittedEntry implements MVCCEntry {
+public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
    private static final Log log = LogFactory.getLog(ReadCommittedEntry.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   protected Object key;
-   protected Object value;
+   protected K key;
+   protected V value;
    protected long created = -1, lastUsed = -1;
    protected short flags = 0;
    protected Metadata metadata;
    protected PrivateMetadata internalMetadata;
+   protected V oldValue;
+   protected Metadata oldMetadata;
 
-   public ReadCommittedEntry(Object key, Object value, Metadata metadata) {
+   public ReadCommittedEntry(K key, V value, Metadata metadata) {
       this.key = key;
       this.value = value;
       this.metadata = metadata;
+      this.oldValue = value;
+      this.oldMetadata = metadata;
    }
 
    // if this or any MVCC entry implementation ever needs to store a boolean, always use a flag instead.  This is far
@@ -109,22 +113,22 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public final Object getKey() {
+   public final K getKey() {
       return key;
    }
 
    @Override
-   public final Object getValue() {
+   public final V getValue() {
       return value;
    }
 
    @Override
-   public boolean isNull() {
+   public final boolean isNull() {
       return value == null;
    }
 
    @Override
-   public void commit(DataContainer container) {
+   public void commit(DataContainer<K, V> container) {
       if (shouldCommit()) {
          if (isEvicted()) {
             container.evict(key);
@@ -139,7 +143,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       }
    }
 
-   public CompletionStage<Void> commit(int segment, InternalDataContainer container) {
+   public CompletionStage<Void> commit(int segment, InternalDataContainer<K, V> container) {
       if (segment < 0) {
          throw new IllegalArgumentException("Segment must be 0 or greater");
       }
@@ -198,8 +202,8 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public Object setValue(Object value) {
-      Object prev = this.value;
+   public V setValue(V value) {
+      V prev = this.value;
       this.value = value;
       return prev;
    }
@@ -270,8 +274,19 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public void updatePreviousValue() {
-      // noop, the previous value is not stored
+   public final void updatePreviousValue() {
+      oldValue = value;
+      oldMetadata = metadata;
+   }
+
+   @Override
+   public final V getOldValue() {
+      return oldValue;
+   }
+
+   @Override
+   public final Metadata getOldMetadata() {
+      return oldMetadata;
    }
 
    @Override
@@ -302,9 +317,10 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public ReadCommittedEntry clone() {
+   public ReadCommittedEntry<K, V> clone() {
       try {
-         return (ReadCommittedEntry) super.clone();
+         //noinspection unchecked
+         return (ReadCommittedEntry<K, V>) super.clone();
       } catch (CloneNotSupportedException e) {
          throw new IllegalStateException(e);
       }
@@ -335,12 +351,14 @@ public class ReadCommittedEntry implements MVCCEntry {
       return getClass().getSimpleName() + "(" + Util.hexIdHashCode(this) + "){" +
             "key=" + toStr(key) +
             ", value=" + toStr(value) +
+            ", oldValue=" + toStr(oldValue) +
             ", isCreated=" + isCreated() +
             ", isChanged=" + isChanged() +
             ", isRemoved=" + isRemoved() +
             ", isExpired=" + isExpired() +
             ", skipLookup=" + skipLookup() +
             ", metadata=" + metadata +
+            ", oldMetadata=" + oldMetadata +
             ", internalMetadata=" + internalMetadata +
             '}';
    }

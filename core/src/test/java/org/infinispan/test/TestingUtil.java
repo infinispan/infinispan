@@ -1443,7 +1443,10 @@ public class TestingUtil {
    }
 
    public static String generateRandomString(int numberOfChars) {
-      Random r = new Random(System.currentTimeMillis());
+      return generateRandomString(numberOfChars, new Random(System.currentTimeMillis()));
+   }
+
+   public static String generateRandomString(int numberOfChars, Random r) {
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < numberOfChars; i++) sb.append((char) (64 + r.nextInt(26)));
       return sb.toString();

@@ -18,8 +18,8 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
@@ -45,7 +45,7 @@ import org.infinispan.util.logging.LogFactory;
 class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 	private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(TxPutFromLoadInterceptor.class);
    private static final Log ispnLog = LogFactory.getLog(TxPutFromLoadInterceptor.class);
-	private PutFromLoadValidator putFromLoadValidator;
+	private final PutFromLoadValidator putFromLoadValidator;
 	private final ByteString cacheName;
 
 	@Inject RpcManager rpcManager;
@@ -69,15 +69,15 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 	}
 
 	@Override
-	public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-		if (!command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+	public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
+		if (!command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
 			beginInvalidating(ctx, command.getKey());
 		}
 		return invokeNext(ctx, command);
 	}
 
 	@Override
-	public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+	public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
 		beginInvalidating(ctx, command.getKey());
 		return invokeNext(ctx, command);
 	}
@@ -86,7 +86,7 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 	// place before EntryWrappingInterceptor and the PrepareCommand is multiplexed into InvalidateCommands
 	// as part of EntryWrappingInterceptor
 	@Override
-	public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+	public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
 		if (ctx.isOriginLocal()) {
 			// We can't wait to commit phase to remove the entry locally (invalidations are processed in 1pc
 			// on remote nodes, so only local case matters here). The problem is that while the entry is locked
@@ -115,7 +115,7 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 	}
 
 	@Override
-	public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+	public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) {
 		if (log.isTraceEnabled()) {
 			log.tracef( "Commit command received, end invalidation" );
 		}
@@ -124,7 +124,7 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 	}
 
 	@Override
-	public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+	public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) {
 		if (log.isTraceEnabled()) {
 			log.tracef( "Rollback command received, end invalidation" );
 		}
@@ -132,36 +132,32 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 		return endInvalidationAndInvokeNextInterceptor(ctx, command);
 	}
 
-	protected Object endInvalidationAndInvokeNextInterceptor(TxInvocationContext<?> ctx, VisitableCommand command) throws Throwable {
-		try {
-			if (ctx.isOriginLocal()) {
-				// We cannot use directly ctx.getAffectedKeys() and that includes keys from local-only operations.
-				// During evictAll inside transaction this would cause unnecessary invalidate command
-				if (!ctx.getModifications().isEmpty()) {
-					Object[] keys = ctx.getModifications().stream()
-						.flatMap(mod -> mod.getAffectedKeys().stream()).distinct().toArray();
+	protected Object endInvalidationAndInvokeNextInterceptor(TxInvocationContext<?> ctx, VisitableCommand command) {
+		if (ctx.isOriginLocal()) {
+			// We cannot use directly ctx.getAffectedKeys() and that includes keys from local-only operations.
+			// During evictAll inside transaction this would cause unnecessary invalidate command
+			if (!ctx.getModifications().isEmpty()) {
+				Object[] keys = ctx.getModifications().stream()
+					.flatMap(mod -> mod.getAffectedKeys().stream()).distinct().toArray();
 
-					if (log.isTraceEnabled()) {
-						log.tracef( "Sending end invalidation for keys %s asynchronously, modifications are %s",
-							Arrays.toString(keys), ctx.getCacheTransaction().getModifications());
-					}
+				if (log.isTraceEnabled()) {
+					log.tracef( "Sending end invalidation for keys %s asynchronously, modifications are %s",
+						Arrays.toString(keys), ctx.getCacheTransaction().getModifications());
+				}
 
-					GlobalTransaction globalTransaction = ctx.getGlobalTransaction();
-					EndInvalidationCommand commitCommand = new EndInvalidationCommand(cacheName, keys, globalTransaction);
-					List<Address> members = distributionManager.getCacheTopology().getMembers();
-					rpcManager.sendToMany(members, commitCommand, DeliverOrder.NONE);
+				GlobalTransaction globalTransaction = ctx.getGlobalTransaction();
+				EndInvalidationCommand commitCommand = new EndInvalidationCommand(cacheName, keys, globalTransaction);
+				List<Address> members = distributionManager.getCacheTopology().getMembers();
+				rpcManager.sendToMany(members, commitCommand, DeliverOrder.NONE);
 
-					// If the transaction is not successful, *RegionAccessStrategy would not be called, therefore
-					// we have to end invalidation from here manually (in successful case as well)
-					for (Object key : keys) {
-						putFromLoadValidator.endInvalidatingKey(globalTransaction, key);
-					}
+				// If the transaction is not successful, *RegionAccessStrategy would not be called, therefore
+				// we have to end invalidation from here manually (in successful case as well)
+				for (Object key : keys) {
+					putFromLoadValidator.endInvalidatingKey(globalTransaction, key);
 				}
 			}
 		}
-		finally {
-			return invokeNext(ctx, command);
-		}
+		return invokeNext(ctx, command);
 	}
 
 	@Override

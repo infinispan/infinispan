@@ -82,10 +82,7 @@ public class WriteSkewHelper {
                      throw new WriteSkewException("Write skew detected on key " + entry.getKey() + " for transaction " +
                            context.getCacheTransaction(), entry.getKey());
                   }
-                  IncrementableEntryVersion oldVersion = versionFromEntry(entry);
-                  IncrementableEntryVersion newVersion = entry.isCreated() || oldVersion == null
-                        ? versionGenerator.generateNew()
-                        : versionGenerator.increment(oldVersion);
+                  IncrementableEntryVersion newVersion = incrementVersion(entry,versionGenerator);
                   // Have to synchronize as we could have returns on different threads due to notifications/loaders etc
                   synchronized (uv) {
                      uv.put(entry.getKey(), newVersion);
@@ -103,6 +100,13 @@ public class WriteSkewHelper {
       }
       PrivateMetadata metadata = entry.getInternalMetadata();
       return metadata == null ? null : metadata.entryVersion();
+   }
+
+   public static IncrementableEntryVersion incrementVersion(CacheEntry<?, ?> entry, VersionGenerator versionGenerator) {
+      IncrementableEntryVersion oldVersion = versionFromEntry(entry);
+      return entry.isCreated() || oldVersion == null ?
+            versionGenerator.generateNew() :
+            versionGenerator.increment(oldVersion);
    }
 
    public interface KeySpecificLogic {

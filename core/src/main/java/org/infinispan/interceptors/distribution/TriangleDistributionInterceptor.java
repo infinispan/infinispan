@@ -39,6 +39,7 @@ import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -108,9 +109,13 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
-         throws Throwable {
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
       return handleSingleKeyWriteCommand(ctx, command, TriangleFunctionsUtil::backupFrom);
+   }
+
+   @Override
+   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
+      return handleSingleKeyWriteCommand(ctx,command, TriangleFunctionsUtil::backupFrom);
    }
 
    @Override

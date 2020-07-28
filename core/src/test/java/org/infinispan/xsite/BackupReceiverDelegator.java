@@ -3,7 +3,6 @@ package org.infinispan.xsite;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.irac.IracUpdateKeyCommand;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
@@ -61,10 +60,5 @@ public abstract class BackupReceiverDelegator implements BackupReceiver {
    @Override
    public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
       return delegate.handleStateTransferState(cmd);
-   }
-
-   @Override
-   public CompletionStage<Void> forwardToPrimary(IracUpdateKeyCommand command) {
-      return delegate.forwardToPrimary(command);
    }
 }
