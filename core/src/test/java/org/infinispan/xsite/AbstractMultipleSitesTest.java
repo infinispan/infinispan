@@ -121,7 +121,7 @@ public abstract class AbstractMultipleSitesTest extends AbstractXSiteTest {
    protected <K, V> void eventuallyAssertInAllSitesAndCaches(String cacheName,
          EventuallyAssertCondition<K, V> condition) {
       for (TestSite testSite : sites) {
-         assertEventuallyInSite(testSite.getSiteName(), cacheName, condition, 30, TimeUnit.SECONDS);
+         assertEventuallyInSite(testSite.getSiteName(), cacheName, condition, 15, TimeUnit.SECONDS);
       }
    }
 }

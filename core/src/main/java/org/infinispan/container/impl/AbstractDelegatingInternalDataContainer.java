@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
+import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -164,6 +165,11 @@ public abstract class AbstractDelegatingInternalDataContainer<K, V> implements I
    @Override
    public void forEach(IntSet segments, Consumer<? super InternalCacheEntry<K, V>> action) {
       delegate().forEach(segments, action);
+   }
+
+   @Override
+   public void forEachSegment(ObjIntConsumer<PeekableTouchableMap<K, V>> segmentMapConsumer) {
+      delegate().forEachSegment(segmentMapConsumer);
    }
 
    @Override

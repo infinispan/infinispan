@@ -3,9 +3,14 @@ package org.infinispan.interceptors.xsite;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionInfo;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.remoting.rpc.RpcManager;
 
 /**
  * Handles x-site data backups for optimistic transactional caches.
@@ -14,6 +19,9 @@ import org.infinispan.interceptors.InvocationStage;
  * @since 5.2
  */
 public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
+
+   @Inject
+   protected RpcManager rpcManager;
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
@@ -60,6 +68,11 @@ public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
 
       InvocationStage stage = backupSender.backupRollback(command, ctx.getTransaction());
       return invokeNextAndWaitForCrossSite(ctx, command, stage);
+   }
+
+   @Override
+   protected Object visitBackupRemoveExpired(DistributionInfo info, InvocationContext ctx, RemoveExpiredCommand command) {
+      return checkRemoteSiteIfMaxIdleExpired(ctx, command);
    }
 
    private boolean shouldRollbackRemoteTxCommand(TxInvocationContext<?> ctx) {

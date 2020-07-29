@@ -3,6 +3,7 @@ package org.infinispan.xsite;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
@@ -22,6 +23,8 @@ import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 public interface BackupReceiver {
 
    CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder);
+
+   CompletionStage<Object> handleRemoteCommand(CacheRpcCommand command, boolean preserveOrder);
 
    /**
     * Updates the key with the value from a remote site.
@@ -55,6 +58,8 @@ public interface BackupReceiver {
     * @return A {@link CompletionStage} that is completed when the cache is cleared.
     */
    CompletionStage<Void> clearKeys();
+
+   CompletionStage<Boolean> touchEntry(Object key);
 
    /**
     * It handles starting the state transfer from a remote site. The command must be broadcast to the entire cluster in

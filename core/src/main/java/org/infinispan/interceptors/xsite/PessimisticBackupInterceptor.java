@@ -4,7 +4,10 @@ import java.util.Arrays;
 
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.interceptors.InvocationStage;
 
 /**
@@ -21,6 +24,11 @@ public class PessimisticBackupInterceptor extends BaseBackupInterceptor {
       //for pessimistic transaction we don't do a 2PC (as we already own the remote lock) but just
       //a 1PC
       throw new IllegalStateException("This should never happen!");
+   }
+
+   @Override
+   protected Object visitBackupRemoveExpired(DistributionInfo info, InvocationContext ctx, RemoveExpiredCommand command) {
+      return checkRemoteSiteIfMaxIdleExpired(ctx, command);
    }
 
    @SuppressWarnings("rawtypes")

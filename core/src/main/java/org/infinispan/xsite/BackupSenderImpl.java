@@ -38,6 +38,7 @@ import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.time.TimeService;
@@ -152,6 +153,12 @@ public class BackupSenderImpl implements BackupSender {
    public InvocationStage backupClear(ClearCommand command) {
       List<XSiteBackup> xSiteBackups = calculateBackupInfo(BackupFilter.KEEP_ALL);
       return backupCommand(command, command, xSiteBackups, null);
+   }
+
+   @Override
+   public InvocationStage backupMaxIdleExpiration(RemoveExpiredCommand command) {
+      // TODO:
+      return null;
    }
 
    @Override

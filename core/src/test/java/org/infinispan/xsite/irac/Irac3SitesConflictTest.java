@@ -2,8 +2,10 @@ package org.infinispan.xsite.irac;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -12,10 +14,14 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.TestOperation;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -29,6 +35,40 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
    private static final int N_SITES = 3;
    private static final int CLUSTER_SIZE = 3;
    private final List<ManualIracManager> iracManagerList;
+
+   private ConfigMode configMode;
+
+   public Irac3SitesConflictTest configMode(ConfigMode configMode) {
+      this.configMode = configMode;
+      return this;
+   }
+
+   private enum ConfigMode {
+      NON_TX,
+      PESSIMISTIC_TX,
+      OPTIMISTIC_TX_RC,
+      OPTIMISTIC_TX_RR,
+   }
+
+   @Factory
+   public Object[] factory() {
+      List<Irac3SitesConflictTest> tests = new LinkedList<>();
+//      for (ConfigMode configMode : ConfigMode.values()) {
+//         tests.add(new Irac3SitesConflictTest().configMode(configMode));
+//      }
+      tests.add(new Irac3SitesConflictTest().configMode(ConfigMode.OPTIMISTIC_TX_RC));
+      return tests.toArray();
+   }
+
+   @Override
+   protected String[] parameterNames() {
+      return new String[]{"configMode"};
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return new Object[]{configMode};
+   }
 
    protected Irac3SitesConflictTest() {
       this.iracManagerList = new ArrayList<>(N_SITES * CLUSTER_SIZE);
@@ -54,6 +94,10 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
       doTest(method, TestOperation.REMOVE);
    }
 
+   public void testMaxExpiration(Method method) {
+      doTest(method, Operations.REMOVE_MAX_IDLE_EXPIRED);
+   }
+
    public void testConditionalRemove(Method method) {
       doTest(method, TestOperation.REMOVE_CONDITIONAL);
    }
@@ -70,7 +114,20 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
 
    @Override
    protected ConfigurationBuilder defaultConfigurationForSite(int siteIndex) {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, configMode != ConfigMode.NON_TX);
+      switch (configMode) {
+         case OPTIMISTIC_TX_RC:
+            builder.transaction().lockingMode(LockingMode.OPTIMISTIC);
+            builder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
+            break;
+         case OPTIMISTIC_TX_RR:
+            builder.transaction().lockingMode(LockingMode.OPTIMISTIC);
+            builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
+            break;
+         case PESSIMISTIC_TX:
+            builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+            break;
+      }
       for (int i = 0; i < N_SITES; ++i) {
          if (i == siteIndex) {
             //don't add our site as backup.

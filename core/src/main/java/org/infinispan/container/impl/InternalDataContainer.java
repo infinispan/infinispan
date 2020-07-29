@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
+import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -226,6 +227,12 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
          action.accept(ice);
       }
    }
+
+   /**
+    * TODO: need to document
+    * @param segmentMapConsumer
+    */
+   void forEachSegment(ObjIntConsumer<PeekableTouchableMap<K, V>> segmentMapConsumer);
 
    /**
     * Sets what segments this data container should be using. Already associated segments are unaffected by this and

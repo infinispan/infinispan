@@ -15,7 +15,7 @@ import org.infinispan.xsite.XSiteBackup;
  * @author Pedro Ruivo
  * @since 10.0
  */
-public interface XSiteResponse extends CompletionStage<Void> {
+public interface XSiteResponse<O> extends CompletionStage<O> {
 
    void whenCompleted(XSiteResponseCompleted xSiteResponseCompleted);
 

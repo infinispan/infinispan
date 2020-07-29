@@ -39,12 +39,14 @@ import org.infinispan.commands.irac.IracPutKeyCommand;
 import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -116,6 +118,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.SingleXSiteCacheRpcCommand;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
@@ -489,6 +492,11 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
+   public SingleXSiteCacheRpcCommand buildSingleXSiteCacheRpcCommand(CacheRpcCommand command) {
+      return actual.buildSingleXSiteCacheRpcCommand(command);
+   }
+
+   @Override
    public GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, Object groupName) {
       return actual.buildGetKeysInGroupCommand(flagsBitSet, groupName);
    }
@@ -705,5 +713,10 @@ public class ControlledCommandFactory implements CommandsFactory {
    public IracPutKeyValueCommand buildIracPutKeyValueCommand(Object key, int segment, Object value, Metadata metadata,
          PrivateMetadata privateMetadata) {
       return actual.buildIracPutKeyValueCommand(key, segment, value, metadata, privateMetadata);
+   }
+
+   @Override
+   public IracTouchKeyCommand buildIracTouchCommand(Object key) {
+      return actual.buildIracTouchCommand(key);
    }
 }

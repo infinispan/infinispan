@@ -195,7 +195,7 @@ public interface Transport extends Lifecycle {
     * @param rpcCommand The command to send.
     * @return A {@link XSiteResponse} that is completed when the request is completed.
     */
-   XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand);
+   <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand);
 
    /**
     * @return true if the current Channel is the coordinator of the cluster.

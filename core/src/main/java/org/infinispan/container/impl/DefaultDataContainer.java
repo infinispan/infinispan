@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -232,5 +233,10 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
       if (evictionCache != null) {
          evictionCache.cleanUp();
       }
+   }
+
+   @Override
+   public void forEachSegment(ObjIntConsumer<PeekableTouchableMap<K, V>> segmentMapConsumer) {
+      segmentMapConsumer.accept(entries, 0);
    }
 }

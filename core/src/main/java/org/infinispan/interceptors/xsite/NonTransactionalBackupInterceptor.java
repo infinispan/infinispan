@@ -18,6 +18,7 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
@@ -115,6 +116,15 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
       return handleMultipleKeysWriteCommand(ctx, command);
+   }
+
+   @Override
+   protected Object visitBackupRemoveExpired(DistributionInfo info, InvocationContext ctx, RemoveExpiredCommand command) {
+      if (!ctx.isOriginLocal()) {
+         // TODO: maybe only do this if command was successful?
+         iracManager.trackUpdatedKey(command.getKey(), command.getCommandInvocationId());
+      }
+      return invokeNext(ctx, command);
    }
 
    private Object handleSingleKeyWriteCommand(InvocationContext ctx, DataWriteCommand command) {

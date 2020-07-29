@@ -12,6 +12,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
@@ -101,7 +102,11 @@ public class OptimisticTxIracLocalSiteInterceptor extends AbstractIracLocalSiteI
          StreamData data = iterator.next();
          IracMetadata metadata;
          if (isPrimaryOwner(data)) {
-            metadata = segmentMetadata.computeIfAbsent(data.segment, iracVersionGenerator::generateNewMetadata);
+            if (data.command instanceof RemoveExpiredCommand) {
+               metadata = segmentMetadata.computeIfAbsent(data.segment, iracVersionGenerator::generateMetadataWithCurrentVersion);
+            } else {
+               metadata = segmentMetadata.computeIfAbsent(data.segment, iracVersionGenerator::generateNewMetadata);
+            }
          } else {
             metadata = segmentMetadata.computeIfAbsent(data.segment, prepareResponse::getIracMetadata);
          }

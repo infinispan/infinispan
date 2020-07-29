@@ -6,6 +6,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -56,6 +57,11 @@ public class NoOpBackupSender implements BackupSender {
 
    @Override
    public InvocationStage backupRollback(RollbackCommand command, Transaction transaction) {
+      return SyncInvocationStage.completedNullStage();
+   }
+
+   @Override
+   public InvocationStage backupMaxIdleExpiration(RemoveExpiredCommand command) {
       return SyncInvocationStage.completedNullStage();
    }
 

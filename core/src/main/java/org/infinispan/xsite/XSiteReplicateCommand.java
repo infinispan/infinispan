@@ -10,8 +10,9 @@ import org.infinispan.util.ByteString;
  *
  * @author Pedro Ruivo
  * @since 7.0
+ * @param <O>
  */
-public abstract class XSiteReplicateCommand extends BaseRpcCommand {
+public abstract class XSiteReplicateCommand<O> extends BaseRpcCommand {
 
    private final byte commandId;
    protected String originSite;
@@ -21,7 +22,7 @@ public abstract class XSiteReplicateCommand extends BaseRpcCommand {
       this.commandId = commandId;
    }
 
-   public abstract CompletionStage<Void> performInLocalSite(BackupReceiver receiver, boolean preserveOrder);
+   public abstract CompletionStage<O> performInLocalSite(BackupReceiver receiver, boolean preserveOrder);
 
    public void setOriginSite(String originSite) {
       this.originSite = originSite;

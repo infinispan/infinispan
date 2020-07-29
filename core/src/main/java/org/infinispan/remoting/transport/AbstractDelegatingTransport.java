@@ -87,7 +87,7 @@ public abstract class AbstractDelegatingTransport implements Transport {
    }
 
    @Override
-   public XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand) {
+   public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
       return actual.backupRemotely(backup, rpcCommand);
    }
 

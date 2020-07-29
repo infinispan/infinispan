@@ -32,12 +32,14 @@ import org.infinispan.commands.irac.IracPutKeyCommand;
 import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -110,6 +112,7 @@ import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublis
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.xsite.SingleXSiteCacheRpcCommand;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
@@ -535,6 +538,13 @@ public interface CommandsFactory {
    SingleXSiteRpcCommand buildSingleXSiteRpcCommand(VisitableCommand command);
 
    /**
+    * Builds SingleRpcCommand used to perform {@link CacheRpcCommand} on the backup site,
+    * @param command the command.
+    * @return the SingleXSiteCacheRpcCommand created
+    */
+   SingleXSiteCacheRpcCommand buildSingleXSiteCacheRpcCommand(CacheRpcCommand command);
+
+   /**
     * Builds {@link org.infinispan.commands.remote.GetKeysInGroupCommand} used to fetch all the keys belonging to a group.
     *
     * @param flagsBitSet Command flags provided by cache
@@ -642,4 +652,6 @@ public interface CommandsFactory {
 
    IracPutKeyValueCommand buildIracPutKeyValueCommand(Object key, int segment, Object value, Metadata metadata,
          PrivateMetadata privateMetadata);
+
+   IracTouchKeyCommand buildIracTouchCommand(Object key);
 }

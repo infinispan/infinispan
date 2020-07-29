@@ -32,6 +32,11 @@ public abstract class BackupReceiverDelegator implements BackupReceiver {
    }
 
    @Override
+   public CompletionStage<Object> handleRemoteCommand(CacheRpcCommand command, boolean preserveOrder) {
+      return delegate.handleRemoteCommand(command, preserveOrder);
+   }
+
+   @Override
    public CompletionStage<Void> putKeyValue(Object key, Object value, Metadata metadata,
          IracMetadata iracMetadata) {
       return delegate.putKeyValue(key, value, metadata, iracMetadata);
@@ -60,5 +65,10 @@ public abstract class BackupReceiverDelegator implements BackupReceiver {
    @Override
    public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
       return delegate.handleStateTransferState(cmd);
+   }
+
+   @Override
+   public CompletionStage<Boolean> touchEntry(Object key) {
+      return delegate.touchEntry(key);
    }
 }

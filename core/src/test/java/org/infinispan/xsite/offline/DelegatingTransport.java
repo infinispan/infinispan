@@ -31,7 +31,7 @@ public class DelegatingTransport extends AbstractDelegatingTransport {
    }
 
    @Override
-   public XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand) {
+   public XSiteResponse<Object> backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand) {
       DummyXSiteResponse response = new DummyXSiteResponse(backup, fail);
       response.complete();
       return response;
@@ -42,7 +42,7 @@ public class DelegatingTransport extends AbstractDelegatingTransport {
       return actual.getLog();
    }
 
-   private static class DummyXSiteResponse extends CompletableFuture<Void> implements XSiteResponse {
+   private static class DummyXSiteResponse extends CompletableFuture<Object> implements XSiteResponse<Object> {
 
       private final XSiteBackup backup;
       private final boolean fail;

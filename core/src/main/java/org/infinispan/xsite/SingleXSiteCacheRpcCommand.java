@@ -5,36 +5,36 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
 
 /**
- * RPC command to replicate cache operations (such as put, remove, replace, etc.) to the backup site.
+ * RPC command to replicate cache rpc operations (i.e. not VisitableCommands) to the backup site.
  *
- * @author Pedro Ruivo
- * @since 7.0
+ * @author wburns
+ * @since 12.0
  */
-public class SingleXSiteRpcCommand extends XSiteReplicateCommand<Void> {
+public class SingleXSiteCacheRpcCommand extends XSiteReplicateCommand<Object> {
 
-   public static final byte COMMAND_ID = 28;
-   private VisitableCommand command;
+   public static final byte COMMAND_ID = 40;
+   private CacheRpcCommand command;
 
-   public SingleXSiteRpcCommand(ByteString cacheName, VisitableCommand command) {
+   public SingleXSiteCacheRpcCommand(ByteString cacheName, CacheRpcCommand command) {
       super(COMMAND_ID, cacheName);
       this.command = command;
    }
 
-   public SingleXSiteRpcCommand(ByteString cacheName) {
+   public SingleXSiteCacheRpcCommand(ByteString cacheName) {
       this(cacheName, null);
    }
 
-   public SingleXSiteRpcCommand() {
+   public SingleXSiteCacheRpcCommand() {
       this(null);
    }
 
    @Override
-   public CompletionStage<Void> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
+   public CompletionStage<Object> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
       return receiver.handleRemoteCommand(command, preserveOrder);
    }
 
@@ -50,7 +50,7 @@ public class SingleXSiteRpcCommand extends XSiteReplicateCommand<Void> {
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      command = (VisitableCommand) input.readObject();
+      command = (CacheRpcCommand) input.readObject();
    }
 
    @Override
@@ -60,7 +60,7 @@ public class SingleXSiteRpcCommand extends XSiteReplicateCommand<Void> {
 
    @Override
    public String toString() {
-      return "SingleXSiteRpcCommand{" +
+      return "SingleXSiteCacheRpcCommand{" +
             "command=" + command +
             '}';
    }

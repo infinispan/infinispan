@@ -1,15 +1,18 @@
 package org.infinispan.interceptors.xsite;
 
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
@@ -28,7 +31,7 @@ import org.infinispan.xsite.irac.IracManager;
  * @author Mircea Markus
  * @since 5.2
  */
-public class BaseBackupInterceptor extends DDAsyncInterceptor {
+public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
 
    @Inject protected BackupSender backupSender;
    @Inject protected TransactionTable txTable;
@@ -46,6 +49,39 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
       }
       return invokeNextThenApply(ctx, command, handleClearReturn);
    }
+
+   @Override
+   public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) {
+      if (skipXSiteBackup(command) || !command.isMaxIdle()) {
+         return invokeNext(ctx, command);
+      }
+      // Max idle command shouldn't fail as the timestamps are updated on access, however the remote site may have
+      // a read that we aren't aware of - so we must synchronously remove the entry if expired on the remote site
+      // and if it isn't expired on the remote site we must update the access time locally here
+      int segment = command.getSegment();
+      DistributionInfo dInfo = clusteringDependentLogic.getCacheTopology().getSegmentDistribution(segment);
+      // Only require primary to check remote site and add to irac queue - If primary dies then a backup will end up
+      // doing the same as promoted primary
+      if (dInfo.isPrimary()) {
+         return checkRemoteSiteIfMaxIdleExpired(ctx, command);
+      } else if (dInfo.isWriteOwner()) {
+         return visitBackupRemoveExpired(dInfo, ctx, command);
+      }
+      return invokeNext(ctx, command);
+   }
+
+   Object checkRemoteSiteIfMaxIdleExpired(InvocationContext ctx, RemoveExpiredCommand command) {
+      CompletionStage<Boolean> expired = iracManager.checkAndTrackExpiration(command.getKey());
+      return asyncValue(expired).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         if ((Boolean) rv) {
+            return invokeNext(rCtx, command);
+         }
+         command.fail();
+         return rv;
+      });
+   }
+
+   abstract protected Object visitBackupRemoveExpired(DistributionInfo info, InvocationContext ctx, RemoveExpiredCommand command);
 
    Object invokeNextAndWaitForCrossSite(TxInvocationContext<?> ctx, VisitableCommand command, InvocationStage stage) {
       return invokeNextThenApply(ctx, command, stage::thenReturn);

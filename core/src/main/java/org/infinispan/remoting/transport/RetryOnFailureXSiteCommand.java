@@ -49,7 +49,7 @@ public class RetryOnFailureXSiteCommand {
 
       do {
          try {
-            CompletionStage<Void> response = rpcManager.invokeXSite(xSiteBackup, command);
+            CompletionStage<Object> response = rpcManager.invokeXSite(xSiteBackup, command);
             response.toCompletableFuture().join();
             if (trace) {
                log.trace("Successful Response received.");

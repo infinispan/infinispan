@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
+import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -251,6 +252,16 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
          for (PrimitiveIterator.OfInt segmentIterator = segments.iterator(); segmentIterator.hasNext(); ) {
             int segment = segmentIterator.nextInt();
             stopMap(segment, true);
+         }
+      }
+   }
+
+   @Override
+   public void forEachSegment(ObjIntConsumer<PeekableTouchableMap<K, V>> segmentMapConsumer) {
+      for (int i = 0; i < maps.length(); ++i) {
+         PeekableTouchableMap<K, V> map = maps.get(i);
+         if (map != null) {
+            segmentMapConsumer.accept(map, i);
          }
       }
    }

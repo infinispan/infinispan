@@ -143,11 +143,6 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
    }
 
    @Override
-   public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) {
-      return visitDataWriteCommand(ctx, command);
-   }
-
-   @Override
    public boolean isTraceEnabled() {
       return trace;
    }
@@ -194,7 +189,13 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
       if (getOwnership(segment) != Ownership.PRIMARY) {
          return;
       }
-      IracMetadata metadata = iracVersionGenerator.generateNewMetadata(segment);
+      IracMetadata metadata;
+      // RemoveExpired should lose to any other conflicting write
+      if (command instanceof RemoveExpiredCommand) {
+         metadata = iracVersionGenerator.generateMetadataWithCurrentVersion(segment);
+      } else {
+         metadata = iracVersionGenerator.generateNewMetadata(segment);
+      }
       updateCommandMetadata(key, command, metadata);
       if (trace) {
          log.tracef("[IRAC] New metadata for key '%s' is %s. Command=%s", key, metadata, command);
