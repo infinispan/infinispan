@@ -1,17 +1,16 @@
 package org.infinispan.query.clustered;
 
+import static org.infinispan.util.concurrent.CompletableFutures.await;
 import static org.infinispan.util.concurrent.CompletableFutures.sequence;
 
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -20,12 +19,9 @@ import org.hibernate.search.util.common.SearchTimeoutException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 
 /**
@@ -54,31 +50,6 @@ final class ClusteredQueryInvoker {
    }
 
    /**
-    * Send this ClusteredQueryCommand to a node.
-    *
-    * @param address               Address of the destination node
-    * @param cmd
-    * @return the response
-    */
-   QueryResponse unicast(Address address, SegmentsClusteredQueryCommand cmd) {
-      if (address.equals(myAddress)) {
-         Future<QueryResponse> localResponse = localInvoke(cmd);
-         try {
-            return localResponse.get();
-         } catch (InterruptedException e) {
-            throw new SearchException("Interrupted while searching locally", e);
-         } catch (ExecutionException e) {
-            throw new SearchException("Exception while searching locally", e);
-         }
-      } else {
-         CompletionStage<Map<Address, Response>> completionStage = rpcManager.invokeCommand(address, cmd, MapResponseCollector.ignoreLeavers(), rpcOptions);
-         Map<Address, Response> responses = rpcManager.blocking(completionStage);
-         List<QueryResponse> queryResponses = cast(responses);
-         return queryResponses.get(0);
-      }
-   }
-
-   /**
     * Broadcast this ClusteredQueryOperation to all cluster nodes. Each node will query a specific number of segments,
     * with the local mode having preference to process as much segments as possible. The remainder segments will be
     * processed by the respective primary owners.
@@ -90,7 +61,7 @@ final class ClusteredQueryInvoker {
       Map<Address, BitSet> split = partitioner.split();
       SegmentsClusteredQueryCommand localCommand = new SegmentsClusteredQueryCommand(cache.getName(), operation, split.get(myAddress));
       // invoke on own node
-      Future<QueryResponse> localResponse = localInvoke(localCommand);
+      CompletionStage<QueryResponse> localResponse = localInvoke(localCommand);
       List<CompletableFuture<QueryResponse>> futureRemoteResponses = split.entrySet().stream()
             .filter(e -> !e.getKey().equals(myAddress)).map(e -> {
                Address address = e.getKey();
@@ -101,9 +72,8 @@ final class ClusteredQueryInvoker {
 
       List<QueryResponse> results = new ArrayList<>();
       try {
-         results.add(localResponse.get());
-         List<QueryResponse> responseList = sequence(futureRemoteResponses).get();
-         results.addAll(responseList);
+         results.add(await(localResponse.toCompletableFuture()));
+         results.addAll(await(sequence(futureRemoteResponses)));
       } catch (InterruptedException e) {
          throw new SearchException("Interrupted while searching locally", e);
       } catch (ExecutionException e) {
@@ -116,26 +86,8 @@ final class ClusteredQueryInvoker {
       return results;
    }
 
-   private Future<QueryResponse> localInvoke(SegmentsClusteredQueryCommand cmd) {
-      return asyncExecutor.submit(() -> {
-         try {
-            return cmd.perform(cache);
-         } catch (Throwable e) {
-            throw new SearchException(e);
-         }
-      });
+   private CompletionStage<QueryResponse> localInvoke(SegmentsClusteredQueryCommand cmd) {
+      return cmd.perform(cache);
    }
 
-   private List<QueryResponse> cast(Map<Address, Response> responses) {
-      List<QueryResponse> queryResponses = new LinkedList<>();
-      for (Response resp : responses.values()) {
-         if (resp instanceof SuccessfulResponse) {
-            QueryResponse response = (QueryResponse) ((SuccessfulResponse) resp).getResponseValue();
-            queryResponses.add(response);
-         } else {
-            throw new SearchException("Unexpected response: " + resp);
-         }
-      }
-      return queryResponses;
-   }
 }

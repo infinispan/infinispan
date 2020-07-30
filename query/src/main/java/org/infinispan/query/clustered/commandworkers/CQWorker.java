@@ -2,13 +2,16 @@ package org.infinispan.query.clustered.commandworkers;
 
 import java.util.BitSet;
 import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.QueryDefinition;
+import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * Add specific behavior for ClusteredQueryCommand. Each ClusteredQueryCommandType links to a CQWorker
@@ -26,19 +29,22 @@ abstract class CQWorker {
    protected QueryDefinition queryDefinition;
    protected UUID queryId;
    protected int docIndex;
+   protected BlockingManager blockingManager;
 
    void initialize(AdvancedCache<?, ?> cache, QueryDefinition queryDefinition, UUID queryId, int docIndex) {
       this.cache = cache;
-      this.keyTransformationHandler = ComponentRegistryUtils.getQueryInterceptor(cache).getKeyTransformationHandler();
+      QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
+      this.keyTransformationHandler = queryInterceptor.getKeyTransformationHandler();
       if (queryDefinition != null) {
          this.queryDefinition = queryDefinition;
          this.queryDefinition.initialize(cache);
       }
       this.queryId = queryId;
+      this.blockingManager = queryInterceptor.getBlockingManager();
       this.docIndex = docIndex;
    }
 
-   abstract QueryResponse perform(BitSet segments);
+   abstract CompletionStage<QueryResponse> perform(BitSet segments);
 
    void setFilter(BitSet segments) {
       SearchQueryBuilder searchQuery = queryDefinition.getSearchQuery();

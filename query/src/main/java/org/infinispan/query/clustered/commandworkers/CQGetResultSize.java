@@ -1,6 +1,7 @@
 package org.infinispan.query.clustered.commandworkers;
 
 import java.util.BitSet;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
@@ -14,11 +15,10 @@ import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 final class CQGetResultSize extends CQWorker {
 
    @Override
-   QueryResponse perform(BitSet segments) {
+   CompletionStage<QueryResponse> perform(BitSet segments) {
       SearchQueryBuilder query = queryDefinition.getSearchQuery();
       setFilter(segments);
-      long hitCount = query.build().fetchTotalHitCount();
-      // or maybe is it better to keep long?
-      return new QueryResponse(Math.toIntExact(hitCount));
+      return blockingManager.supplyBlocking(() -> query.build().fetchTotalHitCount(), this)
+            .thenApply(hitCount -> new QueryResponse(Math.toIntExact(hitCount)));
    }
 }

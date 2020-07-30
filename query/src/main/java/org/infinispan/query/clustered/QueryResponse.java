@@ -42,9 +42,13 @@ public final class QueryResponse {
    }
 
    public QueryResponse(NodeTopDocs nodeTopDocs) {
+      if (nodeTopDocs == null) {
+         this.resultSize = 0;
+      } else {
+         this.resultSize = Math.toIntExact(nodeTopDocs.topDocs == null ? 0 : nodeTopDocs.topDocs.totalHits.value);
+      }
       this.nodeTopDocs = nodeTopDocs;
-      this.resultSize = Math.toIntExact(nodeTopDocs.topDocs == null ? 0 : nodeTopDocs.topDocs.totalHits.value);
-      fetchedValue = null;
+      this.fetchedValue = null;
    }
 
    public NodeTopDocs getNodeTopDocs() {

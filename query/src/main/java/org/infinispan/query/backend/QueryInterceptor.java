@@ -150,6 +150,10 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       return nonBlockingExecutor;
    }
 
+   public BlockingManager getBlockingManager() {
+      return blockingManager;
+   }
+
    private Object handleDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
       if (command.hasAnyFlag(FlagBitSets.SKIP_INDEXING)) {
          return invokeNext(ctx, command);
