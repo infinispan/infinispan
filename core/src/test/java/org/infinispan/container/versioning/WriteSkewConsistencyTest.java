@@ -144,7 +144,11 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
    protected final void createCacheManagers() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
-      builder.clustering().hash().numSegments(1).consistentHashFactory(new ControlledConsistentHashFactory(1, 0));
+      ControlledConsistentHashFactory consistentHashFactory =
+            cacheMode.isReplicated() ?
+            new ControlledConsistentHashFactory.Replicated(1) :
+            new ControlledConsistentHashFactory.Default(1, 0);
+      builder.clustering().hash().numSegments(1).consistentHashFactory(consistentHashFactory);
       createClusteredCaches(4, TestDataSCI.INSTANCE, builder);
    }
 
