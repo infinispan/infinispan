@@ -7,6 +7,7 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -50,7 +51,7 @@ public final class ClusteredQueryOperation {
       return cmd;
    }
 
-   public QueryResponse perform(Cache<?, ?> cache, BitSet segments) {
+   public CompletionStage<QueryResponse> perform(Cache<?, ?> cache, BitSet segments) {
       return commandType.perform(cache.getAdvancedCache(), queryDefinition, queryId, docIndex, segments);
    }
 

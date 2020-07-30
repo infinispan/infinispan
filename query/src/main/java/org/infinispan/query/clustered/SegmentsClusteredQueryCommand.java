@@ -5,6 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.BitSet;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -41,7 +42,7 @@ public class SegmentsClusteredQueryCommand extends BaseRpcCommand {
       return segments;
    }
 
-   public QueryResponse perform(Cache<?, ?> cache) {
+   public CompletionStage<QueryResponse> perform(Cache<?, ?> cache) {
       return clusteredQueryOperation.perform(cache, segments);
    }
 
@@ -68,9 +69,9 @@ public class SegmentsClusteredQueryCommand extends BaseRpcCommand {
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync(ComponentRegistry componentRegistry) {
+   public CompletableFuture<?> invokeAsync(ComponentRegistry componentRegistry) {
       AdvancedCache<?, ?> cache = componentRegistry.getCache().wired();
-      return CompletableFuture.completedFuture(perform(cache));
+      return perform(cache).toCompletableFuture();
    }
 
    @Override
