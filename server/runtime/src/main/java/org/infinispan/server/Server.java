@@ -406,6 +406,7 @@ public class Server implements ServerManagement, AutoCloseable {
       } else {
          loginConfiguration.put("mode", "HTTP");
       }
+      loginConfiguration.put("ready", Boolean.toString(rest.authentication().authenticator().isReadyForHttpChallenge()));
 
       return loginConfiguration;
    }
