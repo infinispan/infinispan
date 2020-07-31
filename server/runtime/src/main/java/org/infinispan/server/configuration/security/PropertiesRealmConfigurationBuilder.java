@@ -56,7 +56,7 @@ public class PropertiesRealmConfigurationBuilder implements Builder<PropertiesRe
             domainBuilder.setDefaultRealmName(realmName);
          }
          this.securityRealm = propertiesSecurityRealm;
-         this.realmBuilder.setHttpChallengeReadiness(propertiesSecurityRealm::isEmpty);
+         this.realmBuilder.setHttpChallengeReadiness(() -> !propertiesSecurityRealm.isEmpty());
          realmBuilder.addFeature(ServerSecurityRealm.Feature.PASSWORD);
       }
       return securityRealm;
