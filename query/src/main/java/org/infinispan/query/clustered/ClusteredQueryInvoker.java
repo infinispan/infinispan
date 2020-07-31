@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -36,13 +35,11 @@ final class ClusteredQueryInvoker {
    private final RpcManager rpcManager;
    private final AdvancedCache<?, ?> cache;
    private final Address myAddress;
-   private final ExecutorService asyncExecutor;
    private final RpcOptions rpcOptions;
    private final QueryPartitioner partitioner;
 
-   ClusteredQueryInvoker(AdvancedCache<?, ?> cache, ExecutorService asyncExecutor) {
+   ClusteredQueryInvoker(AdvancedCache<?, ?> cache) {
       this.cache = cache;
-      this.asyncExecutor = asyncExecutor;
       this.rpcManager = cache.getRpcManager();
       this.myAddress = rpcManager.getAddress();
       this.rpcOptions = new RpcOptions(DeliverOrder.NONE, 10000, TimeUnit.MILLISECONDS);

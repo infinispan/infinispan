@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.hibernate.search.util.common.SearchException;
@@ -34,9 +33,9 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
 
    private int firstResult = 0;
 
-   public ClusteredCacheQueryImpl(QueryDefinition queryDefinition, ExecutorService asyncExecutor, AdvancedCache<?, ?> cache) {
+   public ClusteredCacheQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache) {
       super(queryDefinition, cache);
-      this.invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
+      this.invoker = new ClusteredQueryInvoker(cache);
    }
 
    @Override

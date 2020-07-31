@@ -1,13 +1,10 @@
 package org.infinispan.query.impl;
 
-import java.util.concurrent.ExecutorService;
-
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
@@ -27,7 +24,6 @@ public final class SearchManagerImpl implements SearchManager {
 
    private final SearchMappingHolder searchMappingHolder;
    private final QueryInterceptor queryInterceptor;
-   private final KeyTransformationHandler keyTransformationHandler;
    private final QueryEngine<?> queryEngine;
    private final MassIndexer massIndexer;
 
@@ -37,7 +33,6 @@ public final class SearchManagerImpl implements SearchManager {
       }
       this.searchMappingHolder = ComponentRegistryUtils.getSearchMappingHolder(cache);
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
-      this.keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
       this.queryEngine = queryEngine;
       this.massIndexer = (MassIndexer) ComponentRegistryUtils.getIndexer(cache);
    }
@@ -48,9 +43,8 @@ public final class SearchManagerImpl implements SearchManager {
 
    @Override
    public <E> CacheQuery<E> getQuery(String queryString, IndexedQueryMode indexedQueryMode) {
-      ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
       try {
-         return queryEngine.buildCacheQuery(queryString, indexedQueryMode, keyTransformationHandler, asyncExecutor);
+         return queryEngine.buildCacheQuery(queryString, indexedQueryMode);
       } catch (SearchException se) {
          throw new SearchException("'" + queryString + "' cannot be converted to an indexed query", se);
       }
@@ -62,8 +56,7 @@ public final class SearchManagerImpl implements SearchManager {
    }
 
    public <E> CacheQuery<E> getQuery(QueryDefinition queryDefinition, IndexedQueryMode indexedQueryMode) {
-      ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
-      return queryEngine.buildCacheQuery(queryDefinition, indexedQueryMode, asyncExecutor);
+      return queryEngine.buildCacheQuery(queryDefinition, indexedQueryMode);
    }
 
    @Override
