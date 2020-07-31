@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -41,14 +40,11 @@ import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.query.logging.Log;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.search.mapper.work.SearchIndexer;
@@ -81,9 +77,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    };
 
    @Inject DistributionManager distributionManager;
-   @Inject RpcManager rpcManager;
-   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
-   ExecutorService nonBlockingExecutor;
    @Inject BlockingManager blockingManager;
    @Inject protected KeyPartitioner keyPartitioner;
 
@@ -141,13 +134,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       // If this is a backup node we should modify the entry in the remote context
       return info.isPrimary() || info.isWriteOwner() &&
             (ctx.isInTxScope() || !ctx.isOriginLocal() || command != null && command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER));
-   }
-
-   /**
-    * Use this executor for Async operations
-    */
-   public ExecutorService getAsyncExecutor() {
-      return nonBlockingExecutor;
    }
 
    public BlockingManager getBlockingManager() {

@@ -8,7 +8,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
@@ -41,7 +40,6 @@ import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.syntax.parser.RowPropertyHelper;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
 import org.infinispan.query.core.impl.AggregatingQuery;
 import org.infinispan.query.core.impl.EmbeddedQuery;
@@ -656,21 +654,19 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       return new CacheQueryImpl<>(searchQuery, cache);
    }
 
-   public <E> IndexedQuery<E> buildCacheQuery(QueryDefinition queryDefinition, IndexedQueryMode indexedQueryMode, ExecutorService asyncExecutor) {
+   public <E> IndexedQuery<E> buildCacheQuery(QueryDefinition queryDefinition, IndexedQueryMode indexedQueryMode) {
       if (!isIndexed) {
          throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
       if (indexedQueryMode == IndexedQueryMode.BROADCAST) {
-         return new ClusteredCacheQueryImpl<>(queryDefinition, asyncExecutor, cache);
+         return new ClusteredCacheQueryImpl<>(queryDefinition, cache);
       } else {
          queryDefinition.initialize(cache);
          return new CacheQueryImpl<>(queryDefinition.getSearchQuery(), cache);
       }
    }
 
-   public <E> IndexedQuery<E> buildCacheQuery(String queryString, IndexedQueryMode indexedQueryMode,
-                                            KeyTransformationHandler keyTransformationHandler,
-                                            ExecutorService asyncExecutor) {
+   public <E> IndexedQuery<E> buildCacheQuery(String queryString, IndexedQueryMode indexedQueryMode) {
       if (!isIndexed) {
          throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
@@ -692,7 +688,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       if (indexedQueryMode == IndexedQueryMode.BROADCAST) {
          QueryDefinition queryDefinition = new QueryDefinition(queryString, queryEngineProvider);
          queryDefinition.setIndexedType(targetedClass);
-         cacheQuery = new ClusteredCacheQueryImpl<>(queryDefinition, asyncExecutor, cache);
+         cacheQuery = new ClusteredCacheQueryImpl<>(queryDefinition, cache);
          queryDefinition.initialize(cache);
       } else {
          cacheQuery = new CacheQueryImpl<>(searchQuery, cache);
