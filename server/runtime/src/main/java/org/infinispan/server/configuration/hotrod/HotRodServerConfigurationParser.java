@@ -53,7 +53,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          case HOTROD_CONNECTOR: {
             ServerConfigurationBuilder serverBuilder = builder.module(ServerConfigurationBuilder.class);
             if (serverBuilder != null) {
-               parseHotRodConnector(reader, holder, serverBuilder, serverBuilder.endpoints().addConnector(HotRodServerConfigurationBuilder.class));
+               parseHotRodConnector(reader, holder, serverBuilder, serverBuilder.endpoints().current().addConnector(HotRodServerConfigurationBuilder.class));
             }
             break;
          }
@@ -90,7 +90,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             }
             case SOCKET_BINDING: {
                builder.socketBinding(value);
-               serverBuilder.applySocketBinding(value, builder);
+               serverBuilder.applySocketBinding(value, builder, serverBuilder.endpoints().current().singlePort());
                builder.startTransport(true);
                dedicatedSocketBinding = true;
                break;
@@ -185,7 +185,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
    }
 
    private void parseAuthentication(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
-      ServerSecurityRealm securityRealm = serverBuilder.endpoint().securityRealm();
+      ServerSecurityRealm securityRealm = serverBuilder.endpoints().current().singlePort().securityRealm();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);

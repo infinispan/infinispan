@@ -10,7 +10,12 @@
    <xs:element name="data-sources" type="tns:data-sources"/>
    <xs:element name="security" type="tns:security"/>
    <xs:element name="socket-bindings" type="tns:socket-bindings"/>
-   <xs:element name="endpoints" type="tns:endpoints"/>
+   <xs:element name="endpoints" type="tns:endpoints">
+      <xs:unique name="connector-unique">
+         <xs:selector xpath="./tns:hotrod-connector|./tns:rest-connector|./tns:memcached-connector"/>
+         <xs:field xpath="@name"/>
+      </xs:unique>
+   </xs:element>
 
    <xs:complexType name="server">
       <xs:sequence>
@@ -28,7 +33,7 @@
          </xs:element>
          <xs:element type="tns:security" name="security"/>
          <xs:element type="tns:data-sources" name="data-sources" minOccurs="0"/>
-         <xs:element type="tns:endpoints" name="endpoints"/>
+         <xs:element type="tns:endpoints" name="endpoints" maxOccurs="unbounded"/>
       </xs:sequence>
    </xs:complexType>
 
@@ -292,9 +297,9 @@
       <xs:complexContent>
          <xs:extension base="tns:protocol-connector">
             <xs:sequence>
-               <xs:element type="tns:hotrod-connector" name="hotrod-connector" minOccurs="0"/>
-               <xs:element type="tns:rest-connector" name="rest-connector"/>
-               <xs:element type="tns:memcached-connector" name="memcached-connector" minOccurs="0"/>
+               <xs:element type="tns:hotrod-connector" name="hotrod-connector" minOccurs="0" maxOccurs="unbounded"/>
+               <xs:element type="tns:rest-connector" name="rest-connector" maxOccurs="unbounded"/>
+               <xs:element type="tns:memcached-connector" name="memcached-connector" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
             <xs:attribute name="socket-binding" type="xs:string">
                <xs:annotation>

@@ -46,6 +46,14 @@ public class AuthenticationConfigurationBuilder extends AbstractProtocolServerCo
       return this;
    }
 
+   public String securityRealm() {
+      return attributes.attribute(SECURITY_REALM).get();
+   }
+
+   public boolean hasSecurityRealm() {
+      return !attributes.attribute(SECURITY_REALM).isNull();
+   }
+
    public AuthenticationConfigurationBuilder authenticator(Authenticator authenticator) {
       this.authenticator = authenticator;
       return this.enable();
@@ -58,6 +66,10 @@ public class AuthenticationConfigurationBuilder extends AbstractProtocolServerCo
       }
       attributes.attribute(MECHANISMS).set(mechs);
       return this.enable();
+   }
+
+   public boolean hasMechanisms() {
+      return !attributes.attribute(MECHANISMS).get().isEmpty();
    }
 
    @Override

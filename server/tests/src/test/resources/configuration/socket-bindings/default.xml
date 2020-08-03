@@ -4,4 +4,6 @@
                  default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
    <socket-binding name="default" port="11222"/>
    <socket-binding name="memcached" port="11221"/>
+   <socket-binding name="hotrod-alternate" port="11223"/>
+   <socket-binding name="rest-alternate" port="11224"/>
 </socket-bindings>

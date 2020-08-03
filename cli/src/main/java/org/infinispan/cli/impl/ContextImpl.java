@@ -212,6 +212,7 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    @Override
    public void disconnect() {
       Util.close(connection);
+      connection = null;
       refreshPrompt();
    }
 

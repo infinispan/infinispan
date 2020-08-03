@@ -65,8 +65,8 @@ public class InfinispanServerRule implements TestRule {
             try {
                if (manageServer) {
                   testServer.initServerDriver();
-                  testServer.beforeListeners();
                   testServer.getDriver().prepare(testName);
+                  testServer.beforeListeners();
 
                   configurationEnhancers.forEach(c -> c.accept(testServer.getDriver().getConfDir()));
 

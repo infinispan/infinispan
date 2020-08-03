@@ -80,16 +80,16 @@ public class ServerConfigurationParserTest {
       assertEquals("somevalue", dataSource.connectionProperties().get("someproperty"));
 
       // Connectors
-      List<ProtocolServerConfiguration> connectors = server.endpoints().connectors();
+      List<ProtocolServerConfiguration> connectors = server.endpoints().endpoints().get(0).connectors();
       assertEquals(3, connectors.size());
       assertTrue(connectors.get(0) instanceof HotRodServerConfiguration);
       assertTrue(connectors.get(1) instanceof RestServerConfiguration);
       assertTrue(connectors.get(2) instanceof MemcachedServerConfiguration);
 
       // Ensure endpoints are bound to the interfaces
-      SinglePortRouterConfiguration singlePortRouter = server.endpoints().singlePortRouter();
+      SinglePortRouterConfiguration singlePortRouter = server.endpoints().endpoints().get(0).singlePortRouter();
       assertEquals(socketBindings.get("default").getAddress().getAddress().getHostAddress(), singlePortRouter.host());
       assertEquals(socketBindings.get("default").getPort(), singlePortRouter.port());
-      assertEquals(socketBindings.get("memcached").getPort(), server.endpoints().connectors().get(2).port());
+      assertEquals(socketBindings.get("memcached").getPort(), server.endpoints().endpoints().get(0).connectors().get(2).port());
    }
 }
