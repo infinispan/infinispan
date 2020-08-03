@@ -51,6 +51,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.rest.RestServer;
+import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.configuration.DataSourceConfiguration;
 import org.infinispan.server.configuration.ServerConfiguration;
@@ -406,7 +407,8 @@ public class Server implements ServerManagement, AutoCloseable {
       } else {
          loginConfiguration.put("mode", "HTTP");
       }
-      loginConfiguration.put("ready", Boolean.toString(rest.authentication().authenticator().isReadyForHttpChallenge()));
+      Authenticator authenticator = rest.authentication().authenticator();
+      loginConfiguration.put("ready", Boolean.toString(authenticator == null || authenticator.isReadyForHttpChallenge()));
 
       return loginConfiguration;
    }
