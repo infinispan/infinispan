@@ -56,6 +56,8 @@ import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.configuration.DataSourceConfiguration;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
+import org.infinispan.server.configuration.endpoint.EndpointConfiguration;
+import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
 import org.infinispan.server.configuration.security.TokenRealmConfiguration;
 import org.infinispan.server.context.ServerInitialContextFactoryBuilder;
 import org.infinispan.server.core.BackupManager;
@@ -64,6 +66,7 @@ import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.backup.BackupManagerImpl;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.datasource.DataSourceFactory;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.logging.Log;
@@ -275,7 +278,11 @@ public class Server implements ServerManagement, AutoCloseable {
          // Set the operation handler on all endpoints
          ServerAdminOperationsHandler adminOperationsHandler = new ServerAdminOperationsHandler(defaultsHolder);
          ServerConfigurationBuilder serverConfigurationBuilder = configurationBuilderHolder.getGlobalConfigurationBuilder().module(ServerConfigurationBuilder.class);
-         serverConfigurationBuilder.connectors().forEach(builder -> builder.adminOperationsHandler(adminOperationsHandler));
+         for(EndpointConfigurationBuilder endpoint : serverConfigurationBuilder.endpoints().endpoints().values()) {
+            for(ProtocolServerConfigurationBuilder<?, ?> connector : endpoint.connectors()) {
+               connector.adminOperationsHandler(adminOperationsHandler);
+            }
+         }
 
          // Amend the named caches configurations with the defaults
          for (Map.Entry<String, ConfigurationBuilder> entry : configurationBuilderHolder.getNamedConfigurationBuilders().entrySet()) {
@@ -348,43 +355,46 @@ public class Server implements ServerManagement, AutoCloseable {
          taskManager = bcr.getComponent(TaskManager.class).running();
          taskManager.registerTaskEngine(extensions.getServerTaskEngine(cm));
 
-         // Start the protocol servers
-         SinglePortRouteSource routeSource = new SinglePortRouteSource();
-         ConcurrentMap<Route<? extends RouteSource, ? extends RouteDestination>, Object> routes = new ConcurrentHashMap<>();
-         serverConfiguration.endpoints().connectors().parallelStream().forEach(configuration -> {
-            try {
-               Class<? extends ProtocolServer> protocolServerClass = configuration.getClass().getAnnotation(ConfigurationFor.class).value().asSubclass(ProtocolServer.class);
-               ProtocolServer protocolServer = Util.getInstance(protocolServerClass);
-               if (protocolServer instanceof RestServer) ((RestServer) protocolServer).setServer(this);
-               protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
-               SecurityActions.startProtocolServer(protocolServer, configuration, cm);
-               ProtocolServerConfiguration protocolConfig = protocolServer.getConfiguration();
-               if (protocolConfig.startTransport()) {
-                  log.protocolStarted(protocolServer.getName(), protocolConfig.host(), protocolConfig.port());
-               } else {
-                  if (protocolServer instanceof HotRodServer) {
-                     routes.put(new Route<>(routeSource, new HotRodServerRouteDestination(protocolServer.getName(), (HotRodServer) protocolServer)), 0);
-                     extensions.apply((HotRodServer) protocolServer);
-                  } else if (protocolServer instanceof RestServer) {
-                     routes.put(new Route<>(routeSource, new RestServerRouteDestination(protocolServer.getName(), (RestServer) protocolServer)), 0);
+         for (EndpointConfiguration endpoint : serverConfiguration.endpoints().endpoints()) {
+            // Start the protocol servers
+            SinglePortRouteSource routeSource = new SinglePortRouteSource();
+            ConcurrentMap<Route<? extends RouteSource, ? extends RouteDestination>, Object> routes = new ConcurrentHashMap<>();
+            endpoint.connectors().parallelStream().forEach(configuration -> {
+               try {
+                  Class<? extends ProtocolServer> protocolServerClass = configuration.getClass().getAnnotation(ConfigurationFor.class).value().asSubclass(ProtocolServer.class);
+                  ProtocolServer protocolServer = Util.getInstance(protocolServerClass);
+                  if (protocolServer instanceof RestServer) ((RestServer) protocolServer).setServer(this);
+                  protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
+                  SecurityActions.startProtocolServer(protocolServer, configuration, cm);
+                  ProtocolServerConfiguration protocolConfig = protocolServer.getConfiguration();
+                  if (protocolConfig.startTransport()) {
+                     log.protocolStarted(protocolServer.getName(), protocolConfig.host(), protocolConfig.port());
+                  } else {
+                     if (protocolServer instanceof HotRodServer) {
+                        routes.put(new Route<>(routeSource, new HotRodServerRouteDestination(protocolServer.getName(), (HotRodServer) protocolServer)), 0);
+                        extensions.apply((HotRodServer) protocolServer);
+                     } else if (protocolServer instanceof RestServer) {
+                        routes.put(new Route<>(routeSource, new RestServerRouteDestination(protocolServer.getName(), (RestServer) protocolServer)), 0);
+                     }
+                     log.protocolStarted(protocolServer.getName());
                   }
-                  log.protocolStarted(protocolServer.getName());
+               } catch (Throwable t) {
+                  System.err.println(t.getMessage());
+                  t.printStackTrace();
                }
-            } catch (Throwable t) {
-               System.err.println(t.getMessage());
-               t.printStackTrace();
-            }
-         });
-         // Next we start the single-port endpoint
-         SinglePortRouterConfiguration singlePortRouter = serverConfiguration.endpoints().singlePortRouter();
-         SinglePortEndpointRouter endpointServer = new SinglePortEndpointRouter(singlePortRouter);
-         endpointServer.start(new RoutingTable(routes.keySet()));
-         protocolServers.put("endpoint", endpointServer);
-         log.protocolStarted(endpointServer.getName(), singlePortRouter.host(), singlePortRouter.port());
-         log.endpointUrl(
-               Util.requireNonNullElse(cm.getAddress(), "local"),
-               singlePortRouter.ssl().enabled() ? "https" : "http", singlePortRouter.host(), singlePortRouter.port()
-         );
+            });
+
+            // Next we start the single-port endpoints
+            SinglePortRouterConfiguration singlePortRouter = endpoint.singlePortRouter();
+            SinglePortEndpointRouter endpointServer = new SinglePortEndpointRouter(singlePortRouter);
+            endpointServer.start(new RoutingTable(routes.keySet()));
+            protocolServers.put("endpoint-" + singlePortRouter.host() + ":" + singlePortRouter.port(), endpointServer);
+            log.protocolStarted(endpointServer.getName(), singlePortRouter.host(), singlePortRouter.port());
+            log.endpointUrl(
+                  Util.requireNonNullElse(cm.getAddress(), "local"),
+                  singlePortRouter.ssl().enabled() ? "https" : "http", singlePortRouter.host(), singlePortRouter.port()
+            );
+         }
          // Change status
          this.status = ComponentStatus.RUNNING;
          log.serverStarted(Version.getBrandName(), Version.getBrandVersion(), timeService.timeDuration(startTime, TimeUnit.MILLISECONDS));
@@ -401,10 +411,10 @@ public class Server implements ServerManagement, AutoCloseable {
    }
 
    @Override
-   public Map<String, String> getLoginConfiguration() {
+   public Map<String, String> getLoginConfiguration(ProtocolServer protocolServer) {
       Map<String, String> loginConfiguration = new HashMap<>();
       // Get the REST endpoint's authentication configuration
-      RestServerConfiguration rest = (RestServerConfiguration) serverConfiguration.endpoints().connectors().stream().filter(p -> p instanceof RestServerConfiguration).findFirst().get();
+      RestServerConfiguration rest = (RestServerConfiguration) protocolServer.getConfiguration();
       if (rest.authentication().mechanisms().contains("BEARER_TOKEN")) {
          // Find the token realm
          TokenRealmConfiguration realmConfiguration = serverConfiguration.security().realms().realms().get(0).tokenConfiguration();

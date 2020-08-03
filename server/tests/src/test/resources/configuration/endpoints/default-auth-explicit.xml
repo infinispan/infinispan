@@ -2,14 +2,13 @@
            xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
            xmlns="urn:infinispan:server:12.0"
            socket-binding="default" security-realm="default">
-   <hotrod-connector name="hotrod" />
-   <hotrod-connector name="hotrod2" socket-binding="hotrod-alternate">
-      <authentication security-realm="alternate">
-         <sasl mechanisms="PLAIN"/>
+   <hotrod-connector>
+      <authentication>
+         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 SCRAM-SHA-1 DIGEST-SHA-512 DIGEST-SHA-384 DIGEST-SHA-256 DIGEST-SHA DIGEST-MD5 PLAIN"
+               server-name="infinispan"/>
       </authentication>
    </hotrod-connector>
-   <rest-connector name="rest" />
-   <rest-connector name="rest2" socket-binding="rest-alternate">
-      <authentication security-realm="alternate" mechanisms="BASIC"/>
+   <rest-connector>
+      <authentication mechanisms="DIGEST BASIC"/>
    </rest-connector>
 </endpoints>

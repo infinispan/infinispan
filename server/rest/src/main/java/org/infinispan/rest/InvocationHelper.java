@@ -22,9 +22,11 @@ public class InvocationHelper {
    private final RestServerConfiguration configuration;
    private final ServerManagement server;
    private final Executor executor;
+   private final RestServer protocolServer;
 
-   InvocationHelper(RestCacheManager<Object> restCacheManager, EmbeddedCounterManager counterManager,
+   InvocationHelper(RestServer protocolServer, RestCacheManager<Object> restCacheManager, EmbeddedCounterManager counterManager,
                     RestServerConfiguration configuration, ServerManagement server, Executor executor) {
+      this.protocolServer = protocolServer;
       this.restCacheManager = restCacheManager;
       this.counterManager = counterManager;
       this.configuration = configuration;
@@ -66,5 +68,9 @@ public class InvocationHelper {
 
    public String getContext() {
       return configuration.contextPath();
+   }
+
+   public RestServer getProtocolServer() {
+      return protocolServer;
    }
 }

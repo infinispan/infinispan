@@ -1,0 +1,18 @@
+<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="urn:infinispan:server:12.0 https://infinispan.org/schemas/infinispan-server-12.0.xsd"
+          xmlns="urn:infinispan:server:12.0">
+   <security-realms>
+      <security-realm name="default">
+         <properties-realm groups-attribute="Roles">
+            <user-properties path="users.properties" relative-to="infinispan.server.config.path" plain-text="true"/>
+            <group-properties path="groups.properties" relative-to="infinispan.server.config.path"/>
+         </properties-realm>
+      </security-realm>
+      <security-realm name="alternate">
+         <properties-realm groups-attribute="Roles">
+            <user-properties path="alternate-users.properties" relative-to="infinispan.server.config.path" plain-text="true"/>
+            <group-properties path="alternate-groups.properties" relative-to="infinispan.server.config.path"/>
+         </properties-realm>
+      </security-realm>
+   </security-realms>
+</security>

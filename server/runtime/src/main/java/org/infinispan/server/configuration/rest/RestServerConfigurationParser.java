@@ -76,7 +76,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
    private void parseRest(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder)
          throws XMLStreamException {
       boolean dedicatedSocketBinding = false;
-      RestServerConfigurationBuilder builder = serverBuilder.endpoints().addConnector(RestServerConfigurationBuilder.class);
+      RestServerConfigurationBuilder builder = serverBuilder.endpoints().current().addConnector(RestServerConfigurationBuilder.class);
       String serverHome = reader.getProperties().getProperty(Server.INFINISPAN_SERVER_HOME_PATH);
       builder.staticResources(Paths.get(serverHome, Server.DEFAULT_SERVER_STATIC_DIR));
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -106,7 +106,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
             }
             case SOCKET_BINDING: {
                builder.socketBinding(value);
-               serverBuilder.applySocketBinding(value, builder);
+               serverBuilder.applySocketBinding(value, builder, serverBuilder.endpoints().current().singlePort());
                builder.startTransport(true);
                dedicatedSocketBinding = true;
                break;
@@ -210,7 +210,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
    }
 
    private void parseAuthentication(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
-      ServerSecurityRealm securityRealm = serverBuilder.endpoint().securityRealm();
+      ServerSecurityRealm securityRealm = serverBuilder.endpoints().current().singlePort().securityRealm();
       String serverPrincipal = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
