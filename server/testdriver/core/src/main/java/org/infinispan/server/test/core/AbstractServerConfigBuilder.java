@@ -40,7 +40,7 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
       }
    }
 
-   protected InfinispanServerTestConfiguration createServerTestConfiguration() {
+   public InfinispanServerTestConfiguration createServerTestConfiguration() {
       return new InfinispanServerTestConfiguration(configurationFile, numServers, runMode, this.properties, mavenArtifacts,
                   archives, jmx, parallelStartup, defaultFile, listeners, siteName, portOffset);
    }

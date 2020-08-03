@@ -146,4 +146,8 @@ public class TestServer {
    public boolean hasCrossSiteEnabled() {
       return configuration.site() != null;
    }
+
+   public String getSiteName() {
+      return configuration.site();
+   }
 }
