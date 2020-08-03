@@ -3,5 +3,13 @@
            xmlns="urn:infinispan:server:12.0"
            socket-binding="default" security-realm="default">
    <hotrod-connector name="hotrod" />
+   <hotrod-connector name="hotrod2" socket-binding="hotrod-alternate">
+      <authentication security-realm="alternate">
+         <sasl mechanisms="PLAIN"/>
+      </authentication>
+   </hotrod-connector>
    <rest-connector name="rest" />
+   <rest-connector name="rest2" socket-binding="rest-alternate">
+      <authentication security-realm="alternate" mechanisms="BASIC"/>
+   </rest-connector>
 </endpoints>

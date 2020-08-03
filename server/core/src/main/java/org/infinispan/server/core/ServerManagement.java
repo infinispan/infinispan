@@ -27,7 +27,7 @@ public interface ServerManagement {
 
    CacheIgnoreManager getIgnoreManager(String cacheManager);
 
-   Map<String, String> getLoginConfiguration();
+   Map<String, String> getLoginConfiguration(ProtocolServer protocolServer);
 
    TaskManager getTaskManager();
 

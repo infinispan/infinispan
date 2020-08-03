@@ -4,43 +4,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.commons.configuration.ConfigurationInfo;
-import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.server.configuration.Element;
-import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
-import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
 
 /**
- * @since 10.0
+ * Holds configuration related to endpoints
+ * @author Tristan Tarrant
+ * @since 12.0
  */
 public class EndpointsConfiguration implements ConfigurationInfo {
-   static final AttributeDefinition<String> SOCKET_BINDING = AttributeDefinition.builder("socket-binding", null, String.class).build();
-   static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder("security-realm", null, String.class).build();
-   static final AttributeDefinition<Boolean> IMPLICIT_CONNECTOR_SECURITY = AttributeDefinition.builder("implicit-connector-security", false, Boolean.class).build();
-
-   private final List<ProtocolServerConfiguration> connectors;
-   private final SinglePortRouterConfiguration singlePort;
-
-
-   static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(EndpointsConfiguration.class, SOCKET_BINDING, SECURITY_REALM, IMPLICIT_CONNECTOR_SECURITY);
-   }
 
    private static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.ENDPOINTS.toString());
 
-   private final AttributeSet attributes;
-
+   private final List<EndpointConfiguration> endpoints;
    private final List<ConfigurationInfo> configs = new ArrayList<>();
 
-   EndpointsConfiguration(AttributeSet attributes,
-                          List<ProtocolServerConfiguration> connectors,
-                          SinglePortRouterConfiguration singlePort) {
+   static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(EndpointsConfiguration.class);
+   }
+
+   private final AttributeSet attributes;
+
+   EndpointsConfiguration(AttributeSet attributes, List<EndpointConfiguration> endpoints) {
       this.attributes = attributes.checkProtection();
-      this.connectors = connectors;
-      this.singlePort = singlePort;
-      configs.addAll(connectors);
+      this.endpoints = endpoints;
+      this.configs.addAll(endpoints);
    }
 
    @Override
@@ -48,16 +38,13 @@ public class EndpointsConfiguration implements ConfigurationInfo {
       return configs;
    }
 
-   public SinglePortRouterConfiguration singlePortRouter() {
-      return singlePort;
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
-   public List<ProtocolServerConfiguration> connectors() {
-      return connectors;
-   }
-
-   public boolean implicitConnectorSecurity() {
-      return attributes.attribute(IMPLICIT_CONNECTOR_SECURITY).get();
+   public List<EndpointConfiguration> endpoints() {
+      return endpoints;
    }
 
    @Override
@@ -66,7 +53,24 @@ public class EndpointsConfiguration implements ConfigurationInfo {
    }
 
    @Override
-   public AttributeSet attributes() {
-      return attributes;
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      EndpointsConfiguration that = (EndpointsConfiguration) o;
+
+      return attributes.equals(that.attributes);
+   }
+
+   @Override
+   public int hashCode() {
+      return attributes.hashCode();
+   }
+
+   @Override
+   public String toString() {
+      return "EndpointConfiguration{" +
+            "attributes=" + attributes +
+            '}';
    }
 }
