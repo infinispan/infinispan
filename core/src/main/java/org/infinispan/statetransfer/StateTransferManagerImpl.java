@@ -41,6 +41,7 @@ import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.persistence.manager.PreloadManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -235,7 +236,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
    public void waitForInitialStateTransferToComplete() {
       if (configuration.clustering().stateTransfer().awaitInitialTransfer()) {
          try {
-            if (!localTopologyManager.isCacheRebalancingEnabled(cacheName)) {
+            if (!localTopologyManager.isCacheRebalancingEnabled(cacheName) ||
+                partitionHandlingManager.getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE) {
                initialStateTransferComplete.countDown();
             }
             if (trace)
