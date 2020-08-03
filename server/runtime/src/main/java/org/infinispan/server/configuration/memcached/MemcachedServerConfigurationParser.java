@@ -42,7 +42,7 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
          case MEMCACHED_CONNECTOR: {
             ServerConfigurationBuilder serverBuilder = builder.module(ServerConfigurationBuilder.class);
             if (serverBuilder != null) {
-               parseMemcached(reader, serverBuilder, serverBuilder.endpoints().addConnector(MemcachedServerConfigurationBuilder.class));
+               parseMemcached(reader, serverBuilder, serverBuilder.endpoints().current().addConnector(MemcachedServerConfigurationBuilder.class));
             } else {
                throw ParseUtils.unexpectedElement(reader);
             }
@@ -62,7 +62,7 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
    private void parseMemcached(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, MemcachedServerConfigurationBuilder builder)
          throws XMLStreamException {
       String[] required = ParseUtils.requireAttributes(reader, Attribute.SOCKET_BINDING);
-      serverBuilder.applySocketBinding(required[0], builder);
+      serverBuilder.applySocketBinding(required[0], builder, serverBuilder.endpoints().current().singlePort());
       builder.startTransport(true);
       builder.socketBinding(required[0]);
       for (int i = 0; i < reader.getAttributeCount(); i++) {

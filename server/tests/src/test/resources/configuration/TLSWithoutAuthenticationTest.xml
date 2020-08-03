@@ -16,8 +16,8 @@
 
       <xi:include href="socket-bindings/default.xml"/>
 
-      <xi:include href="security/properties-alternate.xml"/>
+      <xi:include href="security/tls.xml"/>
 
-      <xi:include href="endpoints/multiple-connectors.xml"/>
+      <xi:include href="endpoints/default-auth-implicit.xml"/>
    </server>
 </infinispan>

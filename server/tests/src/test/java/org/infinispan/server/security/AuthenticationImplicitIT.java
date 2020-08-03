@@ -41,6 +41,7 @@ public class AuthenticationImplicitIT {
    @ClassRule
    public static InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/AuthenticationServerImplicitTest.xml")
+                                    .addListener(new SecurityRealmServerListener("alternate"))
                                     .build();
 
    @ClassRule

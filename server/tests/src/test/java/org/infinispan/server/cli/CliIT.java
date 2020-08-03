@@ -141,6 +141,12 @@ public class CliIT {
    public void testCliTasks() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{connectionString()});
+
+         // connect
+         terminal.readln("connect " + hostAddress() + ":11222");
+         terminal.assertContains("//containers/default]>");
+         terminal.clear();
+
          terminal.readln("cd tasks");
          terminal.readln("ls");
          terminal.assertContains("@@cache@names");

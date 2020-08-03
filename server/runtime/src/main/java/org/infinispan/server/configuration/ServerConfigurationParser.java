@@ -20,7 +20,7 @@ import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.server.Server;
-import org.infinispan.server.configuration.endpoint.EndpointsConfigurationBuilder;
+import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
 import org.infinispan.server.configuration.security.FileSystemRealmConfigurationBuilder;
 import org.infinispan.server.configuration.security.GroupsPropertiesConfigurationBuilder;
 import org.infinispan.server.configuration.security.JwtConfigurationBuilder;
@@ -1102,10 +1102,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
    }
 
    private void parseEndpoints(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder builder) throws XMLStreamException {
-      EndpointsConfigurationBuilder endpoints = builder.endpoints();
+
       holder.pushScope(ENDPOINTS_SCOPE);
       String socketBinding = ParseUtils.requireAttributes(reader, Attribute.SOCKET_BINDING)[0];
-      endpoints.socketBinding(socketBinding);
+      EndpointConfigurationBuilder endpoint = builder.endpoints().addEndpoint(socketBinding);
 
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
@@ -1116,9 +1116,9 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
             case SECURITY_REALM:
                // Set the endpoint security realm and fall-through. Starting with 11.0 we also enable implicit authentication configuration
-               endpoints.securityRealm(value).implicitConnectorSecurity(reader.getSchema().since(11, 0));
+               endpoint.securityRealm(value).implicitConnectorSecurity(reader.getSchema().since(11, 0));
             default:
-               parseCommonConnectorAttributes(reader, i, builder, builder.endpoint());
+               parseCommonConnectorAttributes(reader, i, builder, endpoint.singlePort());
                break;
          }
       }

@@ -55,6 +55,10 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
       return this;
    }
 
+   public boolean hasMechanisms() {
+      return sasl.hasMechanisms();
+   }
+
    public AuthenticationConfigurationBuilder addAllowedMech(String mech) {
       sasl.addAllowedMech(mech);
       return this;
@@ -85,6 +89,14 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
       return this;
    }
 
+   public String securityRealm() {
+      return attributes.attribute(AuthenticationConfiguration.SECURITY_REALM).get();
+   }
+
+   public boolean hasSecurityRealm() {
+      return !attributes.attribute(AuthenticationConfiguration.SECURITY_REALM).isNull();
+   }
+
    public SaslConfigurationBuilder sasl() {
       return sasl;
    }
@@ -111,6 +123,4 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
       this.sasl.read(template.sasl());
       return this;
    }
-
-
 }

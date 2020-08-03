@@ -47,7 +47,7 @@ public class ServerConfiguration implements ConfigurationInfo {
       elements.add(socketBindings);
       elements.add(security);
       elements.add(dataSources);
-      elements.add(endpoints);
+      elements.addAll(endpoints.subElements());
    }
 
    @Override

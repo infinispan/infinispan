@@ -68,7 +68,7 @@ public class DataSourcesConfiguration implements ConfigurationInfo {
 
    @Override
    public String toString() {
-      return "SocketBindingConfiguration{" +
+      return "DataSourcesConfiguration{" +
             "attributes=" + attributes +
             '}';
    }
