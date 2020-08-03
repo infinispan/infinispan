@@ -158,10 +158,8 @@ public class ContextImpl implements Context, AeshContext {
 
    @Override
    public void disconnect() {
-      if (connection != null) {
-         Util.close(connection);
-         connection = null;
-      }
+      Util.close(connection);
+      connection = null;
       refreshPrompt();
    }
 

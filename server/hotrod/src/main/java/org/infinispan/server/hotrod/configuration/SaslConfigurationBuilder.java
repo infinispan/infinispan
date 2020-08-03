@@ -105,6 +105,10 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
       return this;
    }
 
+   public boolean hasMechanisms() {
+      return !attributes.attribute(SaslConfiguration.MECHANISMS).get().isEmpty();
+   }
+
    @Override
    public void validate() {
       Set<String> allMechs = new LinkedHashSet<>(Arrays.asList(ExternalSaslServerFactory.NAMES));

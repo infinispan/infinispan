@@ -1,7 +1,6 @@
 package org.infinispan.server.configuration;
 
 import java.util.Arrays;
-import java.util.List;
 
 import javax.net.ssl.SSLContext;
 
@@ -30,14 +29,6 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
 
    public ServerConfigurationBuilder(GlobalConfigurationBuilder builder) {
       this.builder = builder;
-   }
-
-   public List<ProtocolServerConfigurationBuilder<?, ?>> connectors() {
-      return endpoints.connectors();
-   }
-
-   public SinglePortServerConfigurationBuilder endpoint() {
-      return endpoints.singlePort();
    }
 
    public SecurityConfigurationBuilder security() {
@@ -102,17 +93,16 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
       return sslContext;
    }
 
-   public void applySocketBinding(String bingingName, ProtocolServerConfigurationBuilder builder) {
-      if (!socketBindings.exists(bingingName)) {
-         throw Server.log.unknownSocketBinding(bingingName);
+   public void applySocketBinding(String bindingName, ProtocolServerConfigurationBuilder builder, SinglePortServerConfigurationBuilder singlePort) {
+      if (!socketBindings.exists(bindingName)) {
+         throw Server.log.unknownSocketBinding(bindingName);
       }
-      SocketBinding socketBinding = socketBindings.getSocketBinding(bingingName);
+      SocketBinding socketBinding = socketBindings.getSocketBinding(bindingName);
       String host = socketBinding.getAddress().getAddress().getHostAddress();
       int port = socketBinding.getPort();
-      SinglePortServerConfigurationBuilder endpoint = endpoints().singlePort();
-      if (builder != endpoint) {
+      if (builder != singlePort) {
          // Ensure we are using a different socket binding than the one used by the single-port endpoint
-         if (endpoint.host().equals(host) && endpoint.port() == port) {
+         if (singlePort.host().equals(host) && singlePort.port() == port) {
             throw Server.log.protocolCannotUseSameSocketBindingAsEndpoint();
          }
       }

@@ -2,6 +2,6 @@
            xsi:schemaLocation="urn:infinispan:server:11.0 https://infinispan.org/schemas/infinispan-server-11.0.xsd"
            xmlns="urn:infinispan:server:11.0"
            socket-binding="default" security-realm="default">
-   <hotrod-connector name="hotrod" />
-   <rest-connector name="rest" />
+   <hotrod-connector name="hotrod"/>
+   <rest-connector name="rest"/>
 </endpoints>

@@ -40,7 +40,7 @@ public class LoginResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> loginConfiguration(RestRequest restRequest) {
-      Map<String, String> loginConfiguration = invocationHelper.getServer().getLoginConfiguration();
+      Map<String, String> loginConfiguration = invocationHelper.getServer().getLoginConfiguration(invocationHelper.getProtocolServer());
       return asJsonResponseFuture(loginConfiguration, invocationHelper);
    }
 

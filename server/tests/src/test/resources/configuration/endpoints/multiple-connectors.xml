@@ -1,0 +1,15 @@
+<endpoints xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="urn:infinispan:server:11.0 https://infinispan.org/schemas/infinispan-server-11.0.xsd"
+           xmlns="urn:infinispan:server:11.0"
+           socket-binding="default" security-realm="default">
+   <hotrod-connector name="hotrod" />
+   <hotrod-connector name="hotrod2" socket-binding="hotrod-alternate">
+      <authentication security-realm="alternate">
+         <sasl mechanisms="PLAIN"/>
+      </authentication>
+   </hotrod-connector>
+   <rest-connector name="rest" />
+   <rest-connector name="rest2" socket-binding="rest-alternate">
+      <authentication security-realm="alternate" mechanisms="BASIC"/>
+   </rest-connector>
+</endpoints>
