@@ -13,7 +13,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 import org.infinispan.query.remote.impl.logging.Log;
@@ -49,7 +48,7 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
 
    @Override
    public byte[] executeQuery(String queryString, Map<String, Object> namedParametersMap, Integer offset, Integer maxResults,
-                              IndexedQueryMode queryMode, AdvancedCache<?, ?> cache, MediaType outputFormat) {
+                              AdvancedCache<?, ?> cache, MediaType outputFormat) {
       if (unknownMediaType) {
          log.warnNoMediaType(cache.getName());
       } else if (!cacheQueryable) {
@@ -57,7 +56,7 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
       }
 
       QuerySerializer<?> querySerializer = querySerializers.getSerializer(outputFormat);
-      BaseQuery<Object> query = getQueryEngine(cache).makeQuery(queryString, namedParametersMap, offset, maxResults, queryMode);
+      BaseQuery<Object> query = getQueryEngine(cache).makeQuery(queryString, namedParametersMap, offset, maxResults);
       List<Object> results = query.list();
       int totalResults = query.getResultSize();
       String[] projection = query.getProjection();

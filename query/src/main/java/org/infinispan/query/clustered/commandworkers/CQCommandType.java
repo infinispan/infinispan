@@ -19,11 +19,8 @@ import org.infinispan.query.impl.QueryDefinition;
  */
 public enum CQCommandType {
 
-//   TODO HSEARCH-3323 Restore support for scrolling
-//   CREATE_LAZY_ITERATOR(CQCreateLazyQuery::new),
+   //TODO [ISPN-12182] Add support for scrolling
    CREATE_EAGER_ITERATOR(CQCreateEagerQuery::new),
-//   DESTROY_LAZY_ITERATOR(CQKillLazyIterator::new),
-//   GET_SOME_KEYS(CQLazyFetcher::new),
    GET_RESULT_SIZE(CQGetResultSize::new);
 
    private static final CQCommandType[] CACHED_VALUES = values();
@@ -39,7 +36,7 @@ public enum CQCommandType {
    }
 
    public CompletionStage<QueryResponse> perform(AdvancedCache<?, ?> cache, QueryDefinition queryDefinition,
-                                                UUID queryId, int docIndex, BitSet segments) {
+                                                 UUID queryId, int docIndex, BitSet segments) {
       CQWorker worker = workerSupplier.get();
       worker.initialize(cache.withStorageMediaType(), queryDefinition, queryId, docIndex);
       return worker.perform(segments);

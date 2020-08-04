@@ -3,7 +3,6 @@ package org.infinispan.query.remote.impl;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.security.AuthorizationManager;
@@ -41,11 +40,8 @@ public final class QueryFacadeImpl implements QueryFacade {
          int startOffset = request.getStartOffset().intValue();
          int maxResults = request.getMaxResults();
 
-         IndexedQueryMode queryMode = request.getIndexedQueryMode() != null ?
-               IndexedQueryMode.valueOf(request.getIndexedQueryMode()) : null;
-
          return remoteQueryManager.executeQuery(request.getQueryString(),
-               request.getNamedParametersMap(), startOffset, maxResults, queryMode, cache, requestMediaType);
+               request.getNamedParametersMap(), startOffset, maxResults, cache, requestMediaType);
       } catch (Exception e) {
          if (log.isDebugEnabled()) {
             log.debugf(e, "Error executing remote query : %s", e.getMessage());

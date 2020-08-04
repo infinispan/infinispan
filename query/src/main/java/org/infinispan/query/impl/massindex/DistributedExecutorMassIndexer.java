@@ -19,7 +19,6 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.MassIndexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
@@ -37,7 +36,7 @@ import org.infinispan.util.logging.LogFactory;
 @MBean(objectName = "MassIndexer",
       description = "Component that rebuilds the Lucene index from the cached data")
 @Scope(Scopes.NAMED_CACHE)
-public class DistributedExecutorMassIndexer implements MassIndexer, Indexer {
+public class DistributedExecutorMassIndexer implements Indexer {
 
    private static final Log LOG = LogFactory.getLog(DistributedExecutorMassIndexer.class, Log.class);
 
@@ -66,23 +65,17 @@ public class DistributedExecutorMassIndexer implements MassIndexer, Indexer {
    }
 
    @ManagedOperation(description = "Starts rebuilding the index", displayName = "Rebuild index")
-   @Override
    public void start() {
       CompletionStages.join(executeInternal(false));
    }
 
    @Override
-   public CompletableFuture<Void> purge() {
-      return executeInternal(true).toCompletableFuture();
-   }
-
-   @Override
-   public CompletableFuture<Void> startAsync() {
+   public CompletionStage<Void> run() {
       return executeInternal(false).toCompletableFuture();
    }
 
    @Override
-   public CompletableFuture<Void> reindex(Object... keys) {
+   public CompletionStage<Void> run(Object... keys) {
       CompletableFuture<Void> future = null;
       Set<Object> keySet = new HashSet<>();
       for (Object key : keys) {
@@ -105,18 +98,8 @@ public class DistributedExecutorMassIndexer implements MassIndexer, Indexer {
    }
 
    @Override
-   public CompletionStage<Void> run() {
-      return startAsync();
-   }
-
-   @Override
-   public CompletionStage<Void> run(Object... keys) {
-      return reindex(keys);
-   }
-
-   @Override
    public CompletionStage<Void> remove() {
-      return purge();
+      return executeInternal(true).toCompletableFuture();
    }
 
    @Override

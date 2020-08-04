@@ -9,10 +9,7 @@ import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
-import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
-import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.QueryDefinition;
 import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
 import org.infinispan.util.function.SerializableFunction;
@@ -69,19 +66,9 @@ final class RemoteQueryEngine extends ObjectRemoteQueryEngine {
    }
 
    @Override
-   protected IndexedQuery<?> makeCacheQuery(IckleParsingResult<Descriptor> ickleParsingResult,
-                                          SearchQueryBuilder searchQuery, IndexedQueryMode queryMode,
-                                          Map<String, Object> namedParameters) {
-      QueryDefinition queryDefinition;
-      if (queryMode == IndexedQueryMode.BROADCAST) {
-         queryDefinition = new QueryDefinition(ickleParsingResult.getQueryString(), queryEngineProvider);
-      } else {
-         queryDefinition = new QueryDefinition(searchQuery);
-      }
-      queryDefinition.setNamedParameters(namedParameters);
-      return (IndexedQuery<?>) getSearchManager().getQuery(queryDefinition, queryMode);
+   protected QueryDefinition buildQueryDefinition(String q) {
+      return new QueryDefinition(q, queryEngineProvider);
    }
-
 
    @Override
    protected IckleFilterAndConverter createFilter(String queryString, Map<String, Object> namedParameters) {
@@ -94,7 +81,8 @@ final class RemoteQueryEngine extends ObjectRemoteQueryEngine {
       return byte[].class;
    }
 
-   @Override protected String getTargetedNamedType(IckleParsingResult<?> parsingResult) {
+   @Override
+   protected String getTargetedNamedType(IckleParsingResult<?> parsingResult) {
       Descriptor targetEntityMetadata = (Descriptor) parsingResult.getTargetEntityMetadata();
       return targetEntityMetadata.getFullName();
    }

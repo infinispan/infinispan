@@ -9,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
@@ -27,8 +26,6 @@ public final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
 
    private final QueryEngine<TypeMetadata> queryEngine;
 
-   private final IndexedQueryMode queryMode;
-
    private final IckleParsingResult<TypeMetadata> parsingResult;
 
    /**
@@ -36,10 +33,9 @@ public final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
     */
    private BaseQuery<T> query;
 
-   protected DelegatingQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory, String queryString, IndexedQueryMode queryMode) {
+   protected DelegatingQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory, String queryString) {
       super(queryFactory, queryString);
       this.queryEngine = queryEngine;
-      this.queryMode = queryMode;
 
       // parse and validate early
       parsingResult = queryEngine.parse(queryString);
@@ -56,7 +52,6 @@ public final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
                              Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
       super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
       this.queryEngine = queryEngine;
-      this.queryMode = IndexedQueryMode.FETCH;
 
       // parse and validate early
       parsingResult = queryEngine.parse(queryString);
@@ -87,13 +82,13 @@ public final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
 
    @Override
    public void resetQuery() {
-     query = null;
+      query = null;
    }
 
    private Query<T> createQuery() {
       // the query is created first time only
       if (query == null) {
-         query = (BaseQuery<T>) queryEngine.buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults, queryMode);
+         query = (BaseQuery<T>) queryEngine.buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults);
          if (timeout > 0) {
             query.timeout(timeout, TimeUnit.NANOSECONDS);
          }

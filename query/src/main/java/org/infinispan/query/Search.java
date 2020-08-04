@@ -17,15 +17,12 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.query.impl.SearchManagerImpl;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 
 /**
- * This is the entry point for the Infinispan query API. It's allows you the locate the {@link SearchManager} for a
- * cache and start building Lucene queries (with or without the help of Hibernate Search DSL) for indexed caches. It
- * also provides the {@link QueryFactory} which is your starting point for building DSL-based or query string based
- * Ickle queries, continuous queries and event filters, for both indexed and unindexed caches.
+ * This is the entry point for the Infinispan search API. It provides the {@link QueryFactory} which is your
+ * starting point for building Ickle queries, continuous queries and event filters, for both indexed and unindexed caches.
  *
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author anistor@redhat.com
@@ -79,23 +76,6 @@ public final class Search {
     */
    public static <K, V> ContinuousQuery<K, V> getContinuousQuery(Cache<K, V> cache) {
       return new ContinuousQueryImpl<>(cache);
-   }
-
-   /**
-    * Obtain the {@link SearchManager} object for a cache.
-    * @deprecated Since 11.0 with no replacement.
-    */
-   @Deprecated
-   public static SearchManager getSearchManager(Cache<?, ?> cache) {
-      if (cache == null) {
-         throw new IllegalArgumentException("cache parameter must not be null");
-      }
-      AdvancedCache<?, ?> advancedCache = cache.getAdvancedCache();
-      if (advancedCache == null) {
-         throw new IllegalArgumentException("The given cache must expose an AdvancedCache interface");
-      }
-      checkBulkReadPermission(advancedCache);
-      return new SearchManagerImpl(advancedCache, ComponentRegistryUtils.getEmbeddedQueryEngine(advancedCache));
    }
 
    /**

@@ -37,7 +37,9 @@ Some operations that previously supported both `GET` and `POST` now support only
 * ```/v2/cache-managers/{name}/x-site/backups/{site}?action=start-push-state```
 * ```/v2/cache-managers/{name}/x-site/backups/{site}?action=cancel-push-state```
 
-== Indexing
+== Search
+
+* `MassIndexer`, `CacheQuery` and `SearchManager` were deprecated and are now removed.
 
 * Indexed type names must be declared for all indexed caches, regardless of their storage format.
   This requirement was introduced in 11 in a more lenient form and failing to comply just logged a warning.

@@ -66,10 +66,13 @@ public class IndexAccessor {
     * Hibernate Search will take care of it.
     *
     * @return a Lucene index reader
-    * @throws IOException
     */
-   public DirectoryReader getIndexReader() throws IOException {
-      return indexAccessor.getIndexReader();
+   public DirectoryReader getIndexReader() {
+      try {
+         return indexAccessor.getIndexReader();
+      } catch (IOException e) {
+         throw new RuntimeException("Cannot get index reader");
+      }
    }
 
    public Directory getDirectory() {

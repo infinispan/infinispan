@@ -9,8 +9,8 @@ import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.TopFieldDocs;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.query.ResultIterator;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -21,7 +21,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Sanne Grinovero
  * @since 5.1
  */
-class DistributedIterator<E> implements ResultIterator<E> {
+class DistributedIterator<E> implements CloseableIterator<E> {
 
    protected final AdvancedCache<?, ?> cache;
    private final DataConversion keyDataConversion;

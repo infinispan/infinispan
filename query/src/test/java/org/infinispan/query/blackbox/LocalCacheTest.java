@@ -330,15 +330,6 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       Search.getQueryFactory(null);
    }
 
-// TODO: Allow to specify the fetch size
-//   @Test(expectedExceptions = IllegalArgumentException.class)
-//   public void testLazyIteratorWithInvalidFetchSize() {
-//      loadTestingData();
-//      CacheQuery<?> cacheQuery = createQuery("blurb:'Eats'", Person.class).firstResult(1);
-//
-//      cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY).fetchSize(0));
-//   }
-
    @Test(expectedExceptions = NoSuchElementException.class)
    public void testLazyIteratorWithNoElementsFound() {
       loadTestingData();
