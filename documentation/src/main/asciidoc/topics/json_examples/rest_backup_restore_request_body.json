@@ -1,0 +1,6 @@
+{
+  "location": "/some/path/accessible/to/the/server/backup-to-restore.zip",
+  "resources": {
+    "counters": ["*"]
+  }
+}
