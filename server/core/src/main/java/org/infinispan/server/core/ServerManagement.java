@@ -32,4 +32,6 @@ public interface ServerManagement {
    TaskManager getTaskManager();
 
    CompletionStage<Path> getServerReport();
+
+   BackupManager getBackupManager();
 }

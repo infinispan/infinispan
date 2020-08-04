@@ -9,6 +9,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -101,9 +103,11 @@ public class RestConnection implements Connection, Closeable {
    private boolean connected;
    private String serverVersion;
    private String serverInfo;
+   private Path workingDir;
 
    public RestConnection(RestClientConfigurationBuilder builder) {
       this.builder = builder;
+      this.workingDir = Paths.get(System.getProperty("user.dir", ""));
    }
 
    @Override
@@ -590,8 +594,9 @@ public class RestConnection implements Connection, Closeable {
                case FILE:
                   String contentDisposition = r.headers().get("Content-Disposition").get(0);
                   String filename = contentDisposition.substring(contentDisposition.indexOf('"') + 1, contentDisposition.lastIndexOf('"'));
+                  File file = workingDir.resolve(filename).toFile();
 
-                  try (OutputStream os = new FileOutputStream(filename); InputStream is = parseBody(r, InputStream.class)) {
+                  try (OutputStream os = new FileOutputStream(file); InputStream is = parseBody(r, InputStream.class)) {
                      byte[] buffer = new byte[8 * 1024];
                      int bytesRead;
                      while ((bytesRead = is.read(buffer)) != -1) {

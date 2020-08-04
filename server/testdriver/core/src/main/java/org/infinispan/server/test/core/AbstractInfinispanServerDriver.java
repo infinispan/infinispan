@@ -229,6 +229,11 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    }
 
    @Override
+   public File getRootDir() {
+      return rootDir;
+   }
+
+   @Override
    public File getConfDir() {
       return confDir;
    }

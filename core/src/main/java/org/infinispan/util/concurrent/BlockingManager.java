@@ -107,6 +107,21 @@ public interface BlockingManager {
          BiFunction<? super I, Throwable, ? extends O> function, Object traceId);
 
    /**
+    * Replacement for {@link CompletionStage#thenRunAsync(Runnable)} that invokes the {@code Runnable} in a blocking thread
+    * (if the current thread is non-blocking) or in the current thread (if the current thread is blocking).
+    * The returned stage, if not complete, resumes any chained stage on the non-blocking executor.
+    * <p>
+    * Note that if the current thread is blocking, the task is invoked in the current thread meaning the stage is
+    * always completed when returned, so any chained stage is also invoked on the current thread.
+    * @param stage stage, that may or may not be complete, to apply.
+    * @param runnable blocking operation that runs some code.
+    * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads.
+    * @param <I> input value type to the function.
+    * @return a stage that is completed after the action is done or throws an exception.
+    */
+   <I> CompletionStage<Void> thenRunBlocking(CompletionStage<? extends I> stage, Runnable runnable, Object traceId);
+
+   /**
     * Replacement for {@code CompletionStage.thenApplyAsync()} that invokes the {@code Function} in a blocking thread
     * (if the current thread is non-blocking) or in the current thread (if the current thread is blocking).
     * The returned stage, if not complete, resumes any chained stage on the non-blocking executor.
@@ -168,6 +183,22 @@ public interface BlockingManager {
     * @return publisher that does not block the current thread.
     */
    <V> Publisher<V> blockingPublisher(Publisher<V> publisher);
+
+   /**
+    * Subscribes to the provided blocking publisher using the the blocking executor, ignoring all elements and returning
+    * a {@link CompletionStage} with a value of null which completes on a non-blocking thread.
+    * <p>
+    * The returned {@link CompletionStage} will always be completed upon a non-blocking thread if the current thread is
+    * non-blocking.
+    * <p>
+    * Note that if the current thread is blocking everything including subscription, publication and collection of
+    * values will be done on the current thread.
+    *
+    * @param publisher the publisher that, when subscribed to, blocks the current thread.
+    * @param <V>       the published entry types.
+    * @return a completion stage that completes once the publisher has completed.
+    */
+   <V> CompletionStage<Void> blockingPublisherToVoidStage(Publisher<V> publisher, Object traceId);
 
    /**
     * Provides a {@link BlockingExecutor} which is limited to the provided concurrency amount.

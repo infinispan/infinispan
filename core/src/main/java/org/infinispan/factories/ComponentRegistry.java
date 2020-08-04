@@ -46,6 +46,7 @@ import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -84,6 +85,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<AsyncInterceptorChain> asyncInterceptorChain;
    private ComponentRef<BackupReceiver> backupReceiver;
    private ComponentRef<BackupSender> backupSender;
+   private ComponentRef<BlockingManager> blockingManager;
+   private ComponentRef<ClusterPublisherManager> clusterPublisherManager;
    private ComponentRef<BiasManager> biasManager;
    private ComponentRef<CacheNotifier> cacheNotifier;
    private ComponentRef<ClusterCacheNotifier> clusterCacheNotifier;
@@ -363,6 +366,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       biasManager = basicComponentRegistry.getComponent(BiasManager.class);
       backupReceiver = basicComponentRegistry.lazyGetComponent(BackupReceiver.class); //can we avoid instantiate BackupReceiver is not needed?
       backupSender = basicComponentRegistry.getComponent(BackupSender.class);
+      blockingManager = basicComponentRegistry.getComponent(BlockingManager.class);
+      clusterPublisherManager = basicComponentRegistry.getComponent(ClusterPublisherManager.class);
       takeOfflineManager = basicComponentRegistry.getComponent(TakeOfflineManager.class);
       cache = basicComponentRegistry.getComponent(AdvancedCache.class);
       cacheNotifier = basicComponentRegistry.getComponent(CacheNotifier.class);
@@ -396,7 +401,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       basicComponentRegistry.getComponent(ClusterCacheStats.class);
       basicComponentRegistry.getComponent(CacheConfigurationMBean.class);
       basicComponentRegistry.getComponent(InternalConflictManager.class);
-      basicComponentRegistry.getComponent(ClusterPublisherManager.class);
       basicComponentRegistry.getComponent(PreloadManager.class);
    }
 
@@ -424,6 +428,14 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public ComponentRef<BackupSender> getBackupSender() {
       return backupSender;
+   }
+
+   public ComponentRef<BlockingManager> getBlockingManager() {
+      return blockingManager;
+   }
+
+   public ComponentRef<ClusterPublisherManager> getClusterPublisherManager() {
+      return clusterPublisherManager;
    }
 
    public ComponentRef<TakeOfflineManager> getTakeOfflineManager() {
