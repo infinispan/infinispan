@@ -8,6 +8,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
+import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
@@ -16,6 +17,7 @@ import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
 import java.io.ByteArrayOutputStream;
 import java.security.PrivilegedAction;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,9 +31,9 @@ import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.JsonWriter;
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -53,6 +55,7 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.security.Security;
+import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.CacheIgnoreManager;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -108,6 +111,11 @@ public class CacheManagerResource implements ResourceHandler {
 
             // Caches
             .invocation().methods(GET).path("/v2/cache-managers/{name}/caches").handleWith(this::getCaches)
+
+            // BackupManager
+            .invocation().methods(GET).path("/v2/cache-managers/{name}/backups").handleWith(this::getAllBackupNames)
+            .invocation().methods(DELETE, GET, HEAD, POST).path("/v2/cache-managers/{name}/backups/{backupName}").handleWith(this::backup)
+            .invocation().methods(POST).path("/v2/cache-managers/{name}/backups").withAction("restore").handleWith(this::restore)
             .create();
    }
 
@@ -281,6 +289,29 @@ public class CacheManagerResource implements ResourceHandler {
       return asJsonResponseFuture(Json.make(configurations), responseBuilder);
    }
 
+   private CompletionStage<RestResponse> getAllBackupNames(RestRequest request) {
+      BackupManager backupManager = invocationHelper.getServer().getBackupManager();
+      Set<String> names = backupManager.getBackupNames();
+      return asJsonResponseFuture(Json.make(names));
+   }
+
+   private CompletionStage<RestResponse> backup(RestRequest request) {
+      BackupManager backupManager = invocationHelper.getServer().getBackupManager();
+      return BackupManagerResource.handleBackupRequest(request, backupManager, (name, workingDir, json) -> {
+         BackupManager.Resources resources = BackupManagerResource.getResources(json);
+         Map<String, BackupManager.Resources> backupParams = Collections.singletonMap(cacheManagerName, resources);
+         backupManager.create(name, workingDir, backupParams);
+      });
+   }
+
+   private CompletionStage<RestResponse> restore(RestRequest request) {
+      return BackupManagerResource.handleRestoreRequest(request, (path, json) -> {
+         BackupManager.Resources resources = BackupManagerResource.getResources(json);
+         Map<String, BackupManager.Resources> restoreParams = Collections.singletonMap(cacheManagerName, resources);
+         BackupManager backupManager = invocationHelper.getServer().getBackupManager();
+         return backupManager.restore(path, restoreParams);
+      });
+   }
 
    private CompletionStage<RestResponse> convertToJson(RestRequest restRequest) {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(restRequest);

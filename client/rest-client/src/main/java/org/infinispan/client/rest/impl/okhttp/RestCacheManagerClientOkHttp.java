@@ -3,12 +3,19 @@ package org.infinispan.client.rest.impl.okhttp;
 import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.EMPTY_BODY;
 import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.sanitize;
 
+import java.io.File;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 
+import okhttp3.MultipartBody;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -120,5 +127,69 @@ public class RestCacheManagerClientOkHttp implements RestCacheManagerClient {
    @Override
    public CompletionStage<RestResponse> caches() {
       return client.execute(baseCacheManagerUrl, "caches");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> createBackup(String name, String workingDir, Map<String, List<String>> resources) {
+      Json json = Json.object();
+      if (workingDir != null)
+         json.set("directory", workingDir);
+
+      if (resources != null)
+         json.set("resources", Json.factory().make(resources));
+
+      RequestBody body = new StringRestEntityOkHttp(MediaType.APPLICATION_JSON, json.toString()).toRequestBody();
+      Request.Builder builder = backup(name).post(body);
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> getBackup(String name, boolean skipBody) {
+      Request.Builder builder = backup(name);
+      if (skipBody)
+         builder.head();
+
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> deleteBackup(String name) {
+      return client.execute(backup(name).delete());
+   }
+
+   @Override
+   public CompletionStage<RestResponse> restore(File backup, Map<String, List<String>> resources) {
+      Json json = resources != null ? Json.factory().make(resources) : Json.object();
+      RequestBody zipBody = new FileRestEntityOkHttp(MediaType.APPLICATION_ZIP, backup).toRequestBody();
+
+      RequestBody multipartBody = new MultipartBody.Builder()
+            .addFormDataPart("resources", json.toString())
+            .addFormDataPart("backup", backup.getName(), zipBody)
+            .setType(MultipartBody.FORM)
+            .build();
+
+      Request.Builder builder = restore().post(multipartBody);
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> restore(String backupLocation, Map<String, List<String>> resources) {
+      Json json = Json.object();
+      json.set("location", backupLocation);
+
+      if (resources != null)
+         json.set("resources", Json.factory().make(resources));
+
+      RequestBody body = new StringRestEntityOkHttp(MediaType.APPLICATION_JSON, json.toString()).toRequestBody();
+      Request.Builder builder = restore().post(body);
+      return client.execute(builder);
+   }
+
+   private Request.Builder backup(String name) {
+      return new Request.Builder().url(baseCacheManagerUrl + "/backups/" + name);
+   }
+
+   private Request.Builder restore() {
+      return new Request.Builder().url(baseCacheManagerUrl + "/backups?action=restore");
    }
 }

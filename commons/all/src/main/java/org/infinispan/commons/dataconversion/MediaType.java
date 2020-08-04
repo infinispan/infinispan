@@ -56,6 +56,7 @@ public final class MediaType {
    public static final String IMAGE_GIF_TYPE = "image/gif";
    public static final String IMAGE_JPEG_TYPE = "image/jpeg";
    public static final String IMAGE_PNG_TYPE = "image/png";
+   public static final String MULTIPART_FORM_DATA_TYPE = "multipart/form-data";
    public static final String TEXT_CSS_TYPE = "text/css";
    public static final String TEXT_CSV_TYPE = "text/csv";
    public static final String TEXT_PLAIN_TYPE = "text/plain";
@@ -91,6 +92,7 @@ public final class MediaType {
    public static final MediaType APPLICATION_INFINISPAN_MARSHALLED = fromString(APPLICATION_INFINISPAN_MARSHALLING_TYPE);
    public static final MediaType APPLICATION_WWW_FORM_URLENCODED = fromString(WWW_FORM_URLENCODED_TYPE);
    public static final MediaType IMAGE_PNG = fromString(IMAGE_PNG_TYPE);
+   public static final MediaType MULTIPART_FORM_DATA = fromString(MULTIPART_FORM_DATA_TYPE);
    public static final MediaType TEXT_PLAIN = fromString(TEXT_PLAIN_TYPE);
    public static final MediaType TEXT_CSS = fromString(TEXT_CSS_TYPE);
    public static final MediaType TEXT_CSV = fromString(TEXT_CSV_TYPE);

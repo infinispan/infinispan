@@ -188,6 +188,21 @@ public class BlockingManagerImpl implements BlockingManager {
    }
 
    @Override
+   public <I> CompletionStage<Void> thenRunBlocking(CompletionStage<? extends I> stage, Runnable runnable, Object traceId) {
+      if (isCurrentThreadBlocking()) {
+         if (trace) {
+            log.tracef("Invoked thenRun on a blocking thread, joining %s in same blocking thread", traceId);
+         }
+         try {
+            return stage.thenRun(runnable);
+         } catch (Throwable t) {
+            return CompletableFutures.completedExceptionFuture(t);
+         }
+      }
+      return continueOnNonBlockingThread(stage.thenRunAsync(runnable, blockingExecutor), traceId);
+   }
+
+   @Override
    public <V> CompletionStage<V> whenCompleteBlocking(CompletionStage<V> stage,
          BiConsumer<? super V, ? super Throwable> biConsumer, Object traceId) {
       if (isCurrentThreadBlocking()) {
@@ -244,6 +259,28 @@ public class BlockingManagerImpl implements BlockingManager {
                .subscribeOn(blockingScheduler)
                .observeOn(nonBlockingScheduler);
       });
+   }
+
+   public <V> CompletionStage<Void> blockingPublisherToVoidStage(Publisher<V> publisher, Object traceId) {
+      CompletionStage<Void> stage = Flowable.defer(() -> {
+         Flowable<V> flowable = Flowable.fromPublisher(publisher);
+         if (isCurrentThreadBlocking()) {
+            if (trace) {
+               log.tracef("Invoked on a blocking thread, running %s in same blocking thread", traceId);
+            }
+            return flowable;
+         }
+         if (trace) {
+            flowable = flowable.doOnSubscribe(subscription -> log.tracef("Subscribing to %s on blocking thread", traceId));
+         }
+         flowable = flowable.subscribeOn(blockingScheduler);
+         if (trace) {
+            flowable = flowable.doOnSubscribe(subscription -> log.tracef("Publisher %s subscribing thread is %s", traceId, Thread.currentThread()));
+         }
+         return flowable;
+      }).ignoreElements().toCompletionStage(null);
+
+      return continueOnNonBlockingThread(stage, traceId);
    }
 
    @Override

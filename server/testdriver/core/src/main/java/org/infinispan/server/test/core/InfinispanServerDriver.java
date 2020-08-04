@@ -68,6 +68,8 @@ public interface InfinispanServerDriver {
 
    File getCertificateFile(String name);
 
+   File getRootDir();
+
    File getConfDir();
 
    void applyKeyStore(ConfigurationBuilder builder, String certificateName);

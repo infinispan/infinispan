@@ -987,6 +987,10 @@ public final class Util {
       recursiveFileRemove(file);
    }
 
+   public static void recursiveFileRemove(Path path) {
+      recursiveFileRemove(path.toFile());
+   }
+
    /**
     * Deletes directory recursively.
     *
