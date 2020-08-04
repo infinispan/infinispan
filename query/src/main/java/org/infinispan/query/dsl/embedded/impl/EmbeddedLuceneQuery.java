@@ -10,7 +10,6 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.core.impl.MappingIterator;
 import org.infinispan.query.core.impl.QueryResultImpl;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.impl.BaseQuery;
@@ -43,18 +42,15 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
     */
    private IndexedQuery<T> cacheQuery;
 
-   private final IndexedQueryMode queryMode;
-
    EmbeddedLuceneQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory,
                        Map<String, Object> namedParameters, IckleParsingResult<TypeMetadata> parsingResult,
                        String[] projection, QueryEngine.RowProcessor rowProcessor,
-                       long startOffset, int maxResults, IndexedQueryMode queryMode) {
+                       long startOffset, int maxResults) {
       super(queryFactory, parsingResult.getQueryString(), namedParameters, projection, startOffset, maxResults);
       if (rowProcessor != null && (projection == null || projection.length == 0)) {
          throw new IllegalArgumentException("A RowProcessor can only be specified with projections");
       }
       this.queryEngine = queryEngine;
-      this.queryMode = queryMode;
       this.rowProcessor = rowProcessor;
       this.parsingResult = parsingResult;
    }
@@ -68,7 +64,7 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
       // query is created first time only
       if (cacheQuery == null) {
          validateNamedParameters();
-         cacheQuery = queryEngine.buildLuceneQuery(parsingResult, namedParameters, startOffset, maxResults, queryMode);
+         cacheQuery = queryEngine.buildLuceneQuery(parsingResult, namedParameters, startOffset, maxResults);
          if (timeout > 0) {
             cacheQuery.timeout(timeout, TimeUnit.NANOSECONDS);
          }
@@ -93,7 +89,7 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
    @Override
    public CloseableIterator<T> iterator() {
       IndexedQuery<T> cacheQuery = createCacheQuery();
-      return new MappingIterator(cacheQuery.iterator(), i -> (projection == null) ? i : convertProjectionItem(i) );
+      return new MappingIterator(cacheQuery.iterator(), i -> (projection == null) ? i : convertProjectionItem(i));
    }
 
    @Override
@@ -118,10 +114,10 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
       } else if (row instanceof List) {
          // Hibernate Search 6 uses list to wrap multiple item projection
          List<?> castedRow = (List<?>) row;
-         array = castedRow.toArray(new Object[castedRow.size()]);
+         array = castedRow.toArray(new Object[0]);
       } else {
          // Hibernate Search 6 does not wrap single item projection
-         array = new Object[] {row};
+         array = new Object[]{row};
       }
 
       return (rowProcessor == null) ? array : rowProcessor.apply(array);

@@ -17,7 +17,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.objectfilter.ParsingException;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.remote.impl.RemoteQueryManager;
 import org.infinispan.query.remote.json.JsonQueryErrorResult;
 import org.infinispan.query.remote.json.JsonQueryRequest;
@@ -71,7 +70,7 @@ class CacheResourceQueryAction {
       return CompletableFuture.supplyAsync(() -> {
          try {
             byte[] queryResultBytes = remoteQueryManager.executeQuery(queryString, emptyMap(), finalQuery.getStartOffset(),
-                  finalQuery.getMaxResults(), finalQuery.getQueryMode(), cache, MediaType.APPLICATION_JSON);
+                  finalQuery.getMaxResults(), cache, MediaType.APPLICATION_JSON);
             responseBuilder.entity(queryResultBytes);
             return responseBuilder.build();
          } catch (IllegalArgumentException | ParsingException | IllegalStateException | CacheException e) {
@@ -87,8 +86,7 @@ class CacheResourceQueryAction {
       String strMaxResults = getParameterValue(restRequest, MAX_RESULTS);
       Integer offset = strOffset != null ? Integer.valueOf(strOffset) : null;
       Integer maxResults = strMaxResults != null ? Integer.valueOf(strMaxResults) : null;
-      IndexedQueryMode qm = queryMode != null ? IndexedQueryMode.valueOf(queryMode) : null;
-      return new JsonQueryRequest(queryString, offset, maxResults, qm);
+      return new JsonQueryRequest(queryString, offset, maxResults);
    }
 
    private JsonQueryRequest getQueryFromJSON(RestRequest restRequest) throws IOException {

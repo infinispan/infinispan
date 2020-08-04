@@ -15,11 +15,13 @@ import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.util.StringHelper;
-import org.infinispan.query.ProjectionConstants;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 
 public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
+
+   public static String KEY = "__ISPN_Key";
+   public static String VALUE = "__HSearch_This";
 
    private final SearchMappingHolder searchMapping;
 
@@ -79,7 +81,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
          return false;
       }
 
-      return isRepeatedProperty(entityType, Arrays.copyOfRange(propertyPath, 0, propertyPath.length-1));
+      return isRepeatedProperty(entityType, Arrays.copyOfRange(propertyPath, 0, propertyPath.length - 1));
    }
 
    @Override
@@ -99,10 +101,10 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
          return true;
       }
 
-      if (propertyPath.length == 1 && propertyPath[0].equals(ProjectionConstants.KEY)) {
+      if (propertyPath.length == 1 && propertyPath[0].equals(KEY)) {
          return true;
       }
-      if (propertyPath.length == 1 && propertyPath[0].equals(ProjectionConstants.VALUE)) {
+      if (propertyPath.length == 1 && propertyPath[0].equals(VALUE)) {
          return true;
       }
 

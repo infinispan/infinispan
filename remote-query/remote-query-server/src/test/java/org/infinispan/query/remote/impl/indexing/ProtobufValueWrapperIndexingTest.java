@@ -15,7 +15,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
-import org.infinispan.query.Search;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.infinispan.query.remote.impl.mapping.SerializationContextSearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMapping;
@@ -37,10 +37,10 @@ public class ProtobufValueWrapperIndexingTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-         .memory().encoding().value().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE)
-         .indexing().enable()
-         .addIndexedEntity("sample_bank_account.User")
-         .addProperty("directory.type", "local-heap");
+            .memory().encoding().value().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE)
+            .indexing().enable()
+            .addIndexedEntity("sample_bank_account.User")
+            .addProperty("directory.type", "local-heap");
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalBuilder.serialization().addContextInitializer(TestDomainSCI.INSTANCE);
       return TestCacheManagerFactory.createCacheManager(globalBuilder, cfg);
@@ -52,7 +52,7 @@ public class ProtobufValueWrapperIndexingTest extends SingleCacheManagerTest {
       MarshallerRegistration.registerMarshallers(serCtx);
 
       // Create Search 6 mapping from current SerializationContext:
-      SearchMappingHolder mappingHolder = Search.getSearchManager(cache).unwrap(SearchMappingHolder.class);
+      SearchMappingHolder mappingHolder = ComponentRegistryUtils.getSearchMappingHolder(cache);
       SerializationContextSearchMapping.acquire(serCtx).buildMapping(mappingHolder,
             cache.getCacheConfiguration().indexing().indexedEntityTypes());
       SearchMapping searchMapping = mappingHolder.getSearchMapping();

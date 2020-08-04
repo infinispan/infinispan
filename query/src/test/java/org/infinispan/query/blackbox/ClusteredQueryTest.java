@@ -22,12 +22,11 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.helper.SearchConfig;
-import org.infinispan.query.helper.IndexAccessor;
 import org.infinispan.query.dsl.QueryResult;
+import org.infinispan.query.helper.IndexAccessor;
+import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -78,7 +77,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
             .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
       if (storageType != null) {
          cacheCfg.memory()
-                 .storageType(storageType);
+               .storageType(storageType);
       }
       createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
       cacheAMachine1 = cache(0);
@@ -352,22 +351,6 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       assertEquals("name14", results.get(9).getName());
    }
 
-   public void testPartialIckleQuery() throws IOException {
-      String query = String.format("FROM %s p", Person.class.getName());
-
-      Query<Person> machine1Results = queryFactory1.create(query, IndexedQueryMode.FETCH);
-      Query<Person> machine2Results = queryFactory2.create(query, IndexedQueryMode.FETCH);
-
-      int numDocsMachine1 = countLocalIndex(cacheAMachine1);
-      int numDocsMachine2 = countLocalIndex(cacheAMachine2);
-
-      assertEquals(numOwners() * NUM_ENTRIES, numDocsMachine1 + numDocsMachine2);
-      assertEquals(numDocsMachine1, machine1Results.execute().list().size());
-      assertEquals(numDocsMachine2, machine2Results.execute().list().size());
-
-      StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
-   }
-
    private int countLocalIndex(Cache<String, Person> cache) throws IOException {
       IndexReader indexReader = IndexAccessor.of(cache, Person.class).getIndexReader();
       return indexReader.numDocs();
@@ -387,18 +370,6 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
             .create(String.format("SELECT p.name FROM %s p where p.name:'name3' group by p.name", Person.class.getName()));
 
       aggregationQuery.execute().list();
-   }
-
-   @Test
-   public void testBroadcastNativeInfinispanMatchAllQuery() throws Exception {
-      String q = String.format("FROM %s", Person.class.getName());
-      Query<Person> partialResultQuery = queryFactory1.create(q, IndexedQueryMode.FETCH);
-      Query<Person> fullResultQuery = Search.getQueryFactory(cacheAMachine2).create(q);
-
-      int docsInMachine1 = countLocalIndex(cacheAMachine1);
-
-      assertEquals(docsInMachine1, partialResultQuery.execute().list().size());
-      assertEquals(NUM_ENTRIES, fullResultQuery.execute().list().size());
    }
 
    @Test

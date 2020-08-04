@@ -10,7 +10,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.objectfilter.Matcher;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 
@@ -55,5 +54,5 @@ public interface RemoteQueryManager {
    DataConversion getValueDataConversion();
 
    byte[] executeQuery(String queryString, Map<String, Object> namedParametersMap, Integer offset, Integer maxResults,
-                       IndexedQueryMode queryMode, AdvancedCache<?, ?> cache, MediaType outputFormat);
+                       AdvancedCache<?, ?> cache, MediaType outputFormat);
 }

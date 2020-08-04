@@ -17,7 +17,6 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.impl.BaseQuery;
@@ -33,14 +32,12 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
 
    private final InternalRemoteCache<?, ?> cache;
    private final SerializationContext serializationContext;
-   private final IndexedQueryMode indexedQueryMode;
 
    RemoteQuery(QueryFactory queryFactory, InternalRemoteCache<?, ?> cache, SerializationContext serializationContext,
-               String queryString, IndexedQueryMode indexQueryMode) {
+               String queryString) {
       super(queryFactory, queryString);
       this.cache = cache;
       this.serializationContext = serializationContext;
-      this.indexedQueryMode = indexQueryMode;
    }
 
    RemoteQuery(QueryFactory queryFactory, InternalRemoteCache<?, ?> cache, SerializationContext serializationContext,
@@ -48,7 +45,6 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
       super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
       this.cache = cache;
       this.serializationContext = serializationContext;
-      this.indexedQueryMode = null;
    }
 
    @Override
@@ -110,10 +106,6 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
 
    public RemoteCache<?, ?> getCache() {
       return cache;
-   }
-
-   public IndexedQueryMode getIndexedQueryMode() {
-      return indexedQueryMode;
    }
 
    @Override

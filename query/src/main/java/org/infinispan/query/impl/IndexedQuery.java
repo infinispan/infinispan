@@ -3,14 +3,14 @@ package org.infinispan.query.impl;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.query.CacheQuery;
+import org.infinispan.commons.util.CloseableIterator;
 
 /**
  * A distributed Lucene query.
  *
  * @since 11.0
  */
-public interface IndexedQuery<E> extends CacheQuery<E> {
+public interface IndexedQuery<E> {
 
    /***
     * @return the results of a search as a list.
@@ -31,6 +31,10 @@ public interface IndexedQuery<E> extends CacheQuery<E> {
     * @param numResults the maximum number of results to return.
     */
    IndexedQuery<E> maxResults(int numResults);
+
+   CloseableIterator<E> iterator();
+
+   int getResultSize();
 
    /**
     * Set the timeout for this query. If the query hasn't finished processing before the timeout,

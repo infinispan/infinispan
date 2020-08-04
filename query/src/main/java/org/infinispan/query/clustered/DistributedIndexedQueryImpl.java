@@ -8,20 +8,19 @@ import java.util.concurrent.TimeUnit;
 
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
-import org.infinispan.query.FetchOptions;
-import org.infinispan.query.ResultIterator;
-import org.infinispan.query.impl.CacheQueryImpl;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.impl.IndexedQuery;
+import org.infinispan.query.impl.IndexedQueryImpl;
 import org.infinispan.query.impl.QueryDefinition;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * An extension of CacheQueryImpl used for distributed queries.
+ * An extension of IndexedQueryImpl used for distributed queries.
  *
  * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @since 5.1
  */
-public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
+public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
    private Integer resultSize;
 
@@ -33,7 +32,7 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
 
    private int firstResult = 0;
 
-   public ClusteredCacheQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache) {
+   public DistributedIndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache) {
       super(queryDefinition, cache);
       this.invoker = new ClusteredQueryInvoker(cache);
    }
@@ -65,32 +64,17 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
    }
 
    @Override
-   public ResultIterator<E> iterator(FetchOptions fetchOptions) throws SearchException {
+   public CloseableIterator<E> iterator() throws SearchException {
       partitionHandlingSupport.checkCacheAvailable();
       queryDefinition.setMaxResults(getNodeMaxResults());
-      switch (fetchOptions.getFetchMode()) {
-         case EAGER: {
-            ClusteredQueryOperation command = ClusteredQueryOperation.createEagerIterator(queryDefinition);
-            Map<Address, NodeTopDocs> topDocsResponses = broadcastQuery(command);
 
-            return new DistributedIterator<>(queryDefinition.getSearchQuery().getLuceneSort(),
-                  fetchOptions.getFetchSize(), resultSize, maxResults,
-                  firstResult, topDocsResponses, cache);
-         }
-         case LAZY: {
-//            UUID queryId = UUID.randomUUID();
-//            ClusteredQueryOperation command = ClusteredQueryOperation.createLazyIterator(queryDefinition, queryId);
-//            Map<Address, NodeTopDocs> topDocsResponses = broadcastQuery(command);
+      ClusteredQueryOperation command = ClusteredQueryOperation.createEagerIterator(queryDefinition);
+      Map<Address, NodeTopDocs> topDocsResponses = broadcastQuery(command);
 
-            // TODO HSEARCH-3323 Restore support for scrolling
-//            // Make a sort copy to avoid reversed results
-//            return new DistributedLazyIterator<>(queryDefinition.getSort(),
-//                  fetchOptions.getFetchSize(), resultSize, maxResults,
-//                  firstResult, queryId, topDocsResponses, invoker, cache);
-         }
-         default:
-            throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());
-      }
+      return new DistributedIterator<>(queryDefinition.getSearchQuery().getLuceneSort(),
+            maxResults, resultSize, maxResults,
+            firstResult, topDocsResponses, cache);
+
    }
 
    // number of results of each node of cluster
@@ -118,7 +102,7 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
    public List<E> list() throws SearchException {
       partitionHandlingSupport.checkCacheAvailable();
       List<E> values = new ArrayList<>();
-      try (ResultIterator<E> iterator = iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER))) {
+      try (CloseableIterator<E> iterator = iterator()) {
          while (iterator.hasNext()) {
             values.add(iterator.next());
          }

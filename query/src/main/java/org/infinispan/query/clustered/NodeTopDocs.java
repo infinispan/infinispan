@@ -32,13 +32,6 @@ public final class NodeTopDocs {
       this.projections = projections;
    }
 
-   public NodeTopDocs(Address address, TopDocs topDocs) {
-      this.address = address;
-      this.topDocs = topDocs;
-      this.keys = null;
-      this.projections = null;
-   }
-
    public static final class Externalizer extends AbstractExternalizer<NodeTopDocs> {
 
       @Override

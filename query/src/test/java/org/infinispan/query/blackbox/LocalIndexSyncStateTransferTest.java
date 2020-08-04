@@ -6,13 +6,12 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import org.apache.lucene.index.DirectoryReader;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.IndexedQueryMode;
+import org.infinispan.query.helper.IndexAccessor;
 import org.infinispan.query.helper.SearchConfig;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -48,10 +47,10 @@ public class LocalIndexSyncStateTransferTest extends MultipleCacheManagersTest {
       String address = c.getAdvancedCache().getRpcManager().getAddress().toString();
       Map<Class<?>, AtomicInteger> countPerEntity = getEntityCountPerClass(c);
       countPerEntity.forEach((entity, count) -> {
-         Query<?> q = Search.getQueryFactory(c).create("FROM " + entity.getName(), IndexedQueryMode.FETCH);
+         DirectoryReader reader = IndexAccessor.of(c, entity).getIndexReader();
          Supplier<String> messageSupplier = () -> String.format("On node %s index contains %d entries for entity %s," +
-               " but data container has %d", address, q.list().size(), entity.getName(), count.get());
-         eventually(messageSupplier, () -> q.list().size() == count.get());
+               " but data container has %d", address, reader.numDocs(), entity.getName(), count.get());
+         eventually(messageSupplier, () -> reader.numDocs() == count.get());
       });
    }
 

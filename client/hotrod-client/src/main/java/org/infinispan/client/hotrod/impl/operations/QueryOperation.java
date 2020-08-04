@@ -49,9 +49,6 @@ public final class QueryOperation extends RetryOnFailureOperation<Object> {
          queryRequest.setMaxResults(remoteQuery.getMaxResults());
       }
       queryRequest.setNamedParameters(getNamedParameters());
-      if (remoteQuery.getIndexedQueryMode() != null) {
-         queryRequest.setIndexedQueryMode(remoteQuery.getIndexedQueryMode().toString());
-      }
 
       // marshall and write the request
       byte[] requestBytes = querySerializer.serializeQueryRequest(remoteQuery, queryRequest);

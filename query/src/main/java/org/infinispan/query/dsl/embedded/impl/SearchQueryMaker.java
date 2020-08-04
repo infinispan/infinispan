@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.KEY;
+import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.VALUE;
 import static org.infinispan.query.logging.Log.CONTAINER;
 
 import java.io.IOException;
@@ -56,7 +58,6 @@ import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.syntax.Visitor;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
-import org.infinispan.query.ProjectionConstants;
 import org.infinispan.query.logging.Log;
 import org.infinispan.search.mapper.common.EntityReference;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
@@ -124,10 +125,10 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       }
 
       if (projections.length == 1) {
-         if (ProjectionConstants.VALUE.equals(projections[0])) {
+         if (VALUE.equals(projections[0])) {
             return SearchProjectionInfo.entity(projectionFactory);
          }
-         if (ProjectionConstants.KEY.equals(projections[0])) {
+         if (KEY.equals(projections[0])) {
             return SearchProjectionInfo.entityReference(projectionFactory);
          }
          return SearchProjectionInfo.field(projectionFactory, projections[0], projectedTypes[0]);
@@ -135,9 +136,9 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
 
       SearchProjection<?>[] searchProjections = new SearchProjection<?>[projections.length];
       for (int i = 0; i < projections.length; i++) {
-         if (ProjectionConstants.VALUE.equals(projections[i])) {
+         if (VALUE.equals(projections[i])) {
             searchProjections[i] = projectionFactory.entity().toProjection();
-         } else if (ProjectionConstants.KEY.equals(projections[i])) {
+         } else if (KEY.equals(projections[i])) {
             searchProjections[i] = projectionFactory.entityReference().toProjection();
          } else {
             searchProjections[i] = projectionFactory.field(projections[i], projectedTypes[i]).toProjection();
