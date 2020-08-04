@@ -4,13 +4,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -19,38 +18,28 @@ import org.infinispan.query.remote.client.impl.JsonClientQueryResponse;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 import org.infinispan.query.remote.client.impl.QueryResponse;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.stream.JsonReader;
-
 /**
  * @since 9.4
  */
 enum QuerySerializer {
 
    JSON(APPLICATION_JSON) {
-      private final Gson mapper = new GsonBuilder().disableHtmlEscaping().create();
-
       @Override
-      byte[] serializeQueryRequest(RemoteQuery remoteQuery, QueryRequest queryRequest) {
-         JsonObject object = mapper.toJsonTree(queryRequest).getAsJsonObject();
+      byte[] serializeQueryRequest(RemoteQuery<?> remoteQuery, QueryRequest queryRequest) {
+         Json object = Json.make(queryRequest);
          return object.toString().getBytes(UTF_8);
       }
 
       @Override
-      JsonClientQueryResponse readQueryResponse(Marshaller marshaller, RemoteQuery remoteQuery, byte[] bytesResponse) {
-         try (JsonReader reader = new JsonReader(new InputStreamReader(new ByteArrayInputStream(bytesResponse)))) {
-            return new JsonClientQueryResponse(mapper.fromJson(reader, JsonObject.class));
-         } catch (IOException e) {
-            throw new HotRodClientException(e);
-         }
+      JsonClientQueryResponse readQueryResponse(Marshaller marshaller, RemoteQuery<?> remoteQuery, byte[] bytesResponse) {
+         Json response = Json.read(new String(bytesResponse, UTF_8));
+         return new JsonClientQueryResponse(response);
       }
    },
 
    DEFAULT(MATCH_ALL) {
       @Override
-      byte[] serializeQueryRequest(RemoteQuery remoteQuery, QueryRequest queryRequest) {
+      byte[] serializeQueryRequest(RemoteQuery<?> remoteQuery, QueryRequest queryRequest) {
          final SerializationContext serCtx = remoteQuery.getSerializationContext();
          Marshaller marshaller;
          if (serCtx != null) {
@@ -73,7 +62,7 @@ enum QuerySerializer {
       }
 
       @Override
-      QueryResponse readQueryResponse(Marshaller marshaller, RemoteQuery remoteQuery, byte[] bytesResponse) {
+      QueryResponse readQueryResponse(Marshaller marshaller, RemoteQuery<?> remoteQuery, byte[] bytesResponse) {
          SerializationContext serCtx = remoteQuery.getSerializationContext();
          if (serCtx != null) {
             try {
@@ -106,7 +95,7 @@ enum QuerySerializer {
       return mediaType != null && mediaType.match(APPLICATION_JSON) ? JSON : DEFAULT;
    }
 
-   abstract byte[] serializeQueryRequest(RemoteQuery remoteQuery, QueryRequest queryRequest);
+   abstract byte[] serializeQueryRequest(RemoteQuery<?> remoteQuery, QueryRequest queryRequest);
 
-   abstract BaseQueryResponse readQueryResponse(Marshaller marshaller, RemoteQuery remoteQuery, byte[] bytesResponse);
+   abstract BaseQueryResponse<?> readQueryResponse(Marshaller marshaller, RemoteQuery<?> remoteQuery, byte[] bytesResponse);
 }

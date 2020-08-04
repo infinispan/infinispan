@@ -197,8 +197,7 @@ public final class LifecycleManager implements ModuleLifecycle {
 
       if (encoderRegistry.isConversionSupported(storageMediaType, APPLICATION_JSON)) {
          Transcoder jsonStorage = encoderRegistry.getTranscoder(APPLICATION_JSON, storageMediaType);
-         Transcoder jsonObject = encoderRegistry.getTranscoder(APPLICATION_JSON, APPLICATION_OBJECT);
-         querySerializers.addSerializer(APPLICATION_JSON, new JsonQuerySerializer(storageMediaType, jsonStorage, jsonObject));
+         querySerializers.addSerializer(APPLICATION_JSON, new JsonQuerySerializer(storageMediaType, jsonStorage));
       }
       return querySerializers;
    }

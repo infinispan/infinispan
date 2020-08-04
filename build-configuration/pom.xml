@@ -131,7 +131,6 @@
       <version.glassfish.jaxb>2.3.1</version.glassfish.jaxb>
       <version.glassfish.json>1.1.4</version.glassfish.json>
       <version.groovy>2.4.8</version.groovy>
-      <version.gson>2.8.5</version.gson>
       <version.hamcrest>1.3</version.hamcrest>
       <version.hibernate.core_v51>5.1.17.Final</version.hibernate.core_v51>
       <version.hibernate.core_v53>5.3.17.Final</version.hibernate.core_v53>
@@ -202,8 +201,6 @@
 
       <!-- Versions of feature packs we consume: must match expected versions manually for the time being
         See also note in wildfly-modules/provisioning-of-hibernatesearch.xml -->
-      <version.gson.featurepack>2.8.2.hibernate03</version.gson.featurepack>
-      <version.gson.module.slot>2.8</version.gson.module.slot>
       <version.lucene.featurepack>5.5.5.hibernate05</version.lucene.featurepack>
 
       <!-- Plugin dependencies -->

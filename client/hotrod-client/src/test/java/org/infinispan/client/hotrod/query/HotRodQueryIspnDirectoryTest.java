@@ -34,7 +34,9 @@ public class HotRodQueryIspnDirectoryTest extends HotRodQueryTest {
       assertEquals("Tom", user1.at("name").asString());
       assertEquals("Cat", user1.at("surname").asString());
 
-      Query<String> query = Search.getQueryFactory(jsonCache).create("FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<String> query = Search.getQueryFactory(jsonCache).create("FROM sample_bank_account.User WHERE name = :name");
+      query.maxResults(10).startOffset(0).setParameter("name", "Tom");
+
       QueryResult<String> result = query.execute();
       List<String> results = result.list();
 

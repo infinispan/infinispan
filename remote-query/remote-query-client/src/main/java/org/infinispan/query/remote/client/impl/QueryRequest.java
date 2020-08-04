@@ -1,11 +1,15 @@
 package org.infinispan.query.remote.client.impl;
 
+import static java.util.stream.Collectors.toList;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.WrappedMessage;
@@ -15,8 +19,12 @@ import org.infinispan.protostream.WrappedMessage;
  * @since 6.0
  */
 @SerializeWith(Externalizers.QueryRequestExternalizer.class)
-public final class QueryRequest {
+public final class QueryRequest implements JsonSerialization {
 
+   public static final String QUERY_STRING_FIELD = "queryString";
+   public static final String START_OFFSET_FIELD = "startOffset";
+   public static final String MAX_RESULTS_FIELD = "maxResults";
+   public static final String NAMED_PARAMETERS_FIELD = "namedParameters";
    private String queryString;
 
    private List<NamedParameter> namedParameters;
@@ -78,6 +86,31 @@ public final class QueryRequest {
       return indexedQueryMode;
    }
 
+   public static QueryRequest fromJson(Json jsonRequest) {
+      String queryString = jsonRequest.at(QUERY_STRING_FIELD).asString();
+      Json offsetValue = jsonRequest.at(START_OFFSET_FIELD);
+      Json maxResults = jsonRequest.at(MAX_RESULTS_FIELD);
+      List<NamedParameter> params = jsonRequest.at(NAMED_PARAMETERS_FIELD).asJsonList().stream()
+            .map(NamedParameter::fromJson).collect(toList());
+
+      QueryRequest queryRequest = new QueryRequest();
+      queryRequest.setQueryString(queryString);
+      if (!offsetValue.isNull()) queryRequest.setStartOffset(offsetValue.asLong());
+      if (!maxResults.isNull()) queryRequest.setMaxResults(maxResults.asInteger());
+      if (!params.isEmpty()) queryRequest.setNamedParameters(params);
+
+      return queryRequest;
+   }
+
+   @Override
+   public Json toJson() {
+      return Json.object()
+            .set(QUERY_STRING_FIELD, queryString)
+            .set(START_OFFSET_FIELD, startOffset)
+            .set(MAX_RESULTS_FIELD, maxResults)
+            .set(NAMED_PARAMETERS_FIELD, Json.make(getNamedParameters()));
+   }
+
    static final class Marshaller implements MessageMarshaller<QueryRequest> {
 
       @Override
@@ -112,7 +145,9 @@ public final class QueryRequest {
    }
 
    @SerializeWith(Externalizers.NamedParameterExternalizer.class)
-   public static final class NamedParameter {
+   public static final class NamedParameter implements JsonSerialization {
+      public static final String NAME_FIELD = "name";
+      public static final String VALUE_FIELD = "value";
 
       private final String name;
 
@@ -135,6 +170,17 @@ public final class QueryRequest {
 
       public Object getValue() {
          return value;
+      }
+
+      @Override
+      public Json toJson() {
+         return Json.object(NAME_FIELD, name).set(VALUE_FIELD, value);
+      }
+
+      public static NamedParameter fromJson(Json source) {
+         String name = source.at(NAME_FIELD).asString();
+         Object value = source.at(VALUE_FIELD).getValue();
+         return new NamedParameter(name, value);
       }
 
       static final class Marshaller implements MessageMarshaller<NamedParameter> {

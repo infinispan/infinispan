@@ -2,14 +2,13 @@ package org.infinispan.query.remote.impl;
 
 import static java.util.stream.Collectors.toList;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.query.remote.impl.RemoteQueryManager.QUERY_REQUEST_TYPE;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 import org.infinispan.query.remote.json.Hit;
 import org.infinispan.query.remote.json.JsonQueryResponse;
@@ -25,17 +24,15 @@ class JsonQuerySerializer implements QuerySerializer<JsonQueryResponse> {
 
    private final MediaType storageMediaTye;
    private final Transcoder transcoderFromStorage;
-   private final Transcoder transcoderToObject;
 
-   JsonQuerySerializer(MediaType storageMediaTye, Transcoder transcoderFromStorage, Transcoder transcoderToObject) {
+   JsonQuerySerializer(MediaType storageMediaTye, Transcoder transcoderFromStorage) {
       this.storageMediaTye = storageMediaTye;
       this.transcoderFromStorage = transcoderFromStorage;
-      this.transcoderToObject = transcoderToObject;
    }
 
    @Override
    public QueryRequest decodeQueryRequest(byte[] queryRequest, MediaType mediaType) {
-      return (QueryRequest) transcoderToObject.transcode(queryRequest, mediaType, QUERY_REQUEST_TYPE);
+      return QueryRequest.fromJson(Json.read(new String(queryRequest, mediaType.getCharset())));
    }
 
    @Override
@@ -57,7 +54,7 @@ class JsonQuerySerializer implements QuerySerializer<JsonQueryResponse> {
 
    @Override
    public byte[] encodeQueryResponse(Object queryResponse, MediaType destinationType) {
-      return ((JsonQueryResponse) queryResponse).toJson().toString().getBytes(StandardCharsets.UTF_8);
+      return ((JsonQueryResponse) queryResponse).toJson().toString().getBytes(destinationType.getCharset());
    }
 
 }
