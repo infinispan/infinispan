@@ -16,7 +16,6 @@
       <bundle>wrap:mvn:io.netty/netty-transport/${version.netty}</bundle>
       <bundle>wrap:mvn:io.netty/netty-transport-native-epoll/${version.netty}</bundle>
       <bundle>wrap:mvn:io.netty/netty-transport-native-unix-common/${version.netty}</bundle>
-      <bundle>wrap:mvn:com.google.code.gson/gson/${version.gson}</bundle>
       <!-- Do not export the jboss-logging classes in the elytron jar -->
       <bundle>wrap:mvn:org.wildfly.security/wildfly-elytron/${version.org.wildfly.elytron}$Export-Package=org.wildfly.security.*</bundle>
    </feature>
@@ -26,6 +25,5 @@
       <feature version="${version.protostream}">protostream</feature>
       <bundle>mvn:org.infinispan/infinispan-remote-query-client/${project.version}</bundle>
       <bundle>mvn:org.infinispan/infinispan-query-dsl/${project.version}</bundle>
-      <bundle>wrap:mvn:com.google.code.gson/gson/${version.gson}</bundle>
    </feature>
 </features>
