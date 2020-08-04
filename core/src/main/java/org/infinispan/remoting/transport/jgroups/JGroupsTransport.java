@@ -13,13 +13,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -45,6 +46,7 @@ import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
@@ -87,7 +89,6 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.jgroups.Event;
@@ -1217,12 +1218,12 @@ public class JGroupsTransport implements Transport {
    private void updateSitesView(Collection<String> sitesUp, Collection<String> sitesDown) {
       viewUpdateLock.lock();
       try {
-         Set<String> reachableSites = new HashSet<>(sitesView);
+         SortedSet<String> reachableSites = new TreeSet<>(sitesView);
          reachableSites.addAll(sitesUp);
          reachableSites.removeAll(sitesDown);
          log.tracef("Sites view changed: up %s, down %s, new view is %s", sitesUp, sitesDown, reachableSites);
          XSITE.receivedXSiteClusterView(reachableSites);
-         sitesView = Collections.unmodifiableSet(reachableSites);
+         sitesView = Collections.unmodifiableSortedSet(reachableSites);
       } finally {
          viewUpdateLock.unlock();
       }
