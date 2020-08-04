@@ -1,0 +1,25 @@
+.Resource Parameters
+|===
+|Key |Required or Optional |Value
+
+|`caches`
+|OPTIONAL
+|An array of cache names to backup, or "*" for all
+
+|`cache-configs`
+|OPTIONAL
+|An array of cache configuration to backup, or "*" for all
+
+|`counters`
+|OPTIONAL
+|An array of counter names to backup, or "*" for all
+
+|`proto-schemas`
+|OPTIONAL
+|An array of protobuf schema names to backup, or "*" for all
+
+|`scripts`
+|OPTIONAL
+|An array of scripts names to backup, or "*" for all
+
+|===
