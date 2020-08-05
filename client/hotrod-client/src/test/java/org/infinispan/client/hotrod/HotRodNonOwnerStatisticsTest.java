@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -59,10 +60,10 @@ public class HotRodNonOwnerStatisticsTest extends MultipleCacheManagersTest {
 
    private void newCacheManager() {
       ConfigurationBuilder cfg = hotRodCacheConfiguration();
-      cfg.jmxStatistics().enable();
+      cfg.statistics().enable();
       cfg.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2);
       GlobalConfigurationBuilder globalCfg = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalCfg.globalJmxStatistics().enable();
+      globalCfg.jmx().mBeanServerLookup(TestMBeanServerLookup.create()).enable();
       addClusterEnabledCacheManager(globalCfg, cfg);
    }
 
