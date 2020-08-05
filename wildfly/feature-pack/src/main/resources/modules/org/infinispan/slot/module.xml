@@ -20,10 +20,10 @@
       <artifact name="${org.infinispan:infinispan-multimap}"/>
       <artifact name="${org.infinispan:infinispan-objectfilter}"/>
       <artifact name="${org.infinispan:infinispan-persistence-soft-index}"/>
-<!--      <artifact name="${org.infinispan:infinispan-query}"/>-->
-<!--      <artifact name="${org.infinispan:infinispan-query-core}"/>-->
-<!--      <artifact name="${org.infinispan:infinispan-query-dsl}"/>-->
-<!--      <artifact name="${org.infinispan:infinispan-remote-query-client}"/>-->
+      <artifact name="${org.infinispan:infinispan-query}"/>
+      <artifact name="${org.infinispan:infinispan-query-core}"/>
+      <artifact name="${org.infinispan:infinispan-query-dsl}"/>
+      <artifact name="${org.infinispan:infinispan-remote-query-client}"/>
       <artifact name="${org.infinispan.protostream:protostream}"/>
       <artifact name="${org.infinispan:infinispan-jboss-marshalling}"/>
 
@@ -66,6 +66,15 @@
       <artifact name="${software.amazon.ion:ion-java}"/>
 
       <artifact name="${org.antlr:antlr-runtime}"/>
+
+      <artifact name="${org.hibernate.search:hibernate-search-engine}"/>
+      <artifact name="${org.hibernate.search:hibernate-search-mapper-pojo-base}"/>
+      <artifact name="${org.hibernate.search:hibernate-search-util-common}"/>
+      <artifact name="${org.apache.lucene:lucene-core}"/>
+      <artifact name="${org.apache.lucene:lucene-analyzers-common}"/>
+      <artifact name="${org.apache.lucene:lucene-queryparser}"/>
+      <artifact name="${org.apache.lucene:lucene-join}"/>
+      <artifact name="${org.apache.lucene:lucene-facet}"/>
    </resources>
 
    <dependencies>
