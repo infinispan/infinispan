@@ -305,6 +305,7 @@
       <versionx.org.apache.lucene.lucene-core>${version.lucene}</versionx.org.apache.lucene.lucene-core>
       <versionx.org.apache.lucene.lucene-facet>${version.lucene}</versionx.org.apache.lucene.lucene-facet>
       <versionx.org.apache.lucene.lucene-grouping>${version.lucene}</versionx.org.apache.lucene.lucene-grouping>
+      <versionx.org.apache.lucene.lucene-join>${version.lucene}</versionx.org.apache.lucene.lucene-join>
       <versionx.org.apache.lucene.lucene-misc>${version.lucene}</versionx.org.apache.lucene.lucene-misc>
       <versionx.org.apache.lucene.lucene-queryparser>${version.lucene}</versionx.org.apache.lucene.lucene-queryparser>
       <versionx.org.apache.maven.maven-core>3.5.4</versionx.org.apache.maven.maven-core>
@@ -323,7 +324,6 @@
       <versionx.org.hibernate.search.hibernate-search-mapper-pojo-base>${version.hibernate.search}</versionx.org.hibernate.search.hibernate-search-mapper-pojo-base>
       <versionx.org.hibernate.hibernate-testing>${version.hibernate.core}</versionx.org.hibernate.hibernate-testing>
       <versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api>1.0.0.Final</versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api>
-      <versionx.org.hibernate.lucene-jbossmodules.lucene-jbossmodules>${version.lucene.featurepack}</versionx.org.hibernate.lucene-jbossmodules.lucene-jbossmodules>
       <versionx.org.jacoco.org.jacoco.agent>${version.jacoco}</versionx.org.jacoco.org.jacoco.agent>
       <versionx.org.javassist.javassist>3.26.0-GA</versionx.org.javassist.javassist>
       <versionx.org.jboss.arquillian.container.arquillian-weld-embedded>2.0.1.Final</versionx.org.jboss.arquillian.container.arquillian-weld-embedded>
@@ -863,6 +863,11 @@
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-grouping</artifactId>
             <version>${versionx.org.apache.lucene.lucene-grouping}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-join</artifactId>
+            <version>${versionx.org.apache.lucene.lucene-join}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.lucene</groupId>

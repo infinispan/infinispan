@@ -12,7 +12,6 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
-import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,7 +20,6 @@ import org.junit.runner.RunWith;
  * @since 9.0
  */
 @RunWith(Arquillian.class)
-@Ignore
 public class InfinispanRemoteWithQueryIT extends BaseHotRodQueryIT {
 
    @Deployment

@@ -196,10 +196,6 @@
       <version.spring.session>2.3.0.RELEASE</version.spring.session>
       <version.micrometer>1.5.2</version.micrometer>
 
-      <!-- Versions of feature packs we consume: must match expected versions manually for the time being
-        See also note in wildfly-modules/provisioning-of-hibernatesearch.xml -->
-      <version.lucene.featurepack>5.5.5.hibernate05</version.lucene.featurepack>
-
       <!-- Plugin dependencies -->
       <version.checkstyle.maven-plugin>3.1.1</version.checkstyle.maven-plugin>
       <version.maven.antlr3>${version.antlr3}</version.maven.antlr3>
