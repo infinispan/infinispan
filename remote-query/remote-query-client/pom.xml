@@ -9,7 +9,6 @@
    </parent>
 
    <artifactId>infinispan-remote-query-client</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan Remote Query Client</name>
    <description>Infinispan Remote Query common classes between client and server</description>
 
@@ -61,18 +60,6 @@
                   <version>${version.maven.surefire}</version>
                </dependency>
             </dependencies>
-         </plugin>
-
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.query.remote.client.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-               </instructions>
-            </configuration>
          </plugin>
       </plugins>
    </build>

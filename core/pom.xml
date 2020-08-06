@@ -10,7 +10,6 @@
    </parent>
 
    <artifactId>infinispan-core</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan Core</name>
    <description>Infinispan core module</description>
 
@@ -160,32 +159,10 @@
          <version>2.Final</version>
          <scope>provided</scope>
       </dependency>
-
-      <!-- We need the Karaf distribution as a dependency for karaf-maven-plugin -->
-      <!-- But we don't want to use its dependencies (e.g. pax-logging-api) in the core tests -->
-      <dependency>
-         <groupId>org.apache.karaf.features</groupId>
-         <artifactId>framework</artifactId>
-         <type>kar</type>
-         <scope>provided</scope>
-         <exclusions>
-            <exclusion>
-               <groupId>*</groupId>
-               <artifactId>*</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
    </dependencies>
 
    <build>
       <resources>
-         <resource>
-            <directory>${project.basedir}/src/main/resources</directory>
-            <filtering>true</filtering>
-            <includes>
-               <include>features.xml</include>
-            </includes>
-         </resource>
          <resource>
             <directory>${project.basedir}/src/main/resources</directory>
             <filtering>false</filtering>
@@ -200,7 +177,6 @@
                <include>**/*</include>
             </includes>
             <excludes>
-               <exclude>features.xml</exclude>
                <exclude>schema/**</exclude>
             </excludes>
          </resource>
@@ -223,87 +199,6 @@
          </testResource>
       </testResources>
       <plugins>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>generate-blueprint</id>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-                  <phase>prepare-package</phase>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     !${project.groupId}.component.*,
-                     !${project.groupId}.factories.annotations,
-                     !${project.groupId}.factories.scopes,
-                     !${project.groupId}.jmx.annotations,
-                     !${project.groupId}.commons.*,
-                     !${project.groupId}.counter.*,
-                     !${project.groupId}.multimap.*,
-                     !${project.groupId}.lock.*,
-                     !${project.groupId}.protostream.*,
-                     ${project.groupId}.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-                  <Import-Package>
-                     <!-- These exclusions are needed as long as we reference the annotations in code -->
-                     <!-- Deprecated org.infinispan.factories.components.*Metadata -->
-                     <!-- Making the annotations dependency optional would have also satisfied the verify plugin -->
-                     !org.infinispan.factories.annotations.*,
-                     !org.infinispan.factories.scopes.*,
-                     !org.infinispan.jmx.annotations.*,
-                     *
-                  </Import-Package>
-                  <Include-Resource>
-                     {maven-resources},
-                     /schema=${project.build.outputDirectory}/schema,
-                     /proto=${project.build.outputDirectory}/proto,
-                     /META-INF/services=${project.build.outputDirectory}/META-INF/services,
-                     /OSGI-INF/blueprint/blueprint.xml=${project.build.outputDirectory}/OSGI-INF/blueprint/blueprint.xml
-                  </Include-Resource>
-                  <DynamicImport-Package>*</DynamicImport-Package>
-               </instructions>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>build-helper-maven-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>attach-artifacts</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>attach-artifact</goal>
-                  </goals>
-                  <configuration>
-                     <artifacts>
-                        <artifact>
-                           <file>target/classes/features.xml</file>
-                           <type>xml</type>
-                           <classifier>features</classifier>
-                        </artifact>
-                     </artifacts>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.karaf.tooling</groupId>
-            <artifactId>karaf-maven-plugin</artifactId>
-            <configuration>
-               <features>
-                  <feature>infinispan-core</feature>
-               </features>
-            </configuration>
-         </plugin>
          <plugin>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-defaults-maven-plugin</artifactId>

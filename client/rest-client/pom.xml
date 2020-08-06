@@ -9,7 +9,6 @@
    </parent>
 
    <artifactId>infinispan-client-rest</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan REST Client</name>
    <description>Infinispan REST Client</description>
 
@@ -34,21 +33,5 @@
             </includes>
          </resource>
       </resources>
-      <plugins>
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.client.rest.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-                  <Import-Package>
-                     *
-                  </Import-Package>
-               </instructions>
-            </configuration>
-         </plugin>
-      </plugins>
    </build>
 </project>

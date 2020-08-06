@@ -1,5 +1,9 @@
 = Upgrading from 11.0 to 12.0
 
+== OSGi
+
+Support for OSGi was deprecated and has been removed.
+
 == REST
 
 Some operations that previously supported both `GET` and `POST` now support only `POST`:

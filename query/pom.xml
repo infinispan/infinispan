@@ -9,7 +9,6 @@
    </parent>
 
    <artifactId>infinispan-query</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan Query</name>
    <description>Infinispan Query module</description>
 
@@ -174,41 +173,6 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
                <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true</argLine>
-            </configuration>
-         </plugin>
-
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>generate-blueprint</id>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-                  <phase>prepare-package</phase>
-               </execution>
-            </executions>
-         </plugin>
-
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     !${project.groupId}.query.dsl.*,
-                     !${project.groupId}.query.api.continuous.*,
-                     !${project.groupId}.query.core.*,
-                     ${project.groupId}.query.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-                  <Include-Resource>
-                     {maven-resources},
-                     /proto=${project.basedir}/target/classes/proto,
-                     /META-INF/services=${project.basedir}/target/classes/META-INF/services,
-                     /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
-                  </Include-Resource>
-               </instructions>
             </configuration>
          </plugin>
          <plugin>

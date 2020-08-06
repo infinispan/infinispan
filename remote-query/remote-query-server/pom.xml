@@ -8,7 +8,6 @@
       <relativePath>../../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-remote-query-server</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan Remote Query Server</name>
    <description>Infinispan Remote Query Server module</description>
 
@@ -92,36 +91,6 @@
          </resource>
       </resources>
       <plugins>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>generate-blueprint</id>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-                  <phase>prepare-package</phase>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.remote-query-server.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-                  <Include-Resource>
-                     {maven-resources},
-                     /proto=${project.basedir}/target/classes/proto,
-                     /META-INF/services=${project.basedir}/target/classes/META-INF/services,
-                     /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
-                  </Include-Resource>
-               </instructions>
-            </configuration>
-         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>

@@ -35,17 +35,6 @@
                <excludes combine.self="override" />
             </configuration>
          </plugin>
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.tasks.*;version=${project.version};-split-package:=merge-last
-                  </Export-Package>
-               </instructions>
-            </configuration>
-         </plugin>
       </plugins>
    </build>
 

@@ -9,7 +9,6 @@
    </parent>
 
    <artifactId>infinispan-client-hotrod</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan Hot Rod Client</name>
    <description>Infinispan Hot Rod Client</description>
 
@@ -196,21 +195,6 @@
          <groupId>org.objectweb.howl</groupId>
          <artifactId>howl</artifactId>
          <scope>test</scope>
-      </dependency>
-
-      <!-- We need the Karaf distribution as a dependency for karaf-maven-plugin -->
-      <!-- But we don't want to use its dependencies (e.g. pax-logging-api) in the tests -->
-      <dependency>
-        <groupId>org.apache.karaf.features</groupId>
-        <artifactId>framework</artifactId>
-        <type>kar</type>
-        <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
    </dependencies>
 
@@ -546,52 +530,6 @@
                   </configuration>
                </execution>
             </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.client.hotrod.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-                  <Import-Package>
-                     *
-                  </Import-Package>
-               </instructions>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>build-helper-maven-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>attach-artifacts</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>attach-artifact</goal>
-                  </goals>
-                  <configuration>
-                     <artifacts>
-                        <artifact>
-                           <file>target/classes/features.xml</file>
-                           <type>xml</type>
-                           <classifier>features</classifier>
-                        </artifact>
-                     </artifacts>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.karaf.tooling</groupId>
-            <artifactId>karaf-maven-plugin</artifactId>
-            <configuration>
-               <features>
-                  <feature>infinispan-client-hotrod</feature>
-                  <feature>infinispan-client-hotrod-with-query</feature>
-               </features>
-            </configuration>
          </plugin>
       </plugins>
    </build>

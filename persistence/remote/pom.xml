@@ -8,7 +8,6 @@
       <relativePath>../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-cachestore-remote</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan Remote CacheStore</name>
    <description>Infinispan remote CacheStore based on Hot Rod protocol</description>
 
@@ -91,29 +90,10 @@
          <artifactId>mockito-core</artifactId>
          <scope>test</scope>
       </dependency>
-      <dependency>
-        <groupId>org.apache.karaf.features</groupId>
-        <artifactId>framework</artifactId>
-        <type>kar</type>
-        <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
    </dependencies>
 
    <build>
       <resources>
-         <resource>
-            <directory>${project.basedir}/src/main/resources</directory>
-            <filtering>true</filtering>
-            <includes>
-               <include>features.xml</include>
-            </includes>
-         </resource>
          <resource>
             <directory>${project.basedir}/src/main/resources</directory>
             <filtering>false</filtering>
@@ -128,7 +108,6 @@
                <include>**/*</include>
             </includes>
             <excludes>
-               <exclude>features.xml</exclude>
                <exclude>schema/**</exclude>
             </excludes>
          </resource>
@@ -369,52 +348,6 @@
                      </target>
                   </configuration>
                </execution>
-               <execution>
-                  <id>generate-blueprint</id>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-                  <phase>prepare-package</phase>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.persistence.remote.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-                  <Include-Resource>
-                     {maven-resources},
-                     /schema=${project.build.outputDirectory}/schema,
-                     /META-INF/services=${project.build.outputDirectory}/META-INF/services,
-                     /OSGI-INF/blueprint/blueprint.xml=${project.build.outputDirectory}/OSGI-INF/blueprint/blueprint.xml
-                  </Include-Resource>
-               </instructions>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>build-helper-maven-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>attach-artifacts</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>attach-artifact</goal>
-                  </goals>
-                  <configuration>
-                     <artifacts>
-                        <artifact>
-                           <file>target/classes/features.xml</file>
-                           <type>xml</type>
-                           <classifier>features</classifier>
-                        </artifact>
-                     </artifacts>
-                  </configuration>
-               </execution>
             </executions>
          </plugin>
          <plugin>
@@ -430,15 +363,6 @@
                   </goals>
                </execution>
             </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.karaf.tooling</groupId>
-            <artifactId>karaf-maven-plugin</artifactId>
-            <configuration>
-               <features>
-                  <feature>infinispan-cachestore-remote</feature>
-               </features>
-            </configuration>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>

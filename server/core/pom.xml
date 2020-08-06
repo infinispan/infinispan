@@ -10,7 +10,6 @@
    </parent>
 
    <artifactId>infinispan-server-core</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan Server - Core Components</name>
    <description>Infinispan Server - Core Components</description>
 
@@ -115,22 +114,6 @@
 
    <build>
       <plugins>
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.server.core.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-                  <Include-Resource>
-                     {maven-resources},
-                     /proto=${project.basedir}/target/classes/proto,
-                     /META-INF/services=${project.basedir}/target/classes/META-INF/services
-                  </Include-Resource>
-               </instructions>
-            </configuration>
-         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>

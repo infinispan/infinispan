@@ -28,8 +28,7 @@ public final class LookupNames {
       GLASSFISH("java:appserver/TransactionManager", "Sun Glassfish"),
       BORLAND_SUN("java:pm/TransactionManager", "Borland, Sun"),
       WEBLOGIC("javax.transaction.TransactionManager", "BEA WebLogic"),
-      RESIN_ORION_JONAS("java:comp/UserTransaction", "Resin, Orion, JOnAS (JOTM)"),
-      KARAF("osgi:service/javax.transaction.TransactionManager", "Karaf");
+      RESIN_ORION_JONAS("java:comp/UserTransaction", "Resin, Orion, JOnAS (JOTM)");
 
       private final String jndiLookup;
       private final String prettyName;

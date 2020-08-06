@@ -269,12 +269,6 @@
                 <artifactId>infinispan-objectfilter</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
-            <!-- TODO should be here? -->
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-osgi</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-persistence-soft-index</artifactId>

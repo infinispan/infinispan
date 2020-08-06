@@ -7,15 +7,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
-import javax.persistence.spi.PersistenceProvider;
 
-import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceReference;
 
 /**
  *
@@ -92,16 +86,6 @@ public class EntityManagerFactoryRegistry {
    }
 
    private static EntityManagerFactory createEntityManagerFactory(String persistenceUnitName) {
-      if (Util.isOSGiContext()) {
-         Bundle thisBundle = FrameworkUtil.getBundle(EntityManagerFactoryRegistry.class);
-         BundleContext context = thisBundle.getBundleContext();
-
-         ServiceReference<?> serviceReference = context.getServiceReference(PersistenceProvider.class.getName());
-         PersistenceProvider persistenceProvider = (PersistenceProvider) context.getService(serviceReference);
-
-         return persistenceProvider.createEntityManagerFactory(persistenceUnitName, null);
-      } else {
-         return Persistence.createEntityManagerFactory(persistenceUnitName);
-      }
+      return Persistence.createEntityManagerFactory(persistenceUnitName);
    }
 }

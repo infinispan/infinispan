@@ -14,7 +14,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.util.Features;
-import org.infinispan.commons.util.Util;
 
 public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
 
@@ -26,9 +25,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private Features features;
 
    public GlobalConfigurationBuilder() {
-      // In OSGi contexts the TCCL should not be used. Use the infinispan-core bundle as default instead.
-      ClassLoader defaultCL = null;
-      if (!Util.isOSGiContext()) defaultCL = Thread.currentThread().getContextClassLoader();
+      ClassLoader defaultCL = Thread.currentThread().getContextClassLoader();
       if (defaultCL == null) defaultCL = GlobalConfigurationBuilder.class.getClassLoader();
       this.cl = defaultCL;
       this.cacheContainerConfiguration = new CacheContainerConfigurationBuilder(this);

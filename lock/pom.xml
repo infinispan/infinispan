@@ -11,7 +11,6 @@
     <artifactId>infinispan-clustered-lock</artifactId>
     <name>Infinispan Clustered Lock</name>
     <description>Infinispan Clustered Lock module</description>
-    <packaging>bundle</packaging>
 
     <properties>
         <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
@@ -19,22 +18,13 @@
 
     <build>
         <resources>
-            <resource>
-                <directory>${project.basedir}/src/main/resources</directory>
-                <filtering>true</filtering>
-                <includes>
-                    <include>features.xml</include>
-                </includes>
-            </resource>
+
            <resource>
               <directory>${project.basedir}/src/main/resources</directory>
               <filtering>false</filtering>
               <includes>
                  <include>**/*</include>
               </includes>
-              <excludes>
-                 <exclude>features.xml</exclude>
-              </excludes>
            </resource>
         </resources>
         <testResources>
@@ -44,39 +34,6 @@
             </testResource>
         </testResources>
         <plugins>
-           <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-antrun-plugin</artifactId>
-              <executions>
-                 <execution>
-                    <id>generate-blueprint</id>
-                    <goals>
-                       <goal>run</goal>
-                    </goals>
-                    <phase>prepare-package</phase>
-                 </execution>
-              </executions>
-           </plugin>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <configuration>
-                    <instructions>
-                        <Export-Package>
-                            !${project.groupId}.lock.api.*;version=${project.version};-split-package:=error,
-                            !${project.groupId}.lock.exception.*;version=${project.version};-split-package:=error
-                            ${project.groupId}.lock.*;version=${project.version};-split-package:=error
-                        </Export-Package>
-                        <Include-Resource>
-                           {maven-resources},
-                           /schema=${project.build.outputDirectory}/schema,
-                           /META-INF/services=${project.build.outputDirectory}/META-INF/services,
-                           /OSGI-INF/blueprint/blueprint.xml=${project.build.outputDirectory}/OSGI-INF/blueprint/blueprint.xml
-                        </Include-Resource>
-                    </instructions>
-                </configuration>
-            </plugin>
-
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
@@ -87,37 +44,6 @@
                </dependenciesToScan>
             </configuration>
          </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>attach-artifacts</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>attach-artifact</goal>
-                        </goals>
-                        <configuration>
-                            <artifacts>
-                                <artifact>
-                                    <file>target/classes/features.xml</file>
-                                    <type>xml</type>
-                                    <classifier>features</classifier>
-                                </artifact>
-                            </artifacts>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.karaf.tooling</groupId>
-                <artifactId>karaf-maven-plugin</artifactId>
-                <configuration>
-                    <features>
-                        <feature>infinispan-clustered-lock</feature>
-                    </features>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
@@ -129,18 +55,6 @@
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.karaf.features</groupId>
-            <artifactId>framework</artifactId>
-            <type>kar</type>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>

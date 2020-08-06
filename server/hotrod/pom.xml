@@ -9,7 +9,6 @@
    </parent>
 
    <artifactId>infinispan-server-hotrod</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan Hot Rod Server</name>
    <description>Infinispan Hot Rod Server</description>
 
@@ -221,22 +220,6 @@
                   </configuration>
                </execution>
             </executions>
-         </plugin>
-
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.server.hotrod.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-                  <Include-Resource>
-                     {maven-resources},
-                     /META-INF/services=${project.basedir}/target/classes/META-INF/services
-                  </Include-Resource>
-               </instructions>
-            </configuration>
          </plugin>
 
          <plugin>

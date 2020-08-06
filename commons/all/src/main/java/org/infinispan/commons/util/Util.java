@@ -67,7 +67,6 @@ public final class Util {
    private static final boolean IS_ARRAYS_DEBUG = Boolean.getBoolean("infinispan.arrays.debug");
    private static final int COLLECTIONS_LIMIT = Integer.getInteger("infinispan.collections.limit", 8);
    public static final int HEX_DUMP_LIMIT = Integer.getInteger("infinispan.hexdump.limit", 64);
-   private static final boolean IS_OSGI_CONTEXT;
 
    public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
    public static final String[] EMPTY_STRING_ARRAY = new String[0];
@@ -90,13 +89,6 @@ public final class Util {
    private static final String javaVendor = SecurityActions.getProperty("java.vendor", "");
 
    static {
-      boolean osgi = false;
-      try {
-         osgi = Util.class.getClassLoader() instanceof org.osgi.framework.BundleReference;
-      } catch (NoClassDefFoundError ex) {
-         // Ignore
-      }
-      IS_OSGI_CONTEXT = osgi;
       BASIC_TYPES = new HashSet<>();
       BASIC_TYPES.add(Boolean.class);
       BASIC_TYPES.add(Byte.class);
@@ -149,23 +141,8 @@ public final class Util {
       }
    }
 
-   /**
-    * Tries to determine if the code is running in an OSGi context.
-    *
-    * @return true if an OSGi context is detected
-    * @deprecated Since 10.1, OSGi support is deprecated and will be removed in a future version.
-    */
-   @Deprecated
-   public static boolean isOSGiContext() {
-      return IS_OSGI_CONTEXT;
-   }
-
    public static ClassLoader[] getClassLoaders(ClassLoader appClassLoader) {
-      if (isOSGiContext()) {
-         return SecurityActions.getOSGIContextClassLoaders(appClassLoader);
-      } else {
-         return SecurityActions.getClassLoaders(appClassLoader);
-      }
+      return SecurityActions.getClassLoaders(appClassLoader);
    }
 
    /**

@@ -10,7 +10,6 @@
    </parent>
 
    <artifactId>infinispan-cli-client</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan CLI Client</name>
    <description>Infinispan CLI Client module</description>
 
@@ -98,22 +97,6 @@
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${junitListener}</listener>
                </properties>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Main-Class>${cli.main.class}</Main-Class>
-                  <Export-Package>
-                     ${project.groupId}.cli.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-                  <Include-Resource>
-                     {maven-resources},
-                     /META-INF/services=${project.basedir}/target/classes/META-INF/services
-                  </Include-Resource>
-               </instructions>
             </configuration>
          </plugin>
          <!-- For debug purposes -->

@@ -122,7 +122,6 @@
       <module>archetypes</module>
       <module>all</module>
       <module>all/cli</module>
-      <module>osgi</module>
       <module>spring/spring5</module>
       <module>spring/spring5/spring5-common</module>
       <module>spring/spring5/spring5-embedded</module>
@@ -298,8 +297,6 @@
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.directory.server.apacheds-all>2.0.0-M24</versionx.org.apache.directory.server.apacheds-all>
       <versionx.org.apache.geronimo.components.geronimo-transaction>3.1.1</versionx.org.apache.geronimo.components.geronimo-transaction>
-      <versionx.org.apache.karaf.features.framework>${version.karaf}</versionx.org.apache.karaf.features.framework>
-      <versionx.org.apache.karaf.features.org.apache.karaf.features.core>${version.karaf}</versionx.org.apache.karaf.features.org.apache.karaf.features.core>
       <versionx.org.apache.logging.log4j.log4j-api>${version.log4j}</versionx.org.apache.logging.log4j.log4j-api>
       <versionx.org.apache.logging.log4j.log4j-core>${version.log4j}</versionx.org.apache.logging.log4j.log4j-core>
       <versionx.org.apache.logging.log4j.log4j-slf4j-impl>${version.log4j}</versionx.org.apache.logging.log4j.log4j-slf4j-impl>
@@ -322,7 +319,6 @@
       <versionx.org.hamcrest.hamcrest-library>${version.hamcrest}</versionx.org.hamcrest.hamcrest-library>
       <versionx.org.hibernate.common.hibernate-commons-annotations>5.0.5.Final</versionx.org.hibernate.common.hibernate-commons-annotations>
       <versionx.org.hibernate.hibernate-core>${version.hibernate.core}</versionx.org.hibernate.hibernate-core>
-      <versionx.org.hibernate.hibernate-osgi>${version.hibernate.core}</versionx.org.hibernate.hibernate-osgi>
       <versionx.org.hibernate.search.hibernate-search-backend-lucene>${version.hibernate.search}</versionx.org.hibernate.search.hibernate-search-backend-lucene>
       <versionx.org.hibernate.search.hibernate-search-mapper-pojo-base>${version.hibernate.search}</versionx.org.hibernate.search.hibernate-search-mapper-pojo-base>
       <versionx.org.hibernate.hibernate-testing>${version.hibernate.core}</versionx.org.hibernate.hibernate-testing>
@@ -375,8 +371,6 @@
       <versionx.org.objectweb.howl.howl>1.0.1-1</versionx.org.objectweb.howl.howl>
       <versionx.org.openjdk.jmh.jmh-core>${version.openjdk.jmh}</versionx.org.openjdk.jmh.jmh-core>
       <versionx.org.openjdk.jmh.jmh-generator-annprocess>${version.openjdk.jmh}</versionx.org.openjdk.jmh.jmh-generator-annprocess>
-      <versionx.org.osgi.org.osgi.compendium>${version.osgi}</versionx.org.osgi.org.osgi.compendium>
-      <versionx.org.osgi.org.osgi.core>${version.osgi}</versionx.org.osgi.org.osgi.core>
       <versionx.org.picketlink.picketlink-api>${version.picketlink}</versionx.org.picketlink.picketlink-api>
       <versionx.org.reactivestreams.reactive-streams>${version.reactivestreams}</versionx.org.reactivestreams.reactive-streams>
       <versionx.org.rocksdb.rocksdbjni>${version.rocksdb}</versionx.org.rocksdb.rocksdbjni>
@@ -827,25 +821,6 @@
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>org.apache.karaf.features</groupId>
-            <artifactId>framework</artifactId>
-            <version>${versionx.org.apache.karaf.features.framework}</version>
-            <type>xml</type>
-            <scope>runtime</scope>
-            <classifier>features</classifier>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.karaf.features</groupId>
-            <artifactId>framework</artifactId>
-            <version>${versionx.org.apache.karaf.features.framework}</version>
-            <type>kar</type>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.karaf.features</groupId>
-            <artifactId>org.apache.karaf.features.core</artifactId>
-            <version>${versionx.org.apache.karaf.features.org.apache.karaf.features.core}</version>
-         </dependency>
-         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
             <version>${versionx.org.apache.logging.log4j.log4j-api}</version>
@@ -970,12 +945,6 @@
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
             <version>${versionx.org.hibernate.hibernate-core}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-osgi</artifactId>
-            <version>${versionx.org.hibernate.hibernate-osgi}</version>
-            <scope>runtime</scope>
          </dependency>
          <dependency>
             <groupId>org.hibernate.search</groupId>
@@ -1512,17 +1481,6 @@
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.compendium</artifactId>
-            <version>${versionx.org.osgi.org.osgi.compendium}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <version>${versionx.org.osgi.org.osgi.core}</version>
-            <scope>provided</scope>
-         </dependency>
-         <dependency>
             <groupId>org.reactivestreams</groupId>
             <artifactId>reactive-streams</artifactId>
             <version>${versionx.org.reactivestreams.reactive-streams}</version>
@@ -1874,11 +1832,6 @@
                </dependencies>
             </plugin>
             <plugin>
-               <groupId>org.apache.felix</groupId>
-               <artifactId>maven-bundle-plugin</artifactId>
-               <version>${version.maven.bundle}</version>
-            </plugin>
-            <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-assembly-plugin</artifactId>
                <version>3.2.0</version>
@@ -2028,51 +1981,6 @@
                </configuration>
             </plugin>
             <plugin>
-               <groupId>org.apache.karaf.tooling</groupId>
-               <artifactId>karaf-maven-plugin</artifactId>
-               <version>${version.karaf-maven-plugin}</version>
-               <configuration>
-                  <descriptors>
-                     <!--On Windows we need /// or C: is interpreted as a host name -->
-                     <descriptor>file:///${project.build.directory}/classes/features.xml</descriptor>
-                     <!-- ideally, those profiles should be referenced in the features file -->
-                     <descriptor>mvn:org.apache.karaf.features/framework/${version.karaf}/xml/features</descriptor>
-                     <descriptor>mvn:org.apache.karaf.features/enterprise/${version.karaf}/xml/features</descriptor>
-                  </descriptors>
-                  <distribution>org.apache.karaf.features:framework</distribution>
-                  <javase>${version.java}</javase>
-                  <framework>
-                     <feature>framework</feature>
-                  </framework>
-               </configuration>
-               <executions>
-                  <execution>
-                     <id>validate</id>
-                     <phase>install</phase>
-                     <goals>
-                        <goal>verify</goal>
-                     </goals>
-                  </execution>
-               </executions>
-               <dependencies>
-                  <dependency>
-                     <groupId>org.apache.maven.wagon</groupId>
-                     <artifactId>wagon-http-lightweight</artifactId>
-                     <version>2.8</version>
-                  </dependency>
-                  <dependency>
-                     <groupId>javax.activation</groupId>
-                     <artifactId>activation</artifactId>
-                     <version>1.1.1</version>
-                  </dependency>
-                  <dependency>
-                     <groupId>org.glassfish.jaxb</groupId>
-                     <artifactId>jaxb-runtime</artifactId>
-                     <version>${versionx.org.glassfish.jaxb.jaxb-runtime}</version>
-                  </dependency>
-               </dependencies>
-            </plugin>
-            <plugin>
                <artifactId>maven-compiler-plugin</artifactId>
                <version>${version.maven-compiler-plugin}</version>
                <configuration>
@@ -2170,23 +2078,6 @@
             <artifactId>maven-invoker-plugin</artifactId>
             <version>${version.maven.invoker}</version>
          </plugin>
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <extensions>true</extensions>
-            <configuration>
-               <instructions>
-                  <Bundle-DocURL>http://www.infinispan.org/</Bundle-DocURL>
-                  <Export-Package>${project.groupId}.*;version=${project.version};-split-package:=error</Export-Package>
-                  <_consumer-policy>${bnd.consumer.policy}</_consumer-policy>
-                  <_provider-policy>${bnd.provider.policy}</_provider-policy>
-                  <Include-Resource>{maven-resources}</Include-Resource>
-                  <Implementation-Build-Commit-Id>${buildNumber}</Implementation-Build-Commit-Id>
-                  <Implementation-Build-Branch>${scmBranch}</Implementation-Build-Branch>
-               </instructions>
-            </configuration>
-         </plugin>
-
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-eclipse-plugin</artifactId>
@@ -2326,28 +2217,6 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>generate-blueprint</id>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-                  <phase>none</phase>
-                  <configuration>
-                     <target>
-                        <property name="classpath" refid="maven.compile.classpath"/>
-                        <java classname="org.infinispan.commons.util.BlueprintGenerator" failonerror="true"
-                              fork="false">
-                           <arg value="${project.build.outputDirectory}"/>
-                           <classpath>
-                              <pathelement path="${project.build.outputDirectory}"/>
-                              <pathelement path="${classpath}"/>
-                           </classpath>
-                        </java>
-                     </target>
-                  </configuration>
-               </execution>
-            </executions>
          </plugin>
       </plugins>
    </build>
@@ -2420,20 +2289,6 @@
                      <configuration>
                         <lifecycleMappingMetadata>
                            <pluginExecutions>
-                              <pluginExecution>
-                                 <pluginExecutionFilter>
-                                    <groupId>org.apache.felix</groupId>
-                                    <artifactId>maven-bundle-plugin</artifactId>
-                                    <versionRange>[2.4.0,)</versionRange>
-                                    <goals>
-                                       <goal>bundle</goal>
-                                       <goal>cleanVersions</goal>
-                                    </goals>
-                                 </pluginExecutionFilter>
-                                 <action>
-                                    <ignore />
-                                 </action>
-                              </pluginExecution>
                               <pluginExecution>
                                  <pluginExecutionFilter>
                                     <groupId>org.apache.maven.plugins</groupId>
@@ -2738,10 +2593,6 @@
                </plugin>
             </plugins>
          </build>
-         <properties>
-            <!-- By default create OSGI bundles -->
-            <packaging>bundle</packaging>
-         </properties>
       </profile>
       <profile>
          <id>smoke</id>
@@ -3047,7 +2898,6 @@
                               <source>${dir.ispn}/lucene/directory-provider/src/main/java</source>
                               <source>${dir.ispn}/lucene/lucene-directory/src/main/java</source>
                               <source>${dir.ispn}/object-filter/src/main/java</source>
-                              <source>${dir.ispn}/osgi/src/main/java</source>
                               <source>${dir.ispn}/persistence/cli/src/main/java</source>
                               <source>${dir.ispn}/persistence/jdbc/src/main/java</source>
                               <source>${dir.ispn}/persistence/jpa/src/main/java</source>
