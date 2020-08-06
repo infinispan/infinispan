@@ -153,6 +153,12 @@ public class RestCacheManagerClientOkHttp implements RestCacheManagerClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> getBackupNames() {
+      Request.Builder builder = new Request.Builder().url(baseCacheManagerUrl + "/backups");
+      return client.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> deleteBackup(String name) {
       return client.execute(backup(name).delete());
    }

@@ -63,6 +63,12 @@ public class RestClusterClientOkHttp implements RestClusterClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> getBackupNames() {
+      Request.Builder builder = new Request.Builder().url(baseClusterURL + "/backups");
+      return client.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> deleteBackup(String name) {
       return client.execute(backup(name).delete());
    }
