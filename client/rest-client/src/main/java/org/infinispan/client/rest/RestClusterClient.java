@@ -35,6 +35,11 @@ public interface RestClusterClient {
    CompletionStage<RestResponse> getBackup(String name, boolean skipBody);
 
    /**
+    * @return the names of all backups.
+    */
+   CompletionStage<RestResponse> getBackupNames();
+
+   /**
     * Deletes a backup file from the server.
     *
     * @param name the name of the backup.

@@ -3,6 +3,7 @@ package org.infinispan.cli.commands;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -87,6 +88,15 @@ public class CommandInputLine {
 
    public boolean hasOption(String option) {
       return options.containsKey(option);
+   }
+
+   public <T> T optionAs(String arg) {
+      return (T) options.get(arg);
+   }
+
+   public <T> T optionOrDefault(String option, Supplier<T> supplier) {
+      T retVal = optionAs(option);
+      return retVal == null ? supplier.get() : retVal;
    }
 
    public String toString() {

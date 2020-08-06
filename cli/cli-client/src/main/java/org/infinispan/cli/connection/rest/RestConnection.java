@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,8 +26,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.aesh.io.FileResource;
 import org.infinispan.cli.commands.Abort;
 import org.infinispan.cli.commands.Add;
+import org.infinispan.cli.commands.Backup;
 import org.infinispan.cli.commands.Begin;
 import org.infinispan.cli.commands.Cache;
 import org.infinispan.cli.commands.Cas;
@@ -72,6 +75,7 @@ import org.infinispan.cli.resources.Resource;
 import org.infinispan.cli.resources.RootResource;
 import org.infinispan.cli.util.IterableJsonReader;
 import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestCounterClient;
 import org.infinispan.client.rest.RestEntity;
@@ -83,6 +87,11 @@ import org.infinispan.client.rest.configuration.ServerConfiguration;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.util.Version;
+
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -190,6 +199,7 @@ public class RestConnection implements Connection, Closeable {
    private RestResponse handleResponseStatus(RestResponse response) throws IOException {
       switch (response.getStatus()) {
          case 200:
+         case 202:
             return response;
          case 204:
             return null;
@@ -244,6 +254,60 @@ public class RestConnection implements Connection, Closeable {
                response = counter.add(command.longOption(Add.DELTA));
                if (command.boolOption(CliCommand.QUIET)) {
                   responseMode = ResponseMode.QUIET;
+               }
+               break;
+            }
+            case Backup.CMD: {
+               String container = getActiveContainer().getName();
+               RestCacheManagerClient manager = this.client.cacheManager(container);
+               responseMode = ResponseMode.BODY;
+               String backupName;
+               switch (command.arg(CliCommand.TYPE)) {
+                  case Backup.Create.CMD:
+                     backupName = command.optionOrDefault(Backup.NAME, () -> {
+                        // If the backup name has not been specified generate one based upon the Infinispan version and timestamp
+                        LocalDateTime now = LocalDateTime.now();
+                        return String.format("%s-%tY%2$tm%2$td%2$tH%2$tM%2$tS\n", Version.getBrandName(), now);
+                     });
+
+                     sb.append("Creating backup '").append(backupName).append("'");
+                     String directory = command.arg(Backup.Create.DIR);
+                     response = manager.createBackup(backupName, directory, Backup.createResourceMap(command));
+                     break;
+                  case Backup.Delete.CMD:
+                     backupName = command.arg(Backup.NAME);
+                     sb.append("Deleting backup '").append(backupName).append("'");
+                     response = manager.deleteBackup(backupName);
+                     break;
+                  case Backup.Get.CMD:
+                     boolean skipBody = command.boolOption(Backup.Get.NO_CONTENT);
+                     responseMode = skipBody ? ResponseMode.QUIET : ResponseMode.FILE;
+                     backupName = command.arg(Backup.NAME);
+                     sb.append("Downloading backup '").append(backupName).append("'\n");
+                     // Poll the backup's availability every 500 milliseconds with a maximum of 100 attempts
+                     response = Flowable.timer(500, TimeUnit.MILLISECONDS, Schedulers.trampoline())
+                           .repeat(100)
+                           .flatMapSingle(Void -> Single.fromCompletionStage(manager.getBackup(backupName, skipBody)))
+                           .takeUntil(rsp -> rsp.getStatus() != 202)
+                           .lastOrErrorStage();
+                     break;
+                  case Backup.ListBackups.CMD:
+                     sb.append(String.join("\n", getBackupNames(container)));
+                     break;
+                  case Backup.Restore.CMD:
+                     Map<String, List<String>> resources = Backup.createResourceMap(command);
+                     Boolean upload = command.argAs(Backup.Restore.UPLOAD_BACKUP);
+                     FileResource resource = command.argAs(Backup.Restore.PATH);
+                     if (upload != null && upload) {
+                        File file = resource.getFile();
+                        sb.append("Uploading backup '").append(file.getName()).append("' and restoring");
+                        response = manager.restore(file, resources);
+                     } else {
+                        String path = resource.getAbsolutePath();
+                        sb.append("Restoring from backup '").append(path).append("'");
+                        response = manager.restore(path, resources);
+                     }
+                     break;
                }
                break;
             }
@@ -592,8 +656,8 @@ public class RestConnection implements Connection, Closeable {
                   }
                   break;
                case FILE:
-                  String contentDisposition = r.headers().get("Content-Disposition").get(0);
-                  String filename = contentDisposition.substring(contentDisposition.indexOf('"') + 1, contentDisposition.lastIndexOf('"'));
+                  String contentDisposition = parseHeaders(r).get("Content-Disposition").get(0);
+                  String filename = contentDisposition.split("filename=")[1];
                   File file = workingDir.resolve(filename).toFile();
 
                   try (OutputStream os = new FileOutputStream(file); InputStream is = parseBody(r, InputStream.class)) {
@@ -602,7 +666,7 @@ public class RestConnection implements Connection, Closeable {
                      while ((bytesRead = is.read(buffer)) != -1) {
                         os.write(buffer, 0, bytesRead);
                      }
-                     sb.append(MSG.downloadedReport(filename));
+                     sb.append(MSG.downloadedFile(filename));
                   }
                case QUIET:
                   break;
@@ -752,6 +816,11 @@ public class RestConnection implements Connection, Closeable {
    @Override
    public String getServerVersion() {
       return serverVersion;
+   }
+
+   @Override
+   public Collection<String> getBackupNames(String container) throws IOException {
+      return parseBody(fetch(client.cacheManager(container).getBackupNames()), List.class);
    }
 
    private void refreshServerInfo() throws IOException {

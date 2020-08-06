@@ -68,4 +68,6 @@ public interface Connection extends Closeable {
    Collection<String> getAvailableLogAppenders() throws IOException;
 
    Collection<String> getAvailableLoggers() throws IOException;
+
+   Collection<String> getBackupNames(String container) throws IOException;
 }
