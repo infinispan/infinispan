@@ -1,0 +1,73 @@
+[id='cli_creating_backups-{context}']
+= Backing Up {brandname} Clusters
+Create backup archives in `.zip` format that you can download or store on
+{brandname} Server.
+
+.Prerequisites
+
+Backup archives should reflect the most recent cluster state. For this reason
+you should ensure the cluster is no longer accepting write requests before you
+create backup archives.
+
+.Procedure
+
+. Create a CLI connection to {brandname}.
+. Run the [command]`backup create` command with the appropriate options, for example:
++
+* Back up all resources with an automatically generated name.
++
+[source,json,options="nowrap",subs=attributes+]
+----
+[//containers/default]> backup create
+----
++
+* Back up all resources in a backup archive named `example-backup`.
++
+[source,json,options="nowrap",subs=attributes+]
+----
+[//containers/default]> backup create -n example-backup
+----
++
+* Back up all resources to the `/some/server/dir` path on the server.
++
+[source,json,options="nowrap",subs=attributes+]
+----
+[//containers/default]> backup create -d /some/server/dir
+----
++
+* Back up only caches and cache configurations.
++
+[source,json,options="nowrap",subs=attributes+]
+----
+[//containers/default]> backup create --caches=* --cache-configs=*
+----
+* Back up named Protobuf schemas only.
++
+[source,json,options="nowrap",subs=attributes+]
+----
+[//containers/default]> backup create --proto-schemas=schema1,schema2
+----
++
+. List available backup archives on the server.
++
+[source,json,options="nowrap",subs=attributes+]
+----
+[//containers/default]> backup ls
+----
++
+. Download the `example-backup` archive from the server.
++
+If the backup operation is still in progress, the command waits for it to
+complete.
++
+[source,json,options="nowrap",subs=attributes+]
+----
+[//containers/default]> backup get example-backup
+----
++
+. Optionally delete the `example-backup` archive from the server.
++
+[source,json,options="nowrap",subs=attributes+]
+----
+[//containers/default]> backup delete example-backup
+----

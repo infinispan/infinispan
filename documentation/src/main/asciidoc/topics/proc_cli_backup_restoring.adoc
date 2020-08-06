@@ -1,0 +1,34 @@
+[id='cli_restoring_backups-{context}']
+= Restoring {brandname} Clusters from Backup Archives
+Apply the content of backup archives to {brandname} clusters to restore them to
+the backed up state.
+
+.Prerequisites
+
+* Create a backup archive that is either local to the {brandname} CLI or stored on {brandname} Server.
+* Ensure that the target container matches the container name in the backup archive. You cannot restore backups if the container names do not match.
+
+.Procedure
+
+. Create a CLI connection to {brandname}.
+. Run the [command]`backup restore` command with the appropriate options.
+* Restore all content from a backup archive accessible on the server.
++
+[source,json,options="nowrap",subs=attributes+]
+----
+[//containers/default]> backup restore /some/path/on/the/server
+----
++
+* Restore all content from a local backup archive.
++
+[source,json,options="nowrap",subs=attributes+]
+----
+[//containers/default]> backup restore -u /some/local/path
+----
++
+* Restore only cache content from a backup archive on the server.
++
+[source,json,options="nowrap",subs=attributes+]
+----
+[//containers/default]> backup restore /some/path/on/the/server --caches=*
+----
