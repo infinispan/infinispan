@@ -4,22 +4,22 @@
 
 |`caches`
 |OPTIONAL
-|An array of cache names to backup, or "*" for all
+|Specifies either an array of cache names to back up or `*` for all caches.
 
 |`cache-configs`
 |OPTIONAL
-|An array of cache configuration to backup, or "*" for all
+|Specifies either an array of cache configurations to back up or `*` for all cache configurations.
 
 |`counters`
 |OPTIONAL
-|An array of counter names to backup, or "*" for all
+|Defines either an array of counter names to back up or `*` for all counters.
 
 |`proto-schemas`
 |OPTIONAL
-|An array of protobuf schema names to backup, or "*" for all
+|Defines either an array of Protobuf schema names to back up or `*` for all schemas.
 
 |`scripts`
 |OPTIONAL
-|An array of scripts names to backup, or "*" for all
+|Specifies either an array of script names to back up or `*` for all scripts.
 
 |===

@@ -15,6 +15,7 @@ $ help get
 ====
 
 include::{cli_help}/add.adoc[leveloffset=+1]
+include::{cli_help}/backup.adoc[leveloffset=+1]
 include::{cli_help}/cache.adoc[leveloffset=+1]
 include::{cli_help}/cas.adoc[leveloffset=+1]
 include::{cli_help}/cd.adoc[leveloffset=+1]
