@@ -183,10 +183,7 @@ public class TestCacheManagerFactory {
       } else {
          builder.transaction()
                .transactionMode(TransactionMode.TRANSACTIONAL);
-         if (!Util.isOSGiContext()) {
-            //automatically change default TM lookup to the desired one but only outside OSGi. In OSGi we need to use GenericTransactionManagerLookup
-            builder.transaction().transactionManagerLookup(Util.getInstance(TransactionSetup.getManagerLookup(), TestCacheManagerFactory.class.getClassLoader()));
-         }
+         builder.transaction().transactionManagerLookup(Util.getInstance(TransactionSetup.getManagerLookup(), TestCacheManagerFactory.class.getClassLoader()));
       }
    }
 

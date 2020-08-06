@@ -9,7 +9,6 @@
    </parent>
 
    <artifactId>infinispan-objectfilter</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan Object Querying and Filtering API</name>
    <description>Infinispan Object Querying and Filtering based on Ickle, a JP-QL subset</description>
 
@@ -133,18 +132,6 @@
                   </configuration>
                </execution>
             </executions>
-         </plugin>
-
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.objectfilter.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-               </instructions>
-            </configuration>
          </plugin>
       </plugins>
    </build>

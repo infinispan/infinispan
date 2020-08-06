@@ -10,7 +10,6 @@
    </parent>
 
    <artifactId>infinispan-tools</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan Tools</name>
    <description>Infinispan - Tools for project</description>
 
@@ -166,20 +165,6 @@
 
    <build>
       <plugins>
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.tools.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-                  <Include-Resource>
-                     {maven-resources}
-                  </Include-Resource>
-               </instructions>
-            </configuration>
-         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>

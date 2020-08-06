@@ -9,7 +9,6 @@
    </parent>
 
    <artifactId>infinispan-jcache</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan JCACHE (JSR-107) Embedded Implementation</name>
    <description>JCACHE (JSR-107) implementation using Infinispan embedded mode</description>
 
@@ -103,24 +102,6 @@
       </testResources>
       <plugins>
          <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.jcache.embedded.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-                  <Include-Resource>
-                     {maven-resources},
-                     /proto=${project.basedir}/target/classes/proto,
-                     /META-INF/services=${project.basedir}/target/classes/META-INF/services,
-                     /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
-                  </Include-Resource>
-               </instructions>
-            </configuration>
-         </plugin>
-
-         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
@@ -131,20 +112,6 @@
                   <dependency>org.infinispan:infinispan-commons-test</dependency>
                </dependenciesToScan>
             </configuration>
-         </plugin>
-
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>generate-blueprint</id>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-                  <phase>prepare-package</phase>
-               </execution>
-            </executions>
          </plugin>
          <plugin>
             <groupId>org.infinispan.maven-plugins</groupId>

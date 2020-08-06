@@ -70,7 +70,7 @@ public interface ConfigurationChildBuilder {
    /**
     * Specifies the {@link ClassLoader} used to find certain resources used by configuration when specified by name
     * (e.g. certificate stores). Infinispan will search through the classloader which loaded this class, the system
-    * classloader, the TCCL and the OSGi classloader (if applicable).
+    * classloader and the TCCL classloader.
     * @deprecated since 9.0. To be removed in 12.0. If you need to load configuration resources from other locations, you will need to do so
     * yourself and use the appropriate configuration methods (e.g. {@link SslConfigurationBuilder#sslContext(javax.net.ssl.SSLContext)})
     */

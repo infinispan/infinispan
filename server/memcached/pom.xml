@@ -9,7 +9,6 @@
    </parent>
 
    <artifactId>infinispan-server-memcached</artifactId>
-   <packaging>bundle</packaging>
    <name>Infinispan Memcached Server [deprecated]</name>
    <description>Infinispan Memcached Server [deprecated]</description>
 
@@ -56,22 +55,6 @@
 
    <build>
       <plugins>
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.server.memcached.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-                  <Include-Resource>
-                     {maven-resources},
-                     /proto=${project.basedir}/target/classes/proto,
-                     /META-INF/services=${project.basedir}/target/classes/META-INF/services
-                  </Include-Resource>
-               </instructions>
-            </configuration>
-         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
