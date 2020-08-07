@@ -56,46 +56,45 @@ public final class KeyTransformationHandler {
     */
    public Object stringToKey(String s) {
       char type = s.charAt(0);
-      int idx = s.lastIndexOf(":");
       switch (type) {
          case 'S':
             // this is a String, NOT a Short. For Short see case 'X'.
-            return s.substring(2, idx);
+            return s.substring(2);
          case 'I':
             // This is an Integer
-            return Integer.valueOf(s.substring(2, idx));
+            return Integer.valueOf(s.substring(2));
          case 'Y':
             // This is a BYTE
-            return Byte.valueOf(s.substring(2, idx));
+            return Byte.valueOf(s.substring(2));
          case 'L':
             // This is a Long
-            return Long.valueOf(s.substring(2, idx));
+            return Long.valueOf(s.substring(2));
          case 'X':
             // This is a SHORT
-            return Short.valueOf(s.substring(2, idx));
+            return Short.valueOf(s.substring(2));
          case 'D':
             // This is a Double
-            return Double.valueOf(s.substring(2, idx));
+            return Double.valueOf(s.substring(2));
          case 'F':
             // This is a Float
-            return Float.valueOf(s.substring(2, idx));
+            return Float.valueOf(s.substring(2));
          case 'B':
             // This is a Boolean, NOT a Byte. For Byte see case 'Y'.
-            return Boolean.valueOf(s.substring(2, idx));
+            return Boolean.valueOf(s.substring(2));
          case 'C':
             // This is a Character
             return Character.valueOf(s.charAt(2));
          case 'U':
             // This is a java.util.UUID
-            return UUID.fromString(s.substring(2, idx));
+            return UUID.fromString(s.substring(2));
          case 'A':
             // This is an array of bytes encoded as a Base64 string
-            return Base64.getDecoder().decode(s.substring(2, idx));
+            return Base64.getDecoder().decode(s.substring(2));
          case 'T':
             // this is a custom Transformable or a type with a registered Transformer
             int indexOfSecondDelimiter = s.indexOf(':', 2);
             String keyClassName = s.substring(2, indexOfSecondDelimiter);
-            String keyAsString = s.substring(indexOfSecondDelimiter + 1, idx);
+            String keyAsString = s.substring(indexOfSecondDelimiter + 1);
             Transformer t = getTransformer(keyClassName);
             if (t != null) {
                return t.fromString(keyAsString);
@@ -118,51 +117,51 @@ public final class KeyTransformationHandler {
    }
 
    /**
-    * Stringify a key to encode the id and the infinispan segment field.
+    * Stringify a key so Lucene can use it as document id.
     *
     * @param key the key
     * @return a string form of the key
     */
-   public String keyToString(Object key, int segmentId) {
+   public String keyToString(Object key) {
       // This string should be in the format of:
-      // "<TYPE>:<KEY>:<SEGMENT>" for internally supported types or "T:<KEY_CLASS>:<KEY>:<SEGMENT>" for custom types
+      // "<TYPE>:<KEY>" for internally supported types or "T:<KEY_CLASS>:<KEY>" for custom types
       // e.g.:
-      //   "S:my string key:1"
-      //   "I:75:123"
-      //   "D:5.34:12"
-      //   "B:f:12"
-      //   "T:com.myorg.MyType:STRING_GENERATED_BY_TRANSFORMER_FOR_MY_TYPE:20"
+      //   "S:my string key"
+      //   "I:75"
+      //   "D:5.34"
+      //   "B:f"
+      //   "T:com.myorg.MyType:STRING_GENERATED_BY_TRANSFORMER_FOR_MY_TYPE"
 
       // First going to check if the key is a primitive or a String. Otherwise, check if it's a transformable.
       // If none of those conditions are satisfied, we'll throw a CacheException.
 
       // Using 'X' for Shorts and 'Y' for Bytes because 'S' is used for Strings and 'B' is being used for Booleans.
       if (key instanceof byte[])
-         return "A:" + Base64.getEncoder().encodeToString((byte[]) key) + ":" + segmentId;  //todo [anistor] need to profile Base64 versus simple hex encoding of the raw bytes
+         return "A:" + Base64.getEncoder().encodeToString((byte[]) key);  //todo [anistor] need to profile Base64 versus simple hex encoding of the raw bytes
       if (key instanceof String)
-         return "S:" + key + ":" + segmentId;
+         return "S:" + key;
       else if (key instanceof Integer)
-         return "I:" + key + ":" + segmentId;
+         return "I:" + key;
       else if (key instanceof Boolean)
-         return "B:" + key + ":" + segmentId;
+         return "B:" + key;
       else if (key instanceof Long)
-         return "L:" + key + ":" + segmentId;
+         return "L:" + key;
       else if (key instanceof Float)
-         return "F:" + key + ":" + segmentId;
+         return "F:" + key;
       else if (key instanceof Double)
-         return "D:" + key + ":" + segmentId;
+         return "D:" + key;
       else if (key instanceof Short)
-         return "X:" + key + ":" + segmentId;
+         return "X:" + key;
       else if (key instanceof Byte)
-         return "Y:" + key + ":" + segmentId;
+         return "Y:" + key;
       else if (key instanceof Character)
-         return "C:" + key + ":" + segmentId;
+         return "C:" + key;
       else if (key instanceof UUID)
-         return "U:" + key + ":" + segmentId;
+         return "U:" + key;
       else {
          Transformer t = getTransformer(key.getClass());
          if (t != null) {
-            return "T:" + key.getClass().getName() + ":" + t.toString(key) + ":" + segmentId;
+            return "T:" + key.getClass().getName() + ":" + t.toString(key);
          } else {
             throw CONTAINER.noTransformerForKey(key.getClass().getName());
          }

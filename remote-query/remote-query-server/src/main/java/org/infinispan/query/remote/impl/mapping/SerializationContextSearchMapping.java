@@ -7,7 +7,6 @@ import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.Programm
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.impl.CacheRoutingKeyBridge;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.remote.impl.indexing.ProtobufEntityConverter;
 import org.infinispan.query.remote.impl.mapping.model.ProtobufBootstrapIntrospector;
@@ -74,7 +73,6 @@ public class SerializationContextSearchMapping {
 
          programmaticMapping.type(fullName)
                .binder(new ProtobufMessageBinder(globalReferenceHolder, fullName))
-               .routingKeyBinder(new CacheRoutingKeyBridge.Binder())
                .indexed().index(rootMessage.getIndexName());
 
          builder.addEntityType(byte[].class, fullName);

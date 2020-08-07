@@ -682,7 +682,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    }
 
    private SearchQueryParsingResult transformToSearchQueryParsingResult(IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
-      SearchQueryMaker<TypeMetadata> queryMaker = new SearchQueryMaker<>(getSearchMapping());
+      SearchQueryMaker<TypeMetadata> queryMaker = new SearchQueryMaker<>(getSearchMapping(), propertyHelper);
       return queryMaker
             .transform(parsingResult, namedParameters, getTargetedClass(parsingResult), getTargetedNamedType(parsingResult));
    }

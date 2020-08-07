@@ -340,21 +340,21 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * Remove entries from all indexes by key.
     */
    void removeFromIndexes(Object key, int segment) {
-      Futures.unwrappedExceptionJoin(getSearchIndexer().purge(keyToString(key, segment), segment+""));
+      Futures.unwrappedExceptionJoin(getSearchIndexer().purge(keyToString(key), String.valueOf(segment)));
    }
 
    // Method that will be called when data needs to be removed from Lucene.
    private void removeFromIndexes(Object value, Object key, int segment) {
-      Futures.unwrappedExceptionJoin(getSearchIndexer().delete(keyToString(key, segment), value));
+      Futures.unwrappedExceptionJoin(getSearchIndexer().delete(keyToString(key), String.valueOf(segment), value));
    }
 
    private void updateIndexes(boolean usingSkipIndexCleanupFlag, Object value, Object key, int segment) {
       // Note: it's generally unsafe to assume there is no previous entry to cleanup: always use UPDATE
       // unless the specific flag is allowing this.
       if (usingSkipIndexCleanupFlag) {
-         Futures.unwrappedExceptionJoin(getSearchIndexer().add(keyToString(key, segment), value));
+         Futures.unwrappedExceptionJoin(getSearchIndexer().add(keyToString(key), String.valueOf(segment), value));
       } else {
-         Futures.unwrappedExceptionJoin(getSearchIndexer().addOrUpdate(keyToString(key, segment), value));
+         Futures.unwrappedExceptionJoin(getSearchIndexer().addOrUpdate(keyToString(key), String.valueOf(segment), value));
       }
    }
 
@@ -380,8 +380,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       return keyDataConversion.extractIndexable(storedKey);
    }
 
-   private String keyToString(Object key, int segment) {
-      return keyTransformationHandler.keyToString(key, segment);
+   private String keyToString(Object key) {
+      return keyTransformationHandler.keyToString(key);
    }
 
    public KeyTransformationHandler getKeyTransformationHandler() {

@@ -19,6 +19,7 @@ import org.apache.lucene.search.RegexpQuery;
 import org.hibernate.search.backend.lucene.LuceneBackend;
 import org.hibernate.search.backend.lucene.LuceneExtension;
 import org.hibernate.search.backend.lucene.search.predicate.dsl.LuceneSearchPredicateFactory;
+import org.hibernate.search.engine.backend.common.spi.FieldPaths;
 import org.hibernate.search.engine.backend.metamodel.IndexFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldDescriptor;
 import org.hibernate.search.engine.search.predicate.SearchPredicate;
@@ -31,6 +32,7 @@ import org.hibernate.search.engine.search.predicate.dsl.PredicateFinalStep;
 import org.hibernate.search.engine.search.predicate.dsl.RangePredicateFieldMoreStep;
 import org.hibernate.search.engine.search.predicate.dsl.SimpleQueryFlag;
 import org.hibernate.search.engine.search.projection.SearchProjection;
+import org.hibernate.search.engine.search.projection.dsl.FieldProjectionValueStep;
 import org.hibernate.search.engine.search.projection.dsl.SearchProjectionFactory;
 import org.hibernate.search.engine.search.sort.SearchSort;
 import org.hibernate.search.engine.search.sort.dsl.CompositeSortComponentsStep;
@@ -58,6 +60,7 @@ import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.syntax.Visitor;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.logging.Log;
 import org.infinispan.search.mapper.common.EntityReference;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
@@ -84,13 +87,15 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
    private static final char LUCENE_WILDCARD_ESCAPE_CHARACTER = '\\';
 
    private final SearchMapping searchMapping;
+   private final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 
    private Map<String, Object> namedParameters;
    private LuceneSearchPredicateFactory predicateFactory;
    private SearchIndexedEntity indexedEntity;
 
-   SearchQueryMaker(SearchMapping searchMapping) {
+   SearchQueryMaker(SearchMapping searchMapping, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       this.searchMapping = searchMapping;
+      this.propertyHelper = propertyHelper;
    }
 
    public SearchQueryParsingResult transform(IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters,
@@ -111,14 +116,14 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
             searchMapping.indexedEntity(targetedNamedType);
 
       SearchPredicate predicate = makePredicate(parsingResult.getWhereClause()).toPredicate();
-      SearchProjectionInfo projection = makeProjection(scope.projection(), parsingResult.getProjections(),
+      SearchProjectionInfo projection = makeProjection(parsingResult.getTargetEntityMetadata(), scope.projection(), parsingResult.getProjections(),
             parsingResult.getProjectedTypes());
       SearchSort sort = makeSort(scope.sort(), parsingResult.getSortFields());
 
       return new SearchQueryParsingResult(targetedType, targetedNamedType, projection, predicate, sort);
    }
 
-   private SearchProjectionInfo makeProjection(SearchProjectionFactory<EntityReference, ?> projectionFactory,
+   private SearchProjectionInfo makeProjection(TypeMetadata typeMetadata, SearchProjectionFactory<EntityReference, ?> projectionFactory,
                                                String[] projections, Class<?>[] projectedTypes) {
       if (projections == null || projections.length == 0) {
          return SearchProjectionInfo.entity(projectionFactory);
@@ -131,7 +136,12 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
          if (KEY.equals(projections[0])) {
             return SearchProjectionInfo.entityReference(projectionFactory);
          }
-         return SearchProjectionInfo.field(projectionFactory, projections[0], projectedTypes[0]);
+         boolean isRepeatedProperty = propertyHelper.isRepeatedProperty(typeMetadata, FieldPaths.split(projections[0]));
+         if (isRepeatedProperty) {
+            return SearchProjectionInfo.multiField(projectionFactory, projections[0], projectedTypes[0]);
+         } else {
+            return SearchProjectionInfo.field(projectionFactory, projections[0], projectedTypes[0]);
+         }
       }
 
       SearchProjection<?>[] searchProjections = new SearchProjection<?>[projections.length];
@@ -141,7 +151,9 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
          } else if (KEY.equals(projections[i])) {
             searchProjections[i] = projectionFactory.entityReference().toProjection();
          } else {
-            searchProjections[i] = projectionFactory.field(projections[i], projectedTypes[i]).toProjection();
+            boolean isMultiField = propertyHelper.isRepeatedProperty(typeMetadata, FieldPaths.split(projections[i]));
+            FieldProjectionValueStep<?, ?> projectionStep = projectionFactory.field(projections[i], projectedTypes[i]);
+            searchProjections[i] = isMultiField ? projectionStep.multi().toProjection() : projectionStep.toProjection();
          }
       }
       return SearchProjectionInfo.composite(projectionFactory, searchProjections);

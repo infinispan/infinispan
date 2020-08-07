@@ -827,7 +827,7 @@ public class LuceneTransformationTest {
    }
 
    private SearchQuery<?> transform(IckleParsingResult<Class<?>> ickleParsingResult, Map<String, Object> parameters) {
-      SearchQueryMaker<Class<?>> searchQueryMaker = new SearchQueryMaker<>(searchMapping);
+      SearchQueryMaker<Class<?>> searchQueryMaker = new SearchQueryMaker<>(searchMapping, propertyHelper);
       return searchQueryMaker
             .transform(ickleParsingResult, parameters, Employee.class, null)
             .builder(searchMapping.getMappingSession()).build();

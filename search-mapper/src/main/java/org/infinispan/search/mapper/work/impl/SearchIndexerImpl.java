@@ -1,8 +1,6 @@
 package org.infinispan.search.mapper.work.impl;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.hibernate.search.engine.backend.work.execution.DocumentCommitStrategy;
 import org.hibernate.search.engine.backend.work.execution.DocumentRefreshStrategy;
@@ -30,46 +28,43 @@ public class SearchIndexerImpl implements SearchIndexer {
    }
 
    @Override
-   public CompletableFuture<?> add(Object providedId, Object entity) {
+   public CompletableFuture<?> add(Object providedId, String routingKey, Object entity) {
       ConvertedValue convertedValue = convertedValue(entity);
       if (convertedValue == null) {
          return CompletableFuture.completedFuture(null);
       }
 
-      return delegate.add(convertedValue.typeIdentifier, providedId, convertedValue.value,
+      return delegate.add(convertedValue.typeIdentifier, providedId, routingKey, convertedValue.value,
             DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE);
    }
 
    @Override
-   public CompletableFuture<?> addOrUpdate(Object providedId, Object entity) {
+   public CompletableFuture<?> addOrUpdate(Object providedId, String routingKey, Object entity) {
       ConvertedValue convertedValue = convertedValue(entity);
       if (convertedValue == null) {
          return CompletableFuture.completedFuture(null);
       }
 
-      return delegate.addOrUpdate(convertedValue.typeIdentifier, providedId, convertedValue.value,
+      return delegate.addOrUpdate(convertedValue.typeIdentifier, providedId, routingKey, convertedValue.value,
             DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE);
    }
 
    @Override
-   public CompletableFuture<?> delete(Object providedId, Object entity) {
+   public CompletableFuture<?> delete(Object providedId, String routingKey, Object entity) {
       ConvertedValue convertedValue = convertedValue(entity);
       if (convertedValue == null) {
          return CompletableFuture.completedFuture(null);
       }
 
-      return delegate.delete(convertedValue.typeIdentifier, providedId, convertedValue.value,
+      return delegate.delete(convertedValue.typeIdentifier, providedId, routingKey, convertedValue.value,
             DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE);
    }
 
    @Override
-   public CompletableFuture<?> purge(Object providedId, String providedRoutingKey) {
-      List<CompletableFuture<?>> futures = typeContextProvider.allTypeIdentifiers().stream()
-            .map((typeIdentifier) -> delegate.purge(typeIdentifier, providedId, providedRoutingKey,
-                  DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE))
-            .collect(Collectors.toList());
-
-      return CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
+   public CompletableFuture<?> purge(Object providedId, String routingKey) {
+      return CompletableFuture.allOf(typeContextProvider.allTypeIdentifiers().stream()
+            .map((typeIdentifier) -> delegate.purge(typeIdentifier, providedId, routingKey,
+                  DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE)).toArray(CompletableFuture[]::new));
    }
 
    private ConvertedValue convertedValue(Object entity) {
