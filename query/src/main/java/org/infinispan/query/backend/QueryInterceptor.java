@@ -1,15 +1,17 @@
 package org.infinispan.query.backend;
 
+import static java.util.concurrent.CompletableFuture.allOf;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import org.hibernate.search.util.common.impl.Futures;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
@@ -50,6 +52,7 @@ import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.search.mapper.work.SearchIndexer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -166,8 +169,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
             if (entry2 != null && entry2.isChanged()) {
                // TODO: need to reduce the scope of the blocking thread to less if possible later as part of
                // https://issues.redhat.com/browse/ISPN-11731
-               return asyncValue(blockingManager.runBlocking(() -> processChange(rCtx, cmd, cmd.getKey(), oldValue,
-                     entry2.getValue()), cmd)
+               return asyncValue(processChange(rCtx, cmd, cmd.getKey(), oldValue, entry2.getValue())
                      .thenApply(ignore -> rv));
             }
             return rv;
@@ -203,18 +205,18 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
                oldValues.put(key, entry.getValue());
             }
          }
-         return invokeNextThenAccept(ctx, command, (rCtx, cmd, rv) -> {
+         return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
             if (!cmd.isSuccessful()) {
-               return;
+               return rv;
             }
-            for (Object key : cmd.getAffectedKeys()) {
-               CacheEntry entry = rCtx.lookupEntry(key);
-               // If the entry is null we are not an owner and won't index it
+            return asyncValue(allOf(cmd.getAffectedKeys().stream().map(key -> {
+               CacheEntry<?, ?> entry = rCtx.lookupEntry(key);
                if (entry != null && entry.isChanged()) {
                   Object oldValue = oldValues.getOrDefault(key, UNKNOWN);
-                  processChange(rCtx, cmd, key, oldValue, entry.getValue());
+                  return processChange(rCtx, cmd, key, oldValue, entry.getValue());
                }
-            }
+               return CompletableFutures.completedNull();
+            }).toArray(CompletableFuture[]::new)));
          });
       }
    }
@@ -339,22 +341,22 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    /**
     * Remove entries from all indexes by key.
     */
-   void removeFromIndexes(Object key, int segment) {
-      Futures.unwrappedExceptionJoin(getSearchIndexer().purge(keyToString(key), String.valueOf(segment)));
+   CompletableFuture<?> removeFromIndexes(Object key, int segment) {
+      return getSearchIndexer().purge(keyToString(key), String.valueOf(segment));
    }
 
    // Method that will be called when data needs to be removed from Lucene.
-   private void removeFromIndexes(Object value, Object key, int segment) {
-      Futures.unwrappedExceptionJoin(getSearchIndexer().delete(keyToString(key), String.valueOf(segment), value));
+   private CompletableFuture<?> removeFromIndexes(Object value, Object key, int segment) {
+      return getSearchIndexer().delete(keyToString(key), String.valueOf(segment), value);
    }
 
-   private void updateIndexes(boolean usingSkipIndexCleanupFlag, Object value, Object key, int segment) {
+   private CompletableFuture<?> updateIndexes(boolean usingSkipIndexCleanupFlag, Object value, Object key, int segment) {
       // Note: it's generally unsafe to assume there is no previous entry to cleanup: always use UPDATE
       // unless the specific flag is allowing this.
       if (usingSkipIndexCleanupFlag) {
-         Futures.unwrappedExceptionJoin(getSearchIndexer().add(keyToString(key), String.valueOf(segment), value));
+         return getSearchIndexer().add(keyToString(key), String.valueOf(segment), value);
       } else {
-         Futures.unwrappedExceptionJoin(getSearchIndexer().addOrUpdate(keyToString(key), String.valueOf(segment), value));
+         return getSearchIndexer().addOrUpdate(keyToString(key), String.valueOf(segment), value);
       }
    }
 
@@ -388,20 +390,21 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       return keyTransformationHandler;
    }
 
-   void processChange(InvocationContext ctx, FlagAffectedCommand command, Object storedKey, Object storedOldValue, Object storedNewValue) {
+   CompletableFuture<?> processChange(InvocationContext ctx, FlagAffectedCommand command, Object storedKey, Object storedOldValue, Object storedNewValue) {
       int segment = SegmentSpecificCommand.extractSegment(command, storedKey, keyPartitioner);
       Object key = extractKey(storedKey);
       Object oldValue = storedOldValue == UNKNOWN ? UNKNOWN : extractValue(storedOldValue);
       Object newValue = extractValue(storedNewValue);
       boolean skipIndexCleanup = command != null && command.hasAnyFlag(FlagBitSets.SKIP_INDEX_CLEANUP);
+      CompletableFuture<?> operation = CompletableFutures.completedNull();
       if (!skipIndexCleanup) {
          if (oldValue == UNKNOWN) {
             if (shouldModifyIndexes(command, ctx, storedKey)) {
-               removeFromIndexes(key, segment);
+               operation = removeFromIndexes(key, segment);
             }
          } else if (searchMappingHolder.isIndexedType(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
                && shouldModifyIndexes(command, ctx, storedKey)) {
-            removeFromIndexes(oldValue, key, segment);
+            operation = removeFromIndexes(oldValue, key, segment);
          } else if (trace) {
             log.tracef("Index cleanup not needed for %s -> %s", oldValue, newValue);
          }
@@ -411,7 +414,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       if (searchMappingHolder.isIndexedType(newValue)) {
          if (shouldModifyIndexes(command, ctx, storedKey)) {
             // This means that the entry is just modified so we need to update the indexes and not add to them.
-            updateIndexes(skipIndexCleanup, newValue, key, segment);
+            operation = operation.thenCompose(r -> updateIndexes(skipIndexCleanup, newValue, key, segment));
          } else {
             if (trace) {
                log.tracef("Not modifying index for %s (%s)", storedKey, command);
@@ -420,6 +423,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       } else if (trace) {
          log.tracef("Update not needed for %s", newValue);
       }
+      return operation;
    }
 
    private boolean shouldRemove(Object value, Object previousValue) {

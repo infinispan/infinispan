@@ -2,9 +2,8 @@ package org.infinispan.query.backend;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -14,9 +13,11 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.InvocationSuccessAction;
+import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 public final class TxQueryInterceptor extends DDAsyncInterceptor {
 
@@ -26,7 +27,7 @@ public final class TxQueryInterceptor extends DDAsyncInterceptor {
    // wouldn't help much.
    private final QueryInterceptor queryInterceptor;
 
-   private final InvocationSuccessAction<VisitableCommand> commitModificationsToIndex = this::commitModificationsToIndex;
+   private final InvocationSuccessFunction<VisitableCommand> commitModificationsToIndex = this::commitModificationsToIndexFuture;
 
    public TxQueryInterceptor(ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues, QueryInterceptor queryInterceptor) {
       this.txOldValues = txOldValues;
@@ -36,7 +37,7 @@ public final class TxQueryInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
       if (command.isOnePhaseCommit()) {
-         return invokeNextThenAccept(ctx, command, commitModificationsToIndex);
+         return invokeNextThenApply(ctx, command, commitModificationsToIndex);
       } else {
          return invokeNext(ctx, command);
       }
@@ -44,27 +45,26 @@ public final class TxQueryInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) {
-      return invokeNextThenAccept(ctx, command, commitModificationsToIndex);
+      return invokeNextThenApply(ctx, command, commitModificationsToIndex);
    }
 
-   private void commitModificationsToIndex(InvocationContext ctx, VisitableCommand cmd, Object rv) {
+   private InvocationStage commitModificationsToIndexFuture(InvocationContext ctx, VisitableCommand cmd, Object rv) {
       TxInvocationContext txCtx = (TxInvocationContext) ctx;
-      Map<Object, Object> oldValues = txOldValues.remove(txCtx.getGlobalTransaction());
-      if (oldValues == null) {
-         oldValues = Collections.emptyMap();
-      }
+      Map<Object, Object> removed = txOldValues.remove(txCtx.getGlobalTransaction());
+      final Map<Object, Object> oldValues = removed == null ? Collections.emptyMap() : removed;
+
       AbstractCacheTransaction transaction = txCtx.getCacheTransaction();
-      Set<Object> keys = transaction.getAllModifications().stream()
+      return asyncValue(CompletableFuture.allOf(transaction.getAllModifications().stream()
             .filter(mod -> !mod.hasAnyFlag(FlagBitSets.SKIP_INDEXING))
             .flatMap(mod -> mod.getAffectedKeys().stream())
-            .collect(Collectors.toSet());
-
-      for (Object key : keys) {
-         CacheEntry entry = txCtx.lookupEntry(key);
-         if (entry != null) {
-            Object oldValue = oldValues.getOrDefault(key, QueryInterceptor.UNKNOWN);
-            queryInterceptor.processChange(ctx, null, key, oldValue, entry.getValue());
-         }
-      }
+            .map(key -> {
+               CacheEntry<?, ?> entry = txCtx.lookupEntry(key);
+               if (entry != null) {
+                  Object oldValue = oldValues.getOrDefault(key, QueryInterceptor.UNKNOWN);
+                  return queryInterceptor.processChange(ctx, null, key, oldValue, entry.getValue());
+               }
+               return CompletableFutures.completedNull();
+            })
+            .toArray(CompletableFuture[]::new)));
    }
 }

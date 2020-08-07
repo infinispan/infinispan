@@ -130,6 +130,18 @@
       </dependency>
 
       <dependency>
+         <groupId>io.projectreactor.tools</groupId>
+         <artifactId>blockhound</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <!-- Included to avoid issue in blockhound during tests -->
+      <dependency>
+         <groupId>org.eclipse.microprofile.metrics</groupId>
+         <artifactId>microprofile-metrics-api</artifactId>
+         <optional>true</optional>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.byteman</groupId>
          <artifactId>byteman</artifactId>
          <scope>test</scope>
