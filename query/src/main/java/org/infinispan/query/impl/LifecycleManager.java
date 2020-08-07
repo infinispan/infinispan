@@ -17,7 +17,6 @@ import javax.management.ObjectName;
 
 import org.apache.lucene.search.BooleanQuery;
 import org.hibernate.search.backend.lucene.analysis.LuceneAnalysisConfigurer;
-import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.ProgrammaticMappingConfigurationContext;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
@@ -337,10 +336,6 @@ public class LifecycleManager implements ModuleLifecycle {
          searchMappingHolder.setEntityLoader(new EntityLoader(cache, keyTransformationHandler));
          SearchMappingBuilder builder = searchMappingHolder.builder(SearchMappingBuilder.introspector(MethodHandles.lookup()));
          builder.addEntityTypes(types);
-         ProgrammaticMappingConfigurationContext programmaticMapping = builder.programmaticMapping();
-         for (Class<?> type : types) {
-            programmaticMapping.type(type).routingKeyBinder(new CacheRoutingKeyBridge.Binder());
-         }
          searchMappingHolder.build();
       }
 

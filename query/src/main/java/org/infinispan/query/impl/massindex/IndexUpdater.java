@@ -62,7 +62,7 @@ public class IndexUpdater {
          return CompletableFuture.completedFuture(null);
       }
 
-      final String idInString = keyTransformationHandler.keyToString(key, segment);
-      return searchMappingHolder.getSearchMapping().getSearchIndexer().addOrUpdate(idInString, value);
+      final String idInString = keyTransformationHandler.keyToString(key);
+      return searchMappingHolder.getSearchMapping().getSearchIndexer().addOrUpdate(idInString, String.valueOf(segment), value);
    }
 }

@@ -7,12 +7,12 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface SearchIndexer {
 
-   CompletableFuture<?> add(Object providedId, Object entity);
+   CompletableFuture<?> add(Object providedId, String routingKey, Object entity);
 
-   CompletableFuture<?> addOrUpdate(Object providedId, Object entity);
+   CompletableFuture<?> addOrUpdate(Object providedId, String routingKey, Object entity);
 
-   CompletableFuture<?> delete(Object providedId, Object entity);
+   CompletableFuture<?> delete(Object providedId, String routingKey, Object entity);
 
-   CompletableFuture<?> purge(Object providedId, String providedRoutingKey);
+   CompletableFuture<?> purge(Object providedId, String routingKey);
 
 }

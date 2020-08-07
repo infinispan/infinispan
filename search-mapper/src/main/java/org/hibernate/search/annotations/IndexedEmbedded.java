@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hibernate.search.engine.backend.document.model.dsl.ObjectFieldStorage;
+import org.hibernate.search.engine.backend.types.ObjectStructure;
 import org.hibernate.search.mapper.pojo.extractor.mapping.programmatic.ContainerExtractorPath;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessor;
@@ -99,7 +99,7 @@ public @interface IndexedEmbedded {
          mappingContext.indexedEmbedded()
                .extractors( ContainerExtractorPath.defaultExtractors() )
                .prefix( cleanedUpPrefix )
-               .storage( ObjectFieldStorage.DEFAULT )
+               .structure( ObjectStructure.DEFAULT )
                .maxDepth( cleanedUpMaxDepth )
                .includePaths( cleanedUpIncludePaths );
       }

@@ -19,6 +19,11 @@ class SearchProjectionInfo {
       return new SearchProjectionInfo(factory.field(absoluteFieldPath, type).toProjection(), false);
    }
 
+   static SearchProjectionInfo multiField(SearchProjectionFactory<EntityReference, ?> factory,
+                                     String absoluteFieldPath, Class<?> type) {
+      return new SearchProjectionInfo(factory.field(absoluteFieldPath, type).multi().toProjection(), false);
+   }
+
    static SearchProjectionInfo composite(SearchProjectionFactory<EntityReference, ?> factory,
                                          SearchProjection<?>[] children) {
       return new SearchProjectionInfo(factory.composite(children).toProjection(), false);
