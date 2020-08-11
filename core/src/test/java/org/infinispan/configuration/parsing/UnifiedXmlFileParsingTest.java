@@ -43,6 +43,7 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
+import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.eviction.EvictionStrategy;
@@ -119,6 +120,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(1, scattered.clustering().invalidationBatchSize());
             assertEquals(BiasAcquisition.NEVER, scattered.clustering().biasAcquisition());
             assertEquals(256, scattered.clustering().biasLifespan());
+            TransportConfiguration tc = getGlobalConfiguration(holder).transport();
+            assertTrue(tc.properties().size() >= 1);
+            assertEquals("value", tc.properties().getProperty("key"));
          }
       },
       INFINISPAN_110(11, 0) {

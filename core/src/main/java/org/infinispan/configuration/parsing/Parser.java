@@ -1066,7 +1066,10 @@ public class Parser implements ConfigurationParser {
             }
          }
       }
-      ParseUtils.requireNoContent(reader);
+      Properties properties = parseProperties(reader);
+      for (Map.Entry<Object, Object> propertyEntry : properties.entrySet()) {
+        transport.addProperty((String) propertyEntry.getKey(), (String) propertyEntry.getValue());
+      }
    }
 
    private void parseGlobalState(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {

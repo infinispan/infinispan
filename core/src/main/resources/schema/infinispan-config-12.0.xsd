@@ -401,6 +401,13 @@
   </xs:complexType>
 
   <xs:complexType name="transport">
+    <xs:sequence>
+      <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>A transport property with name and value to be passed to the Transport instance.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
     <xs:attribute name="stack" type="xs:string">
       <xs:annotation>
         <xs:documentation>Defines the jgroups stack used by the transport.</xs:documentation>
