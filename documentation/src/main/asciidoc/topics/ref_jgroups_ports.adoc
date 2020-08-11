@@ -1,0 +1,27 @@
+[id='jgroups_ports-{context}']
+= TCP and UDP Ports for Cluster Traffic
+{brandname} uses the following ports by default:
+
+[%header,cols=3*]
+|===
+|Default Port
+|Protocol
+|Description
+
+|`7800`
+|TCP/UDP
+|JGroups cluster bind port
+
+|`46655`
+|UDP
+|JGroups multicast
+
+|`7200`
+|TCP
+|JGroups RELAY2 for cross-site replication
+
+|===
+
+.Reference
+
+link:{config_docs}#cluster_transport[Setting Up Cluster Transport]
