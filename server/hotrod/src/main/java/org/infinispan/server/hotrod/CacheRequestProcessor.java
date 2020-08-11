@@ -37,11 +37,6 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       listenerRegistry = server.getClientListenerRegistry();
    }
 
-   private boolean isBlockingWrite(CacheInfo cacheInfo, HotRodHeader header) {
-      // Note: cache store cannot be skipped (yet)
-      return cacheInfo.indexing && !header.isSkipIndexing();
-   }
-
    void ping(HotRodHeader header, Subject subject) {
       // we need to throw an exception when the cache is inaccessible
       // but ignore the default cache, because the client always pings the default cache first
@@ -167,11 +162,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
-      if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> putInternal(header, cache, key, value, metadata.build()));
-      } else {
-         putInternal(header, cache, key, value, metadata.build());
-      }
+      putInternal(header, cache, key, value, metadata.build());
    }
 
    private void putInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value, Metadata metadata) {
@@ -191,11 +182,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
-      if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build()));
-      } else {
-         replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build());
-      }
+      replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build());
    }
 
    private void replaceIfUnmodifiedInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, long version, byte[] value, Metadata metadata) {
@@ -232,11 +219,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
-      if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> replaceInternal(header, cache, key, value, metadata.build()));
-      } else {
-         replaceInternal(header, cache, key, value, metadata.build());
-      }
+      replaceInternal(header, cache, key, value, metadata.build());
    }
 
    private void replaceInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value, Metadata metadata) {
@@ -272,11 +255,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
-      if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> putIfAbsentInternal(header, cache, key, value, metadata.build()));
-      } else {
-         putIfAbsentInternal(header, cache, key, value, metadata.build());
-      }
+      putIfAbsentInternal(header, cache, key, value, metadata.build());
    }
 
    private void putIfAbsentInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value, Metadata metadata) {
@@ -308,11 +287,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void remove(HotRodHeader header, Subject subject, byte[] key) {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> removeInternal(header, cache, key));
-      } else {
-         removeInternal(header, cache, key);
-      }
+      removeInternal(header, cache, key);
    }
 
    private void removeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key) {
@@ -332,11 +307,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void removeIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version) {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> removeIfUnmodifiedInternal(header, cache, key, version));
-      } else {
-         removeIfUnmodifiedInternal(header, cache, key, version);
-      }
+      removeIfUnmodifiedInternal(header, cache, key, version);
    }
 
    private void removeIfUnmodifiedInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, long version) {
@@ -371,11 +342,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void clear(HotRodHeader header, Subject subject) {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> clearInternal(header, cache));
-      } else {
-         clearInternal(header, cache);
-      }
+      clearInternal(header, cache);
    }
 
    private void clearInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache) {
@@ -391,11 +358,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void putAll(HotRodHeader header, Subject subject, Map<byte[], byte[]> entries, Metadata.Builder metadata) {
       CacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      if (isBlockingWrite(cacheInfo, header)) {
-         executor.execute(() -> putAllInternal(header, cache, entries, metadata.build()));
-      } else {
-         putAllInternal(header, cache, entries, metadata.build());
-      }
+      putAllInternal(header, cache, entries, metadata.build());
    }
 
    private void putAllInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Map<byte[], byte[]> entries, Metadata metadata) {
