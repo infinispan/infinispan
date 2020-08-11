@@ -1,13 +1,15 @@
 [id='eviction-{context}']
 = Eviction
-Eviction lets you control the size of the data container by removing cache
-entries to make space when adding new entries.
+Eviction lets you control the size of the data container by removing entries
+from memory. Eviction drops one entry from the data container at a time and is
+local to the node on which it occurs.
 
 [IMPORTANT]
 ====
 Eviction removes entries from memory but not from persistent cache stores. To
-ensure that entries remain available after {brandname} evicts them, you should
-configure a persistent cache store.
+ensure that entries remain available after {brandname} evicts them, and to
+prevent inconsistencies with your data, you should configure a persistent cache
+store.
 ====
 
 {brandname} eviction relies on two configurations:
