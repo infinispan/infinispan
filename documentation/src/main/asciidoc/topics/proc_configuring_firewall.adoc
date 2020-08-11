@@ -1,0 +1,27 @@
+[id='configuring_firewalls-{context}']
+= Configuring Network Firewalls for Remote Connections
+Adjust any firewall rules to allow traffic between the server and external
+clients.
+
+.Procedure
+
+On Red Hat Enterprise Linux (RHEL) workstations, for example, you can allow
+traffic to port `11222` with firewalld as follows:
+
+[source,bash,options="nowrap",subs=attributes+]
+----
+# firewall-cmd --add-port=11222/tcp --permanent
+success
+# firewall-cmd --list-ports | grep 11222
+11222/tcp
+----
+
+To configure firewall rules that apply across a network, you can use the
+nftables utility.
+
+ifdef::productized[]
+.Reference
+
+* link:https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html-single/configuring_and_managing_networking/index#using-and-configuring-firewalld_configuring-and-managing-networking[Using and configuring firewalld]
+* link:https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html-single/configuring_and_managing_networking/index#getting-started-with-nftables_configuring-and-managing-networking[Getting started with nftables]
+endif::productized[]
