@@ -17,7 +17,7 @@ import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResol
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 
 /**
  * Implementation of {@link RemoteQueryManager} for caches storing deserialized content (Java Objects).
@@ -30,20 +30,19 @@ final class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
 
    private final SerializationContext serCtx;
 
-   private final SearchMappingHolder searchMapping;
+   private final SearchMapping searchMapping;
 
    private final ComponentRegistry cr;
 
    ObjectRemoteQueryManager(AdvancedCache<?, ?> cache, ComponentRegistry cr, QuerySerializers querySerializers) {
       super(cache, querySerializers, cr);
       this.cr = cr;
-      this.searchMapping = cr.getComponent(SearchMappingHolder.class);
+      this.searchMapping = cr.getComponent(SearchMapping.class);
       this.serCtx = SecurityActions.getSerializationContext(cache.getCacheManager());
 
       BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
       ObjectReflectionMatcher objectReflectionMatcher = ObjectReflectionMatcher.create(
-            createEntityNamesResolver(APPLICATION_OBJECT), (searchMapping == null) ? null :
-                      searchMapping.getSearchMapping());
+            createEntityNamesResolver(APPLICATION_OBJECT), searchMapping);
       bcr.replaceComponent(ObjectReflectionMatcher.class.getName(), objectReflectionMatcher, true);
 
       ProtobufObjectReflectionMatcher protobufObjectReflectionMatcher = ProtobufObjectReflectionMatcher.create(createEntityNamesResolver(APPLICATION_PROTOSTREAM), serCtx);
