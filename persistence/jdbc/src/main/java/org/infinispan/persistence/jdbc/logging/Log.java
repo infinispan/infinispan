@@ -71,7 +71,7 @@ public interface Log extends BasicLogger {
    void ioErrorUnmarshalling(@Cause IOException e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "*UNEXPECTED* ClassNotFoundException. This should not happen as Bucket class exists", id = 8010)
+   @Message(value = "*UNEXPECTED* ClassNotFoundException.", id = 8010)
    void unexpectedClassNotFoundException(@Cause ClassNotFoundException e);
 
    @LogMessage(level = ERROR)
@@ -175,4 +175,14 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Error whilst removing keys in batch from the database. Keys: %s", id = 8038)
    PersistenceException sqlFailureDeletingBatch(Iterable<Object> keys, @Cause Exception e);
+
+   @Message(value = "The existing store was created without segmentation enabled", id = 8039)
+   CacheConfigurationException existingStoreNoSegmentation();
+
+   @Message(value = "The existing store was created with %d segments configured, but the cache is configured with %d", id = 8040)
+   CacheConfigurationException existingStoreSegmentMismatch(int existing, int cache);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error retrieving JDBC metadata", id = 8041)
+   void sqlFailureMetaRetrieval(@Cause SQLException e);
 }

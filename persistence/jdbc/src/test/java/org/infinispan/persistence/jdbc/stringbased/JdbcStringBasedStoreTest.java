@@ -2,17 +2,22 @@ package org.infinispan.persistence.jdbc.stringbased;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertSame;
 
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.jdbc.DatabaseType;
+import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.table.AbstractTableManager;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -75,16 +80,19 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
 
       JdbcStringBasedStore stringBasedCacheStore = new JdbcStringBasedStore();
       stringBasedCacheStore.init(createContext(builder.build()));
-      stringBasedCacheStore.start();
-      assertNull(stringBasedCacheStore.getConnectionFactory());
 
       // this will make sure that if a method like stop is called on the connection then it will barf an exception
       ConnectionFactory connectionFactory = mock(ConnectionFactory.class);
       TableManager tableManager = mock(TableManager.class);
+      TableManager.Metadata meta = new AbstractTableManager.MetadataImpl(Version.getVersionShort(), HashConfiguration.NUM_SEGMENTS.getDefaultValue());
+      when(tableManager.getMetadata()).thenReturn(meta);
 
       tableManager.start();
-
-      stringBasedCacheStore.initializeConnectionFactory(connectionFactory);
+      assertNull(stringBasedCacheStore.getConnectionFactory());
+      stringBasedCacheStore.setConnectionFactory(connectionFactory);
+      stringBasedCacheStore.setTableManager(tableManager);
+      stringBasedCacheStore.start();
+      assertSame(stringBasedCacheStore.getConnectionFactory(), connectionFactory);
 
       //stop should be called even if this is an external
       reset(tableManager, connectionFactory);

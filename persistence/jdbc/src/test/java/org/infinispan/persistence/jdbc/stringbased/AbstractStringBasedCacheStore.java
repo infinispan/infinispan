@@ -18,11 +18,14 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
+import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
+import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -131,7 +134,9 @@ public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTe
         tableConfiguration = storeBuilder.create().table();
         EmbeddedCacheManager defaultCacheManager = TestCacheManagerFactory.newDefaultCacheManager(true, gcb, builder);
         String cacheName = defaultCacheManager.getCache().getName();
-        tableManager = TableManagerFactory.getManager(connectionFactory, storeBuilder.create(), cacheName);
+        PersistenceMarshaller marshaller = defaultCacheManager.getCache().getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
+        InitializationContext ctx = new DummyInitializationContext(null, null, marshaller, null, null, null, null, null);
+        tableManager = TableManagerFactory.getManager(ctx, connectionFactory, storeBuilder.create(), cacheName);
 
         return defaultCacheManager;
     }

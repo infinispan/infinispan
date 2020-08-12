@@ -65,7 +65,13 @@ The Kryo and Protostuff marshallers have been deprecated and will be removed in 
 
 All occurrences of "white list" have been renamed to "allow list".
 
-== Stores
+== Persistence
+
+=== JdbcStringBasedStore
+The JDBC string based store now creates an additional `_META` to ensure that any database content is compatible with
+the current {brandname} version and configuration.
+
+=== Rest Store
 The rest-store has been removed. Users should utilise the HotRod based remote-store for reading/writing to Infinispan clusters.
 
 = Upgrading from 10.1 to 11.0

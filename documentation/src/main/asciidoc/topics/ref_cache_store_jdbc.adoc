@@ -9,6 +9,9 @@ simple one-to-one mapping that maps each key to a `String` object using the `key
 {brandname} provides a default implementation, `DefaultTwoWayKey2StringMapper`,
 that handles primitive types.
 
+In addition to the data table used to store cache entries, the store also creates a `_META` table for storing metadata.
+This table is used to ensure that any existing database content is compatible with the current {brandname} version and configuration.
+
 [NOTE]
 ====
 By default {brandname} shares are not stored, which means that all nodes in the
