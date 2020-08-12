@@ -20,17 +20,16 @@ public class InfinispanMappingInitiator extends AbstractPojoMappingInitiator<Inf
    implements MappingConfigurationContext {
 
    private final InfinispanTypeConfigurationContributor typeConfigurationContributor;
-   private final EntityLoader<EntityReference, ?> entityLoader;
    private final Collection<ProgrammaticSearchMappingProvider> mappingProviders;
 
+   private EntityLoader<EntityReference, ?> entityLoader;
    private EntityConverter entityConverter;
 
-   public InfinispanMappingInitiator(PojoBootstrapIntrospector introspector, EntityLoader<EntityReference, ?> entityLoader,
+   public InfinispanMappingInitiator(PojoBootstrapIntrospector introspector,
                                      Collection<ProgrammaticSearchMappingProvider> mappingProviders) {
       super(introspector);
       typeConfigurationContributor = new InfinispanTypeConfigurationContributor(introspector);
       addConfigurationContributor(typeConfigurationContributor);
-      this.entityLoader = entityLoader;
       this.mappingProviders = mappingProviders;
    }
 
@@ -38,12 +37,17 @@ public class InfinispanMappingInitiator extends AbstractPojoMappingInitiator<Inf
       typeConfigurationContributor.addEntityType(type, entityName);
    }
 
+   public void setEntityLoader(EntityLoader<EntityReference, ?> entityLoader) {
+      this.entityLoader = entityLoader;
+   }
+
    public void setEntityConverter(EntityConverter entityConverter) {
       this.entityConverter = entityConverter;
    }
 
    @Override
-   public void configure(MappingBuildContext buildContext, MappingConfigurationCollector<PojoTypeMetadataContributor> configurationCollector) {
+   public void configure(MappingBuildContext buildContext,
+                         MappingConfigurationCollector<PojoTypeMetadataContributor> configurationCollector) {
       super.configure(buildContext, configurationCollector);
 
       for (ProgrammaticSearchMappingProvider mappingProvider : mappingProviders) {

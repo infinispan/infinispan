@@ -41,13 +41,13 @@ public final class SearchMappingBuilder {
    private final InfinispanMappingKey mappingKey;
    private final InfinispanMappingInitiator mappingInitiator;
 
-   SearchMappingBuilder(PojoBootstrapIntrospector introspector, EntityLoader<EntityReference, ?> entityLoader,
-                        ClassLoader aggregatedClassLoader, Collection<ProgrammaticSearchMappingProvider> mappingProviders) {
+   SearchMappingBuilder(PojoBootstrapIntrospector introspector, ClassLoader aggregatedClassLoader,
+                        Collection<ProgrammaticSearchMappingProvider> mappingProviders) {
       propertyChecker = ConfigurationPropertyChecker.create();
       propertySource = indexProperties.createPropertySource(propertyChecker);
       integrationBuilder = SearchIntegration.builder(propertySource, propertyChecker);
       mappingKey = new InfinispanMappingKey();
-      mappingInitiator = new InfinispanMappingInitiator(introspector, entityLoader, mappingProviders);
+      mappingInitiator = new InfinispanMappingInitiator(introspector, mappingProviders);
       integrationBuilder.addMappingInitiator(mappingKey, mappingInitiator);
       // Enable annotated type discovery by default
       mappingInitiator.annotatedTypeDiscoveryEnabled(true);
@@ -103,6 +103,11 @@ public final class SearchMappingBuilder {
 
    public SearchMappingBuilder setProvidedIdentifierBridge(BeanReference<? extends IdentifierBridge<Object>> providedIdentifierBridge) {
       mappingInitiator.providedIdentifierBridge(providedIdentifierBridge);
+      return this;
+   }
+
+   public SearchMappingBuilder setEntityLoader(EntityLoader<EntityReference, ?> entityLoader) {
+      mappingInitiator.setEntityLoader(entityLoader);
       return this;
    }
 

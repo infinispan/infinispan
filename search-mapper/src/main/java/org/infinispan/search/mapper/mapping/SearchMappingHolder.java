@@ -47,7 +47,8 @@ public class SearchMappingHolder {
    }
 
    public SearchMappingBuilder builder(PojoBootstrapIntrospector introspector) {
-      builder = SearchMapping.builder(introspector, entityLoader, aggregatedClassLoader, mappingProviders)
+      builder = SearchMapping.builder(introspector, aggregatedClassLoader, mappingProviders)
+            .setEntityLoader(entityLoader)
             .setProvidedIdentifierBridge(identifierBridge)
             .setProperties(properties);
       return builder;
