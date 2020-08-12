@@ -5,9 +5,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.hibernate.search.engine.reporting.FailureHandler;
-import org.hibernate.search.engine.search.loading.spi.EntityLoader;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
-import org.infinispan.search.mapper.common.EntityReference;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
 import org.infinispan.search.mapper.work.SearchIndexer;
@@ -64,10 +62,8 @@ public interface SearchMapping extends AutoCloseable {
 
    boolean isIndexedType(Object value);
 
-   static SearchMappingBuilder builder(PojoBootstrapIntrospector introspector,
-                                       EntityLoader<EntityReference, ?> entityLoader,
-                                       ClassLoader aggregatedClassLoader,
+   static SearchMappingBuilder builder(PojoBootstrapIntrospector introspector, ClassLoader aggregatedClassLoader,
                                        Collection<ProgrammaticSearchMappingProvider> mappingProviders) {
-      return new SearchMappingBuilder(introspector, entityLoader, aggregatedClassLoader, mappingProviders);
+      return new SearchMappingBuilder(introspector, aggregatedClassLoader, mappingProviders);
    }
 }

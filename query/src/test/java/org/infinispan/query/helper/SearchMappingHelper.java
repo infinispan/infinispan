@@ -32,7 +32,7 @@ public class SearchMappingHelper {
       InfinispanBootstrapIntrospector introspector = SearchMappingBuilder.introspector(MethodHandles.lookup());
 
       // do not pass any entity loader nor identifier bridges
-      return SearchMapping.builder(introspector, null, null, Collections.emptyList())
+      return SearchMapping.builder(introspector, null, Collections.emptyList())
             .setProperties(properties)
             .addEntityTypes(new HashSet<>(Arrays.asList(types)))
             .build();
