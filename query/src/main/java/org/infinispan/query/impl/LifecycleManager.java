@@ -73,7 +73,7 @@ import org.infinispan.registry.InternalCacheRegistry.Flag;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.search.mapper.mapping.ProgrammaticSearchMappingProvider;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
+import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
 import org.infinispan.search.mapper.mapping.impl.CompositeAnalysisConfigurer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.LogFactory;
@@ -113,7 +113,7 @@ public class LifecycleManager implements ModuleLifecycle {
          ClassLoader aggregatedClassLoader = makeAggregatedClassLoader(cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader());
          boolean isIndexed = cfg.indexing().enabled();
 
-         SearchMappingHolder searchMapping = null;
+         SearchMapping searchMapping = null;
          if (isIndexed) {
             setBooleanQueryMaxClauseCount(cfg.indexing().properties());
 
@@ -133,8 +133,7 @@ public class LifecycleManager implements ModuleLifecycle {
          }
 
          cr.registerComponent(ObjectReflectionMatcher.create(
-               new ReflectionEntityNamesResolver(aggregatedClassLoader), (searchMapping == null) ? null :
-                         searchMapping.getSearchMapping()),
+               new ReflectionEntityNamesResolver(aggregatedClassLoader), searchMapping),
                ObjectReflectionMatcher.class);
          cr.registerComponent(new QueryEngine<>(cache, isIndexed), QueryEngine.class);
       }
@@ -221,15 +220,14 @@ public class LifecycleManager implements ModuleLifecycle {
          throw new IllegalStateException("It was expected to find the Query interceptor registered in the InterceptorChain but it wasn't found");
       }
 
-      SearchMappingHolder searchMapping = cr.getComponent(SearchMappingHolder.class);
-      SearchMapping mapping = searchMapping.getSearchMapping();
-      if (mapping != null) {
-         checkIndexableClasses(mapping, indexingConfiguration.indexedEntities());
+      SearchMapping searchMapping = cr.getComponent(SearchMapping.class);
+      if (searchMapping != null) {
+         checkIndexableClasses(searchMapping, indexingConfiguration.indexedEntities());
       }
 
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
       Indexer massIndexer = ComponentRegistryUtils.getIndexer(cache);
-      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(mapping, massIndexer);
+      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchMapping, massIndexer);
       stats.setStatisticsEnabled(configuration.statistics().enabled());
       cr.registerComponent(stats, InfinispanQueryStatisticsInfo.class);
 
@@ -293,13 +291,13 @@ public class LifecycleManager implements ModuleLifecycle {
       return interceptorChain != null && interceptorChain.containsInterceptorType(QueryInterceptor.class, true);
    }
 
-   private SearchMappingHolder createSearchMapping(IndexingConfiguration indexingConfiguration,
-                                                   Map<String, Class<?>> indexedClasses, ComponentRegistry cr,
-                                                   AdvancedCache<?, ?> cache,
-                                                   KeyTransformationHandler keyTransformationHandler,
-                                                   ClassLoader aggregatedClassLoader) {
-      SearchMappingHolder searchMappingHolder = cr.getComponent(SearchMappingHolder.class);
-      if (searchMappingHolder != null && searchMappingHolder.getSearchMapping() != null && !searchMappingHolder.getSearchMapping().isClose()) {
+   private SearchMapping createSearchMapping(IndexingConfiguration indexingConfiguration,
+                                             Map<String, Class<?>> indexedClasses, ComponentRegistry cr,
+                                             AdvancedCache<?, ?> cache,
+                                             KeyTransformationHandler keyTransformationHandler,
+                                             ClassLoader aggregatedClassLoader) {
+      SearchMapping searchMapping = cr.getComponent(SearchMapping.class);
+      if (searchMapping != null && !searchMapping.isClose()) {
          // a paranoid check against an unlikely failure
          throw new IllegalStateException("SearchIntegrator already initialized!");
       }
@@ -328,24 +326,27 @@ public class LifecycleManager implements ModuleLifecycle {
          }
       }
 
-      searchMappingHolder = new SearchMappingHolder(CacheIdentifierBridge.getReference(), properties,
-            aggregatedClassLoader, mappingProviders);
+      SearchMappingCommonBuilding commonBuilding = new SearchMappingCommonBuilding(
+            CacheIdentifierBridge.getReference(), properties, aggregatedClassLoader, mappingProviders);
       Set<Class<?>> types = new HashSet<>( indexedClasses.values() );
 
-      // TODO: look for protobuf entity type marked as indexed.
       if (!types.isEmpty()) {
-         SearchMappingBuilder builder = searchMappingHolder.builder(SearchMappingBuilder.introspector(MethodHandles.lookup()));
+         // use the common builder to create the mapping now
+         SearchMappingBuilder builder = commonBuilding.builder(SearchMappingBuilder.introspector(MethodHandles.lookup()));
          builder.setEntityLoader(new EntityLoader(cache, keyTransformationHandler));
          builder.addEntityTypes(types);
-         searchMappingHolder.build();
-         SearchMapping searchMapping = searchMappingHolder.getSearchMapping();
+         searchMapping = builder.build();
          if (searchMapping != null) {
             cr.registerComponent(searchMapping, SearchMapping.class);
          }
       }
 
-      cr.registerComponent(searchMappingHolder, SearchMappingHolder.class);
-      return searchMappingHolder;
+      if (searchMapping == null) {
+         // register the common builder to create the mapping at a later time
+         cr.registerComponent(commonBuilding, SearchMappingCommonBuilding.class);
+      }
+
+      return searchMapping;
    }
 
    /**
@@ -400,9 +401,9 @@ public class LifecycleManager implements ModuleLifecycle {
          queryInterceptor.prepareForStopping();
       }
 
-      SearchMappingHolder searchMappingHolder = cr.getComponent(SearchMappingHolder.class);
-      if (searchMappingHolder != null && searchMappingHolder.getSearchMapping() != null) {
-         searchMappingHolder.getSearchMapping().close();
+      SearchMapping searchMapping = cr.getComponent(SearchMapping.class);
+      if (searchMapping != null) {
+         searchMapping.close();
       }
    }
 

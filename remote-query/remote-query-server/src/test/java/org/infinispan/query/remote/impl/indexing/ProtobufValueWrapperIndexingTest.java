@@ -11,15 +11,10 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
-import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
-import org.infinispan.query.remote.impl.mapping.SerializationContextSearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -46,16 +41,8 @@ public class ProtobufValueWrapperIndexingTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(globalBuilder, cfg);
    }
 
-   public void testIndexingWithWrapper() throws Exception {
-      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
-
-      MarshallerRegistration.registerMarshallers(serCtx);
-
-      // Create Search 6 mapping from current SerializationContext:
-      SearchMappingHolder mappingHolder = ComponentRegistryUtils.getSearchMappingHolder(cache);
-      SerializationContextSearchMapping.acquire(serCtx).buildMapping(mappingHolder, null,
-            cache.getCacheConfiguration().indexing().indexedEntityTypes());
-      SearchMapping searchMapping = mappingHolder.getSearchMapping();
+   public void testIndexingWithWrapper() {
+      SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
       assertNotNull(searchMapping);
 
       // Store some test data:
