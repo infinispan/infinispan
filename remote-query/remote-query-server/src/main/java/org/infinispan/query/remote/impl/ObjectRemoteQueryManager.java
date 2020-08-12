@@ -42,7 +42,8 @@ final class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
 
       BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
       ObjectReflectionMatcher objectReflectionMatcher = ObjectReflectionMatcher.create(
-            createEntityNamesResolver(APPLICATION_OBJECT), searchMapping);
+            createEntityNamesResolver(APPLICATION_OBJECT), (searchMapping == null) ? null :
+                      searchMapping.getSearchMapping());
       bcr.replaceComponent(ObjectReflectionMatcher.class.getName(), objectReflectionMatcher, true);
 
       ProtobufObjectReflectionMatcher protobufObjectReflectionMatcher = ProtobufObjectReflectionMatcher.create(createEntityNamesResolver(APPLICATION_PROTOSTREAM), serCtx);

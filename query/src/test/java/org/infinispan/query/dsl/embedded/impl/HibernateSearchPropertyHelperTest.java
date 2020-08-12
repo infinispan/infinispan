@@ -2,8 +2,6 @@ package org.infinispan.query.dsl.embedded.impl;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
@@ -12,7 +10,6 @@ import org.hibernate.search.mapper.pojo.mapping.definition.annotation.DocumentId
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.helper.SearchMappingHelper;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 
 import org.junit.After;
 import org.junit.Before;
@@ -29,10 +26,8 @@ public class HibernateSearchPropertyHelperTest {
 
    @Before
    public void setup() {
-      SearchMappingHolder mappingHolder = mock(SearchMappingHolder.class);
       searchMapping = SearchMappingHelper.createSearchMappingForTests(TestEntity.class);
-      when(mappingHolder.getSearchMapping()).thenReturn(searchMapping);
-      propertyHelper = new HibernateSearchPropertyHelper(mappingHolder, new ReflectionEntityNamesResolver(null));
+      propertyHelper = new HibernateSearchPropertyHelper(searchMapping, new ReflectionEntityNamesResolver(null));
    }
 
    @After
