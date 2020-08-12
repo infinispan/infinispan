@@ -4,7 +4,7 @@
                                      urn:infinispan:config:anchored:12.0 https://infinispan.org/schemas/infinispan-anchored-config-12.0.xsd"
                  xmlns="urn:infinispan:config:12.0"
                  name="default" statistics="true">
-    <transport cluster="${infinispan.cluster.name}" stack="${infinispan.cluster.stack}"/>
+    <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}"/>
     <metrics gauges="true" histograms="true"/>
     <replicated-cache name="default">
         <locking concurrency-level="100" acquire-timeout="1000"/>

@@ -54,11 +54,11 @@ public interface Messages {
    @Message("Specifies a logging configuration file. Defaults to `%s`.")
    String serverHelpLoggingConfig(String defaultConfiguration);
 
-   @Message("Sets the name of the cluster. Defaults to `%s`.")
-   String serverHelpClusterName(String defaultClusterName);
+   @Message("Sets the name of the cluster. Default set by configuration expression")
+   String serverHelpClusterName();
 
-   @Message("Specifies the JGroups stack for clustering. Defaults to `%s`.")
-   String serverHelpClusterStack(String defaultStack);
+   @Message("Specifies the JGroups stack for clustering. Default set by configuration expression")
+   String serverHelpClusterStack();
 
    @Message("Specifies the JGroups bind address for clustering.")
    String serverHelpClusterAddress();

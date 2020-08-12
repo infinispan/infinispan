@@ -14,7 +14,7 @@
     </jgroups>
 
     <cache-container default-cache="default" statistics="true">
-        <transport cluster="${infinispan.cluster.name}" stack="wildfly-modules-it"/>
+        <transport cluster="${infinispan.cluster.name:cluster}" stack="wildfly-modules-it"/>
         <global-state />
         <local-cache name="default" />
     </cache-container>
