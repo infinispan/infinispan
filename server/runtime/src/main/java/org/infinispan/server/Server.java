@@ -216,8 +216,6 @@ public class Server implements ServerManagement, AutoCloseable {
       properties.putIfAbsent(INFINISPAN_SERVER_DATA_PATH, new File(serverRoot, DEFAULT_SERVER_DATA).getAbsolutePath());
       properties.putIfAbsent(INFINISPAN_SERVER_LOG_PATH, new File(serverRoot, DEFAULT_SERVER_LOG).getAbsolutePath());
       properties.putIfAbsent(INFINISPAN_BIND_PORT, DEFAULT_BIND_PORT);
-      properties.putIfAbsent(INFINISPAN_CLUSTER_NAME, DEFAULT_CLUSTER_NAME);
-      properties.putIfAbsent(INFINISPAN_CLUSTER_STACK, DEFAULT_CLUSTER_STACK);
 
       this.serverConf = new File(properties.getProperty(INFINISPAN_SERVER_CONFIG_PATH));
 

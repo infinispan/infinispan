@@ -2,6 +2,6 @@
                  xsi:schemaLocation="urn:infinispan:config:11.0 https://infinispan.org/schemas/infinispan-config-fragment-11.0.xsd"
                  xmlns="urn:infinispan:config:11.0"
                  name="default" statistics="true">
-   <transport cluster="${infinispan.cluster.name}" stack="${infinispan.cluster.stack}"/>
+   <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}"/>
    <metrics gauges="true" histograms="true"/>
 </cache-container>

@@ -76,7 +76,7 @@ The following is an example server configuration:
         xmlns="urn:infinispan:config:11.0"
         xmlns:server="urn:infinispan:server:11.0">
    <cache-container default-cache="default" statistics="false">
-      <transport cluster="${infinispan.cluster.name}" stack="udp"/>
+      <transport cluster="${infinispan.cluster.name:cluster}" stack="udp"/>
       <global-state/>
       <distributed-cache name="default"/>
    </cache-container>

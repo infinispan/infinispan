@@ -1,6 +1,6 @@
 <infinispan>
     <cache-container name="default" statistics="true">
-        <transport cluster="${infinispan.cluster.name}" stack="${infinispan.cluster.stack:tcp}" node-name="${infinispan.node.name:}"/>
+        <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack:tcp}" node-name="${infinispan.node.name:}"/>
     </cache-container>
 
     <server>

@@ -10,9 +10,9 @@ create caches at run-time.
 ----
 <cache-container name="default" <1>
                  statistics="true"> <2>
-  <transport cluster="${infinispan.cluster.name}" <3>
+  <transport cluster="${infinispan.cluster.name:cluster}" <3>
              stack="${infinispan.cluster.stack:tcp}" <4>
-             node-name="${infinispan.node.name:}"/>
+             node-name="${infinispan.node.name:}"/> <5>
 </cache-container>
 ----
 
@@ -21,6 +21,7 @@ create caches at run-time.
 <3> Adds a JGroups cluster transport that allows {ProductName} servers to
 automatically discover each other and form clusters.
 <4> Uses the default TCP stack for cluster traffic.
+<5> Individual name for the node, must be unique across the cluster. Uses a unified hostname by default.
 
 .Examining the Cache Manager
 
