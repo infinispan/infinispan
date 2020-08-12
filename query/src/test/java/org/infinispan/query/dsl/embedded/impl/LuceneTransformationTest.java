@@ -2,16 +2,19 @@ package org.infinispan.query.dsl.embedded.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.query.helper.IndexAccessor.extractSort;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
 import org.hibernate.search.engine.search.query.SearchQuery;
 import org.hibernate.search.util.common.SearchException;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -19,12 +22,9 @@ import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResol
 import org.infinispan.query.dsl.embedded.impl.model.Employee;
 import org.infinispan.query.helper.SearchMappingHelper;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
 
 /**
  * Test the parsing and transformation of Ickle queries to Lucene queries.
@@ -35,7 +35,6 @@ import org.junit.rules.ExpectedException;
 public class LuceneTransformationTest {
 
    private SearchMapping searchMapping;
-   private SearchMappingHolder mappingHolder;
    private HibernateSearchPropertyHelper propertyHelper;
 
    @Rule
@@ -44,9 +43,7 @@ public class LuceneTransformationTest {
    @Before
    public void initMapping() {
       searchMapping = SearchMappingHelper.createSearchMappingForTests(Employee.class);
-      mappingHolder = mock(SearchMappingHolder.class);
-      when(mappingHolder.getSearchMapping()).thenReturn(searchMapping);
-      propertyHelper = new HibernateSearchPropertyHelper(mappingHolder, new ReflectionEntityNamesResolver(null));
+      propertyHelper = new HibernateSearchPropertyHelper(searchMapping, new ReflectionEntityNamesResolver(null));
    }
 
    @After

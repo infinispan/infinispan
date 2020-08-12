@@ -16,16 +16,16 @@ import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 
 public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
 
    public static String KEY = "__ISPN_Key";
    public static String VALUE = "__HSearch_This";
 
-   private final SearchMappingHolder searchMapping;
+   private final SearchMapping searchMapping;
 
-   public HibernateSearchPropertyHelper(SearchMappingHolder searchMapping, EntityNameResolver<Class<?>> entityNameResolver) {
+   public HibernateSearchPropertyHelper(SearchMapping searchMapping, EntityNameResolver<Class<?>> entityNameResolver) {
       super(entityNameResolver);
       this.searchMapping = searchMapping;
    }
@@ -143,7 +143,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
    }
 
    private IndexDescriptor getIndexDescriptor(Class<?> type) {
-      SearchIndexedEntity indexedEntity = searchMapping.getSearchMapping().indexedEntity(type);
+      SearchIndexedEntity indexedEntity = searchMapping.indexedEntity(type);
       if (indexedEntity == null) {
          return null;
       }

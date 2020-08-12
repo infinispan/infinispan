@@ -2,7 +2,7 @@ package org.infinispan.query.dsl.embedded.impl;
 
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 
 /**
  * Like ReflectionMatcher but also able to use Hibernate Search metadata if available.
@@ -20,7 +20,7 @@ public final class ObjectReflectionMatcher extends ReflectionMatcher {
       super(entityNameResolver);
    }
 
-   public static ObjectReflectionMatcher create(EntityNameResolver<Class<?>> entityNameResolver, SearchMappingHolder searchMapping) {
+   public static ObjectReflectionMatcher create(EntityNameResolver<Class<?>> entityNameResolver, SearchMapping searchMapping) {
       return searchMapping == null ? new ObjectReflectionMatcher(entityNameResolver) :
             new ObjectReflectionMatcher(new HibernateSearchPropertyHelper(searchMapping, entityNameResolver));
    }
