@@ -48,6 +48,7 @@ import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.query.remote.impl.mapping.SerializationContextSearchMapping;
 import org.infinispan.query.remote.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 
 /**
@@ -150,13 +151,17 @@ public final class LifecycleManager implements ModuleLifecycle {
          // the SearchMapping instances will be created for all user caches,
          // updating theirs SearchMapping holders.
          SearchMappingHolder searchMappingHolder = cr.getComponent(SearchMappingHolder.class);
-         if (searchMappingHolder != null) {
+         if (searchMappingHolder != null && searchMappingHolder.getSearchMapping() == null) {
             AdvancedCache cache = cr.getComponent(Cache.class).getAdvancedCache().withStorageMediaType()
                   .withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class);
             KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
             searchMappingHolder.setEntityLoader(new EntityLoader(cache, keyTransformationHandler));
             SerializationContextSearchMapping.acquire(serCtx).buildMapping(searchMappingHolder,
                   cache.getCacheConfiguration().indexing().indexedEntityTypes());
+            SearchMapping searchMapping = searchMappingHolder.getSearchMapping();
+            if (searchMapping != null) {
+               cr.registerComponent(searchMapping, SearchMapping.class);
+            }
          }
 
          RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr);

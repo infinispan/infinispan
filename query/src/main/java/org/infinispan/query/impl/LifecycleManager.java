@@ -338,6 +338,10 @@ public class LifecycleManager implements ModuleLifecycle {
          SearchMappingBuilder builder = searchMappingHolder.builder(SearchMappingBuilder.introspector(MethodHandles.lookup()));
          builder.addEntityTypes(types);
          searchMappingHolder.build();
+         SearchMapping searchMapping = searchMappingHolder.getSearchMapping();
+         if (searchMapping != null) {
+            cr.registerComponent(searchMapping, SearchMapping.class);
+         }
       }
 
       cr.registerComponent(searchMappingHolder, SearchMappingHolder.class);
