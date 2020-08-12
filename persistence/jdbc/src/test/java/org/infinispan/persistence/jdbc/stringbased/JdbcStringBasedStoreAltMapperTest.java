@@ -133,7 +133,7 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
 
    protected int rowCount() {
       ConnectionFactory connectionFactory = getConnection();
-      TableName tableName = tableManager.getTableName();
+      TableName tableName = tableManager.getDataTableName();
       return UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
    }
 

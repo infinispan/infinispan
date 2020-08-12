@@ -17,19 +17,35 @@ public interface TableManager {
 
    void stop() throws PersistenceException;
 
-   boolean tableExists(Connection connection) throws PersistenceException;
-
    boolean tableExists(Connection connection, TableName tableName) throws PersistenceException;
 
-   void createTable(Connection conn) throws PersistenceException;
+   void createDataTable(Connection conn) throws PersistenceException;
 
-   void dropTable(Connection conn) throws PersistenceException;
+   void dropDataTable(Connection conn) throws PersistenceException;
+
+   void createMetaTable(Connection conn) throws PersistenceException;
+
+   void dropMetaTable(Connection conn) throws PersistenceException;
+
+   /**
+    * Write the latest metadata to the meta table.
+    */
+   void updateMetaTable(Connection conn) throws PersistenceException;
+
+   Metadata getMetadata() throws PersistenceException;
+
+   default void dropTables(Connection conn) throws PersistenceException {
+      dropDataTable(conn);
+      dropMetaTable(conn);
+   }
 
    int getFetchSize();
 
    boolean isUpsertSupported();
 
-   TableName getTableName();
+   TableName getDataTableName();
+
+   TableName getMetaTableName();
 
    String getIdentifierQuoteString();
 
@@ -68,4 +84,11 @@ public interface TableManager {
    void prepareUpsertStatement(PreparedStatement ps, String key, long timestamp, int segment, ByteBuffer byteBuffer) throws SQLException;
 
    void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, int segment, ByteBuffer byteBuffer) throws SQLException;
+
+   interface Metadata {
+
+      short getVersion();
+
+      int getSegments();
+   }
 }

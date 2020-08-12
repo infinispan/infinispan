@@ -12,6 +12,7 @@ import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigu
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -23,37 +24,37 @@ public class TableManagerFactory {
    public static final String UPSERT_DISABLED = "infinispan.jdbc.upsert.disabled";
    public static final String INDEXING_DISABLED = "infinispan.jdbc.indexing.disabled";
 
-   public static TableManager getManager(ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config, String cacheName) {
+   public static TableManager getManager(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config, String cacheName) {
       DbMetaData metaData = getDbMetaData(connectionFactory, config.dialect(), config.dbMajorVersion(),
             config.dbMinorVersion(), isPropertyDisabled(config, UPSERT_DISABLED),
             isPropertyDisabled(config, INDEXING_DISABLED), !config.segmented());
 
-      return getManager(metaData, connectionFactory, config.table(), cacheName);
+      return getManager(metaData, ctx, connectionFactory, config.table(), cacheName);
    }
 
-   public static TableManager getManager(DbMetaData metaData, ConnectionFactory connectionFactory,
+   public static TableManager getManager(DbMetaData metaData, InitializationContext ctx, ConnectionFactory connectionFactory,
                                          TableManipulationConfiguration tableConfig, String cacheName) {
       switch (metaData.getType()) {
          case DB2:
          case DB2_390:
-            return new DB2TableManager(connectionFactory, tableConfig, metaData, cacheName);
+            return new DB2TableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
          case H2:
-            return new H2TableManager(connectionFactory, tableConfig, metaData, cacheName);
+            return new H2TableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
          case MARIA_DB:
          case MYSQL:
-            return new MySQLTableManager(connectionFactory, tableConfig, metaData, cacheName);
+            return new MySQLTableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
          case ORACLE:
-            return new OracleTableManager(connectionFactory, tableConfig, metaData, cacheName);
+            return new OracleTableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
          case POSTGRES:
-            return new PostgresTableManager(connectionFactory, tableConfig, metaData, cacheName);
+            return new PostgresTableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
          case SQLITE:
-            return new SQLiteTableManager(connectionFactory, tableConfig, metaData, cacheName);
+            return new SQLiteTableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
          case SYBASE:
-            return new SybaseTableManager(connectionFactory, tableConfig, metaData, cacheName);
+            return new SybaseTableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
          case SQL_SERVER:
-            return new SQLServerTableManager(connectionFactory, tableConfig, metaData, cacheName);
+            return new SQLServerTableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
          default:
-            return new GenericTableManager(connectionFactory, tableConfig, metaData, cacheName);
+            return new GenericTableManager(ctx, connectionFactory, tableConfig, metaData, cacheName);
       }
    }
 

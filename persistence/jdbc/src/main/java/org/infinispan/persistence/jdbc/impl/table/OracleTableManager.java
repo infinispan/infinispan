@@ -13,6 +13,7 @@ import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 
@@ -26,8 +27,8 @@ class OracleTableManager extends AbstractTableManager {
    private static final int MAX_INDEX_IDENTIFIER_SIZE = 30;
    private static final String INDEX_PREFIX = "IDX";
 
-   OracleTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
-      super(connectionFactory, config, metaData, cacheName, log);
+   OracleTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
+      super(ctx, connectionFactory, config, metaData, cacheName, log);
    }
 
    @Override
@@ -53,7 +54,7 @@ class OracleTableManager extends AbstractTableManager {
       ResultSet rs = null;
       try {
          DatabaseMetaData meta = conn.getMetaData();
-         rs = meta.getIndexInfo(null, null, tableName.toString(), false, false);
+         rs = meta.getIndexInfo(null, null, dataTableName.toString(), false, false);
          while (rs.next()) {
             String index = rs.getString("INDEX_NAME");
             if (indexName.equalsIgnoreCase(index)) {
@@ -75,7 +76,7 @@ class OracleTableManager extends AbstractTableManager {
          indexExt = INDEX_PREFIX;
       }
       int maxNameSize = MAX_INDEX_IDENTIFIER_SIZE - indexExt.length() - 1;
-      String plainTableName = tableName.toString().replace(identifierQuoteString, "");
+      String plainTableName = dataTableName.toString().replace(identifierQuoteString, "");
       String truncatedName = plainTableName.length() > maxNameSize ? plainTableName.substring(0, maxNameSize) : plainTableName;
       String indexName = indexExt + "_" + truncatedName;
       if (withIdentifier) {
@@ -90,35 +91,35 @@ class OracleTableManager extends AbstractTableManager {
 
    @Override
    protected String initInsertRowSql() {
-      if (metaData.isSegmentedDisabled()) {
-         return String.format("INSERT INTO %s (%s,%s,%s) VALUES (?,?,?)", tableName,
+      if (dbMetadata.isSegmentedDisabled()) {
+         return String.format("INSERT INTO %s (%s,%s,%s) VALUES (?,?,?)", dataTableName,
                config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
       } else {
-         return String.format("INSERT INTO %s (%s,%s,%s,%s) VALUES (?,?,?,?)", tableName,
+         return String.format("INSERT INTO %s (%s,%s,%s,%s) VALUES (?,?,?,?)", dataTableName,
                config.idColumnName(), config.timestampColumnName(), config.dataColumnName(), config.segmentColumnName());
       }
    }
 
    @Override
    protected String initUpdateRowSql() {
-      return String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = ?", tableName,
+      return String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = ?", dataTableName,
             config.timestampColumnName(), config.dataColumnName(), config.idColumnName());
    }
 
    @Override
    public String initUpsertRowSql() {
-      if (metaData.isSegmentedDisabled()) {
+      if (dbMetadata.isSegmentedDisabled()) {
          return String.format("MERGE INTO %1$s t " +
                      "USING (SELECT ? %2$s, ? %3$s, ? %4$s from dual) tmp ON (t.%2$s = tmp.%2$s) " +
                      "WHEN MATCHED THEN UPDATE SET t.%3$s = tmp.%3$s, t.%4$s = tmp.%4$s " +
                      "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s)",
-               tableName, config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
+               dataTableName, config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
       } else {
          return String.format("MERGE INTO %1$s t " +
                      "USING (SELECT ? %2$s, ? %3$s, ? %4$s, ? %5$s from dual) tmp ON (t.%2$s = tmp.%2$s) " +
                      "WHEN MATCHED THEN UPDATE SET t.%3$s = tmp.%3$s, t.%4$s = tmp.%4$s " +
                      "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s, %5$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s, tmp.%5$s)",
-               tableName, config.idColumnName(), config.timestampColumnName(), config.dataColumnName(),
+               dataTableName, config.idColumnName(), config.timestampColumnName(), config.dataColumnName(),
                config.segmentColumnName());
       }
    }
@@ -129,7 +130,7 @@ class OracleTableManager extends AbstractTableManager {
       ps.setLong(2, timestamp);
       // We must use BLOB here to avoid ORA-01461 caused by implicit casts on dual
       ps.setBlob(3, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
-      if (!metaData.isSegmentedDisabled()) {
+      if (!dbMetadata.isSegmentedDisabled()) {
          ps.setInt(4, segment);
       }
    }
@@ -139,7 +140,7 @@ class OracleTableManager extends AbstractTableManager {
       ps.setLong(1, timestamp);
       ps.setBinaryStream(2, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
       ps.setString(3, key);
-      if (!metaData.isSegmentedDisabled()) {
+      if (!dbMetadata.isSegmentedDisabled()) {
          ps.setInt(4, segment);
       }
    }

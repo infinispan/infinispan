@@ -1,5 +1,7 @@
 package org.infinispan.persistence.jdbc.impl.table;
 
+import static org.infinispan.persistence.jdbc.JdbcUtil.marshall;
+import static org.infinispan.persistence.jdbc.JdbcUtil.unmarshall;
 import static org.infinispan.persistence.jdbc.logging.Log.PERSISTENCE;
 
 import java.io.ByteArrayInputStream;
@@ -12,11 +14,18 @@ import java.sql.Statement;
 import java.util.Objects;
 
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.Version;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.PersistenceContextInitializerImpl;
 import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * @author Ryan Emerson
@@ -24,16 +33,21 @@ import org.infinispan.persistence.spi.PersistenceException;
 public abstract class AbstractTableManager implements TableManager {
 
    private static final String DEFAULT_IDENTIFIER_QUOTE_STRING = "\"";
+   private static final String META_TABLE_SUFFIX = "_META";
+   private static final String META_TABLE_DATA_COLUMN = "data";
 
    private final Log log;
+   protected final InitializationContext ctx;
    protected final ConnectionFactory connectionFactory;
    protected final TableManipulationConfiguration config;
    protected final String timestampIndexExt = "timestamp_index";
    protected final String segmentIndexExt = "segment_index";
 
    protected final String identifierQuoteString;
-   protected final DbMetaData metaData;
-   protected final TableName tableName;
+   protected final DbMetaData dbMetadata;
+   protected final TableName dataTableName;
+   protected final TableName metaTableName;
+   protected MetadataImpl metadata;
 
    // the field order is important because we are reusing some sql
    private final String insertRowSql;
@@ -48,19 +62,21 @@ public abstract class AbstractTableManager implements TableManager {
    private final String deleteAllRows;
    private final String selectExpiredRowsSql;
 
-   AbstractTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName, Log log) {
-      this(connectionFactory, config, metaData, cacheName, DEFAULT_IDENTIFIER_QUOTE_STRING, log);
+   AbstractTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData dbMetadata, String cacheName, Log log) {
+      this(ctx, connectionFactory, config, dbMetadata, cacheName, DEFAULT_IDENTIFIER_QUOTE_STRING, log);
    }
 
-   AbstractTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName, String identifierQuoteString, Log log) {
+   AbstractTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData dbMetadata, String cacheName, String identifierQuoteString, Log log) {
       // cacheName is required
       if (cacheName == null || cacheName.trim().length() == 0)
          throw new PersistenceException("cacheName needed in order to create table");
 
+      this.ctx = ctx;
       this.connectionFactory = connectionFactory;
       this.config = config;
-      this.metaData = metaData;
-      this.tableName = new TableName(identifierQuoteString, config.tableNamePrefix(), cacheName);
+      this.dbMetadata = dbMetadata;
+      this.dataTableName = new TableName(identifierQuoteString, config.tableNamePrefix(), cacheName);
+      this.metaTableName = new TableName(identifierQuoteString, config.tableNamePrefix(), cacheName + META_TABLE_SUFFIX);
       this.identifierQuoteString = identifierQuoteString;
       this.log = log;
 
@@ -76,6 +92,8 @@ public abstract class AbstractTableManager implements TableManager {
       this.loadAllNonExpiredRowsSql = initLoadNonExpiredAllRowsSql();
       this.deleteAllRows = initDeleteAllRowsSql();
       this.selectExpiredRowsSql = initSelectOnlyExpiredRowsSql();
+
+      ctx.getPersistenceMarshaller().register(new PersistenceContextInitializerImpl());
    }
 
    @Override
@@ -84,11 +102,15 @@ public abstract class AbstractTableManager implements TableManager {
          Connection conn = null;
          try {
             conn = connectionFactory.getConnection();
-            if (!tableExists(conn)) {
-               createTable(conn);
+            if (!tableExists(conn, metaTableName)) {
+               createMetaTable(conn);
+            }
+
+            if (!tableExists(conn, dataTableName)) {
+               createDataTable(conn);
             }
             createIndex(conn, timestampIndexExt, config.timestampColumnName());
-            if (!metaData.isSegmentedDisabled()) {
+            if (!dbMetadata.isSegmentedDisabled()) {
                createIndex(conn, segmentIndexExt, config.segmentColumnName());
             }
          } finally {
@@ -103,15 +125,11 @@ public abstract class AbstractTableManager implements TableManager {
          Connection conn = null;
          try {
             conn = connectionFactory.getConnection();
-            dropTable(conn);
+            dropTables(conn);
          } finally {
             connectionFactory.releaseConnection(conn);
          }
       }
-   }
-
-   public boolean tableExists(Connection connection) throws PersistenceException {
-      return tableExists(connection, tableName);
    }
 
    public boolean tableExists(Connection connection, TableName tableName) throws PersistenceException {
@@ -133,15 +151,60 @@ public abstract class AbstractTableManager implements TableManager {
       }
    }
 
-   public void createTable(Connection conn) throws PersistenceException {
+   @Override
+   public void createMetaTable(Connection conn) throws PersistenceException {
+      // Store using internal names for columns and store as binary using the provided dataColumnType so no additional configuration is required
+      String sql = String.format("CREATE TABLE %1$s (%2$s %3$s NOT NULL)", metaTableName, META_TABLE_DATA_COLUMN, config.dataColumnType());
+      executeUpdateSql(conn, sql);
+      updateMetaTable(conn);
+   }
+
+   @Override
+   public void updateMetaTable(Connection conn) throws PersistenceException {
+      short version = Version.getVersionShort();
+      int segments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
+      this.metadata = new MetadataImpl(version, segments);
+      ByteBuffer buffer = marshall(metadata, ctx.getPersistenceMarshaller());
+
+      String sql = String.format("INSERT INTO %s (%s) VALUES (?)", metaTableName, META_TABLE_DATA_COLUMN);
+      PreparedStatement ps = null;
+      try {
+         ps = conn.prepareStatement(sql);
+         ps.setBinaryStream(1, new ByteArrayInputStream(buffer.getBuf(), buffer.getOffset(), buffer.getLength()));
+         ps.executeUpdate();
+      } catch (SQLException e) {
+         PERSISTENCE.errorCreatingTable(sql, e);
+         throw new PersistenceException(e);
+      } finally {
+         JdbcUtil.safeClose(ps);
+      }
+   }
+
+   @Override
+   public TableManager.Metadata getMetadata() throws PersistenceException {
+      if (metadata == null) {
+         try (Connection connection = connectionFactory.getConnection()) {
+            String sql = String.format("SELECT %s FROM %s", META_TABLE_DATA_COLUMN, metaTableName.toString());
+            ResultSet rs = connection.createStatement().executeQuery(sql);
+            rs.next();
+            this.metadata = unmarshall(rs.getBinaryStream(1), ctx.getPersistenceMarshaller());
+         } catch (SQLException e) {
+            PERSISTENCE.sqlFailureMetaRetrieval(e);
+            throw new PersistenceException(e);
+         }
+      }
+      return metadata;
+   }
+
+   public void createDataTable(Connection conn) throws PersistenceException {
       String ddl;
-      if (metaData.isSegmentedDisabled()) {
+      if (dbMetadata.isSegmentedDisabled()) {
          ddl = String.format("CREATE TABLE %1$s (%2$s %3$s NOT NULL, %4$s %5$s NOT NULL, %6$s %7$s NOT NULL, PRIMARY KEY (%2$s))",
-               tableName, config.idColumnName(), config.idColumnType(), config.dataColumnName(),
+               dataTableName, config.idColumnName(), config.idColumnType(), config.dataColumnName(),
                config.dataColumnType(), config.timestampColumnName(), config.timestampColumnType());
       } else {
          ddl = String.format("CREATE TABLE %1$s (%2$s %3$s NOT NULL, %4$s %5$s NOT NULL, %6$s %7$s NOT NULL, %8$s %9$s NOT NULL, PRIMARY KEY (%2$s))",
-               tableName, config.idColumnName(), config.idColumnType(), config.dataColumnName(),
+               dataTableName, config.idColumnName(), config.idColumnType(), config.dataColumnName(),
                config.dataColumnType(), config.timestampColumnName(), config.timestampColumnType(),
                config.segmentColumnName(), config.segmentColumnType());
       }
@@ -152,12 +215,13 @@ public abstract class AbstractTableManager implements TableManager {
       executeUpdateSql(conn, ddl);
    }
 
+
    private void createIndex(Connection conn, String indexExt, String columnName) throws PersistenceException {
-      if (metaData.isIndexingDisabled()) return;
+      if (dbMetadata.isIndexingDisabled()) return;
 
       boolean indexExists = indexExists(getIndexName(false, indexExt), conn);
       if (!indexExists) {
-         String ddl = String.format("CREATE INDEX %s ON %s (%s)", getIndexName(true, indexExt), tableName, columnName);
+         String ddl = String.format("CREATE INDEX %s ON %s (%s)", getIndexName(true, indexExt), dataTableName, columnName);
          if (log.isTraceEnabled()) {
             log.tracef("Adding index with following DDL: '%s'.", ddl);
          }
@@ -169,7 +233,7 @@ public abstract class AbstractTableManager implements TableManager {
       ResultSet rs = null;
       try {
          DatabaseMetaData meta = conn.getMetaData();
-         rs = meta.getIndexInfo(null, tableName.getSchema(), tableName.getName(), false, false);
+         rs = meta.getIndexInfo(null, dataTableName.getSchema(), dataTableName.getName(), false, false);
 
          while (rs.next()) {
             if (indexName.equalsIgnoreCase(rs.getString("INDEX_NAME"))) {
@@ -197,10 +261,18 @@ public abstract class AbstractTableManager implements TableManager {
       }
    }
 
-   public void dropTable(Connection conn) throws PersistenceException {
+   public void dropDataTable(Connection conn) throws PersistenceException {
       dropIndex(conn, timestampIndexExt);
       dropIndex(conn, segmentIndexExt);
+      dropTable(conn, dataTableName);
+   }
 
+   @Override
+   public void dropMetaTable(Connection conn) throws PersistenceException {
+      dropTable(conn, metaTableName);
+   }
+
+   private void dropTable(Connection conn, TableName tableName) throws PersistenceException {
       String clearTable = "DELETE FROM " + tableName;
       executeUpdateSql(conn, clearTable);
 
@@ -222,7 +294,7 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    protected String getDropTimestampSql(String indexName) {
-      return String.format("DROP INDEX %s ON %s", getIndexName(true, indexName), tableName);
+      return String.format("DROP INDEX %s ON %s", getIndexName(true, indexName), dataTableName);
    }
 
    public int getFetchSize() {
@@ -235,19 +307,24 @@ public abstract class AbstractTableManager implements TableManager {
 
    @Override
    public boolean isUpsertSupported() {
-      return !metaData.isUpsertDisabled();
+      return !dbMetadata.isUpsertDisabled();
    }
 
    public String getIdentifierQuoteString() {
       return identifierQuoteString;
    }
 
-   public TableName getTableName() {
-      return tableName;
+   public TableName getDataTableName() {
+      return dataTableName;
+   }
+
+   @Override
+   public TableName getMetaTableName() {
+      return metaTableName;
    }
 
    public String getIndexName(boolean withIdentifier, String indexExt) {
-      String plainTableName = tableName.toString().replace(identifierQuoteString, "");
+      String plainTableName = dataTableName.toString().replace(identifierQuoteString, "");
       String indexName = plainTableName + "_" + indexExt;
       if (withIdentifier) {
          return identifierQuoteString + indexName + identifierQuoteString;
@@ -256,11 +333,11 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    protected String initInsertRowSql() {
-      if (metaData.isSegmentedDisabled()) {
-         return String.format("INSERT INTO %s (%s,%s,%s) VALUES (?,?,?)", tableName,
+      if (dbMetadata.isSegmentedDisabled()) {
+         return String.format("INSERT INTO %s (%s,%s,%s) VALUES (?,?,?)", dataTableName,
                config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
       } else {
-         return String.format("INSERT INTO %s (%s,%s,%s,%s) VALUES (?,?,?,?)", tableName,
+         return String.format("INSERT INTO %s (%s,%s,%s,%s) VALUES (?,?,?,?)", dataTableName,
                config.dataColumnName(), config.timestampColumnName(), config.idColumnName(), config.segmentColumnName());
       }
    }
@@ -271,7 +348,7 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    protected String initUpdateRowSql() {
-      return String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = ?", tableName,
+      return String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = ?", dataTableName,
             config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
    }
 
@@ -282,7 +359,7 @@ public abstract class AbstractTableManager implements TableManager {
 
    protected String initSelectRowSql() {
       return String.format("SELECT %s, %s FROM %s WHERE %s = ?",
-            config.idColumnName(), config.dataColumnName(), tableName, config.idColumnName());
+            config.idColumnName(), config.dataColumnName(), dataTableName, config.idColumnName());
    }
 
    @Override
@@ -291,7 +368,7 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    protected String initSelectIdRowSql() {
-      return String.format("SELECT %s FROM %s WHERE %s = ?", config.idColumnName(), tableName, config.idColumnName());
+      return String.format("SELECT %s FROM %s WHERE %s = ?", config.idColumnName(), dataTableName, config.idColumnName());
    }
 
    @Override
@@ -300,7 +377,7 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    protected String initCountNonExpiredRowsSql() {
-      return "SELECT COUNT(*) FROM " + tableName +
+      return "SELECT COUNT(*) FROM " + dataTableName +
             " WHERE " + config.timestampColumnName() + " < 0 OR " + config.timestampColumnName() + " > ?";
    }
 
@@ -312,7 +389,7 @@ public abstract class AbstractTableManager implements TableManager {
    @Override
    public String getCountNonExpiredRowsSqlForSegments(int numSegments) {
       StringBuilder stringBuilder = new StringBuilder("SELECT COUNT(*) FROM ");
-      stringBuilder.append(tableName);
+      stringBuilder.append(dataTableName);
       // Note the timestamp or is surrounded with parenthesis
       stringBuilder.append(" WHERE (");
       stringBuilder.append(config.timestampColumnName());
@@ -331,7 +408,7 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    protected String initDeleteRowSql() {
-      return String.format("DELETE FROM %s WHERE %s = ?", tableName, config.idColumnName());
+      return String.format("DELETE FROM %s WHERE %s = ?", dataTableName, config.idColumnName());
    }
 
    @Override
@@ -342,7 +419,7 @@ public abstract class AbstractTableManager implements TableManager {
    @Override
    public String getDeleteRowsSqlForSegments(int numSegments) {
       StringBuilder stringBuilder = new StringBuilder("DELETE FROM ");
-      stringBuilder.append(tableName);
+      stringBuilder.append(dataTableName);
       // Note the timestamp or is surrounded with parenthesis
       stringBuilder.append(" WHERE ");
       stringBuilder.append(config.segmentColumnName());
@@ -359,7 +436,7 @@ public abstract class AbstractTableManager implements TableManager {
    protected String initLoadNonExpiredAllRowsSql() {
       return String.format("SELECT %1$s, %2$s, %3$s FROM %4$s WHERE %3$s > ? OR %3$s < 0",
             config.dataColumnName(), config.idColumnName(),
-            config.timestampColumnName(), tableName);
+            config.timestampColumnName(), dataTableName);
    }
 
    @Override
@@ -374,7 +451,7 @@ public abstract class AbstractTableManager implements TableManager {
       stringBuilder.append(", ");
       stringBuilder.append(config.idColumnName());
       stringBuilder.append(" FROM ");
-      stringBuilder.append(tableName);
+      stringBuilder.append(dataTableName);
       // Note the timestamp or is surrounded with parenthesis
       stringBuilder.append(" WHERE (");
       stringBuilder.append(config.timestampColumnName());
@@ -394,7 +471,7 @@ public abstract class AbstractTableManager implements TableManager {
 
    protected String initLoadAllRowsSql() {
       return String.format("SELECT %s, %s FROM %s", config.dataColumnName(),
-            config.idColumnName(), tableName);
+            config.idColumnName(), dataTableName);
    }
 
    @Override
@@ -403,7 +480,7 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    protected String initDeleteAllRowsSql() {
-      return "DELETE FROM " + tableName;
+      return "DELETE FROM " + dataTableName;
    }
 
    @Override
@@ -421,20 +498,20 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    protected String initUpsertRowSql() {
-      if (metaData.isSegmentedDisabled()) {
+      if (dbMetadata.isSegmentedDisabled()) {
          return String.format("MERGE INTO %1$s " +
                      "USING (VALUES (?, ?, ?)) AS tmp (%2$s, %3$s, %4$s) " +
                      "ON (%2$s = tmp.%2$s) " +
                      "WHEN MATCHED THEN UPDATE SET %3$s = tmp.%3$s, %4$s = tmp.%4$s " +
                      "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s)",
-               tableName, config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+               dataTableName, config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
       } else {
          return String.format("MERGE INTO %1$s " +
                      "USING (VALUES (?, ?, ?, ?)) AS tmp (%2$s, %3$s, %4$s, %5$s) " +
                      "ON (%2$s = tmp.%2$s) " +
                      "WHEN MATCHED THEN UPDATE SET %3$s = tmp.%3$s, %4$s = tmp.%4$s, %5$s = tmp.%5$s " +
                      "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s, %5$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s, tmp.%5$s)",
-               tableName, config.dataColumnName(), config.timestampColumnName(), config.idColumnName(), config.segmentColumnName());
+               dataTableName, config.dataColumnName(), config.timestampColumnName(), config.idColumnName(), config.segmentColumnName());
       }
    }
 
@@ -458,7 +535,7 @@ public abstract class AbstractTableManager implements TableManager {
       ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
       ps.setLong(2, timestamp);
       ps.setString(3, key);
-      if (!metaData.isSegmentedDisabled()) {
+      if (!dbMetadata.isSegmentedDisabled()) {
          ps.setInt(4, segment);
       }
    }
@@ -468,5 +545,37 @@ public abstract class AbstractTableManager implements TableManager {
       ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
       ps.setLong(2, timestamp);
       ps.setString(3, key);
+   }
+
+   @ProtoTypeId(ProtoStreamTypeIds.JDBC_PERSISTED_METADATA)
+   public static class MetadataImpl implements TableManager.Metadata {
+      final short version;
+      final int segments;
+
+      @ProtoFactory
+      public MetadataImpl(short version, int segments) {
+         this.version = version;
+         this.segments = segments;
+      }
+
+      @Override
+      @ProtoField(number = 1, defaultValue = "-1")
+      public short getVersion() {
+         return version;
+      }
+
+      @Override
+      @ProtoField(number = 2, defaultValue = "-1")
+      public int getSegments() {
+         return segments;
+      }
+
+      @Override
+      public String toString() {
+         return "MetadataImpl{" +
+               "version=" + version +
+               ", segments=" + segments +
+               '}';
+      }
    }
 }
