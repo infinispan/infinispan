@@ -154,9 +154,9 @@ public final class LifecycleManager implements ModuleLifecycle {
                   .withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class);
             KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
 
-            searchMapping = SerializationContextSearchMapping.acquire(serCtx).buildMapping(commonBuilding,
+            searchMapping = SerializationContextSearchMapping.buildMapping(commonBuilding,
                   new EntityLoader(cache, keyTransformationHandler),
-                  cache.getCacheConfiguration().indexing().indexedEntityTypes());
+                  cache.getCacheConfiguration().indexing().indexedEntityTypes(), serCtx);
 
             if (searchMapping != null) {
                cr.registerComponent(searchMapping, SearchMapping.class);
