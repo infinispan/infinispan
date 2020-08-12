@@ -127,7 +127,7 @@ public class LifecycleManager implements ModuleLifecycle {
 
             createQueryInterceptorIfNeeded(cr, cfg, cache, indexedClasses, keyTransformationHandler);
 
-            DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache, searchMapping,
+            DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache,
                   keyTransformationHandler);
             cr.registerComponent(massIndexer, Indexer.class);
          }

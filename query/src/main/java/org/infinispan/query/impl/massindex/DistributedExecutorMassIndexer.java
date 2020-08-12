@@ -22,7 +22,6 @@ import org.infinispan.query.Indexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -54,10 +53,9 @@ public class DistributedExecutorMassIndexer implements Indexer {
       }
    };
 
-   public DistributedExecutorMassIndexer(AdvancedCache<?, ?> cache, SearchMappingHolder searchMappingHolder,
-                                         KeyTransformationHandler keyTransformationHandler) {
+   public DistributedExecutorMassIndexer(AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
       this.cache = cache;
-      this.indexUpdater = new IndexUpdater(searchMappingHolder, keyTransformationHandler);
+      this.indexUpdater = new IndexUpdater(cache, keyTransformationHandler);
       this.executor = cache.getCacheManager().executor();
       this.blockingManager = cache.getCacheManager().getGlobalComponentRegistry()
             .getComponent(BlockingManager.class);

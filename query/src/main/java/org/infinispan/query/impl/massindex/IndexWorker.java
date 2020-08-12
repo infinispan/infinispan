@@ -22,7 +22,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 
 /**
  * Mass indexer task.
@@ -53,12 +53,12 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
 
       AdvancedCache<Object, Object> reindexCache = valueFilterable ? cache.withStorageMediaType() : cache;
 
-      SearchMappingHolder searchMappingHolder = ComponentRegistryUtils.getSearchMappingHolder(cache);
+      SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
       KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
       TimeService timeService = ComponentRegistryUtils.getTimeService(cache);
 
-      MassIndexerProgressNotifier notifier = new MassIndexerProgressNotifier(searchMappingHolder, timeService);
-      IndexUpdater indexUpdater = new IndexUpdater(searchMappingHolder, keyTransformationHandler);
+      MassIndexerProgressNotifier notifier = new MassIndexerProgressNotifier(searchMapping, timeService);
+      IndexUpdater indexUpdater = new IndexUpdater(searchMapping, keyTransformationHandler);
       KeyPartitioner keyPartitioner = ComponentRegistryUtils.getKeyPartitioner(cache);
 
       DataConversion keyDataConversion = reindexCache.getKeyDataConversion();
