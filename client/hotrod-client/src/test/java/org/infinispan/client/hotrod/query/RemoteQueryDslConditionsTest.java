@@ -37,7 +37,6 @@ import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
@@ -124,8 +123,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
    @Override
    public void testIndexPresence() {
-      SearchMapping searchMapping = TestingUtil.extractComponent(cache, SearchMappingHolder.class)
-            .getSearchMapping();
+      SearchMapping searchMapping = TestingUtil.extractComponent(cache, SearchMapping.class);
 
       // we have indexing for remote query!
       assertTrue(searchMapping.allIndexedTypes().containsValue(ProtobufValueWrapper.class));

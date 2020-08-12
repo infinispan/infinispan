@@ -7,7 +7,7 @@ import java.io.IOException;
 import org.infinispan.Cache;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -58,9 +58,9 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
     * @param cache the cache to extract indexing from
     */
    private void assertIndexingEnabled(Cache<Object, Object> cache, boolean expected) {
-      SearchMappingHolder searchMapping = null;
+      SearchMapping searchMapping = null;
       try {
-         searchMapping = ComponentRegistryUtils.getSearchMappingHolder(cache);
+         searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
       } catch (IllegalStateException e) {
          // ignored here, we deal with it later
       }

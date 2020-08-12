@@ -9,7 +9,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.test.Person;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -39,8 +38,7 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
                .addIndexedEntity(Person.class);
          cc = TestCacheManagerFactory.createCacheManager(cfg);
          Cache<?, ?> cache = cc.getCache();
-         SearchMappingHolder smh = TestingUtil.extractComponent(cache, SearchMappingHolder.class);
-         SearchMapping searchMapping = smh.getSearchMapping();
+         SearchMapping searchMapping = TestingUtil.extractComponent(cache, SearchMapping.class);
 
          assertFalse(searchMapping.isClose());
 

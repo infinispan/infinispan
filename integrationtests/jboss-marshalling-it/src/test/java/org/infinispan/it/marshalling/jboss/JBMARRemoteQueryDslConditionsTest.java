@@ -22,7 +22,6 @@ import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.QueryDslConditionsTest;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
@@ -104,7 +103,7 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
    @Override
    public void testIndexPresence() {
-      SearchMapping searchMapping = TestingUtil.extractComponent(cache, SearchMappingHolder.class).getSearchMapping();
+      SearchMapping searchMapping = TestingUtil.extractComponent(cache, SearchMapping.class);
 
       verifyClassIsIndexed(searchMapping, getModelFactory().getUserImplClass());
       verifyClassIsIndexed(searchMapping, getModelFactory().getAccountImplClass());

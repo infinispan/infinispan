@@ -17,7 +17,7 @@ import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.indexedembedded.City;
 import org.infinispan.query.indexedembedded.Country;
 import org.infinispan.query.test.QueryTestSCI;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -35,7 +35,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
    WaitNonBlockingStore store;
    CacheContainer cm;
    QueryFactory queryFactory;
-   SearchMappingHolder searchMappingHolder;
+   SearchMapping searchMapping;
 
    @BeforeClass
    public void setUp() {
@@ -76,7 +76,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       verifyFullTextHasMatches(1);
 
       cache.stop();
-      assert searchMappingHolder.getSearchMapping().isClose();
+      assert searchMapping.isClose();
       TestingUtil.killCacheManagers(cm);
 
       // Now let's check the entry is not re-indexed during data preloading:
@@ -103,7 +103,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       cache = cm.getCache();
       store = TestingUtil.getFirstStore(cache);
       queryFactory = Search.getQueryFactory(cache);
-      searchMappingHolder = TestingUtil.extractComponent(cache, SearchMappingHolder.class);
+      searchMapping = TestingUtil.extractComponent(cache, SearchMapping.class);
    }
 
    private void verifyFullTextHasMatches(int i) {

@@ -20,7 +20,6 @@ import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
@@ -46,9 +45,7 @@ public class TestQueryHelperFactory {
 
    public static SearchMapping extractSearchMapping(Cache<?, ?> cache) {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
-      SearchMappingHolder component = componentRegistry.getComponent(SearchMappingHolder.class);
-      assertNotNull(component);
-      SearchMapping searchMapping = component.getSearchMapping();
+      SearchMapping searchMapping = componentRegistry.getComponent(SearchMapping.class);
       assertNotNull(searchMapping);
       return searchMapping;
    }
