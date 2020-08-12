@@ -16,7 +16,7 @@ import org.hibernate.search.util.common.SearchException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.query.logging.Log;
 import org.infinispan.search.mapper.common.EntityReference;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.util.logging.LogFactory;
 
 class MassIndexerProgressNotifier {
@@ -24,16 +24,16 @@ class MassIndexerProgressNotifier {
    private static final Log log = LogFactory.getLog(MassIndexerProgressNotifier.class, Log.class);
 
    private final MassIndexerProgressMonitor monitor;
-   private final SearchMappingHolder searchMappingHolder;
+   private final SearchMapping searchMapping;
 
    private final AtomicReference<RecordedEntityIndexingFailure> entityIndexingFirstFailure = new AtomicReference<>(null);
    private final LongAdder entityIndexingFailureCount = new LongAdder();
 
    private FailureHandler failureHandler;
 
-   MassIndexerProgressNotifier(SearchMappingHolder searchMappingHolder, TimeService timeService) {
+   MassIndexerProgressNotifier(SearchMapping searchMapping, TimeService timeService) {
       this.monitor = new MassIndexerProgressMonitor(timeService);
-      this.searchMappingHolder = searchMappingHolder;
+      this.searchMapping = searchMapping;
    }
 
    void notifyDocumentsAdded(int size) {
@@ -67,7 +67,7 @@ class MassIndexerProgressNotifier {
       }
 
       if (failureHandler == null) {
-         failureHandler = searchMappingHolder.getSearchMapping().getFailureHandler();
+         failureHandler = searchMapping.getFailureHandler();
       }
       failureHandler.handle(contextBuilder.build());
    }
