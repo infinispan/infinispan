@@ -63,8 +63,4 @@ public class SearchMappingHolder {
       }
       searchMapping = builder.build();
    }
-
-   public boolean isIndexedType(Object value) {
-      return (searchMapping != null) ? searchMapping.isIndexedType(value) : false;
-   }
 }

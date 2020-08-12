@@ -11,6 +11,7 @@ import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.core.impl.QueryCache;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 
 /**
@@ -43,6 +44,11 @@ public final class ComponentRegistryUtils {
    public static SearchMappingHolder getSearchMappingHolder(Cache<?, ?> cache) {
       ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
       return componentRegistry.getComponent(SearchMappingHolder.class, SearchMappingHolder.class.getName());
+   }
+
+   public static SearchMapping getSearchMapping(Cache<?, ?> cache) {
+      ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
+      return componentRegistry.getComponent(SearchMapping.class, SearchMapping.class.getName());
    }
 
    public static KeyPartitioner getKeyPartitioner(Cache<?, ?> cache) {
