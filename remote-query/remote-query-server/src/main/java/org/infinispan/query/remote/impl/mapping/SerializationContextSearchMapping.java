@@ -16,21 +16,13 @@ import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
 
 public class SerializationContextSearchMapping {
 
-   private final SerializationContext serializationContext;
-
-   public static SerializationContextSearchMapping acquire(SerializationContext serializationContext) {
-      return new SerializationContextSearchMapping(serializationContext);
+   private SerializationContextSearchMapping() {
    }
 
-   private SerializationContextSearchMapping(SerializationContext serializationContext) {
-      this.serializationContext = serializationContext;
-   }
-
-   // TODO ISPN-12169 make this class an helper
-   public SearchMapping buildMapping(SearchMappingCommonBuilding commonBuilding,
-                                     EntityLoader<EntityReference, ?> entityLoader, Set<String> indexedEntityTypes) {
+   public static SearchMapping buildMapping(SearchMappingCommonBuilding commonBuilding,
+                                            EntityLoader<EntityReference, ?> entityLoader,
+                                            Set<String> indexedEntityTypes, SerializationContext serializationContext) {
       GlobalReferenceHolder globalReferenceHolder = new GlobalReferenceHolder(serializationContext.getGenericDescriptors());
-
       ProtobufBootstrapIntrospector introspector = new ProtobufBootstrapIntrospector();
       SearchMappingBuilder builder = commonBuilding.builder(introspector);
       builder.setEntityLoader(entityLoader);
