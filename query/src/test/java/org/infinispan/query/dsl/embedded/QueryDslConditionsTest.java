@@ -43,7 +43,6 @@ import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -240,8 +239,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testIndexPresence() {
-      SearchMapping searchMapping = TestingUtil.extractComponent((Cache<?, ?>) getCacheForQuery(), SearchMappingHolder.class)
-            .getSearchMapping();
+      SearchMapping searchMapping = TestingUtil.extractComponent((Cache<?, ?>) getCacheForQuery(), SearchMapping.class);
 
       verifyClassIsIndexed(searchMapping, getModelFactory().getUserImplClass());
       verifyClassIsIndexed(searchMapping, getModelFactory().getAccountImplClass());

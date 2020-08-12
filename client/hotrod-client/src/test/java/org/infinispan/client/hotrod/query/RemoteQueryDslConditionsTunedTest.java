@@ -7,7 +7,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -45,8 +44,7 @@ public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsF
 
    @Override
    public void testIndexPresence() {
-      SearchMapping searchMapping = TestingUtil.extractComponent(cache, SearchMappingHolder.class)
-            .getSearchMapping();
+      SearchMapping searchMapping = TestingUtil.extractComponent(cache, SearchMapping.class);
 
       // we have indexing for remote query!
       assertTrue(searchMapping.allIndexedTypes().containsValue(ProtobufValueWrapper.class));
