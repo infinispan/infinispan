@@ -149,9 +149,9 @@ public class Bootstrap extends Main {
       out.printf("  -b, --bind-address=<address>  %s\n", MSG.serverHelpBindAddress());
       out.printf("  -c, --server-config=<config>  %s\n", MSG.serverHelpServerConfig(Server.DEFAULT_CONFIGURATION_FILE));
       out.printf("  -l, --logging-config=<config> %s\n", MSG.serverHelpLoggingConfig(Server.DEFAULT_LOGGING_FILE));
-      out.printf("  -g, --cluster-name=<name>     %s\n", MSG.serverHelpClusterName(Server.DEFAULT_CLUSTER_NAME));
+      out.printf("  -g, --cluster-name=<name>     %s\n", MSG.serverHelpClusterName());
       out.printf("  -h, --help                    %s\n", MSG.toolHelpHelp());
-      out.printf("  -j, --cluster-stack=<name>    %s\n", MSG.serverHelpClusterStack(Server.DEFAULT_CLUSTER_STACK));
+      out.printf("  -j, --cluster-stack=<name>    %s\n", MSG.serverHelpClusterStack());
       out.printf("  -k, --cluster-address=<name>  %s\n", MSG.serverHelpClusterAddress());
       out.printf("  -n, --node-name=<name>        %s\n", MSG.serverHelpNodeName());
       out.printf("  -o, --port-offset=<offset>    %s\n", MSG.serverHelpPortOffset());
