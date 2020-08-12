@@ -53,7 +53,6 @@ import org.infinispan.query.impl.IndexedQueryImpl;
 import org.infinispan.query.impl.QueryDefinition;
 import org.infinispan.query.logging.Log;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
 
@@ -77,7 +76,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    /**
     * Optional, lazily. This is {@code null} if the cache is not actually indexed.
     */
-   private SearchMappingHolder searchMappingHolder;
+   private SearchMapping searchMapping;
 
    private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> c.getComponentRegistry().getComponent(QueryEngine.class);
    private final boolean broadCastQuery;
@@ -94,10 +93,10 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    }
 
    protected SearchMapping getSearchMapping() {
-      if (searchMappingHolder == null) {
-         searchMappingHolder = ComponentRegistryUtils.getSearchMappingHolder(cache);
+      if (searchMapping == null) {
+         searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
       }
-      return searchMappingHolder.getSearchMapping();
+      return searchMapping;
    }
 
    public Class<? extends Matcher> getMatcherClass() {
