@@ -334,8 +334,8 @@ public class LifecycleManager implements ModuleLifecycle {
 
       // TODO: look for protobuf entity type marked as indexed.
       if (!types.isEmpty()) {
-         searchMappingHolder.setEntityLoader(new EntityLoader(cache, keyTransformationHandler));
          SearchMappingBuilder builder = searchMappingHolder.builder(SearchMappingBuilder.introspector(MethodHandles.lookup()));
+         builder.setEntityLoader(new EntityLoader(cache, keyTransformationHandler));
          builder.addEntityTypes(types);
          searchMappingHolder.build();
          SearchMapping searchMapping = searchMappingHolder.getSearchMapping();

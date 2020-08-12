@@ -53,7 +53,7 @@ public class ProtobufValueWrapperIndexingTest extends SingleCacheManagerTest {
 
       // Create Search 6 mapping from current SerializationContext:
       SearchMappingHolder mappingHolder = ComponentRegistryUtils.getSearchMappingHolder(cache);
-      SerializationContextSearchMapping.acquire(serCtx).buildMapping(mappingHolder,
+      SerializationContextSearchMapping.acquire(serCtx).buildMapping(mappingHolder, null,
             cache.getCacheConfiguration().indexing().indexedEntityTypes());
       SearchMapping searchMapping = mappingHolder.getSearchMapping();
       assertNotNull(searchMapping);
