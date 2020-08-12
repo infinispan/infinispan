@@ -229,7 +229,7 @@ public class LifecycleManager implements ModuleLifecycle {
 
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
       Indexer massIndexer = ComponentRegistryUtils.getIndexer(cache);
-      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchMapping, massIndexer);
+      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(mapping, massIndexer);
       stats.setStatisticsEnabled(configuration.statistics().enabled());
       cr.registerComponent(stats, InfinispanQueryStatisticsInfo.class);
 
