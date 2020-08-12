@@ -10,7 +10,7 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.query.Indexer;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 
 /**
  * This MBean exposes the query statistics from the Hibernate Search's SearchIntegrator Statistics object via
@@ -23,12 +23,12 @@ import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 @MBean(objectName = "Statistics", description = "Statistics for index based query")
 public final class InfinispanQueryStatisticsInfo implements JsonSerialization {
 
-   private final SearchMappingHolder searchMapping;
+   private final SearchMapping searchMapping;
    private final Indexer massIndexer;
    private final QueryStatistics queryStatistics = new QueryStatistics();
    private final IndexStatistics indexStatistics = new IndexStatistics();
 
-   InfinispanQueryStatisticsInfo(SearchMappingHolder searchMapping, Indexer massIndexer) {
+   InfinispanQueryStatisticsInfo(SearchMapping searchMapping, Indexer massIndexer) {
       this.searchMapping = searchMapping;
       this.massIndexer = massIndexer;
    }
