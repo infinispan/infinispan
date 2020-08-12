@@ -12,7 +12,6 @@ import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 
 /**
  * Lookup methods for various internal components of search module.
@@ -39,11 +38,6 @@ public final class ComponentRegistryUtils {
       if (!cfg.indexing().enabled()) {
          throw new IllegalStateException("Indexing was not enabled on cache " + cache.getName());
       }
-   }
-
-   public static SearchMappingHolder getSearchMappingHolder(Cache<?, ?> cache) {
-      ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
-      return componentRegistry.getComponent(SearchMappingHolder.class, SearchMappingHolder.class.getName());
    }
 
    public static SearchMapping getSearchMapping(Cache<?, ?> cache) {

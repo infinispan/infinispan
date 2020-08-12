@@ -49,7 +49,7 @@ import org.infinispan.query.remote.impl.mapping.SerializationContextSearchMappin
 import org.infinispan.query.remote.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
+import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
 
 /**
  * Initializes components for remote query. Each cache manager has its own instance of this class during its lifetime.
@@ -147,18 +147,17 @@ public final class LifecycleManager implements ModuleLifecycle {
          // a remote query manager must be added for each non-internal cache
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
 
-         // If the serialization context contains indexed entities,
-         // the SearchMapping instances will be created for all user caches,
-         // updating theirs SearchMapping holders.
-         SearchMappingHolder searchMappingHolder = cr.getComponent(SearchMappingHolder.class);
-         if (searchMappingHolder != null && searchMappingHolder.getSearchMapping() == null) {
+         SearchMappingCommonBuilding commonBuilding = cr.getComponent(SearchMappingCommonBuilding.class);
+         SearchMapping searchMapping = cr.getComponent(SearchMapping.class);
+         if (commonBuilding != null && searchMapping == null) {
             AdvancedCache cache = cr.getComponent(Cache.class).getAdvancedCache().withStorageMediaType()
                   .withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class);
             KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
-            SerializationContextSearchMapping.acquire(serCtx).buildMapping(searchMappingHolder,
+
+            searchMapping = SerializationContextSearchMapping.acquire(serCtx).buildMapping(commonBuilding,
                   new EntityLoader(cache, keyTransformationHandler),
                   cache.getCacheConfiguration().indexing().indexedEntityTypes());
-            SearchMapping searchMapping = searchMappingHolder.getSearchMapping();
+
             if (searchMapping != null) {
                cr.registerComponent(searchMapping, SearchMapping.class);
             }

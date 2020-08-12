@@ -10,8 +10,9 @@ import org.infinispan.query.remote.impl.mapping.model.ProtobufBootstrapIntrospec
 import org.infinispan.query.remote.impl.mapping.reference.GlobalReferenceHolder;
 import org.infinispan.query.remote.impl.mapping.typebridge.ProtobufMessageBinder;
 import org.infinispan.search.mapper.common.EntityReference;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
+import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
 
 public class SerializationContextSearchMapping {
 
@@ -25,18 +26,19 @@ public class SerializationContextSearchMapping {
       this.serializationContext = serializationContext;
    }
 
-   public void buildMapping(SearchMappingHolder mappingHolder, EntityLoader<EntityReference, ?> entityLoader,
-                            Set<String> indexedEntityTypes) {
+   // TODO ISPN-12169 make this class an helper
+   public SearchMapping buildMapping(SearchMappingCommonBuilding commonBuilding,
+                                     EntityLoader<EntityReference, ?> entityLoader, Set<String> indexedEntityTypes) {
       GlobalReferenceHolder globalReferenceHolder = new GlobalReferenceHolder(serializationContext.getGenericDescriptors());
 
       ProtobufBootstrapIntrospector introspector = new ProtobufBootstrapIntrospector();
-      SearchMappingBuilder builder = mappingHolder.builder(introspector);
+      SearchMappingBuilder builder = commonBuilding.builder(introspector);
       builder.setEntityLoader(entityLoader);
       builder.setEntityConverter(new ProtobufEntityConverter(serializationContext, globalReferenceHolder.getRootMessages()));
       ProgrammaticMappingConfigurationContext programmaticMapping = builder.programmaticMapping();
 
       if (globalReferenceHolder.getRootMessages().isEmpty()) {
-         return;
+         return null;
       }
 
       boolean existIndexedEntities = false;
@@ -55,8 +57,6 @@ public class SerializationContextSearchMapping {
          builder.addEntityType(byte[].class, fullName);
       }
 
-      if (existIndexedEntities) {
-         mappingHolder.build();
-      }
+      return (existIndexedEntities) ? builder.build() : null;
    }
 }
