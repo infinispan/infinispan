@@ -155,8 +155,8 @@ public final class LifecycleManager implements ModuleLifecycle {
             AdvancedCache cache = cr.getComponent(Cache.class).getAdvancedCache().withStorageMediaType()
                   .withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class);
             KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
-            searchMappingHolder.setEntityLoader(new EntityLoader(cache, keyTransformationHandler));
             SerializationContextSearchMapping.acquire(serCtx).buildMapping(searchMappingHolder,
+                  new EntityLoader(cache, keyTransformationHandler),
                   cache.getCacheConfiguration().indexing().indexedEntityTypes());
             SearchMapping searchMapping = searchMappingHolder.getSearchMapping();
             if (searchMapping != null) {

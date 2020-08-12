@@ -4,10 +4,8 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.hibernate.search.engine.environment.bean.BeanReference;
-import org.hibernate.search.engine.search.loading.spi.EntityLoader;
 import org.hibernate.search.mapper.pojo.bridge.IdentifierBridge;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
-import org.infinispan.search.mapper.common.EntityReference;
 
 /**
  * Holds an instance of {@link SearchMapping}.
@@ -25,7 +23,6 @@ public class SearchMappingHolder {
 
    private SearchMappingBuilder builder;
    private volatile SearchMapping searchMapping;
-   private volatile EntityLoader<EntityReference, ?> entityLoader;
    private volatile ClassLoader aggregatedClassLoader;
    private volatile Collection<ProgrammaticSearchMappingProvider> mappingProviders;
 
@@ -42,13 +39,8 @@ public class SearchMappingHolder {
       return searchMapping;
    }
 
-   public void setEntityLoader(EntityLoader<EntityReference, ?> entityLoader) {
-      this.entityLoader = entityLoader;
-   }
-
    public SearchMappingBuilder builder(PojoBootstrapIntrospector introspector) {
       builder = SearchMapping.builder(introspector, aggregatedClassLoader, mappingProviders)
-            .setEntityLoader(entityLoader)
             .setProvidedIdentifierBridge(identifierBridge)
             .setProperties(properties);
       return builder;
