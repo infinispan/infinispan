@@ -44,9 +44,9 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationSuccessAction;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.logging.Log;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.infinispan.search.mapper.mapping.SearchMappingHolder;
 import org.infinispan.search.mapper.work.SearchIndexer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -80,7 +80,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    @Inject BlockingManager blockingManager;
    @Inject protected KeyPartitioner keyPartitioner;
 
-   private final SearchMappingHolder searchMappingHolder;
    private final KeyTransformationHandler keyTransformationHandler;
    private final AtomicBoolean stopping = new AtomicBoolean(false);
    private final ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues;
@@ -92,12 +91,13 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private final boolean isManualIndexing;
    private final AdvancedCache<?, ?> cache;
    private final Map<String, Class<?>> indexedClasses;
+
+   private SearchMapping searchMapping;
    private SegmentListener segmentListener;
 
-   public QueryInterceptor(SearchMappingHolder searchMappingHolder, KeyTransformationHandler keyTransformationHandler,
+   public QueryInterceptor(KeyTransformationHandler keyTransformationHandler,
                            boolean isManualIndexing, ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues,
                            AdvancedCache<?, ?> cache, Map<String, Class<?>> indexedClasses) {
-      this.searchMappingHolder = searchMappingHolder;
       this.keyTransformationHandler = keyTransformationHandler;
       this.isManualIndexing = isManualIndexing;
       this.txOldValues = txOldValues;
@@ -116,6 +116,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          segmentListener = new SegmentListener(cache, this::purgeIndex, blockingManager);
          this.cache.addListener(segmentListener);
       }
+      searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
    }
 
    public void prepareForStopping() {
@@ -304,7 +305,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * Remove all entries from all known indexes
     */
    public void purgeAllIndexes() {
-      SearchMapping searchMapping = searchMappingHolder.getSearchMapping();
       if (searchMapping == null) {
          return;
       }
@@ -313,7 +313,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    public void purgeIndex(Class<?> entityType) {
-      SearchMapping searchMapping = searchMappingHolder.getSearchMapping();
       if (searchMapping == null) {
          return;
       }
@@ -325,10 +324,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * Removes from the index the entries corresponding to the supplied segments, if the index is local.
     */
    void purgeIndex(IntSet segments) {
-      if (segments == null || segments.isEmpty()) return;
-
-      SearchMapping searchMapping = searchMappingHolder.getSearchMapping();
-      if (searchMapping == null) {
+      if (segments == null || segments.isEmpty() || searchMapping == null) {
          return;
       }
 
@@ -369,7 +365,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    private SearchIndexer getSearchIndexer() {
-      return searchMappingHolder.getSearchMapping().getSearchIndexer();
+      return searchMapping.getSearchIndexer();
    }
 
    private Object extractValue(Object storedValue) {
@@ -399,7 +395,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
             if (shouldModifyIndexes(command, ctx, storedKey)) {
                removeFromIndexes(key, segment);
             }
-         } else if (searchMappingHolder.isIndexedType(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
+         } else if (isIndexedType(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
                && shouldModifyIndexes(command, ctx, storedKey)) {
             removeFromIndexes(oldValue, key, segment);
          } else if (trace) {
@@ -408,7 +404,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       } else if (trace) {
          log.tracef("Skipped index cleanup for command %s", command);
       }
-      if (searchMappingHolder.isIndexedType(newValue)) {
+      if (isIndexedType(newValue)) {
          if (shouldModifyIndexes(command, ctx, storedKey)) {
             // This means that the entry is just modified so we need to update the indexes and not add to them.
             updateIndexes(skipIndexCleanup, newValue, key, segment);
@@ -434,5 +430,9 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    public boolean isStopping() {
       return stopping.get();
+   }
+
+   private boolean isIndexedType(Object value) {
+      return (searchMapping != null) && searchMapping.isIndexedType(value);
    }
 }

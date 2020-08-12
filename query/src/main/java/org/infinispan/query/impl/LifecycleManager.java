@@ -125,7 +125,7 @@ public class LifecycleManager implements ModuleLifecycle {
             searchMapping = createSearchMapping(cfg.indexing(), indexedClasses, cr, cache, keyTransformationHandler,
                   aggregatedClassLoader);
 
-            createQueryInterceptorIfNeeded(cr, cfg, cache, indexedClasses, searchMapping, keyTransformationHandler);
+            createQueryInterceptorIfNeeded(cr, cfg, cache, indexedClasses, keyTransformationHandler);
 
             DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache, searchMapping,
                   keyTransformationHandler);
@@ -165,8 +165,8 @@ public class LifecycleManager implements ModuleLifecycle {
       return entities;
    }
 
-   private void createQueryInterceptorIfNeeded(ComponentRegistry cr, Configuration cfg, AdvancedCache<?, ?> cache, Map<String, Class<?>> indexedClasses,
-                                               SearchMappingHolder searchMapping, KeyTransformationHandler keyTransformationHandler) {
+   private void createQueryInterceptorIfNeeded(ComponentRegistry cr, Configuration cfg, AdvancedCache<?, ?> cache,
+           Map<String, Class<?>> indexedClasses, KeyTransformationHandler keyTransformationHandler) {
       CONTAINER.registeringQueryInterceptor(cache.getName());
 
       BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
@@ -180,8 +180,8 @@ public class LifecycleManager implements ModuleLifecycle {
       boolean manualIndexing = HS5_CONF_STRATEGY_MANUAL.equals(
             cfg.indexing().properties().get(HS5_CONF_STRATEGY_PROPERTY));
 
-      QueryInterceptor queryInterceptor = new QueryInterceptor(searchMapping, keyTransformationHandler, manualIndexing,
-            txOldValues, cache, indexedClasses);
+      QueryInterceptor queryInterceptor = new QueryInterceptor(keyTransformationHandler, manualIndexing, txOldValues,
+              cache, indexedClasses);
 
       for (Map.Entry<Class<?>, Class<?>> kt : cfg.indexing().keyTransformers().entrySet()) {
          keyTransformationHandler.registerTransformer(kt.getKey(), (Class<? extends Transformer>) kt.getValue());
