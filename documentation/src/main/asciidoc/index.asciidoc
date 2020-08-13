@@ -36,14 +36,7 @@ Written and maintained by the {brandname} community
 * link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference]
 * link:titles/rest/rest.html[REST API]
 * link:titles/integrating/integrating.html[Integrations]
-* link:https://infinispan.org/infinispan-spring-boot/master/spring_boot_starter.html[Spring Boot Starter]
-
-[discrete]
-== Cloud
-
-[unstyled]
-* link:https://infinispan.org/infinispan-operator/master/operator.html[{brandname} Operator Guide: Version 2.0.x (Dev)]
-* link:https://infinispan.org/infinispan-operator/1.1.x/operator.html[{brandname} Operator Guide: Version 1.1.x]
+* link:titles/spring_boot/starter.html[Spring Boot Starter]
 
 [discrete]
 == Additional Resources
