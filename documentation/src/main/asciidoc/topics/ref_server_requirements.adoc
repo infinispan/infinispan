@@ -1,15 +1,18 @@
+[id='server_requirements']
 = {brandname} Server Requirements
-Check host system requirements for the {brandname} server.
 
 //Community
 ifndef::productized[]
-{brandname} server requires a Java Virtual Machine and supports:
+{brandname} Server requires a Java Virtual Machine and works with Java 11 and later.
 
-* Java 8
-* Java 11
+[NOTE]
+====
+{brandname} Server does not support Java 8. However, you can use Java 8 with
+Hot Rod Java clients.
+====
 endif::productized[]
 
 //Product
 ifdef::productized[]
-See the link:https://access.redhat.com/articles/2435931[{FullProductName} Supported Configurations].
+{brandname} Server requires a Java Virtual Machine. See the link:{rhdg_configurations}[{brandname} Supported Configurations] for details on supported versions.
 endif::productized[]
