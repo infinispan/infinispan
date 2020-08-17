@@ -1,24 +1,29 @@
 package org.infinispan.stress;
 
-import java.util.concurrent.Callable;
+import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
+import static org.infinispan.configuration.cache.CacheMode.INVALIDATION_SYNC;
+import static org.infinispan.configuration.cache.CacheMode.LOCAL;
+import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
+import static org.infinispan.test.TestingUtil.waitForNoRebalance;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterTest;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -33,9 +38,11 @@ import org.testng.annotations.Test;
 public class LargeClusterStressTest extends MultipleCacheManagersTest {
 
    private static final int NUM_NODES = 40;
-   private static final int NUM_CACHES = 80;
-   private static final int NUM_THREADS = 10;
-   private static final int NUM_SEGMENTS = 1000;
+   private static final int NUM_CACHES = 20;
+   private static final int NUM_THREADS = NUM_NODES;
+   private static final int NUM_SEGMENTS = 256;
+
+   private static final EnumSet<CacheMode> cacheModes = EnumSet.of(CacheMode.LOCAL, CacheMode.INVALIDATION_SYNC, DIST_SYNC, REPL_SYNC);
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -43,56 +50,53 @@ public class LargeClusterStressTest extends MultipleCacheManagersTest {
    }
 
    public void testLargeClusterStart() throws Exception {
-      final Configuration distConfig = new ConfigurationBuilder()
-            .clustering().cacheMode(CacheMode.DIST_SYNC)
+      Map<CacheMode, Configuration> configurations = new HashMap<>();
+      configurations.put(DIST_SYNC, new ConfigurationBuilder()
+            .clustering().cacheMode(DIST_SYNC)
             .clustering().stateTransfer().awaitInitialTransfer(false)
-//            .hash().consistentHashFactory(new TopologyAwareSyncConsistentHashFactory()).numSegments(NUM_SEGMENTS)
-            .hash().consistentHashFactory(new SyncConsistentHashFactory()).numSegments(NUM_SEGMENTS)
-            .build();
-      final Configuration replConfig = new ConfigurationBuilder()
-            .clustering().cacheMode(CacheMode.REPL_SYNC)
+            .clustering().hash().numSegments(NUM_SEGMENTS)
+            .build());
+      configurations.put(REPL_SYNC, new ConfigurationBuilder()
+            .clustering().cacheMode(REPL_SYNC)
             .clustering().hash().numSegments(NUM_SEGMENTS)
             .clustering().stateTransfer().awaitInitialTransfer(false)
-            .build();
+            .build());
+      configurations.put(INVALIDATION_SYNC, new ConfigurationBuilder()
+            .clustering().cacheMode(CacheMode.INVALIDATION_SYNC)
+            .build());
+      configurations.put(LOCAL, new ConfigurationBuilder()
+            .clustering().cacheMode(LOCAL)
+            .build());
 
       // Start the caches (and the JGroups channels) in separate threads
       ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS, getTestThreadFactory("Worker"));
-      ExecutorCompletionService<Object> completionService = new ExecutorCompletionService<Object>(executor);
-      Future<Object>[] futures = new Future[NUM_NODES];
+      ExecutorCompletionService<Object> completionService = new ExecutorCompletionService<>(executor);
       try {
          for (int i = 0; i < NUM_NODES; i++) {
             final String nodeName = TestResourceTracker.getNameForIndex(i);
-            final String machineId = "m" + (i / 2);
-            futures[i] = completionService.submit(new Callable<Object>() {
-               @Override
-               public Object call() throws Exception {
-                  GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-                  gcb.transport().defaultTransport().nodeName(nodeName);
+//            final String machineId = "m" + (i / 2);
+            completionService.submit(() -> {
+               GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+               gcb.transport().defaultTransport().nodeName(nodeName);
 //                  gcb.transport().machineId(machineId);
-                  BlockingThreadPoolExecutorFactory remoteExecutorFactory = new BlockingThreadPoolExecutorFactory(
-                        10, 1, 0, 60000);
-                  gcb.transport().remoteCommandThreadPool().threadPoolFactory(remoteExecutorFactory);
-                  BlockingThreadPoolExecutorFactory stateTransferExecutorFactory = new BlockingThreadPoolExecutorFactory(
-                        4, 1, 0, 60000);
-                  gcb.transport().stateTransferThreadPool().threadPoolFactory(stateTransferExecutorFactory);
-                  EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build());
-                  try {
-                     for (int j = 0; j < NUM_CACHES/2; j++) {
-                        cm.defineConfiguration("repl-cache-" + j, replConfig);
-                        cm.defineConfiguration("dist-cache-" + j, distConfig);
+               EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build());
+               try {
+                  for (int j = 0; j < NUM_CACHES; j++) {
+                     for (CacheMode mode : cacheModes) {
+                        cm.defineConfiguration(cacheName(mode, j), configurations.get(mode));
                      }
-                     for (int j = 0; j < NUM_CACHES/2; j++) {
-                        Cache<Object, Object> replCache = cm.getCache("repl-cache-" + j);
-                        replCache.put(cm.getAddress(), "bla");
-                        Cache<Object, Object> distCache = cm.getCache("dist-cache-" + j);
-                        distCache.put(cm.getAddress(), "bla");
-                     }
-                  } finally {
-                     registerCacheManager(cm);
                   }
-                  log.infof("Started cache manager %s", cm.getAddress());
-                  return null;
+                  for (int j = 0; j < NUM_CACHES; j++) {
+                     for (CacheMode mode : cacheModes) {
+                        Cache<Object, Object> cache = cm.getCache(cacheName(mode, j));
+                        cache.put(cm.getAddress(), "bla");
+                     }
+                  }
+               } finally {
+                  registerCacheManager(cm);
                }
+               log.infof("Started cache manager %s", cm.getAddress());
+               return null;
             });
          }
 
@@ -105,15 +109,22 @@ public class LargeClusterStressTest extends MultipleCacheManagersTest {
 
       log.infof("All %d cache managers started, waiting for state transfer to finish for each cache", NUM_NODES);
 
-      for (int j = 0; j < NUM_CACHES/2; j++) {
-         waitForClusterToForm("repl-cache-" + j);
-         waitForClusterToForm("dist-cache-" + j);
+      for (int j = 0; j < NUM_CACHES; j++) {
+         for (CacheMode mode : cacheModes) {
+            if (mode.isClustered()) {
+               waitForClusterToForm(cacheName(mode, j));
+            }
+         }
       }
+   }
+
+   private String cacheName(CacheMode mode, int index) {
+      return mode.toString().toLowerCase() + "-cache-" + index;
    }
 
    @Test(dependsOnMethods = "testLargeClusterStart")
    public void testLargeClusterStop() {
-      for (int i = 0; i < NUM_NODES - 1; i++) {
+      for (int i = 0; i < NUM_NODES; i++) {
          int killIndex = -1;
          for (int j = 0; j < cacheManagers.size(); j++) {
             if (address(j).equals(manager(0).getCoordinator())) {
@@ -127,9 +138,12 @@ public class LargeClusterStressTest extends MultipleCacheManagersTest {
          cacheManagers.remove(killIndex);
          if (cacheManagers.size() > 0) {
             TestingUtil.blockUntilViewsReceived(60000, false, cacheManagers);
-            for (int j = 0; j < NUM_CACHES/2; j++) {
-               TestingUtil.waitForNoRebalance(caches("repl-cache-" + j));
-               TestingUtil.waitForNoRebalance(caches("dist-cache-" + j));
+            for (int j = 0; j < NUM_CACHES; j++) {
+               for (CacheMode mode : cacheModes) {
+                  if (mode.isClustered()) {
+                     waitForNoRebalance(caches(cacheName(mode, j)));
+                  }
+               }
             }
          }
       }

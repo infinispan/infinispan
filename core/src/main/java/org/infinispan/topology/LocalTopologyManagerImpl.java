@@ -143,18 +143,17 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Override
    public CompletionStage<CacheTopology> join(String cacheName, CacheJoinInfo joinInfo, CacheTopologyHandler stm,
                                               PartitionHandlingManager phm) {
-      log.debugf("Node %s joining cache %s", transport.getAddress(), cacheName);
-
-      LocalCacheStatus cacheStatus = new LocalCacheStatus(joinInfo, stm, phm);
-      LocalCacheStatus previousStatus = runningCaches.put(cacheName, cacheStatus);
-      if (previousStatus != null) {
-         throw new IllegalStateException("A cache can only join once");
-      }
-
       // Use the action sequencer for the initial join request
       // This ensures that all topology updates from the coordinator will be delayed
       // until the join and the GET_CACHE_LISTENERS request are done
       return orderOnCache(cacheName, () -> {
+         log.debugf("Node %s joining cache %s", transport.getAddress(), cacheName);
+         LocalCacheStatus cacheStatus = new LocalCacheStatus(joinInfo, stm, phm);
+         LocalCacheStatus previousStatus = runningCaches.put(cacheName, cacheStatus);
+         if (previousStatus != null) {
+            throw new IllegalStateException("A cache can only join once");
+         }
+
          long timeout = joinInfo.getTimeout();
          long endTime = timeService.expectedEndTime(timeout, MILLISECONDS);
          return sendJoinRequest(cacheName, joinInfo, timeout, endTime)
