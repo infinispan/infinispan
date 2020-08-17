@@ -1,7 +1,12 @@
 package org.infinispan.cli.impl;
 
 import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -36,20 +41,38 @@ import org.infinispan.commons.util.Version;
  * @since 5.2
  */
 public class ContextImpl implements Context, AeshContext {
-   private final ConfigImpl config;
+   private static final String CONFIG_FILE = "cli.properties";
    private Connection connection;
    private final Properties properties;
    private org.aesh.io.Resource cwd;
    private ReadlineConsole console;
    private SSLContextSettings sslContext;
    private CommandRegistry<? extends CommandInvocation> registry;
+   private final Path configPath;
 
-   public ContextImpl(Properties properties) {
-      this.properties = properties;
+   public ContextImpl(Properties defaults) {
+      this.properties = new Properties(defaults);
       String userDir = properties.getProperty("user.dir");
       cwd = userDir != null ? new FileResource(userDir) : null;
-      config = new ConfigImpl(SystemUtils.getAppConfigFolder(Version.getBrandName().toLowerCase().replace(' ', '_')));
-      config.load();
+      String cliDir = properties.getProperty("cli.dir");
+      if (cliDir != null) {
+         configPath = Paths.get(cliDir);
+      } else {
+         configPath = Paths.get(SystemUtils.getAppConfigFolder(Version.getBrandName().toLowerCase().replace(' ', '_')));
+      }
+      Path configFile = configPath.resolve(CONFIG_FILE);
+      if (Files.exists(configFile)) {
+         try (Reader r = Files.newBufferedReader(configFile)) {
+            properties.load(r);
+         } catch (IOException e) {
+            System.err.println(Messages.MSG.configLoadFailed(configFile.toString()));
+         }
+      }
+   }
+
+   @Override
+   public Path getConfigPath() {
+      return configPath;
    }
 
    @Override
@@ -59,12 +82,39 @@ public class ContextImpl implements Context, AeshContext {
 
    @Override
    public void setProperty(String key, String value) {
-      properties.setProperty(key, value);
+      if (value == null) {
+         properties.remove(key);
+      } else {
+         properties.setProperty(key, value);
+      }
    }
 
    @Override
    public String getProperty(String key) {
       return properties.getProperty(key);
+   }
+
+   @Override
+   public String getProperty(Property property) {
+      return properties.getProperty(property.propertyName());
+   }
+
+   @Override
+   public Properties getProperties() {
+      return properties;
+   }
+
+   @Override
+   public void saveProperties() {
+      Path configFile = configPath.resolve(CONFIG_FILE);
+      try {
+         Files.createDirectories(configPath);
+         try (Writer w = Files.newBufferedWriter(configFile)) {
+            properties.store(w, null);
+         }
+      } catch (IOException e) {
+         System.err.println(Messages.MSG.configStoreFailed(configFile.toString()));
+      }
    }
 
    @Override

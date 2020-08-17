@@ -1,0 +1,69 @@
+CONFIG(1)
+========
+:doctype: manpage
+
+
+NAME
+----
+config - manages CLI configuration properties.
+
+
+SYNOPSIS
+--------
+*config*
+
+*config set* 'name' 'value'
+
+*config get* 'name'
+
+DESCRIPTION
+-----------
+Manage (list, set, get) CLI configuration properties.
+
+
+COMMAND SYNOPSIS
+----------------
+
+*config*::
+Lists all configuration properties that are set.
+
+*config set* 'name' ['value']::
+Sets the value of a specific property. If you do not specify a value, the property is not set.
+
+*config get* 'name'::
+Retrieves the value of a specific property.
+
+
+COMMON OPTIONS
+--------------
+
+These options apply to all commands:
+
+*-h, --help*::
+Displays a help page for the command or sub-command.
+
+
+PROPERTIES
+----------
+
+Available properties:
+
+*autoconnect-url*::
+Specifies the URL to which the CLI automatically connects on startup, for example:
+*config set autoconnect-url http://user:password:11222*
+
+*autoexec*::
+Specifies the path of a CLI batch file to execute on startup, for example:
+*config set autoexec /home/user/my-cli-batch-file*
+
+*trustall*::
+Specifies whether to trust all server certificates without supplying a trust store, for example:
+*config set trustall true*
+
+*truststore*::
+Specifies the path of a truststore to validate server certificates, for example:
+*config set truststore /home/user/my-trust-store.jks*
+
+*truststore-password*::
+Specifies the password that corresponds to the truststore, for example:
+*config set truststore-password secret*

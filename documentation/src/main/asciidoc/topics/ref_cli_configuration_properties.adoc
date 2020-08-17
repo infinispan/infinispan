@@ -1,0 +1,37 @@
+[id='cli_configuration_properties-{context}']
+= {brandname} CLI Configuration Properties
+
+[%header,cols=2*]
+|===
+|Property
+|Description
+
+|`autoconnect-url`
+|Specifies the URL of a {brandname} server to connect to on startup.
+
+|`autoexec`
+|Defines the path to a CLI batch file that runs on startup. If an `autoconnect-url` property is specified, a connection to the server is established before the batch file runs.
+
+|`trustall`
+|Configures the CLI to trust all server certificates. Boolean value. Set to `true` to trust all certificates and bypass certificate validation.
+
+|`truststore`
+|Defines the path to the server key store. The CLI uses this key store to validate {brandname} Server identity.
+
+|`truststore_password`
+|Specifies a password for the key store, if required.
+|===
+
+.Persistent configuration
+
+{brandname} CLI stores configuration in the following OS-specific directories:
+
+* Linux/Unix: `$HOME/.config/{brandshortname}`
+* Windows: `$APPDATA/Sun/Java/{brandshortname}`
+* OS X: `$HOME/Library/Java/{brandshortname}`
+
+This directory contains the following files:
+
+* `cli.properties`: CLI configuration properties.
+* `aliases`: custom CLI aliases.
+* `history`: CLI history.

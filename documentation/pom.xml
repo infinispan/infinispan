@@ -163,6 +163,7 @@
                                 <infinispancomponentversion>${version.infinispan}</infinispancomponentversion>
                                 <schemaversion>${schemaVersion}</schemaversion>
                                 <brandname>${infinispan.brand.name}</brandname>
+                                <brandshortname>${infinispan.brand.short-name}</brandshortname>
                                 <fullbrandname>${infinispan.brand.name}</fullbrandname>
                                 <moduleprefix>${infinispan.module.slot.prefix}</moduleprefix>
                                 <infinispanslot>${infinispanslot}</infinispanslot>

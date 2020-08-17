@@ -19,6 +19,7 @@
 
 :brandname: Data Grid
 :fullbrandname: Red Hat Data Grid
+:brandshortname: red_hat_data_grid
 :wildflydocroot: https://docs.jboss.org/author/display/WFLY11
 :jdkdocroot: https://docs.oracle.com/javase/8/docs/api
 :javaeedocroot: https://docs.oracle.com/javaee/7/api
