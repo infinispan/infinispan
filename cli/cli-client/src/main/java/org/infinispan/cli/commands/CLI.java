@@ -5,6 +5,7 @@ import static org.infinispan.cli.logging.Messages.MSG;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
+import java.util.Properties;
 
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -56,6 +57,7 @@ import org.wildfly.security.provider.util.ProviderUtil;
             Cd.class,
             Clear.class,
             ClearCache.class,
+            Config.class,
             Connect.class,
             Container.class,
             Counter.class,
@@ -126,29 +128,36 @@ public class CLI extends CliCommand {
 
       context = invocation.getContext();
 
-      if (truststore != null) {
-         try (FileInputStream f = new FileInputStream(truststore.getAbsolutePath())) {
-            KeyStore keyStore = KeyStoreUtil.loadKeyStore(ProviderUtil.INSTALLED_PROVIDERS, null, f, truststore.getAbsolutePath(), truststorePassword.toCharArray());
+      String sslTrustStore = truststore != null ? truststore.getAbsolutePath() : context.getProperty(Context.Property.TRUSTSTORE);
+      if (sslTrustStore != null) {
+         String sslTrustStorePassword = truststorePassword != null ? truststorePassword : context.getProperty(Context.Property.TRUSTSTORE_PASSWORD);
+         try (FileInputStream f = new FileInputStream(sslTrustStore)) {
+            KeyStore keyStore = KeyStoreUtil.loadKeyStore(ProviderUtil.INSTALLED_PROVIDERS, null, f, sslTrustStore, sslTrustStorePassword != null ? sslTrustStorePassword.toCharArray() : null);
             TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             trustManagerFactory.init(keyStore);
             SSLContextSettings sslContext = SSLContextSettings.getInstance("TLS", null, trustManagerFactory.getTrustManagers(), null, null);
             context.setSslContext(sslContext);
          } catch (Exception e) {
-            invocation.getShell().writeln(MSG.keyStoreError(truststore.getAbsolutePath(), e));
+            invocation.getShell().writeln(MSG.keyStoreError(sslTrustStore, e));
             return CommandResult.FAILURE;
          }
-      } else if (trustAll) {
+      } else if (trustAll || Boolean.parseBoolean(context.getProperty(Context.Property.TRUSTALL))) {
          SSLContextSettings sslContext = SSLContextSettings.getInstance("TLS", null, new TrustManager[]{new ZeroSecurityTrustManager()}, null, new ZeroSecurityHostnameVerifier());
          context.setSslContext(sslContext);
       }
 
-      if (connect != null) {
-         context.connect(null, connect);
+      String connectionString = connect != null ? connect : context.getProperty(Context.Property.AUTOCONNECT_URL);
+
+      if (connectionString != null) {
+         context.connect(null, connectionString);
       }
 
       if (file != null) {
          return batch(file.getAbsolutePath(), invocation.getShell());
       } else {
+         if (context.getProperty(Context.Property.AUTOEXEC) != null) {
+            batch(context.getProperty(Context.Property.AUTOEXEC), invocation.getShell());
+         }
          return interactive(invocation.getShell());
       }
    }
@@ -182,6 +191,8 @@ public class CLI extends CliCommand {
       SettingsBuilder settings = SettingsBuilder.builder();
       settings
             .enableAlias(true)
+            .aliasFile(context.getConfigPath().resolve("aliases").toFile())
+            .historyFile(context.getConfigPath().resolve("history").toFile())
             .outputStream(System.out)
             .outputStreamError(System.err)
             .inputStream(System.in)
@@ -222,9 +233,9 @@ public class CLI extends CliCommand {
       }
    }
 
-   private static AeshCommandRuntimeBuilder initialCommandRuntimeBuilder(Shell shell) throws CommandRegistryException {
+   private static AeshCommandRuntimeBuilder initialCommandRuntimeBuilder(Shell shell, Properties properties) throws CommandRegistryException {
       AeshCommandRegistryBuilder registryBuilder = AeshCommandRegistryBuilder.builder().command(CLI.class);
-      Context context = new ContextImpl(System.getProperties());
+      Context context = new ContextImpl(properties);
       AeshCommandRuntimeBuilder runtimeBuilder = AeshCommandRuntimeBuilder.builder();
       runtimeBuilder
             .commandActivatorProvider(new ContextAwareCommandActivatorProvider(context))
@@ -237,9 +248,9 @@ public class CLI extends CliCommand {
       return runtimeBuilder;
    }
 
-   public static void main(Shell shell, String[] args) {
+   public static void main(Shell shell, String[] args, Properties properties) {
       try {
-         AeshCommandRuntimeBuilder runtimeBuilder = initialCommandRuntimeBuilder(shell);
+         AeshCommandRuntimeBuilder runtimeBuilder = initialCommandRuntimeBuilder(shell, properties);
          AeshRuntimeRunner.builder().commandRuntime(runtimeBuilder.build()).args(args).execute();
       } catch (Exception e) {
          throw new RuntimeException(e);
@@ -248,7 +259,7 @@ public class CLI extends CliCommand {
 
    public static void main(String[] args) {
       try {
-         AeshCommandRuntimeBuilder runtimeBuilder = initialCommandRuntimeBuilder(new DefaultShell());
+         AeshCommandRuntimeBuilder runtimeBuilder = initialCommandRuntimeBuilder(new DefaultShell(), System.getProperties());
          AeshRuntimeRunner.builder().commandRuntime(runtimeBuilder.build()).args(args).execute();
       } catch (Exception e) {
          throw new RuntimeException(e);
