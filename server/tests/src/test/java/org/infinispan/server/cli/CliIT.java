@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Properties;
 
 import org.aesh.terminal.utils.Config;
 import org.infinispan.cli.commands.CLI;
@@ -38,12 +39,15 @@ public class CliIT {
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
    private static File workingDir;
+   private static Properties properties;
 
    @BeforeClass
    public static void setup() {
       workingDir = new File(CommonsTestingUtil.tmpDirectory(CliIT.class));
       Util.recursiveFileRemove(workingDir);
       workingDir.mkdirs();
+      properties = new Properties(System.getProperties());
+      properties.put("cli.dir", workingDir.getAbsolutePath());
    }
 
    @AfterClass
@@ -54,7 +58,7 @@ public class CliIT {
    @Test
    public void testCliInteractive() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{});
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
 
          terminal.readln("echo Hi");
          terminal.assertEquals("[disconnected]> echo Hi" + Config.getLineSeparator() + "Hi" + Config.getLineSeparator() + "[disconnected]> ");
@@ -124,7 +128,7 @@ public class CliIT {
    public void testCliBatch() {
       System.setProperty("serverAddress", hostAddress());
       AeshTestShell shell = new AeshTestShell();
-      CLI.main(shell, new String[]{"-f", getCliResource("batch.cli").getPath()});
+      CLI.main(shell, new String[]{"-f", getCliResource("batch.cli").getPath()}, properties);
       shell.assertContains("Hi CLI running on " + System.getProperty("os.arch"));
       shell.assertContains("batch1");
    }
@@ -132,7 +136,7 @@ public class CliIT {
    @Test
    public void testCliBatchPreconnect() {
       AeshTestShell shell = new AeshTestShell();
-      CLI.main(shell, new String[]{connectionString(), "-f", getCliResource("batch-preconnect.cli").getPath()});
+      CLI.main(shell, new String[]{connectionString(), "-f", getCliResource("batch-preconnect.cli").getPath()}, properties);
       shell.assertContains("Hi CLI");
       shell.assertContains("batch2");
    }
@@ -140,7 +144,7 @@ public class CliIT {
    @Test
    public void testCliTasks() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{connectionString()});
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{connectionString()}, properties);
 
          // connect
          terminal.readln("connect " + hostAddress() + ":11222");
@@ -164,7 +168,7 @@ public class CliIT {
    @Test
    public void testCliUploadProtobufSchemas() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{});
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
 
          // connect
          terminal.readln("connect " + hostAddress() + ":11222");
@@ -177,6 +181,24 @@ public class CliIT {
          terminal.readln("cd /containers/default/schemas");
          terminal.readln("ls");
          terminal.assertContains("person.proto");
+      }
+   }
+
+   @Test
+   public void testCliConfigPersistence() {
+      try (AeshTestConnection terminal = new AeshTestConnection()) {
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+
+         terminal.readln("config set autoconnect-url http://" + hostAddress() + ":11222");
+         terminal.clear();
+         terminal.readln("config get autoconnect-url");
+         terminal.assertContains("http://" + hostAddress() + ":11222");
+      }
+      // Close and recreate the CLI so that auto-connection kicks in
+      try (AeshTestConnection terminal = new AeshTestConnection()) {
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         terminal.assertContains("//containers/default]>");
+         terminal.readln("config set autoconnect-url");
       }
    }
 

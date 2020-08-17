@@ -1,0 +1,38 @@
+[id='cli_configuring_tls_properties-{context}']
+= Trusting {brandname} Server Connections
+Secure {brandname} CLI connections to {brandname} Server with SSL/TLS
+certificates. If you create a key store as an SSL identity for {brandname}
+Server, the CLI can validate server certificates to verify the identity.
+
+.Prerequisites
+
+* Set up an SSL identity for {brandname} Server.
+* Add {brandname} credentials.
+
+.Procedure
+
+. Specify the location of the server key store, as in the following example:
++
+----
+$ bin/cli.sh config set truststore /home/user/my-trust-store.jks
+----
++
+. Define the key store password, if necessary, as follows:
++
+----
+$ bin/cli.sh config set truststore-password secret
+----
++
+. Verify your CLI configuration.
++
+----
+$ bin/cli.sh config get truststore
+truststore=/home/user/my-trust-store.jks
+
+$ bin/cli.sh config get truststore-password
+truststore-password=secret
+----
+
+.Reference
+
+link:{server_docs}#ssl_identity-server[Setting Up SSL Identities for {brandname} Server]
