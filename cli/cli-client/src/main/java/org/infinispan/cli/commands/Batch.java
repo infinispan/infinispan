@@ -18,6 +18,7 @@ import org.aesh.command.invocation.CommandInvocation;
             Cas.class,
             Cd.class,
             ClearCache.class,
+            Config.class,
             Connect.class,
             Container.class,
             Counter.class,

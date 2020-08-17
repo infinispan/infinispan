@@ -1,0 +1,47 @@
+[id='cli_configuring_startup_properties-{context}']
+= Configuring Startup Properties
+Configure {brandname} CLI to automatically connect to specific URLs on startup
+and run batch files.
+
+.Prerequisites
+
+* Add {brandname} credentials.
+* Optionally create CLI batch files to run at startup.
+
+.Procedure
+
+. Specify a hostname and port to which the CLI automatically connects.
++
+For example, connect to the default server location when you start the CLI:
++
+----
+$ bin/cli.sh config set autoconnect-url http://127.0.0.1:11222
+----
++
+. If you want to run a batch file when you start the CLI, specify the path to it as follows:
++
+----
+$ bin/cli.sh config set autoexec /path/to/batch/file
+----
++
+. Verify your CLI configuration.
++
+----
+$ bin/cli.sh config get autoconnect-url
+autoconnect-url=http://127.0.0.1:11222
+
+$ bin/cli.sh config get autoexec
+autoexec=/path/to/batch/file
+----
++
+. Start the {brandname} CLI and enter your credentials when prompted.
++
+----
+$ bin/cli.sh
+
+[ //containers/default]>
+----
+
+.Reference
+
+link:{cli_docs}#batch_operations[Performing Batch Operations]

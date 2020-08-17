@@ -200,4 +200,13 @@ public interface Messages {
 
    @Message(value = "Attempted to use a different realm '%s' than the already existing one '%s'")
    IllegalArgumentException userToolWrongRealm(String realm1, String realm2);
+
+   @Message(value = "Unable to load CLI configuration from `%s`. Using defaults.")
+   String configLoadFailed(String path);
+
+   @Message(value = "Unable to store CLI configuration to '%s'.")
+   String configStoreFailed(String path);
+
+   @Message(value = "Wrong argument count: %d.")
+   IllegalArgumentException wrongArgumentCount(int size);
 }
