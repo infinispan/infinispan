@@ -12,3 +12,9 @@ Complete this procedure to use Spring Session in your project.
 - `@EnableCaching`
 - `@EnableInfinispanRemoteHttpSession`
 - `@EnableInfinispanEmbeddedHttpSession`
+
+[NOTE]
+====
+{brandname} does not provide a default cache. To use Spring Session, you must
+add a {brandname} cache configuration. See link:{server_docs}#create_remote_cache[Remotely Creating {brandname} Caches].
+====
