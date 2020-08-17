@@ -2,6 +2,10 @@
 = Getting the Hot Rod Java Client
 Add the Hot Rod Java client to your project.
 
+.Prerequisites
+
+Hot Rod Java clients can use Java 8 or Java 11.
+
 .Procedure
 
 * Add the `infinispan-client-hotrod` artifact as a dependency in your `pom.xml`
@@ -11,3 +15,7 @@ as follows:
 ----
 include::dependencies_maven/hotrod_java_client.xml[]
 ----
+
+.Reference
+
+link:{server_docs}#server_requirements[{brandname} Server Requirements]
