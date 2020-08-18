@@ -1,6 +1,7 @@
 package org.infinispan.commons.internal;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.ForkJoinPool;
 
 import org.infinispan.commons.dataconversion.MediaTypeResolver;
 import org.infinispan.commons.executors.NonBlockingResource;
@@ -30,6 +31,8 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
 
       // Loading a service may require opening a file from classpath
       builder.allowBlockingCallsInside(ServiceFinder.class.getName(), "load");
+
+      handleJREClasses(builder);
    }
 
    // Register all methods of a given class to allow for blocking - NOTE that if these methods invoke passed in code,
@@ -43,5 +46,12 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
       for (Method method : methods) {
          builder.allowBlockingCallsInside(clazz.getName(), method.getName());
       }
+   }
+
+   private static void handleJREClasses(BlockHound.Builder builder) {
+      // The runWorker method can block waiting for a new task to be submitted - this is okay
+      builder.allowBlockingCallsInside(ForkJoinPool.class.getName(), "runWorker");
+      // The scan method is where the task is actually ran
+      builder.disallowBlockingCallsInside(ForkJoinPool.class.getName(), "scan");
    }
 }
