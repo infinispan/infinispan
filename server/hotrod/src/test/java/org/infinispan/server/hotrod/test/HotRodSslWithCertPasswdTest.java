@@ -7,7 +7,6 @@ import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager
 import static org.testng.AssertJUnit.assertNotNull;
 
 import org.infinispan.server.core.test.Stoppable;
-import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
@@ -29,12 +28,11 @@ public class HotRodSslWithCertPasswdTest extends AbstractInfinispanTest {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
       builder.host(host()).port(serverPort()).idleTimeout(0);
       builder.ssl().enable().keyStoreFileName(keyStoreFileName).keyStorePassword("secret".toCharArray())
-            .keyStoreType("pkcs12")
+             .keyStoreType("pkcs12")
              .keyStoreCertificatePassword("secret2".toCharArray()).trustStoreFileName(trustStoreFileName)
              .trustStorePassword("secret".toCharArray()).trustStoreType("pkcs12");
       Stoppable.useCacheManager(createCacheManager(hotRodCacheConfiguration()), cm ->
-            Stoppable.useServer(new HotRodServer(), server -> {
-                                   server.start(builder.build(), cm);
+            Stoppable.useServer(HotRodTestingUtil.startHotRodServer(cm, builder), server -> {
                                    assertNotNull(server.getConfiguration().ssl().keyStoreCertificatePassword());
                                 }
             ));

@@ -35,7 +35,6 @@ public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest 
    }
 
    ConfigurationBuilder initServerAndClient(Map<String, String> mechProperties) {
-      hotrodServer = new HotRodServer();
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
       serverBuilder.authentication()
          .enable()
@@ -43,7 +42,7 @@ public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest 
          .addAllowedMech("CRAM-MD5")
          .serverAuthenticationProvider(createAuthenticationProvider());
       serverBuilder.authentication().mechProperties(mechProperties);
-      hotrodServer.start(serverBuilder.build(), cacheManager);
+      hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager, serverBuilder);
       log.info("Started server on port: " + hotrodServer.getPort());
 
       ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();

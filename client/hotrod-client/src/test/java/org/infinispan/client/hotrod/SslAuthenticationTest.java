@@ -79,7 +79,6 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
          if (cache == null) cache = cacheManager.getCache();
          return null;
       });
-      hotrodServer = new HotRodServer();
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
 
       ClassLoader cl = SslAuthenticationTest.class.getClassLoader();
@@ -102,7 +101,7 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
                .addAllowedMech("EXTERNAL")
                .serverAuthenticationProvider(sap);
       Security.doAs(ADMIN, (PrivilegedExceptionAction<Object>) () -> {
-         hotrodServer.start(serverBuilder.build(), cacheManager);
+         hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager, serverBuilder);
          return null;
       });
 

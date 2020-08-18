@@ -49,7 +49,6 @@ public class SslTest extends SingleCacheManagerTest {
    }
 
    protected void initServerAndClient(boolean sslServer, boolean sslClient, boolean requireClientAuth, boolean clientAuth, boolean altCertPassword) {
-      hotrodServer = new HotRodServer();
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
 
       ClassLoader tccl = Thread.currentThread().getContextClassLoader();
@@ -69,7 +68,7 @@ public class SslTest extends SingleCacheManagerTest {
                .trustStoreType("PKCS12")
                .trustStorePassword(STORE_PASSWORD);
       }
-      hotrodServer.start(serverBuilder.build(), cacheManager);
+      hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager, serverBuilder);
       log.info("Started server on port: " + hotrodServer.getPort());
 
       String clientKeyStore = tccl.getResource(altCertPassword ? "keystore_client.jks" : "keystore_client.p12").getPath();
