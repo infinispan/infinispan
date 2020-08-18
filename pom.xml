@@ -104,7 +104,6 @@
       <module>persistence/jdbc</module>
       <module>persistence/jpa</module>
       <module>persistence/remote</module>
-      <module>persistence/rest</module>
       <module>persistence/rocksdb</module>
       <module>persistence/soft-index</module>
       <module>server</module>
@@ -2908,7 +2907,6 @@
                               <source>${dir.ispn}/persistence/jpa/src/main/java</source>
                               <source>${dir.ispn}/persistence/leveldb/src/main/java</source>
                               <source>${dir.ispn}/persistence/remote/src/main/java</source>
-                              <source>${dir.ispn}/persistence/rest/src/main/java</source>
                               <source>${dir.ispn}/persistence/rocksdb/src/main/java</source>
                               <source>${dir.ispn}/persistence/soft-index/src/main/java</source>
                               <source>${dir.ispn}/query-core/src/main/java</source>
