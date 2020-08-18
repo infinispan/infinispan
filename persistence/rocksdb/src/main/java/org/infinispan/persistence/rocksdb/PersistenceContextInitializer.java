@@ -12,7 +12,10 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
  * @since 10.0
  */
 @AutoProtoSchemaBuilder(
-      includeClasses = RocksDBStore.ExpiryBucket.class,
+      includeClasses = {
+            RocksDBStore.ExpiryBucket.class,
+            RocksDBStore.MetadataImpl.class
+      },
       schemaFileName = "persistence.rocksdb.proto",
       schemaFilePath = "proto/generated",
       schemaPackageName = "org.infinispan.persistence.rocksdb",

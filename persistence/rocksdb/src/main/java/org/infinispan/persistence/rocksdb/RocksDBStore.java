@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +35,7 @@ import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.impl.MarshallableEntryImpl;
 import org.infinispan.metadata.Metadata;
@@ -48,6 +48,7 @@ import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -79,6 +80,8 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
 
    static final String DATABASE_PROPERTY_NAME_WITH_SUFFIX = "database.";
    static final String COLUMN_FAMILY_PROPERTY_NAME_WITH_SUFFIX = "data.";
+   static final byte[] META_COLUMN_FAMILY = "meta-cf".getBytes();
+   static final byte[] META_COLUMN_FAMILY_KEY = "metadata".getBytes();
 
    protected RocksDBStoreConfiguration configuration;
    private RocksDB db;
@@ -134,6 +137,16 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          try {
             db = handler.open(getLocation(), dataDbOptions());
             expiredDb = openDatabase(getExpirationLocation(), expiredDbOptions());
+
+            MetadataImpl existingMeta = handler.loadMetadata();
+            boolean versionsMatch = true;
+            if (existingMeta != null) {
+               // TODO Perform data migration as part of ISPN-11614 and remove versionsMatch check
+               versionsMatch = existingMeta.version == Version.getVersionShort();
+            }
+            // Update the metadata entry to use the current Infinispan version
+            if (versionsMatch)
+               handler.writeMetadata();
          } catch (Exception e) {
             throw new CacheConfigurationException("Unable to open database", e);
          }
@@ -467,6 +480,17 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       }
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.ROCKSDB_PERSISTED_METADATA)
+   static final class MetadataImpl {
+      @ProtoField(number = 1, defaultValue = "-1")
+      short version;
+
+      @ProtoFactory
+      MetadataImpl(short version) {
+         this.version = version;
+      }
+   }
+
    private static final class ExpiryEntry {
 
       final long expiry;
@@ -524,6 +548,8 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
 
    private abstract class RocksDBHandler {
 
+      protected ColumnFamilyHandle metaColumnFamilyHandle;
+
       abstract RocksDB open(Path location, DBOptions options) throws RocksDBException;
 
       abstract void close();
@@ -533,6 +559,15 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       abstract ColumnFamilyHandle getHandle(Object key);
 
       abstract ColumnFamilyHandle getHandleForMarshalledKey(byte[] marshalledKey);
+
+      void writeMetadata() throws RocksDBException {
+         MetadataImpl metadata = new MetadataImpl(Version.getVersionShort());
+         db.put(metaColumnFamilyHandle, META_COLUMN_FAMILY_KEY, marshall(metadata));
+      }
+
+      MetadataImpl loadMetadata() throws RocksDBException {
+         return unmarshall(db.get(metaColumnFamilyHandle, META_COLUMN_FAMILY_KEY));
+      }
 
       ColumnFamilyDescriptor newDescriptor(byte[] name) {
          ColumnFamilyOptions columnFamilyOptions;
@@ -684,12 +719,14 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       RocksDB open(Path location, DBOptions options) throws RocksDBException {
          File dir = location.toFile();
          dir.mkdirs();
-         List<ColumnFamilyHandle> handles = new ArrayList<>(1);
-         ColumnFamilyDescriptor desc = newDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY);
-         RocksDB rocksDB = RocksDB.open(options, location.toString(),
-               Collections.singletonList(desc),
-               handles);
+         List<ColumnFamilyDescriptor> descriptors = new ArrayList<>(2);
+         List<ColumnFamilyHandle> handles = new ArrayList<>(2);
+         descriptors.add(newDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY));
+         descriptors.add(newDescriptor(META_COLUMN_FAMILY));
+         RocksDB rocksDB = RocksDB.open(options, location.toString(), descriptors, handles);
+
          defaultColumnFamilyHandle = handles.get(0);
+         metaColumnFamilyHandle = handles.get(1);
          return rocksDB;
       }
 
@@ -844,17 +881,22 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          File dir = location.toFile();
          dir.mkdirs();
          int segmentCount = handles.length();
-         List<ColumnFamilyDescriptor> descriptors = new ArrayList<>(segmentCount + 1);
-         List<ColumnFamilyHandle> outHandles = new ArrayList<>(segmentCount + 1);
+         List<ColumnFamilyDescriptor> descriptors = new ArrayList<>(segmentCount + 2);
+         List<ColumnFamilyHandle> outHandles = new ArrayList<>(segmentCount + 2);
          // You have to open the default column family
-         descriptors.add(new ColumnFamilyDescriptor(
-               RocksDB.DEFAULT_COLUMN_FAMILY, new ColumnFamilyOptions()));
+         descriptors.add(new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY, new ColumnFamilyOptions()));
+
+         // Create the meta column family
+         descriptors.add(new ColumnFamilyDescriptor(META_COLUMN_FAMILY, new ColumnFamilyOptions()));
+
          for (int i = 0; i < segmentCount; ++i) {
             descriptors.add(newDescriptor(byteArrayFromInt(i)));
          }
+
          RocksDB rocksDB = RocksDB.open(options, location.toString(), descriptors, outHandles);
+         metaColumnFamilyHandle = outHandles.get(1);
          for (int i = 0; i < segmentCount; ++i) {
-            handles.set(i, outHandles.get(i + 1));
+            handles.set(i, outHandles.get(i + 2));
          }
          return rocksDB;
       }
