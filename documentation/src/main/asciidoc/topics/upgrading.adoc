@@ -65,6 +65,9 @@ The Kryo and Protostuff marshallers have been deprecated and will be removed in 
 
 All occurrences of "white list" have been renamed to "allow list".
 
+== Stores
+The rest-store has been removed. Users should utilise the HotRod based remote-store for reading/writing to Infinispan clusters.
+
 = Upgrading from 10.1 to 11.0
 
 == HotRod Client
