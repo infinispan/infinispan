@@ -1,5 +1,5 @@
 STATS(1)
-===========
+========
 :doctype: manpage
 
 
