@@ -87,4 +87,15 @@ public class BlockHoundHelper {
    public static Executor allowBlockingExecutor() {
       return BlockHoundHelper::allowBlocking;
    }
+
+   /**
+    * Helper method that "blocks" as dictated by block hound but in actuality does nothing. This is useful to detect
+    * if the given code is actually be invoked in an method that allows for blocking or not.
+    * @param consumed an argument useful for making this method a `Consumer` via method reference
+    * @param <V> whatever desired type is
+    */
+   public static <V> void blockingConsume(V consumed) {
+      // Do nothing - this method is instrumented via block hound to be "blocking" for use by tests to simulate blocking
+      // without actually blocking
+   }
 }

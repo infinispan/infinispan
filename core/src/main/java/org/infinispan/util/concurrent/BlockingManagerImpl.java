@@ -4,6 +4,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -32,6 +33,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 public class BlockingManagerImpl implements BlockingManager {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();
+   private static final AtomicInteger id = trace ? new AtomicInteger() : null;
 
    @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    Executor nonBlockingExecutor;
@@ -43,9 +45,20 @@ public class BlockingManagerImpl implements BlockingManager {
    private Scheduler nonBlockingScheduler;
 
    @Start
-   protected void start() {
-      blockingScheduler = Schedulers.from(blockingExecutor);
+   void start() {
+      blockingScheduler = Schedulers.from(new ReentrantBlockingExecutor());
       nonBlockingScheduler = Schedulers.from(nonBlockingExecutor);
+   }
+
+   private static String nextTraceId() {
+      return id != null ? "-BlockingManagerImpl-" + id.getAndIncrement() : null;
+   }
+
+   private class ReentrantBlockingExecutor implements Executor {
+      @Override
+      public void execute(Runnable command) {
+         runBlockingOperation(command, nextTraceId(), blockingExecutor, false);
+      }
    }
 
    @Override
@@ -56,15 +69,8 @@ public class BlockingManagerImpl implements BlockingManager {
    @Override
    public <E> CompletionStage<Void> subscribeBlockingConsumer(Publisher<E> publisher, Consumer<E> consumer,
          Object traceId) {
-      Flowable<E> valuePublisher = Flowable.fromPublisher(publisher);
-      if (!isCurrentThreadBlocking()) {
-         valuePublisher = valuePublisher.observeOn(blockingScheduler);
-         if (trace) {
-            log.tracef("Subscribing to publisher for %s observing on blocking thread", traceId);
-         }
-      } else if (trace) {
-         log.tracef("Subscribing to publisher for %s observing on invoking blocking thread", traceId);
-      }
+      Flowable<E> valuePublisher = Flowable.fromPublisher(publisher)
+            .observeOn(blockingScheduler);
 
       if (trace) {
          valuePublisher = valuePublisher.doOnNext(value -> log.tracef("Invoking blocking consumer for %s with value %s", traceId, value));
@@ -78,15 +84,8 @@ public class BlockingManagerImpl implements BlockingManager {
    @Override
    public <T, A, R> CompletionStage<R> subscribeBlockingCollector(Publisher<T> publisher, Collector<? super T, A, R> collector,
          Object traceId) {
-      Flowable<T> valuePublisher = Flowable.fromPublisher(publisher);
-      if (!isCurrentThreadBlocking()) {
-         valuePublisher = valuePublisher.observeOn(blockingScheduler);
-         if (trace) {
-            log.tracef("Subscribing to publisher for %s observing on blocking thread", traceId);
-         }
-      } else if (trace) {
-         log.tracef("Subscribing to publisher for %s observing on invoking blocking thread", traceId);
-      }
+      Flowable<T> valuePublisher = Flowable.fromPublisher(publisher)
+            .observeOn(blockingScheduler);
 
       if (trace) {
          valuePublisher = valuePublisher.doOnNext(value -> log.tracef("Invoking blocking collector for %s with value %s", traceId, value));
@@ -98,6 +97,11 @@ public class BlockingManagerImpl implements BlockingManager {
    }
 
    private CompletionStage<Void> runBlockingOperation(Runnable runnable, Object traceId, Executor executor) {
+      return runBlockingOperation(runnable, traceId, executor, true);
+   }
+
+   private CompletionStage<Void> runBlockingOperation(Runnable runnable, Object traceId, Executor executor,
+      boolean requireReturnOnNonBlockingThread) {
       if (isCurrentThreadBlocking()) {
          if (trace) {
             log.tracef("Invoked run on a blocking thread, running %s in same blocking thread", traceId);
@@ -119,7 +123,7 @@ public class BlockingManagerImpl implements BlockingManager {
       } else {
          stage = CompletableFuture.runAsync(runnable, executor);
       }
-      return continueOnNonBlockingThread(stage, traceId);
+      return requireReturnOnNonBlockingThread ? continueOnNonBlockingThread(stage, traceId) : CompletableFutures.completedNull();
    }
 
    @Override
@@ -262,14 +266,8 @@ public class BlockingManagerImpl implements BlockingManager {
    }
 
    public <V> CompletionStage<Void> blockingPublisherToVoidStage(Publisher<V> publisher, Object traceId) {
-      CompletionStage<Void> stage = Flowable.defer(() -> {
-         Flowable<V> flowable = Flowable.fromPublisher(publisher);
-         if (isCurrentThreadBlocking()) {
-            if (trace) {
-               log.tracef("Invoked on a blocking thread, running %s in same blocking thread", traceId);
-            }
-            return flowable;
-         }
+      Flowable<V> flowable = Flowable.fromPublisher(publisher);
+      if (!isCurrentThreadBlocking()) {
          if (trace) {
             flowable = flowable.doOnSubscribe(subscription -> log.tracef("Subscribing to %s on blocking thread", traceId));
          }
@@ -277,8 +275,13 @@ public class BlockingManagerImpl implements BlockingManager {
          if (trace) {
             flowable = flowable.doOnSubscribe(subscription -> log.tracef("Publisher %s subscribing thread is %s", traceId, Thread.currentThread()));
          }
-         return flowable;
-      }).ignoreElements().toCompletionStage(null);
+      } else if (trace) {
+         log.tracef("Invoked on a blocking thread, subscribing %s in same blocking thread", traceId);
+      }
+
+      CompletionStage<Void> stage = flowable
+            .ignoreElements()
+            .toCompletionStage(null);
 
       return continueOnNonBlockingThread(stage, traceId);
    }
@@ -307,7 +310,8 @@ public class BlockingManagerImpl implements BlockingManager {
       }
    }
 
-   private boolean isCurrentThreadBlocking() {
+   // This method is designed to be overridden for testing purposes
+   protected boolean isCurrentThreadBlocking() {
       return Thread.currentThread().getThreadGroup() instanceof BlockingResource;
    }
 }
