@@ -45,6 +45,8 @@ public class CommonsTestBlockHoundIntegration implements BlockHoundIntegration {
       // Allow logging to block in our test suite
       builder.allowBlockingCallsInside(org.apache.logging.log4j.core.Logger.class.getName(), "logMessage");
       builder.allowBlockingCallsInside(java.util.logging.Logger.class.getName(), "log");
+
+      builder.markAsBlocking(BlockHoundHelper.class, "blockingConsume", "(Ljava/lang/Object;)V");
    }
 
    // This is a duplicate of CommonsBlockHoundIntegration - but unfortunately neither can reference each other

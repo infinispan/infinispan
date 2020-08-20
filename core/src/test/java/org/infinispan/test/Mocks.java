@@ -68,6 +68,24 @@ public class Mocks {
     */
    public static final String AFTER_RELEASE = "after_release";
 
+   public static final Answer<Void> EXECUTOR_RUN_ANSWER = invocation -> {
+      Runnable runnable = invocation.getArgument(0);
+      runnable.run();
+      return null;
+   };
+
+   public static Answer<Void> justRunExecutorAnswer() {
+      return EXECUTOR_RUN_ANSWER;
+   }
+
+   public static Answer<Void> runWithExecutorAnswer(Executor executor) {
+      return invocation -> {
+         Runnable runnable = invocation.getArgument(0);
+         executor.execute(runnable);
+         return null;
+      };
+   }
+
    /**
     * Delegates a Mockito invocation to a target object, and returns the mock instead of the target object.
     *

@@ -174,10 +174,13 @@ public interface BlockingManager {
    <V> CompletionStage<V> continueOnNonBlockingThread(CompletionStage<V> delay, Object traceId);
 
    /**
-    * Provided a publisher that is known to block when subscribed to, this ensures that the publisher is subscribed
-    * on the blocking executor and any values published are observed on a non blocking thread. Note that if a
-    * blocking thread subscribes to the publisher these additional threads are not used and the entire Publisher
-    * is subscribed and observed on the invoking thread.
+    * Provided a publisher that is known to block when subscribed to. Thus if the thread that subscribes in a non
+    * blocking thread we will instead subscribe on a blocking thread and observe on a non blocking thread for each
+    * published value.
+    * <p>
+    * If, however, the subscribing thread is a blocking thread no threading changes will be done, which
+    * means the publisher will be subscribed to on the invoking thread. In this case values have no guarantee as to
+    * which thread they are observed on, dependent solely on how the Publisher publishes them.
     * @param publisher the publisher that, when subscribed to, blocks the current thread.
     * @param <V> the published entry types.
     * @return publisher that does not block the current thread.
@@ -186,7 +189,8 @@ public interface BlockingManager {
 
    /**
     * Subscribes to the provided blocking publisher using the the blocking executor, ignoring all elements and returning
-    * a {@link CompletionStage} with a value of null which completes on a non-blocking thread.
+    * a {@link CompletionStage} with a value of null which completes on a non-blocking thread. This method is designed
+    * to be used by a {@link Publisher} that when subscribed to has some type of side-effect that is blocking.
     * <p>
     * The returned {@link CompletionStage} will always be completed upon a non-blocking thread if the current thread is
     * non-blocking.
