@@ -14,6 +14,7 @@ import java.util.zip.ZipFile;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
@@ -87,9 +88,7 @@ public class CounterResource extends AbstractContainerResource {
                                  return e;
                               })
                               .doOnNext(e -> writeMessageStream(e, serCtx, output))
-                              .doOnError(t -> {
-                                 throw new CacheException("Unable to create counter backup", t);
-                              }),
+                              .onErrorResumeNext(RxJavaInterop.cacheExceptionWrapper()),
                   OutputStream::close
             ), "write-counters");
    }

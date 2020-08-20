@@ -16,7 +16,7 @@ import io.reactivex.rxjava3.functions.Function;
  * @since 10.0
  */
 public class RxJavaInterop {
-   private RxJavaInterop() { }
+   protected RxJavaInterop() { }
 
    /**
     * Provides a {@link Function} that can be used to convert from an instance of {@link java.util.Map.Entry} to
