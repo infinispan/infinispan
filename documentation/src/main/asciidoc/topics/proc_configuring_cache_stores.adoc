@@ -9,29 +9,39 @@ only.
 .Procedure
 
 . Use the `persistence` parameter to configure the persistence layer for caches.
-. Add {brandname} cache stores with the appropriate configuration, as in the
-following examples:
+. Configure whether cache stores are local to the node or shared across the cluster.
++
+Use either the `shared` attribute declaratively or the `shared(false)` method programmatically.
++
+. Configure other cache stores properties as appropriate. Custom cache stores can also include `property` parameters.
++
+[NOTE]
+====
+Configuring cache stores as shared or not shared (local only) determines which
+parameters you should set. In some cases, using the wrong combination of
+parameters in your cache store configuration can lead to data loss or
+performance issues.
 
-.Declarative configuration for a file-based cache store
+For example, if the cache store is local to a node then it makes sense to fetch
+state and purge on startup. However, if the cache store is shared, then you
+should not fetch state or purge on startup.
+====
+
+.Local (non-shared) file store
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/file_store.xml[]
 ----
 
-.Declarative configuration for a custom cache store configuration
+.Shared custom cache store
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/custom_cache_store.xml[]
 ----
 
-[NOTE]
-====
-Custom cache stores include `property` parameters that let you configure specific attributes for your cache store.
-====
-
-.Programmatic configuration for a single file cache store
+.Single file store
 
 [source,java]
 ----
