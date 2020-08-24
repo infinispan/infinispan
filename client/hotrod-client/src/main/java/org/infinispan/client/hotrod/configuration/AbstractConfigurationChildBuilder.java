@@ -98,6 +98,10 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
       return builder.forceReturnValues(forceReturnValues);
    }
 
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    @Override
    public ConfigurationBuilder keySizeEstimate(int keySizeEstimate) {
       return builder.keySizeEstimate(keySizeEstimate);
@@ -167,6 +171,10 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
       return builder.tcpKeepAlive(tcpKeepAlive);
    }
 
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    @Override
    public ConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
       return builder.valueSizeEstimate(valueSizeEstimate);

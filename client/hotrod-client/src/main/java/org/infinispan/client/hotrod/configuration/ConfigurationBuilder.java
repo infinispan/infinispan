@@ -222,6 +222,10 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return this;
    }
 
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    @Override
    public ConfigurationBuilder keySizeEstimate(int keySizeEstimate) {
       this.keySizeEstimate = keySizeEstimate;
@@ -325,6 +329,10 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return this;
    }
 
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    @Override
    public ConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
       this.valueSizeEstimate = valueSizeEstimate;

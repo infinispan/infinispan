@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ClassAllowList;
+import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.CheckedInputStream;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
@@ -94,9 +95,27 @@ public final class MarshallerUtil {
       return false;
    }
 
+   /**
+    * @deprecated Since 12.0, will be removed in 15.0
+    */
+   @Deprecated
    public static byte[] obj2bytes(Marshaller marshaller, Object o, boolean isKey, int estimateKeySize, int estimateValueSize) {
       try {
          return marshaller.objectToByteBuffer(o, isKey ? estimateKeySize : estimateValueSize);
+      } catch (IOException ioe) {
+         throw new HotRodClientException(
+               "Unable to marshall object of type [" + o.getClass().getName() + "]", ioe);
+      } catch (InterruptedException ie) {
+         Thread.currentThread().interrupt();
+         return null;
+      }
+   }
+
+   public static byte[] obj2bytes(Marshaller marshaller, Object o, BufferSizePredictor sizePredictor) {
+      try {
+         byte[] bytes = marshaller.objectToByteBuffer(o, sizePredictor.nextSize(o));
+         sizePredictor.recordSize(bytes.length);
+         return bytes;
       } catch (IOException ioe) {
          throw new HotRodClientException(
                "Unable to marshall object of type [" + o.getClass().getName() + "]", ioe);

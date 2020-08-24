@@ -88,7 +88,7 @@
         <xs:attribute name="key-size-estimate" type="xs:int" default="${RemoteStore.keySizeEstimate}">
           <xs:annotation>
             <xs:documentation>
-              This hint allows sizing of byte buffers when serializing and deserializing keys, to minimize array resizing. It defaults to 64.
+              Deprecated since 12.0, does nothing and will be removed in 15.0
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
@@ -117,7 +117,7 @@
         <xs:attribute name="value-size-estimate" type="xs:int" default="${RemoteStore.valueSizeEstimate}">
           <xs:annotation>
             <xs:documentation>
-              This hint allows sizing of byte buffers when serializing and deserializing values, to minimize array resizing.
+              Deprecated since 12.0, does nothing and will be removed in 15.0
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>

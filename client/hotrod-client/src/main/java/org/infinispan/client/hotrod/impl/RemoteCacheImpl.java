@@ -80,8 +80,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    private final String name;
    private final RemoteCacheManager remoteCacheManager;
    protected OperationsFactory operationsFactory;
-   private int estimateKeySize;
-   private int estimateValueSize;
    private int batchSize;
    private volatile boolean isObjectStorage;
    private final DataFormat defaultDataFormat;
@@ -125,16 +123,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
     */
    @Override
    public void init(Marshaller marshaller, OperationsFactory operationsFactory, Configuration configuration) {
-      init(marshaller, operationsFactory, configuration.keySizeEstimate(), configuration.valueSizeEstimate(),
-            configuration.batchSize());
+      init(marshaller, operationsFactory,
+           configuration.batchSize());
    }
 
-   private void init(Marshaller marshaller, OperationsFactory operationsFactory, int estimateKeySize, int estimateValueSize,
-         int batchSize) {
+   private void init(Marshaller marshaller, OperationsFactory operationsFactory,
+                     int batchSize) {
       this.defaultMarshaller = marshaller;
       this.operationsFactory = operationsFactory;
-      this.estimateKeySize = estimateKeySize;
-      this.estimateValueSize = estimateValueSize;
       this.batchSize = batchSize;
       this.dataFormat = defaultDataFormat;
    }
@@ -569,11 +565,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public byte[] keyToBytes(Object o) {
-      return dataFormat.keyToBytes(o, estimateKeySize, estimateValueSize);
+      return dataFormat.keyToBytes(o);
    }
 
    protected byte[] valueToBytes(Object o) {
-      return dataFormat.valueToBytes(o, estimateKeySize, estimateValueSize);
+      return dataFormat.valueToBytes(o);
    }
 
    protected void assertRemoteCacheManagerIsStarted() {
@@ -653,7 +649,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    private <T, U> RemoteCacheImpl<T, U> newInstance() {
       RemoteCacheImpl<T, U> copy = new RemoteCacheImpl<>(this.remoteCacheManager, name, clientStatistics);
-      copy.init(this.defaultMarshaller, this.operationsFactory, this.estimateKeySize, this.estimateValueSize, this.batchSize);
+      copy.init(this.defaultMarshaller, this.operationsFactory, this.batchSize);
       return copy;
    }
 

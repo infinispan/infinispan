@@ -111,8 +111,9 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder forceReturnValues(boolean forceReturnValues);
 
    /**
-    * This hint allows sizing of byte buffers when serializing and deserializing keys, to minimize array resizing. It defaults to 64.
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
+   @Deprecated
    ConfigurationBuilder keySizeEstimate(int keySizeEstimate);
 
    /**
@@ -199,9 +200,9 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder uri(String uri);
 
    /**
-    * This hint allows sizing of byte buffers when serializing and deserializing values, to minimize
-    * array resizing. It defaults to 512
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
+   @Deprecated
    ConfigurationBuilder valueSizeEstimate(int valueSizeEstimate);
 
    /**

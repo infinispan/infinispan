@@ -116,6 +116,10 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       return this;
    }
 
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    @Override
    public RemoteStoreConfigurationBuilder keySizeEstimate(int keySizeEstimate) {
       attributes.attribute(KEY_SIZE_ESTIMATE).set(keySizeEstimate);
@@ -181,7 +185,10 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       return this;
    }
 
-   @Override
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    public RemoteStoreConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
       attributes.attribute(VALUE_SIZE_ESTIMATE).set(valueSizeEstimate);
       return this;

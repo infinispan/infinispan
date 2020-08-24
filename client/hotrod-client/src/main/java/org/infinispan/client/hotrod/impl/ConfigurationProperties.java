@@ -35,7 +35,15 @@ public class ConfigurationProperties {
    public static final String TCP_NO_DELAY = ICH + "tcp_no_delay";
    public static final String TCP_KEEP_ALIVE = ICH + "tcp_keep_alive";
    public static final String REQUEST_BALANCING_STRATEGY = ICH + "request_balancing_strategy";
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    public static final String KEY_SIZE_ESTIMATE = ICH + "key_size_estimate";
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    public static final String VALUE_SIZE_ESTIMATE = ICH + "value_size_estimate";
    public static final String FORCE_RETURN_VALUES = ICH + "force_return_values";
    public static final String HASH_FUNCTION_PREFIX = ICH + "hash_function_impl";
@@ -110,7 +118,15 @@ public class ConfigurationProperties {
    public static final String CACHE_TRANSACTION_MODE_SUFFIX = ".transaction_mode";
 
    // defaults
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    public static final int DEFAULT_KEY_SIZE = 64;
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    public static final int DEFAULT_VALUE_SIZE = 512;
    public static final int DEFAULT_HOTROD_PORT = 11222;
    public static final int DEFAULT_SO_TIMEOUT = 60_000;
@@ -215,18 +231,34 @@ public class ConfigurationProperties {
       return props.getProperty(REQUEST_BALANCING_STRATEGY, RoundRobinBalancingStrategy.class.getName());
    }
 
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    public int getKeySizeEstimate() {
       return props.getIntProperty(KEY_SIZE_ESTIMATE, DEFAULT_KEY_SIZE);
    }
 
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    public void setKeySizeEstimate(int keySizeEstimate) {
       props.setProperty(KEY_SIZE_ESTIMATE, keySizeEstimate);
    }
 
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    public int getValueSizeEstimate() {
       return props.getIntProperty(VALUE_SIZE_ESTIMATE, DEFAULT_VALUE_SIZE);
    }
 
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    public void setValueSizeEstimate(int valueSizeEstimate) {
       props.setProperty(VALUE_SIZE_ESTIMATE, valueSizeEstimate);
    }

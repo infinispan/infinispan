@@ -49,8 +49,9 @@ public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurat
    RemoteStoreConfigurationBuilder hotRodWrapping(boolean hotRodWrapping);
 
    /**
-    * The class name of the driver used for connecting to the database.
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
+   @Deprecated
    RemoteStoreConfigurationBuilder keySizeEstimate(int keySizeEstimate);
 
    /**
@@ -116,9 +117,9 @@ public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurat
    RemoteStoreConfigurationBuilder transportFactory(Class<? extends ChannelFactory> transportFactory);
 
    /**
-    * This hint allows sizing of byte buffers when serializing and deserializing values, to minimize
-    * array resizing.
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
+   @Deprecated
    RemoteStoreConfigurationBuilder valueSizeEstimate(int valueSizeEstimate);
 
 }

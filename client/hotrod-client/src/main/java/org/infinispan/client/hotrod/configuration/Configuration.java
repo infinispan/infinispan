@@ -186,6 +186,10 @@ public class Configuration {
       return forceReturnValues;
    }
 
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    public int keySizeEstimate() {
       return keySizeEstimate;
    }
@@ -231,6 +235,10 @@ public class Configuration {
       return tcpKeepAlive;
    }
 
+   /**
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
+    */
+   @Deprecated
    public int valueSizeEstimate() {
       return valueSizeEstimate;
    }
