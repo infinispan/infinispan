@@ -21,6 +21,7 @@
 
       <!-- Default configuration is appropriate for entity/collection caching. -->
       <invalidation-cache-configuration name="entity" remote-timeout="20000" statistics="false" statistics-available="false">
+         <encoding media-type="application/x-java-object"/>
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
@@ -28,6 +29,7 @@
       </invalidation-cache-configuration>
 
       <replicated-cache-configuration name="replicated-entity" remote-timeout="20000" statistics="false" statistics-available="false">
+         <encoding media-type="application/x-java-object"/>
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
@@ -36,6 +38,7 @@
 
       <!-- A config appropriate for query caching. Does not replicate queries. -->
       <local-cache-configuration name="local-query" statistics="false" statistics-available="false">
+         <encoding media-type="application/x-java-object"/>
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
@@ -44,6 +47,7 @@
 
       <!-- A query cache that replicates queries. Replication is asynchronous. -->
       <replicated-cache-configuration name="replicated-query" mode="ASYNC" statistics="false" statistics-available="false">
+         <encoding media-type="application/x-java-object"/>
          <locking concurrency-level="1000" acquire-timeout="15000" isolation="READ_COMMITTED"/>
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
@@ -54,6 +58,7 @@
            is required if query caching is used, even if the query cache
            itself is configured with CacheMode=LOCAL. -->
       <replicated-cache-configuration name="timestamps" mode="ASYNC" statistics="false" statistics-available="false">
+         <encoding media-type="application/x-java-object"/>
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <!-- Explicitly non transactional -->
          <transaction mode="NONE"/>
@@ -65,6 +70,7 @@
       <!-- When providing custom configuration, always make this cache local and non-transactional.
            To avoid possible leaks, use expiration (max idle time). Optimize for speed.-->
       <local-cache-configuration name="pending-puts" simple-cache="true" statistics="false" statistics-available="false">
+         <encoding media-type="application/x-java-object"/>
          <transaction mode="NONE"/>
          <expiration max-idle="60000" />
       </local-cache-configuration>
