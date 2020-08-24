@@ -1866,6 +1866,8 @@
                      <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
                   </systemPropertyVariables>
                   <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs}</argLine>
+                  <!-- Use TCP for plugin <-> fork JVM communication -->
+                  <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
                </configuration>
             </plugin>
             <plugin>
@@ -2217,6 +2219,8 @@
                   <listener>${testNGListeners}</listener>
                </properties>
                <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true</argLine>
+               <!-- Use TCP for plugin <-> fork JVM communication -->
+               <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
             </configuration>
          </plugin>
          <plugin>
