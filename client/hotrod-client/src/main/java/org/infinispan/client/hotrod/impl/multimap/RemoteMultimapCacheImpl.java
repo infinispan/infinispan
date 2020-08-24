@@ -24,6 +24,8 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.multimap.MetadataCollection;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCache;
+import org.infinispan.commons.marshall.AdaptiveBufferSizePredictor;
+import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.Marshaller;
 
 /**
@@ -41,8 +43,8 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
    private final RemoteCacheManager remoteCacheManager;
    private MultimapOperationsFactory operationsFactory;
    private Marshaller marshaller;
-   private int estimateKeySize;
-   private int estimateValueSize;
+   private final BufferSizePredictor keySizePredictor = new AdaptiveBufferSizePredictor();
+   private final BufferSizePredictor valueSizePredictor = new AdaptiveBufferSizePredictor();
    private long defaultLifespan = 0;
    private long defaultMaxIdleTime = 0;
 
@@ -54,8 +56,6 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
             cache.getDataFormat(),
             cache.clientStatistics());
       this.marshaller = remoteCacheManager.getMarshaller();
-      this.estimateKeySize = remoteCacheManager.getConfiguration().keySizeEstimate();
-      this.estimateValueSize = remoteCacheManager.getConfiguration().valueSizeEstimate();
    }
 
    public RemoteMultimapCacheImpl(RemoteCacheManager rcm, RemoteCache<K, Collection<V>> cache) {
@@ -73,8 +73,8 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       }
       assertRemoteCacheManagerIsStarted();
       K objectKey = isObjectStorage() ? key : null;
-      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, true, estimateKeySize, estimateValueSize);
-      byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, false, estimateKeySize, estimateValueSize);
+      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
+      byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, valueSizePredictor);
 
       PutKeyValueMultimapOperation op = operationsFactory.newPutKeyValueOperation(objectKey,
             marshallKey, marshallValue, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
@@ -88,7 +88,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       }
       assertRemoteCacheManagerIsStarted();
       K objectKey = isObjectStorage() ? key : null;
-      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, true, estimateKeySize, estimateValueSize);
+      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
 
       GetKeyMultimapOperation<V> gco = operationsFactory.newGetKeyMultimapOperation(objectKey, marshallKey);
       return gco.execute();
@@ -101,7 +101,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       }
       assertRemoteCacheManagerIsStarted();
       K objectKey = isObjectStorage() ? key : null;
-      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, true, estimateKeySize, estimateValueSize);
+      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
       GetKeyWithMetadataMultimapOperation<V> operation
             = operationsFactory.newGetKeyWithMetadataMultimapOperation(objectKey, marshallKey);
       return operation.execute();
@@ -114,7 +114,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       }
       assertRemoteCacheManagerIsStarted();
       K objectKey = isObjectStorage() ? key : null;
-      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, true, estimateKeySize, estimateValueSize);
+      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
       RemoveKeyMultimapOperation removeOperation = operationsFactory.newRemoveKeyOperation(objectKey, marshallKey);
       return removeOperation.execute();
    }
@@ -126,8 +126,8 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       }
       assertRemoteCacheManagerIsStarted();
       K objectKey = isObjectStorage() ? key : null;
-      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, true, estimateKeySize, estimateValueSize);
-      byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, false, estimateKeySize, estimateValueSize);
+      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
+      byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, valueSizePredictor);
       RemoveEntryMultimapOperation removeOperation = operationsFactory.newRemoveEntryOperation(objectKey, marshallKey, marshallValue);
       return removeOperation.execute();
    }
@@ -139,7 +139,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       }
       assertRemoteCacheManagerIsStarted();
       K objectKey = isObjectStorage() ? key : null;
-      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, true, estimateKeySize, estimateValueSize);
+      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
       ContainsKeyMultimapOperation containsKeyOperation = operationsFactory.newContainsKeyOperation(objectKey, marshallKey);
       return containsKeyOperation.execute();
    }
@@ -150,7 +150,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
          log.tracef("About to call contains (V): (%s)", value);
       }
       assertRemoteCacheManagerIsStarted();
-      byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, false, estimateKeySize, estimateValueSize);
+      byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, valueSizePredictor);
       ContainsValueMultimapOperation containsValueOperation = operationsFactory.newContainsValueOperation(marshallValue);
       return containsValueOperation.execute();
    }
@@ -162,8 +162,8 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       }
       assertRemoteCacheManagerIsStarted();
       K objectKey = isObjectStorage() ? key : null;
-      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, true, estimateKeySize, estimateValueSize);
-      byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, false, estimateKeySize, estimateValueSize);
+      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
+      byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, valueSizePredictor);
       ContainsEntryMultimapOperation containsOperation = operationsFactory.newContainsEntryOperation(objectKey, marshallKey, marshallValue);
       return containsOperation.execute();
    }

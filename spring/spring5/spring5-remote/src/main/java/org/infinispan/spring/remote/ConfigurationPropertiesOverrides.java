@@ -108,15 +108,17 @@ public class ConfigurationPropertiesOverrides {
    }
 
    /**
-    * @param keySizeEstimate
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
+   @Deprecated
    public void setKeySizeEstimate(final int keySizeEstimate) {
       this.overridingProperties.setProperty(KEY_SIZE_ESTIMATE, Integer.toString(keySizeEstimate));
    }
 
    /**
-    * @param valueSizeEstimate
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
+   @Deprecated
    public void setValueSizeEstimate(final int valueSizeEstimate) {
       this.overridingProperties.setProperty(VALUE_SIZE_ESTIMATE,
                                             Integer.toString(valueSizeEstimate));

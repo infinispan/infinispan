@@ -33,6 +33,10 @@ public enum Attribute {
    MAX_WAIT("max-wait"),
    MIN_EVICTABLE_IDLE_TIME("min-evictable-idle-time"),
    MIN_IDLE("min-idle"),
+   /**
+    * @deprecated Since 12.0, will be removed in 15.0
+    */
+   @Deprecated
    KEY_SIZE_ESTIMATE("key-size-estimate"),
    OUTBOUND_SOCKET_BINDING("outbound-socket-binding"),
    PASSWORD("password"),
@@ -52,6 +56,10 @@ public enum Attribute {
    TIME_BETWEEN_EVICTION_RUNS("eviction-interval"),
    TRANSPORT_FACTORY("transport-factory"),
    USERNAME("username"),
+   /**
+    * @deprecated Since 12.0, will be removed in 15.0
+    */
+   @Deprecated
    VALUE_SIZE_ESTIMATE("value-size-estimate"),
    ;
 

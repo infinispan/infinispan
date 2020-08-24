@@ -61,19 +61,18 @@ public abstract class AbstractRemoteCacheManagerFactory {
       final Properties answer;
       if (this.configurationProperties != null) {
          answer = this.configurationPropertiesOverrides.override(this.configurationProperties);
-         this.logger.debug("Using user-defined properties [" + this.configurationProperties
+         logger.debug("Using user-defined properties [" + this.configurationProperties
                                  + "] for configuring RemoteCacheManager");
       } else if (this.configurationPropertiesFileLocation != null) {
          answer = loadPropertiesFromFile(this.configurationPropertiesFileLocation);
-         this.logger.debug("Loading properties from file [" + this.configurationProperties
+         logger.debug("Loading properties from file [" + this.configurationProperties
                                  + "] for configuring RemoteCacheManager");
       } else if (!this.configurationPropertiesOverrides.isEmpty()) {
          answer = this.configurationPropertiesOverrides.override(new Properties());
-         this.logger.debug("Using explicitly set configuration settings [" + answer
+         logger.debug("Using explicitly set configuration settings [" + answer
                                  + "] for configuring RemoteCacheManager");
       } else {
-         this.logger
-               .debug("No configuration properties. RemoteCacheManager will use default configuration.");
+         logger.debug("No configuration properties. RemoteCacheManager will use default configuration.");
          RemoteCacheManager remoteCacheManager = new RemoteCacheManager(false);
          try {
             answer = remoteCacheManager.getConfiguration().properties();
@@ -126,7 +125,7 @@ public abstract class AbstractRemoteCacheManagerFactory {
             try {
                propsStream.close();
             } catch (final IOException e) {
-               this.logger.warn(
+               logger.warn(
                      "Failed to close InputStream used to load configuration properties: "
                            + e.getMessage(), e);
             }
@@ -237,17 +236,17 @@ public abstract class AbstractRemoteCacheManagerFactory {
    }
 
    /**
-    * @param keySizeEstimate
-    * @see ConfigurationPropertiesOverrides#setKeySizeEstimate(int)
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
+   @Deprecated
    public void setKeySizeEstimate(final int keySizeEstimate) {
       this.configurationPropertiesOverrides.setKeySizeEstimate(keySizeEstimate);
    }
 
    /**
-    * @param valueSizeEstimate
-    * @see ConfigurationPropertiesOverrides#setValueSizeEstimate(int)
+    * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
+   @Deprecated
    public void setValueSizeEstimate(final int valueSizeEstimate) {
       this.configurationPropertiesOverrides.setValueSizeEstimate(valueSizeEstimate);
    }
