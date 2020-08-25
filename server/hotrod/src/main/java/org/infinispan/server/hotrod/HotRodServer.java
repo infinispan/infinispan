@@ -28,7 +28,7 @@ import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Externalizer;
@@ -673,7 +673,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
                   log.debug("Error re-adding address to topology cache, retrying", t);
                   recursionTopologyChanged();
                }
-               if (!v) {
+               if (t == null && !v) {
                   log.debugf("Re-adding %s to the topology cache", clusterAddress);
                   addressCache.putAsync(clusterAddress, address);
                }
