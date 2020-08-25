@@ -83,7 +83,7 @@ public class ChannelFactory {
    private Map<WrappedByteArray, FailoverRequestBalancingStrategy> balancers;
    private OperationsFactory operationsFactory;
    private Configuration configuration;
-   private Collection<SocketAddress> initialServers;
+   private Collection<InetSocketAddress> initialServers;
    private int maxRetries;
    private Marshaller marshaller;
    private Collection<Consumer<Set<SocketAddress>>> failedServerNotifier;
@@ -118,7 +118,7 @@ public class ChannelFactory {
          int maxExecutors = Math.min(asyncThreads, eventLoopThreads);
          this.eventLoopGroup = TransportHelper.createEventLoopGroup(maxExecutors, executorService);
 
-         Collection<SocketAddress> servers = new ArrayList<>();
+         Collection<InetSocketAddress> servers = new ArrayList<>();
          initialServers = new ArrayList<>();
          for (ServerConfiguration server : configuration.servers()) {
             servers.add(InetSocketAddress.createUnresolved(server.host(), server.port()));
@@ -126,7 +126,7 @@ public class ChannelFactory {
          initialServers.addAll(servers);
          if (!configuration.clusters().isEmpty()) {
             configuration.clusters().forEach(cluster -> {
-               Collection<SocketAddress> clusterAddresses = cluster.getCluster().stream()
+               Collection<InetSocketAddress> clusterAddresses = cluster.getCluster().stream()
                      .map(server -> InetSocketAddress.createUnresolved(server.host(), server.port()))
                      .collect(Collectors.toList());
                ClusterInfo clusterInfo = new ClusterInfo(cluster.getClusterName(), clusterAddresses);
@@ -191,12 +191,12 @@ public class ChannelFactory {
 
    private FailoverRequestBalancingStrategy createBalancer(WrappedByteArray cacheName) {
       FailoverRequestBalancingStrategy balancer = configuration.balancingStrategyFactory().get();
-      balancer.setServers(topologyInfo.getServers(cacheName));
+      balancer.setServers((Collection)topologyInfo.getServers(cacheName));
       return balancer;
    }
 
    private void pingServersIgnoreException() {
-      Collection<SocketAddress> servers = topologyInfo.getServers();
+      Collection<InetSocketAddress> servers = topologyInfo.getServers();
       for (SocketAddress addr : servers) {
          // Go through all statically configured nodes and force a
          // connection to be established and a ping message to be sent.
@@ -318,35 +318,26 @@ public class ChannelFactory {
       record.release(channel);
    }
 
-   public void updateServers(Collection<SocketAddress> newServers, byte[] cacheName, boolean quiet) {
+   public void updateServers(Collection<InetSocketAddress> newServers, byte[] cacheName, boolean quiet) {
       lock.writeLock().lock();
       try {
-         Collection<SocketAddress> servers = updateTopologyInfo(cacheName, newServers, quiet);
+         Collection<InetSocketAddress> servers = updateTopologyInfo(cacheName, newServers, quiet);
          if (!servers.isEmpty()) {
             FailoverRequestBalancingStrategy balancer = getOrCreateIfAbsentBalancer(cacheName);
-            balancer.setServers(servers);
+            balancer.setServers((Collection)servers);
          }
       } finally {
          lock.writeLock().unlock();
       }
    }
 
-   private void updateServers(Collection<SocketAddress> newServers) {
-      lock.writeLock().lock();
-      try {
-         Collection<SocketAddress> servers = updateTopologyInfo(Util.EMPTY_BYTE_ARRAY, newServers, true);
-         if (!servers.isEmpty()) {
-            for (FailoverRequestBalancingStrategy balancer : balancers.values())
-               balancer.setServers(servers);
-         }
-      } finally {
-         lock.writeLock().unlock();
-      }
+   private void updateServers(Collection<InetSocketAddress> newServers) {
+      updateServers(newServers, Util.EMPTY_BYTE_ARRAY, true);
    }
 
    @GuardedBy("lock")
-   protected Collection<SocketAddress> updateTopologyInfo(byte[] cacheName, Collection<SocketAddress> newServers, boolean quiet) {
-      Collection<SocketAddress> servers = topologyInfo.getServers(new WrappedByteArray(cacheName));
+   protected Collection<InetSocketAddress> updateTopologyInfo(byte[] cacheName, Collection<InetSocketAddress> newServers, boolean quiet) {
+      Collection<InetSocketAddress> servers = topologyInfo.getServers(new WrappedByteArray(cacheName));
       Set<SocketAddress> addedServers = new HashSet<>(newServers);
       addedServers.removeAll(servers);
       Set<SocketAddress> failedServers = new HashSet<>(servers);
@@ -391,7 +382,7 @@ public class ChannelFactory {
       return servers;
    }
 
-   public Collection<SocketAddress> getServers() {
+   public Collection<InetSocketAddress> getServers() {
       lock.readLock().lock();
       try {
          return topologyInfo.getServers();
@@ -488,7 +479,7 @@ public class ChannelFactory {
       }
    }
 
-   private CompletableFuture<Boolean> checkServersAlive(Collection<SocketAddress> servers) {
+   private CompletableFuture<Boolean> checkServersAlive(Collection<InetSocketAddress> servers) {
       AtomicInteger remainingResponses = new AtomicInteger(servers.size());
       CompletableFuture<Boolean> allFuture = new CompletableFuture<>();
       for (SocketAddress server : servers) {
@@ -524,7 +515,7 @@ public class ChannelFactory {
          return false;
       }
 
-      Collection<SocketAddress> addresses = findClusterInfo(clusterName);
+      Collection<InetSocketAddress> addresses = findClusterInfo(clusterName);
       if (!addresses.isEmpty()) {
          updateServers(addresses);
          log.debugf("Switching to %s, servers: %s, setting topology.", clusterName, addresses);
@@ -549,7 +540,7 @@ public class ChannelFactory {
       return topologyAge.get();
    }
 
-   private Collection<SocketAddress> findClusterInfo(String clusterName) {
+   private Collection<InetSocketAddress> findClusterInfo(String clusterName) {
       for (ClusterInfo cluster : clusters) {
          if (cluster.clusterName.equals(clusterName))
             return cluster.clusterAddresses;
@@ -608,10 +599,10 @@ public class ChannelFactory {
    }
 
    private static final class ClusterInfo {
-      final Collection<SocketAddress> clusterAddresses;
+      final Collection<InetSocketAddress> clusterAddresses;
       final String clusterName;
 
-      private ClusterInfo(String clusterName, Collection<SocketAddress> clusterAddresses) {
+      private ClusterInfo(String clusterName, Collection<InetSocketAddress> clusterAddresses) {
          this.clusterAddresses = clusterAddresses;
          this.clusterName = clusterName;
       }
@@ -647,16 +638,7 @@ public class ChannelFactory {
             return checkServersAlive(cluster.clusterAddresses).thenCompose(this);
          }
          topologyAge.incrementAndGet();
-         lock.writeLock().lock();
-         try {
-            Collection<SocketAddress> servers = updateTopologyInfo(cacheName, cluster.clusterAddresses, true);
-            if (!servers.isEmpty()) {
-               FailoverRequestBalancingStrategy balancer = getOrCreateIfAbsentBalancer(cacheName);
-               balancer.setServers(servers);
-            }
-         } finally {
-            lock.writeLock().unlock();
-         }
+         updateServers(cluster.clusterAddresses, cacheName, true);
          topologyInfo.setTopologyId(cacheName, HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
          //clustersViewed++; // Increase number of clusters viewed
          currentClusterName = cluster.clusterName;

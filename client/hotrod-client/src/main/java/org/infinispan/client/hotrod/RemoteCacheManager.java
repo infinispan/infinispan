@@ -7,7 +7,7 @@ import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.security.Provider;
 import java.util.Arrays;
@@ -682,8 +682,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
     */
    @Override
    public String[] getServers() {
-      Collection<SocketAddress> addresses = channelFactory.getServers();
-      return addresses.stream().map(SocketAddress::toString).toArray(String[]::new);
+      Collection<InetSocketAddress> addresses = channelFactory.getServers();
+      return addresses.stream().map(socketAddress -> socketAddress.getHostString() + ":" + socketAddress.getPort()).toArray(String[]::new);
    }
 
    @Override
