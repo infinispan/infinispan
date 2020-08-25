@@ -131,7 +131,6 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
       hitCountInterceptor(cacheIndex).reset();
    }
 
-   @Test(groups = "unstable", description = "ISPN-6901")
    public void testCorrectBalancingOfKeysAfterNodeKill() {
       //final AtomicInteger clientTopologyId = TestingUtil.extractField(remoteCacheManager, "defaultCacheTopologyId");
       ChannelFactory channelFactory = TestingUtil.extractField(remoteCacheManager, "channelFactory");
@@ -146,8 +145,8 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
          int topologyId = channelFactory.getTopologyId(new byte[]{});
          log.tracef("Client topology id is %d, waiting for it to become %d", topologyId,
                topologyIdBeforeJoin + 2);
-         // The put operation will update the client topology (if necessary)
-         remoteCache.put("k", "v");
+         // The get operation will update the client topology (if necessary)
+         remoteCache.get("k");
          return topologyId >= topologyIdBeforeJoin + 2;
       });
 
