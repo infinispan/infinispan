@@ -205,10 +205,10 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
          if (ctx.isOriginLocal()) {
             if ((command instanceof AbstractDataCommand) && ((AbstractDataCommand)command).hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
                int count = backupSiteInvocationCount.incrementAndGet();
-               log.infof("Backup Hit %d for %s", count, command);
+               log.debugf("Backup Hit %d for %s", count, command);
             } else {
                int count = localSiteInvocationCount.incrementAndGet();
-               log.infof("Local Hit %d for %s", count, command);
+               log.debugf("Local Hit %d for %s", count, command);
             }
          }
          return invokeNext(ctx, command);

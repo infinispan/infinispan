@@ -6,7 +6,6 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.Collection;
 
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -138,7 +137,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
          remoteCache.put("k" + i, "v" + i);
          if (added == channelFactory.getServers().contains(server1Address)) break;
       }
-      Collection<SocketAddress> addresses = channelFactory.getServers();
+      Collection<InetSocketAddress> addresses = channelFactory.getServers();
       assertEquals(server1Address + " not found in " + addresses, added, addresses.contains(server1Address));
    }
 

@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.IntStream.range;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,13 +40,13 @@ public final class TopologyInfo {
    private static final Log log = LogFactory.getLog(TopologyInfo.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private Map<WrappedByteArray, Collection<SocketAddress>> servers = new ConcurrentHashMap<>();
+   private Map<WrappedByteArray, Collection<InetSocketAddress>> servers = new ConcurrentHashMap<>();
    private Map<WrappedByteArray, ConsistentHash> consistentHashes = new ConcurrentHashMap<>();
    private Map<WrappedByteArray, Integer> segmentsByCache = new ConcurrentHashMap<>();
    private Map<WrappedByteArray, AtomicInteger> topologyIds = new ConcurrentHashMap<>();
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
 
-   public TopologyInfo(AtomicInteger topologyId, Collection<SocketAddress> initialServers, Configuration configuration) {
+   public TopologyInfo(AtomicInteger topologyId, Collection<InetSocketAddress> initialServers, Configuration configuration) {
       this.topologyIds.put(WrappedByteArray.EMPTY_BYTES, topologyId);
       this.servers.put(WrappedByteArray.EMPTY_BYTES, initialServers);
       this.hashFactory.init(configuration);
@@ -72,7 +73,7 @@ public final class TopologyInfo {
          return consistentHash.getPrimarySegmentsByServer();
       } else {
          Optional<Integer> numSegments = Optional.ofNullable(segmentsByCache.get(key));
-         Collection<SocketAddress> cacheServers = servers.get(key);
+         Collection<InetSocketAddress> cacheServers = servers.get(key);
 
          if (cacheServers.isEmpty()) {
             return Collections.emptyMap();
@@ -80,7 +81,7 @@ public final class TopologyInfo {
 
          Optional<Map<SocketAddress, Set<Integer>>> targets = numSegments.map(maxSegment -> {
             Map<SocketAddress, Set<Integer>> addressSegments = new HashMap<>(cacheServers.size());
-            Iterator<SocketAddress> addressIterator = cacheServers.iterator();
+            Iterator<InetSocketAddress> addressIterator = cacheServers.iterator();
             for (int i = 0; i < maxSegment; ++i) {
                SocketAddress nextAddress;
                if (!addressIterator.hasNext()) {
@@ -96,11 +97,11 @@ public final class TopologyInfo {
       }
    }
 
-   public Collection<SocketAddress> getServers(WrappedByteArray cacheName) {
+   public Collection<InetSocketAddress> getServers(WrappedByteArray cacheName) {
       return servers.computeIfAbsent(cacheName, k -> servers.get(WrappedByteArray.EMPTY_BYTES));
    }
 
-   public Collection<SocketAddress> getServers() {
+   public Collection<InetSocketAddress> getServers() {
       // Note: the returned list contains duplicities as the server is there once per each cache
       return servers.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
    }
@@ -165,7 +166,7 @@ public final class TopologyInfo {
       return valid;
    }
 
-   public void updateServers(byte[] cacheName, Collection<SocketAddress> updatedServers) {
+   public void updateServers(byte[] cacheName, Collection<InetSocketAddress> updatedServers) {
       // We must not update servers for other caches than cacheName because the list of servers
       // here would get out of sync with balancer.
       WrappedByteArray wrappedCacheName;

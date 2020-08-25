@@ -8,8 +8,8 @@ import java.lang.annotation.Annotation;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -369,7 +369,7 @@ public class Codec20 implements Codec, HotRodConstants {
       final Log localLog = getLog();
       int newTopologyId = ByteBufUtil.readVInt(buf);
 
-      SocketAddress[] addresses = readTopology(buf);
+      InetSocketAddress[] addresses = readTopology(buf);
 
       final short hashFunctionVersion;
       final SocketAddress[][] segmentOwners;
@@ -399,7 +399,7 @@ public class Codec20 implements Codec, HotRodConstants {
       // but we should still accept the topology
       if (params.topologyAge < topologyAge || params.topologyAge == topologyAge && currentTopology != newTopologyId) {
          params.topologyId.set(newTopologyId);
-         List<SocketAddress> addressList = Arrays.asList(addresses);
+         Collection<InetSocketAddress> addressList = Arrays.asList(addresses);
          if (HOTROD.isInfoEnabled()) {
             HOTROD.newTopology(newTopologyId, topologyAge,
                   addresses.length, new HashSet<>(addressList));
@@ -423,9 +423,9 @@ public class Codec20 implements Codec, HotRodConstants {
       }
    }
 
-   private SocketAddress[] readTopology(ByteBuf buf) {
+   private InetSocketAddress[] readTopology(ByteBuf buf) {
       int clusterSize = ByteBufUtil.readVInt(buf);
-      SocketAddress[] addresses = new SocketAddress[clusterSize];
+      InetSocketAddress[] addresses = new InetSocketAddress[clusterSize];
       for (int i = 0; i < clusterSize; i++) {
          String host = ByteBufUtil.readString(buf);
          int port = buf.readUnsignedShort();
