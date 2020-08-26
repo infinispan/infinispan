@@ -54,6 +54,7 @@ import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -2050,4 +2051,17 @@ public interface Log extends BasicLogger {
          "To read/write values as JSON, it is recommended to define a protobuf schema and store data in the cache using " +
          "'application/x-protostream' as MediaType", id = 602)
    void jsonObjectConversionDeprecated();
+
+   @Message(value = "Unable to handle cross-site request from site '%s'. Cache '%s' not found.", id = 603)
+   CacheConfigurationException xsiteCacheNotFound(String remoteSite, ByteString cacheName);
+
+   @Message(value = "Unable to handle cross-site request from site '%s'. Cache '%s' is stopped.", id = 604)
+   CacheConfigurationException xsiteCacheNotStarted(String origin, ByteString cacheName);
+
+   @Message(value = "Unable to handle cross-site request from site '%s'. Cache '%s' is not clustered.", id = 605)
+   CacheConfigurationException xsiteInLocalCache(String origin, ByteString cacheName);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Remote site '%s' has an invalid cache configuration. Changing to offline.", id = 606)
+   void xsiteInvalidConfigurationRemoteSite(String siteName);
 }
