@@ -1,4 +1,4 @@
-[id='configuring_clustering-{context}']
+[id='configuring_clustering']
 :context: jgroups
 = Configuring {brandname} Clustering
 {brandname} uses the JGroups protocol so nodes can discover each other on the
