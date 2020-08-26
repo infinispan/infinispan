@@ -76,7 +76,7 @@ public class InfinispanRemoteAutoConfiguration {
       boolean hasProperties = StringUtils.hasText(infinispanProperties.getServerList());
       ConfigurationBuilder builder = new ConfigurationBuilder();
       //by default, add java white list and marshaller
-      builder.addJavaSerialWhiteList("java.util.*", "java.time.*", "org.springframework.*", "org.infinispan.spring.common.*", "org.infinispan.spring.remote.*");
+      builder.addJavaSerialAllowList("java.util.*", "java.time.*", "org.springframework.*", "org.infinispan.spring.common.*", "org.infinispan.spring.remote.*");
       builder.marshaller(new JavaSerializationMarshaller());
 
       if (hasConfigurer) {
