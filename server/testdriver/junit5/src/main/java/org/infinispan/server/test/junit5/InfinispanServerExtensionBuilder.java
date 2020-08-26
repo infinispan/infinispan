@@ -1,9 +1,9 @@
 package org.infinispan.server.test.junit5;
 
+import static org.infinispan.server.test.core.AbstractInfinispanServerDriver.DEFAULT_CLUSTERED_INFINISPAN_CONFIG_FILE_NAME;
+
 import org.infinispan.server.test.core.AbstractServerConfigBuilder;
 import org.infinispan.server.test.core.ServerRunMode;
-
-import static org.infinispan.server.test.core.AbstractInfinispanServerDriver.DEFAULT_CLUSTERED_INFINISPAN_CONFIG_FILE_NAME;
 
 /**
  * Infinispan Server Extension Builder
@@ -13,12 +13,21 @@ import static org.infinispan.server.test.core.AbstractInfinispanServerDriver.DEF
  */
 public class InfinispanServerExtensionBuilder extends AbstractServerConfigBuilder<InfinispanServerExtensionBuilder> {
    /**
-    * Use this method to instantiate a single clustered embedded server
-    *
-    * @return InfinispanServerExtension
+    * Use this method to instantiate a single clustered server in a container, using the default configuration.
     */
    public static InfinispanServerExtension server() {
       return new InfinispanServerExtensionBuilder(DEFAULT_CLUSTERED_INFINISPAN_CONFIG_FILE_NAME, true)
+            .numServers(1)
+            .runMode(ServerRunMode.CONTAINER)
+            .parallelStartup(false)
+            .build();
+   }
+
+   /**
+    * Use this method to instantiate a single clustered server in a container, using a custom configuration.
+    */
+   public static InfinispanServerExtension server(String configurationFile) {
+      return new InfinispanServerExtensionBuilder(configurationFile, false)
             .numServers(1)
             .runMode(ServerRunMode.CONTAINER)
             .parallelStartup(false)

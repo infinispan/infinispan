@@ -65,7 +65,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    private File rootDir;
    private File confDir;
    private ComponentStatus status;
-   private AtomicLong certSerial = new AtomicLong(1);
+   private final AtomicLong certSerial = new AtomicLong(1);
 
    protected AbstractInfinispanServerDriver(InfinispanServerTestConfiguration configuration, InetAddress testHostAddress) {
       this.configuration = configuration;

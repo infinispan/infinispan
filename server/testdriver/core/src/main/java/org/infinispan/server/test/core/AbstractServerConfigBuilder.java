@@ -13,9 +13,9 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
  * @author Katia Aresti
  * @since 11
  */
-public abstract class AbstractServerConfigBuilder<T> {
+public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfigBuilder<T>> {
    private final String configurationFile;
-   private boolean defaultFile;
+   private final boolean defaultFile;
    private final Properties properties;
    private String[] mavenArtifacts;
    private int numServers = 2;
