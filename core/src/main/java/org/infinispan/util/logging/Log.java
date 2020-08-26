@@ -54,6 +54,7 @@ import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -2041,4 +2042,17 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Store %s cannot be configured to be shared as it does not contain the SHARED characteristic", id = 600)
    CacheConfigurationException storeConfiguredSharedButCharacteristicNotPresent(String storeClassName);
+
+   @Message(value = "Unable to handle cross-site request from site '%s'. Cache '%s' not found.", id = 603)
+   CacheConfigurationException xsiteCacheNotFound(String remoteSite, ByteString cacheName);
+
+   @Message(value = "Unable to handle cross-site request from site '%s'. Cache '%s' is stopped.", id = 604)
+   CacheConfigurationException xsiteCacheNotStarted(String origin, ByteString cacheName);
+
+   @Message(value = "Unable to handle cross-site request from site '%s'. Cache '%s' is not clustered.", id = 605)
+   CacheConfigurationException xsiteInLocalCache(String origin, ByteString cacheName);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Remote site '%s' has an invalid cache configuration. Changing to offline.", id = 606)
+   void xsiteInvalidConfigurationRemoteSite(String siteName);
 }
