@@ -379,6 +379,7 @@
       <versionx.org.springframework.boot.spring-boot-starter-security>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-security>
       <versionx.org.springframework.boot.spring-boot-starter-test>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-test>
       <versionx.org.springframework.boot.spring-boot-starter-web>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-web>
+      <versionx.org.springframework.boot.spring-boot-starter-log4j2>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-log4j2>
       <versionx.org.springframework.boot.spring-boot-configuration-processor>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-configuration-processor>
       <versionx.org.springframework.boot.spring-boot-starter-actuator>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-actuator>
       <versionx.org.springframework.boot.spring-boot-autoconfigure-processor>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-autoconfigure-processor>
@@ -1543,6 +1544,20 @@
             <artifactId>spring-boot-starter</artifactId>
             <version>${versionx.org.springframework.boot.spring-boot-starter}</version>
             <scope>test</scope>
+            <exclusions>
+               <exclusion>
+                  <!-- exclude logback -->
+                  <groupId>org.springframework.boot</groupId>
+                  <artifactId>spring-boot-starter-logging</artifactId>
+               </exclusion>
+            </exclusions>
+         </dependency>
+         <!-- use log4j2 for logging in spring boot starter tests -->
+         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
+            <version>${versionx.org.springframework.boot.spring-boot-starter-log4j2}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -1859,8 +1874,12 @@
                <configuration>
                   <systemPropertyVariables>
                      <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+                     <!-- Force all loggers to use a single context -->
                      <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>
+                     <!-- Bridge java.util.logging to Log4j2 -->
                      <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
+                     <!-- Use the same configuration in Spring Boot -->
+                     <logging.config>${log4j.configurationFile}</logging.config>
                      <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
                      <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                      <ansi.strip>${ansi.strip}</ansi.strip>
@@ -2205,8 +2224,12 @@
                   <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
 
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+                  <!-- Force all loggers to use a single context -->
                   <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>
+                  <!-- Bridge java.util.logging to Log4j2 -->
                   <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
+                  <!-- Use the same configuration in Spring Boot -->
+                  <logging.config>${log4j.configurationFile}</logging.config>
                   <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
                   <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   <ansi.strip>${ansi.strip}</ansi.strip>

@@ -71,7 +71,6 @@
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${junitListener}</listener>
                </properties>
-               <argLine>-Xmx512m</argLine>
             </configuration>
             <dependencies>
                <dependency>
