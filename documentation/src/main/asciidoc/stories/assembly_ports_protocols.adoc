@@ -1,4 +1,4 @@
-[id='ports_protocols-{context}']
+[id='ports_protocols']
 :context: network
 = {brandname} Ports and Protocols
 As {brandname} distributes data across your network and can establish
