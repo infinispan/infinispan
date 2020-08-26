@@ -4,10 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
 
@@ -97,16 +96,19 @@ public abstract class AbstractRemoteCacheManagerFactory {
          properties.setProperty(ConfigurationProperties.MARSHALLER, marshaller);
       }
 
-      if (!configurationPropertiesOverrides.containsProperty(ConfigurationProperties.JAVA_SERIAL_WHITELIST)) {
-         String allowList;
-         String userAllowList = properties.getProperty(ConfigurationProperties.JAVA_SERIAL_WHITELIST);
-         if (userAllowList == null || userAllowList.isEmpty()) {
-            allowList = String.join(",", SPRING_JAVA_SERIAL_ALLOWLIST);
-         } else {
-            Set<String> userRegexSet = new HashSet<>(Arrays.asList(SPRING_JAVA_SERIAL_ALLOWLIST.split(",")));
+      if (!configurationPropertiesOverrides.containsProperty(ConfigurationProperties.JAVA_SERIAL_WHITELIST) &&
+          !configurationPropertiesOverrides.containsProperty(ConfigurationProperties.JAVA_SERIAL_ALLOWLIST)) {
+         Set<String> userRegexSet = new LinkedHashSet<>();
+         Collections.addAll(userRegexSet, SPRING_JAVA_SERIAL_ALLOWLIST.split(","));
+         String userAllowList = properties.getProperty(ConfigurationProperties.JAVA_SERIAL_ALLOWLIST);
+         if (userAllowList != null && !userAllowList.isEmpty()) {
             Collections.addAll(userRegexSet, userAllowList.split(","));
-            allowList = String.join(",", userRegexSet);
          }
+         String userWhiteList = properties.getProperty(ConfigurationProperties.JAVA_SERIAL_WHITELIST);
+         if (userWhiteList != null && !userWhiteList.isEmpty()) {
+            Collections.addAll(userRegexSet, userWhiteList.split(","));
+         }
+         String allowList = String.join(",", userRegexSet);
          properties.setProperty(ConfigurationProperties.JAVA_SERIAL_ALLOWLIST, allowList);
       }
    }
