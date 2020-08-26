@@ -20,6 +20,7 @@ include::{topics}/ref_jgroups_preconfigured_tuning.adoc[leveloffset=+2]
 ifndef::productized[]
 include::{topics}/proc_using_custom_jchannels.adoc[leveloffset=+1]
 endif::productized[]
+include::{topics}/ref_jgroups_ports.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
