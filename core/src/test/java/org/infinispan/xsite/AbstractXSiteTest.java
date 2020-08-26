@@ -165,6 +165,10 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       return site(site).cache(cacheName, index);
    }
 
+   protected <K,V> Cache<K,V> cache(int siteIndex, String cacheName, int nodeIndex) {
+      return site(siteIndex).cache(cacheName, nodeIndex);
+   }
+
    protected <K,V> List<Cache<K,V>> caches(String site) {
       return caches(site, null);
    }

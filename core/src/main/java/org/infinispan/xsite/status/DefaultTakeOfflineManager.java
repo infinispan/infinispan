@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
@@ -17,6 +18,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.CacheUnreachableException;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -41,7 +43,7 @@ import org.jgroups.UnreachableException;
 @Scope(Scopes.NAMED_CACHE)
 public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteResponse.XSiteResponseCompleted {
 
-   private static Log log = LogFactory.getLog(DefaultTakeOfflineManager.class);
+   private static final Log log = LogFactory.getLog(DefaultTakeOfflineManager.class);
 
    private final String cacheName;
    private final Map<String, OfflineStatus> offlineStatus;
@@ -66,6 +68,14 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
             error instanceof UnreachableException ||
             error instanceof CacheUnreachableException ||
             error instanceof SuspectException;
+   }
+
+   private static boolean isConfigurationError(Throwable throwable) {
+      Throwable error = throwable;
+      if (throwable instanceof ExecutionException || throwable instanceof RemoteException) {
+         error = throwable.getCause();
+      }
+      return error instanceof CacheConfigurationException; //incorrect cache configuration in remote site.
    }
 
    @Start
@@ -140,7 +150,16 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
    @Override
    public void onCompleted(XSiteBackup backup, long sendTimeNanos, long durationNanos, Throwable throwable) {
       OfflineStatus status = offlineStatus.get(backup.getSiteName());
-      if (status != null && status.isEnabled()) {
+      assert status != null;
+
+      if (isConfigurationError(throwable)) {
+         //we have an invalid configuration. change site to offline
+         log.xsiteInvalidConfigurationRemoteSite(backup.getSiteName());
+         status.forceOffline();
+         return;
+      }
+
+      if (status.isEnabled()) {
          if (isCommunicationError(throwable)) {
             status.updateOnCommunicationFailure(TimeUnit.NANOSECONDS.toMillis(sendTimeNanos));
          } else if (!status.isOffline()) {

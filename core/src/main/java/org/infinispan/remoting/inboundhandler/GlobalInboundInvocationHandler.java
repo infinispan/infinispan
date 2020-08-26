@@ -126,8 +126,19 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
          log.tracef("Handling command %s from remote site %s", command, origin);
       }
 
-      ByteString localCacheName = findLocalCacheForRemoteSite(origin, command.getCacheName());
-      ComponentRegistry cr = globalComponentRegistry.getNamedComponentRegistry(localCacheName);
+      LocalSiteCache localCache = findLocalCacheForRemoteSite(origin, command.getCacheName());
+      if (localCache == null) {
+         reply.reply(new ExceptionResponse(log.xsiteCacheNotFound(origin, command.getCacheName())));
+         return;
+      } else if (localCache.local) {
+         reply.reply(new ExceptionResponse(log.xsiteInLocalCache(origin, localCache.cacheName)));
+         return;
+      }
+      ComponentRegistry cr = globalComponentRegistry.getNamedComponentRegistry(localCache.cacheName);
+      if (cr == null) {
+         reply.reply(new ExceptionResponse(log.xsiteCacheNotStarted(origin, localCache.cacheName)));
+         return;
+      }
       PerCacheInboundInvocationHandler handler = cr.getPerCacheInboundInvocationHandler();
       assert handler != null;
       handler.registerXSiteCommandReceiver();
@@ -177,13 +188,9 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       return cache == null ? null : cache.cacheName;
    }
 
-   private ByteString findLocalCacheForRemoteSite(String remoteSite, ByteString remoteCache) {
+   private LocalSiteCache findLocalCacheForRemoteSite(String remoteSite, ByteString remoteCache) {
       RemoteSiteCache key = new RemoteSiteCache(remoteSite, remoteCache);
-      LocalSiteCache cache = localCachesMap.computeIfAbsent(key, this::lookupLocalCaches);
-      if (cache.local) {
-         throw log.xsiteInLocalCache();
-      }
-      return cache.cacheName;
+      return localCachesMap.computeIfAbsent(key, this::lookupLocalCaches);
    }
 
    private LocalSiteCache lookupLocalCaches(RemoteSiteCache remoteSiteCache) {
@@ -199,7 +206,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
             remoteSiteCache.originSite, name, name);
       Configuration configuration = getCacheConfiguration(name);
       if (configuration == null) {
-         throw log.noSuchCacheConfiguration(name);
+         return null;
       }
 
       return new LocalSiteCache(remoteSiteCache.originCache, isLocal(configuration));
