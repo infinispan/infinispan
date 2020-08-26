@@ -27,6 +27,11 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <scope>test</scope>
         </dependency>
@@ -120,10 +125,6 @@
                        <usedefaultlisteners>false</usedefaultlisteners>
                        <listener>${junitListener}</listener>
                     </properties>
-                    <systemPropertyVariables>
-                        <!-- Don't use the log4j2-jul bridge, spring-boot starters default to Logback-->
-                        <java.util.logging.manager>java.util.logging.LogManager</java.util.logging.manager>
-                    </systemPropertyVariables>
                 </configuration>
                 <dependencies>
                     <dependency>
