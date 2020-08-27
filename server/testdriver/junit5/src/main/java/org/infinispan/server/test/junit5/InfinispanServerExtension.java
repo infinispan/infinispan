@@ -1,5 +1,10 @@
 package org.infinispan.server.test.junit5;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
@@ -8,15 +13,10 @@ import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
 import org.junit.jupiter.api.extension.AfterAllCallback;
-import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
+import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * JUnit 5 {@link 'https://junit.org/junit5'} extension. <br/>
@@ -44,8 +44,8 @@ import java.util.function.Consumer;
 public class InfinispanServerExtension implements
       TestClientDriver,
       BeforeAllCallback,
-      BeforeTestExecutionCallback,
-      AfterTestExecutionCallback,
+      BeforeEachCallback,
+      AfterEachCallback,
       AfterAllCallback {
 
    private final TestServer testServer;
@@ -58,7 +58,7 @@ public class InfinispanServerExtension implements
    }
 
    @Override
-   public void beforeAll(ExtensionContext extensionContext) throws Exception {
+   public void beforeAll(ExtensionContext extensionContext) {
       String testName = extensionContext.getRequiredTestClass().getName();
       // Don't manage the server when a test is using the same InfinispanServerRule instance as the parent suite
       boolean manageServer = !testServer.isDriverInitialized();
@@ -74,7 +74,7 @@ public class InfinispanServerExtension implements
    }
 
    @Override
-   public void beforeTestExecution(ExtensionContext extensionContext) throws Exception {
+   public void beforeEach(ExtensionContext extensionContext) {
       this.testClient = new TestClient(testServer);
       testClient.initResources();
       methodName =
@@ -83,12 +83,12 @@ public class InfinispanServerExtension implements
    }
 
    @Override
-   public void afterTestExecution(ExtensionContext extensionContext) throws Exception {
+   public void afterEach(ExtensionContext extensionContext) {
       testClient.clearResources();
    }
 
    @Override
-   public void afterAll(ExtensionContext extensionContext) throws Exception {
+   public void afterAll(ExtensionContext extensionContext) {
       String testName = extensionContext.getRequiredTestClass().getName();
       if (testServer.isDriverInitialized()) {
          testServer.afterListeners();
