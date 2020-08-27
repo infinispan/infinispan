@@ -100,6 +100,8 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
          throw new IllegalStateException("CacheIgnoreManager is a required component");
       }
 
+      bcr.replaceComponent(getQualifiedName(), this, false);
+
       executor = bcr.getComponent(KnownComponentNames.BLOCKING_EXECUTOR, ExecutorService.class).running();
 
       manageableThreadPoolExecutorService = new ManageableThreadPoolExecutorService(executor);

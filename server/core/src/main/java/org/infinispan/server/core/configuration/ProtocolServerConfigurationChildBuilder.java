@@ -20,7 +20,8 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
    S defaultCacheName(String defaultCacheName);
 
    /**
-    * Specifies a custom name for this server in order to easily distinguish it from other servers, e.g. via JMX. Defaults to the empty string.
+    * Specifies a custom name for this protocol server in order to easily distinguish it from others of the same type on the same server, e.g. via JMX. Defaults to the empty string.
+    * The name should be the same across the cluster.
     */
    S name(String name);
 

@@ -111,8 +111,8 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
       TestSite site = createSite(siteName, NODES_PER_SITE, globalBuilder, builder);
       Collection<EmbeddedCacheManager> cacheManagers = site.cacheManagers();
       List<HotRodServer> servers = cacheManagers.stream().map(cm -> serverPort
-         .map(port -> HotRodClientTestingUtil.startHotRodServer(cm, port, new HotRodServerConfigurationBuilder().name(cm.getCacheManagerConfiguration().transport().nodeName())))
-         .orElseGet(() -> HotRodClientTestingUtil.startHotRodServer(cm, new HotRodServerConfigurationBuilder().name(cm.getCacheManagerConfiguration().transport().nodeName())))).collect(Collectors.toList());
+         .map(port -> HotRodClientTestingUtil.startHotRodServer(cm, port, new HotRodServerConfigurationBuilder()))
+         .orElseGet(() -> HotRodClientTestingUtil.startHotRodServer(cm, new HotRodServerConfigurationBuilder()))).collect(Collectors.toList());
       siteServers.put(siteName, servers);
 
       log.debugf("Create site '%s' with ports: %s", siteName,

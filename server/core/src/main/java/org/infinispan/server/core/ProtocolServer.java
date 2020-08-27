@@ -2,6 +2,7 @@ package org.infinispan.server.core;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.server.core.transport.Transport;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
@@ -55,4 +56,9 @@ public interface ProtocolServer<C extends ProtocolServerConfiguration> {
     * Returns the name of this server
     */
    String getName();
+
+   /**
+    * Returns the transport for this server
+    */
+   Transport getTransport();
 }
