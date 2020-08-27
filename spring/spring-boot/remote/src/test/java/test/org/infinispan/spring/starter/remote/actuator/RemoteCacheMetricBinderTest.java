@@ -1,33 +1,45 @@
 package test.org.infinispan.spring.starter.remote.actuator;
 
-import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
-import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
+import static java.util.Collections.emptyList;
+
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.configuration.XMLStringConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.starter.remote.actuator.RemoteInfinispanCacheMeterBinderProvider;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import static java.util.Collections.emptyList;
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
 
 public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKit {
 
    @RegisterExtension
-   static InfinispanServerExtension infinispanServerExtension = InfinispanServerExtensionBuilder.server();
+   static InfinispanServerExtension infinispanServerExtension =
+         InfinispanServerExtensionBuilder.server("infinispan.xml");
 
    private RemoteCache<String, String> cache;
 
-   @AfterEach
-   public void cleanCache() {
-      cache.clientStatistics().resetStatistics();
-   }
-
    @Override
    public CacheMeterBinder binder() {
-      cache = infinispanServerExtension.hotrod().createRemoteCacheManager().getCache("mycache");
-      RemoteInfinispanCacheMeterBinderProvider remoteInfinispanCacheMeterBinderProvider = new RemoteInfinispanCacheMeterBinderProvider();
+      org.infinispan.configuration.cache.ConfigurationBuilder serverBuilder =
+            new org.infinispan.configuration.cache.ConfigurationBuilder();
+      serverBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      XMLStringConfiguration stringConfiguration =
+            new XMLStringConfiguration(serverBuilder.build().toXMLString("mycache"));
+
+      ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+      clientBuilder.statistics().enable();
+      RemoteCacheManager remoteCacheManager =
+            infinispanServerExtension.hotrod().withClientConfiguration(clientBuilder)
+                                     .createRemoteCacheManager();
+      cache = remoteCacheManager.administration().getOrCreateCache("mycache", stringConfiguration);
+      RemoteInfinispanCacheMeterBinderProvider remoteInfinispanCacheMeterBinderProvider =
+            new RemoteInfinispanCacheMeterBinderProvider();
       return (CacheMeterBinder) remoteInfinispanCacheMeterBinderProvider
             .getMeterBinder(new SpringCache(cache), emptyList());
    }
