@@ -14,6 +14,7 @@
         <ispnserver.project.dir>${basedir}/../../server/runtime</ispnserver.project.dir>
         <server.build.dist>${ispnserver.project.dir}/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
         <ispnserver.dist>${basedir}/target/infinispan-server</ispnserver.dist>
+        <ispn.config.file>${basedir}/server-integration-commons/src/test/resources/infinispan-custom.xml</ispn.config.file>
     </properties>
 
     <modelVersion>4.0.0</modelVersion>
@@ -81,7 +82,7 @@
                                 <ant antfile="${ispnserver.project.dir}/src/main/ant/infinispan-server.xml" target="create-distro">
                                     <property name="server.build.dist" value="${server.build.dist}" />
                                     <property name="server.dist" value="${ispnserver.dist}" />
-                                    <property name="ispn.config.file" value="${basedir}/src/test/resources/infinispan-custom.xml" />
+                                    <property name="ispn.config.file" value="${ispn.config.file}" />
                                 </ant>
                             </target>
                         </configuration>

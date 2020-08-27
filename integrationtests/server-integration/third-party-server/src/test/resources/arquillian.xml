@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<arquillian xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns="http://jboss.org/schema/arquillian"
+            xsi:schemaLocation="http://jboss.org/schema/arquillian http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
+
+    <container qualifier="tomcat">
+        <configuration>
+            <property name="catalinaHome">${catalinaHome}</property>
+            <property name="user">admin</property>
+            <property name="pass">admin-pwd</property>
+            <!--
+            <property name="javaVmArguments">
+                -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y
+            </property>
+            -->
+        </configuration>
+    </container>
+    <container qualifier="wildfly">
+        <configuration>
+            <property name="jbossHome">${jbossHome}</property>
+            <property name="javaHome">${server.jvm}</property>
+            <!--
+            <property name="javaVmArguments">
+                -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y
+            </property>
+            -->
+            <property name="javaVmArguments">
+            </property>
+        </configuration>
+    </container>
+</arquillian>
