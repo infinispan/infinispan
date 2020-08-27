@@ -135,7 +135,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
                restServerHelper.withKeyStore(SERVER_KEY_STORE, STORE_PASSWORD, STORE_TYPE)
                      .withTrustStore(SERVER_KEY_STORE, STORE_PASSWORD, STORE_TYPE);
             }
-            restServerHelper.start(TestResourceTracker.getCurrentTestShortName() + "-" + cm.getAddress());
+            restServerHelper.start(TestResourceTracker.getCurrentTestShortName());
             restServers.add(restServerHelper);
          }
          ignoreManager = SecurityActions.getGlobalComponentRegistry(cacheManagers.get(0)).getComponent(CacheIgnoreManager.class);

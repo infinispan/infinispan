@@ -83,7 +83,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       // start rest sever for each cache manager
       cacheManagers.forEach(cm -> {
          RestServerHelper restServer = new RestServerHelper(cm);
-         restServer.start(TestResourceTracker.getCurrentTestShortName() + "-" + cm.getAddress());
+         restServer.start(TestResourceTracker.getCurrentTestShortName());
          restServers.add(restServer);
       });
 

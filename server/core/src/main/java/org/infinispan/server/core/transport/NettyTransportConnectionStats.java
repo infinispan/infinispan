@@ -3,20 +3,16 @@ package org.infinispan.server.core.transport;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
-import javax.management.JMException;
-import javax.management.ObjectName;
-
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.core.ProtocolServer;
 
 import io.netty.channel.group.ChannelGroup;
 
@@ -31,9 +27,9 @@ class NettyTransportConnectionStats {
 
    public NettyTransportConnectionStats(EmbeddedCacheManager cacheManager, ChannelGroup acceptedChannels, String threadNamePrefix) {
       this.cacheManager = cacheManager;
-      this.isGlobalStatsEnabled = cacheManager != null && SecurityActions.getCacheManagerConfiguration(cacheManager).jmx().enabled();
       this.acceptedChannels = acceptedChannels;
       this.threadNamePrefix = threadNamePrefix;
+      this.isGlobalStatsEnabled = cacheManager != null && cacheManager.getCacheManagerConfiguration().statistics();
    }
 
    private void increment(AtomicLong base, long bytes) {
@@ -93,28 +89,7 @@ class NettyTransportConnectionStats {
 
       @Override
       public Integer apply(EmbeddedCacheManager embeddedCacheManager) {
-         CacheManagerJmxRegistration jmxRegistration = SecurityActions.getGlobalComponentRegistry(embeddedCacheManager)
-               .getComponent(CacheManagerJmxRegistration.class);
-         if (jmxRegistration.enabled()) {
-            try {
-               ObjectName transportNamePattern = new ObjectName(jmxRegistration.getDomain() + ":type=Server,component=Transport,name=*");
-               Set<ObjectName> objectNames = jmxRegistration.getMBeanServer().queryNames(transportNamePattern, null);
-
-               // sum the NumberOfLocalConnections from all transport MBeans that match the pattern
-               int total = 0;
-               for (ObjectName name : objectNames) {
-                  if (name.getKeyProperty("name").startsWith(serverName)) {
-                     Integer connections = (Integer) jmxRegistration.getMBeanServer().getAttribute(name, "NumberOfLocalConnections");
-                     total += connections;
-                  }
-               }
-               return total;
-            } catch (JMException e) {
-               throw new RuntimeException(e);
-            }
-         }
-
-         return 0; // jmx not enabled. computer says no.
+         return SecurityActions.getGlobalComponentRegistry(embeddedCacheManager).getComponent(ProtocolServer.class, serverName).getTransport().getNumberOfLocalConnections();
       }
 
       public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<ConnectionAdderTask> {

@@ -54,7 +54,7 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
    @Override
    public EmbeddedCacheManager createTestCacheManager() {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalConfiguration.jmx().enabled(true).domain(jmxDomain).mBeanServerLookup(mBeanServerLookup);
+      globalConfiguration.cacheContainer().statistics(true).jmx().enabled(true).domain(jmxDomain).mBeanServerLookup(mBeanServerLookup);
 
       ConfigurationBuilder configuration = new ConfigurationBuilder();
       configuration.statistics().enabled(true);

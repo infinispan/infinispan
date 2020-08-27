@@ -36,6 +36,7 @@ public class HotRodStatsTest extends HotRodSingleNodeTest {
       ConfigurationBuilder cfg = hotRodCacheConfiguration();
       cfg.statistics().enable();
       GlobalConfigurationBuilder globalCfg = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalCfg.cacheContainer().statistics(true);
       configureJmx(globalCfg, jmxDomain(), mBeanServerLookup);
       return TestCacheManagerFactory.createClusteredCacheManager(globalCfg, cfg);
    }
@@ -45,7 +46,6 @@ public class HotRodStatsTest extends HotRodSingleNodeTest {
       int bytesWritten = 0;
 
       Map<String, String> s = client().stats();
-//      assertTrue(s.get("timeSinceStart") != "0")
       assertEquals(s.get("currentNumberOfEntries"), "0");
       assertEquals(s.get("totalNumberOfEntries"), "0");
       assertEquals(s.get("stores"), "0");
@@ -74,8 +74,8 @@ public class HotRodStatsTest extends HotRodSingleNodeTest {
       assertEquals(s.get("hits"), "1");
       assertEquals(s.get("misses"), "0");
       assertEquals(s.get("retrievals"), "1");
-      bytesRead = assertHigherBytes(bytesRead, s.get("totalBytesRead"));
-      bytesWritten = assertHigherBytes(bytesWritten, s.get("totalBytesWritten"));
+      assertHigherBytes(bytesRead, s.get("totalBytesRead"));
+      assertHigherBytes(bytesWritten, s.get("totalBytesWritten"));
 
       client().clear();
 
@@ -86,7 +86,7 @@ public class HotRodStatsTest extends HotRodSingleNodeTest {
 
    private int assertHigherBytes(int currentBytesRead, String bytesStr) {
       int bytesRead = Integer.valueOf(bytesStr);
-      assertTrue(bytesRead > currentBytesRead);
+      assertTrue(String.format("Expecting %d > %d", bytesRead, currentBytesRead), bytesRead > currentBytesRead);
       return bytesRead;
    }
 }
