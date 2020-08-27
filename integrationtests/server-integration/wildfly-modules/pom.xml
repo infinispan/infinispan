@@ -15,6 +15,7 @@
 
    <properties>
       <ispnserver.project.dir>${basedir}/../../../server/runtime</ispnserver.project.dir>
+      <ispn.config.file>${basedir}/../server-integration-commons/src/test/resources/infinispan-custom.xml</ispn.config.file>
       <resources.dir>${basedir}/src/test/resources</resources.dir>
       <serverMemoryJvmArgs>-Xmx300m</serverMemoryJvmArgs>
       <jvm.x64.args />
@@ -156,6 +157,13 @@
          <artifactId>infinispan-feature-pack</artifactId>
          <version>${project.version}</version>
          <type>zip</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-integrationtests-commons</artifactId>
+         <type>test-jar</type>
          <scope>test</scope>
       </dependency>
 

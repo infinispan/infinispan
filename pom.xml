@@ -146,7 +146,9 @@
       <module>integrationtests/cdi-weld-se-it</module>
       <module>integrationtests/spring-boot-it</module>
       <module>integrationtests/server-integration</module>
+      <module>integrationtests/server-integration/server-integration-commons</module>
       <module>integrationtests/server-integration/wildfly-modules</module>
+      <module>integrationtests/server-integration/third-party-server</module>
       <module>client/marshaller</module>
       <module>hibernate</module>
       <module>api</module>
@@ -1188,6 +1190,13 @@
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-hibernate-cache-commons</artifactId>
             <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-integrationtests-commons</artifactId>
+            <version>${version.infinispan}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
