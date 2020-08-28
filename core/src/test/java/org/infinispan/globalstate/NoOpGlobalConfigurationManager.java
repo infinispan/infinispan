@@ -3,6 +3,7 @@ package org.infinispan.globalstate;
 import java.util.EnumSet;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -13,6 +14,11 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * A no-op implementation for tests which mess up with initial state transfer and RPCs
  */
 public class NoOpGlobalConfigurationManager implements GlobalConfigurationManager {
+   @Override
+   public Cache<ScopedState, Object> getStateCache() {
+      return null;
+   }
+
    @Override
    public CompletableFuture<Configuration> createCache(String cacheName, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       return CompletableFutures.completedNull();

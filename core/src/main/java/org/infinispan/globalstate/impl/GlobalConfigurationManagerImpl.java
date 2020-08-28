@@ -135,6 +135,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       });
    }
 
+   @Override
    public Cache<ScopedState, Object> getStateCache() {
       if (stateCache == null) {
          stateCache = cacheManager.getCache(CONFIG_STATE_CACHE_NAME);

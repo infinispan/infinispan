@@ -3,6 +3,7 @@ package org.infinispan.globalstate;
 import java.util.EnumSet;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.scopes.Scope;
@@ -19,6 +20,12 @@ import org.infinispan.factories.scopes.Scopes;
 @Scope(Scopes.GLOBAL)
 public interface GlobalConfigurationManager {
    String CONFIG_STATE_CACHE_NAME = "org.infinispan.CONFIG";
+
+   /**
+    * Returns the global state cache
+    */
+   Cache<ScopedState, Object> getStateCache();
+
    /**
     * Defines a cluster-wide cache configuration
     * @param cacheName the name of the configuration
