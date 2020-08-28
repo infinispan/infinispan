@@ -1,7 +1,5 @@
 package org.infinispan.server.core;
 
-import static org.infinispan.server.core.LifecycleCallbacks.SERVER_STATE_CACHE;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,6 +13,9 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.globalstate.GlobalConfigurationManager;
+import org.infinispan.globalstate.ScopeFilter;
+import org.infinispan.globalstate.ScopedState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -32,9 +33,9 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  */
 @Scope(Scopes.GLOBAL)
 public final class CacheIgnoreManager {
-   private static final String IGNORED_CACHES_KEY = "ignored-caches";
+   private static final ScopedState IGNORED_CACHES_KEY = new ScopedState("ignored-caches", "ignored-caches");
 
-   private Cache<String, IgnoredCaches> cache;
+   private Cache<ScopedState, Object> cache;
    private final IgnoredCaches ignored = new IgnoredCaches();
    private final CacheListener listener = new CacheListener();
    private volatile boolean hasIgnores;
@@ -43,14 +44,17 @@ public final class CacheIgnoreManager {
    @Inject
    EmbeddedCacheManager cacheManager;
 
+   @Inject
+   GlobalConfigurationManager configurationManager;
+
    CacheIgnoreManager() {
    }
 
    @Start
    public void start() {
-      cache = cacheManager.getCache(SERVER_STATE_CACHE);
-      updateLocalCopy(cache.get(IGNORED_CACHES_KEY));
-      cache.addListener(listener);
+      cache = configurationManager.getStateCache();
+      updateLocalCopy((IgnoredCaches) cache.get(IGNORED_CACHES_KEY));
+      cache.addListener(listener, new ScopeFilter(IGNORED_CACHES_KEY.getScope()), null);
    }
 
    public CompletableFuture<Void> unignoreCache(String cacheName) {
@@ -98,18 +102,18 @@ public final class CacheIgnoreManager {
       }
    }
 
-   @Listener
+   @Listener(observation = Listener.Observation.POST)
    private final class CacheListener {
       @CacheEntryCreated
       public void created(CacheEntryCreatedEvent<String, IgnoredCaches> e) {
-         if (!e.isOriginLocal() && !e.isPre() && e.getKey().equals(IGNORED_CACHES_KEY)) {
+         if (!e.isOriginLocal()) {
             updateLocalCopy(e.getValue());
          }
       }
 
       @CacheEntryModified
       public void modified(CacheEntryModifiedEvent<String, IgnoredCaches> e) {
-         if (!e.isOriginLocal() && !e.isPre() && e.getKey().equals(IGNORED_CACHES_KEY)) {
+         if (!e.isOriginLocal()) {
             updateLocalCopy(e.getValue());
          }
       }
