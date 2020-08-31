@@ -4,7 +4,10 @@
 [source,xml,options="nowrap",subs=attributes+]
 ----
 <jgroups>
-   <stack-file name="relay-global" path="jgroups-relay.xml"/> <1>
+   <stack name="relay-global" extends="tcp"> <1>
+         <MPING stack.combine="REMOVE"/>
+         <TCPPING initial_hosts="192.0.2.0[7800]" stack.combine="INSERT_AFTER" stack.position="TCP"/>
+    </stack>
    <stack name="xsite" extends="udp">
       <relay.RELAY2 site="LON" xmlns="urn:org:jgroups"
                     max_site_masters="10" <2>
@@ -17,10 +20,18 @@
 </jgroups>
 ----
 
-<1> Adds a custom RELAY2 stack defined in `jgroups-relay.xml`.
+<1> Adds a custom RELAY2 stack that extends the TCP stack and uses TCPPING instead of MPING for discovery.
 <2> Sets the maximum number of site masters and optionally specifies additional RELAY2 properties. See JGroups RELAY2 documentation.
 
-.Example `jgroups-relay.xml`
+You can also reference externally defined JGroups stack files as follows:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<stack-file name="relay-global" path="jgroups-relay.xml"/>
+----
+
+In the preceding configuration `jgroups-relay.xml` provides a JGroups stack
+such as this:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
