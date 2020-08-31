@@ -18,5 +18,5 @@
              port_range="3"
              ergonomics="false"/>
 
-    <!-- Provide other configuration as required. -->
+    <!-- Provide other JGroups stack configuration as required. -->
 </config>
