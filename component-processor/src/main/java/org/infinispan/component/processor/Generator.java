@@ -156,10 +156,10 @@ public class Generator {
                String componentType = parameter.typeName;
                CharSequence componentName = parameter.componentName;
                String lazy = parameter.isComponentRef ? "Lazy" : "";
-               writer.printf("               context.get%s(\"%s\", %s.class, start)%s",
+               writer.printf("               context.get%s(\"%s\", %s.class, start)%s\n",
                              lazy, componentName, componentType, optionalComma(i, parameters.size()));
             }
-            writer.printf(");\n");
+            writer.printf("            );\n");
          }
          writer.printf("         }\n");
          writer.printf("\n");
