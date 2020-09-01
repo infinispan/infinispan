@@ -391,7 +391,7 @@
       <versionx.org.springframework.spring-expression>${version.spring5}</versionx.org.springframework.spring-expression>
       <versionx.org.springframework.spring-jdbc>${version.spring5}</versionx.org.springframework.spring-jdbc>
       <versionx.org.springframework.spring-test>${version.spring5}</versionx.org.springframework.spring-test>
-      <versionx.org.testcontainers.testcontainers>1.14.0</versionx.org.testcontainers.testcontainers>
+      <versionx.org.testcontainers.testcontainers>1.14.3</versionx.org.testcontainers.testcontainers>
       <versionx.micrometer>${version.micrometer}</versionx.micrometer>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
       <versionx.org.twdata.maven.mojo-executor>2.3.1</versionx.org.twdata.maven.mojo-executor>
