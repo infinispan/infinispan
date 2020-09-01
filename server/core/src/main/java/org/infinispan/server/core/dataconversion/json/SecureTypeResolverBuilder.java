@@ -16,7 +16,10 @@ import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator
  * Builder that can produce {@link SecureTypeIdResolver} from an existing TypeIdResolver.
  *
  * @since 9.3
+ *
+ * @deprecated JSON to POJO conversion is deprecated and will be removed in a future version.
  */
+@Deprecated
 public class SecureTypeResolverBuilder extends ObjectMapper.DefaultTypeResolverBuilder {
 
    private final ClassAllowList allowList;

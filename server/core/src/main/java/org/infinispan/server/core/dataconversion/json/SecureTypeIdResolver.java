@@ -15,7 +15,10 @@ import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
  * Jackson TypeIdResolver that checks the serialization allow list before deserializing JSON types.
  *
  * @since 9.3
+ *
+ * @deprecated JSON to POJO conversion is deprecated and will be removed in a future version.
  */
+@Deprecated
 public class SecureTypeIdResolver implements TypeIdResolver {
 
    protected final static Log logger = LogFactory.getLog(SecureTypeIdResolver.class, Log.class);
