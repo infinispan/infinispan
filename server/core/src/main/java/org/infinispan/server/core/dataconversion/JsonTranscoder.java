@@ -83,7 +83,7 @@ public class JsonTranscoder extends OneToManyTranscoder {
             if (content instanceof String || content instanceof byte[]) {
                return convertTextToJson(content, contentCharset, destinationCharset, outputString);
             }
-
+            logger.jsonObjectConversionDeprecated();
             if (outputString) {
                return objectMapper.writeValueAsString(content);
             }
@@ -98,6 +98,7 @@ public class JsonTranscoder extends OneToManyTranscoder {
          }
       }
       if (destinationType.match(APPLICATION_OBJECT)) {
+         logger.jsonObjectConversionDeprecated();
          try {
             String destinationClassName = destinationType.getClassType();
             Class<?> destinationClass = Object.class;

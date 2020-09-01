@@ -1,5 +1,10 @@
 = Upgrading from 11.0 to 12.0
 
+== Encoding
+
+Conversions of cache data between `application/x-java-object` and `application/json` are deprecated and will be removed
+in a future version. For JSON support, it is recommend to configure the cache with `application/x-protostream` encoding.
+
 == OSGi
 
 Support for OSGi was deprecated and has been removed.

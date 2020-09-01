@@ -2044,4 +2044,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Store %s cannot be configured to be segmented as it does not contain the SEGMENTABLE characteristic", id = 601)
    CacheConfigurationException storeConfiguredSegmentedButCharacteristicNotPresent(String storeClassName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Conversions between JSON and Java Objects are deprecated and will be removed in a future version. " +
+         "To read/write values as JSON, it is recommended to define a protobuf schema and store data in the cache using " +
+         "'application/x-protostream' as MediaType", id = 602)
+   void jsonObjectConversionDeprecated();
 }
