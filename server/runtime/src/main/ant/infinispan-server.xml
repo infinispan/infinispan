@@ -102,6 +102,12 @@
         </exec>
         <checkoutput run-property="run.ps" exitcode-property="ps.result" output-property="ps.pid"/>
 
+        <!-- lsof is required for unix, otherwise the server wont be stopped -->
+        <exec executable="bash" outputproperty="lsof.output" failifexecutionfails="true" failonerror="true" osfamily="unix">
+            <arg value="-c"/>
+            <arg value="lsof" />
+        </exec>
+
         <exec executable="bash" outputproperty="lsof.pid" resultproperty="lsof.result" failifexecutionfails="false" failonerror="false" osfamily="unix">
             <arg value="-c"/>
             <arg value="lsof -t -i TCP:${hotrod.port} -s TCP:LISTEN"/>
