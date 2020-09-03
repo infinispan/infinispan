@@ -6,7 +6,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 
 /**
- * The marshaller that is responsible serializaing/desearilizing objects which are to be persisted.
+ * The marshaller that is responsible serializing/deserializing objects which are to be persisted.
  *
  * @author Ryan Emerson
  * @since 10.0
