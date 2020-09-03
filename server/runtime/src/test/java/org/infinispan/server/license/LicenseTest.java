@@ -57,6 +57,14 @@ public class LicenseTest {
             tdMatcher.find();
             String version = tdMatcher.group(1);
 
+            tdMatcher.find();
+            String remoteLicenses = tdMatcher.group(1);
+            Assert.assertTrue(hasLicenseLink(remoteLicenses));
+
+            tdMatcher.find();
+            String localLicenses = tdMatcher.group(1);
+            Assert.assertTrue(hasLicenseLink(localLicenses));
+
             htmlDependencies.add(String.format("%s-%s.jar", artifact, version));
          }
       }
@@ -85,5 +93,9 @@ public class LicenseTest {
       File licensesDir = new File(docsDir, "licenses");
       File licensesHtmlFile = new File(licensesDir, "licenses.html");
       return licensesHtmlFile.toPath();
+   }
+
+   private boolean hasLicenseLink(String value) {
+      return value != null ? value.contains("a href") : false;
    }
 }
