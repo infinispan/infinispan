@@ -16,6 +16,8 @@
 
    <properties>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
+      <!-- The default configuration does not support test-tcp -->
+      <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
    </properties>
    <dependencies>
       <!-- Build dependencies. -->

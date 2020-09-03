@@ -14,7 +14,6 @@
 
    <properties>
       <server.output.dir.prefix>${infinispan.brand.prefix}-testdriver</server.output.dir.prefix>
-      <infinispan.cluster.stack>test-tcp</infinispan.cluster.stack>
    </properties>
    <modules>
       <module>core</module>
