@@ -26,7 +26,6 @@ public class BasicComponentRegistryImplTest {
 
    @BeforeMethod(alwaysRun = true)
    public void setup() {
-      ClassLoader classLoader = this.getClass().getClassLoader();
       moduleRepository = TestModuleRepository.defaultModuleRepository();
       globalRegistry = new BasicComponentRegistryImpl(moduleRepository, true, null);
       cacheRegistry = new BasicComponentRegistryImpl(moduleRepository, false, globalRegistry);
