@@ -110,15 +110,21 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
 
    @Override
    public void start(String name) {
-      log.infof("Starting server %s", name);
-      start(name, rootDir, new File(configuration.configurationFile()));
-      log.infof("Started server %s", name);
-      status = ComponentStatus.RUNNING;
+      status = ComponentStatus.INITIALIZING;
+      try {
+         log.infof("Starting server %s", name);
+         start(name, rootDir, new File(configuration.configurationFile()));
+         log.infof("Started server %s", name);
+         status = ComponentStatus.RUNNING;
+      } catch (Throwable t) {
+         status = ComponentStatus.FAILED;
+         throw t;
+      }
    }
 
    @Override
    public final void stop(String name) {
-      if (status == ComponentStatus.RUNNING) {
+      if (status != ComponentStatus.INSTANTIATED) {
          status = ComponentStatus.STOPPING;
          log.infof("Stopping server %s", name);
          stop();
