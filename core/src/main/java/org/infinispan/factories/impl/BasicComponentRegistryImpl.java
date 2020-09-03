@@ -12,9 +12,9 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.factories.ComponentFactory;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ModuleRepository;
@@ -250,17 +250,19 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
    private ComponentFactory findFactory(String name) {
       String factoryName = moduleRepository.getFactoryName(name);
       if (factoryName == null) {
-         // Cannot find factory in this scope, getComponent will return null
-         return null;
+         // No designated factory, try auto instantiation as a last resort
+         return tryAutoInstantiation(name);
       }
 
       ComponentRef<ComponentFactory> factoryRef = getComponent(factoryName, ComponentFactory.class);
-      if (factoryRef == null) {
-         factoryRef = tryAutoInstantiation(factoryName);
+      if (factoryRef != null) {
+         // Start the factory (and it's dependencies!) because some factories
+         // are responsible for stopping the components they create (e.g. NamedExecutorsFactory)
+         return factoryRef.running();
+      } else {
+         // The factory does not exist in this scope
+         return null;
       }
-      // Start the factory (and it's dependencies!) because some factories
-      // are responsible for stopping the components they create (e.g. NamedExecutorsFactory)
-      return factoryRef != null ? factoryRef.running() : null;
    }
 
    private void commitWrapperStateChange(ComponentWrapper wrapper, WrapperState expectedState, WrapperState newState) {
@@ -305,30 +307,28 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       }
    }
 
-   private ComponentRef<ComponentFactory> tryAutoInstantiation(String factoryName) {
+   /**
+    * Factories that implement {@link org.infinispan.factories.AutoInstantiableFactory} can be instantiated
+    * without an additional factory.
+    */
+   private ComponentFactory tryAutoInstantiation(String factoryName) {
       ComponentAccessor<Object> accessor = moduleRepository.getComponentAccessor(factoryName);
       if (accessor == null) {
          return null;
       }
       if (accessor.getScopeOrdinal() != null && !accessor.getScopeOrdinal().equals(scope.ordinal())) {
-         // Allow the factory to be auto-instantiated in the proper scope
-         // Null means any scope
+         // The accessor exists, but it has a different scope (null means any scope)
+         // Returning null allows the factory to be auto-instantiated in the proper scope
          return null;
       }
 
       Object autoInstance = accessor.newInstance();
       if (autoInstance == null) {
-         // It would be nice to throw an exception here if the factory is not auto-instantiable
-         // but when trying to instantiate a cache component we first try to instantiate it in global scope
-         // and so we try to auto-instantiate its factory in global scope
+         // Not auto-instantiable
          return null;
       }
 
-      // Register, instantiate, and wire the factory (skipping steps already performed by other threads)
-      ComponentWrapper wrapper = registerWrapper(factoryName, true);
-      instantiateWrapper(wrapper, new ConstComponentFactory(autoInstance));
-      wireWrapper(wrapper);
-      return wrapper;
+      return new ConstComponentFactory(autoInstance);
    }
 
    private void invokeInjection(Object target, ComponentAccessor<Object> accessor, boolean startDependencies) {
@@ -690,8 +690,8 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          String name = wrapper.name;
          if (wrapper.state == WrapperState.EMPTY) {
             throw new CacheConfigurationException(
-               "Component " + name + " is missing a strong reference: waiting to become " + expectedState +
-               " but it has not been instantiated yet");
+                  "Component " + name + " is missing a strong (non-ComponentRef) reference: waiting to become " +
+                  expectedState + " but it has not been instantiated yet");
          }
          if (wrapper.state.isBefore(expectedState)) {
             ComponentPath currentComponentPath = mutatorThreads.get(Thread.currentThread());
@@ -835,7 +835,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          return state.isBefore(expectedState);
       }
 
-      @GuardedBy("lock")
+      @GuardedBy("BasicComponentRegistryImpl.lock")
       void addDynamicDependency(String subComponentName) {
          dynamicDependencies = new ComponentPath(subComponentName, null, dynamicDependencies);
       }
