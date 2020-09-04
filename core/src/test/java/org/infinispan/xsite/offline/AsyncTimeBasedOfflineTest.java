@@ -1,5 +1,6 @@
 package org.infinispan.xsite.offline;
 
+import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -13,9 +14,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.xsite.AbstractXSiteTest;
-import org.infinispan.xsite.BackupSender;
-import org.infinispan.xsite.BackupSenderImpl;
 import org.infinispan.xsite.OfflineStatus;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -40,6 +40,11 @@ public class AsyncTimeBasedOfflineTest extends AbstractXSiteTest {
       String cacheName = method.getName();
       defineCache(LON, cacheName, getLONConfiguration());
       defineCache(NYC, cacheName, getNYCOrSFOConfiguration());
+
+      //disable exponential back-off to avoid messing the times
+      for (int i = 0; i < NUM_NODES; ++i) {
+         iracManager(LON, cacheName, i).setBackOff(ExponentialBackOff.NO_OP);
+      }
 
       String key = method.getName() + "-key";
       int primaryOwner = primaryOwnerIndex(cacheName, key);
@@ -108,17 +113,10 @@ public class AsyncTimeBasedOfflineTest extends AbstractXSiteTest {
       assertTrue("Unable to bring " + SFO + " online. status=" + status, status.bringOnline());
    }
 
-   private BackupSenderImpl backupSender(String cacheName, int index) {
-      return (BackupSenderImpl) cache(LON, cacheName, index).getAdvancedCache()
-            .getComponentRegistry()
-            .getComponent(BackupSender.class);
-   }
-
    private int primaryOwnerIndex(String cacheName, String key) {
       for (int i = 0; i < NUM_NODES; ++i) {
-         boolean isPrimary = cache(LON, cacheName, i).getAdvancedCache().getComponentRegistry()
-               .getDistributionManager()
-               .getCacheTopology()
+
+         boolean isPrimary = extractCacheTopology(cache(LON, cacheName, i))
                .getDistribution(key)
                .isPrimary();
          if (isPrimary) {

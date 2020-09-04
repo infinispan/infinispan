@@ -2,6 +2,7 @@ package org.infinispan.util.logging;
 
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.FATAL;
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
@@ -2067,4 +2068,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The XSiteEntryMergePolicy is missing! Must be non-null.", id = 607)
    CacheConfigurationException missingXSiteEntryMergePolicy();
+
+   @LogMessage(level = FATAL)
+   @Message(value = "[IRAC] Unexpected error occurred.", id = 608)
+   void unexpectedErrorFromIrac(@Cause Throwable t);
 }

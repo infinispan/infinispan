@@ -58,7 +58,7 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
       this.offlineStatus = new ConcurrentHashMap<>();
    }
 
-   private static boolean isCommunicationError(Throwable throwable) {
+   public static boolean isCommunicationError(Throwable throwable) {
       Throwable error = throwable;
       if (throwable instanceof ExecutionException) {
          error = throwable.getCause();
