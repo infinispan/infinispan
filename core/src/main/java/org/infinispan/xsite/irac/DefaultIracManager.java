@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -38,6 +39,8 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ExponentialBackOff;
+import org.infinispan.util.ExponentialBackOffImpl;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -45,6 +48,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.status.DefaultTakeOfflineManager;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
 
@@ -81,6 +85,7 @@ public class DefaultIracManager implements IracManager, Runnable {
 
    private final Map<Object, Object> updatedKeys;
    private final Semaphore senderNotifier;
+   private volatile ExponentialBackOff backOff;
    private volatile boolean hasClear;
    private volatile Collection<XSiteBackup> asyncBackups;
    private volatile Thread sender;
@@ -89,6 +94,7 @@ public class DefaultIracManager implements IracManager, Runnable {
    public DefaultIracManager() {
       this.updatedKeys = new ConcurrentHashMap<>();
       this.senderNotifier = new Semaphore(0);
+      this.backOff = new ExponentialBackOffImpl();
    }
 
    private static Collection<XSiteBackup> asyncBackups(Configuration config, String localSiteName) {
@@ -133,7 +139,6 @@ public class DefaultIracManager implements IracManager, Runnable {
       Thread newSender = new Thread(this, "irac-sender-thread-" + transport.getAddress());
       sender = newSender;
       newSender.start();
-
    }
 
    @Stop
@@ -277,25 +282,37 @@ public class DefaultIracManager implements IracManager, Runnable {
       }
    }
 
+   public void setBackOff(ExponentialBackOff backOff) {
+      this.backOff = Objects.requireNonNull(backOff);
+   }
+
+   public boolean isEmpty() {
+      return updatedKeys.isEmpty();
+   }
+
    private void sendStateRequest(Address primary, IntSet segments) {
       CacheRpcCommand cmd = commandsFactory.buildIracRequestStateCommand(segments);
       rpcManager.sendTo(primary, cmd, DeliverOrder.NONE);
    }
 
 
-   private boolean awaitResponses(CompletionStage<Void> reply) throws InterruptedException {
+   private ResponseResult awaitResponses(CompletionStage<Void> reply) throws InterruptedException {
       //wait for replies
       try {
          reply.toCompletableFuture().get();
-         return true;
+         return ResponseResult.OK;
       } catch (ExecutionException e) {
          //can be ignored. it will be retried in the next round.
-         log.trace("IRAC update not successful.", e);
+         if (trace) {
+            log.trace("IRAC update not successful.", e);
+         }
          //if it fails, we release a permit so the thread can retry
          //otherwise, if the cluster is idle, the keys will never been sent to the remote site
          senderNotifier.release();
+         return DefaultTakeOfflineManager.isCommunicationError(e) ?
+               ResponseResult.NETWORK_EXCEPTION :
+               ResponseResult.REMOTE_EXCEPTION;
       }
-      return false;
    }
 
    private void periodicSend() throws InterruptedException {
@@ -305,11 +322,20 @@ public class DefaultIracManager implements IracManager, Runnable {
       if (hasClear) {
          //make sure the clear is replicated everywhere before sending the updates!
          CompletionStage<Void> rsp = sendCommandToAllBackups(commandsFactory.buildIracClearKeysCommand());
-         if (awaitResponses(rsp)) {
-            hasClear = false;
-         } else {
-            //we got an exception. go for next round
-            return;
+         switch (awaitResponses(rsp)) {
+            case REMOTE_EXCEPTION:
+               //an exception occurred. we need to retry
+               backOff.reset();
+               return;
+            case NETWORK_EXCEPTION:
+               //network exception. backoff to avoid overloading the receiving site
+               backOff.backoffSleep();
+               return;
+            case OK:
+               //everything cleared from remote site. continue with the new updates
+               hasClear = false;
+               backOff.reset();
+               break;
          }
       }
       try {
@@ -317,10 +343,11 @@ public class DefaultIracManager implements IracManager, Runnable {
          updatedKeys.forEach(task);
          task.await();
       } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
          throw e;
       } catch (Throwable t) {
-         //TODO log exception
-         log.fatal("[IRAC] Unexpected error occurred.", t);
+         //it should never happen. SendKeyTask must handle all exceptions!
+         log.unexpectedErrorFromIrac(t);
       }
    }
 
@@ -429,9 +456,17 @@ public class DefaultIracManager implements IracManager, Runnable {
          //cleanup everything not needed
          cleanupTasks.forEach(CleanupTask::run);
 
+         boolean needsBackoff = false;
          //wait for replies
          for (CompletionStage<Void> rsp : responses) {
-            awaitResponses(rsp);
+            if (awaitResponses(rsp) == ResponseResult.NETWORK_EXCEPTION) {
+               needsBackoff = true;
+            }
+         }
+         if (needsBackoff) {
+            backOff.backoffSleep();
+         } else {
+            backOff.reset();
          }
       }
    }
@@ -456,5 +491,11 @@ public class DefaultIracManager implements IracManager, Runnable {
       public void run() {
          removeKey(key, segmentId, lockOwner, tombstone);
       }
+   }
+
+   private enum ResponseResult {
+      OK,
+      REMOTE_EXCEPTION,
+      NETWORK_EXCEPTION
    }
 }

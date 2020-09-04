@@ -2,6 +2,7 @@ package org.infinispan.util.logging;
 
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.FATAL;
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
@@ -2055,6 +2056,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Remote site '%s' has an invalid cache configuration. Changing to offline.", id = 606)
    void xsiteInvalidConfigurationRemoteSite(String siteName);
+
+   @LogMessage(level = FATAL)
+   @Message(value = "[IRAC] Unexpected error occurred.", id = 608)
+   void unexpectedErrorFromIrac(@Cause Throwable t);
 
    @LogMessage(level = DEBUG)
    @Message(value = "Cannot obtain cache '%s' as it is in FAILED state. Please check the configuration", id = 609)
