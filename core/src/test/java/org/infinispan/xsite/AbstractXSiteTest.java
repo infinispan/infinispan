@@ -26,6 +26,8 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.xsite.irac.DefaultIracManager;
+import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.status.DefaultTakeOfflineManager;
 import org.infinispan.xsite.status.TakeOfflineManager;
 import org.jgroups.protocols.relay.RELAY2;
@@ -40,7 +42,7 @@ import org.testng.annotations.BeforeMethod;
 public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
    protected List<TestSite> sites = new ArrayList<>();
-   private Map<String, Integer> siteName2index = new HashMap<>();
+   private final Map<String, Integer> siteName2index = new HashMap<>();
 
    @BeforeMethod(alwaysRun = true) // run even for tests in the unstable group
    public void createBeforeMethod() {
@@ -363,6 +365,10 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       return (DefaultTakeOfflineManager) cache(site, index).getAdvancedCache()
             .getComponentRegistry()
             .getComponent(TakeOfflineManager.class);
+   }
+
+   protected DefaultIracManager iracManager(String site, String cacheName, int index) {
+      return (DefaultIracManager) TestingUtil.extractComponent(cache(site, cacheName, index), IracManager.class);
    }
 
    @Override
