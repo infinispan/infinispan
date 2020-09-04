@@ -1,5 +1,6 @@
 package org.infinispan.xsite.offline;
 
+import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.infinispan.test.TestingUtil.wrapGlobalComponent;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -23,6 +24,7 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.xsite.AbstractXSiteTest;
 import org.infinispan.xsite.OfflineStatus;
 import org.infinispan.xsite.XSiteReplicateCommand;
@@ -50,6 +52,10 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
       defineCache(LON, cacheName, getLONConfiguration());
       defineCache(NYC, cacheName, getNYCOrSFOConfiguration());
 
+      for (int i = 0; i < NUM_NODES; ++i) {
+         iracManager(LON, cacheName, i).setBackOff(ExponentialBackOff.NO_OP);
+      }
+
       String key = method.getName() + "-key";
       int primaryOwner = primaryOwnerIndex(cacheName, key);
       for (int i = 0; i < NUM_NODES; ++i) {
@@ -65,6 +71,10 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
       defineCache(LON, cacheName, getLONConfiguration());
       defineCache(NYC, cacheName, getNYCOrSFOConfiguration());
       defineCache(SFO, cacheName, getNYCOrSFOConfiguration());
+
+      for (int i = 0; i < NUM_NODES; ++i) {
+         iracManager(LON, cacheName, i).setBackOff(ExponentialBackOff.NO_OP);
+      }
 
       String key = method.getName() + "-key";
       int primaryOwner = primaryOwnerIndex(cacheName, key);
@@ -135,7 +145,6 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
 
    private void doTestInNode(String cacheName, int index, int primaryOwnerIndex, String key) {
       Cache<String, String> cache = this.cache(LON, cacheName, index);
-
       assertOnline(cacheName, index, NYC);
       assertOnline(cacheName, index, SFO);
 
@@ -182,9 +191,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
 
    private int primaryOwnerIndex(String cacheName, String key) {
       for (int i = 0; i < NUM_NODES; ++i) {
-         boolean isPrimary = cache(LON, cacheName, i).getAdvancedCache().getComponentRegistry()
-               .getDistributionManager()
-               .getCacheTopology()
+         boolean isPrimary = extractCacheTopology(cache(LON, cacheName, i))
                .getDistribution(key)
                .isPrimary();
          if (isPrimary) {
