@@ -57,10 +57,6 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-cachestore-rest</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-rocksdb</artifactId>
         </dependency>
 
@@ -106,7 +102,6 @@
                                 <jar>infinispan-cachestore-jpa</jar>
                                 <jar>infinispan-cachestore-rocksdb</jar>
                                 <jar>infinispan-cachestore-remote</jar>
-                                <jar>infinispan-cachestore-rest</jar>
                             </jars>
                         </configuration>
                     </execution>
