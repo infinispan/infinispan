@@ -16,7 +16,7 @@ import org.kohsuke.MetaInfServices;
 @CommandDefinition(name = Connect.CMD, description = "Connects to a remote server")
 public class Connect extends CliCommand {
    public static final String CMD = "connect";
-   @Argument(description = "The connection string")
+   @Argument(description = "The connection string 'http://<host>:<port>")
    String connectionString;
 
    @Option(shortName = 'u')

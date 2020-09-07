@@ -22,10 +22,10 @@ import org.kohsuke.MetaInfServices;
 @CommandDefinition(name = Schema.CMD, description = "Manipulates protobuf schemas", activator = ConnectionActivator.class)
 public class Schema extends CliCommand {
    public static final String CMD = "schema";
-   @Arguments(required = true)
+   @Arguments(required = true, description = "The name of the schema")
    List<String> args;
 
-   @Option(completer = FileOptionCompleter.class, shortName = 'u')
+   @Option(completer = FileOptionCompleter.class, shortName = 'u', description = "The protobuf file to upload")
    Resource upload;
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)

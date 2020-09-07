@@ -103,13 +103,13 @@ public class Create extends CliCommand {
       @Argument(required = true)
       String name;
 
-      @Option(shortName = 't', defaultValue = "", completer = CounterTypeCompleter.class)
+      @Option(shortName = 't', defaultValue = "", completer = CounterTypeCompleter.class, description = "Type of counter [weak|strong]")
       String type;
 
-      @Option(shortName = 'i', name = "initial-value", defaultValue = "0")
+      @Option(shortName = 'i', name = "initial-value", defaultValue = "0", description = "Initial value for the counter (defaults to 0)")
       Long initialValue;
 
-      @Option(shortName = 's', defaultValue = "VOLATILE", completer = CounterStorageCompleter.class)
+      @Option(shortName = 's', defaultValue = "VOLATILE", completer = CounterStorageCompleter.class, description = "persistent state PERSISTENT | VOLATILE (default)")
       String storage;
 
       @Option(shortName = 'u', name = "upper-bound")
@@ -118,7 +118,7 @@ public class Create extends CliCommand {
       @Option(shortName = 'l', name = "lower-bound")
       Long lowerBound;
 
-      @Option(shortName = 'c', name = "concurrency-level", defaultValue = "16")
+      @Option(shortName = 'c', name = "concurrency-level", defaultValue = "16", description = "concurrency level for weak counters, defaults to 16")
       Integer concurrencyLevel;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)

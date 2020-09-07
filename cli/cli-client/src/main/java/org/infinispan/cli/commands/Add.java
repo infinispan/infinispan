@@ -22,7 +22,7 @@ public class Add extends CliCommand {
    public static final String COUNTER = "counter";
    public static final String DELTA = "delta";
 
-   @Argument(completer = CounterCompleter.class)
+   @Argument(completer = CounterCompleter.class, description = "The name of the counter")
    String counter;
 
    @Option(description = "Does not display the value", completer = BooleanOptionCompleter.class)
