@@ -1,4 +1,6 @@
-# script is for /etc/systemd/system
+# This script allows you to run Infinispan Server as a systemd service.
+# Modify environment properties in this script as appropriate.
+# Copy this script to the following location: /etc/systemd/system
 # activate with 'systemctl daemon-reload'
 #               'systemctl start|enable infinispan'
 
@@ -15,4 +17,3 @@ User=infinispan
 
 [Install]
 WantedBy=multi-user.target
-
