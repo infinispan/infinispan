@@ -24,7 +24,7 @@ public class Query extends CliCommand {
    public static final String QUERY_MODE = "query-mode";
    public static final String QUERY = "query";
 
-   @Argument(required = true)
+   @Argument(required = true, description = "The Ickle query")
    String query;
 
    @Option(completer = CacheCompleter.class)
@@ -36,7 +36,7 @@ public class Query extends CliCommand {
    @Option(name = OFFSET, defaultValue = "0")
    Integer offset;
 
-   @Option(name = QUERY_MODE, completer = QueryModeCompleter.class, defaultValue = "FETCH")
+   @Option(name = QUERY_MODE, completer = QueryModeCompleter.class, defaultValue = "FETCH", description = "Mode for queries FETCH|BROADCAST, defaults to FETCH")
    String queryMode;
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)

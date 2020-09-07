@@ -43,7 +43,7 @@ public class Drop extends CliCommand {
    public static class Cache extends CliCommand {
       public static final String CMD = "cache";
 
-      @Argument(required = true, completer = CacheCompleter.class)
+      @Argument(required = true, completer = CacheCompleter.class, description = "The cache name")
       String name;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -70,7 +70,7 @@ public class Drop extends CliCommand {
    public static class Counter extends CliCommand {
       public static final String CMD = "counter";
 
-      @Argument(required = true, completer = CounterCompleter.class)
+      @Argument(required = true, completer = CounterCompleter.class, description = "The counter name")
       String name;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
