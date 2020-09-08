@@ -17,7 +17,6 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.BeforeMethod;
@@ -29,7 +28,7 @@ import org.testng.annotations.Test;
  * @author William Burns
  * @since 12.0
  */
-@Test(groups = "xsite", testName = "xsite.AsyncExpirationBackupTest")
+@Test(groups = "xsite", testName = "xsite.AsyncExpirationBackupTest", enabled = false)
 public class AsyncExpirationBackupTest extends AbstractTwoSitesTest {
 
    private ConfigMode lonConfigMode;

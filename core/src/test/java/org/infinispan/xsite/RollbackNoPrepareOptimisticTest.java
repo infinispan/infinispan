@@ -8,7 +8,7 @@ import java.util.concurrent.CompletionStage;
 
 import javax.transaction.TransactionManager;
 
-import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
@@ -46,14 +46,14 @@ public class RollbackNoPrepareOptimisticTest extends AbstractTwoSitesTest {
 
    public static class LogBackupReceiver extends BackupReceiverDelegator {
 
-      volatile VisitableCommand received;
+      volatile ReplicableCommand received;
 
       protected LogBackupReceiver(BackupReceiver delegate) {
          super(delegate);
       }
 
       @Override
-      public CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
+      public CompletionStage<Object> handleRemoteCommand(ReplicableCommand command, boolean preserveOrder) {
          received = command;
          return super.handleRemoteCommand(command, preserveOrder);
       }

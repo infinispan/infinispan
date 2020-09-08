@@ -2,7 +2,7 @@ package org.infinispan.xsite;
 
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
@@ -27,12 +27,7 @@ public abstract class BackupReceiverDelegator implements BackupReceiver {
    }
 
    @Override
-   public CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
-      return delegate.handleRemoteCommand(command, preserveOrder);
-   }
-
-   @Override
-   public CompletionStage<Object> handleRemoteCommand(CacheRpcCommand command, boolean preserveOrder) {
+   public CompletionStage<Object> handleRemoteCommand(ReplicableCommand command, boolean preserveOrder) {
       return delegate.handleRemoteCommand(command, preserveOrder);
    }
 

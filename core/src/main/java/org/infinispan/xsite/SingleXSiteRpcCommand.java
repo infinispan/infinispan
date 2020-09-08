@@ -5,6 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
@@ -15,12 +16,12 @@ import org.infinispan.util.ByteString;
  * @author Pedro Ruivo
  * @since 7.0
  */
-public class SingleXSiteRpcCommand extends XSiteReplicateCommand<Void> {
+public class SingleXSiteRpcCommand extends XSiteReplicateCommand<Object> {
 
-   public static final byte COMMAND_ID = 28;
-   private VisitableCommand command;
+   public static final byte COMMAND_ID = 40;
+   private ReplicableCommand command;
 
-   public SingleXSiteRpcCommand(ByteString cacheName, VisitableCommand command) {
+   public SingleXSiteRpcCommand(ByteString cacheName, ReplicableCommand command) {
       super(COMMAND_ID, cacheName);
       this.command = command;
    }
@@ -34,7 +35,7 @@ public class SingleXSiteRpcCommand extends XSiteReplicateCommand<Void> {
    }
 
    @Override
-   public CompletionStage<Void> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
+   public CompletionStage<Object> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
       return receiver.handleRemoteCommand(command, preserveOrder);
    }
 

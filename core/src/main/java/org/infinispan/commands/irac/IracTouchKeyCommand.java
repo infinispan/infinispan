@@ -5,11 +5,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.distribution.DistributionInfo;
-import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.expiration.impl.ClusterExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.BackupReceiver;
@@ -54,21 +51,6 @@ public class IracTouchKeyCommand extends ForwardableCommand<Boolean> {
    }
 
    @Override
-   public Address forwardAddress(LocalizedCacheTopology cacheTopology) {
-      DistributionInfo distributionInfo = cacheTopology.getDistribution(key);
-      if (distributionInfo.isWriteOwner()) {
-         return null;
-      }
-      return distributionInfo.primary();
-   }
-
-   @Override
-   public ForwardableCommand<Boolean> copyForCacheName(ByteString cacheName) {
-      // TODO: is this really needed?
-      return new IracTouchKeyCommand(cacheName, key);
-   }
-
-   @Override
    public ResponseCollector<Boolean> responseCollector() {
       return ClusterExpirationManager.TouchResponseCollector.INSTANCE;
    }
@@ -76,6 +58,6 @@ public class IracTouchKeyCommand extends ForwardableCommand<Boolean> {
    @Override
    public CompletionStage<Boolean> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
       assert !preserveOrder : "IRAC Touch Command sent asynchronously!";
-      return receiver.forwardAndExecute(this);
+      return receiver.touchEntry(key);
    }
 }

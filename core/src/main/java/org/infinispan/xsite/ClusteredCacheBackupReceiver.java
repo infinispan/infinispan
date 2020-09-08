@@ -25,6 +25,7 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -204,27 +205,25 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    }
 
    @Override
-   public final CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
+   public final CompletionStage<Object> handleRemoteCommand(ReplicableCommand command, boolean preserveOrder) {
+      //currently, it only handles sync xsite requests.
+      //async xsite requests are handle by the other methods.
+      assert !preserveOrder;
       try {
-         //currently, it only handles sync xsite requests.
-         //async xsite requests are handle by the other methods.
-         assert !preserveOrder;
-         //noinspection unchecked
-         return (CompletableFuture<Void>) command.acceptVisitor(null, defaultHandler);
-      } catch (Throwable throwable) {
-         return completedExceptionFuture(throwable);
-      }
-   }
+         if (command instanceof VisitableCommand) {
+            try {
+               //noinspection unchecked
+               return (CompletionStage<Object>) ((VisitableCommand)command).acceptVisitor(null, defaultHandler);
+            } catch (Throwable throwable) {
+               return completedExceptionFuture(throwable);
+            }
+         } else if (command instanceof CacheRpcCommand) {
+            //noinspection unchecked
+            return (CompletionStage<Object>) ((CacheRpcCommand) command).invokeAsync(componentRegistry);
+         } else {
+            throw new UnsupportedOperationException("Only VisitableCommand and CacheRpcCommand is allowed!");
+         }
 
-   @Override
-   public CompletionStage<Object> handleRemoteCommand(CacheRpcCommand command, boolean preserveOrder) {
-      // TODO: may need to reroute as necessary
-      try {
-         //currently, it only handles sync xsite requests.
-         //async xsite requests are handle by the other methods.
-         assert !preserveOrder;
-         //noinspection unchecked
-         return (CompletionStage<Object>) command.invokeAsync(componentRegistry);
       } catch (Throwable throwable) {
          return completedExceptionFuture(throwable);
       }

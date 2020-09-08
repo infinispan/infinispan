@@ -46,7 +46,6 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
-import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -118,7 +117,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.xsite.SingleXSiteCacheRpcCommand;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
@@ -487,13 +485,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public SingleXSiteRpcCommand buildSingleXSiteRpcCommand(VisitableCommand command) {
+   public SingleXSiteRpcCommand buildSingleXSiteRpcCommand(ReplicableCommand command) {
       return actual.buildSingleXSiteRpcCommand(command);
-   }
-
-   @Override
-   public SingleXSiteCacheRpcCommand buildSingleXSiteCacheRpcCommand(CacheRpcCommand command) {
-      return actual.buildSingleXSiteCacheRpcCommand(command);
    }
 
    @Override

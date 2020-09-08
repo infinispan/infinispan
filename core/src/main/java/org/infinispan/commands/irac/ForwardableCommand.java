@@ -24,7 +24,5 @@ public abstract class ForwardableCommand<O> extends XSiteReplicateCommand<O> {
       return false; //by default
    }
 
-   public abstract ForwardableCommand<O> copyForCacheName(ByteString cacheName);
-
    public abstract ResponseCollector<O> responseCollector();
 }

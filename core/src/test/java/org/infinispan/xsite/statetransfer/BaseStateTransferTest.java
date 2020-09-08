@@ -26,7 +26,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -288,7 +288,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
       final BackupListener listener = new BackupListener() {
          @Override
-         public void beforeCommand(VisitableCommand command) throws Exception {
+         public void beforeCommand(ReplicableCommand command) throws Exception {
             checkPoint.trigger("before-update");
             if (!performBeforeState && isUpdatingKeyWithValue(command, key, operation.finalValue())) {
                //we need to wait for the state transfer before perform the command
@@ -297,7 +297,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          }
 
          @Override
-         public void afterCommand(VisitableCommand command) {
+         public void afterCommand(ReplicableCommand command) {
             if (performBeforeState && isUpdatingKeyWithValue(command, key, operation.finalValue())) {
                //command was performed before state... let the state continue
                checkPoint.trigger("apply-state");
@@ -406,12 +406,12 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
       final BackupListener listener = new BackupListener() {
          @Override
-         public void beforeCommand(VisitableCommand command) {
+         public void beforeCommand(ReplicableCommand command) {
             commandReceived.set(true);
          }
 
          @Override
-         public void afterCommand(VisitableCommand command) {
+         public void afterCommand(ReplicableCommand command) {
             commandReceived.set(true);
          }
 
@@ -449,7 +449,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       assertInSite(LON, cache -> assertEquals(operation.finalValue(), cache.get(key)));
    }
 
-   private boolean isUpdatingKeyWithValue(VisitableCommand command, Object key, Object value) {
+   private boolean isUpdatingKeyWithValue(ReplicableCommand command, Object key, Object value) {
       if (command instanceof PutKeyValueCommand) {
          return key.equals(((PutKeyValueCommand) command).getKey()) &&
                value.equals(((PutKeyValueCommand) command).getValue());
@@ -763,11 +763,11 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
    private static abstract class BackupListener {
 
-      void beforeCommand(VisitableCommand command) throws Exception {
+      void beforeCommand(ReplicableCommand command) throws Exception {
          //no-op by default
       }
 
-      void afterCommand(VisitableCommand command) {
+      void afterCommand(ReplicableCommand command) {
          //no-op by default
       }
 
@@ -790,7 +790,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       }
 
       @Override
-      public CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
+      public CompletionStage<Object> handleRemoteCommand(ReplicableCommand command, boolean preserveOrder) {
          try {
             listener.beforeCommand(command);
          } catch (Exception e) {

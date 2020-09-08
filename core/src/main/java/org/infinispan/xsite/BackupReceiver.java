@@ -2,8 +2,7 @@ package org.infinispan.xsite;
 
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
@@ -22,9 +21,7 @@ import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 @Scope(Scopes.NAMED_CACHE)
 public interface BackupReceiver {
 
-   CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder);
-
-   CompletionStage<Object> handleRemoteCommand(CacheRpcCommand command, boolean preserveOrder);
+   CompletionStage<Object> handleRemoteCommand(ReplicableCommand command, boolean preserveOrder);
 
    /**
     * Updates the key with the value from a remote site.
