@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -15,7 +17,6 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.TestOperation;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
@@ -56,7 +57,7 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
 //      for (ConfigMode configMode : ConfigMode.values()) {
 //         tests.add(new Irac3SitesConflictTest().configMode(configMode));
 //      }
-      tests.add(new Irac3SitesConflictTest().configMode(ConfigMode.OPTIMISTIC_TX_RC));
+      tests.add(new Irac3SitesConflictTest().configMode(ConfigMode.PESSIMISTIC_TX));
       return tests.toArray();
    }
 
@@ -94,8 +95,12 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
       doTest(method, TestOperation.REMOVE);
    }
 
-   public void testMaxExpiration(Method method) {
-      doTest(method, Operations.REMOVE_MAX_IDLE_EXPIRED);
+   public void testMaxIdleExpirationSync(Method method) {
+      doTest(method, Operations.REMOVE_MAX_IDLE_EXPIRED_SYNC);
+   }
+
+   public void testMaxIdleExpirationASync(Method method) {
+      doTest(method, Operations.REMOVE_MAX_IDLE_EXPIRED_ASYNC);
    }
 
    public void testConditionalRemove(Method method) {

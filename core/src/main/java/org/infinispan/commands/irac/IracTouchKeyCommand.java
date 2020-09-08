@@ -8,6 +8,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.expiration.impl.ClusterExpirationManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.util.ByteString;
@@ -30,6 +31,11 @@ public class IracTouchKeyCommand extends ForwardableCommand<Boolean> {
    public IracTouchKeyCommand(ByteString cacheName, Object key) {
       super(COMMAND_ID, cacheName);
       this.key = key;
+   }
+
+   @Override
+   public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
+      return null;
    }
 
    @Override
