@@ -22,7 +22,7 @@ import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.Property
  * the root entity index. This allows queries involving associated objects properties.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.FIELD, ElementType.METHOD })
+@Target({ElementType.FIELD, ElementType.METHOD})
 @Documented
 @PropertyMapping(processor = @PropertyMappingAnnotationProcessorRef(type = IndexedEmbedded.Processor.class))
 public @interface IndexedEmbedded {
@@ -46,7 +46,7 @@ public @interface IndexedEmbedded {
     *
     * @return the paths to include. Default to empty array
     */
-   String[] includePaths() default { };
+   String[] includePaths() default {};
 
    /**
     * Stop indexing embedded elements when {@code depth} is reached.
@@ -77,31 +77,29 @@ public @interface IndexedEmbedded {
             cleanedUpPrefix = cleanedUpPrefix.substring(1);
          }
 
-         if ( cleanedUpPrefix.isEmpty() ) {
+         if (cleanedUpPrefix.isEmpty()) {
             cleanedUpPrefix = null;
          }
 
          Integer cleanedUpMaxDepth = annotation.depth();
-         if ( cleanedUpMaxDepth.equals( -1 ) ) {
+         if (cleanedUpMaxDepth.equals(-1)) {
             cleanedUpMaxDepth = null;
          }
 
          String[] includePathsArray = annotation.includePaths();
          Set<String> cleanedUpIncludePaths;
-         if ( includePathsArray.length > 0 ) {
+         if (includePathsArray.length > 0) {
             cleanedUpIncludePaths = new HashSet<>();
-            Collections.addAll( cleanedUpIncludePaths, includePathsArray );
-         }
-         else {
+            Collections.addAll(cleanedUpIncludePaths, includePathsArray);
+         } else {
             cleanedUpIncludePaths = Collections.emptySet();
          }
 
-         mappingContext.indexedEmbedded()
-               .extractors( ContainerExtractorPath.defaultExtractors() )
-               .prefix( cleanedUpPrefix )
-               .structure( ObjectStructure.DEFAULT )
-               .maxDepth( cleanedUpMaxDepth )
-               .includePaths( cleanedUpIncludePaths );
+         mappingContext.indexedEmbedded(cleanedUpPrefix)
+               .extractors(ContainerExtractorPath.defaultExtractors())
+               .structure(ObjectStructure.DEFAULT)
+               .includeDepth(cleanedUpMaxDepth)
+               .includePaths(cleanedUpIncludePaths);
       }
    }
 }

@@ -1,7 +1,6 @@
 package org.infinispan.query.dsl.embedded.impl;
 
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Optional;
 
@@ -69,19 +68,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       if (fieldDescriptor == null) {
          return super.isRepeatedProperty(entityType, propertyPath);
       }
-
-      if (fieldDescriptor.isValueField() && fieldDescriptor.toValueField().multiValued()) {
-         return true;
-      }
-      if (!fieldDescriptor.isValueField() && fieldDescriptor.toObjectField().multiValued()) {
-         return true;
-      }
-
-      if (propertyPath.length == 1) {
-         return false;
-      }
-
-      return isRepeatedProperty(entityType, Arrays.copyOfRange(propertyPath, 0, propertyPath.length - 1));
+      return fieldDescriptor.multiValuedInRoot();
    }
 
    @Override

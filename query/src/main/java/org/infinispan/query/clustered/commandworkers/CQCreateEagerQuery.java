@@ -30,7 +30,7 @@ final class CQCreateEagerQuery extends CQWorker {
    private CompletionStage<NodeTopDocs> collectKeys(SearchQueryBuilder query) {
       return blockingManager.supplyBlocking(() -> query.documentReference().fetchAll(), "CQCreateEagerQuery#collectKeys")
             .thenApply(queryResult -> {
-               if (queryResult.totalHitCount() == 0L) return null;
+               if (queryResult.total().hitCount() == 0L) return null;
 
                Object[] keys = queryResult.hits().stream()
                      .map(DocumentReference::id)
@@ -42,7 +42,7 @@ final class CQCreateEagerQuery extends CQWorker {
 
    private CompletionStage<NodeTopDocs> collectProjections(SearchQueryBuilder query) {
       return blockingManager.supplyBlocking(() -> query.build().fetchAll(), "CQCreateEagerQuery#collectProjections").thenApply(queryResult -> {
-         if (queryResult.totalHitCount() == 0L) return null;
+         if (queryResult.total().hitCount() == 0L) return null;
 
          List<?> hits = queryResult.hits();
          Object[] projections = hits.toArray(new Object[0]);

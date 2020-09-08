@@ -5,6 +5,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.search.engine.search.timeout.spi.TimeoutManager;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.search.mapper.common.EntityReference;
 
@@ -38,7 +39,7 @@ public final class EntityLoader<E> implements QueryResultLoader<E> {
    }
 
    @Override
-   public List<E> loadBlocking(List<EntityReference> entityReferences) {
+   public List<E> loadBlocking(List<EntityReference> entityReferences, TimeoutManager timeoutManager) {
       int entitiesSize = entityReferences.size();
       LinkedHashSet<Object> keys = new LinkedHashSet<>(entitiesSize);
       for (EntityReference entityReference : entityReferences) {
