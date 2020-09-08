@@ -37,6 +37,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.query.remote.impl.filter.IckleCacheEventFilterConverterFactory;
 import org.infinispan.util.logging.Log;
@@ -81,6 +82,7 @@ public class ClientListenerWithDslFilterObjectStorageTest extends MultiHotRodSer
       cfgBuilder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cfgBuilder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cfgBuilder.indexing().enable()
+            .addIndexedEntities(UserHS.class)
             .addProperty("directory.type", "local-heap");
       return cfgBuilder;
    }

@@ -43,10 +43,8 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
-      cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-            .indexing().enable()
-            .addProperty("directory.type", "local-heap");
-      return TestCacheManagerFactory.createCacheManager(cfg);
+      cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      return TestCacheManagerFactory.createServerModeCacheManager(cfg);
    }
 
    public void testProtobufFieldIndexingMetadata() {
