@@ -41,7 +41,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    private static final String READER_STRATEGY = "hibernate.search.default.reader.strategy";
 
-   private static final String FS_PROVIDER = "filesystem";
+   private static final String FS_PROVIDER = "local-filesystem";
 
    /**
     * Legacy name "ram" was replaced by "local-heap" many years ago.
@@ -269,12 +269,11 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          }
          if (indexedEntities().isEmpty() && !getBuilder().template()) {
             //TODO  [anistor] This does not take into account eventual programmatically defined entity mappings
-            CONFIG.noIndexableClassesDefined();  //todo [anistor]  really really remove autodetection in 11 !
+            throw CONFIG.noIndexableClassesDefined();
          }
       } else {
-         //TODO [anistor] Infinispan 10 must not allow definition of indexed entities or indexing properties if indexing is not enabled
          if (!indexedEntities().isEmpty()) {
-            // throw new CacheConfigurationException("Cache configuration must not declare indexed entities if it is not indexed");
+            throw CONFIG.indexableClassesDefined();
          }
       }
 

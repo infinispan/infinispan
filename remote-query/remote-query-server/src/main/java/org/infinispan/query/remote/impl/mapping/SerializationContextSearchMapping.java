@@ -14,24 +14,21 @@ import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
 
-public class SerializationContextSearchMapping {
+public final class SerializationContextSearchMapping {
 
    private SerializationContextSearchMapping() {
    }
 
    public static SearchMapping buildMapping(SearchMappingCommonBuilding commonBuilding,
                                             EntityLoader<EntityReference, ?> entityLoader,
-                                            Set<String> indexedEntityTypes, SerializationContext serializationContext) {
+                                            Set<String> indexedEntityTypes,
+                                            SerializationContext serializationContext) {
       GlobalReferenceHolder globalReferenceHolder = new GlobalReferenceHolder(serializationContext.getGenericDescriptors());
       ProtobufBootstrapIntrospector introspector = new ProtobufBootstrapIntrospector();
       SearchMappingBuilder builder = commonBuilding.builder(introspector);
       builder.setEntityLoader(entityLoader);
       builder.setEntityConverter(new ProtobufEntityConverter(serializationContext, globalReferenceHolder.getRootMessages()));
       ProgrammaticMappingConfigurationContext programmaticMapping = builder.programmaticMapping();
-
-      if (globalReferenceHolder.getRootMessages().isEmpty()) {
-         return null;
-      }
 
       boolean existIndexedEntities = false;
       for (GlobalReferenceHolder.RootMessageInfo rootMessage : globalReferenceHolder.getRootMessages()) {
@@ -49,6 +46,6 @@ public class SerializationContextSearchMapping {
          builder.addEntityType(byte[].class, fullName);
       }
 
-      return (existIndexedEntities) ? builder.build() : null;
+      return existIndexedEntities ? builder.build() : null;
    }
 }

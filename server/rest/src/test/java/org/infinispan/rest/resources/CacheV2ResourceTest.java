@@ -303,7 +303,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       // Indexed
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().addProperty("directory.type", "local-heap").enable();
-      builder.indexing().enable();
+      builder.indexing().enable().addIndexedEntity("Entity");
       createCache(builder, "cacheIndexed");
       details = getCacheDetail("cacheIndexed");
       assertTrue(details.at("queryable").asBoolean());
@@ -384,10 +384,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testFlags() {
-      String proto = "/* @Indexed */ message Entity { /* @Field */ required int32 value=1; }";
-      registerSchema("sample.proto", proto);
       RestResponse response = insertEntity(1, 1000);
-      System.out.println(response.getBody());
       ResponseAssertion.assertThat(response).isOk();
       assertIndexed(1000);
 

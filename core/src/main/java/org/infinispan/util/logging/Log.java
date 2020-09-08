@@ -1397,9 +1397,9 @@ public interface Log extends BasicLogger {
    TimeoutException coordinatorTimeoutWaitingForView(int expectedViewId, int currentViewId,
                                                      Object clusterManagerStatus);
 
-   @LogMessage(level = WARN)
-   @Message(value = "No indexable classes were defined for this indexed cache; switching to autodetection (support for autodetection will be removed in Infinispan 11).", id = 403)
-   void noIndexableClassesDefined();
+   @Message(value = "No indexable classes were defined for this indexed cache. The configuration must contain " +
+         "classes or protobuf message types annotated with '@Indexed'", id = 403)
+   CacheConfigurationException noIndexableClassesDefined();
 
 //   @Message(value = "The configured entity class %s is not indexable. Please remove it from the indexing configuration.", id = 404)
 //   CacheConfigurationException classNotIndexable(String className);
@@ -2076,4 +2076,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = DEBUG)
    @Message(value = "Cannot obtain cache '%s' as it is in FAILED state. Please check the configuration", id = 609)
    void cannotObtainFailedCache(String name, @Cause Throwable t);
+
+   @Message(value = "Cache configuration must not declare indexed entities if it is not indexed", id = 610)
+   CacheConfigurationException indexableClassesDefined();
 }

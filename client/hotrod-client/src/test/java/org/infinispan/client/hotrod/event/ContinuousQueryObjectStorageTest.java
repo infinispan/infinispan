@@ -32,6 +32,7 @@ import org.infinispan.query.api.continuous.ContinuousQueryListener;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCacheEventFilterConverterFactory;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
@@ -80,6 +81,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
       cfgBuilder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cfgBuilder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cfgBuilder.indexing().enable()
+            .addIndexedEntities(UserHS.class)
             .addProperty("directory.type", "local-heap");
       cfgBuilder.expiration().disableReaper();
       return cfgBuilder;

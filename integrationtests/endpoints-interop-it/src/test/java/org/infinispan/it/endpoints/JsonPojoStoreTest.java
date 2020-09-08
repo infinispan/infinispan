@@ -20,6 +20,7 @@ public class JsonPojoStoreTest extends BaseJsonTest {
       ConfigurationBuilder indexedCache = new ConfigurationBuilder();
 
       indexedCache.indexing().enable()
+            .addIndexedEntities(CryptoCurrency.class)
             .addProperty("directory.type", "local-heap");
 
       indexedCache.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);

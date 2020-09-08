@@ -8,6 +8,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -23,8 +24,11 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.remote.impl.ProtobufFieldIndexingMetadataTest")
 public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
 
-   private static final String PROTO_DEFINITIONS =
-         "/** @Indexed */ message User {\n" +
+   private static final class TestSCI implements SerializationContextInitializer {
+
+      @Override
+      public String getProtoFile() {
+         return "/** @Indexed */ message User {\n" +
                "\n" +
                "   /** @Field(store = Store.YES) */ required string name = 1;\n" +
                "\n" +
@@ -39,19 +43,36 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
                "   /** @Field(store = Store.YES) */ repeated Address indexedAddresses = 3;\n" +
                "\n" +
                "   /** @Field(index = Index.NO) */ repeated Address unindexedAddresses = 4;\n" +
-               "}";
+               "}\n";
+      }
+
+      @Override
+      public String getProtoFileName() {
+         return "user_definition.proto";
+      }
+
+      @Override
+      public void registerSchema(SerializationContext serCtx) {
+         serCtx.registerProtoFiles(FileDescriptorSource.fromString(getProtoFileName(), getProtoFile()));
+      }
+
+      @Override
+      public void registerMarshallers(SerializationContext ctx) {
+      }
+   }
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().enable()
-            .addProperty("directory.type", "local-heap");
-      return TestCacheManagerFactory.createCacheManager(cfg);
+            .addIndexedEntity("User")
+            .addProperty("default.directory_provider", "local-heap")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+      return TestCacheManagerFactory.createServerModeCacheManager(new TestSCI(), cfg);
    }
 
    public void testProtobufFieldIndexingMetadata() {
       SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
-      serCtx.registerProtoFiles(FileDescriptorSource.fromString("user_definition.proto", PROTO_DEFINITIONS));
       ProtobufFieldIndexingMetadata userIndexedFieldProvider = new ProtobufFieldIndexingMetadata(serCtx.getMessageDescriptor("User"));
       ProtobufFieldIndexingMetadata addressIndexedFieldProvider = new ProtobufFieldIndexingMetadata(serCtx.getMessageDescriptor("User.Address"));
 

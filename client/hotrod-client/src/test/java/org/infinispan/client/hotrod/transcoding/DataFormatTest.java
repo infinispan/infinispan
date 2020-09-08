@@ -13,7 +13,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,6 +43,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -218,10 +218,11 @@ public class DataFormatTest extends SingleHotRodServerTest {
    public void testBatchOperations() {
       remoteCache.clear();
 
-      Map<ComplexKey, String> entries = new HashMap<>();
+      Map<ComplexKey, ComplexValue> entries = new HashMap<>();
       IntStream.range(0, 50).forEach(i -> {
          ComplexKey key = new ComplexKey(String.valueOf(i), (float) i);
-         entries.put(key, UUID.randomUUID().toString());
+         ComplexValue value = new ComplexValue(UUID.randomUUID());
+         entries.put(key, value);
       });
       remoteCache.putAll(entries);
 
@@ -239,7 +240,9 @@ public class DataFormatTest extends SingleHotRodServerTest {
          Json key = Json.object("_type", "org.infinispan.test.client.DataFormatTest.ComplexKey")
                .set("id", i)
                .set("ratio", i);
-         newEntries.put(key.toString(), UUID.randomUUID().toString());
+         Json value = Json.object("_type", "org.infinispan.test.client.DataFormatTest.ComplexValue")
+               .set("uuid",  UUID.randomUUID().toString());
+         newEntries.put(key.toString(), value.toString());
       });
       jsonCache.putAll(newEntries);
 
@@ -255,6 +258,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
       remoteCache.clear();
 
       ComplexKey complexKey = new ComplexKey("Key-1", 89.88f);
+      ComplexValue complexValue = new ComplexValue(UUID.randomUUID());
 
       // Receive events as JSON Strings
       DataFormat jsonStringFormat = DataFormat.builder().keyType(APPLICATION_JSON).keyMarshaller(new UTF8StringMarshaller()).build();
@@ -262,7 +266,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
       EventLogListener<Object> l = new EventLogListener<>(remoteCache.withDataFormat(jsonStringFormat));
 
       withClientListener(l, remote -> {
-         remoteCache.put(complexKey, UUID.randomUUID().toString());
+         remoteCache.put(complexKey, complexValue);
          l.expectOnlyCreatedEvent("\n{\n   \"_type\": \"org.infinispan.test.client.DataFormatTest.ComplexKey\",\n   \"id\": \"Key-1\",\n   \"ratio\": 89.88\n}\n");
       });
    }
@@ -322,7 +326,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
    }
 
    @AutoProtoSchemaBuilder(
-         includeClasses = ComplexKey.class,
+         includeClasses = {ComplexKey.class, ComplexValue.class},
          schemaFileName = "test.client.DataFormatTest.proto",
          schemaFilePath = "proto/generated",
          schemaPackageName = "org.infinispan.test.client.DataFormatTest"
@@ -356,8 +360,7 @@ class JsonMarshaller extends AbstractMarshaller {
    }
 }
 
-@SuppressWarnings("unused")
-class ComplexKey implements Serializable {
+class ComplexKey {
 
    @ProtoField(number = 1)
    String id;
@@ -376,12 +379,49 @@ class ComplexKey implements Serializable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       ComplexKey that = (ComplexKey) o;
-      return Objects.equals(id, that.id) &&
-            Objects.equals(ratio, that.ratio);
+      return Objects.equals(id, that.id) && Objects.equals(ratio, that.ratio);
    }
 
    @Override
    public int hashCode() {
       return Objects.hash(id, ratio);
+   }
+}
+
+@ProtoDoc("@Indexed")
+class ComplexValue {
+
+   private UUID uuid;
+
+   @ProtoFactory
+   ComplexValue(String uuid) {
+      setUuid(uuid);
+   }
+
+   ComplexValue(UUID uuid) {
+      this.uuid = uuid;
+   }
+
+   @ProtoField(number = 1)
+   @ProtoDoc("@Field(store = Store.YES)")
+   public String getUuid() {
+      return uuid.toString();
+   }
+
+   public void setUuid(String uuid) {
+      this.uuid =  UUID.fromString(uuid);
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ComplexValue that = (ComplexValue) o;
+      return Objects.equals(uuid, that.uuid);
+   }
+
+   @Override
+   public int hashCode() {
+      return uuid.hashCode();
    }
 }

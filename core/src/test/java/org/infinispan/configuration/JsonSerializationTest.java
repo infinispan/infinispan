@@ -105,7 +105,6 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
             .numOwners(2)
             .numSegments(123)
 
-
             .groups()
             .enabled(true)
             .addGrouper(new Grouper1()).addGrouper(new Grouper2())
@@ -141,11 +140,10 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
             .maxRetries(2)
             .waitTime(12)
 
-
             .security().authorization().role("ROLE").role("ROLA")
             .persistence().passivation(false)
             .expiration().lifespan(10).wakeUpInterval(123).maxIdle(1122)
-            .indexing().autoConfig(true).addProperty("v", "v")
+            .indexing().enable().addIndexedEntity("Entity").addProperty("v", "v")
             .customInterceptors()
             .addInterceptor()
             .interceptorClass(AsyncInterceptor1.class)

@@ -16,6 +16,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
@@ -43,6 +44,7 @@ import org.infinispan.query.remote.impl.filter.IckleBinaryProtobufFilterAndConve
 import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCacheEventFilterConverter;
 import org.infinispan.query.remote.impl.filter.IckleProtobufCacheEventFilterConverter;
 import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
+import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.query.remote.impl.mapping.SerializationContextSearchMapping;
 import org.infinispan.query.remote.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -57,6 +59,7 @@ import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
  */
 @InfinispanModule(name = "remote-query-server", requiredModules = {"core", "query", "server-core"})
 public final class LifecycleManager implements ModuleLifecycle {
+   private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
@@ -146,12 +149,12 @@ public final class LifecycleManager implements ModuleLifecycle {
          SearchMappingCommonBuilding commonBuilding = cr.getComponent(SearchMappingCommonBuilding.class);
          SearchMapping searchMapping = cr.getComponent(SearchMapping.class);
          if (commonBuilding != null && searchMapping == null) {
-            AdvancedCache cache = cr.getComponent(Cache.class).getAdvancedCache().withStorageMediaType()
+            AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache().withStorageMediaType()
                   .withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class);
             KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
 
             searchMapping = SerializationContextSearchMapping.buildMapping(commonBuilding,
-                  new EntityLoader(cache, keyTransformationHandler),
+                  new EntityLoader<>(cache, keyTransformationHandler),
                   cache.getCacheConfiguration().indexing().indexedEntityTypes(), serCtx);
 
             if (searchMapping != null) {
@@ -170,6 +173,9 @@ public final class LifecycleManager implements ModuleLifecycle {
                for (String typeName : cfg.indexing().indexedEntityTypes()) {
                   if (!knownTypes.contains(typeName)) {
                      throw new CacheConfigurationException("The declared indexed type '" + typeName + "' is not known. Please register its proto schema file first.");
+                  }
+                  if (searchMapping == null || searchMapping.indexedEntity(typeName) == null) {
+                     throw log.typeNotIndexed(typeName);
                   }
                }
             }

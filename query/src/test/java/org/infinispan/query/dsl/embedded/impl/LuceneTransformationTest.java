@@ -248,7 +248,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.getQueryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
 
       assertThat(parsed.getProjections()).isEqualTo(new String[]{"id", "name"});
    }
@@ -259,7 +259,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.getQueryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
 
       assertThat(parsed.getProjections()).isEqualTo(new String[]{"author.name"});
    }
@@ -270,7 +270,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.getQueryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
 
       assertThat(parsed.getProjections()).isEqualTo(new String[]{"author.address.street"});
    }
@@ -688,7 +688,7 @@ public class LuceneTransformationTest {
       String ickle = "select d.email from org.infinispan.query.dsl.embedded.impl.model.Employee e JOIN e.contactDetails d";
 
       SearchQuery<?> result = parseAndTransform(ickle);
-      assertThat(result.getQueryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+      assertThat(result.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
 
       assertThat(parse(ickle).getProjections()).containsOnly("contactDetails.email");
    }
@@ -699,7 +699,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.getQueryString()).isEqualTo("+contactDetails.address.postCode:EA123 #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:EA123 #__HSEARCH_type:main");
 
       assertThat(parsed.getProjections()).containsOnly("contactDetails.email");
    }
@@ -710,7 +710,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.getQueryString()).isEqualTo("+contactDetails.address.postCode:EA123 #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:EA123 #__HSEARCH_type:main");
 
       assertThat(parsed.getProjections()).containsOnly("contactDetails.email");
    }
@@ -721,7 +721,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.getQueryString()).isEqualTo("+contactDetails.address.postCode:[0000 TO ZZZZ] #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:[0000 TO ZZZZ] #__HSEARCH_type:main");
 
       assertThat(parsed.getProjections()).containsOnly("contactDetails.email");
    }
@@ -732,7 +732,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.getQueryString()).isEqualTo("+contactDetails.address.postCode:{0000 TO *] #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:{0000 TO *] #__HSEARCH_type:main");
 
       assertThat(parsed.getProjections()).containsOnly("contactDetails.email");
    }
@@ -743,7 +743,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.getQueryString()).isEqualTo("+contactDetails.address.postCode:EA1* #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:EA1* #__HSEARCH_type:main");
 
       assertThat(parsed.getProjections()).containsOnly("contactDetails.email");
    }
@@ -754,7 +754,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.getQueryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
 
       assertThat(parsed.getProjections()).containsOnly("name", "text");
    }
@@ -765,7 +765,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.getQueryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
 
       assertThat(parsed.getProjections()).containsOnly("name", "text", "contactDetails.email");
    }
@@ -776,7 +776,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.getQueryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
 
       assertThat(parsed.getProjections()).containsOnly("name", "text", "contactDetails.email");
    }
@@ -791,7 +791,7 @@ public class LuceneTransformationTest {
                   " WHERE d.address.postCode='EA123' AND a.email='ninja647@mailinator.com'");
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.getQueryString())
+      assertThat(query.queryString())
             .isEqualTo("+(+contactDetails.address.postCode:EA123 +alternativeContactDetails.email:ninja647@mailinator.com) #__HSEARCH_type:main");
 
       assertThat(parsed.getProjections()).containsOnly("contactDetails.email");
@@ -803,7 +803,7 @@ public class LuceneTransformationTest {
 
    private void assertGeneratedLuceneQuery(String queryString, Map<String, Object> namedParameters, String expectedLuceneQuery) {
       SearchQuery<?> result = parseAndTransform(queryString, namedParameters);
-      assertThat(result.getQueryString()).isEqualTo(expectedLuceneQuery);
+      assertThat(result.queryString()).isEqualTo(expectedLuceneQuery);
    }
 
    private SearchQuery<?> parseAndTransform(String queryString) {

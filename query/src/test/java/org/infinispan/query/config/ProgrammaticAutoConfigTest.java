@@ -31,7 +31,7 @@ public class ProgrammaticAutoConfigTest {
               .create();
 
       assertFalse(cfg.properties().isEmpty());
-      assertEquals(cfg.properties().get("hibernate.search.backends.infinispan_backend.directory.type"), "filesystem");
+      assertEquals(cfg.properties().get("hibernate.search.backends.infinispan_backend.directory.type"), "local-filesystem");
    }
 
    @Test
@@ -42,7 +42,7 @@ public class ProgrammaticAutoConfigTest {
               .create();
 
       assertFalse(cfg.properties().isEmpty());
-      assertEquals(cfg.properties().get("hibernate.search.backends.infinispan_backend.directory.type"), "filesystem");
+      assertEquals(cfg.properties().get("hibernate.search.backends.infinispan_backend.directory.type"), "local-filesystem");
    }
 
    @Test

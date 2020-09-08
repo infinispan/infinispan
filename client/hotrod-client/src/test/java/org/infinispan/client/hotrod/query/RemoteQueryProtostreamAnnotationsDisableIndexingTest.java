@@ -10,6 +10,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -84,9 +85,10 @@ public class RemoteQueryProtostreamAnnotationsDisableIndexingTest extends Single
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.indexing().enable()
+            .addIndexedEntity("sample_bank_account.User")
             .addProperty("directory.type", "local-heap");
 
-      return TestCacheManagerFactory.createServerModeCacheManager(builder);
+      return TestCacheManagerFactory.createServerModeCacheManager(TestDomainSCI.INSTANCE, builder);
    }
 
    @Override

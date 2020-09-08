@@ -16,7 +16,9 @@ public class DataFormatIndexedTest extends DataFormatTest {
    @Override
    protected ConfigurationBuilder buildCacheConfig() {
       ConfigurationBuilder parentBuilder = hotRodCacheConfiguration();
-      parentBuilder.indexing().enable().addProperty("directory.type", "local-heap");
+      parentBuilder.indexing().enable()
+            .addIndexedEntities("org.infinispan.test.client.DataFormatTest.ComplexValue")
+            .addProperty("directory.type", "local-heap");
       return parentBuilder;
    }
 }

@@ -8,7 +8,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
-import org.infinispan.util.concurrent.CompletableFutures;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -27,7 +26,7 @@ public abstract class BaseHttpRequestHandler extends SimpleChannelInboundHandler
    final RestAccessLoggingHandler restAccessLoggingHandler = new RestAccessLoggingHandler();
 
    void handleError(ChannelHandlerContext ctx, FullHttpRequest request, Throwable throwable) {
-      Throwable cause = CompletableFutures.extractException(throwable);
+      Throwable cause = Util.getRootCause(throwable);
       NettyRestResponse errorResponse;
       if (cause instanceof RestResponseException) {
          RestResponseException responseException = (RestResponseException) throwable;
@@ -35,7 +34,7 @@ public abstract class BaseHttpRequestHandler extends SimpleChannelInboundHandler
          errorResponse = new NettyRestResponse.Builder().status(responseException.getStatus()).entity(responseException.getText()).build();
       } else if (cause instanceof SecurityException) {
          errorResponse = new NettyRestResponse.Builder().status(FORBIDDEN).entity(cause.getMessage()).build();
-      } else if (cause instanceof CacheConfigurationException) {
+      } else if (cause instanceof CacheConfigurationException || cause instanceof IllegalArgumentException) {
          errorResponse = new NettyRestResponse.Builder().status(BAD_REQUEST).entity(cause.getMessage()).build();
       } else {
          Throwable rootCause = Util.getRootCause(throwable);
