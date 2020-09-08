@@ -145,7 +145,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
             .security().authorization().role("ROLE").role("ROLA")
             .persistence().passivation(false)
             .expiration().lifespan(10).wakeUpInterval(123).maxIdle(1122)
-            .indexing().autoConfig(true).addProperty("v", "v")
+            .indexing().enable().addIndexedEntities("Entity").addProperty("v", "v")
             .customInterceptors()
             .addInterceptor()
             .interceptorClass(AsyncInterceptor1.class)

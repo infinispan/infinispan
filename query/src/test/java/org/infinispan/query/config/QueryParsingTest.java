@@ -44,7 +44,6 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
       Configuration replDefaults = namedConfigurations.get("repl-with-default").build();
       assertTrue(replDefaults.indexing().enabled());
-      assertFalse(replDefaults.indexing().properties().isEmpty());
    }
 
    public void testConfigurationFileParsingWithDefaultEnabled() throws IOException {
@@ -57,9 +56,6 @@ public class QueryParsingTest extends AbstractInfinispanTest {
       assertTrue(defaultConfiguration.indexing().enabled());
       assertEquals(defaultConfiguration.indexing().properties()
             .getProperty(SearchConfig.DIRECTORY_TYPE), SearchConfig.HEAP);
-
-      Configuration nonSearchableCfg = namedConfigurations.get("not-searchable").build();
-      assertFalse(nonSearchableCfg.indexing().enabled());
 
       Configuration simpleCfg = namedConfigurations.get("simple").build();
       assertTrue(simpleCfg.indexing().enabled());

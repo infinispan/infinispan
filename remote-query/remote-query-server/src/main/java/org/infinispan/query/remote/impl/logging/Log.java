@@ -74,4 +74,7 @@ public interface Log extends BasicLogger {
 
    @Message(id = 28018, value = "It is not possible to create indexes for a field having type %s. Field: %s.")
    CacheException typeNotIndexable(String typeName, String fieldName);
+
+   @Message(id = 28019, value = "The configured indexed-entity type '%s' must be indexed. Please annotate it with @Indexed or remove it from the configuration.")
+   CacheConfigurationException typeNotIndexed(String typeName);
 }

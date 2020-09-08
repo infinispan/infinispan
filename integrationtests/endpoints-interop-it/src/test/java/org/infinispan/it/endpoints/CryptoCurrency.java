@@ -14,7 +14,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 @Indexed
 @ProtoDoc("@Indexed")
-class CryptoCurrency implements Serializable {
+public class CryptoCurrency implements Serializable {
 
    @Field(analyze = Analyze.NO)
    @ProtoField(number = 1)
