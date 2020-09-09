@@ -93,11 +93,11 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
    }
 
 //   public void testMaxIdleExpirationSync(Method method) {
-//      doTest(method, Operations.REMOVE_MAX_IDLE_EXPIRED_SYNC);
+//      doTest(method, TestOperation.REMOVE_MAX_IDLE_EXPIRED_SYNC);
 //   }
 //
 //   public void testMaxIdleExpirationASync(Method method) {
-//      doTest(method, Operations.REMOVE_MAX_IDLE_EXPIRED_ASYNC);
+//      doTest(method, TestOperation.REMOVE_MAX_IDLE_EXPIRED_ASYNC);
 //   }
 
    public void testConditionalRemove(Method method) {
