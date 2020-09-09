@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.irac.IracVersionGenerator;
@@ -36,6 +37,12 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
    @Inject ClusteringDependentLogic clusteringDependentLogic;
    @Inject IracVersionGenerator iracVersionGenerator;
    @Inject KeyPartitioner keyPartitioner;
+
+   @Override
+   public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
+      // Expiration isn't supported yet for xsite and lifespan doesn't need to be sent across sites
+      return invokeNext(ctx, command);
+   }
 
    protected static boolean isNormalWriteCommand(WriteCommand command) {
       return !command.hasAnyFlag(FlagBitSets.IRAC_UPDATE);

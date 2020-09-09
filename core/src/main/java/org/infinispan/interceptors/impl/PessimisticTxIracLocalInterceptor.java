@@ -24,7 +24,6 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
@@ -147,11 +146,6 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
    @Override
    public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) {
       return visitWriteCommand(ctx, command);
-   }
-
-   @Override
-   public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) {
-      return visitDataWriteCommand(ctx, command);
    }
 
    @SuppressWarnings("rawtypes")

@@ -16,6 +16,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
@@ -73,6 +74,11 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 		if (!command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
 			beginInvalidating(ctx, command.getKey());
 		}
+		return invokeNext(ctx, command);
+	}
+
+	@Override
+	public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
 		return invokeNext(ctx, command);
 	}
 

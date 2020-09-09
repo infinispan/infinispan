@@ -15,12 +15,14 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.KeyValueMetadataSizeCalculator;
 import org.infinispan.container.offheap.OffHeapConcurrentMap;
@@ -34,6 +36,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -60,6 +63,8 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
    private long minSize;
    private KeyValueMetadataSizeCalculator<Object, Object> calculator;
    private InternalExpirationManager<Object, Object> expirationManager;
+
+   private InvocationSuccessAction<RemoveExpiredCommand> removeExpiredAction = this::removeExpiredAccept;
 
    public long getCurrentSize() {
       return currentSize.get();
@@ -164,6 +169,34 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
          increaseSize(changeAmount);
       }
       return super.visitInvalidateCommand(ctx, command);
+   }
+
+   // Remove Expired is not transactional
+   @Override
+   public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) {
+      Object key = command.getKey();
+      // Skip adding changeAmount if originator is not primary
+      if (ctx.isOriginLocal() && dm != null && !dm.getCacheTopology().getSegmentDistribution(command.getSegment()).isPrimary()) {
+         return invokeNext(ctx, command);
+      }
+      return invokeNextThenAccept(ctx, command, removeExpiredAction);
+   }
+
+   private void removeExpiredAccept(InvocationContext rCtx, RemoveExpiredCommand rCommand, Object rValue) {
+      Object rKey = rCommand.getKey();
+      if (rCommand.isSuccessful()) {
+         if (dm == null || dm.getCacheTopology().getSegmentDistribution(rCommand.getSegment()).isWriteOwner()) {
+            MVCCEntry<?, ?> entry = (MVCCEntry<?, ?>) rCtx.lookupEntry(rKey);
+            if (isTrace) {
+               log.tracef("Key %s was removed via expiration", rKey);
+            }
+
+            long changeAmount = -calculator.calculateSize(rKey, entry.getOldValue(), entry.getOldMetadata(), entry.getInternalMetadata());
+            if (changeAmount != 0 && !increaseSize(changeAmount)) {
+               throw CONTAINER.containerFull(maxSize);
+            }
+         }
+      }
    }
 
    @Override
