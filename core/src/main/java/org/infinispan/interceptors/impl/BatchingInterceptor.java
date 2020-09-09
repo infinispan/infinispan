@@ -10,6 +10,7 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
@@ -48,6 +49,11 @@ public class BatchingInterceptor extends DDAsyncInterceptor {
       return command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ) ?
             invokeNext(ctx, command) :
             handleDefault(ctx, command);
+   }
+
+   @Override
+   public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
+      return invokeNext(ctx, command);
    }
 
    @Override

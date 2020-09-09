@@ -178,7 +178,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private volatile boolean stopping = false;
    private boolean transactional;
    private boolean batchingEnabled;
-   private final ContextBuilder pferContextBuilder = this::putForExternalReadContext;
+   private final ContextBuilder nonTxContextBuilder = this::nonTxContextBuilder;
 
    public CacheImpl(String name) {
       this.name = name;
@@ -715,8 +715,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Transaction ongoingTransaction = null;
       try {
          ongoingTransaction = suspendOngoingTransactionIfExists();
-         InvocationContext ctx = invocationHelper.createInvocationContextWithImplicitTransaction(1, true);
-         return invocationHelper.invokeAsync(ctx, command);
+         return invocationHelper.invokeAsync(nonTxContextBuilder, command, 1);
       } catch (Exception e) {
          if (log.isDebugEnabled()) log.debug("Caught exception while doing removeExpired()", e);
          return CompletableFutures.completedExceptionFuture(e);
@@ -884,7 +883,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       try {
          ongoingTransaction = suspendOngoingTransactionIfExists();
          // if the entry exists then this should be a no-op.
-         putIfAbsent(key, value, metadata, EnumUtil.mergeBitSets(PFER_FLAGS, explicitFlags), pferContextBuilder);
+         putIfAbsent(key, value, metadata, EnumUtil.mergeBitSets(PFER_FLAGS, explicitFlags), nonTxContextBuilder);
       } catch (Exception e) {
          if (log.isDebugEnabled()) log.debug("Caught exception while doing putForExternalRead()", e);
       } finally {
@@ -967,7 +966,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return notifier.addFilteredListenerAsync(listener, filter, converter, filterAnnotations);
    }
 
-   private InvocationContext putForExternalReadContext(int keyCount) {
+   private InvocationContext nonTxContextBuilder(int keyCount) {
       return transactional ?
             invocationContextFactory.createSingleKeyNonTxInvocationContext() :
             invocationContextFactory.createInvocationContext(true, keyCount);
