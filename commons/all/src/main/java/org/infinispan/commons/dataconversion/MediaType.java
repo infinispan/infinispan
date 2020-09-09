@@ -9,17 +9,22 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.util.Immutables;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -33,6 +38,27 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.MEDIA_TYPE)
 @SerializeWith(value = MediaType.MediaTypeExternalizer.class)
 public final class MediaType {
+   private static final Pattern TREE_PATTERN;
+   private static final Pattern LIST_SEPARATOR_PATTERN;
+
+   static {
+      // Adapted from https://stackoverflow.com/a/48046041/55870
+      // See also https://tools.ietf.org/html/rfc7231#section-3.1.1.1
+      // and https://tools.ietf.org/html/rfc7230#section-3.2.6
+      // Extended to support "*" as a media type (as used by java.net.HttpURLConnection)
+      // More details at https://bugs.openjdk.java.net/browse/JDK-8163921
+      // Use PrintPattern.main(new String(TREE_PATTERN.toString()) to view the regex structure
+      String ows = "[ \t]*";
+      // Expand ranges in token pattern so that it uses the ASCII-only BitClass for matching
+      String token = "[!#$%&'*+.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz^_`|~-]+";
+      String quotedString = "\"(?:[^\"\\\\]|\\\\.)*\"";
+      String typeSubtype = ows + "((" + token + ")/" + token + "|\\*)" + ows;
+      String parameter = ";" + ows + "(" + token + ")=(" + token + "|" + quotedString + ")" + ows;
+      String listSeparator = "\\G," + ows;
+      String tree = "^" + typeSubtype + "|\\G" + parameter + "|\\G" + listSeparator;
+      TREE_PATTERN = Pattern.compile(tree, Pattern.DOTALL);
+      LIST_SEPARATOR_PATTERN = Pattern.compile(listSeparator, Pattern.DOTALL);
+   }
 
    // OpenMetrics aka Prometheus content type
    public static final String APPLICATION_OPENMETRICS_TYPE = "application/openmetrics-text";
@@ -129,10 +155,9 @@ public final class MediaType {
    private static final double DEFAULT_WEIGHT = 1.0;
    private static final Charset DEFAULT_CHARSET = UTF_8;
 
-   private final Map<String, String> params = new HashMap<>(2);
-   private final String type;
-   private final String subType;
+   private final Map<String, String> params;
    private final String typeSubtype;
+   private final int typeLength;
    private final boolean matchesAll;
    private final transient double weight;
 
@@ -141,15 +166,27 @@ public final class MediaType {
    }
 
    public MediaType(String type, String subtype, Map<String, String> params) {
-      this.type = validate(type);
-      this.subType = validate(subtype);
-      this.typeSubtype = type + "/" + subtype;
-      this.matchesAll = typeSubtype.equalsIgnoreCase(MATCH_ALL_TYPE);
+      this(type + "/" + subtype, type.length(), params);
+   }
+
+   public MediaType(String typeSubtype) {
+      this(typeSubtype, emptyMap());
+   }
+
+   public MediaType(String typeSubType, Map<String, String> params) {
+      this(typeSubType, validate(typeSubType), params);
+   }
+
+   private MediaType(String typeSubType, int typeLength, Map<String, String> params) {
+      this.typeSubtype = typeSubType;
+      this.typeLength = typeLength;
+      this.matchesAll = typeSubtype.equals(MATCH_ALL_TYPE);
       if (params != null) {
-         this.params.putAll(params);
+         this.params = Immutables.immutableMapCopy(params);
          String weight = params.get(WEIGHT_PARAM_NAME);
          this.weight = weight != null ? parseWeight(weight) : DEFAULT_WEIGHT;
       } else {
+         this.params = emptyMap();
          this.weight = DEFAULT_WEIGHT;
       }
    }
@@ -170,34 +207,92 @@ public final class MediaType {
    @ProtoFactory
    public static MediaType fromString(String tree) {
       if (tree == null || tree.isEmpty()) throw CONTAINER.missingMediaType();
-      int separatorIdx = tree.indexOf(';');
-      boolean emptyParams = separatorIdx == -1;
-      String types = emptyParams ? tree : tree.substring(0, separatorIdx);
-      String params = emptyParams ? "" : tree.substring(separatorIdx + 1);
-      Map<String, String> paramMap = parseParams(params);
 
-      // "*" is not a valid MediaType according to the https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html,
-      // but we'll ignore for now to play nice with java.net.HttpURLConnection.
-      // More details on https://bugs.openjdk.java.net/browse/JDK-8163921
-      if (types.trim().equals("*")) {
-         return emptyParams ? MediaType.MATCH_ALL : new MediaType("*", "*", paramMap);
-      }
-      if (types.indexOf('/') == -1) {
-         throw CONTAINER.invalidMediaTypeSubtype();
+      Matcher matcher = TREE_PATTERN.matcher(tree);
+      return parseSingleMediaType(tree, matcher, false);
+   }
+
+   private static MediaType parseSingleMediaType(String input, Matcher matcher, boolean isList) {
+      if (!matcher.lookingAt() || matcher.start(1) < 0) {
+         throw CONTAINER.invalidMediaTypeSubtype(input);
       }
 
-      String[] typeSubtype = types.split("/");
-      if(typeSubtype.length > 2) throw CONTAINER.invalidMediaTypeSubtype();
-      return new MediaType(typeSubtype[0].trim(), typeSubtype[1].trim(), paramMap);
+      String typeSubtype;
+      int typeLength;
+      if (matcher.start(2) >= 0) {
+         // group 1 is the full type+subtype, group 2 is the type
+         typeSubtype = matcher.group(1);
+         typeLength = matcher.end(2) - matcher.start(2);
+      } else {
+         // group 1 is "*"
+         typeSubtype = MATCH_ALL_TYPE;
+         typeLength = 1;
+      }
+
+      Map<String, String> paramMap = null;
+      String firstParamName = null;
+      String firstParamValue = null;
+      while (matcher.end() < input.length()) {
+         // find() doesn't skip any characters because of the \G
+         if (!matcher.find()) {
+            throw CONTAINER.invalidMediaTypeParam(input, input.substring(matcher.regionStart()));
+         }
+
+         // Groups 1 and 2 are only valid during the first match because of the ^
+         String paramName = matcher.group(3);
+         String paramValue = matcher.group(4);
+
+         if (paramName == null) {
+            // The comma alternative matched
+            if (!isList) {
+              throw CONTAINER.invalidMediaTypeSubtype(input);
+            } else if (matcher.end() < input.length()) {
+               // parseSingleMediaType will be called again
+               break;
+            } else {
+               throw CONTAINER.invalidMediaTypeListCommaAtEnd(input);
+            }
+         }
+
+         if (firstParamName == null) {
+            firstParamName = paramName;
+            firstParamValue = paramValue;
+         } else {
+            if (paramMap == null) {
+               paramMap = new HashMap<>();
+            }
+            paramMap.put(firstParamName, firstParamValue);
+            paramMap.put(paramName, paramValue);
+         }
+      }
+
+      if (paramMap == null && firstParamName != null) {
+         paramMap = Collections.singletonMap(firstParamName, firstParamValue);
+      }
+
+      return new MediaType(typeSubtype, typeLength, paramMap);
    }
 
    /**
     * Parse a comma separated list of media type trees.
     */
    public static Stream<MediaType> parseList(String mediaTypeList) {
-      return stream(mediaTypeList.split(","))
-            .map(MediaType::fromString)
-            .sorted(Comparator.comparingDouble((MediaType m) -> m.weight).reversed());
+      if (mediaTypeList == null || mediaTypeList.isEmpty()) throw CONTAINER.missingMediaType();
+
+      Matcher matcher = TREE_PATTERN.matcher(mediaTypeList);
+      List<MediaType> list = new ArrayList<>();
+      while (true) {
+         MediaType mediaType = parseSingleMediaType(mediaTypeList, matcher, true);
+         list.add(mediaType);
+
+         if (matcher.end() == mediaTypeList.length())
+            break;
+
+         matcher.region(matcher.end(), mediaTypeList.length());
+      }
+
+      list.sort(Comparator.comparingDouble(MediaType::getWeight).reversed());
+      return list.stream();
    }
 
    private static double parseWeight(String weightValue) {
@@ -205,39 +300,6 @@ public final class MediaType {
          return Double.parseDouble(weightValue);
       } catch (NumberFormatException nf) {
          throw CONTAINER.invalidWeight(weightValue);
-      }
-   }
-
-   private static Map<String, String> parseParams(String params) {
-      Map<String, String> parsed = new HashMap<>();
-      if (params == null || params.isEmpty()) return parsed;
-
-      String[] parameters = params.split(";");
-
-      for (String p : parameters) {
-         if (!p.contains("=")) throw CONTAINER.invalidMediaTypeParam(p);
-         String[] nameValue = p.split("=");
-         String paramName = nameValue[0].trim();
-         String paramValue = nameValue[1].trim();
-         boolean isQuoted = paramValue.startsWith("\"") || paramValue.startsWith("\'");
-         String parsedValue = paramValue;
-         if (isQuoted) {
-            checkValidQuotes(paramValue);
-            String quoted = nameValue[1].trim();
-            parsedValue = quoted.substring(1, quoted.length() - 1);
-         }
-         parsed.put(validate(paramName), validate(parsedValue));
-      }
-      return parsed;
-   }
-
-   private static boolean checkStartAndEnd(String toCheck, char c) {
-      return toCheck != null && toCheck.charAt(0) == c && toCheck.charAt(toCheck.length() - 1) == c;
-   }
-
-   private static void checkValidQuotes(String paramValue) {
-      if (!checkStartAndEnd(paramValue, '\'') && !checkStartAndEnd(paramValue, '\"')) {
-         throw CONTAINER.unquotedMediaTypeParam();
       }
    }
 
@@ -258,7 +320,7 @@ public final class MediaType {
 
    public MediaType withoutParameters() {
       if (params.isEmpty()) return this;
-      return new MediaType(type, subType);
+      return new MediaType(typeSubtype);
    }
 
    public double getWeight() {
@@ -299,11 +361,11 @@ public final class MediaType {
    }
 
    public String getType() {
-      return type;
+      return typeSubtype.substring(0, typeLength);
    }
 
    public String getSubType() {
-      return subType;
+      return typeSubtype.substring(typeLength + 1);
    }
 
    public boolean hasParameters() {
@@ -319,17 +381,15 @@ public final class MediaType {
    }
 
    public MediaType withParameters(Map<String, String> parameters) {
-      return parameters.isEmpty() ? this : new MediaType(this.type, this.subType, parameters);
+      return parameters.isEmpty() ? this : new MediaType(this.typeSubtype, parameters);
    }
 
-   private static String validate(String token) {
-      if (token == null) throw new NullPointerException("type and subtype cannot be null");
-      for (char c : token.toCharArray()) {
-         if (c < 0x20 || c > 0x7F || INVALID_TOKENS.indexOf(c) > 0) {
-            throw CONTAINER.invalidCharMediaType(c, token);
-         }
-      }
-      return token;
+   private static int validate(String typeSubtype) {
+      if (typeSubtype == null) throw new NullPointerException("type and subtype cannot be null");
+      Matcher matcher = TREE_PATTERN.matcher(typeSubtype);
+      if (!matcher.matches())
+         throw CONTAINER.invalidMediaTypeSubtype(typeSubtype);
+      return matcher.end(2);
    }
 
    public MediaType withCharset(Charset charset) {
@@ -339,7 +399,7 @@ public final class MediaType {
    public MediaType withParameter(String name, String value) {
       Map<String, String> newParams = new HashMap<>(params);
       newParams.put(name, value);
-      return new MediaType(type, subType, newParams);
+      return new MediaType(typeSubtype, newParams);
    }
 
    public String toStringExcludingParam(String... params) {
@@ -375,8 +435,7 @@ public final class MediaType {
          Short id = MediaTypeIds.getId(mediaType);
          if (id == null) {
             output.writeBoolean(false);
-            output.writeUTF(mediaType.type);
-            output.writeUTF(mediaType.subType);
+            output.writeUTF(mediaType.typeSubtype);
             output.writeObject(mediaType.params);
          } else {
             output.writeBoolean(true);
@@ -394,10 +453,9 @@ public final class MediaType {
             Map<String, String> params = (Map<String, String>) input.readObject();
             return MediaTypeIds.getMediaType(id).withParameters(params);
          } else {
-            String type = input.readUTF();
-            String subType = input.readUTF();
+            String typeSubType = input.readUTF();
             Map<String, String> params = (Map<String, String>) input.readObject();
-            return new MediaType(type, subType, params);
+            return new MediaType(typeSubType, params);
          }
       }
    }

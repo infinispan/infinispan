@@ -157,21 +157,21 @@ public interface Log extends BasicLogger {
    @Message(value = "end() failed for %s", id = 928)
    void xaResourceEndFailed(String xaResource, @Cause Throwable t);
 
-   @Message(value = "MediaType cannot be empty or null!", id = 929)
+   @Message(value = "Media type cannot be empty or null!", id = 929)
    EncodingException missingMediaType();
 
-   @Message(value = "MediaType must contain a type and a subtype separated by '/'", id = 930)
-   EncodingException invalidMediaTypeSubtype();
+   @Message(value = "Invalid media type '%s': must contain a type and a subtype separated by '/'", id = 930)
+   EncodingException invalidMediaTypeSubtype(String mediaType);
 
-   @Message(value = "Failed to parse MediaType: Invalid param description '%s'", id = 931)
-   EncodingException invalidMediaTypeParam(String param);
+   @Message(value = "Invalid media type '%s': invalid param '%s'", id = 931)
+   EncodingException invalidMediaTypeParam(String mediaType, String param);
 
-   @Message(value = "Unclosed param value quote", id = 932)
-   EncodingException unquotedMediaTypeParam();
+   @Message(value = "Invalid media type list '%s': comma expected", id = 932)
+   EncodingException invalidMediaTypeListCommaMissing(String mediaType);
 
-   @Message(value = "Invalid character '%s' found in token '%s'", id = 933)
-   EncodingException invalidCharMediaType(char character, String token);
-
+   @Message(value = "Invalid media type list '%s': type expected after comma", id = 933)
+   EncodingException invalidMediaTypeListCommaAtEnd(String mediaType);
+//
    @Message(value = "Errors converting '%s' from '%s' to '%s'", id = 934)
    EncodingException errorTranscoding(String content, MediaType contentType, MediaType requestType, @Cause Throwable t);
 
