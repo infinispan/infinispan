@@ -87,30 +87,9 @@
         </sequential>
     </macrodef>
     <target name="-do.kinit" depends="-check.skipped" unless="tests.skipped">
-        <exec executable="bash" outputproperty="ps.pid" resultproperty="ps.result" failifexecutionfails="false"
-              failonerror="false" osfamily="unix">
-            <arg value="-c"/>
-            <!-- Use \- to exclude the awk command -->
-            <arg value="ps -eaf | awk '/jboss\-modules.jar/ {print $$2;}'"/>
-            <redirector>
-                <outputfilterchain>
-                    <prefixlines prefix=" "/>
-                    <striplinebreaks/>
-                    <trim/>
-                </outputfilterchain>
-            </redirector>
-        </exec>
-        <checkoutput run-property="run.ps" exitcode-property="ps.result" output-property="ps.pid"/>
-
-        <!-- lsof is required for unix, otherwise the server wont be stopped -->
-        <exec executable="bash" outputproperty="lsof.output" failifexecutionfails="true" failonerror="true" osfamily="unix">
-            <arg value="-c"/>
-            <arg value="lsof" />
-        </exec>
-
-        <exec executable="bash" outputproperty="lsof.pid" resultproperty="lsof.result" failifexecutionfails="false" failonerror="false" osfamily="unix">
-            <arg value="-c"/>
-            <arg value="lsof -t -i TCP:${hotrod.port} -s TCP:LISTEN"/>
+        <!-- failifexecutionfails="true" will fail the build if lsof does not exist -->
+        <exec executable="lsof" outputproperty="lsof.pid" resultproperty="lsof.result" failifexecutionfails="true" failonerror="false" osfamily="unix">
+            <arg line="-t -i TCP:${hotrod.port} -s TCP:LISTEN"/>
             <redirector>
                 <outputfilterchain>
                     <prefixlines prefix=" "/>
@@ -121,24 +100,7 @@
         </exec>
         <checkoutput run-property="run.lsof" exitcode-property="lsof.result" output-property="lsof.pid"/>
 
-        <!--jps/jstat are not supported in IBM JDK we should add failifexecutionfails parameter to not fail when jps command does not exist -->
-        <exec executable="${server.jvm}/bin/jps" outputproperty="jps.pid" resultproperty="jps.result"
-              failifexecutionfails="false" failonerror="false">
-            <redirector>
-                <outputfilterchain>
-                    <linecontains>
-                        <contains value="jboss-modules.jar"/>
-                    </linecontains>
-                    <tokenfilter>
-                        <replaceregex pattern=" .*" replace=" "/>
-                    </tokenfilter>
-                    <striplinebreaks/>
-                </outputfilterchain>
-            </redirector>
-        </exec>
-        <checkoutput run-property="run.jps" exitcode-property="jps.result" output-property="jps.pid"/>
-
-        <exec executable="netstat" outputproperty="cmd.pid" resultproperty="cmd.result" failifexecutionfails="false"
+        <exec executable="netstat" outputproperty="cmd.pid" resultproperty="cmd.result" failifexecutionfails="true"
               failonerror="false" osfamily="windows">
             <arg value="-aon"/>
             <redirector>
@@ -156,36 +118,11 @@
             </redirector>
         </exec>
         <checkoutput run-property="run.cmd" exitcode-property="cmd.result" output-property="cmd.pid"/>
-
-        <fail message="Build requires either ps/jps/lsof (UNIX) or netstat (WINDOWS) in order to stop running servers">
-            <condition>
-                <not>
-                    <or>
-                        <equals arg1="${ps.result}" arg2="0"/>
-                        <equals arg1="${lsof.result}" arg2="0"/>
-                        <equals arg1="${jps.result}" arg2="0"/>
-                        <equals arg1="${cmd.result}" arg2="0"/>
-                    </or>
-                </not>
-            </condition>
-        </fail>
-    </target>
-
-    <target name="-do.ps" if="run.ps">
-        <exec executable="kill" osfamily="unix">
-            <arg line="-9 ${ps.pid}"/>
-        </exec>
     </target>
 
     <target name="-do.lsof" if="run.lsof">
         <exec executable="kill" osfamily="unix">
             <arg line="-9 ${lsof.pid}"/>
-        </exec>
-    </target>
-
-    <target name="-do.jps" if="run.jps">
-        <exec executable="kill" osfamily="unix">
-            <arg line="-9 ${jps.pid}"/>
         </exec>
     </target>
 
@@ -195,5 +132,5 @@
         </exec>
     </target>
 
-    <target name="kill-server" depends="-do.kinit, -do.ps, -do.lsof, -do.jps, -do.cmd"/>
+    <target name="kill-server" depends="-do.kinit, -do.lsof, -do.cmd"/>
 </project>
