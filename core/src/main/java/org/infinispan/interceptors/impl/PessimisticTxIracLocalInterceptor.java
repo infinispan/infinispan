@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.impl;
 
+import static org.infinispan.util.IracUtils.getIracVersionFromCacheEntry;
+
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -27,6 +29,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -267,22 +270,25 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
          return;
       }
       int segment = getSegment(command, key);
-      CompletionStage<IracMetadata> metadata = requestNewMetadata(segment);
+      CompletionStage<IracMetadata> metadata = requestNewMetadata(segment, ctx.lookupEntry(key));
       ctx.storeIracMetadata(key, metadata);
    }
 
-   private CompletionStage<IracMetadata> requestNewMetadata(int segment) {
+   private CompletionStage<IracMetadata> requestNewMetadata(int segment, CacheEntry<?, ?> cacheEntry) {
       LocalizedCacheTopology cacheTopology = getCacheTopology();
       DistributionInfo dInfo = cacheTopology.getSegmentDistribution(segment);
       if (dInfo.isPrimary()) {
-         return CompletableFuture.completedFuture(iracVersionGenerator.generateNewMetadata(segment));
+         IracEntryVersion versionSeen = getIracVersionFromCacheEntry(cacheEntry);
+         return CompletableFuture.completedFuture(iracVersionGenerator.generateNewMetadata(segment, versionSeen));
       } else {
-         return requestNewMetadataFromPrimaryOwner(dInfo, cacheTopology.getTopologyId());
+         return requestNewMetadataFromPrimaryOwner(dInfo, cacheTopology.getTopologyId(), cacheEntry);
       }
    }
 
-   private CompletionStage<IracMetadata> requestNewMetadataFromPrimaryOwner(DistributionInfo dInfo, int topologyId) {
-      IracMetadataRequestCommand cmd = commandsFactory.buildIracMetadataRequestCommand(dInfo.segmentId());
+   private CompletionStage<IracMetadata> requestNewMetadataFromPrimaryOwner(DistributionInfo dInfo, int topologyId,
+                                                                            CacheEntry<?, ?> cacheEntry) {
+      IracEntryVersion versionSeen = getIracVersionFromCacheEntry(cacheEntry);
+      IracMetadataRequestCommand cmd = commandsFactory.buildIracMetadataRequestCommand(dInfo.segmentId(), versionSeen);
       cmd.setTopologyId(topologyId);
       RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
       return rpcManager.invokeCommand(dInfo.primary(), cmd, RESPONSE_COLLECTOR, rpcOptions);

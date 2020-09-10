@@ -86,7 +86,7 @@ public class IracMetadataStoreTest extends AbstractXSiteTest {
 
    private static IracMetadata generateNew() {
       long v = V_GENERATOR.incrementAndGet();
-      return new IracMetadata(LON, new IracEntryVersion(Collections.singletonMap(LON, new TopologyIracVersion(1, v))));
+      return new IracMetadata(LON, new IracEntryVersion(Collections.singletonMap(LON, TopologyIracVersion.create(1, v))));
    }
 
    private static ManualIracVersionGenerator createManualIracVerionGenerator(Cache<String, Object> cache) {
@@ -417,6 +417,11 @@ public class IracMetadataStoreTest extends AbstractXSiteTest {
 
       @Override
       public IracMetadata generateNewMetadata(int segment) {
+         return metadata;
+      }
+
+      @Override
+      public IracMetadata generateNewMetadata(int segment, IracEntryVersion versionSeen) {
          return metadata;
       }
    }

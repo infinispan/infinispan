@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.impl;
 
 import static org.infinispan.remoting.responses.PrepareResponse.asPrepareResponse;
+import static org.infinispan.util.IracUtils.getIracVersionFromCacheEntry;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -13,6 +14,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -101,7 +103,8 @@ public class OptimisticTxIracLocalSiteInterceptor extends AbstractIracLocalSiteI
          StreamData data = iterator.next();
          IracMetadata metadata;
          if (isPrimaryOwner(data)) {
-            metadata = segmentMetadata.computeIfAbsent(data.segment, iracVersionGenerator::generateNewMetadata);
+            IracEntryVersion versionSeen = getIracVersionFromCacheEntry(ctx.lookupEntry(data.key));
+            metadata = segmentMetadata.computeIfAbsent(data.segment, segment -> iracVersionGenerator.generateNewMetadata(segment, versionSeen));
          } else {
             metadata = segmentMetadata.computeIfAbsent(data.segment, prepareResponse::getIracMetadata);
          }
@@ -120,11 +123,19 @@ public class OptimisticTxIracLocalSiteInterceptor extends AbstractIracLocalSiteI
             .filter(this::isPrimaryOwner)
             .distinct()
             .iterator();
-      Map<Integer, IracMetadata> segmentMetadata = new HashMap<>();
+      Map<Integer, IracEntryVersion> maxVersionSeen = new HashMap<>();
       while (iterator.hasNext()) {
          StreamData data = iterator.next();
-         segmentMetadata.computeIfAbsent(data.segment, iracVersionGenerator::generateNewMetadata);
+         IracEntryVersion versionSeen = getIracVersionFromCacheEntry(ctx.lookupEntry(data.key));
+         if (versionSeen != null) {
+            maxVersionSeen.merge(data.segment, versionSeen, IracEntryVersion::merge);
+         } else {
+            maxVersionSeen.putIfAbsent(data.segment, null);
+         }
       }
+      Map<Integer, IracMetadata> segmentMetadata = new HashMap<>();
+      maxVersionSeen.forEach((segment, version) ->
+            segmentMetadata.put(segment, iracVersionGenerator.generateNewMetadata(segment, version)));
       rsp.setNewIracMetadata(segmentMetadata);
       if (isTraceEnabled()) {
          getLog().tracef("[IRAC] After successful remote prepare for tx %s. New Return Value: %s",

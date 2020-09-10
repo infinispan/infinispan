@@ -1,5 +1,7 @@
 package org.infinispan.xsite;
 
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.CacheMode;
@@ -85,9 +87,19 @@ public abstract class AbstractMultipleSitesTest extends AbstractXSiteTest {
          throw new IllegalArgumentException("Default number of sites must be less than the max number of configured sites.");
       }
       for (int siteIndex = 0; siteIndex < defaultNumberOfSites(); siteIndex++) {
-         createSite(siteName(siteIndex), defaultNumberOfNodes(), defaultGlobalConfigurationForSite(siteIndex), defaultConfigurationForSite(siteIndex));
+         createSite(siteName(siteIndex), defaultNumberOfNodes(), defaultGlobalConfigurationForSite(siteIndex),
+               defaultConfigurationForSite(siteIndex));
       }
+      waitForSites();
       afterSitesCreated();
+   }
+
+   protected void restartSite(int siteIndex) {
+      TestSite site = site(siteIndex);
+      assertTrue(site.cacheManagers.isEmpty());
+      site.createClusteredCaches(defaultNumberOfNodes(), null, defaultGlobalConfigurationForSite(siteIndex),
+            defaultConfigurationForSite(siteIndex), true);
+      waitForSites();
    }
 
    private void assertValidSiteIndex(int index) {

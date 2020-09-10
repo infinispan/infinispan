@@ -9,6 +9,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
@@ -27,8 +28,8 @@ public class IracMetadataRequestCommand implements CacheRpcCommand, TopologyAffe
    private ByteString cacheName;
    private int segment;
    private int topologyId = -1;
+   private IracEntryVersion versionSeen;
 
-   @SuppressWarnings("unused")
    public IracMetadataRequestCommand() {
    }
 
@@ -36,9 +37,10 @@ public class IracMetadataRequestCommand implements CacheRpcCommand, TopologyAffe
       this.cacheName = cacheName;
    }
 
-   public IracMetadataRequestCommand(ByteString cacheName, int segment) {
+   public IracMetadataRequestCommand(ByteString cacheName, int segment, IracEntryVersion versionSeen) {
       this.cacheName = cacheName;
       this.segment = segment;
+      this.versionSeen = versionSeen;
    }
 
    @Override
@@ -48,7 +50,7 @@ public class IracMetadataRequestCommand implements CacheRpcCommand, TopologyAffe
 
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
-      return completedFuture(registry.getIracVersionGenerator().running().generateNewMetadata(segment));
+      return completedFuture(registry.getIracVersionGenerator().running().generateNewMetadata(segment, versionSeen));
    }
 
    @Override
@@ -64,13 +66,13 @@ public class IracMetadataRequestCommand implements CacheRpcCommand, TopologyAffe
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeInt(segment);
-      output.writeInt(topologyId);
+      output.writeObject(versionSeen);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException {
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       this.segment = input.readInt();
-      this.topologyId = input.readInt();
+      this.versionSeen = (IracEntryVersion) input.readObject();
    }
 
    @Override
@@ -90,6 +92,7 @@ public class IracMetadataRequestCommand implements CacheRpcCommand, TopologyAffe
             "cacheName=" + cacheName +
             ", segment=" + segment +
             ", topologyId=" + topologyId +
+            ", versionSeen=" + versionSeen +
             '}';
    }
 

@@ -1,6 +1,7 @@
 package org.infinispan.xsite.statetransfer;
 
 import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
+import static org.infinispan.context.Flag.IRAC_STATE;
 import static org.infinispan.context.Flag.PUT_FOR_X_SITE_STATE_TRANSFER;
 import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
@@ -37,7 +38,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
 
    private static final long STATE_TRANSFER_PUT_FLAGS = EnumUtil.bitSetOf(PUT_FOR_X_SITE_STATE_TRANSFER,
                                                                           IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
-                                                                          SKIP_XSITE_BACKUP);
+                                                                          SKIP_XSITE_BACKUP, IRAC_STATE);
    private static final Log log = LogFactory.getLog(XSiteStateConsumerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();
@@ -49,7 +50,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
    @Inject CommitManager commitManager;
    @Inject KeyPartitioner keyPartitioner;
 
-   private AtomicReference<String> sendingSite = new AtomicReference<>(null);
+   private final AtomicReference<String> sendingSite = new AtomicReference<>(null);
 
    @Override
    public void startStateTransfer(String sendingSite) {
@@ -102,7 +103,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
          transactionManager.begin();
          InvocationContext ctx = invocationContextFactory.createInvocationContext(transactionManager.getTransaction(),
                                                                                   true);
-         ((TxInvocationContext) ctx).getCacheTransaction().setStateTransferFlag(PUT_FOR_X_SITE_STATE_TRANSFER);
+         ((TxInvocationContext<?>) ctx).getCacheTransaction().setStateTransferFlag(PUT_FOR_X_SITE_STATE_TRANSFER);
          for (XSiteState siteState : chunk) {
             interceptorChain.invoke(ctx, createPut(siteState));
             if (trace) {

@@ -1,5 +1,7 @@
 package org.infinispan.xsite;
 
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,7 +43,7 @@ import org.testng.annotations.BeforeMethod;
  */
 public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
-   protected List<TestSite> sites = new ArrayList<>();
+   protected final List<TestSite> sites = new ArrayList<>();
    private final Map<String, Integer> siteName2index = new HashMap<>();
 
    @BeforeMethod(alwaysRun = true) // run even for tests in the unstable group
@@ -101,6 +103,18 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       ts.cacheManagers.forEach(Lifecycle::stop);
    }
 
+   protected void stopSite(int siteIndex) {
+      TestSite site = site(siteIndex);
+      List<EmbeddedCacheManager> cacheManagers = site.cacheManagers;
+      while (!cacheManagers.isEmpty()) {
+         cacheManagers.remove(cacheManagers.size() - 1).stop();
+         if (!cacheManagers.isEmpty()) {
+            site.waitForClusterToForm(null);
+         }
+      }
+      assertTrue(site.cacheManagers.isEmpty());
+   }
+
    protected abstract void createSites();
 
    protected TestSite createSite(String siteName, int numNodes, GlobalConfigurationBuilder gcb, ConfigurationBuilder defaultCacheConfig) {
@@ -114,6 +128,10 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       sites.add(testSite);
       siteName2index.put(siteName, sites.size() - 1);
       return testSite;
+   }
+
+   public void waitForSites() {
+      waitForSites(10, TimeUnit.SECONDS, siteName2index.keySet().toArray(new String[0]));
    }
 
    /**
@@ -135,7 +153,6 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
                                                                            .findProtocol(RELAY2.class);
             if (!relay2.isSiteMaster())
                return;
-
             while (System.nanoTime() - deadlineNanos < 0) {
                if (expectedSites.equals(manager.getTransport().getSitesView()))
                   break;
@@ -177,6 +194,22 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
    protected <K,V> List<Cache<K,V>> caches(String site, String cacheName) {
       return Collections.unmodifiableList(site(site).getCaches(cacheName));
+   }
+
+   protected <K,V> List<Cache<K,V>> caches(int siteIndex) {
+      return caches(siteIndex, null);
+   }
+
+   protected <K,V> List<Cache<K,V>> caches(int siteIndex, String cacheName) {
+      return Collections.unmodifiableList(site(siteIndex).getCaches(cacheName));
+   }
+
+   protected <K, V> Cache<K,V> cache(int siteIndex, int cacheIndex) {
+      return site(siteIndex).cache(cacheIndex);
+   }
+
+   protected <K, V> Cache<K,V> cache(int siteIndex, int cacheIndex, String cacheName) {
+      return site(siteIndex).cache(cacheName, cacheIndex);
    }
 
    protected void startCache(String siteName, String cacheName, ConfigurationBuilder configurationBuilder) {
@@ -237,7 +270,15 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       boolean assertInCache(Cache<K, V> cache);
    }
 
-   public static class TestSite {
+   protected void decorateGlobalConfiguration(GlobalConfigurationBuilder builder, int siteIndex, int nodeIndex) {
+
+   }
+
+   protected void decorateCacheConfiguration(ConfigurationBuilder builder, int siteIndex, int nodeIndex) {
+
+   }
+
+   public class TestSite {
       protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<>();
       private final String siteName;
       private final int siteIndex;
@@ -256,17 +297,35 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       }
 
       protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, String cacheName,
-                                                               GlobalConfigurationBuilder gcb, ConfigurationBuilder builder) {
+                                                               GlobalConfigurationBuilder globalTemplate,
+                                                               ConfigurationBuilder cacheTemplate) {
+         return createClusteredCaches(numMembersInCluster, cacheName, globalTemplate, cacheTemplate, false);
+      }
+
+      protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, String cacheName,
+                                                               GlobalConfigurationBuilder globalTemplate,
+                                                               ConfigurationBuilder cacheTemplate, boolean waitBetweenCacheManager) {
          List<Cache<K, V>> caches = new ArrayList<>(numMembersInCluster);
          final TransportFlags flags = transportFlags();
          for (int i = 0; i < numMembersInCluster; i++) {
+            GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+            gcb.read(globalTemplate.build());
+            decorateGlobalConfiguration(gcb, siteIndex, i);
+
+            ConfigurationBuilder builder = new ConfigurationBuilder();
+            builder.read(cacheTemplate.build());
+            decorateCacheConfiguration(builder, siteIndex, i);
+
             EmbeddedCacheManager cm = addClusterEnabledCacheManager(flags, gcb, builder);
-            if (cacheName != null)
+            if (cacheName != null) {
                cm.defineConfiguration(cacheName, builder.build());
-
-            Cache<K, V> cache = cacheName == null ? cm.getCache() : cm.getCache(cacheName);
-
-            caches.add(cache);
+               caches.add(cm.getCache(cacheName));
+            } else {
+               caches.add(cm.getCache());
+            }
+            if (waitBetweenCacheManager) {
+               waitForClusterToForm(cacheName);
+            }
          }
          waitForClusterToForm(cacheName);
          return caches;

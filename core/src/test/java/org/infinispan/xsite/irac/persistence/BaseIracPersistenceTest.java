@@ -144,7 +144,7 @@ public abstract class BaseIracPersistenceTest<V> extends SingleCacheManagerTest 
    }
 
    private IracMetadata createMetadata() {
-      TopologyIracVersion tVersion = new TopologyIracVersion(1, V_GENERATOR.incrementAndGet());
+      TopologyIracVersion tVersion = TopologyIracVersion.create(1, V_GENERATOR.incrementAndGet());
       IracEntryVersion version = new IracEntryVersion(Collections.singletonMap(SITE, tVersion));
       return new IracMetadata(SITE, version);
    }

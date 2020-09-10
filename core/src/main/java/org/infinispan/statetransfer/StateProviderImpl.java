@@ -377,6 +377,8 @@ public class StateProviderImpl implements StateProvider {
    }
 
    private InternalCacheEntry<Object, Object> defaultMapEntryFromStore(MarshallableEntry<Object, Object> me) {
-      return entryFactory.create(me.getKey(), me.getValue(), me.getMetadata());
+      InternalCacheEntry<Object, Object> entry = entryFactory.create(me.getKey(), me.getValue(), me.getMetadata());
+      entry.setInternalMetadata(me.getInternalMetadata());
+      return entry;
    }
 }

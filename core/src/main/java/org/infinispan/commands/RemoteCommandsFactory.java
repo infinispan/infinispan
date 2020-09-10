@@ -23,6 +23,7 @@ import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTouchKeyCommand;
+import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -466,6 +467,9 @@ public class RemoteCommandsFactory {
                break;
             case IracTouchKeyCommand.COMMAND_ID:
                command = new IracTouchKeyCommand(cacheName);
+               break;
+            case IracUpdateVersionCommand.COMMAND_ID:
+               command = new IracUpdateVersionCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

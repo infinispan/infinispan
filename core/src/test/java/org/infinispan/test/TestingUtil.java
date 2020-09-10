@@ -1373,6 +1373,10 @@ public class TestingUtil {
       return prefix + m.getName();
    }
 
+   public static String v(Method m, String prefix, int index) {
+      return String.format("%s-v%d-%s", prefix, index, m.getName());
+   }
+
    public static TransactionTable getTransactionTable(Cache<?, ?> cache) {
       return extractComponent(cache, TransactionTable.class);
    }

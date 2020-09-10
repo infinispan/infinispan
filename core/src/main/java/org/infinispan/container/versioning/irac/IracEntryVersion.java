@@ -88,6 +88,21 @@ public class IracEntryVersion {
       return merger.result();
    }
 
+   public IracEntryVersion merge(IracEntryVersion other) {
+      if (other == null || other.vectorClock.isEmpty()) {
+         return this;
+      }
+      Map<String, TopologyIracVersion> copy = new HashMap<>(vectorClock);
+      for (Map.Entry<String, TopologyIracVersion> entry : other.vectorClock.entrySet()) {
+         copy.merge(entry.getKey(), entry.getValue(), TopologyIracVersion::max);
+      }
+      return new IracEntryVersion(copy);
+   }
+
+   public int getTopology(String siteName) {
+      return vectorClock.getOrDefault(siteName, TopologyIracVersion.NO_VERSION).getTopologyId();
+   }
+
    @Override
    public String toString() {
       List<String> entries = new LinkedList<>();
@@ -257,8 +272,8 @@ public class IracEntryVersion {
    }
 
    private static class VersionCompare {
-      private TopologyIracVersion ours;
-      private TopologyIracVersion theirs;
+      TopologyIracVersion ours;
+      TopologyIracVersion theirs;
 
       @Override
       public String toString() {
@@ -291,7 +306,7 @@ public class IracEntryVersion {
          }
          v.ours = version;
          if (v.theirs == null) {
-            v.theirs = new TopologyIracVersion(0, 0);
+            v.theirs = TopologyIracVersion.NO_VERSION;
          }
       }
 
@@ -303,7 +318,7 @@ public class IracEntryVersion {
          }
          v.theirs = version;
          if (v.ours == null) {
-            v.ours = new TopologyIracVersion(0, 0);
+            v.ours = TopologyIracVersion.NO_VERSION;
          }
       }
 

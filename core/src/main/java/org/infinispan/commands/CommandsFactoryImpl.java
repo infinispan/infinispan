@@ -34,6 +34,7 @@ import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTouchKeyCommand;
+import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -97,6 +98,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.impl.TouchCommand;
@@ -723,8 +725,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public IracMetadataRequestCommand buildIracMetadataRequestCommand(int segment) {
-      return new IracMetadataRequestCommand(cacheName, segment);
+   public IracMetadataRequestCommand buildIracMetadataRequestCommand(int segment, IracEntryVersion versionSeen) {
+      return new IracMetadataRequestCommand(cacheName, segment, versionSeen);
    }
 
    @Override
@@ -746,5 +748,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public IracTouchKeyCommand buildIracTouchCommand(Object key) {
       return new IracTouchKeyCommand(cacheName, key);
+   }
+
+   @Override
+   public IracUpdateVersionCommand buildIracUpdateVersionCommand(Map<Integer, IracEntryVersion> segmentsVersion) {
+      return new IracUpdateVersionCommand(cacheName, segmentsVersion);
    }
 }
