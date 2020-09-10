@@ -1,6 +1,7 @@
 package org.infinispan.test.integration.as.client;
 
 import org.infinispan.commons.util.Version;
+import org.infinispan.test.integration.commons.client.AbstractHotRodClientIT;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
