@@ -4,11 +4,16 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
+import java.util.Optional;
+
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.container.versioning.irac.DefaultIracVersionGenerator;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.container.versioning.irac.TopologyIracVersion;
+import org.infinispan.globalstate.GlobalStateManager;
+import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.metadata.impl.IracMetadata;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -29,11 +34,9 @@ public class IracVersionUnitTest extends AbstractInfinispanTest {
    private static final String SITE_2 = "site_2";
 
    private static DefaultIracVersionGenerator newGenerator(String site) {
-      Transport transport = mockTransport(site);
-      DefaultIracVersionGenerator generator = new DefaultIracVersionGenerator();
-      TestingUtil.inject(generator, transport);
+      DefaultIracVersionGenerator generator = new DefaultIracVersionGenerator("cache-name");
+      TestingUtil.inject(generator, mockRpcManager(site), mockGlobalStateManager());
       generator.start();
-      triggerTopologyEvent(generator, 1);
       return generator;
    }
 
@@ -44,10 +47,24 @@ public class IracVersionUnitTest extends AbstractInfinispanTest {
       return t;
    }
 
-   private static CacheTopology mockCacheTopology(int topologyId) {
+   private static RpcManager mockRpcManager(String siteName) {
+      Transport transport = mockTransport(siteName);
+      RpcManager rpcManager = Mockito.mock(RpcManager.class);
+      Mockito.when(rpcManager.getTransport()).thenReturn(transport);
+      return rpcManager;
+   }
+
+   private static CacheTopology mockCacheTopology() {
       CacheTopology t = Mockito.mock(CacheTopology.class);
-      Mockito.when(t.getTopologyId()).thenReturn(topologyId);
+      Mockito.when(t.getPhase()).thenReturn(CacheTopology.Phase.NO_REBALANCE);
       return t;
+   }
+
+   private static GlobalStateManager mockGlobalStateManager() {
+      GlobalStateManager manager = Mockito.mock(GlobalStateManager.class);
+      Mockito.doNothing().when(manager).writeScopedState(Mockito.any(ScopedPersistentState.class));
+      Mockito.when(manager.readScopedState(Mockito.anyString())).thenReturn(Optional.empty());
+      return manager;
    }
 
    private static void assertSiteVersion(IracEntryVersion entryVersion, String site, int topologyId, long version) {
@@ -64,8 +81,8 @@ public class IracVersionUnitTest extends AbstractInfinispanTest {
       assertNull(iracVersion);
    }
 
-   private static void triggerTopologyEvent(DefaultIracVersionGenerator generator, int topologyId) {
-      generator.onTopologyChange(mockCacheTopology(topologyId));
+   private static void triggerTopologyEvent(DefaultIracVersionGenerator generator) {
+      generator.onTopologyChange(mockCacheTopology());
    }
 
    public void testEquals() {
@@ -80,7 +97,7 @@ public class IracVersionUnitTest extends AbstractInfinispanTest {
       DefaultIracVersionGenerator g1 = newGenerator(SITE_1);
 
       IracMetadata m1 = g1.generateNewMetadata(0); // (1,0)
-      triggerTopologyEvent(g1, 2);
+      triggerTopologyEvent(g1);
 
       IracMetadata m2 = g1.generateNewMetadata(0); //(1+,0)
 
@@ -163,7 +180,7 @@ public class IracVersionUnitTest extends AbstractInfinispanTest {
       g1.updateVersion(0, m2.getVersion());
       IracMetadata m1 = g1.generateNewMetadata(0); //(1,2)
 
-      triggerTopologyEvent(g2, 2);
+      triggerTopologyEvent(g2);
       m2 = g2.generateNewMetadata(0); //(0,1+)
 
       //we should have a conflict m1=(1,2) & m2=(0,1+)
@@ -199,6 +216,4 @@ public class IracVersionUnitTest extends AbstractInfinispanTest {
       assertEquals(InequalVersionComparisonResult.AFTER, m1.getVersion().compareTo(m3.getVersion()));
       assertEquals(InequalVersionComparisonResult.BEFORE, m3.getVersion().compareTo(m1.getVersion()));
    }
-
-
 }

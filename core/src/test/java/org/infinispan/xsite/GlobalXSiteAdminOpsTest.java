@@ -13,7 +13,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -39,8 +38,6 @@ import org.testng.annotations.Test;
 @Test(groups = "xsite", testName = "xsite.GlobalXSiteAdminOpsTest")
 public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
 
-
-
    protected static ConfigurationBuilder newConfiguration() {
       return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
    }
@@ -54,17 +51,17 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
 
       extractGlobalComponent(site(0).cacheManagers().get(0), GlobalXSiteAdminOperations.class).takeSiteOffline(siteName(1));
 
-      assertSiteStatus(0, 0, null, 1, XSiteAdminOperations.OFFLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name(), 1, XSiteAdminOperations.OFFLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name(), 2, XSiteAdminOperations.ONLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_2.name(), 2, XSiteAdminOperations.ONLINE);
+      assertSiteStatus(null, 1, XSiteAdminOperations.OFFLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_1_AND_2.name(), 1, XSiteAdminOperations.OFFLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_1_AND_2.name(), 2, XSiteAdminOperations.ONLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_2.name(), 2, XSiteAdminOperations.ONLINE);
 
       //double check with data
       putInAllCache(key, value);
       assertValueInAllCachesInPrimarySite(key, value); //all caches should have the value in primary site
 
-      assertCacheEmpty(1, 0, null);
-      assertCacheEmpty(1, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name());
+      assertCacheEmpty(1, null);
+      assertCacheEmpty(1, CacheType.BACKUP_TO_SITE_1_AND_2.name());
       assertValueInCache(2, CacheType.BACKUP_TO_SITE_1_AND_2.name(), key, value);
       assertValueInCache(2, CacheType.BACKUP_TO_SITE_2.name(), key, value);
    }
@@ -79,10 +76,10 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
 
       extractGlobalComponent(site(0).cacheManagers().get(0), GlobalXSiteAdminOperations.class).bringSiteOnline(siteName(1));
 
-      assertSiteStatus(0, 0, null, 1, XSiteAdminOperations.ONLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name(), 1, XSiteAdminOperations.ONLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name(), 2, XSiteAdminOperations.OFFLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_2.name(), 2, XSiteAdminOperations.OFFLINE);
+      assertSiteStatus(null, 1, XSiteAdminOperations.ONLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_1_AND_2.name(), 1, XSiteAdminOperations.ONLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_1_AND_2.name(), 2, XSiteAdminOperations.OFFLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_2.name(), 2, XSiteAdminOperations.OFFLINE);
 
       //double check with data
       putInAllCache(key, value);
@@ -90,8 +87,8 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
 
       assertValueInCache(1, null, key, value);
       assertValueInCache(1, CacheType.BACKUP_TO_SITE_1_AND_2.name(), key, value);
-      assertCacheEmpty(2, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name());
-      assertCacheEmpty(2, 0, CacheType.BACKUP_TO_SITE_2.name());
+      assertCacheEmpty(2, CacheType.BACKUP_TO_SITE_1_AND_2.name());
+      assertCacheEmpty(2, CacheType.BACKUP_TO_SITE_2.name());
    }
 
    public void testPushState(Method m) {
@@ -106,33 +103,33 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
       assertValueInAllCachesInPrimarySite(key, value);
 
       //check the value is not in the backups
-      assertCacheEmpty(1, 0, null);
-      assertCacheEmpty(1, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name());
-      assertCacheEmpty(2, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name());
-      assertCacheEmpty(2, 0, CacheType.BACKUP_TO_SITE_2.name());
+      assertCacheEmpty(1, null);
+      assertCacheEmpty(1, CacheType.BACKUP_TO_SITE_1_AND_2.name());
+      assertCacheEmpty(2, CacheType.BACKUP_TO_SITE_1_AND_2.name());
+      assertCacheEmpty(2, CacheType.BACKUP_TO_SITE_2.name());
 
       extractGlobalComponent(site(0).cacheManagers().get(0), GlobalXSiteAdminOperations.class).pushState(siteName(1));
       awaitXSiteStateTransfer();
 
       //check state and data
-      assertSiteStatus(0, 0, null, 1, XSiteAdminOperations.ONLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name(), 1, XSiteAdminOperations.ONLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name(), 2, XSiteAdminOperations.OFFLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_2.name(), 2, XSiteAdminOperations.OFFLINE);
+      assertSiteStatus(null, 1, XSiteAdminOperations.ONLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_1_AND_2.name(), 1, XSiteAdminOperations.ONLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_1_AND_2.name(), 2, XSiteAdminOperations.OFFLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_2.name(), 2, XSiteAdminOperations.OFFLINE);
 
       assertValueInCache(1, null, key, value);
       assertValueInCache(1, CacheType.BACKUP_TO_SITE_1_AND_2.name(), key, value);
-      assertCacheEmpty(2, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name());
-      assertCacheEmpty(2, 0, CacheType.BACKUP_TO_SITE_2.name());
+      assertCacheEmpty(2, CacheType.BACKUP_TO_SITE_1_AND_2.name());
+      assertCacheEmpty(2, CacheType.BACKUP_TO_SITE_2.name());
 
       extractGlobalComponent(site(0).cacheManagers().get(0), GlobalXSiteAdminOperations.class).pushState(siteName(2));
       awaitXSiteStateTransfer();
 
       //check state and data
-      assertSiteStatus(0, 0, null, 1, XSiteAdminOperations.ONLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name(), 1, XSiteAdminOperations.ONLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name(), 2, XSiteAdminOperations.ONLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_2.name(), 2, XSiteAdminOperations.ONLINE);
+      assertSiteStatus(null, 1, XSiteAdminOperations.ONLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_1_AND_2.name(), 1, XSiteAdminOperations.ONLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_1_AND_2.name(), 2, XSiteAdminOperations.ONLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_2.name(), 2, XSiteAdminOperations.ONLINE);
 
       assertValueInCache(1, null, key, value);
       assertValueInCache(1, CacheType.BACKUP_TO_SITE_1_AND_2.name(), key, value);
@@ -152,12 +149,12 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
       assertValueInAllCachesInPrimarySite(key, value);
 
       //check the value is not in the backups
-      assertCacheEmpty(1, 0, null);
-      assertCacheEmpty(1, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name());
-      assertCacheEmpty(2, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name());
-      assertCacheEmpty(2, 0, CacheType.BACKUP_TO_SITE_2.name());
+      assertCacheEmpty(1, null);
+      assertCacheEmpty(1, CacheType.BACKUP_TO_SITE_1_AND_2.name());
+      assertCacheEmpty(2, CacheType.BACKUP_TO_SITE_1_AND_2.name());
+      assertCacheEmpty(2, CacheType.BACKUP_TO_SITE_2.name());
 
-      List<BlockingTransport> blockingTransportList = getBlockingTransport(0, true);
+      List<BlockingTransport> blockingTransportList = getBlockingTransport(true);
       blockingTransportList.forEach(BlockingTransport::blockCommands);
 
       extractGlobalComponent(site(0).cacheManagers().get(0), GlobalXSiteAdminOperations.class).pushState(siteName(1));
@@ -165,15 +162,15 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
       extractGlobalComponent(site(0).cacheManagers().get(0), GlobalXSiteAdminOperations.class).cancelPushState(siteName(1));
 
       //check state and data
-      assertSiteStatus(0, 0, null, 1, XSiteAdminOperations.ONLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name(), 1, XSiteAdminOperations.ONLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name(), 2, XSiteAdminOperations.OFFLINE);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_2.name(), 2, XSiteAdminOperations.OFFLINE);
+      assertSiteStatus(null, 1, XSiteAdminOperations.ONLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_1_AND_2.name(), 1, XSiteAdminOperations.ONLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_1_AND_2.name(), 2, XSiteAdminOperations.OFFLINE);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_2.name(), 2, XSiteAdminOperations.OFFLINE);
 
-      assertCacheEmpty(1, 0, null);
-      assertCacheEmpty(1, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name());
-      assertCacheEmpty(2, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name());
-      assertCacheEmpty(2, 0, CacheType.BACKUP_TO_SITE_2.name());
+      assertCacheEmpty(1, null);
+      assertCacheEmpty(1, CacheType.BACKUP_TO_SITE_1_AND_2.name());
+      assertCacheEmpty(2, CacheType.BACKUP_TO_SITE_1_AND_2.name());
+      assertCacheEmpty(2, CacheType.BACKUP_TO_SITE_2.name());
 
       blockingTransportList.forEach(BlockingTransport::unblockCommands);
    }
@@ -181,7 +178,7 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
    @AfterMethod(alwaysRun = true)
    public void resetStatusAfterMethod() {
       setSitesStatus(true);
-      getBlockingTransport(0, false).forEach(BlockingTransport::unblockCommands);
+      getBlockingTransport(false).forEach(BlockingTransport::unblockCommands);
    }
 
    @Override
@@ -242,20 +239,20 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
 
    private void awaitXSiteStateTransferFor(String cacheName) {
       eventually(format("Failed to complete the x-site state transfer for cache '%s'", cacheName),
-                 () -> xSiteAdminOperations(0, 0, cacheName).getRunningStateTransfer().isEmpty());
+                 () -> xSiteAdminOperations(cacheName).getRunningStateTransfer().isEmpty());
    }
 
    private void setSitesStatus(boolean online) {
       if (online) {
-         xSiteAdminOperations(0, 0, null).bringSiteOnline(siteName(1));
-         xSiteAdminOperations(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name()).bringSiteOnline(siteName(1));
-         xSiteAdminOperations(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name()).bringSiteOnline(siteName(2));
-         xSiteAdminOperations(0, 0, CacheType.BACKUP_TO_SITE_2.name()).bringSiteOnline(siteName(2));
+         xSiteAdminOperations(null).bringSiteOnline(siteName(1));
+         xSiteAdminOperations(CacheType.BACKUP_TO_SITE_1_AND_2.name()).bringSiteOnline(siteName(1));
+         xSiteAdminOperations(CacheType.BACKUP_TO_SITE_1_AND_2.name()).bringSiteOnline(siteName(2));
+         xSiteAdminOperations(CacheType.BACKUP_TO_SITE_2.name()).bringSiteOnline(siteName(2));
       } else {
-         xSiteAdminOperations(0, 0, null).takeSiteOffline(siteName(1));
-         xSiteAdminOperations(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name()).takeSiteOffline(siteName(1));
-         xSiteAdminOperations(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name()).takeSiteOffline(siteName(2));
-         xSiteAdminOperations(0, 0, CacheType.BACKUP_TO_SITE_2.name()).takeSiteOffline(siteName(2));
+         xSiteAdminOperations(null).takeSiteOffline(siteName(1));
+         xSiteAdminOperations(CacheType.BACKUP_TO_SITE_1_AND_2.name()).takeSiteOffline(siteName(1));
+         xSiteAdminOperations(CacheType.BACKUP_TO_SITE_1_AND_2.name()).takeSiteOffline(siteName(2));
+         xSiteAdminOperations(CacheType.BACKUP_TO_SITE_2.name()).takeSiteOffline(siteName(2));
       }
    }
 
@@ -281,48 +278,39 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
       }
    }
 
-   private XSiteAdminOperations xSiteAdminOperations(int siteIndex, int nodeIndex, String cacheName) {
-      return TestingUtil.extractComponent(cache(siteIndex, nodeIndex, cacheName), XSiteAdminOperations.class);
+   private XSiteAdminOperations xSiteAdminOperations(String cacheName) {
+      return TestingUtil.extractComponent(cache(0, 0, cacheName), XSiteAdminOperations.class);
    }
 
-   private <K, V> Cache<K, V> cache(int siteIndex, int nodeIndex, String cacheName) {
-      if (cacheName == null) {
-         return site(siteIndex).cache(nodeIndex);
-      } else {
-         return site(siteIndex).cache(cacheName, nodeIndex);
-      }
-   }
-
-   private void assertCacheEmpty(int siteIndex, int nodeIndex, String cacheName) {
+   private void assertCacheEmpty(int siteIndex, String cacheName) {
       assertTrue(format("Cache '%s' is not empty in site '%d'", cacheName, siteIndex),
-                 cache(siteIndex, nodeIndex, cacheName).isEmpty());
+                 cache(siteIndex, 0, cacheName).isEmpty());
    }
 
    private void assertAllCachesEmpty() {
       for (CacheType cacheType : CacheType.values()) {
-         assertCacheEmpty(0, 0, cacheType.name());
+         assertCacheEmpty(0, cacheType.name());
       }
-      assertCacheEmpty(1, 0, null);
-      assertCacheEmpty(1, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name());
-      assertCacheEmpty(2, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name());
-      assertCacheEmpty(2, 0, CacheType.BACKUP_TO_SITE_2.name());
+      assertCacheEmpty(1, null);
+      assertCacheEmpty(1, CacheType.BACKUP_TO_SITE_1_AND_2.name());
+      assertCacheEmpty(2, CacheType.BACKUP_TO_SITE_1_AND_2.name());
+      assertCacheEmpty(2, CacheType.BACKUP_TO_SITE_2.name());
    }
 
    private void assertSiteStatusInAllCaches(String status) {
-      assertSiteStatus(0, 0, null, 1, status);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name(), 1, status);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_1_AND_2.name(), 2, status);
-      assertSiteStatus(0, 0, CacheType.BACKUP_TO_SITE_2.name(), 2, status);
+      assertSiteStatus(null, 1, status);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_1_AND_2.name(), 1, status);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_1_AND_2.name(), 2, status);
+      assertSiteStatus(CacheType.BACKUP_TO_SITE_2.name(), 2, status);
    }
 
-   private void assertSiteStatus(int siteIndex, int nodeIndex, String cacheName, int backupSiteIndex, String status) {
-      assertEquals(format("Wrong site status for cache '%s' in site '%d' for backup site '%d'.", cacheName, siteIndex, backupSiteIndex),
-                   status,
-                   xSiteAdminOperations(siteIndex, nodeIndex, cacheName).siteStatus(siteName(backupSiteIndex)));
+   private void assertSiteStatus(String cacheName, int backupSiteIndex, String status) {
+      assertEquals(format("Wrong site status for cache '%s' for backup site '%d'.", cacheName, backupSiteIndex), status,
+                   xSiteAdminOperations(cacheName).siteStatus(siteName(backupSiteIndex)));
    }
 
-   private List<BlockingTransport> getBlockingTransport(int siteIndex, boolean createIfAbsent) {
-      List<EmbeddedCacheManager> cacheManagerList = site(siteIndex).cacheManagers();
+   private List<BlockingTransport> getBlockingTransport(boolean createIfAbsent) {
+      List<EmbeddedCacheManager> cacheManagerList = site(0).cacheManagers();
       List<BlockingTransport> blockingTransportList = new ArrayList<>(cacheManagerList.size());
       cacheManagerList.forEach(cacheManager -> {
          Transport transport = cacheManager.getTransport();

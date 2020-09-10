@@ -14,6 +14,7 @@ import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTouchKeyCommand;
+import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
@@ -119,7 +120,8 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             StateTransferGetTransactionsCommand.class, StateTransferStartCommand.class,
             IracPutKeyCommand.class, IracRemoveKeyCommand.class, IracClearKeysCommand.class,
             IracCleanupKeyCommand.class, IracMetadataRequestCommand.class,
-            IracRequestStateCommand.class, IracStateResponseCommand.class, IracTouchKeyCommand.class);
+            IracRequestStateCommand.class, IracStateResponseCommand.class, IracTouchKeyCommand.class,
+            IracUpdateVersionCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

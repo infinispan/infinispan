@@ -1,5 +1,7 @@
 package org.infinispan.xsite.irac;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +18,6 @@ import org.infinispan.util.TestOperation;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.infinispan.xsite.spi.AlwaysRemoveXSiteEntryMergePolicy;
 import org.infinispan.xsite.spi.XSiteMergePolicy;
-import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -140,7 +141,7 @@ public class IracAlwaysRemoveConflictTest extends AbstractMultipleSitesTest {
       //check if everything is correct
       for (int i = 0; i < N_SITES; ++i) {
          String fValue = finalValues[i];
-         assertInSite(siteName(i), cache -> AssertJUnit.assertEquals(fValue, cache.get(key)));
+         assertInSite(siteName(i), cache -> assertEquals(fValue, cache.get(key)));
       }
 
       //enable xsite. this will send the keys!

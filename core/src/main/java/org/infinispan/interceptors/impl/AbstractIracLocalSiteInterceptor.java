@@ -75,10 +75,6 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
       return getDistributionInfo(segment).writeOwnership();
    }
 
-   protected Ownership getOwnership(Object key) {
-      return getCacheTopology().getDistribution(key).writeOwnership();
-   }
-
    protected DistributionInfo getDistributionInfo(int segment) {
       return getCacheTopology().getSegmentDistribution(segment);
    }

@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.Optional;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
@@ -21,13 +23,14 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.Ownership;
+import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.metadata.impl.IracMetadata;
-import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.util.IracUtils;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,6 +50,8 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
 
    private static final Log log = LogFactory.getLog(NonTxIracLocalSiteInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
+
+   private final InvocationFinallyAction<WriteCommand> afterWriteCommand = this::handleWriteCommand;
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
@@ -174,7 +179,7 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
       for (Object key : command.getAffectedKeys()) {
          visitKey(ctx, key, command);
       }
-      return invokeNextAndFinally(ctx, command, this::handleWriteCommand);
+      return invokeNextAndFinally(ctx, command, afterWriteCommand);
    }
 
    private boolean skipCommand(InvocationContext ctx, FlagAffectedCommand command) {
@@ -191,20 +196,14 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
       if (getOwnership(segment) != Ownership.PRIMARY) {
          return;
       }
-      IracMetadata metadata = null;
+      Optional<IracMetadata> entryMetadata = IracUtils.findIracMetadataFromCacheEntry(ctx.lookupEntry(key));
+      IracMetadata metadata;
       // RemoveExpired should lose to any other conflicting write
       if (command instanceof RemoveExpiredCommand) {
-         CacheEntry<?, ?> ce = ctx.lookupEntry(key);
-         PrivateMetadata pm = ce.getInternalMetadata();
-         if (pm != null) {
-            metadata = pm.iracMetadata();
-         }
-
-         if (metadata == null) {
-            metadata = iracVersionGenerator.generateMetadataWithCurrentVersion(segment);
-         }
+         metadata = entryMetadata.orElseGet(() -> iracVersionGenerator.generateMetadataWithCurrentVersion(segment));
       } else {
-         metadata = iracVersionGenerator.generateNewMetadata(segment);
+         IracEntryVersion versionSeen = entryMetadata.map(IracMetadata::getVersion).orElse(null);
+         metadata = iracVersionGenerator.generateNewMetadata(segment, versionSeen);
       }
       updateCommandMetadata(key, command, metadata);
       if (trace) {
@@ -217,7 +216,7 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
     */
    private void handleDataWriteCommand(InvocationContext ctx, DataWriteCommand command, Object rv, Throwable t) {
       final Object key = command.getKey();
-      if (!command.isSuccessful() || skipEntryCommit(ctx, key)) {
+      if (!command.isSuccessful() || skipEntryCommit(ctx, command, key)) {
          return;
       }
       setMetadataToCacheEntry(ctx.lookupEntry(key), command.getInternalMetadata(key).iracMetadata());
@@ -226,20 +225,21 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
    /**
     * Visits th {@link WriteCommand} after executed and stores the {@link IracMetadata} if it was successful.
     */
+   @SuppressWarnings("unused")
    private void handleWriteCommand(InvocationContext ctx, WriteCommand command, Object rv, Throwable t) {
       if (!command.isSuccessful()) {
          return;
       }
       for (Object key : command.getAffectedKeys()) {
-         if (skipEntryCommit(ctx, key)) {
+         if (skipEntryCommit(ctx, command, key)) {
             continue;
          }
          setMetadataToCacheEntry(ctx.lookupEntry(key), command.getInternalMetadata(key).iracMetadata());
       }
    }
 
-   private boolean skipEntryCommit(InvocationContext ctx, Object key) {
-      switch (getOwnership(key)) {
+   private boolean skipEntryCommit(InvocationContext ctx, WriteCommand command, Object key) {
+      switch (getOwnership(getSegment(command, key))) {
          case NON_OWNER:
             //not a write owner, we do nothing
             return true;

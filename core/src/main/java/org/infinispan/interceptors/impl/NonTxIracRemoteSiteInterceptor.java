@@ -168,6 +168,9 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
       SiteEntry<Object> remoteSiteEntry = command.createSiteEntry(remoteMetadata.getSite());
 
       return mergePolicy.merge(entry.getKey(), localSiteEntry, remoteSiteEntry).thenApply(resolved -> {
+         if (trace) {
+            log.tracef("[IRAC] resolve(%s, %s) = %s", localSiteEntry, remoteSiteEntry, resolved);
+         }
          //fast track, it is the same entry as stored already locally. do nothing!
          if (resolved.equals(localSiteEntry)) {
             discardUpdate(entry, command, remoteMetadata);
@@ -177,16 +180,15 @@ public class NonTxIracRemoteSiteInterceptor extends DDAsyncInterceptor implement
             Object key = entry.getKey();
             command.updateCommand(resolved);
             PrivateMetadata.Builder builder = PrivateMetadata.getBuilder(command.getInternalMetadata())
-                  .iracMetadata(mergeVersion( command.getSegment(), resolved.getSiteName(), localMetadata.getVersion(), remoteMetadata.getVersion()));
+                  .iracMetadata(mergeVersion(resolved.getSiteName(), localMetadata.getVersion(), remoteMetadata.getVersion()));
             command.setInternalMetadata(key, builder.build());
          }
          return true;
       });
    }
 
-   private IracMetadata mergeVersion(int segment, String siteName, IracEntryVersion localVersion,
-         IracEntryVersion remoteVersion) {
-      return iracVersionGenerator.mergeVersion(segment, localVersion, remoteVersion, siteName);
+   private IracMetadata mergeVersion(String siteName, IracEntryVersion localVersion, IracEntryVersion remoteVersion) {
+      return new IracMetadata(siteName, localVersion.merge(remoteVersion));
    }
 
    private IncrementableEntryVersion generateWriteSkewVersion(CacheEntry<?, ?> entry) {

@@ -155,6 +155,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
             .append(", putIfAbsent=").append(putIfAbsent)
             .append(", valueMatcher=").append(valueMatcher)
             .append(", metadata=").append(metadata)
+            .append(", internalMetadata=").append(internalMetadata)
             .append(", successful=").append(successful)
             .append(", topologyId=").append(getTopologyId())
             .append("}")

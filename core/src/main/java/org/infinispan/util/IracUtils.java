@@ -2,7 +2,10 @@ package org.infinispan.util;
 
 import static org.infinispan.metadata.impl.PrivateMetadata.getBuilder;
 
+import java.util.Optional;
+
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
@@ -17,6 +20,18 @@ import org.infinispan.util.logging.LogSupplier;
 public final class IracUtils {
 
    private IracUtils() {
+   }
+
+   public static Optional<IracMetadata> findIracMetadataFromCacheEntry(CacheEntry<?, ?> entry) {
+      PrivateMetadata privateMetadata = entry.getInternalMetadata();
+      if (privateMetadata == null) {
+         return Optional.empty();
+      }
+      return Optional.ofNullable(privateMetadata.iracMetadata());
+   }
+
+   public static IracEntryVersion getIracVersionFromCacheEntry(CacheEntry<?,?> entry) {
+      return findIracMetadataFromCacheEntry(entry).map(IracMetadata::getVersion).orElse(null);
    }
 
    /**
