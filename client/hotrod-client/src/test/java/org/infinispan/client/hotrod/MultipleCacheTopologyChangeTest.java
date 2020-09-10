@@ -121,5 +121,6 @@ public class MultipleCacheTopologyChangeTest extends MultipleCacheManagersTest {
    protected void destroy() {
       HotRodClientTestingUtil.killRemoteCacheManager(client);
       nodes.forEach(Node::kill);
+      nodes.clear();
    }
 }

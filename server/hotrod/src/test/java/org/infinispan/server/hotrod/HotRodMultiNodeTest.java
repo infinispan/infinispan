@@ -123,6 +123,7 @@ public abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
          log.debug("Test finished, close Hot Rod server");
          hotRodClients.forEach(HotRodTestingUtil::killClient);
          hotRodServers.forEach(ServerTestingUtil::killServer);
+         hotRodServers.clear();
       } finally {
          // Stop the caches last so that at stoppage time topology cache can be updated properly
          super.destroy();

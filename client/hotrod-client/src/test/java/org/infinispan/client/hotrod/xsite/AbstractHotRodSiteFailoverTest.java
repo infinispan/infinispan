@@ -96,6 +96,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
       try {
          siteServers.values().forEach(servers ->
             servers.forEach(HotRodClientTestingUtil::killServers));
+         siteServers.clear();
       } finally {
          super.destroy();
       }

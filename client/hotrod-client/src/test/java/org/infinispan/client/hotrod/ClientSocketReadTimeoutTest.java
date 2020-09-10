@@ -68,6 +68,7 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
    protected void teardown() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotrodServer);
+      hotrodServer = null;
       super.teardown();
    }
 

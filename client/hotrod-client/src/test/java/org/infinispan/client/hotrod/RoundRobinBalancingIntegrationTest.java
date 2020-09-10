@@ -74,7 +74,12 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
    @AfterClass(alwaysRun = true)
    public void tearDown() {
       killRemoteCacheManager(remoteCacheManager);
+      remoteCacheManager = null;
       killServers(hotRodServer1, hotRodServer2, hotRodServer3, hotRodServer4);
+      hotRodServer1 = null;
+      hotRodServer2 = null;
+      hotRodServer3 = null;
+      hotRodServer4 = null;
    }
 
    public void testRoundRobinLoadBalancing() {

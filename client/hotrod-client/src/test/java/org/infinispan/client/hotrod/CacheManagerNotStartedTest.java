@@ -52,6 +52,7 @@ public class CacheManagerNotStartedTest extends SingleCacheManagerTest {
       super.destroyAfterClass();
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotrodServer);
+      hotrodServer = null;
    }
 
    public void testGetCacheOperations() {

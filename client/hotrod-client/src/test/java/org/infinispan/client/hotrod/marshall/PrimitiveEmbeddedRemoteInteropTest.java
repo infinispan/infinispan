@@ -63,7 +63,9 @@ public class PrimitiveEmbeddedRemoteInteropTest extends SingleCacheManagerTest {
    @AfterClass(alwaysRun = true)
    public void release() {
       killRemoteCacheManager(remoteCacheManager);
+      remoteCacheManager = null;
       killServers(hotRodServer);
+      hotRodServer = null;
    }
 
    public void testRemotePutAndGet() {

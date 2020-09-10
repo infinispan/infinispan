@@ -104,7 +104,9 @@ public class RemoteQueryDisableIndexingTest extends AbstractQueryDslTest {
    @AfterClass(alwaysRun = true)
    public void release() {
       killRemoteCacheManager(remoteCacheManager);
+      remoteCacheManager = null;
       killServers(hotRodServer);
+      hotRodServer = null;
    }
 
    public void testEmptyIndexIsPresent() {

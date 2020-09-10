@@ -75,6 +75,8 @@ public class AsymmetricRoutingTest extends HitsAwareCacheManagersTest {
    protected void destroy() {
       killRemoteCacheManager(rcm);
       killServers(server1, server2);
+      server1 = null;
+      server2 = null;
       super.destroy();
    }
 

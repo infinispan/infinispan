@@ -14,6 +14,16 @@ public class EvictInvalidatedNearCacheTest extends SingleHotRodServerTest {
 
    AssertsNearCache<Integer, String> assertClient;
 
+   @Override
+   protected void teardown() {
+      if (assertClient != null) {
+         assertClient.stop();
+         assertClient = null;
+      }
+
+      super.teardown();
+   }
+
    protected RemoteCacheManager getRemoteCacheManager() {
       assertClient = createClient();
       return assertClient.manager;

@@ -63,6 +63,8 @@ public class JCacheTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
    protected void destroy() {
       super.destroy();
       killServers(hotRodServer1, hotRodServer2);
+      hotRodServer1 = null;
+      hotRodServer2 = null;
       Caching.getCachingProvider(testSpecificClassLoader).close();
    }
 

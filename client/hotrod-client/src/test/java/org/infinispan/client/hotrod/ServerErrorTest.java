@@ -57,7 +57,9 @@ public class ServerErrorTest extends SingleCacheManagerTest {
    @AfterClass
    public void shutDownHotrod() {
       killRemoteCacheManager(remoteCacheManager);
+      remoteCacheManager = null;
       killServers(hotrodServer);
+      hotrodServer = null;
    }
 
    public void testErrorWhileDoingPut(Method m) {

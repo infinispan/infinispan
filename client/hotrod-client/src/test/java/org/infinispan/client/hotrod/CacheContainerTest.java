@@ -44,6 +44,7 @@ public class CacheContainerTest extends SingleCacheManagerTest {
       killCacheManagers(cacheManager);
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotrodServer);
+      hotrodServer = null;
    }
 
    public void testObtainingSameInstanceMultipleTimes() {

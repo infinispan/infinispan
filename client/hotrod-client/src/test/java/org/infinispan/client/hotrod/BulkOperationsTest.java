@@ -158,6 +158,7 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
    public void release() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotrodServers);
+      hotrodServers = null;
    }
 
    protected void populateCacheManager() {

@@ -249,12 +249,19 @@ public class EndpointsCacheFactory<K, V> {
 
    void teardown() {
       Util.close(restClient);
+      restClient = null;
       killRemoteCacheManager(hotrodClient);
+      hotrodClient = null;
       killServers(hotrod);
+      hotrod = null;
       killRestServer(rest);
+      rest = null;
       killMemcachedClient(memcachedClient);
+      memcachedClient = null;
       killMemcachedServer(memcached);
+      memcached = null;
       killCacheManagers(cacheManager);
+      cacheManager = null;
    }
 
    private void killRestServer(RestServer rest) {

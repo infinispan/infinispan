@@ -40,6 +40,7 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
    @Override
    protected void teardown() {
       HotRodClientTestingUtil.killServers(hotrodServer);
+      hotrodServer = null;
 
       super.teardown();
    }

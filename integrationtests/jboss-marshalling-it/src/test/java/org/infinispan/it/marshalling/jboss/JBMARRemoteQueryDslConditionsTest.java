@@ -98,7 +98,9 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    @AfterClass(alwaysRun = true)
    public void release() {
       killRemoteCacheManager(remoteCacheManager);
+      remoteCacheManager = null;
       killServers(hotRodServer);
+      hotRodServer = null;
    }
 
    @Override

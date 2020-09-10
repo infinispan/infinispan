@@ -48,6 +48,7 @@ public class LockingTest extends SingleCacheManagerTest {
    protected void teardown() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotrodServer);
+      hotrodServer = null;
       super.teardown();
    }
 

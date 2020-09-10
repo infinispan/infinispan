@@ -41,6 +41,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
    protected void teardown() {
       super.teardown();
       HotRodClientTestingUtil.killServers(hotRodServer);
+      hotRodServer = null;
    }
 
    public void testClosedConnection() throws Exception {
