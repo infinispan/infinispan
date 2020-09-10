@@ -1,4 +1,4 @@
-package org.infinispan.test.integration.as.client;
+package org.infinispan.test.integration.commons.client;
 
 import static org.junit.Assert.assertEquals;
 

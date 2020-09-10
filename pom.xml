@@ -1896,6 +1896,8 @@
                   <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs}</argLine>
                   <!-- Use TCP for plugin <-> fork JVM communication -->
                   <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
+                  <!-- Disable modular classpath -->
+                  <useModulePath>false</useModulePath>
                </configuration>
             </plugin>
             <plugin>
@@ -2253,6 +2255,8 @@
                <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true</argLine>
                <!-- Use TCP for plugin <-> fork JVM communication -->
                <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
+               <!-- Disable modular classpath -->
+               <useModulePath>false</useModulePath>
             </configuration>
          </plugin>
          <plugin>
