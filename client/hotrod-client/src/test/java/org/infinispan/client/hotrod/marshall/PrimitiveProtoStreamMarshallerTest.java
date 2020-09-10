@@ -49,7 +49,9 @@ public class PrimitiveProtoStreamMarshallerTest extends SingleCacheManagerTest {
    @AfterClass(alwaysRun = true)
    public void release() {
       killRemoteCacheManager(remoteCacheManager);
+      remoteCacheManager = null;
       killServers(hotRodServer);
+      hotRodServer = null;
    }
 
    public void testPutAndGet() {

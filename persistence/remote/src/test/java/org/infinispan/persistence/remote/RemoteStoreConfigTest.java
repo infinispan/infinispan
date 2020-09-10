@@ -66,6 +66,8 @@ public class RemoteStoreConfigTest extends AbstractInfinispanTest {
    @AfterClass
    public void tearDown() {
       HotRodClientTestingUtil.killServers(hotRodServer);
+      hotRodServer = null;
       TestingUtil.killCacheManagers(cacheManager);
+      cacheManager = null;
    }
 }

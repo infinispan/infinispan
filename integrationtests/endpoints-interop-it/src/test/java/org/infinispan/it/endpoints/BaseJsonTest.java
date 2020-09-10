@@ -169,6 +169,8 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
          }
       }
       killCacheManagers(cacheManager);
+      cacheManager = null;
       killServers(hotRodServer);
+      hotRodServer = null;
    }
 }

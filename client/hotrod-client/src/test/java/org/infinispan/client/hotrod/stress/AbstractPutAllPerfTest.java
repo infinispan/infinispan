@@ -61,7 +61,9 @@ public abstract class AbstractPutAllPerfTest extends MultipleCacheManagersTest {
    @AfterClass(alwaysRun = true)
    public void release() {
       killRemoteCacheManager(remoteCacheManager);
+      remoteCacheManager = null;
       killServers(hotrodServers);
+      hotrodServers = null;
    }
 
    protected void runTest(int size, String name) {

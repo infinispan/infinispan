@@ -61,6 +61,7 @@ public abstract class BaseGetAllTest extends MultipleCacheManagersTest {
    public void release() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotrodServers);
+      hotrodServers = null;
    }
 
    protected Set<Integer> populateCacheManager() {

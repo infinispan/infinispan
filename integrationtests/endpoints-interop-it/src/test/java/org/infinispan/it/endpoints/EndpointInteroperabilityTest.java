@@ -511,7 +511,9 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
          }
       }
       killCacheManagers(cacheManager);
+      cacheManager = null;
       killServers(hotRodServer);
+      hotRodServer = null;
    }
 
 }

@@ -100,8 +100,14 @@ public class RemoteStoreWrapperTest extends AbstractInfinispanTest {
    @AfterClass
    public void tearDown() {
       HotRodClientTestingUtil.killRemoteCacheManagers(remoteSourceCacheManager, remoteTargetCacheManager);
+      remoteSourceCacheManager = null;
+      remoteTargetCacheManager = null;
       HotRodClientTestingUtil.killServers(sourceServer, targetServer);
+      sourceServer = null;
+      targetServer = null;
       TestingUtil.killCacheManagers(targetCacheManager, serverCacheManager);
+      targetCacheManager = null;
+      serverCacheManager = null;
    }
 
 }

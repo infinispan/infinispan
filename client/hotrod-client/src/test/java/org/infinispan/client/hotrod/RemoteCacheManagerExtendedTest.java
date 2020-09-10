@@ -45,8 +45,11 @@ public class RemoteCacheManagerExtendedTest extends SingleCacheManagerTest {
    @AfterClass(alwaysRun = true)
    public void release() {
       TestingUtil.killCacheManagers(cacheManager);
+      cacheManager = null;
       HotRodClientTestingUtil.killServers(hotrodServer);
+      hotrodServer = null;
       HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
+      remoteCacheManager = null;
    }
 
    public void testGetUndefinedCache() {

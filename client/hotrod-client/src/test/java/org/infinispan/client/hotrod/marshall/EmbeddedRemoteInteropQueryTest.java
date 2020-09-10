@@ -101,7 +101,9 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
    @Override
    protected void teardown() {
       killRemoteCacheManager(remoteCacheManager);
+      remoteCacheManager = null;
       killServers(hotRodServer);
+      hotRodServer = null;
       super.teardown();
    }
 

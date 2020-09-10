@@ -50,8 +50,11 @@ class TestCluster {
 
    void destroy() {
       embeddedCacheManagers.forEach(TestingUtil::killCacheManagers);
+      embeddedCacheManagers.clear();
       hotRodServers.forEach(HotRodClientTestingUtil::killServers);
+      hotRodServers.clear();
       HotRodClientTestingUtil.killRemoteCacheManagers(remoteCacheManager);
+      remoteCacheManager = null;
    }
 
    Cache<Object, Object> getEmbeddedCache(String name) {

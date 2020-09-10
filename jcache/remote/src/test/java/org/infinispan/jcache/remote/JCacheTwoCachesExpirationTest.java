@@ -87,6 +87,8 @@ public class JCacheTwoCachesExpirationTest extends AbstractTwoCachesExpirationTe
       rcm1.close();
       rcm2.close();
       killServers(hotRodServer1, hotRodServer2);
+      hotRodServer1 = null;
+      hotRodServer2 = null;
       Caching.getCachingProvider(testSpecificClassLoader).close();
    }
 

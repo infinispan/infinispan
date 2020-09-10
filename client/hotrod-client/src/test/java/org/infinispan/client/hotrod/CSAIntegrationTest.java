@@ -103,6 +103,9 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
    protected void destroy() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotRodServer1, hotRodServer2, hotRodServer3);
+      hotRodServer1 = null;
+      hotRodServer2 = null;
+      hotRodServer3 = null;
       super.destroy();
    }
 

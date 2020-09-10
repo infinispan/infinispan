@@ -103,7 +103,9 @@ public class SkipIndexingFlagTest extends SingleCacheManagerTest {
    @Override
    protected void teardown() {
       HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
+      remoteCacheManager = null;
       HotRodClientTestingUtil.killServers(hotRodServer);
+      hotRodServer = null;
       super.teardown();
    }
 

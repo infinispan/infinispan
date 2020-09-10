@@ -57,6 +57,16 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
    }
 
    @Override
+   protected void teardown() {
+      if (assertClient != null) {
+         assertClient.stop();
+         assertClient = null;
+      }
+
+      super.teardown();
+   }
+
+   @Override
    protected RemoteCacheManager getRemoteCacheManager() {
       assertClient = createAssertClient();
       return assertClient.manager;

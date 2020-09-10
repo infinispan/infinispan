@@ -71,10 +71,12 @@ public class StreamingOpsTest extends SingleCacheManagerTest {
       return new RemoteCacheManager(clientBuilder.build());
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void testDestroyRemoteCacheFactory() {
       HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
+      remoteCacheManager = null;
       HotRodClientTestingUtil.killServers(hotrodServer);
+      hotrodServer = null;
    }
 
    private void consumeAndCloseStream(InputStream is) throws Exception {

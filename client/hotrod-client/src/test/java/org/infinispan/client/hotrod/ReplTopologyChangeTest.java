@@ -49,8 +49,12 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    @Override
    protected void destroy() {
       super.destroy();
-      killServers(hotRodServer1, hotRodServer2);
+      killServers(hotRodServer1, hotRodServer2, hotRodServer3);
       killRemoteCacheManager(remoteCacheManager);
+      hotRodServer1 = null;
+      hotRodServer2 = null;
+      hotRodServer3 = null;
+      remoteCacheManager = null;
    }
 
    @Override

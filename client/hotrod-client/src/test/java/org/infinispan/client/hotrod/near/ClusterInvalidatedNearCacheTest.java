@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.near.ClusterInvalidatedNearCacheTest")
@@ -22,6 +23,15 @@ public class ClusterInvalidatedNearCacheTest extends MultiHotRodServersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       createHotRodServers(2, getCacheConfiguration());
+   }
+
+   @AfterClass(alwaysRun = true)
+   @Override
+   protected void destroy() {
+      assertClients.forEach(AssertsNearCache::stop);
+      assertClients.clear();
+
+      super.destroy();
    }
 
    private ConfigurationBuilder getCacheConfiguration() {

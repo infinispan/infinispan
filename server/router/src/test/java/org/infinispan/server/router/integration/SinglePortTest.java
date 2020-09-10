@@ -84,7 +84,9 @@ public class SinglePortTest {
             restServer.stop();
             TestingUtil.killCacheManagers(restServer.getCacheManager());
         }
-
+        hotRodClient = null;
+        hotrodServer = null;
+        restServer = null;
     }
 
     @Test

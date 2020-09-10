@@ -90,7 +90,11 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    protected void clearContent() throws Throwable {
       if (cleanupAfterMethod()) {
          HotRodClientTestingUtil.killRemoteCacheManagers(remoteCacheManager);
+         remoteCacheManager = null;
          HotRodClientTestingUtil.killServers(hotRodServer1, hotRodServer2, hotRodServer3);
+         hotRodServer1 = null;
+         hotRodServer2 = null;
+         hotRodServer3 = null;
       }
       super.clearContent();
    }
@@ -100,7 +104,11 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    protected void destroy() {
       if (cleanupAfterTest()) {
          HotRodClientTestingUtil.killRemoteCacheManagers(remoteCacheManager);
+         remoteCacheManager = null;
          HotRodClientTestingUtil.killServers(hotRodServer1, hotRodServer2, hotRodServer3);
+         hotRodServer1 = null;
+         hotRodServer2 = null;
+         hotRodServer3 = null;
       }
       super.destroy();
    }

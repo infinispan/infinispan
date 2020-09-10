@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -8,7 +10,6 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 @Test(testName = "client.hotrod.ForceReturnValuesTest", groups = "functional")
 @CleanupAfterMethod
@@ -34,6 +35,7 @@ public class ForceReturnValuesTest extends SingleCacheManagerTest {
    void shutdown() {
       HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
       HotRodClientTestingUtil.killServers(hotRodServer);
+      hotRodServer = null;
    }
 
    public void testDontForceReturnValues() {

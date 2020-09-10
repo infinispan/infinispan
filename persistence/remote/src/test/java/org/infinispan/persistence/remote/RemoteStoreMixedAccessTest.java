@@ -105,8 +105,12 @@ public class RemoteStoreMixedAccessTest extends AbstractInfinispanTest {
    @AfterClass
    public void tearDown() {
       HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
+      remoteCacheManager = null;
       HotRodClientTestingUtil.killServers(hrServer);
+      hrServer = null;
       TestingUtil.killCacheManagers(clientCacheManager, serverCacheManager);
+      clientCacheManager = null;
+      serverCacheManager = null;
    }
 
 }

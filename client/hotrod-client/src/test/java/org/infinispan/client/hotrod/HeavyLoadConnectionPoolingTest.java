@@ -72,6 +72,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       super.destroyAfterClass();
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotRodServer);
+      hotRodServer = null;
    }
 
    public void testHeavyLoad() throws InterruptedException, ExecutionException {

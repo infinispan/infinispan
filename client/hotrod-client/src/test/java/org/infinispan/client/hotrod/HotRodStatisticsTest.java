@@ -62,6 +62,7 @@ public class HotRodStatisticsTest extends AbstractInfinispanTest {
       TestingUtil.killCacheManagers(cacheContainer);
       killRemoteCacheManager(rcm);
       killServers(hotrodServer);
+      hotrodServer = null;
    }
 
    public void testAllStatsArePresent() {

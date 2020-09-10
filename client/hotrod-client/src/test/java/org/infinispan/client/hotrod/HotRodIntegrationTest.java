@@ -82,6 +82,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
    public void testDestroyRemoteCacheFactory() {
       HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
       HotRodClientTestingUtil.killServers(hotrodServer);
+      hotrodServer = null;
    }
 
    public void testPut() throws Exception {

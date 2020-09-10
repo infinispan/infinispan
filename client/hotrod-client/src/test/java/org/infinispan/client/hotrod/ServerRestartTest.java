@@ -51,7 +51,9 @@ public class ServerRestartTest extends SingleCacheManagerTest {
    @AfterClass
    public void testDestroyRemoteCacheFactory() {
       killRemoteCacheManager(remoteCacheManager);
+      remoteCacheManager = null;
       killServers(hotrodServer);
+      hotrodServer = null;
    }
 
    public void testServerShutdown() throws Exception {

@@ -47,6 +47,7 @@ public class CacheManagerStoppedTest extends SingleCacheManagerTest {
       killRemoteCacheManager(remoteCacheManager);
       killCacheManagers(cacheManager);
       killServers(hotrodServer);
+      hotrodServer = null;
    }
 
    public void testGetCacheOperations() {
