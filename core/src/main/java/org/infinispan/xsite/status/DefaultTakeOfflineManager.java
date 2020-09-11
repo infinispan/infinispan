@@ -88,7 +88,7 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
    }
 
    @Override
-   public void registerRequest(XSiteResponse response) {
+   public void registerRequest(XSiteResponse<?> response) {
       response.whenCompleted(this);
    }
 

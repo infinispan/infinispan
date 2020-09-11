@@ -146,7 +146,7 @@ public interface RpcManager {
     * @param command The command to send.
     * @return A {@link XSiteResponse} that is completed when the request is completed.
     */
-   XSiteResponse invokeXSite(XSiteBackup backup, XSiteReplicateCommand command);
+   <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteReplicateCommand<O> command);
 
    /**
     * @return a reference to the underlying transport.

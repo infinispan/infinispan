@@ -790,13 +790,13 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       }
 
       @Override
-      public CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
+      public <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
          try {
             listener.beforeCommand(command);
          } catch (Exception e) {
             return CompletableFutures.completedExceptionFuture(e);
          }
-         return super.handleRemoteCommand(command, preserveOrder).whenComplete((v, t) -> listener.afterCommand(command));
+         return super.<O>handleRemoteCommand(command, preserveOrder).whenComplete((v, t) -> listener.afterCommand(command));
       }
 
       @Override

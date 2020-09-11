@@ -53,7 +53,7 @@ public class RollbackNoPrepareOptimisticTest extends AbstractTwoSitesTest {
       }
 
       @Override
-      public CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
+      public <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
          received = command;
          return super.handleRemoteCommand(command, preserveOrder);
       }

@@ -14,7 +14,7 @@ import org.infinispan.xsite.irac.IracManager;
  * @author Pedro Ruivo
  * @since 11.0
  */
-public abstract class IracUpdateKeyCommand extends XSiteReplicateCommand {
+public abstract class IracUpdateKeyCommand extends XSiteReplicateCommand<Void> {
 
    protected IracUpdateKeyCommand(byte commandId, ByteString cacheName) {
       super(commandId, cacheName);

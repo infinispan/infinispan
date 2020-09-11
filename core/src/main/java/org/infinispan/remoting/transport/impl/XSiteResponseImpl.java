@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.xsite.XSiteBackup;
 
@@ -17,7 +18,7 @@ import org.infinispan.xsite.XSiteBackup;
  * @author Pedro Ruivo
  * @since 10.0
  */
-public class XSiteResponseImpl extends CompletableFuture<Void> implements XSiteResponse, BiConsumer<Object, Throwable> {
+public class XSiteResponseImpl<O> extends CompletableFuture<O> implements XSiteResponse<O>, BiConsumer<ValidResponse, Throwable> {
 
    private final long sendTimeNanos;
    private final TimeService timeService;
@@ -38,12 +39,13 @@ public class XSiteResponseImpl extends CompletableFuture<Void> implements XSiteR
    }
 
    @Override
-   public void accept(Object o, Throwable throwable) {
+   public void accept(ValidResponse response, Throwable throwable) {
       durationNanos = timeService.timeDuration(sendTimeNanos, TimeUnit.NANOSECONDS);
       if (throwable != null) {
          completeExceptionally(throwable);
       } else {
-         complete(null);
+         //noinspection unchecked
+         complete((O) response.getResponseValue());
       }
    }
 }

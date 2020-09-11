@@ -5,9 +5,12 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * RPC command to replicate cache operations (such as put, remove, replace, etc.) to the backup site.
@@ -15,12 +18,12 @@ import org.infinispan.util.ByteString;
  * @author Pedro Ruivo
  * @since 7.0
  */
-public class SingleXSiteRpcCommand extends XSiteReplicateCommand {
+public class SingleXSiteRpcCommand extends XSiteReplicateCommand<Object> {
 
    public static final byte COMMAND_ID = 40;
-   private VisitableCommand command;
+   private ReplicableCommand command;
 
-   public SingleXSiteRpcCommand(ByteString cacheName, VisitableCommand command) {
+   public SingleXSiteRpcCommand(ByteString cacheName, ReplicableCommand command) {
       super(COMMAND_ID, cacheName);
       this.command = command;
    }
@@ -34,8 +37,23 @@ public class SingleXSiteRpcCommand extends XSiteReplicateCommand {
    }
 
    @Override
-   public CompletionStage<Void> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
-      return receiver.handleRemoteCommand(command, preserveOrder);
+   public CompletionStage<Object> performInLocalSite(ComponentRegistry registry, boolean preserveOrder) {
+      // Need to check VisitableCommand before CacheRpcCommand as PrepareCommand implements both but need to visit
+      if (command instanceof VisitableCommand) {
+         return super.performInLocalSite(registry, preserveOrder);
+      } else {
+         try {
+            //noinspection unchecked
+            return (CompletionStage<Object>) ((CacheRpcCommand) command).invokeAsync(registry);
+         } catch (Throwable throwable) {
+            return CompletableFutures.completedExceptionFuture(throwable);
+         }
+      }
+   }
+
+   @Override
+   public CompletionStage<Object> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
+      return receiver.handleRemoteCommand((VisitableCommand) command, preserveOrder);
    }
 
    @Override
@@ -50,7 +68,7 @@ public class SingleXSiteRpcCommand extends XSiteReplicateCommand {
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      command = (VisitableCommand) input.readObject();
+      command = (ReplicableCommand) input.readObject();
    }
 
    @Override

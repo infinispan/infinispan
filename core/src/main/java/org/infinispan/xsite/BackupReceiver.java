@@ -21,7 +21,7 @@ import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 @Scope(Scopes.NAMED_CACHE)
 public interface BackupReceiver {
 
-   CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder);
+   <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command, boolean preserveOrder);
 
    /**
     * Updates the key with the value from a remote site.

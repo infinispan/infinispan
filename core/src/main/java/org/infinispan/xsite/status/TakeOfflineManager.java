@@ -23,7 +23,7 @@ public interface TakeOfflineManager {
     *
     * @param response The cross-site response.
     */
-   void registerRequest(XSiteResponse response);
+   void registerRequest(XSiteResponse<?> response);
 
    /**
     * Returns the site state for site {@code siteName}.

@@ -20,7 +20,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
  * @author Ryan Emerson
  * @since 11.0
  */
-public class XSiteStateTransferStartReceiveCommand extends XSiteReplicateCommand {
+public class XSiteStateTransferStartReceiveCommand extends XSiteReplicateCommand<Void> {
 
    public static final byte COMMAND_ID = 106;
 

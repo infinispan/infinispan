@@ -340,7 +340,7 @@ public class JGroupsTransport implements Transport {
    }
 
    @Override
-   public XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand) {
+   public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
       Address recipient = JGroupsAddressCache.fromJGroupsAddress(new SiteMaster(backup.getSiteName()));
       long requestId = requests.newRequestId();
       logRequest(requestId, rpcCommand, recipient, "backup");
@@ -350,7 +350,7 @@ public class JGroupsTransport implements Transport {
 
       DeliverOrder order = backup.isSync() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER;
       long timeout = backup.getTimeout();
-      XSiteResponseImpl xSiteResponse = new XSiteResponseImpl(timeService, backup);
+      XSiteResponseImpl<O> xSiteResponse = new XSiteResponseImpl<>(timeService, backup);
       try {
          sendCommand(recipient, rpcCommand, request.getRequestId(), order, false, false);
          if (timeout > 0) {

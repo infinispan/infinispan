@@ -18,7 +18,7 @@ import org.infinispan.xsite.XSiteReplicateCommand;
  * @author Pedro Ruivo
  * @since 7.0
  */
-public class XSiteStatePushCommand extends XSiteReplicateCommand {
+public class XSiteStatePushCommand extends XSiteReplicateCommand<Void> {
 
    public static final byte COMMAND_ID = 33;
    private XSiteState[] chunk;

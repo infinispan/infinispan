@@ -18,16 +18,16 @@ import org.infinispan.xsite.XSiteReplicateCommand;
  * @author Pedro Ruivo
  * @since 7.0
  */
-public class RetryOnFailureXSiteCommand {
+public class RetryOnFailureXSiteCommand<O> {
 
    public static final RetryPolicy NO_RETRY = new MaxRetriesPolicy(0);
    private static final Log log = LogFactory.getLog(RetryOnFailureXSiteCommand.class);
    private static final boolean trace = log.isTraceEnabled();
    private final XSiteBackup xSiteBackup;
-   private final XSiteReplicateCommand command;
+   private final XSiteReplicateCommand<O> command;
    private final RetryPolicy retryPolicy;
 
-   private RetryOnFailureXSiteCommand(XSiteBackup backup, XSiteReplicateCommand command, RetryPolicy retryPolicy) {
+   private RetryOnFailureXSiteCommand(XSiteBackup backup, XSiteReplicateCommand<O> command, RetryPolicy retryPolicy) {
       this.xSiteBackup = backup;
       this.command = command;
       this.retryPolicy = retryPolicy;
@@ -49,7 +49,7 @@ public class RetryOnFailureXSiteCommand {
 
       do {
          try {
-            CompletionStage<Void> response = rpcManager.invokeXSite(xSiteBackup, command);
+            CompletionStage<O> response = rpcManager.invokeXSite(xSiteBackup, command);
             response.toCompletableFuture().join();
             if (trace) {
                log.trace("Successful Response received.");
@@ -81,12 +81,12 @@ public class RetryOnFailureXSiteCommand {
     * @return the new instance.
     * @throws java.lang.NullPointerException if any parameter is {@code null}
     */
-   public static RetryOnFailureXSiteCommand newInstance(XSiteBackup backup, XSiteReplicateCommand command,
+   public static <O> RetryOnFailureXSiteCommand<O> newInstance(XSiteBackup backup, XSiteReplicateCommand<O> command,
                                                         RetryPolicy retryPolicy) {
       assertNotNull(backup, "XSiteBackup");
       assertNotNull(command, "XSiteReplicateCommand");
       assertNotNull(retryPolicy, "RetryPolicy");
-      return new RetryOnFailureXSiteCommand(backup, command, retryPolicy);
+      return new RetryOnFailureXSiteCommand<>(backup, command, retryPolicy);
    }
 
    @Override

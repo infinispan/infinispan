@@ -27,7 +27,7 @@ public abstract class BackupReceiverDelegator implements BackupReceiver {
    }
 
    @Override
-   public CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
+   public <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
       return delegate.handleRemoteCommand(command, preserveOrder);
    }
 

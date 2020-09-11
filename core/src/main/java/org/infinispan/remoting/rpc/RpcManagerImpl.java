@@ -370,11 +370,11 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    }
 
    @Override
-   public XSiteResponse invokeXSite(XSiteBackup backup, XSiteReplicateCommand command) {
+   public <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteReplicateCommand<O> command) {
       if (!statisticsEnabled) {
          return t.backupRemotely(backup, command);
       }
-      XSiteResponse rsp = t.backupRemotely(backup, command);
+      XSiteResponse<O> rsp = t.backupRemotely(backup, command);
       rsp.whenCompleted(xSiteResponseCompleted);
       return rsp;
    }
