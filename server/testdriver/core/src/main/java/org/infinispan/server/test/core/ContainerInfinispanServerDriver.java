@@ -270,7 +270,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       return serverOutputPath;
    }
 
-   private GenericContainer createContainer(int i, Consumer<OutputFrame>... logConsumers) {
+   private GenericContainer<?> createContainer(int i, Consumer<OutputFrame>... logConsumers) {
 
       if (this.volumes[i] == null) {
          String volumeName = UUID.randomUUID().toString();
@@ -278,7 +278,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          this.volumes[i] = volumeName;
       }
 
-      GenericContainer container = new GenericContainer<>(image)
+      GenericContainer<?> container = new GenericContainer<>(image)
          .withCreateContainerCmdModifier(cmd -> {
             cmd.getHostConfig().withMounts(
                   Arrays.asList(new Mount().withSource(this.volumes[i]).withTarget(serverPath()).withType(MountType.VOLUME))
@@ -311,7 +311,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
 
       // See https://github.com/testcontainers/testcontainers-java/issues/2276
-      ThreadLeakChecker.ignoreThreadsContaining("tc-okhttp-stream-");
+      ThreadLeakChecker.ignoreThreadsContaining("docker-java-stream-");
    }
 
    @Override
