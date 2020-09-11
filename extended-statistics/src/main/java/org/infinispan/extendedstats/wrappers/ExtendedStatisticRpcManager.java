@@ -158,7 +158,7 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    }
 
    @Override
-   public XSiteResponse invokeXSite(XSiteBackup backup, XSiteReplicateCommand command) {
+   public <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteReplicateCommand<O> command) {
       return actual.invokeXSite(backup, command);
    }
 

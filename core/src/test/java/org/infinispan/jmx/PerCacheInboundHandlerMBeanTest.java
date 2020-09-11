@@ -13,13 +13,13 @@ import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.mockito.ArgumentMatchers;
 import org.testng.annotations.Test;
@@ -81,8 +81,8 @@ public class PerCacheInboundHandlerMBeanTest extends AbstractClusterMBeanTest {
       assertTrue(mBeanServer.isRegistered(objName));
       assertEquals(Boolean.TRUE, mBeanServer.getAttribute(objName, "StatisticsEnabled"));
 
-      XSiteReplicateCommand command = mock(XSiteReplicateCommand.class);
-      when(command.performInLocalSite(ArgumentMatchers.any(BackupReceiver.class), anyBoolean()))
+      XSiteReplicateCommand<?> command = mock(XSiteReplicateCommand.class);
+      when(command.performInLocalSite(ArgumentMatchers.any(ComponentRegistry.class), anyBoolean()))
             .thenReturn(CompletableFutures.completedNull());
       when(command.getCacheName()).thenReturn(ByteString.fromString(getDefaultCacheName()));
 

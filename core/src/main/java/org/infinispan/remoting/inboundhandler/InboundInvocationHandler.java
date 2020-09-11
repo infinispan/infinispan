@@ -30,5 +30,5 @@ public interface InboundInvocationHandler {
     * @param reply   the return value is passed to this object in order to be sent back to the origin
     * @param order   the {@link DeliverOrder} in which the command was sent
     */
-   void handleFromRemoteSite(String origin, XSiteReplicateCommand command, Reply reply, DeliverOrder order);
+   void handleFromRemoteSite(String origin, XSiteReplicateCommand<?> command, Reply reply, DeliverOrder order);
 }

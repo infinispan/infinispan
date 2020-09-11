@@ -172,16 +172,16 @@ public class BackupSenderImpl implements BackupSender {
 
    private InvocationStage backupCommand(VisitableCommand command, VisitableCommand originalCommand,
          List<XSiteBackup> xSiteBackups, Transaction transaction) {
-      XSiteReplicateCommand xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(command);
+      XSiteReplicateCommand<Object> xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(command);
       ResponseAggregator aggregator = new ResponseAggregator(originalCommand, transaction);
       sendTo(xsiteCommand, xSiteBackups, aggregator);
       return aggregator.freeze();
    }
 
-   private void sendTo(XSiteReplicateCommand command, Collection<XSiteBackup> xSiteBackups,
+   private void sendTo(XSiteReplicateCommand<Object> command, Collection<XSiteBackup> xSiteBackups,
          ResponseAggregator aggregator) {
       for (XSiteBackup backup : xSiteBackups) {
-         XSiteResponse cs = rpcManager.invokeXSite(backup, command);
+         XSiteResponse<Object> cs = rpcManager.invokeXSite(backup, command);
          takeOfflineManager.registerRequest(cs);
          aggregator.addResponse(backup, cs);
       }
@@ -199,7 +199,7 @@ public class BackupSenderImpl implements BackupSender {
       }
       PrepareCommand prepare = commandsFactory.buildPrepareCommand(command.getGlobalTransaction(),
                                                                    modifications, true);
-      XSiteReplicateCommand xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(prepare);
+      XSiteReplicateCommand<Object> xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(prepare);
       sendTo(xsiteCommand, xSiteBackups, aggregator);
    }
 
@@ -208,7 +208,7 @@ public class BackupSenderImpl implements BackupSender {
       if (xSiteBackups.isEmpty()) {
          return; //avoid creating garbage
       }
-      XSiteReplicateCommand xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(command);
+      XSiteReplicateCommand<Object> xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(command);
       sendTo(xsiteCommand, xSiteBackups, aggregator);
    }
 

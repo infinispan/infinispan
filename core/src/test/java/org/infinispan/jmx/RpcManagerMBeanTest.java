@@ -27,6 +27,8 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
@@ -149,15 +151,15 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       Transport originalTransport = rpcManager.getTransport();
 
       List<XSiteResponse> responses = new ArrayList<>(3);
-      List<CompletableFuture<Void>> asyncFutures = new ArrayList<>(2);
-      List<CompletableFuture<Void>> syncFutures = new ArrayList<>(2);
+      List<CompletableFuture<ValidResponse>> asyncFutures = new ArrayList<>(2);
+      List<CompletableFuture<ValidResponse>> syncFutures = new ArrayList<>(2);
 
       try {
          Transport mockTransport = mock(Transport.class);
          when(mockTransport.backupRemotely(any(XSiteBackup.class), any(XSiteReplicateCommand.class)))
                .then(invocationOnMock -> {
                   XSiteBackup arg1 = invocationOnMock.getArgument(0);
-                  CompletableFuture<Void> cf = new CompletableFuture<>();
+                  CompletableFuture<ValidResponse> cf = new CompletableFuture<>();
                   XSiteResponseImpl rsp = new XSiteResponseImpl(timeService, arg1);
                   if (arg1.isSync()) {
                      syncFutures.add(cf);
@@ -187,13 +189,13 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
 
       //in the end, we end up with 2 sync request and 2 async requests
       timeService.advance(10);
-      asyncFutures.get(0).complete(null);
-      syncFutures.get(0).complete(null);
+      asyncFutures.get(0).complete(SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
+      syncFutures.get(0).complete(SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
       responses.get(0).toCompletableFuture().join();
 
       timeService.advance(20);
-      asyncFutures.get(1).complete(null);
-      syncFutures.get(1).complete(null);
+      asyncFutures.get(1).complete(SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
+      syncFutures.get(1).complete(SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
       responses.get(1).toCompletableFuture().join();
       responses.get(2).toCompletableFuture().join();
       responses.get(3).toCompletableFuture().join();

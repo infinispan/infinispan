@@ -42,7 +42,6 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
 /**
@@ -121,7 +120,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    }
 
    @Override
-   public void handleFromRemoteSite(String origin, XSiteReplicateCommand command, Reply reply, DeliverOrder order) {
+   public void handleFromRemoteSite(String origin, XSiteReplicateCommand<?> command, Reply reply, DeliverOrder order) {
       if (trace) {
          log.tracef("Handling command %s from remote site %s", command, origin);
       }
@@ -142,8 +141,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       PerCacheInboundInvocationHandler handler = cr.getPerCacheInboundInvocationHandler();
       assert handler != null;
       handler.registerXSiteCommandReceiver();
-      BackupReceiver receiver = cr.getBackupReceiver().running();
-      command.performInLocalSite(receiver, order.preserveOrder()).whenComplete(new ResponseConsumer(command, reply));
+      command.performInLocalSite(cr, order.preserveOrder()).whenComplete(new ResponseConsumer(command, reply));
    }
 
    private void handleCacheRpcCommand(Address origin, CacheRpcCommand command, Reply reply, DeliverOrder mode) {

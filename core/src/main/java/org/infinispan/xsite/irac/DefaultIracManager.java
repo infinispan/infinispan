@@ -324,8 +324,8 @@ public class DefaultIracManager implements IracManager, Runnable {
       }
    }
 
-   private XSiteResponse sendToRemoteSite(XSiteBackup backup, XSiteReplicateCommand cmd) {
-      XSiteResponse rsp = rpcManager.invokeXSite(backup, cmd);
+   private <O> XSiteResponse<O> sendToRemoteSite(XSiteBackup backup, XSiteReplicateCommand<O> cmd) {
+      XSiteResponse<O> rsp = rpcManager.invokeXSite(backup, cmd);
       takeOfflineManager.registerRequest(rsp);
       return rsp;
    }
@@ -357,7 +357,7 @@ public class DefaultIracManager implements IracManager, Runnable {
       return getDistributionInfoKey(key).isWriteOwner();
    }
 
-   private CompletionStage<Void> sendCommandToAllBackups(XSiteReplicateCommand command) {
+   private CompletionStage<Void> sendCommandToAllBackups(XSiteReplicateCommand<Void> command) {
       if (command == null) {
          return CompletableFutures.completedNull();
       }
@@ -371,7 +371,7 @@ public class DefaultIracManager implements IracManager, Runnable {
       return collector.freeze();
    }
 
-   private XSiteReplicateCommand buildRemoveCommand(CleanupTask cleanupTask) {
+   private XSiteReplicateCommand<Void> buildRemoveCommand(CleanupTask cleanupTask) {
       Object key = cleanupTask.key;
       IracMetadata metadata = iracVersionGenerator.getTombstone(key);
       if (metadata == null) {

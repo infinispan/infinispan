@@ -111,6 +111,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    @Inject InvocationContextFactory invocationContextFactory;
    @Inject RpcManager rpcManager;
    @Inject ClusteringDependentLogic clusteringDependentLogic;
+   @Inject ComponentRegistry componentRegistry;
 
    private final ByteString cacheName;
 
@@ -200,13 +201,13 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    }
 
    @Override
-   public final CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
+   public final <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
       try {
          //currently, it only handles sync xsite requests.
          //async xsite requests are handle by the other methods.
          assert !preserveOrder;
          //noinspection unchecked
-         return (CompletableFuture<Void>) command.acceptVisitor(null, defaultHandler);
+         return (CompletionStage<O>) command.acceptVisitor(null, defaultHandler);
       } catch (Throwable throwable) {
          return completedExceptionFuture(throwable);
       }

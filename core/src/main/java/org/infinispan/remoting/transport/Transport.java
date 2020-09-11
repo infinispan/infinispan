@@ -19,6 +19,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -29,7 +30,6 @@ import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
-import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
@@ -195,7 +195,7 @@ public interface Transport extends Lifecycle {
     * @param rpcCommand The command to send.
     * @return A {@link XSiteResponse} that is completed when the request is completed.
     */
-   XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand);
+   <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand);
 
    /**
     * @return true if the current Channel is the coordinator of the cluster.
