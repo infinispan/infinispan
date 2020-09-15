@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
+import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -226,6 +227,16 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
          action.accept(ice);
       }
    }
+
+   /**
+    * Performs the given consumer for each map inside this container, once for each segment until all maps have been
+    * processed or the action throws an exception. Exceptions thrown by the action are relayed to the caller. The
+    * consumer will be provided with the segment as well that maps to the given segment.
+    *
+    * @param segmentMapConsumer The action to be performed for each element map
+    * @throws NullPointerException if the specified action is null
+    */
+   void forEachSegment(ObjIntConsumer<PeekableTouchableMap<K, V>> segmentMapConsumer);
 
    /**
     * Sets what segments this data container should be using. Already associated segments are unaffected by this and

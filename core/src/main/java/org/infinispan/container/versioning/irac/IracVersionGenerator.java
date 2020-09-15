@@ -17,7 +17,7 @@ import org.infinispan.topology.CacheTopology;
 public interface IracVersionGenerator extends Lifecycle {
 
    /**
-    * Generator a new {@link IracMetadata} for a given {@code segment}.
+    * Generates a new {@link IracMetadata} for a given {@code segment}.
     * <p>
     * The {@link IracEntryVersion} created is always higher than the previous one for the same {@code segment}.
     *
@@ -25,6 +25,17 @@ public interface IracVersionGenerator extends Lifecycle {
     * @return The {@link IracMetadata} created.
     */
    IracMetadata generateNewMetadata(int segment);
+
+   /**
+    * Generate a new {@link IracMetadata} for a given {@code segment}.
+    * <p>
+    * The {@link IracEntryVersion} created will be the same as the previous one for the same {@code segment}. If there
+    * was no version prior then it will create an initial version.
+    *
+    * @param segment The segment.
+    * @return The {@link IracMetadata} created.
+    */
+   IracMetadata generateMetadataWithCurrentVersion(int segment);
 
    /**
     * Creates a new {@link IracMetadata} with the merged {@link IracEntryVersion} from locally stored value and remote

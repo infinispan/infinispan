@@ -2,7 +2,6 @@ package org.infinispan.xsite;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.Collections;
@@ -11,7 +10,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -22,16 +20,13 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Factory;
@@ -182,47 +177,6 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       assertNull(backup(LON).get("k"));
       blockingInterceptor.waitingLatch.countDown();
       eventuallyEquals("v", () -> backup(LON).get("k"));
-   }
-
-   private void testExpired(boolean lifespan) throws InterruptedException {
-      Cache<String, String> cache = cache(LON, 0);
-      Cache<Object, Object> backupCache = backup(LON);
-      ControlledTimeService timeService = new ControlledTimeService();
-      // Max idle requires all caches to show it as expired to be removed.
-      for (Cache<?, ?> c : caches(LON)) {
-         TestingUtil.replaceComponent(c.getCacheManager(), TimeService.class, timeService, true);
-      }
-
-      if (lifespan) {
-         cache.put("k", "v", 1, TimeUnit.SECONDS);
-      } else {
-         cache.put("k", "v", -1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
-      }
-      blockingInterceptor.invocationReceivedLatch.await(10, TimeUnit.SECONDS);
-      assertEquals("v", cache(LON, 0).get("k"));
-      assertEquals("v", cache(LON, 1).get("k"));
-      assertNull(backupCache.get("k"));
-      blockingInterceptor.waitingLatch.countDown();
-      eventuallyEquals("v", () -> backup(LON).get("k"));
-
-      blockingInterceptor.reset();
-      // Now expire the entry
-      timeService.advance(TimeUnit.SECONDS.toMillis(2));
-      assertNull(cache.get("k"));
-
-      // We shouldn't receive any cross site command
-      assertFalse(blockingInterceptor.invocationReceivedLatch.await(100, TimeUnit.MILLISECONDS));
-
-      // Expiration should not have been replicated
-      assertEquals(1, blockingInterceptor.invocationReceivedLatch.getCount());
-   }
-
-   public void testExpiredLifespan() throws InterruptedException {
-      testExpired(true);
-   }
-
-   public void testExpiredMaxIdle() throws InterruptedException {
-      testExpired(false);
    }
 
    private void doPutWithDisabledBlockingInterceptor() {

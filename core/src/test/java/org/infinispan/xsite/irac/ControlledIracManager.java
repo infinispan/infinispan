@@ -2,6 +2,7 @@ package org.infinispan.xsite.irac;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
 import org.infinispan.commands.write.WriteCommand;
@@ -72,6 +73,11 @@ public class ControlledIracManager implements IracManager {
    @Override
    public void receiveState(Object key, Object lockOwner, IracMetadata tombstone) {
       actual.receiveState(key, lockOwner, tombstone);
+   }
+
+   @Override
+   public CompletionStage<Boolean> checkAndTrackExpiration(Object key) {
+      return actual.checkAndTrackExpiration(key);
    }
 
    protected Optional<DefaultIracManager> asDefaultIracManager() {

@@ -57,6 +57,13 @@ public interface BackupReceiver {
    CompletionStage<Void> clearKeys();
 
    /**
+    * Touches an entry and returns if it was able to or not.
+    * @param key the key of the entry to touch
+    * @return if the entry was touched
+    */
+   CompletionStage<Boolean> touchEntry(Object key);
+
+   /**
     * It handles starting the state transfer from a remote site. The command must be broadcast to the entire cluster in
     * which the cache exists.
     */

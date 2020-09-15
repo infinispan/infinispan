@@ -592,8 +592,11 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          } else if (trace) {
             log.trace("Cannot remove entry as its lifespan or value do not match");
          }
-      } else if (trace) {
-         log.trace("Nothing to remove since the entry doesn't exist in the context or it is already removed");
+      } else {
+         if (trace) {
+            log.trace("Nothing to remove since the entry doesn't exist in the context or it is already removed - assume command was successful");
+         }
+         return true;
       }
       command.fail();
       return false;
