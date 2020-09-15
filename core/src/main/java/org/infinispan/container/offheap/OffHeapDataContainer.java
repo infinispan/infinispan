@@ -2,6 +2,7 @@ package org.infinispan.container.offheap;
 
 import java.util.Iterator;
 import java.util.Spliterator;
+import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.FilterIterator;
@@ -106,5 +107,10 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
    @Override
    public void clear() {
       map.clear();
+   }
+
+   @Override
+   public void forEachSegment(ObjIntConsumer<PeekableTouchableMap<WrappedBytes, WrappedBytes>> segmentMapConsumer) {
+      segmentMapConsumer.accept(map, 0);
    }
 }

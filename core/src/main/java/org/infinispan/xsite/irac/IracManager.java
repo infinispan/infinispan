@@ -1,6 +1,7 @@
 package org.infinispan.xsite.irac;
 
 import java.util.Collection;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
 import org.infinispan.commands.write.WriteCommand;
@@ -89,4 +90,10 @@ public interface IracManager {
     */
    void receiveState(Object key, Object lockOwner, IracMetadata tombstone);
 
+   /**
+    * Checks if the given key is expired on all other sites. If the key is expired on all other sites this will return true
+    * @param key The key to check if it is expired or not
+    * @return Whether this key is expired on all other sites
+    */
+   CompletionStage<Boolean> checkAndTrackExpiration(Object key);
 }

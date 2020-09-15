@@ -18,10 +18,11 @@ import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeyCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
+import org.infinispan.commands.irac.IracPutKeyCommand;
 import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
-import org.infinispan.commands.irac.IracPutKeyCommand;
+import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -462,6 +463,9 @@ public class RemoteCommandsFactory {
                break;
             case IracClearKeysCommand.COMMAND_ID:
                command = new IracClearKeysCommand(cacheName);
+               break;
+            case IracTouchKeyCommand.COMMAND_ID:
+               command = new IracTouchKeyCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

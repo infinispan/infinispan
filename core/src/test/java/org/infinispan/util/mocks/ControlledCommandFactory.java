@@ -39,6 +39,7 @@ import org.infinispan.commands.irac.IracPutKeyCommand;
 import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -705,5 +706,10 @@ public class ControlledCommandFactory implements CommandsFactory {
    public IracPutKeyValueCommand buildIracPutKeyValueCommand(Object key, int segment, Object value, Metadata metadata,
          PrivateMetadata privateMetadata) {
       return actual.buildIracPutKeyValueCommand(key, segment, value, metadata, privateMetadata);
+   }
+
+   @Override
+   public IracTouchKeyCommand buildIracTouchCommand(Object key) {
+      return actual.buildIracTouchCommand(key);
    }
 }

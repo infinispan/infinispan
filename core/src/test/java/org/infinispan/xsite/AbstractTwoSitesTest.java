@@ -24,6 +24,7 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
    protected BackupFailurePolicy lonBackupFailurePolicy = BackupFailurePolicy.WARN;
    protected boolean isLonBackupTransactional = false;
    protected BackupConfiguration.BackupStrategy lonBackupStrategy = BackupConfiguration.BackupStrategy.SYNC;
+   protected BackupConfiguration.BackupStrategy nycBackupStrategy = BackupConfiguration.BackupStrategy.SYNC;
    protected String lonCustomFailurePolicyClass = null;
    protected boolean use2Pc = false;
    protected int initialClusterSize = 2;
@@ -44,7 +45,7 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
       ConfigurationBuilder nyc = getNycActiveConfig();
       nyc.sites().addBackup()
             .site(LON)
-            .strategy(BackupConfiguration.BackupStrategy.SYNC)
+            .strategy(nycBackupStrategy)
             .sites().addInUseBackupSite(LON);
 
       createSite(LON, initialClusterSize, globalConfigurationBuilderForSite(LON), lon);
@@ -89,8 +90,12 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
    }
 
    protected Cache<Object, Object> backup(String site) {
-      if (site.equals(LON)) return implicitBackupCache ? cache(NYC, 0) : cache(NYC, "lonBackup", 0);
-      if (site.equals(NYC)) return implicitBackupCache ? cache(LON, 0) : cache(LON, "nycBackup", 0);
+      return backup(site, 0);
+   }
+
+   protected Cache<Object, Object> backup(String site, int offset) {
+      if (site.equals(LON)) return implicitBackupCache ? cache(NYC, offset) : cache(NYC, "lonBackup", offset);
+      if (site.equals(NYC)) return implicitBackupCache ? cache(LON, offset) : cache(LON, "nycBackup", offset);
       throw new IllegalArgumentException("No such site: " + site);
    }
 

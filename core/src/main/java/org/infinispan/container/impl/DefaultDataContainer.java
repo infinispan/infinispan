@@ -1,11 +1,9 @@
 package org.infinispan.container.impl;
 
-import java.lang.invoke.MethodHandles;
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.Spliterator;
-import java.util.concurrent.ConcurrentHashMap;
-
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Policy;
+import net.jcip.annotations.ThreadSafe;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.EntrySizeCalculator;
@@ -19,11 +17,12 @@ import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.Policy;
-
-import net.jcip.annotations.ThreadSafe;
+import java.lang.invoke.MethodHandles;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.Spliterator;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.ObjIntConsumer;
 
 /**
  * DefaultDataContainer is both eviction and non-eviction based data container.
@@ -232,5 +231,11 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
       if (evictionCache != null) {
          evictionCache.cleanUp();
       }
+   }
+
+
+   @Override
+   public void forEachSegment(ObjIntConsumer<PeekableTouchableMap<K, V>> segmentMapConsumer) {
+      segmentMapConsumer.accept(entries, 0);
    }
 }

@@ -61,4 +61,9 @@ public abstract class BackupReceiverDelegator implements BackupReceiver {
    public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
       return delegate.handleStateTransferState(cmd);
    }
+
+   @Override
+   public CompletionStage<Boolean> touchEntry(Object key) {
+      return delegate.touchEntry(key);
+   }
 }

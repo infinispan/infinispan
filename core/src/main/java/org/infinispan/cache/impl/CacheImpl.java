@@ -707,7 +707,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value, long explicitFlags) {
       RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value, keyPartitioner.getSegment(key),
-            explicitFlags | FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_XSITE_BACKUP);
+            explicitFlags | FlagBitSets.SKIP_CACHE_LOAD);
       return performRemoveExpiredCommand(command);
    }
 

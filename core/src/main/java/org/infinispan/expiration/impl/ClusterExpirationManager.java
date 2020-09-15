@@ -158,7 +158,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                   if (expiredMortal) {
                      stage = handleLifespanExpireEntry(ice.getKey(), value, lifespan, false);
                   } else {
-                     stage = handleMaxIdleExpireEntry(ice.getKey(), value, maxIdle, false);
+                     stage = handleMaxIdleExpireEntry(ice, false);
                   }
                   stage.whenComplete((obj, t) -> addStageToPermits(expirationPermits, stage));
                }
@@ -244,8 +244,19 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       return cacheToUse.removeLifespanExpired(key, value, lifespan);
    }
 
-   CompletableFuture<Boolean> handleMaxIdleExpireEntry(K key, V value, long maxIdle, boolean isWrite) {
-      return handleEitherExpiration(key, value, true, maxIdle, isWrite);
+   CompletableFuture<Boolean> handleMaxIdleExpireEntry(InternalCacheEntry<K, V> entry, boolean isWrite) {
+      return handleEitherExpiration(entry.getKey(), entry.getValue(), true, entry.getMaxIdle(), isWrite)
+              .thenCompose(expired -> {
+                 if (!expired) {
+                    if (trace) {
+                       log.tracef("Entry was not actually expired via max idle - touching on all nodes");
+                    }
+                    // TODO: what do we do if another node couldn't touch the value?
+                    return checkExpiredMaxIdle(entry, keyPartitioner.getSegment(entry.getKey()))
+                          .thenApply(ignore -> Boolean.FALSE);
+                 }
+                 return CompletableFutures.completedTrue();
+              });
    }
 
    CompletableFuture<Boolean> removeMaxIdle(AdvancedCache<K, V> cacheToUse, K key, V value) {
@@ -335,7 +346,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          }
       } else {
          // This means it expired transiently - this will block user until we confirm the entry is okay
-         future = handleMaxIdleExpireEntry(entry.getKey(), value, entry.getMaxIdle(), isWrite);
+         future = handleMaxIdleExpireEntry(entry, isWrite);
       }
 
       return future.handle((expired, t) -> {
