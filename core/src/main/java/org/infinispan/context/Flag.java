@@ -246,6 +246,12 @@ public enum Flag {
     * Internal use
     */
    IRAC_STATE,
+
+   /**
+    * Flag to designate that this operation was performed on behalf of another that already has the lock for the given
+    * key.
+    */
+   ALREADY_HAS_LOCK,
    ;
 
    private static final Flag[] CACHED_VALUES = values();
