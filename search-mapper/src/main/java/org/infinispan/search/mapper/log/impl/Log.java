@@ -1,8 +1,6 @@
 package org.infinispan.search.mapper.log.impl;
 
 import org.hibernate.search.engine.environment.classpath.spi.ClassLoadingException;
-import org.hibernate.search.mapper.pojo.logging.spi.PojoTypeModelFormatter;
-import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
 import org.hibernate.search.util.common.SearchException;
 import org.hibernate.search.util.common.logging.impl.ClassFormatter;
 import org.jboss.logging.BasicLogger;
@@ -19,16 +17,8 @@ public interface Log extends BasicLogger {
 
    int ID_OFFSET_1 = 750000;
 
-   @Message(id = ID_OFFSET_1 + 1, value = "Unable to find property '%2$s' on type '%1$s'.")
-   SearchException cannotFindProperty(@FormatWith(PojoTypeModelFormatter.class) PojoRawTypeModel<?> typeModel,
-                                      String propertyName);
-
    @Message(id = ID_OFFSET_1 + 2, value = "Exception while retrieving the type model for '%1$s'.")
    SearchException errorRetrievingTypeModel(@FormatWith(ClassFormatter.class) Class<?> clazz, @Cause Exception cause);
-
-   @Message(id = ID_OFFSET_1 + 3, value = "Exception while retrieving property type model for '%1$s' on '%2$s'")
-   SearchException errorRetrievingPropertyTypeModel(String propertyModelName, @FormatWith(PojoTypeModelFormatter.class)
-         PojoRawTypeModel<?> parentTypeModel, @Cause Exception cause);
 
    @Message(id = ID_OFFSET_1 + 4, value = "Multiple entity types configured with the same name '%1$s': '%2$s', '%3$s'")
    SearchException multipleEntityTypesWithSameName(String entityName, Class<?> previousType, Class<?> type);
