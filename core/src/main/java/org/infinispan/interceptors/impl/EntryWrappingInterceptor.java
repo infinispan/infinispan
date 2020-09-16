@@ -213,7 +213,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) {
       final Object key = command.getKey();
       CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, command.getSegment(),
-            ignoreOwnership(command) || canRead(command));
+            ignoreOwnership(command) || canRead(command), command.hasAnyFlag(FlagBitSets.ALREADY_HAS_LOCK));
       return makeStage(asyncInvokeNext(ctx, command, stage)).thenApply(ctx, command, dataReadReturnHandler);
    }
 
@@ -223,7 +223,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       AggregateCompletionStage<Void> aggregateCompletionStage = null;
       for (Object key : command.getKeys()) {
          CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
-               ignoreOwnership || canReadKey(key));
+               ignoreOwnership || canReadKey(key), false);
          aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
       }
 
@@ -483,7 +483,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          // TxReadOnlyKeyCommand may apply some mutations on the entry in context so we need to always wrap it
          stage = entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command), true);
       } else {
-         stage = entryFactory.wrapEntryForReading(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command));
+         stage = entryFactory.wrapEntryForReading(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command), false);
       }
 
       // Repeatable reads are not achievable with functional commands, as we don't store the value locally
@@ -508,7 +508,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       } else {
          for (Object key : command.getKeys()) {
             CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
-                  ignoreOwnership || canReadKey(key));
+                  ignoreOwnership || canReadKey(key), false);
             aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
          }
       }

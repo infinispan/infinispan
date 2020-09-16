@@ -10,6 +10,7 @@ import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.MVCCEntry;
@@ -19,6 +20,8 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
@@ -40,7 +43,6 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
 
    private Object key;
 
-   //only used by extended statistics. this boolean is local.
    private boolean isWrite;
    private int segment;
 
@@ -72,6 +74,17 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
       // CACHE_MODE_LOCAL is not used as it can be used when we want to ignore the ownership with respect to reads
       long flagBitSet = EnumUtil.bitSetOf(Flag.SKIP_REMOTE_LOOKUP);
+      // If this get command was due to a write and we are pessimistic that means it already holds the lock for the
+      // given key - This allows expiration to be performed if needed as it won't have to acquire the lock
+      // This code and the Flag can be removed when https://issues.redhat.com/browse/ISPN-12332 is complete
+      if (isWrite) {
+         TransactionConfiguration transactionConfiguration = componentRegistry.getConfiguration().transaction();
+         if (transactionConfiguration.transactionMode() == TransactionMode.TRANSACTIONAL) {
+            if (transactionConfiguration.lockingMode() == LockingMode.PESSIMISTIC) {
+               flagBitSet = EnumUtil.mergeBitSets(flagBitSet, FlagBitSets.ALREADY_HAS_LOCK);
+            }
+         }
+      }
       GetCacheEntryCommand command = componentRegistry.getCommandsFactory().buildGetCacheEntryCommand(key, segment,
             EnumUtil.mergeBitSets(flagBitSet, getFlagsBitSet()));
       command.setTopologyId(topologyId);
@@ -111,6 +124,7 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
       output.writeObject(key);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeBoolean(isWrite);
    }
 
    @Override
@@ -118,6 +132,7 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
       key = input.readObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
       setFlagsBitSet(input.readLong());
+      isWrite = input.readBoolean();
    }
 
    @Override
@@ -142,6 +157,7 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
          .append(key)
          .append(", flags=").append(printFlags())
          .append(", topologyId=").append(topologyId)
+         .append(", isWrite=").append(isWrite)
          .append("}")
          .toString();
    }

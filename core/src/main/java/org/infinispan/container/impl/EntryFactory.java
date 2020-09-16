@@ -95,9 +95,11 @@ public interface EntryFactory {
     * @param key key to look up and wrap
     * @param segment segment for the key
     * @param isOwner true if this node is current owner in readCH (or we ignore CH)
+    * @param hasLock true if the invoker already has the lock for this key
     * @return stage that when complete the value should be in the context
     */
-   CompletionStage<Void> wrapEntryForReading(InvocationContext ctx, Object key, int segment, boolean isOwner);
+   CompletionStage<Void> wrapEntryForReading(InvocationContext ctx, Object key, int segment, boolean isOwner,
+                                             boolean hasLock);
 
    /**
     * Insert an entry that exists in the data container into the context.
