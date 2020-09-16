@@ -57,7 +57,6 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
       hotRodServer3 = HotRodClientTestingUtil.startHotRodServer(manager(2));
       hotRodServer4 = HotRodClientTestingUtil.startHotRodServer(manager(3));
 
-
       waitForClusterToForm();
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
@@ -98,6 +97,10 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
       stopServer(hotRodServer2);
       stopServer(hotRodServer3);
       stopServer(hotRodServer4);
+      hotRodServer1 = null;
+      hotRodServer2 = null;
+      hotRodServer3 = null;
+      hotRodServer4 = null;
 
       remoteCache.stop();
       remoteCacheManager.stop();
@@ -142,12 +145,11 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
 
       // Rebalancing to include the joiner will increment the topology id by 2
       eventually(() -> {
-         int topologyId = channelFactory.getTopologyId(new byte[]{});
-         log.tracef("Client topology id is %d, waiting for it to become %d", topologyId,
-               topologyIdBeforeJoin + 2);
          // The get operation will update the client topology (if necessary)
          remoteCache.get("k");
-         return topologyId >= topologyIdBeforeJoin + 2;
+
+         CacheTopologyInfo topology = channelFactory.getCacheTopologyInfo(new byte[]{});
+         return topology.getSegmentsPerServer().size() == 5;
       });
 
       resetHitInterceptors();
@@ -157,16 +159,15 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
       runTest(3);
 
       stopServer(hotRodServer5);
-      TestingUtil.killCacheManagers(cm5);
+      killMember(4);
 
       // Rebalancing to exclude the leaver will again increment the topology id by 2
       eventually(() -> {
-         int topologyId = channelFactory.getTopologyId(new byte[]{});
-         log.tracef("Client topology id is %d, waiting for it to become %d", topologyId,
-               topologyIdBeforeJoin + 4);
-         // The put operation will update the client topology (if necessary)
-         remoteCache.put("k", "v");
-         return topologyId >= topologyIdBeforeJoin + 4;
+         // The get operation will update the client topology (if necessary)
+         remoteCache.get("k");
+
+         CacheTopologyInfo topology = channelFactory.getCacheTopologyInfo(new byte[]{});
+         return topology.getSegmentsPerServer().size() == 4;
       });
 
       resetHitInterceptors();
