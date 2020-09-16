@@ -28,7 +28,7 @@ final class CQCreateEagerQuery extends CQWorker {
    }
 
    private CompletionStage<NodeTopDocs> collectKeys(SearchQueryBuilder query) {
-      return blockingManager.supplyBlocking(() -> query.documentReference().fetchAll(), "CQCreateEagerQuery#collectKeys")
+      return blockingManager.supplyBlocking(() -> query.documentReference().fetch(queryDefinition.getMaxResults()), "CQCreateEagerQuery#collectKeys")
             .thenApply(queryResult -> {
                if (queryResult.total().hitCount() == 0L) return null;
 
@@ -41,7 +41,7 @@ final class CQCreateEagerQuery extends CQWorker {
    }
 
    private CompletionStage<NodeTopDocs> collectProjections(SearchQueryBuilder query) {
-      return blockingManager.supplyBlocking(() -> query.build().fetchAll(), "CQCreateEagerQuery#collectProjections").thenApply(queryResult -> {
+      return blockingManager.supplyBlocking(() -> query.build().fetch(queryDefinition.getMaxResults()), "CQCreateEagerQuery#collectProjections").thenApply(queryResult -> {
          if (queryResult.total().hitCount() == 0L) return null;
 
          List<?> hits = queryResult.hits();
