@@ -26,13 +26,14 @@ import org.jboss.logging.annotations.MessageLogger;
 //TODO [anistor] query-core and query modules share the id range!
 /**
  * Log abstraction for the query module. For this module, message ids
- * ranging from 14001 to 14800 inclusively have been reserved.
+ * ranging from 14001 to 14500 inclusively have been reserved.
  *
  * @author Galder Zamarreño
  * @author Sanne Grinovero
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
+//@ValidIdRange(min = 14001, max = 14500)
 public interface Log extends org.infinispan.query.core.impl.Log {
 
    Log CONTAINER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONTAINER");

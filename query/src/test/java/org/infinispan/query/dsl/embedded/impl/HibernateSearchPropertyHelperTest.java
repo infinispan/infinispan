@@ -6,11 +6,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.Store;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.DocumentId;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.helper.SearchMappingHelper;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +32,7 @@ public class HibernateSearchPropertyHelperTest {
 
    @After
    public void cleanUp() {
-      if ( searchMapping != null ) {
+      if (searchMapping != null) {
          searchMapping.close();
       }
    }
@@ -77,6 +77,11 @@ public class HibernateSearchPropertyHelperTest {
    }
 
    @Test
+   public void testRecognizeStoredField() {
+      assertThat(propertyHelper.getIndexedFieldProvider().get(TestEntity.class).isStored(new String[]{"description"})).isTrue();
+   }
+
+   @Test
    public void testRecognizeUnanalyzedField() {
       assertThat(propertyHelper.getIndexedFieldProvider().get(TestEntity.class).isAnalyzed(new String[]{"i"})).isFalse();
    }
@@ -86,8 +91,10 @@ public class HibernateSearchPropertyHelperTest {
 
       public String id;
 
+      @Field(analyze = Analyze.NO)
       public String name;
 
+      @Field(analyze = Analyze.YES, store = Store.YES)
       public String description;
 
       public int i;
@@ -101,16 +108,6 @@ public class HibernateSearchPropertyHelperTest {
       @DocumentId
       public String getId() {
          return id;
-      }
-
-      @Field(analyze = Analyze.NO)
-      public String getName() {
-         return name;
-      }
-
-      @Field(analyze = Analyze.YES)
-      public String getDescription() {
-         return description;
       }
 
       @Field(analyze = Analyze.NO)
