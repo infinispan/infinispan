@@ -4,10 +4,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -15,6 +15,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.TestOperation;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -103,7 +104,21 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
 //   }
 //
    public void testMaxIdleExpirationSync(Method method) {
-      doTest(method, new RemoveExpiredOperation());
+      doTest(method, new RemoveExpiredOperation(replaceTimeService()));
+   }
+
+   private ControlledTimeService replaceTimeService() {
+      ControlledTimeService timeService = new ControlledTimeService();
+      for (int i = 0; i < N_SITES; i++) {
+         String siteName = siteName(i);
+         for (int j = 0; j < CLUSTER_SIZE; ++j) {
+            Cache<?, ?> c = cache(siteName, j);
+            // Max idle requires all caches to show it as expired to be removed.
+            TestingUtil.replaceComponent(c.getCacheManager(), TimeService.class, timeService, true);
+         }
+      }
+
+      return timeService;
    }
 
    interface IracTestOperation {
@@ -119,13 +134,15 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
    }
 
    static class RemoveExpiredOperation implements IracTestOperation {
+      private final ControlledTimeService timeService;
+
+      RemoveExpiredOperation(ControlledTimeService timeService) {
+         this.timeService = timeService;
+      }
+
       @Override
       public <K, V> V execute(Cache<K, V> cache, K key, V prevValue, V newValue) {
-         try {
-            Thread.sleep(TimeUnit.SECONDS.toMillis(6));
-         } catch (InterruptedException e) {
-            e.printStackTrace();
-         }
+         timeService.advance(TimeUnit.SECONDS.toMillis(10));
          CompletionStages.join(cache.getAdvancedCache().removeMaxIdleExpired(key, prevValue));
          return null;
       }
