@@ -70,7 +70,8 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    @Override
-   public final CompletionStage<Void> wrapEntryForReading(InvocationContext ctx, Object key, int segment, boolean isOwner) {
+   public final CompletionStage<Void> wrapEntryForReading(InvocationContext ctx, Object key, int segment, boolean isOwner,
+                                                          boolean hasLock) {
       if (!isOwner && !isL1Enabled) {
          return CompletableFutures.completedNull();
       }
@@ -84,7 +85,7 @@ public class EntryFactoryImpl implements EntryFactory {
             }
          } else if (isOwner || readEntry.isL1Entry()) {
             if (readEntry.canExpire()) {
-               CompletionStage<Boolean> expiredStage = expirationManager.handlePossibleExpiration(readEntry, segment, false);
+               CompletionStage<Boolean> expiredStage = expirationManager.handlePossibleExpiration(readEntry, segment, hasLock);
                if (CompletionStages.isCompletedSuccessfully(expiredStage)) {
                   Boolean expired = CompletionStages.join(expiredStage);
                   handleExpiredEntryContextAddition(expired, ctx, readEntry, key, isOwner);
