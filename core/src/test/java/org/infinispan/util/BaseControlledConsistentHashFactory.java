@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.IntFunction;
@@ -61,8 +62,7 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
    }
 
    @Override
-   public CH updateMembers(CH baseCH, List<Address> newMembers,
-                                              Map<Address, Float> capacityFactors) {
+   public CH updateMembers(CH baseCH, List<Address> newMembers, Map<Address, Float> capacityFactors) {
       assertNumberOfSegments(baseCH.getNumSegments());
       List<Address>[] segmentOwners = new List[numSegments];
       List<Address>[] balancedOwners = null;
@@ -173,9 +173,10 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
                                             Map<Address, Float> capacityFactors, List<Address>[] segmentOwners,
                                             boolean rebalanced) {
          int[] segmentOwners1 = Stream.of(segmentOwners)
-                                          .mapToInt(list -> list.isEmpty() ? 0 : members.indexOf(list.get(0)))
-                                          .toArray();
-         return new ReplicatedConsistentHash(members, segmentOwners1);
+                                      .mapToInt(list -> members.indexOf(list.get(0)))
+                                      .toArray();
+         // No support for zero-capacity nodes for now
+         return new ReplicatedConsistentHash(members, capacityFactors, Collections.emptyList(), segmentOwners1);
       }
 
       @Override
@@ -185,7 +186,7 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
 
       @Override
       public boolean requiresPrimaryOwner() {
-         return false;
+         return true;
       }
 
       @Override

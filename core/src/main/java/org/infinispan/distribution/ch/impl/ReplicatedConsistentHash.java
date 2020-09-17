@@ -1,18 +1,22 @@
 package org.infinispan.distribution.ch.impl;
 
+import static org.infinispan.distribution.ch.impl.AbstractConsistentHash.STATE_CAPACITY_FACTOR;
+import static org.infinispan.distribution.ch.impl.AbstractConsistentHash.STATE_CAPACITY_FACTORS;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
+import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -36,24 +40,42 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    private static final String STATE_PRIMARY_OWNERS_COUNT = "primaryOwners";
    private final int[] primaryOwners;
    private final List<Address> members;
-   private final Set<Address> membersSet;
+   private final List<Address> membersWithState;
+   private final Set<Address> membersWithStateSet;
+   private final List<Address> membersWithoutState;
+
+   private final Map<Address, Float> capacityFactors;
    private final Set<Integer> segments;
 
    public ReplicatedConsistentHash(List<Address> members, int[] primaryOwners) {
-      this.members = Collections.unmodifiableList(new ArrayList<>(members));
-      this.membersSet = Collections.unmodifiableSet(new HashSet<>(members));
+      this(members, null, Collections.emptyList(), primaryOwners);
+   }
+
+   public ReplicatedConsistentHash(List<Address> members, Map<Address, Float> capacityFactors, List<Address> membersWithoutState, int[] primaryOwners) {
+      this.members = Immutables.immutableListCopy(members);
+      this.membersWithoutState = Immutables.immutableListCopy(membersWithoutState);
+      this.membersWithState = computeMembersWithState(members, membersWithoutState);
+      this.membersWithStateSet = Immutables.immutableSetConvert(this.membersWithState);
       this.primaryOwners = primaryOwners;
-      segments = IntSets.immutableRangeSet(primaryOwners.length);
+      this.capacityFactors = Immutables.immutableMapCopy(capacityFactors);
+      this.segments = IntSets.immutableRangeSet(primaryOwners.length);
    }
 
    public ReplicatedConsistentHash union(ReplicatedConsistentHash ch2) {
       if (this.getNumSegments() != ch2.getNumSegments())
          throw new IllegalArgumentException("The consistent hash objects must have the same number of segments");
 
-      List<Address> unionMembers = new ArrayList<>(this.getMembers());
+      List<Address> unionMembers = new ArrayList<>(this.members);
       for (Address member : ch2.getMembers()) {
-         if (!unionMembers.contains(member)) {
+         if (!members.contains(member)) {
             unionMembers.add(member);
+         }
+      }
+
+      List<Address> unionMembersWithoutState = new ArrayList<>(this.membersWithoutState);
+      for (Address member : ch2.membersWithoutState) {
+         if (!ch2.membersWithStateSet.contains(member) && !unionMembersWithoutState.contains(member)) {
+            unionMembersWithoutState.add(member);
          }
       }
 
@@ -64,23 +86,72 @@ public class ReplicatedConsistentHash implements ConsistentHash {
          primaryOwners[segmentId] = primaryOwnerIndex;
       }
 
-      return new ReplicatedConsistentHash(unionMembers, primaryOwners);
+      Map<Address, Float> unionCapacityFactors;
+      if (capacityFactors == null && ch2.capacityFactors == null) {
+         unionCapacityFactors = null;
+      } else if (capacityFactors == null) {
+         unionCapacityFactors = new HashMap<>(ch2.capacityFactors);
+         for (Address address : members) {
+            unionCapacityFactors.put(address, 1.0f);
+         }
+      } else if (ch2.capacityFactors == null) {
+         unionCapacityFactors = new HashMap<>(capacityFactors);
+         for (Address address : ch2.members) {
+            unionCapacityFactors.put(address, 1.0f);
+         }
+      } else {
+         unionCapacityFactors = new HashMap<>(capacityFactors);
+         unionCapacityFactors.putAll(ch2.capacityFactors);
+      }
+      return new ReplicatedConsistentHash(unionMembers, unionCapacityFactors, unionMembersWithoutState, primaryOwners);
    }
 
    ReplicatedConsistentHash(ScopedPersistentState state) {
-      int numMembers = Integer.parseInt(state.getProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS));
-      this.members = new ArrayList<>(numMembers);
-      for(int i = 0; i < numMembers; i++) {
-         PersistentUUID uuid = PersistentUUID.fromString(state.getProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i)));
-         this.members.add(uuid);
+      List<Address> members = parseMembers(state, ConsistentHashPersistenceConstants.STATE_MEMBERS,
+                        ConsistentHashPersistenceConstants.STATE_MEMBER);
+      List<Address> membersWithoutState = parseMembers(state, ConsistentHashPersistenceConstants.STATE_MEMBERS_NO_ENTRIES,
+                                                   ConsistentHashPersistenceConstants.STATE_MEMBER_NO_ENTRIES);
+      Map<Address, Float> capacityFactors = parseCapacityFactors(state, members);
+      int[] primaryOwners = parsePrimaryOwners(state);
+
+      this.members = Immutables.immutableListCopy(members);
+      this.membersWithoutState = Immutables.immutableListCopy(membersWithoutState);
+      this.membersWithState = computeMembersWithState(members, membersWithoutState);
+      this.membersWithStateSet = Immutables.immutableSetConvert(this.membersWithState);
+      this.primaryOwners = primaryOwners;
+      this.capacityFactors = Immutables.immutableMapCopy(capacityFactors);
+      this.segments = IntSets.immutableRangeSet(this.primaryOwners.length);
+   }
+
+   private static List<Address> parseMembers(ScopedPersistentState state, String numMembersPropertyName,
+                                             String memberPropertyFormat) {
+      int numMembers = Integer.parseInt(state.getProperty(numMembersPropertyName));
+      List<Address> members = new ArrayList<>(numMembers);
+      for (int i = 0; i < numMembers; i++) {
+         PersistentUUID uuid = PersistentUUID.fromString(state.getProperty(String.format(memberPropertyFormat, i)));
+         members.add(uuid);
       }
-      this.membersSet = Collections.unmodifiableSet(new HashSet<>(this.members));
+      return members;
+   }
+
+   private static Map<Address, Float> parseCapacityFactors(ScopedPersistentState state,
+                                                           List<Address> members) {
+      int numCapacityFactors = Integer.parseInt(state.getProperty(STATE_CAPACITY_FACTORS));
+      Map<Address, Float> capacityFactors = new HashMap<>(numCapacityFactors * 2);
+      for (int i = 0; i < numCapacityFactors; i++) {
+         float capacityFactor = Float.parseFloat(state.getProperty(String.format(STATE_CAPACITY_FACTOR, i)));
+         capacityFactors.put(members.get(i), capacityFactor);
+      }
+      return capacityFactors;
+   }
+
+   private static int[] parsePrimaryOwners(ScopedPersistentState state) {
       int numPrimaryOwners = state.getIntProperty(STATE_PRIMARY_OWNERS_COUNT);
-      this.primaryOwners = new int[numPrimaryOwners];
+      int[] primaryOwners = new int[numPrimaryOwners];
       for (int i = 0; i < numPrimaryOwners; i++) {
-         this.primaryOwners[i] = state.getIntProperty(String.format(STATE_PRIMARY_OWNERS, i));
+         primaryOwners[i] = state.getIntProperty(String.format(STATE_PRIMARY_OWNERS, i));
       }
-      segments = IntSets.immutableRangeSet(primaryOwners.length);
+      return primaryOwners;
    }
 
    @Override
@@ -89,7 +160,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    }
 
    public int getNumOwners() {
-      return members.size();
+      return membersWithState.size();
    }
 
    @Override
@@ -100,9 +171,9 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    @Override
    public List<Address> locateOwnersForSegment(int segmentId) {
       Address primaryOwner = locatePrimaryOwnerForSegment(segmentId);
-      List<Address> owners = new ArrayList<>(members.size());
+      List<Address> owners = new ArrayList<>(membersWithState.size());
       owners.add(primaryOwner);
-      for (Address member : members) {
+      for (Address member : membersWithState) {
          if (!member.equals(primaryOwner)) {
             owners.add(member);
          }
@@ -120,10 +191,14 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       if (owner == null) {
          throw new IllegalArgumentException("owner cannot be null");
       }
-      if (!membersSet.contains(owner)) {
-         throw new IllegalArgumentException("The node is not a member : " + owner);
-      }
-      return segments;
+
+      if (membersWithStateSet.contains(owner))
+         return segments;
+
+      if (members.contains(owner))
+         return IntSets.immutableEmptySet();
+
+      throw new IllegalArgumentException("The node is not a member : " + owner);
    }
 
    @Override
@@ -143,20 +218,32 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    @Override
    public String getRoutingTableAsString() {
+      int[] primaryOwned = new int[members.size()];
+      for (int primaryOwner : primaryOwners) {
+         primaryOwned[primaryOwner]++;
+      }
+
       StringBuilder sb = new StringBuilder();
-      for (Address a : members) {
+      for (int i = 0; i < members.size(); i++) {
+         Address a = members.get(i);
          if (sb.length() > 0) {
             sb.append("\n  ");
          }
-         Set<Integer> primarySegments = getPrimarySegmentsForOwner(a);
-         sb.append(a).append(" primary: ").append(primarySegments);
+
+         sb.append(a).append(" primary: ").append(primaryOwned[i]);
+         sb.append(", backup:");
+         if (membersWithStateSet.contains(a)) {
+            sb.append(getNumSegments() - primaryOwned[i]);
+         } else {
+            sb.append("0");
+         }
       }
       return sb.toString();
    }
 
    @Override
    public boolean isSegmentLocalToNode(Address nodeAddress, int segmentId) {
-      return membersSet.contains(nodeAddress);
+      return membersWithStateSet.contains(nodeAddress);
    }
 
    @Override
@@ -170,7 +257,17 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       state.setProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS, Integer.toString(members.size()));
       for (int i = 0; i < members.size(); i++) {
          state.setProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i),
-               members.get(i).toString());
+                           members.get(i).toString());
+      }
+      state.setProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS_NO_ENTRIES, Integer.toString(membersWithoutState.size()));
+      for (int i = 0; i < membersWithoutState.size(); i++) {
+         state.setProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER_NO_ENTRIES, i),
+                           membersWithoutState.get(i).toString());
+      }
+      state.setProperty(STATE_CAPACITY_FACTORS, Integer.toString(capacityFactors.size()));
+      for (int i = 0; i < members.size(); i++) {
+         state.setProperty(String.format(STATE_CAPACITY_FACTOR, i),
+                           capacityFactors.get(members.get(i)).toString());
       }
       state.setProperty(STATE_PRIMARY_OWNERS_COUNT, Integer.toString(primaryOwners.length));
       for (int i = 0; i < primaryOwners.length; i++) {
@@ -181,25 +278,54 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    @Override
    public ConsistentHash remapAddresses(UnaryOperator<Address> remapper) {
       List<Address> remappedMembers = new ArrayList<>(members.size());
-      for(Iterator<Address> i = members.iterator(); i.hasNext(); ) {
-         Address a = remapper.apply(i.next());
+      for (Address member : members) {
+         Address a = remapper.apply(member);
          if (a == null) {
             return null;
          }
          remappedMembers.add(a);
       }
-      return new ReplicatedConsistentHash(remappedMembers, primaryOwners);
+      List<Address> remappedMembersWithoutState = new ArrayList<>(membersWithoutState.size());
+      for (Address member : membersWithoutState) {
+         Address a = remapper.apply(member);
+         if (a == null) {
+            return null;
+         }
+         remappedMembersWithoutState.add(a);
+      }
+      Map<Address, Float> remappedCapacityFactors = null;
+      if (capacityFactors != null) {
+         remappedCapacityFactors = new HashMap<>(members.size());
+         for (Address member : members) {
+            remappedCapacityFactors.put(remapper.apply(member), capacityFactors.get(member));
+         }
+      }
+      return new ReplicatedConsistentHash(remappedMembers, remappedCapacityFactors, remappedMembersWithoutState, primaryOwners);
+   }
+   @Override
+   public Map<Address, Float> getCapacityFactors() {
+      return capacityFactors;
+   }
+
+   private List<Address> computeMembersWithState(List<Address> members, List<Address> membersWithoutState) {
+      if (membersWithoutState.isEmpty()) {
+         return members;
+      } else {
+         List<Address> membersWithState = new ArrayList<>(members);
+         membersWithState.removeAll(membersWithoutState);
+         return Immutables.immutableListCopy(membersWithState);
+      }
    }
 
    @Override
    public String toString() {
       StringBuilder sb = new StringBuilder("ReplicatedConsistentHash{");
-      sb.append("ns = ").append(segments.size());
+      sb.append("ns = ").append(primaryOwners.length);
       sb.append(", owners = (").append(members.size()).append(")[");
 
       int[] primaryOwned = new int[members.size()];
-      for (int i = 0; i < primaryOwners.length; i++) {
-         primaryOwned[primaryOwners[i]] ++;
+      for (int primaryOwner : primaryOwners) {
+         primaryOwned[primaryOwner]++;
       }
 
       boolean first = true;
@@ -211,6 +337,12 @@ public class ReplicatedConsistentHash implements ConsistentHash {
             sb.append(", ");
          }
          sb.append(a).append(": ").append(primaryOwned[i]);
+         sb.append("+");
+         if (membersWithStateSet.contains(a)) {
+            sb.append(getNumSegments() - primaryOwned[i]);
+         } else {
+            sb.append("0");
+         }
       }
       sb.append("]}");
       return sb.toString();
@@ -221,6 +353,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       final int prime = 31;
       int result = 1;
       result = prime * result + ((members == null) ? 0 : members.hashCode());
+      result = prime * result + ((membersWithoutState == null) ? 0 : membersWithoutState.hashCode());
       result = prime * result + Arrays.hashCode(primaryOwners);
       return result;
    }
@@ -239,6 +372,11 @@ public class ReplicatedConsistentHash implements ConsistentHash {
             return false;
       } else if (!members.equals(other.members))
          return false;
+      if (membersWithoutState == null) {
+         if (other.membersWithoutState != null)
+            return false;
+      } else if (!membersWithoutState.equals(other.membersWithoutState))
+         return false;
       if (!Arrays.equals(primaryOwners, other.primaryOwners))
          return false;
       return true;
@@ -250,15 +388,20 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       @Override
       public void doWriteObject(ObjectOutput output, ReplicatedConsistentHash ch) throws IOException {
          output.writeObject(ch.members);
+         output.writeObject(ch.capacityFactors);
+         output.writeObject(ch.membersWithoutState);
          output.writeObject(ch.primaryOwners);
       }
 
       @Override
       @SuppressWarnings("unchecked")
-      public ReplicatedConsistentHash doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public ReplicatedConsistentHash doReadObject(ObjectInput unmarshaller) throws IOException,
+                                                                                    ClassNotFoundException {
          List<Address> members = (List<Address>) unmarshaller.readObject();
+         Map<Address, Float> capacityFactors = (Map<Address, Float>) unmarshaller.readObject();
+         List<Address> membersWithoutState = (List<Address>) unmarshaller.readObject();
          int[] primaryOwners = (int[]) unmarshaller.readObject();
-         return new ReplicatedConsistentHash(members, primaryOwners);
+         return new ReplicatedConsistentHash(members, capacityFactors, membersWithoutState, primaryOwners);
       }
 
       @Override

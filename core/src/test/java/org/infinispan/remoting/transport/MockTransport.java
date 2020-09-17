@@ -183,13 +183,14 @@ public class MockTransport implements Transport {
       throw new UnsupportedOperationException();
    }
 
+   @Deprecated
    @Override
    public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) {
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand) {
+   public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
       throw new UnsupportedOperationException();
    }
 
@@ -278,6 +279,7 @@ public class MockTransport implements Transport {
       throw new UnsupportedOperationException();
    }
 
+   @Deprecated
    @Override
    public void checkTotalOrderSupported() {
    }
@@ -374,7 +376,7 @@ public class MockTransport implements Transport {
 
       public void finish() {
          if (collector == null) {
-            log.debugf("sendToX methods do not need a finish() call, ignoring it");
+            // sendToX methods do not need a finish() call, ignoring it
             return;
          }
 

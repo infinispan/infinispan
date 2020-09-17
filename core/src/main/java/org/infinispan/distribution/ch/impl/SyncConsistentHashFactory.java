@@ -89,7 +89,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          for (Address node : members) {
             Float capacityFactor = capacityFactors.get(node);
             if (capacityFactor == null || capacityFactor < 0)
-               throw new IllegalArgumentException("Invalid capacity factor for node " + node);
+               throw new IllegalArgumentException("Invalid capacity factor for node " + node + ": " + capacityFactor);
             totalCapacity += capacityFactor;
          }
          if (totalCapacity == 0)

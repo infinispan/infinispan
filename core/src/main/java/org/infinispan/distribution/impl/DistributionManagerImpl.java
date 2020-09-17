@@ -150,7 +150,7 @@ public class DistributionManagerImpl implements DistributionManager {
       List<Address> members = Collections.singletonList(localAddress);
       int[] owners = new int[numSegments];
       Arrays.fill(owners, 0);
-      ConsistentHash ch = new ReplicatedConsistentHash(members, owners);
+      ConsistentHash ch = new ReplicatedConsistentHash(members, null, Collections.emptyList(), owners);
       CacheTopology cacheTopology = new CacheTopology(-1, -1, ch, null, CacheTopology.Phase.NO_REBALANCE, members, null);
       return new LocalizedCacheTopology(cacheMode, cacheTopology, keyPartitioner, localAddress, false);
    }
