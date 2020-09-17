@@ -1,16 +1,16 @@
 package org.infinispan.query.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
 import org.hibernate.search.engine.search.timeout.spi.TimeoutManager;
-import org.infinispan.query.backend.KeyTransformationHandler;
-import org.infinispan.search.mapper.common.EntityReference;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.search.mapper.common.EntityReference;
 
 /**
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
@@ -40,6 +40,8 @@ public final class EntityLoader<E> implements QueryResultLoader<E> {
 
    @Override
    public List<E> loadBlocking(List<EntityReference> entityReferences, TimeoutManager timeoutManager) {
+      if(entityReferences.isEmpty()) return Collections.emptyList();
+
       int entitiesSize = entityReferences.size();
       LinkedHashSet<Object> keys = new LinkedHashSet<>(entitiesSize);
       for (EntityReference entityReference : entityReferences) {
