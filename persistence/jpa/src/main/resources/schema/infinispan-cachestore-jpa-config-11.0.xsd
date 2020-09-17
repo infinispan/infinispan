@@ -29,11 +29,10 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="batch-size" type="xs:long" default="${JpaStore.batchSize}">
+        <xs:attribute name="batch-size" type="xs:long" default="100">
           <xs:annotation>
             <xs:documentation>
-              The batch size is used during cache store streaming. Default is
-              100.
+              The batch size is used during cache store streaming. Default is 100.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
