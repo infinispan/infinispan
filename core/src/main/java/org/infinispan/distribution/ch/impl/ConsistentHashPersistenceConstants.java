@@ -11,4 +11,6 @@ public class ConsistentHashPersistenceConstants {
     public static final String STATE_HASH_FUNCTION = "hashFunction";
     public static final String STATE_MEMBER = "member.%d";
     public static final String STATE_MEMBERS = "members";
+    public static final String STATE_MEMBER_NO_ENTRIES = "memberNoEntries.%d";
+    public static final String STATE_MEMBERS_NO_ENTRIES = "membersNoEntries";
 }

@@ -1,8 +1,9 @@
 package org.infinispan.distribution.ch;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
 import org.infinispan.profiling.testinternals.Generator;
@@ -23,8 +24,12 @@ public class ReplicatedConsistentHashPersistenceTest extends BaseCHPersistenceTe
       members.add(Generator.generateAddress());
       members.add(Generator.generateAddress());
       members.add(Generator.generateAddress());
+      Map<Address, Float> capacityFactors = new HashMap<>();
+      for (Address member : members) {
+         capacityFactors.put(member, 1.0f);
+      }
       ReplicatedConsistentHashFactory hashFactory = new ReplicatedConsistentHashFactory();
-      return hashFactory.create(2, 100, members, Collections.emptyMap());
+      return hashFactory.create(2, 100, members, capacityFactors);
    }
 
 }

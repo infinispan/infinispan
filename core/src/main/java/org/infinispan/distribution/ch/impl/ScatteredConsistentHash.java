@@ -40,8 +40,7 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public class ScatteredConsistentHash extends AbstractConsistentHash {
-   private PersistentUUID ZERO_UUID = new PersistentUUID(0, 0);
-
+   private static final PersistentUUID ZERO_UUID = new PersistentUUID(0, 0);
    private static final String STATE_SEGMENT_OWNER = "segmentOwner.%d";
    private static final String REBALANCED = "rebalanced";
 
@@ -53,7 +52,7 @@ public class ScatteredConsistentHash extends AbstractConsistentHash {
    /**
     * Scattered cache guarantees that there will be always one owner of any segment.
     * However rebalance is started in {@link ClusterCacheStatus#startQueuedRebalance()}  based on equality
-    * of CH got from {@link ScatteredConsistentHashFactory#updateMembers(ConsistentHash, List, Map)} vs.
+    * of CH got from {@link ScatteredConsistentHashFactory#updateMembers(ScatteredConsistentHash, List, Map)} vs.
     * the on got from {@link ScatteredConsistentHashFactory#rebalance(ScatteredConsistentHash)}.
     * So this works as a flag to trigger the rebalance.
     */

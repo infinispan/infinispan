@@ -1,5 +1,6 @@
 package org.infinispan.distribution.ch.impl;
 
+import static org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory.computeMembersWithoutState;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.io.ObjectInput;
@@ -29,11 +30,20 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
    @Override
    public ReplicatedConsistentHash create(int numOwners, int numSegments, List<Address> members,
                                           Map<Address, Float> capacityFactors) {
+      List<Address> membersWithoutState = computeMembersWithoutState(members, null, capacityFactors);
       int[] primaryOwners = new int[numSegments];
+      int nextPrimaryOwner = 0;
       for (int i = 0; i < numSegments; i++) {
-         primaryOwners[i] = i % members.size();
+         // computeMembersWithoutState ensures that there is at least one member *with* state
+         while (membersWithoutState.contains(members.get(nextPrimaryOwner))) {
+            nextPrimaryOwner++;
+            if (nextPrimaryOwner == members.size()) {
+               nextPrimaryOwner = 0;
+            }
+         }
+         primaryOwners[i] = nextPrimaryOwner;
       }
-      return new ReplicatedConsistentHash(members, primaryOwners);
+      return new ReplicatedConsistentHash(members, capacityFactors, membersWithoutState, primaryOwners);
    }
 
    @Override
@@ -50,6 +60,15 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
       if (newMembers.equals(baseCH.getMembers()))
          return baseCH;
 
+      return updateCH(baseCH, newMembers, actualCapacityFactors, false);
+   }
+
+   private ReplicatedConsistentHash updateCH(ReplicatedConsistentHash baseCH, List<Address> newMembers,
+                                             Map<Address, Float> actualCapacityFactors, boolean rebalance) {
+      // New members missing from the old CH or with capacity factor 0 should not become primary or backup owners
+      List<Address> membersWithoutState = computeMembersWithoutState(newMembers, baseCH.getMembers(),
+                                                                     actualCapacityFactors);
+
       // recompute primary ownership based on the new list of members (removes leavers)
       int numSegments = baseCH.getNumSegments();
       int[] primaryOwners = new int[numSegments];
@@ -63,6 +82,19 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
             foundOrphanSegments = true;
          } else {
             nodeUsage[primaryOwnerIndex]++;
+         }
+      }
+
+      if (!foundOrphanSegments && !rebalance) {
+         // The primary owners don't need to change
+         return new ReplicatedConsistentHash(newMembers, actualCapacityFactors, membersWithoutState, primaryOwners);
+      }
+
+      // Exclude members without state by setting their usage to a very high value
+      for (int i = 0; i < newMembers.size(); i++) {
+         Address a = newMembers.get(i);
+         if (membersWithoutState.contains(a)) {
+            nodeUsage[i] = Integer.MAX_VALUE;
          }
       }
 
@@ -84,7 +116,7 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
          int owner = primaryOwners[segmentId];
          Queue<Integer> segments = segmentsByNode[owner];
          if (segments == null) {
-            segmentsByNode[owner] = segments = new ArrayDeque<Integer>(minSegmentsPerNode);
+            segmentsByNode[owner] = segments = new ArrayDeque<>(minSegmentsPerNode);
          }
          segments.add(segmentId);
       }
@@ -103,7 +135,7 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
          }
       }
 
-      return new ReplicatedConsistentHash(newMembers, primaryOwners);
+      return new ReplicatedConsistentHash(newMembers, actualCapacityFactors, membersWithoutState, primaryOwners);
    }
 
    private int findLeastUsedNode(int[] nodeUsage) {
@@ -128,7 +160,7 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
 
    @Override
    public ReplicatedConsistentHash rebalance(ReplicatedConsistentHash baseCH) {
-      return baseCH;
+      return updateCH(baseCH, baseCH.getMembers(), baseCH.getCapacityFactors(), true);
    }
 
    @Override
@@ -153,7 +185,6 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public ReplicatedConsistentHashFactory readObject(ObjectInput unmarshaller) {
          return new ReplicatedConsistentHashFactory();
       }

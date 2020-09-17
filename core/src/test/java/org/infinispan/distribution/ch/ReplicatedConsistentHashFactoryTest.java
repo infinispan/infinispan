@@ -41,18 +41,23 @@ public class ReplicatedConsistentHashFactoryTest {
          checkDistribution(ch);
 
          ch = factory.updateMembers(ch, ab, null);
+         ch = factory.rebalance(ch);
          checkDistribution(ch);
 
          ch = factory.updateMembers(ch, abc, null);
+         ch = factory.rebalance(ch);
          checkDistribution(ch);
 
          ch = factory.updateMembers(ch, abcd, null);
+         ch = factory.rebalance(ch);
          checkDistribution(ch);
 
          ch = factory.updateMembers(ch, bcd, null);
+         ch = factory.rebalance(ch);
          checkDistribution(ch);
 
          ch = factory.updateMembers(ch, c, null);
+         ch = factory.rebalance(ch);
          checkDistribution(ch);
       }
    }
