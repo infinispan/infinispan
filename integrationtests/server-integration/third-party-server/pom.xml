@@ -42,6 +42,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>net.spy</groupId>
+            <artifactId>spymemcached</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-integrationtests-commons</artifactId>
             <type>test-jar</type>

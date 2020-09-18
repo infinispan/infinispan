@@ -37,6 +37,11 @@
             <artifactId>infinispan-client-hotrod</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>net.spy</groupId>
+            <artifactId>spymemcached</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.jboss.arquillian.junit</groupId>
