@@ -65,125 +65,125 @@ public class LuceneTransformationTest {
    public void testMatchAllQuery() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee",
-            "+*:* #__HSEARCH_type:main");
+            "+*:*");
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e",
-            "+*:* #__HSEARCH_type:main");
+            "+*:*");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e",
-            "+*:* #__HSEARCH_type:main");
+            "+*:*");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where true",
-            "+*:* #__HSEARCH_type:main");
+            "+*:*");
    }
 
    @Test
    public void testRejectAllQuery() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where false",
-            "+(-*:* #*:*) #__HSEARCH_type:main");   //TODO [anistor] maybe this should be "-*:*"
+            "+(-*:* #*:*)");   //TODO [anistor] maybe this should be "-*:*"
    }
 
    @Test
    public void testFullTextKeyword() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : 'bicycle'",
-            "+text:bicycle #__HSEARCH_type:main");
+            "+text:bicycle");
    }
 
    @Test
    public void testFullTextWildcard() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : 'geo*e'",
-            "+text:geo*e #__HSEARCH_type:main");
+            "+text:geo*e");
    }
 
    @Test
    public void testFullTextFuzzy() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : 'jonh'~2",
-            "+text:jonh~2 #__HSEARCH_type:main");
+            "+text:jonh~2");
    }
 
    @Test
    public void testFullTextPhrase() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : 'twisted cables'",
-            "+text:\"twisted cables\" #__HSEARCH_type:main");
+            "+text:\"twisted cables\"");
    }
 
    @Test
    public void testFullTextRegexp() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : /te?t/",
-            "+text:/te?t/ #__HSEARCH_type:main");
+            "+text:/te?t/");
    }
 
    @Test
    public void testFullTextRegexp_boosted() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : /te?t/^3",
-            "+(text:/te?t/)^3.0 #__HSEARCH_type:main");
+            "+(text:/te?t/)^3.0");
    }
 
    @Test
    public void testFullTextRange() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : ['AAA' 'ZZZ']",
-            "+text:[aaa TO zzz] #__HSEARCH_type:main");
+            "+text:[aaa TO zzz]");
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : ['AAA' to 'ZZZ']",
-            "+text:[aaa TO zzz] #__HSEARCH_type:main");
+            "+text:[aaa TO zzz]");
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : [* to 'eeee']",
-            "+text:[* TO eeee] #__HSEARCH_type:main");
+            "+text:[* TO eeee]");
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : ['eeee' to *]",
-            "+text:[eeee TO *] #__HSEARCH_type:main");
+            "+text:[eeee TO *]");
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : [* *]",
-            "+ConstantScore(NormsFieldExistsQuery [field=text]) #__HSEARCH_type:main");
+            "+ConstantScore(NormsFieldExistsQuery [field=text])");
    }
 
    @Test
    public void testFullTextFieldBoost() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : 'foo'^3.0'",
-            "+(text:foo)^3.0 #__HSEARCH_type:main");
+            "+(text:foo)^3.0");
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : ('foo')^3.0'",
-            "+(text:foo)^3.0 #__HSEARCH_type:main");
+            "+(text:foo)^3.0");
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : ('foo' and 'bar')^3.0'",
-            "+(+text:foo +text:bar)^3.0 #__HSEARCH_type:main");
+            "+(+text:foo +text:bar)^3.0");
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : 'foo'^3.0 || e.analyzedInfo : 'bar'",
-            "+((text:foo)^3.0 analyzedInfo:bar) #__HSEARCH_type:main");
+            "+((text:foo)^3.0 analyzedInfo:bar)");
    }
 
    @Test
    public void testFullTextFieldOccur() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : (-'foo') ",
-            "+(-text:foo #*:*) #__HSEARCH_type:main");
+            "+(-text:foo #*:*)");
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : (-'foo' +'bar')",
-            "+((-text:foo #*:*) (+text:bar)) #__HSEARCH_type:main");
+            "+((-text:foo #*:*) (+text:bar))");
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where not e.text : (-'foo' +'bar')",
-            "+(-((-text:foo #*:*) (+text:bar)) #*:*) #__HSEARCH_type:main");
+            "+(-((-text:foo #*:*) (+text:bar)) #*:*)");
 
 // TODO [anistor] fix this
 //      assertGeneratedLuceneQuery(
@@ -192,45 +192,45 @@ public class LuceneTransformationTest {
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text : (-'foo' '*')",
-            "+((-text:foo #*:*) *:*) #__HSEARCH_type:main");
+            "+((-text:foo #*:*) *:*)");
    }
 
    @Test
    public void testRestrictedQueryUsingSelect() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name = 'same' or e.id = 5",
-            "+(name:same id:5) #__HSEARCH_type:main");
+            "+(name:same id:5)");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name = 'same' and e.id = 5",
-            "+(+name:same +id:5) #__HSEARCH_type:main");
+            "+(+name:same +id:5)");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name = 'same' and not e.id = 5",
-            "+(+name:same +(-id:5 #*:*)) #__HSEARCH_type:main");
+            "+(+name:same +(-id:5 #*:*))");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name = 'same' or not e.id = 5",
-            "+(name:same (-id:5 #*:*)) #__HSEARCH_type:main");
+            "+(name:same (-id:5 #*:*))");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where not e.id = 5",
-            "+(-id:5 #*:*) #__HSEARCH_type:main");
+            "+(-id:5 #*:*)");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.id != 5",
-            "+(-id:5 #*:*) #__HSEARCH_type:main");
+            "+(-id:5 #*:*)");
    }
 
    @Test
    public void testFieldMapping() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.someMoreInfo = 'foo'",
-            "+someMoreInfo:foo #__HSEARCH_type:main");
+            "+someMoreInfo:foo");
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.sameInfo = 'foo'",
-            "+sameInfo:foo #__HSEARCH_type:main");
+            "+sameInfo:foo");
    }
 
    @Test
@@ -248,7 +248,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+*:*");
 
       assertThat(parsed.getProjections()).isEqualTo(new String[]{"id", "name"});
    }
@@ -259,7 +259,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+*:*");
 
       assertThat(parsed.getProjections()).isEqualTo(new String[]{"author.name"});
    }
@@ -270,7 +270,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+*:*");
 
       assertThat(parsed.getProjections()).isEqualTo(new String[]{"author.address.street"});
    }
@@ -279,42 +279,42 @@ public class LuceneTransformationTest {
    public void testQueryWithUnqualifiedPropertyReferences() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where name = 'same' and not id = 5",
-            "+(+name:same +(-id:5 #*:*)) #__HSEARCH_type:main");
+            "+(+name:same +(-id:5 #*:*))");
    }
 
    @Test
    public void testNegatedQuery() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where NOT e.name = 'same'",
-            "+(-name:same #*:*) #__HSEARCH_type:main");
+            "+(-name:same #*:*)");
 
       // JPQL syntax
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name <> 'same'",
-            "+(-name:same #*:*) #__HSEARCH_type:main");
+            "+(-name:same #*:*)");
 
       // HQL syntax
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name != 'same'",
-            "+(-name:same #*:*) #__HSEARCH_type:main");
+            "+(-name:same #*:*)");
    }
 
    @Test
    public void testNegatedQueryOnNumericProperty() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.position <> 3",
-            "+(-position:[3 TO 3] #*:*) #__HSEARCH_type:main");
+            "+(-position:[3 TO 3] #*:*)");
    }
 
    @Test
    public void testNegatedRangeQuery() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee where name = 'Bob' and not position between 1 and 3",
-            "+(+name:Bob +(-position:[1 TO 3] #*:*)) #__HSEARCH_type:main");
+            "+(+name:Bob +(-position:[1 TO 3] #*:*))");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name = 'Bob' and not e.position between 1 and 3",
-            "+(+name:Bob +(-position:[1 TO 3] #*:*)) #__HSEARCH_type:main");
+            "+(+name:Bob +(-position:[1 TO 3] #*:*))");
    }
 
    @Test
@@ -325,52 +325,52 @@ public class LuceneTransformationTest {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee where name = :nameParameter",
             namedParameters,
-            "+name:Bob #__HSEARCH_type:main");
+            "+name:Bob");
 
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name = :nameParameter",
             namedParameters,
-            "+name:Bob #__HSEARCH_type:main");
+            "+name:Bob");
    }
 
    @Test
    public void testBooleanQuery() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name = 'same' or (e.id = 4 and e.name = 'Bob')",
-            "+(name:same (+id:4 +name:Bob)) #__HSEARCH_type:main");
+            "+(name:same (+id:4 +name:Bob))");
    }
 
    @Test
    public void testBooleanQueryUsingSelect() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name = 'same' or (e.id = 4 and e.name = 'Bob')",
-            "+(name:same (+id:4 +name:Bob)) #__HSEARCH_type:main");
+            "+(name:same (+id:4 +name:Bob))");
    }
 
    @Test
    public void testBetweenQuery() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name between 'aaa' and 'zzz'",
-            "+name:[aaa TO zzz] #__HSEARCH_type:main");
+            "+name:[aaa TO zzz]");
    }
 
    @Test
    public void testNotBetweenQuery() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name not between 'aaa' and 'zzz'",
-            "+(-name:[aaa TO zzz] #*:*) #__HSEARCH_type:main");
+            "+(-name:[aaa TO zzz] #*:*)");
    }
 
    @Test
    public void testNumericNotBetweenQuery() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where not e.position between 1 and 3",
-            "+(-position:[1 TO 3] #*:*) #__HSEARCH_type:main");
+            "+(-position:[1 TO 3] #*:*)");
    }
 
    @Test
    public void testBetweenQueryForCharacterLiterals() {
-      assertGeneratedLuceneQuery("select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name between 'a' and 'z'", "+name:[a TO z] #__HSEARCH_type:main");
+      assertGeneratedLuceneQuery("select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name between 'a' and 'z'", "+name:[a TO z]");
    }
 
    @Test
@@ -382,7 +382,7 @@ public class LuceneTransformationTest {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name between :p1 and :p2",
             namedParameters,
-            "+name:[aaa TO zzz] #__HSEARCH_type:main");
+            "+name:[aaa TO zzz]");
    }
 
    @Test
@@ -394,65 +394,65 @@ public class LuceneTransformationTest {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.position between :p1 and :p2",
             namedParameters,
-            "+position:[10 TO 20] #__HSEARCH_type:main");
+            "+position:[10 TO 20]");
    }
 
    @Test
    public void testQueryWithEmbeddedPropertyInFromClause() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.author.name = 'Bob'",
-            "+author.name:Bob #__HSEARCH_type:main");
+            "+author.name:Bob");
    }
 
    @Test
    public void testLessThanQuery() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.position < 100",
-            "+position:[-9223372036854775808 TO 99] #__HSEARCH_type:main");
+            "+position:[-9223372036854775808 TO 99]");
    }
 
    @Test
    public void testLessThanOrEqualsToQuery() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.position <= 100",
-            "+position:[-9223372036854775808 TO 100] #__HSEARCH_type:main");
+            "+position:[-9223372036854775808 TO 100]");
    }
 
    @Test
    public void testGreaterThanOrEqualsToQuery() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee where position >= 100",
-            "+position:[100 TO 9223372036854775807] #__HSEARCH_type:main");
+            "+position:[100 TO 9223372036854775807]");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.position >= 100",
-            "+position:[100 TO 9223372036854775807] #__HSEARCH_type:main");
+            "+position:[100 TO 9223372036854775807]");
    }
 
    @Test
    public void testGreaterThanQuery() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee where position > 100",
-            "+position:[101 TO 9223372036854775807] #__HSEARCH_type:main");
+            "+position:[101 TO 9223372036854775807]");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.position > 100",
-            "+position:[101 TO 9223372036854775807] #__HSEARCH_type:main");
+            "+position:[101 TO 9223372036854775807]");
    }
 
    @Test
    public void testInQuery() {
       assertGeneratedLuceneQuery(
             "from org.infinispan.query.dsl.embedded.impl.model.Employee where name in ('Bob', 'Alice')",
-            "+(name:Bob name:Alice) #__HSEARCH_type:main");
+            "+(name:Bob name:Alice)");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name in ('Bob', 'Alice')",
-            "+(name:Bob name:Alice) #__HSEARCH_type:main");
+            "+(name:Bob name:Alice)");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.position in (10, 20, 30, 40)",
-            "+(position:[10 TO 10] position:[20 TO 20] position:[30 TO 30] position:[40 TO 40]) #__HSEARCH_type:main");
+            "+(position:[10 TO 10] position:[20 TO 20] position:[30 TO 30] position:[40 TO 40])");
    }
 
    @Test
@@ -464,7 +464,7 @@ public class LuceneTransformationTest {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name in (:name1, :name2)",
             namedParameters,
-            "+(name:Bob name:Alice) #__HSEARCH_type:main");
+            "+(name:Bob name:Alice)");
 
       namedParameters = new HashMap<>();
       namedParameters.put("pos1", 10);
@@ -475,92 +475,92 @@ public class LuceneTransformationTest {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.position in (:pos1, :pos2, :pos3, :pos4)",
             namedParameters,
-            "+(position:[10 TO 10] position:[20 TO 20] position:[30 TO 30] position:[40 TO 40]) #__HSEARCH_type:main");
+            "+(position:[10 TO 10] position:[20 TO 20] position:[30 TO 30] position:[40 TO 40])");
    }
 
    @Test
    public void testNotInQuery() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name not in ('Bob', 'Alice')",
-            "+(-(name:Bob name:Alice) #*:*) #__HSEARCH_type:main");
+            "+(-(name:Bob name:Alice) #*:*)");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.position not in (10, 20, 30, 40)",
-            "+(-(position:[10 TO 10] position:[20 TO 20] position:[30 TO 30] position:[40 TO 40]) #*:*) #__HSEARCH_type:main");
+            "+(-(position:[10 TO 10] position:[20 TO 20] position:[30 TO 30] position:[40 TO 40]) #*:*)");
    }
 
    @Test
    public void testLikeQuery() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name LIKE 'Al_ce'",
-            "+name:Al?ce #__HSEARCH_type:main");
+            "+name:Al?ce");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name LIKE 'Ali%'",
-            "+name:Ali* #__HSEARCH_type:main");
+            "+name:Ali*");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name LIKE 'Ali%%'",
-            "+name:Ali** #__HSEARCH_type:main");
+            "+name:Ali**");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name LIKE '_l_ce'",
-            "+name:?l?ce #__HSEARCH_type:main");
+            "+name:?l?ce");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name LIKE '___ce'",
-            "+name:???ce #__HSEARCH_type:main");
+            "+name:???ce");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name LIKE '_%_ce'",
-            "+name:?*?ce #__HSEARCH_type:main");
+            "+name:?*?ce");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name LIKE 'Alice in wonderl%'",
-            "+name:Alice in wonderl* #__HSEARCH_type:main");
+            "+name:Alice in wonderl*");
    }
 
    @Test
    public void testNotLikeQuery() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name NOT LIKE 'Al_ce'",
-            "+(-name:Al?ce #*:*) #__HSEARCH_type:main");
+            "+(-name:Al?ce #*:*)");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name NOT LIKE 'Ali%'",
-            "+(-name:Ali* #*:*) #__HSEARCH_type:main");
+            "+(-name:Ali* #*:*)");
 
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name NOT LIKE '_l_ce' and not (e.title LIKE '%goo' and e.position = '5')",
-            "+(+(-name:?l?ce #*:*) +(-(+title:*goo +position:[5 TO 5]) #*:*)) #__HSEARCH_type:main");
+            "+(+(-name:?l?ce #*:*) +(-(+title:*goo +position:[5 TO 5]) #*:*))");
    }
 
    @Test
    public void testIsNullQuery() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name IS null",
-            "+(-ConstantScore(__HSEARCH_field_names:name) #*:*) #__HSEARCH_type:main");
+            "+(-ConstantScore(__HSEARCH_field_names:name) #*:*)");
    }
 
    @Test
    public void testIsNullQueryForEmbeddedEntity() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.author IS null",
-            "+(-(ConstantScore(__HSEARCH_field_names:author.name) ConstantScore(NormsFieldExistsQuery [field=author.address.street]) ConstantScore(NormsFieldExistsQuery [field=author.address.city])) #*:*) #__HSEARCH_type:main");
+            "+(-(ConstantScore(__HSEARCH_field_names:author.name) ConstantScore(NormsFieldExistsQuery [field=author.address.street]) ConstantScore(NormsFieldExistsQuery [field=author.address.city])) #*:*)");
    }
 
    @Test
    public void testIsNotNullQuery() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name IS NOT null",
-            "+ConstantScore(__HSEARCH_field_names:name) #__HSEARCH_type:main");
+            "+ConstantScore(__HSEARCH_field_names:name)");
    }
 
    @Test
    public void testCollectionOfEmbeddableQuery() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e JOIN e.contactDetails d WHERE d.email = 'ninja647@mailinator.com' ",
-            "+contactDetails.email:ninja647@mailinator.com #__HSEARCH_type:main");
+            "+contactDetails.email:ninja647@mailinator.com");
    }
 
    @Test
@@ -570,7 +570,7 @@ public class LuceneTransformationTest {
                   + " JOIN e.contactDetails d"
                   + " JOIN d.address.alternatives as a "
                   + "WHERE a.postCode = '90210' ",
-            "+contactDetails.address.alternatives.postCode:90210 #__HSEARCH_type:main");
+            "+contactDetails.address.alternatives.postCode:90210");
    }
 
    @Test
@@ -688,7 +688,7 @@ public class LuceneTransformationTest {
       String ickle = "select d.email from org.infinispan.query.dsl.embedded.impl.model.Employee e JOIN e.contactDetails d";
 
       SearchQuery<?> result = parseAndTransform(ickle);
-      assertThat(result.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+      assertThat(result.queryString()).isEqualTo("+*:*");
 
       assertThat(parse(ickle).getProjections()).containsOnly("contactDetails.email");
    }
@@ -699,7 +699,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:EA123 #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:EA123");
 
       assertThat(parsed.getProjections()).containsOnly("contactDetails.email");
    }
@@ -710,7 +710,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:EA123 #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:EA123");
 
       assertThat(parsed.getProjections()).containsOnly("contactDetails.email");
    }
@@ -721,7 +721,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:[0000 TO ZZZZ] #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:[0000 TO ZZZZ]");
 
       assertThat(parsed.getProjections()).containsOnly("contactDetails.email");
    }
@@ -732,7 +732,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:{0000 TO *] #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:{0000 TO *]");
 
       assertThat(parsed.getProjections()).containsOnly("contactDetails.email");
    }
@@ -743,7 +743,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:EA1* #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+contactDetails.address.postCode:EA1*");
 
       assertThat(parsed.getProjections()).containsOnly("contactDetails.email");
    }
@@ -754,7 +754,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+*:*");
 
       assertThat(parsed.getProjections()).containsOnly("name", "text");
    }
@@ -765,7 +765,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+*:*");
 
       assertThat(parsed.getProjections()).containsOnly("name", "text", "contactDetails.email");
    }
@@ -776,7 +776,7 @@ public class LuceneTransformationTest {
       IckleParsingResult<Class<?>> parsed = parse(ickle);
       SearchQuery<?> query = transform(parsed);
 
-      assertThat(query.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+      assertThat(query.queryString()).isEqualTo("+*:*");
 
       assertThat(parsed.getProjections()).containsOnly("name", "text", "contactDetails.email");
    }
@@ -792,7 +792,7 @@ public class LuceneTransformationTest {
       SearchQuery<?> query = transform(parsed);
 
       assertThat(query.queryString())
-            .isEqualTo("+(+contactDetails.address.postCode:EA123 +alternativeContactDetails.email:ninja647@mailinator.com) #__HSEARCH_type:main");
+            .isEqualTo("+(+contactDetails.address.postCode:EA123 +alternativeContactDetails.email:ninja647@mailinator.com)");
 
       assertThat(parsed.getProjections()).containsOnly("contactDetails.email");
    }
