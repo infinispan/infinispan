@@ -10,6 +10,8 @@
     </parent>
 
     <artifactId>infinispan-third-party-integrationtests</artifactId>
+    <name>Integration tests - Third Party Integration Tests</name>
+    <description>Integration tests - Third Party Integration Tests</description>
 
     <properties>
         <version.wildfly>${appserver.version}</version.wildfly>
@@ -143,8 +145,12 @@
                         <artifactId>maven-antrun-plugin</artifactId>
                         <executions>
                             <execution>
-                                <phase>generate-resources</phase>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
                                 <configuration>
+                                    <skip>${skipTests}</skip>
                                     <target>
                                         <echo message="unzipping tomcat server" />
                                         <unzip src="${tomcat.zip}" dest="${project.build.directory}/tomcat" />
@@ -157,9 +163,6 @@
                                         <copy file="${basedir}/src/test/resources/tomcat/tomcat-users.xml" todir="${project.build.directory}/tomcat/conf" overwrite="true" />
                                     </target>
                                 </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
                             </execution>
                         </executions>
                     </plugin>
