@@ -17,7 +17,7 @@ public class DeploymentHelper {
 
       if (arquillianLaunch.equals("tomcat")) {
          tomcat(war);
-      } else if (arquillianLaunch.equals("wildfly")) {
+      } else if (arquillianLaunch.equals("wildfly") || arquillianLaunch.equals("eap")) {
          wildfly(war);
       } else {
          throw new IllegalStateException(String.format("%s not supported", arquillianLaunch));
