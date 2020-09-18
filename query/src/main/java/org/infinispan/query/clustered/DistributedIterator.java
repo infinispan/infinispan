@@ -1,5 +1,6 @@
 package org.infinispan.query.clustered;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
@@ -46,7 +47,8 @@ class DistributedIterator<E> implements CloseableIterator<E> {
       this.keyDataConversion = cache.getKeyDataConversion();
       final int parallels = topDocsResponses.size();
       this.partialResults = new NodeTopDocs[parallels];
-      TopDocs[] partialTopDocs = sort != null ? new TopFieldDocs[parallels] : new TopDocs[parallels];
+      boolean isFieldDocs = expectTopFieldDocs( topDocsResponses );
+      TopDocs[] partialTopDocs = isFieldDocs ? new TopFieldDocs[parallels] : new TopDocs[parallels];
       this.partialPositionNext = new int[parallels];
       int i = 0;
       for (Entry<Address, NodeTopDocs> entry : topDocsResponses.entrySet()) {
@@ -54,11 +56,19 @@ class DistributedIterator<E> implements CloseableIterator<E> {
          partialTopDocs[i] = partialResults[i].topDocs;
          i++;
       }
-      if (sort != null) {
+      if (isFieldDocs) {
          mergedResults = TopDocs.merge(sort, firstResult, maxResults, (TopFieldDocs[]) partialTopDocs, true);
       } else {
          mergedResults = TopDocs.merge(firstResult, maxResults, partialTopDocs, true);
       }
+   }
+
+   private boolean expectTopFieldDocs(Map<Address, NodeTopDocs> topDocsResponses) {
+      Iterator<NodeTopDocs> it = topDocsResponses.values().iterator();
+      if ( it.hasNext() ) {
+         return it.next().topDocs instanceof TopFieldDocs;
+      }
+      return false;
    }
 
    @Override
