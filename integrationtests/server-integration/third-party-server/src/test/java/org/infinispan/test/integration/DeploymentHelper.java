@@ -28,6 +28,10 @@ public class DeploymentHelper {
             .loadPomFromFile("pom.xml")
             .resolve("org.infinispan:infinispan-client-hotrod")
             .withTransitivity().as(File.class));
+      addLibrary(war, resolver
+            .loadPomFromFile("pom.xml")
+            .resolve("net.spy:spymemcached")
+            .withTransitivity().as(File.class));
       return war;
    }
 
