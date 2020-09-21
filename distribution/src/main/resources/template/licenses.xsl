@@ -99,7 +99,7 @@
                 <xsl:text>bsd-2-clause.txt</xsl:text>
             </xsl:when>
             <xsl:when test="contains($filename, 'bsd') and contains($filename, '3-clause')">
-                <xsl:text>bsd 3-clause new or revised license.html</xsl:text>
+                <xsl:text>bsd-3-clause.txt</xsl:text>
             </xsl:when>
             <xsl:when test="contains($filename, 'apache') and contains($filename, '1.1')">
                 <xsl:text>apache-1.1.txt</xsl:text>
@@ -131,6 +131,9 @@
             <xsl:when test="contains($filename, 'cddl+gpl_1_1')">
                 <xsl:text>cddl-1.1-gpl-1-1.txt</xsl:text>
             </xsl:when>
+            <xsl:when test="contains($filename, 'cddl+gpl-1.1')">
+                <xsl:text>cddl-1.1-gpl-1-1.txt</xsl:text>
+            </xsl:when>
             <xsl:when test="contains($filename, 'cddl.txt')">
                 <xsl:text>common development and distribution license 1.1.txt</xsl:text>
             </xsl:when>
@@ -149,11 +152,17 @@
             <xsl:when test="contains($filename, 'gpl-2.0-ce')">
                 <xsl:text>gnu general public license v2.0 only, with classpath exception.txt</xsl:text>
             </xsl:when>
+            <xsl:when test="contains($filename, 'gpl2 w/')">
+                <xsl:text>gnu general public license v2.0 only, with classpath exception.txt</xsl:text>
+            </xsl:when>
             <xsl:when test="contains($filename, 'epl-v10')">
                 <xsl:text>eclipse public license 1.0.txt</xsl:text>
             </xsl:when>
             <xsl:when test="contains($filename, 'eclipse public license 1.0')">
                 <xsl:text>eclipse public license 1.0.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'epl-2.0')">
+                <xsl:text>eclipse public license 2.0.txt</xsl:text>
             </xsl:when>
             <xsl:when test="contains($filename, 'edl-1.0.txt')">
                 <xsl:text>eclipse distribution license, version 1.0.txt</xsl:text>
@@ -184,6 +193,18 @@
             </xsl:when>
             <xsl:when test="contains($filename, 'cc0')">
                 <xsl:text>cc0-1.0.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'isc license')">
+                <xsl:text>isc-license.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'unlicense')">
+                <xsl:text>unlicense.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'sil open font license 1.1')">
+                <xsl:text>ofl-1.1.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'bsd zero clause license')">
+                <xsl:text>bsd-0-clause.txt</xsl:text>
             </xsl:when>
             <xsl:otherwise>
                 <xsl:value-of select="$filename"/>
