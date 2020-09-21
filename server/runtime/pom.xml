@@ -297,6 +297,7 @@
                   <configuration>
                      <target>
                         <property name="compile_classpath" refid="maven.compile.classpath"/>
+                        <property name="plugin_classpath" refid="maven.plugin.classpath"/>
                         <property name="output.dir"
                                   value="${server.output.dir}"/>
                         <property name="server.dir"
@@ -304,6 +305,10 @@
                         <property name="test.lib.dir"
                                   value="${server.test.lib.dir}"/>
                         <property name="dollar" value="$"/>
+                        <property name="licenses.template.dir"
+                                  value="${project.basedir}/../../distribution/src/main/resources/template"/>
+                        <property name="licenses.data.dir"
+                                  value="${project.basedir}/../../distribution/src/main/resources/licenses"/>
 
                         <filterset id="brandfilter" begintoken="${dollar}{" endtoken="}">
                            <filter token="infinispan.brand.name" value="${infinispan.brand.name}"/>
@@ -321,6 +326,13 @@
                   </configuration>
                </execution>
             </executions>
+            <dependencies>
+               <dependency>
+                  <groupId>org.infinispan</groupId>
+                  <artifactId>infinispan-tools</artifactId>
+                  <version>${version.infinispan}</version>
+               </dependency>
+            </dependencies>
          </plugin>
          <plugin>
             <groupId>org.wildfly.maven.plugins</groupId>
@@ -331,11 +343,11 @@
                   <goals>
                      <goal>insert-versions</goal>
                   </goals>
-                  <phase>package</phase>
+                  <phase>generate-resources</phase>
                   <configuration>
                      <sortByGroupIdAndArtifactId>true</sortByGroupIdAndArtifactId>
                      <licensesOutputFile>${server.output.dir}/docs/licenses/licenses.xml</licensesOutputFile>
-                     <excludedArtifacts>.*jcip.*</excludedArtifacts>
+                     <excludedArtifacts>.*jcip.*|infinispan-tools|java-getopt</excludedArtifacts>
                      <includeSelfArtifact>true</includeSelfArtifact>
                   </configuration>
                </execution>
@@ -360,7 +372,7 @@
                            <includes>
                               <include>licenses.xml</include>
                            </includes>
-                           <stylesheet>${server.output.dir}/docs/licenses/licenses.xsl</stylesheet>
+                           <stylesheet>${project.basedir}/../../distribution/src/main/resources/template/licenses.xsl</stylesheet>
                            <outputDir>${server.output.dir}/docs/licenses</outputDir>
                            <fileMappers>
                               <fileMapper
@@ -371,11 +383,11 @@
                            <parameters>
                               <parameter>
                                  <name>product</name>
-                                 <value>${project.name}</value>
+                                 <value>${infinispan.brand.name} Server</value>
                               </parameter>
                               <parameter>
                                  <name>version</name>
-                                 <value>${project.version}</value>
+                                 <value>${infinispan.brand.version}</value>
                               </parameter>
                            </parameters>
                         </transformationSet>

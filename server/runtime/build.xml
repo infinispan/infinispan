@@ -42,6 +42,39 @@
          </patternset>
          <mapper type="flatten"/>
       </unzip>
+      <copy todir="${output.dir}/docs/licenses/">
+         <fileset dir="${licenses.template.dir}">
+            <include name="licenses.css"/>
+         </fileset>
+      </copy>
+      <java classname="org.infinispan.tools.licenses.LicenseMerger">
+         <arg line="-v"/>
+         <arg line="-o"/>
+         <arg line="${output.dir}/docs/licenses/licenses.xml"/>
+         <arg line="${output.dir}/static/console/META-INF/licenses/licenses-console.xml"/>
+         <arg line="${output.dir}/docs/licenses/licenses.xml"/>
+         <classpath>
+            <pathelement path="${plugin_classpath}"/>
+         </classpath>
+      </java>
+      <copy todir="${output.dir}/docs/licenses/">
+         <fileset dir="${licenses.data.dir}">
+            <include name="apache license 2.0.txt"/>
+            <include name="bsd-0-clause.txt"/>
+            <include name="bsd-3-clause.txt"/>
+            <include name="cc0-1.0.txt"/>
+            <include name="cddl-1.1-gpl-1-1.txt"/>
+            <include name="common development and distribution license 1.1.txt"/>
+            <include name="dual license consisting of the cddl v1.1 and gpl v2 - cddl+gpl-1.1"/>
+            <include name="gnu general public license v2.0 only, with classpath exception.txt"/>
+            <include name="gnu general public license, version 2.txt"/>
+            <include name="gnu lesser general public license v2.1 only.txt"/>
+            <include name="isc-license.txt"/>
+            <include name="mit license.txt"/>
+            <include name="ofl-1.1.txt"/>
+            <include name="xstream-bsd.txt"/>
+         </fileset>
+      </copy>
    </target>
 
    <target name="default">
