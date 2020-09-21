@@ -1,12 +1,18 @@
 [id='remote_cache_store']
 = Remote Cache Stores
-Remote cache stores, `RemoteStore`, use a remote {brandname} cluster as storage.
+Remote cache stores, `RemoteStore`, use the Hot Rod protocol to store data on
+{brandname} clusters.
 
-`RemoteStore` uses the Hot Rod protocol to communicate with remote {brandname}
-clusters.
+The following is an example `RemoteStore` configuration that stores data in a
+cache named "mycache" on two {brandname} Server instances, named "one" and
+"two":
 
-In the following configuration examples, `RemoteStore` uses the remote cache
-named "mycache" on {brandname} servers "one" and "two":
+[NOTE]
+====
+If you configure remote cache stores as shared you cannot preload data. In
+other words if `shared="true"` in your configuration then you must set 
+`preload="false"`.
+====
 
 .Declarative configuration
 
