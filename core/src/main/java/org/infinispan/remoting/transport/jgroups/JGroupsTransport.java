@@ -514,6 +514,9 @@ public class JGroupsTransport implements Transport {
     */
    protected void startJGroupsChannelIfNeeded() {
       String clusterName = configuration.transport().clusterName();
+      if (log.isDebugEnabled()) {
+         log.debugf("JGroups protocol stack: %s\n", channel.getProtocolStack().printProtocolSpec(true));
+      }
       if (connectChannel) {
          try {
             channel.connect(clusterName);
