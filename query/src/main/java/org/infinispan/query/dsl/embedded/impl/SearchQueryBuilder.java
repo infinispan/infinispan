@@ -9,10 +9,10 @@ import java.util.stream.Collectors;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.backend.lucene.LuceneExtension;
 import org.hibernate.search.backend.lucene.search.query.LuceneSearchQuery;
+import org.hibernate.search.backend.lucene.search.query.dsl.LuceneSearchQueryOptionsStep;
 import org.hibernate.search.engine.backend.common.DocumentReference;
 import org.hibernate.search.engine.search.predicate.SearchPredicate;
 import org.hibernate.search.engine.search.projection.SearchProjection;
-import org.hibernate.search.engine.search.query.spi.SearchQueryImplementor;
 import org.hibernate.search.engine.search.sort.SearchSort;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
@@ -70,19 +70,18 @@ public class SearchQueryBuilder {
    }
 
    private <T> LuceneSearchQuery<T> build(SearchProjection<T> searchProjection) {
-      LuceneSearchQuery<T> query = querySession.search(scope)
+      LuceneSearchQueryOptionsStep<T, ?> queryOptionsStep = querySession.search(scope)
             .extension(LuceneExtension.get())
             .select(searchProjection)
             .where(predicate)
             .sort(sort)
-            .routing(routingKeys)
-            .toQuery();
+            .routing(routingKeys);
 
       if (timeout != null && timeUnit != null) {
-         ((SearchQueryImplementor<?>) query).failAfter(timeout, timeUnit);
+         queryOptionsStep = queryOptionsStep.failAfter(timeout, timeUnit);
       }
 
-      return query;
+      return queryOptionsStep.toQuery();
    }
 
    public void failAfter(long timeout, TimeUnit timeUnit) {
