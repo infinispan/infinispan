@@ -109,8 +109,18 @@ public class LicenseMerger {
          Node dependencies = doc.getElementsByTagName("dependencies").item(0);
          for(Node dependency = dependencies.getFirstChild(); dependency != null; ) {
             if ("dependency".equals(dependency.getLocalName())) {
-               String groupId = findFirstChildByTagName(dependency, "groupId").getTextContent().trim();
-               String artifactId = findFirstChildByTagName(dependency, "artifactId").getTextContent().trim();
+               Node groupIdNode = findFirstChildByTagName(dependency, "groupId");
+               String groupId;
+               String artifactId;
+               if  (groupIdNode == null) {
+                  //NPM dependency.
+                  groupId = findFirstChildByTagName(dependency, "packageName").getTextContent().trim();
+                  artifactId = "";
+               } else {
+                  //Maven dependency
+                  groupId = groupIdNode.getTextContent().trim();
+                  artifactId = findFirstChildByTagName(dependency, "artifactId").getTextContent().trim();
+               }
                String version = findFirstChildByTagName(dependency, "version").getTextContent().trim();
                // Only include artifact if not in inclusive mode or if it's one of the included jars
                if (!inclusiveMode || xmls.containsKey(String.format("%s-%s", artifactId, version))) {
