@@ -75,6 +75,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -110,6 +111,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private boolean isSync;
    private boolean useRepeatableRead;
    private boolean isVersioned;
+   private boolean isPessimistic;
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -167,6 +169,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ
             || cacheConfiguration.clustering().cacheMode().isScattered();
       isVersioned = Configurations.isTxVersioned(cacheConfiguration);
+      isPessimistic = cacheConfiguration.transaction().transactionMode().isTransactional()
+            && cacheConfiguration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
    }
 
    private boolean ignoreOwnership(FlagAffectedCommand command) {
@@ -214,7 +218,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) {
       final Object key = command.getKey();
       CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, command.getSegment(),
-            ignoreOwnership(command) || canRead(command), command.hasAnyFlag(FlagBitSets.ALREADY_HAS_LOCK));
+            ignoreOwnership(command) || canRead(command), command.hasAnyFlag(FlagBitSets.ALREADY_HAS_LOCK)
+                  || (isPessimistic && command.hasAnyFlag(FlagBitSets.FORCE_WRITE_LOCK)));
       return makeStage(asyncInvokeNext(ctx, command, stage)).thenApply(ctx, command, dataReadReturnHandler);
    }
 

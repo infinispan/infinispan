@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -15,8 +14,6 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -56,8 +53,6 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
    @Inject Configuration config;
    @Inject EventLogManager eventLogManager;
    @Inject RpcManager rpcManager;
-   @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
-   @Inject Executor nonBlockingExecutor;
    @Inject InternalDataContainer<Object, Object> dataContainer;
 
    public DefaultTakeOfflineManager(String cacheName) {
@@ -206,8 +201,7 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
          getEventLogger().info(EventLogCategory.CLUSTER, MESSAGES.siteOffline(siteName));
          log.debug("Touching all in memory entries as a site has gone offline");
          long currentTimeMillis = timeService.wallClockTime();
-         dataContainer.forEachSegment((map, segment) ->
-                 map.forEach((k, v) -> map.touchKey(k, currentTimeMillis)));
+         dataContainer.forEachSegment((map, segment) -> map.touchAll(currentTimeMillis));
       }
 
       @Override

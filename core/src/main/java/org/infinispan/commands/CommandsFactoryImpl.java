@@ -695,8 +695,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public TouchCommand buildTouchCommand(Object key, int segment) {
-      return new TouchCommand(cacheName, key, segment);
+   public TouchCommand buildTouchCommand(Object key, int segment, boolean touchEvenIfExpired, long flagBitSet) {
+      return new TouchCommand(key, segment, flagBitSet, touchEvenIfExpired);
    }
 
    @Override

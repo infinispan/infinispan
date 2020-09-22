@@ -1043,4 +1043,16 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public String toString() {
       return "Secure " + delegate;
    }
+
+   @Override
+   public CompletionStage<Boolean> touch(Object key, int segment, boolean touchEvenIfExpired) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.touch(key, segment, touchEvenIfExpired);
+   }
+
+   @Override
+   public CompletionStage<Boolean> touch(Object key, boolean touchEvenIfExpired) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.touch(key, touchEvenIfExpired);
+   }
 }

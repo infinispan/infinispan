@@ -92,6 +92,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.PublisherManagerFactory;
 import org.infinispan.factories.annotations.ComponentName;
@@ -1116,6 +1117,32 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          updateStoreFlags(command, entry);
       });
       return returns;
+   }
+
+   @Override
+   public Object visitTouchCommand(InvocationContext ctx, TouchCommand command) throws Throwable {
+      int segment = command.getSegment();
+      Object key = command.getKey();
+      InternalCacheEntry<?, ?> ice = dataContainer.peek(segment, key);
+      if (ice == null) {
+         if (trace) {
+            log.tracef("Entry was not in the container to touch for key %s", key);
+         }
+         return Boolean.FALSE;
+      }
+      long currentTime = timeService.wallClockTime();
+
+      if (command.isTouchEvenIfExpired() || !ice.isExpired(currentTime)) {
+         boolean touched = dataContainer.touch(segment, key, currentTime);
+         if (trace) {
+            log.tracef("Entry was touched: %s for key %s.", touched, key);
+         }
+         return touched;
+      }
+      if (trace) {
+         log.tracef("Entry was expired for key %s and we could not touch it.", key);
+      }
+      return Boolean.FALSE;
    }
 
    private void updateStoreFlags(FlagAffectedCommand command, MVCCEntry e) {

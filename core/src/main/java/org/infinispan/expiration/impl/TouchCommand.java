@@ -3,44 +3,28 @@ package org.infinispan.expiration.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.TopologyAffectedCommand;
-import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commands.Visitor;
+import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.distribution.DistributionInfo;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 
 /**
  * This command updates a cache entry's last access timestamp. If eviction is enabled, it will also update the recency information
  * <p>
  * This command returns a Boolean that is whether this command was able to touch the value or not.
  */
-public class TouchCommand extends BaseRpcCommand implements TopologyAffectedCommand {
+public class TouchCommand extends AbstractDataCommand {
    public static final byte COMMAND_ID = 66;
 
-   private Object key;
-   private int segment;
-   private int topologyId = -1;
+   private boolean touchEvenIfExpired;
 
-   // Only here for CommandIdUniquenessTest
-   private TouchCommand() { super(null); }
+   public TouchCommand() { }
 
-   public TouchCommand(ByteString cacheName) {
-      super(cacheName);
-   }
-
-   public TouchCommand(ByteString cacheName, Object key, int segment) {
-      super(cacheName);
-      this.key = key;
-      this.segment = segment;
+   public TouchCommand(Object key, int segment, long flagBitSet, boolean touchEvenIfExpired) {
+      super(key, segment, flagBitSet);
+      this.touchEvenIfExpired = touchEvenIfExpired;
    }
 
    @Override
@@ -57,50 +41,30 @@ public class TouchCommand extends BaseRpcCommand implements TopologyAffectedComm
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       UnsignedNumeric.writeUnsignedInt(output, segment);
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeBoolean(touchEvenIfExpired);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
+      setFlagsBitSet(input.readLong());
+      touchEvenIfExpired = input.readBoolean();
    }
 
 
-   @Override
-   public int getTopologyId() {
-      return topologyId;
-   }
-
-   @Override
-   public void setTopologyId(int topologyId) {
-      this.topologyId = topologyId;
-   }
-
-   public CompletionStage<Object> invokeAsync(ComponentRegistry componentRegistry, long currentTimeMilli) {
-      DistributionManager distributionManager = componentRegistry.getDistributionManager();
-      InternalDataContainer internalDataContainer = componentRegistry.getInternalDataContainer().running();
-      boolean touched = internalDataContainer.touch(segment, key, currentTimeMilli);
-      // Hibernate currently disables clustered expiration manager, which means we can have a topology id of -1
-      // when using a clustered cache mode. Invalidation mode will also result in a topology id of -1.
-      if (topologyId != -1) {
-         LocalizedCacheTopology lct = distributionManager.getCacheTopology();
-         int currentTopologyId = lct.getTopologyId();
-         if (currentTopologyId != topologyId) {
-            return CompletableFutures.completedExceptionFuture(OutdatedTopologyException.RETRY_NEXT_TOPOLOGY);
-         }
-         DistributionInfo di = lct.getSegmentDistribution(segment);
-         // If our node is a write owner but not read owner, that means we may not have the value yet - so we just
-         // say we were touched anyways
-         // TODO: There is a small window where the access time may not be updated which is described in https://issues.redhat.com/browse/ISPN-11144
-         if (di.isWriteOwner() && !di.isReadOwner()) {
-            return CompletableFuture.completedFuture(Boolean.TRUE);
-         }
-      }
-      return CompletableFuture.completedFuture(touched);
+   public boolean isTouchEvenIfExpired() {
+      return touchEvenIfExpired;
    }
 
    @Override
-   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) {
-      return invokeAsync(componentRegistry, componentRegistry.getTimeService().wallClockTime());
+   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
+      return visitor.visitTouchCommand(ctx, this);
+   }
+
+   @Override
+   public LoadType loadType() {
+      return LoadType.DONT_LOAD;
    }
 }

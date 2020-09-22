@@ -42,6 +42,7 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
    protected static final Log log = LogFactory.getLog(BaseBackupInterceptor.class);
    protected static final boolean trace = log.isTraceEnabled();
    private final InvocationSuccessFunction<ClearCommand> handleClearReturn = this::handleClearReturn;
+   private final InvocationSuccessFunction<RemoveExpiredCommand> handleBackupMaxIdle = this::handleBackupMaxIdle;
    private final InvocationSuccessAction<RemoveExpiredCommand> handleExpiredReturn = this::handleExpiredReturn;
 
    @Override
@@ -71,15 +72,17 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
       // remove expired is lost due to topology change it just will cause another check later but maintain consistency
       if (dInfo.isPrimary()) {
          CompletionStage<Boolean> expired = iracManager.checkAndTrackExpiration(command.getKey());
-         return asyncValue(expired).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
-            if ((Boolean) rv) {
-               return invokeNextThenAccept(rCtx, command, this::handleExpiredReturn);
-            }
-            command.fail();
-            return rv;
-         });
+         return asyncValue(expired).thenApply(ctx, command, handleBackupMaxIdle);
       }
       return invokeNext(ctx, command);
+   }
+
+   private Object handleBackupMaxIdle(InvocationContext rCtx, RemoveExpiredCommand rCommand, Object rv) {
+      if ((Boolean) rv) {
+         return invokeNextThenAccept(rCtx, rCommand, handleExpiredReturn);
+      }
+      rCommand.fail();
+      return rv;
    }
 
    private void handleExpiredReturn(InvocationContext context, RemoveExpiredCommand command, Object returnValue) {

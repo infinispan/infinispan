@@ -282,6 +282,16 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
       cache.start();
    }
 
+   @Override
+   public CompletionStage<Boolean> touch(Object key, int segment, boolean touchEvenIfExpired) {
+      return cache.touch(key, segment, touchEvenIfExpired);
+   }
+
+   @Override
+   public CompletionStage<Boolean> touch(Object key, boolean touchEvenIfExpired) {
+      return cache.touch(key, -1, touchEvenIfExpired);
+   }
+
    ////////////////////////////////////////////////////////////////////////////
 
    /**

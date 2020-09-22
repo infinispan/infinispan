@@ -625,7 +625,7 @@ public interface CommandsFactory {
 
    CheckTransactionRpcCommand buildCheckTransactionRpcCommand(Collection<GlobalTransaction> globalTransactions);
 
-   TouchCommand buildTouchCommand(Object key, int segment);
+   TouchCommand buildTouchCommand(Object key, int segment, boolean touchEvenIfExpired, long flagBitSet);
 
    <K,V> IracPutKeyCommand buildIracPutKeyCommand(InternalCacheEntry<K, V> entry);
 

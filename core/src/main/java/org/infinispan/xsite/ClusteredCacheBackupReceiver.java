@@ -39,8 +39,6 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -114,8 +112,6 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    @Inject InvocationContextFactory invocationContextFactory;
    @Inject RpcManager rpcManager;
    @Inject ClusteringDependentLogic clusteringDependentLogic;
-   @Inject ComponentRegistry componentRegistry;
-   @Inject InternalDataContainer<Object, Object> dataContainer;
 
    private final ByteString cacheName;
 
@@ -130,8 +126,9 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    public void start() {
       //it would be nice if we could inject bootstrap component
       //this feels kind hacky but saves 3 fields in this class
-      TransactionHandler txHandler = new TransactionHandler(cache, componentRegistry.getTransactionTable());
-      defaultHandler = new DefaultHandler(txHandler, componentRegistry.getComponent(BlockingManager.class));
+      ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
+      TransactionHandler txHandler = new TransactionHandler(cache, cr.getTransactionTable());
+      defaultHandler = new DefaultHandler(txHandler, cr.getComponent(BlockingManager.class));
    }
 
    @Override
@@ -262,21 +259,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
 
    @Override
    public CompletionStage<Boolean> touchEntry(Object key) {
-      int segment = clusteringDependentLogic.getCacheTopology().getSegment(key);
-      InternalCacheEntry<Object, Object> entry = dataContainer.peek(segment, key);
-      long currentTime = timeService.wallClockTime();
-      if (entry == null || entry.isExpired(currentTime)) {
-         if (trace) {
-            log.tracef("Entry was not found or is expired for key %s", key);
-         }
-         return CompletableFutures.completedFalse();
-      }
-      // TODO: do we touch other nodes in this cluster?
-      if (trace) {
-         log.tracef("Entry was found and wasn't expired for key %s", key);
-      }
-      dataContainer.touch(segment, key, currentTime);
-      return CompletableFutures.completedTrue();
+      return cache.getAdvancedCache().touch(key, false);
    }
 
    private CompletionStage<Void> invokeRemotelyInLocalSite(CacheRpcCommand command) {

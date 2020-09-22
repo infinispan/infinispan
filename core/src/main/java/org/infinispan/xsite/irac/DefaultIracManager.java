@@ -266,13 +266,18 @@ public class DefaultIracManager implements IracManager, Runnable {
             }
             continue; //backup is offline
          }
+         if (trace) {
+            log.tracef("Sending irac touch key command to %s", backup);
+         }
          XSiteResponse<Boolean> response = sendToRemoteSite(backup, command);
          collector.dependsOn(response.thenAccept(touched -> {
             if (touched) {
                if (trace) {
-                  log.tracef("Key was recently touched on a remote site");
+                  log.tracef("Key %s was recently touched on a remote site %s", key, backup);
                }
                expired.set(false);
+            } else if (trace) {
+               log.tracef("Entry %s was expired on remote site %s", key, backup);
             }
          }));
       }

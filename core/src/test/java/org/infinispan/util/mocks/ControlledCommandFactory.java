@@ -662,8 +662,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public TouchCommand buildTouchCommand(Object key, int segment) {
-      return actual.buildTouchCommand(key, segment);
+   public TouchCommand buildTouchCommand(Object key, int segment, boolean touchEvenIfExpired, long flagBitSet) {
+      return actual.buildTouchCommand(key, segment, touchEvenIfExpired, flagBitSet);
    }
 
    @Override

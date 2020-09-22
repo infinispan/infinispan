@@ -214,7 +214,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
 
       LocalizedCacheTopology cacheTopology = checkTopologyId(command);
-      DistributionInfo info = cacheTopology.getDistribution(key);
+      DistributionInfo info = cacheTopology.getSegmentDistribution(SegmentSpecificCommand.extractSegment(command, key,
+            keyPartitioner));
       if (entry == null) {
          boolean load = shouldLoad(ctx, command, info);
          if (info.isPrimary()) {
@@ -239,23 +240,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             return invokeNext(ctx, command);
          }
       }
-   }
-
-   protected LocalizedCacheTopology checkTopologyId(TopologyAffectedCommand command) {
-      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
-      int currentTopologyId = cacheTopology.getTopologyId();
-      int cmdTopology = command.getTopologyId();
-      if (command instanceof FlagAffectedCommand && ((((FlagAffectedCommand) command).hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL)))) {
-         getLog().tracef("Skipping topology check for command %s", command);
-         return cacheTopology;
-      }
-      if (trace) {
-         getLog().tracef("Current topology %d, command topology %d", currentTopologyId, cmdTopology);
-      }
-      if (cmdTopology >= 0 && currentTopologyId != cmdTopology) {
-         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
-      }
-      return cacheTopology;
    }
 
    protected Object primaryReturnHandler(InvocationContext ctx, AbstractDataWriteCommand command, Object localResult) {

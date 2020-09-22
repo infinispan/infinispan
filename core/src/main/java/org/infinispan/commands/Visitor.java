@@ -35,6 +35,7 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.expiration.impl.TouchCommand;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -124,4 +125,6 @@ public interface Visitor {
    Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable;
 
    Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable;
+
+   Object visitTouchCommand(InvocationContext ctx, TouchCommand command) throws Throwable;
 }

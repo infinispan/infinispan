@@ -36,6 +36,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.expiration.impl.TouchCommand;
 
 /**
  * An abstract implementation of a Visitor that delegates all visit calls to a default handler which can be overridden.
@@ -240,6 +241,11 @@ public abstract class AbstractVisitor implements Visitor {
 
    @Override
    public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+      return handleDefault(ctx, command);
+   }
+
+   @Override
+   public Object visitTouchCommand(InvocationContext ctx, TouchCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 }

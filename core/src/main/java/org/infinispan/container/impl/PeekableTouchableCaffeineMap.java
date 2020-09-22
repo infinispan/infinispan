@@ -36,4 +36,11 @@ public class PeekableTouchableCaffeineMap<K, V> extends AbstractDelegatingConcur
       }
       return false;
    }
+
+   @Override
+   public void touchAll(long currentTimeMillis) {
+      for (InternalCacheEntry<K, V> ice : map.values()) {
+         ice.touch(currentTimeMillis);
+      }
+   }
 }
