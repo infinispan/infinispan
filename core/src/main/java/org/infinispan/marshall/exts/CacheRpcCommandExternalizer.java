@@ -46,7 +46,6 @@ import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
-import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand;
@@ -99,7 +98,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             VersionedPrepareCommand.class,
             VersionedCommitCommand.class,
             XSiteStatePushCommand.class, SingleXSiteRpcCommand.class,
-            ClusteredGetAllCommand.class, TouchCommand.class,
+            ClusteredGetAllCommand.class,
             SingleKeyBackupWriteCommand.class,
             SingleKeyFunctionalBackupWriteCommand.class,
             PutMapBackupWriteCommand.class,

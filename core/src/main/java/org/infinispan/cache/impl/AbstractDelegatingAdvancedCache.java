@@ -5,6 +5,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -189,6 +190,16 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
             throw new CacheException(e);
          }
       }
+   }
+
+   @Override
+   public CompletionStage<Boolean> touch(Object key, boolean touchEvenIfExpired) {
+      return cache.touch(key, touchEvenIfExpired);
+   }
+
+   @Override
+   public CompletionStage<Boolean> touch(Object key, int segment, boolean touchEvenIfExpired) {
+      return cache.touch(key, segment, touchEvenIfExpired);
    }
 
    @Override

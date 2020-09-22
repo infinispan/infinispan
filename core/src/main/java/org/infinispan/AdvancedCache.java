@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -704,6 +705,33 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * PartitionHandlingConfiguration#whenSplit()} is set to {@link org.infinispan.partitionhandling.PartitionHandling#ALLOW_READ_WRITES}.
     */
    void setAvailability(AvailabilityMode availabilityMode);
+
+   /**
+    * Touches the given key if present. This will refresh its last access time, used for max idle, and count as a recent
+    * access for eviction purposes.
+    * <p>
+    * Note that it is possible to touch an entry that is expired via max idle if {@code touchEvenIfExpired} argument is
+    * {@code true}.
+    * <p>
+    * This method will return without blocking and complete the returned stage with a value after all appropriate nodes
+    * have actually touched the value.
+    * @param key key of the entry to touch
+    * @param touchEvenIfExpired true if the entry should be touched even if already expired via max idle, effectively
+    *                           making it so the entry is no longer expired via max idle
+    * @return true if the entry was actually touched
+    */
+   CompletionStage<Boolean> touch(Object key, boolean touchEvenIfExpired);
+
+   /**
+    * The same as {@link #touch(Object, boolean)} except that the segment is already known. This can be helpful to reduce
+    * an extra segment computation
+    * @param key key of the entry to touch
+    * @param segment segment of the key
+    * @param touchEvenIfExpired true if the entry should be touched even if already expired via max idle, effectively
+    *                           making it so the entry is no longer expired via max idle
+    * @return true if the entry was actually touched
+    */
+   CompletionStage<Boolean> touch(Object key, int segment, boolean touchEvenIfExpired);
 
    /**
     * Identical to {@link Cache#entrySet()} but is typed to return CacheEntries instead of Entries.  Please see the

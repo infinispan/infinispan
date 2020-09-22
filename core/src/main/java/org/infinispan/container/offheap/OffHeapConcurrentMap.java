@@ -184,6 +184,17 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       }
    }
 
+   @Override
+   public void touchAll(long currentTimeMillis) {
+      // TODO: eventually optimize this to not create object instances and just touch memory directly
+      // but requires additional rewrite as we need to ensure this is done with a write lock
+      Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iterator = entryIterator();
+      while (iterator.hasNext()) {
+         InternalCacheEntry<WrappedBytes, WrappedBytes> ice = iterator.next();
+         touchKey(ice.getKey(), currentTimeMillis);
+      }
+   }
+
    @GuardedBy("locks#writeLock")
    private boolean lockedTouch(MemoryAddressHash memoryLookup, WrappedBytes k, int hashCode, long currentTimeMillis) {
       int memoryOffset = getMemoryOffset(memoryLookup, hashCode);

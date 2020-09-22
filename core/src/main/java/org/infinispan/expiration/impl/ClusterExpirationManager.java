@@ -3,7 +3,6 @@ package org.infinispan.expiration.impl;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -15,27 +14,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.cache.impl.AbstractDelegatingCache;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -70,21 +63,15 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
     */
    private static final int MAX_CONCURRENT_EXPIRATIONS = 100;
 
-   @Inject protected ComponentRef<AdvancedCache<K, V>> cacheRef;
    @Inject protected RpcManager rpcManager;
    @Inject protected DistributionManager distributionManager;
 
-   protected AdvancedCache<K, V> cache;
    private Address localAddress;
    private long timeout;
-   private String cacheName;
 
    @Override
    public void start() {
       super.start();
-      // Data container entries are retrieved directly, so we don't need to worry about an encodings
-      this.cache = AbstractDelegatingCache.unwrapCache(cacheRef.wired()).getAdvancedCache();
-      this.cacheName = cache.getName();
       this.localAddress = cache.getCacheManager().getAddress();
       this.timeout = configuration.clustering().remoteTimeout();
    }
@@ -158,7 +145,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                   if (expiredMortal) {
                      stage = handleLifespanExpireEntry(ice.getKey(), value, lifespan, false);
                   } else {
-                     stage = handleMaxIdleExpireEntry(ice, false);
+                     stage = handleMaxIdleExpireEntry(ice, false, currentTimeMillis);
                   }
                   stage.whenComplete((obj, t) -> addStageToPermits(expirationPermits, stage));
                }
@@ -244,7 +231,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       return cacheToUse.removeLifespanExpired(key, value, lifespan);
    }
 
-   CompletableFuture<Boolean> handleMaxIdleExpireEntry(InternalCacheEntry<K, V> entry, boolean isWrite) {
+   CompletableFuture<Boolean> handleMaxIdleExpireEntry(InternalCacheEntry<K, V> entry, boolean isWrite, long currentTime) {
       return handleEitherExpiration(entry.getKey(), entry.getValue(), true, entry.getMaxIdle(), isWrite)
               .thenCompose(expired -> {
                  if (!expired) {
@@ -252,7 +239,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                        log.tracef("Entry was not actually expired via max idle - touching on all nodes");
                     }
                     // TODO: what do we do if another node couldn't touch the value?
-                    return checkExpiredMaxIdle(entry, keyPartitioner.getSegment(entry.getKey()))
+                    return checkExpiredMaxIdle(entry, keyPartitioner.getSegment(entry.getKey()), currentTime)
                           .thenApply(ignore -> Boolean.FALSE);
                  }
                  return CompletableFutures.completedTrue();
@@ -346,7 +333,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          }
       } else {
          // This means it expired transiently - this will block user until we confirm the entry is okay
-         future = handleMaxIdleExpireEntry(entry, isWrite);
+         future = handleMaxIdleExpireEntry(entry, isWrite, currentTime);
       }
 
       return future.handle((expired, t) -> {
@@ -443,8 +430,8 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    }
 
    @Override
-   protected CompletionStage<Boolean> checkExpiredMaxIdle(InternalCacheEntry ice, int segment) {
-      return attemptTouchAndReturnIfExpired(ice, segment)
+   protected CompletionStage<Boolean> checkExpiredMaxIdle(InternalCacheEntry ice, int segment, long currentTime) {
+      return attemptTouchAndReturnIfExpired(ice, segment, currentTime)
             .handle((expired, t) -> {
                if (t != null) {
                   Throwable innerT = CompletableFutures.extractException(t);
@@ -452,7 +439,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                      if (trace) {
                         log.tracef("Touch received OutdatedTopologyException, retrying");
                      }
-                     return attemptTouchAndReturnIfExpired(ice, segment);
+                     return attemptTouchAndReturnIfExpired(ice, segment, currentTime);
                   }
                   return CompletableFutures.<Boolean>completedExceptionFuture(t);
                } else {
@@ -462,92 +449,14 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             .thenCompose(Function.identity());
    }
 
-   private CompletionStage<Boolean> attemptTouchAndReturnIfExpired(InternalCacheEntry ice, int segment) {
-      LocalizedCacheTopology lct = distributionManager.getCacheTopology();
-
-      TouchCommand touchCommand = cf.running().buildTouchCommand(ice.getKey(), segment);
-      touchCommand.setTopologyId(lct.getTopologyId());
-
-      CompletionStage<Boolean> remoteStage = invokeTouchCommandRemotely(touchCommand, lct, segment);
-      long accessTime = timeService.wallClockTime();
-      CompletionStage<Object> localStage = touchCommand.invokeAsync(componentRegistry, accessTime);
-
-      return remoteStage.thenCombine(localStage, (remoteTouch, localTouch) -> {
-         if (remoteTouch == Boolean.TRUE && localTouch == Boolean.TRUE) {
-            // The ICE can be a copy in cases such as off heap - we need to update its time that is reported to the user
-            ice.touch(accessTime);
-            return Boolean.FALSE;
-         }
-         return Boolean.TRUE;
-      });
-   }
-
-   private CompletionStage<Boolean> invokeTouchCommandRemotely(TouchCommand touchCommand, LocalizedCacheTopology lct,
-         int segment) {
-      boolean isScattered = configuration.clustering().cacheMode().isScattered();
-      DistributionInfo di = lct.getSegmentDistribution(segment);
-      // Scattered any node could be a backup, so we have to touch all members
-      List<Address> owners = isScattered ? lct.getActualMembers() : di.writeOwners();
-      return rpcManager.invokeCommand(owners, touchCommand,
-            isScattered ? ScatteredTouchResponseCollector.INSTANCE : TouchResponseCollector.INSTANCE,
-            rpcManager.getSyncRpcOptions());
-   }
-
-   private static abstract class AbstractTouchResponseCollector extends ValidResponseCollector<Boolean> {
-      @Override
-      protected Boolean addTargetNotFound(Address sender) {
-         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
-      }
-
-      @Override
-      protected Boolean addException(Address sender, Exception exception) {
-         if (exception instanceof CacheException) {
-            throw (CacheException) exception;
-         }
-         throw new CacheException(exception);
-      }
-   }
-
-   private static class ScatteredTouchResponseCollector extends AbstractTouchResponseCollector {
-
-      private static final ScatteredTouchResponseCollector INSTANCE = new ScatteredTouchResponseCollector();
-
-      @Override
-      public Boolean finish() {
-         // No other node was touched
-         return Boolean.FALSE;
-      }
-
-      @Override
-      protected Boolean addValidResponse(Address sender, ValidResponse response) {
-         Boolean touched = (Boolean) response.getResponseValue();
-         if (touched == Boolean.TRUE) {
-            // Return early if any node touched the value - as SCATTERED only exists on a single backup!
-            // TODO: what if the read was when one of the backups or primary died?
-            return Boolean.TRUE;
-         }
-         return null;
-      }
-   }
-
-   private static class TouchResponseCollector extends AbstractTouchResponseCollector {
-
-      private static final TouchResponseCollector INSTANCE = new TouchResponseCollector();
-
-      @Override
-      public Boolean finish() {
-         // If all were touched, then the value isn't expired
-         return Boolean.TRUE;
-      }
-
-      @Override
-      protected Boolean addValidResponse(Address sender, ValidResponse response) {
-         Boolean touched = (Boolean) response.getResponseValue();
-         if (touched == Boolean.FALSE) {
-            // Return early if any value wasn't touched!
-            return Boolean.FALSE;
-         }
-         return null;
-      }
+   private CompletionStage<Boolean> attemptTouchAndReturnIfExpired(InternalCacheEntry ice, int segment, long currentTime) {
+      return cache.touch(ice.getKey(), segment, true)
+            .thenApply(touched -> {
+               if (touched) {
+                  // The ICE can be a copy in cases such as off heap - we need to update its time that is reported to the user
+                  ice.touch(currentTime);
+               }
+               return !touched;
+            });
    }
 }

@@ -338,6 +338,16 @@ public class SecureCacheTestDriver {
       cache.noFlags();
    }
 
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testTouch_Object_boolean(SecureCache<String, String> cache) {
+      cache.touch(new Object(), true);
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testTouch_Object_int_boolean(SecureCache<String, String> cache) {
+      cache.touch(new Object(), 1, true);
+   }
+
    @TestCachePermission(AuthorizationPermission.ADMIN)
    public void testTransform_Function(SecureCache<String, String> cache) {
       cache.transform(Function.identity());

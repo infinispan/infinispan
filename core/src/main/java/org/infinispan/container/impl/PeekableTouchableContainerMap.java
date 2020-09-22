@@ -37,4 +37,11 @@ public class PeekableTouchableContainerMap<K, V> extends AbstractDelegatingConcu
       }
       return false;
    }
+
+   @Override
+   public void touchAll(long currentTimeMillis) {
+      for (InternalCacheEntry<K, V> ice : map.values()) {
+         ice.touch(currentTimeMillis);
+      }
+   }
 }

@@ -14,6 +14,8 @@ import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
@@ -147,7 +149,7 @@ public class AsyncBackupExpirationTest extends AbstractTwoSitesTest {
    }
 
    @Test(dataProvider = "two boolean cross product")
-   public void testExpiredAccess(boolean lifespan, boolean readOnPrimary) throws InterruptedException {
+   public void testExpiredAccess(boolean lifespan, boolean readOnPrimary) {
       Cache<MagicKey, String> cache = cache(LON, 0);
 
       ControlledTimeService timeService = replaceTimeService();
@@ -160,19 +162,28 @@ public class AsyncBackupExpirationTest extends AbstractTwoSitesTest {
       }
       eventuallyEquals("v", () -> cache(LON, 0).get(key));
       eventuallyEquals("v", () -> cache(LON, 1).get(key));
-      Cache<Object, Object> backupCache = backup(LON);
-      assertNull(backupCache.get("k"));
       eventuallyEquals("v", () -> backup(LON).get(key));
+
+      if (!lifespan) {
+         // When using max idle all the nodes for the sites should be updated
+         for (int i = 0; i < 2; ++i) {
+            TestSite testSite = site(i);
+            for (int j = 0; j < 2; ++j) {
+               InternalCacheEntry<Object, Object> ice = TestingUtil.extractComponent(testSite.cache(j),
+                     InternalDataContainer.class).peek(key);
+               assertEquals(timeService.wallClockTime(), ice.getLastUsed());
+            }
+         }
+      }
 
       // Now expire the entry
       timeService.advance(TimeUnit.SECONDS.toMillis(2));
       assertNull(cache.get(key));
-
-      // TODO: check for the touch command being invoked on the remote site for lifespan = false
+      assertNull(backup(LON).get(key));
    }
 
    @Test(dataProvider = "two boolean cross product")
-   public void testMaxIdleWithRecentAccess(boolean readFromWrittenSite, boolean readOnAccessedSite) throws InterruptedException {
+   public void testMaxIdleWithRecentAccess(boolean readFromWrittenSite, boolean readOnAccessedSite) {
       Cache<Object, Object> mainSiteCache = cache(LON, 0);
       Cache<Object, Object> backupSiteCache = cache(NYC, 0);
 

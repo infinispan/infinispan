@@ -265,6 +265,9 @@ public class RemoteCommandsFactory {
             case IracPutKeyValueCommand.COMMAND_ID:
                command = new IracPutKeyValueCommand();
                break;
+            case TouchCommand.COMMAND_ID:
+               command = new TouchCommand();
+               break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
          }
@@ -439,9 +442,6 @@ public class RemoteCommandsFactory {
                break;
             case CheckTransactionRpcCommand.COMMAND_ID:
                command = new CheckTransactionRpcCommand(cacheName);
-               break;
-            case TouchCommand.COMMAND_ID:
-               command = new TouchCommand(cacheName);
                break;
             case IracPutKeyCommand.COMMAND_ID:
                command = new IracPutKeyCommand(cacheName);
