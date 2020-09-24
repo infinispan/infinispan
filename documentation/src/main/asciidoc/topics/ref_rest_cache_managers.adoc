@@ -218,6 +218,8 @@ stored in the cache manager.
 POST /rest/v2/cache-managers/{cacheManagerName}/backups/{backupName}
 ----
 
+A `202` response indicates that the backup request is accepted for processing.
+
 Optionally include a JSON payload with your request that contains parameters
 for the backup operation, as follows:
 
@@ -255,42 +257,56 @@ failed.
 GET /rest/v2/cache-managers/{cacheManagerName}/backups
 ----
 
+{brandname} responds with an Array of all backup names as in the following example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+["backup1", "backup2"]
+----
+
 [id='rest_v2_backup_manager_head']
 = Checking Backup Availability
-Verify that a backup operation is complete. A `200` response indicates the
-backup archive is available. A `202` response indicates the backup operation is
-in progress.
+Verify that a backup operation is complete.
 
 [source,options="nowrap",subs=attributes+]
 ----
 HEAD /rest/v2/cache-managers/{cacheManagerName}/backups/{backupName}
 ----
 
+A `200` response indicates the backup archive is available.
+A `202` response indicates the backup operation is in progress.
+
 [id='rest_v2_backup_manager_get']
 = Downloading Backup Archives
-Download backup archives from the server. A `200` response indicates the
-backup archive is available. A `202` response indicates the backup operation is
-in progress.
+Download backup archives from the server.
 
 [source,options="nowrap",subs=attributes+]
 ----
 GET /rest/v2/cache-managers/{cacheManagerName}/backups/{backupName}
 ----
 
+A `200` response indicates the backup archive is available.
+A `202` response indicates the backup operation is in progress.
+
 [id='rest_v2_backup_manager_delete']
 = Deleting Backup Archives
-Remove backup archives from the server. A `204` response indicates that the
-backup archive is deleted. A `202` response indicates that the backup operation
-is in progress but will be deleted when the operation completes.
+Remove backup archives from the server.
 
 [source,options="nowrap",subs=attributes+]
 ----
 DELETE /rest/v2/cache-managers/{cacheManagerName}/backups/{backupName}
 ----
 
+A `204` response indicates that the backup archive is deleted. A `202` response
+indicates that the backup operation is in progress but will be deleted when the
+operation completes.
+
+
 [id='rest_v2_restore_manager']
 = Restoring {brandname} Resources from Backup Archives
-Apply {brandname} resources in backup archives to restore the content.
+Restore {brandname} resources from backup archives. The provided
+`{restoreName}` is for tracking restore progress, and is independent of the name of
+backup file being restored.
 
 [IMPORTANT]
 ====
@@ -300,8 +316,11 @@ matches `{cacheManagerName}`.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/cache-managers/{cacheManagerName}/backups?action=restore
+POST /rest/v2/cache-managers/{cacheManagerName}/restores/{restoreName}
 ----
+
+A `202` response indicates
+that the restore request has been accepted for processing.
 
 == Restoring from Backup Archives on {brandname} Server
 Use the `application/json` content type with your POST request to back up from
@@ -369,3 +388,47 @@ Content-Length: 7353
 <zip-bytes>
 --5ec9bc07-f069-4662-a535-46069afeda32--
 ----
+
+[id='rest_v2_restore_manager_list']
+= Listing Restores
+Retrieve the names of all restore requests that are in progress, completed, or
+failed.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cache-managers/{cacheManagerName}/restores
+----
+
+{brandname} responds with an Array of all restore names as in the following example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+["restore1", "restore2"]
+----
+
+[id='rest_v2_restore_manager_head']
+= Checking Restore Progress
+Verify that a restore operation is complete.
+
+[source,options="nowrap",subs=attributes+]
+----
+HEAD /rest/v2/cache-managers/{cacheManagerName}/restores/{restoreName}
+----
+
+A `200` response indicates the restore operation is completed.
+A `202` response indicates the backup operation is in progress.
+
+[id='rest_v2_restore_manager_delete']
+= Deleting Restore Metadata
+Remove metadata for restore requests from the server. This action removes all metadata
+associated with restore requests but does not delete any restored content. If you delete
+the request metadata, you can use the request name to perform subsequent restore operations.
+
+[source,options="nowrap",subs=attributes+]
+----
+DELETE /rest/v2/cache-managers/{cacheManagerName}/restores/{restoreName}
+----
+
+A `204` response indicates that the restore metadata is deleted.
+A `202` response indicates that the restore operation is in progress and will be deleted when the operation
+completes.

@@ -127,20 +127,20 @@ public interface Log extends BasicLogger {
    CacheException restoreInProgress();
 
    @LogMessage(level = INFO)
-   @Message(value = "Starting cluster backup", id = 5043)
-   void initiatingClusterBackup();
+   @Message(value = "Starting backup '%s'", id = 5043)
+   void initiatingBackup(String name);
 
    @LogMessage(level = INFO)
    @Message(value = "Backup file created '%s'", id = 5044)
    void backupComplete(String backupName);
 
    @LogMessage(level = INFO)
-   @Message(value = "Restoring content from backup file '%s'", id = 5045)
-   void initiatingClusterRestore(Path backup);
+   @Message(value = "Starting restore '%s' of '%s'", id = 5045)
+   void initiatingRestore(String name, Path backup);
 
    @LogMessage(level = INFO)
-   @Message(value = "Backup complete", id = 5046)
-   void restoreComplete();
+   @Message(value = "Restore '%s' complete", id = 5046)
+   void restoreComplete(String name);
 
    @Message(value = "%s '%s' not found in the backup archive", id = 5047)
    CacheException unableToFindBackupResource(String resource, Set<String> resourceNames);
@@ -154,4 +154,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Deleted backup '%s'", id = 5050)
    void backupDeleted(String name);
+
+   @Message(value = "Cannot perform restore, restore already exists with name '%s'", id = 5051)
+   CacheException restoreAlreadyExists(String name);
 }

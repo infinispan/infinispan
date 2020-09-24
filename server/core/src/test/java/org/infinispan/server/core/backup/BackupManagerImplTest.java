@@ -128,13 +128,14 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
    }
 
    private void invalidRestoreTest(String resourceName, BackupManager.Resources params) throws Exception {
+      String name = "invalidRestoreTest";
       createAndRestore(
-            (source, backupManager) -> backupManager.create("invalidRestoreTest", null),
+            (source, backupManager) -> backupManager.create(name, null),
             (target, backupManager, backup) -> {
                assertTrue(target.getCacheNames().isEmpty());
                assertNull(target.getCacheConfiguration("cache-config"));
                Map<String, BackupManager.Resources> paramMap = Collections.singletonMap("default", params);
-               CompletableFuture<Void> stage = backupManager.restore(backup, paramMap).toCompletableFuture();
+               CompletableFuture<Void> stage = backupManager.restore(name, backup, paramMap).toCompletableFuture();
 
                try {
                   stage.get(MAX_WAIT_SECS, TimeUnit.SECONDS);
@@ -156,12 +157,13 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
    }
 
    public void testBackupAndRestoreIgnoreResources() throws Exception {
+      String name = "testBackupAndRestoreIgnoreResources";
       createAndRestore(
             (source, backupManager) -> {
                source.defineConfiguration("cache-config", config(APPLICATION_OBJECT_TYPE, true));
                Cache<String, String> cache = source.createCache("cache", config(APPLICATION_OBJECT_TYPE));
                cache.put("key", "value");
-               return backupManager.create("testBackupAndRestoreIgnoreResources", null);
+               return backupManager.create(name, null);
             },
             (target, backupManager, backup) -> {
                assertTrue(target.getCacheNames().isEmpty());
@@ -172,24 +174,25 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
                            .ignore(CACHES)
                            .build()
                );
-               await(backupManager.restore(backup, paramMap));
+               await(backupManager.restore(name, backup, paramMap));
                assertTrue(target.getCacheNames().isEmpty());
                assertNotNull(target.getCacheConfiguration("cache-config"));
             });
    }
 
    public void testBackupAndRestoreWildcardResources() throws Exception {
+      String name = "testBackupAndRestoreWildcardResources";
       createAndRestore(
             (source, backupManager) -> {
                source.defineConfiguration("cache-config", config(APPLICATION_OBJECT_TYPE, true));
                Cache<String, String> cache = source.createCache("cache", config(APPLICATION_OBJECT_TYPE));
                cache.put("key", "value");
-               return backupManager.create("testBackupAndRestoreWildcardResources", null);
+               return backupManager.create(name, null);
             },
             (target, backupManager, backup) -> {
                assertTrue(target.getCacheNames().isEmpty());
                assertNull(target.getCacheConfiguration("cache-config"));
-               await(backupManager.restore(backup));
+               await(backupManager.restore(name, backup));
                assertFalse(target.getCacheNames().isEmpty());
                assertNotNull(target.getCacheConfiguration("cache-config"));
 

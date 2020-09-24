@@ -50,14 +50,36 @@ public interface RestClusterClient {
     * Restores all content from a backup file, by uploading the file to the server endpoint for processing, returning
     * once the restoration has completed.
     *
+    * @param name a unique name to identify the restore request.
     * @param backup the backup {@link File} containing the data to be restored.
     */
-   CompletionStage<RestResponse> restore(File backup);
+   CompletionStage<RestResponse> restore(String name, File backup);
 
    /**
     * Restores all content from a backup file available to the server instance.
     *
+    * @param name a unique name to identify the restore request.
     * @param backupLocation the path of the backup file already located on the server.
     */
-   CompletionStage<RestResponse> restore(String backupLocation);
+   CompletionStage<RestResponse> restore(String name, String backupLocation);
+
+   /**
+    * Polls a restore request progress with the given name. 201 indicates that the request has completed, 202 that it's
+    * in progress and 404 that it can't be found.
+    *
+    * @param name the name of the restore.
+    */
+   CompletionStage<RestResponse> getRestore(String name);
+
+   /**
+    * @return the names of all restores.
+    */
+   CompletionStage<RestResponse> getRestoreNames();
+
+   /**
+    * Deletes a restore request from the server. Container content is not affected.
+    *
+    * @param name the name of the restore.
+    */
+   CompletionStage<RestResponse> deleteRestore(String name);
 }
