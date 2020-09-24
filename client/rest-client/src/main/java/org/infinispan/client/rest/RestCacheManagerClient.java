@@ -102,29 +102,52 @@ public interface RestCacheManagerClient {
     * Restores all content associated with this containers name contained within the provided backup file. The backup
     * file is uploaded via the server endpoint for processing, returning once the restoration has completed.
     *
+    * @param name a unique name to identify the restore request.
     * @param backup the backup {@link File} containing the data to be restored.
     */
-   default CompletionStage<RestResponse> restore(File backup) {
-      return restore(backup, null);
+   default CompletionStage<RestResponse> restore(String name, File backup) {
+      return restore(name, backup, null);
    }
 
    /**
     * Restores the specified content from the backup file that's associated with this container's name.
     *
+    * @param name a unique name to identify the restore request.
     * @param backup    the backup {@link File} containing the data to be restored.
     * @param resources a map of BackupManager.Resources.Type with the names of the resources to backup. If the provided
     *                  list only contains "*" then all available resources of that type are restored. A null value
     *                  indicates that all resources in the backup should be restored.
     */
-   CompletionStage<RestResponse> restore(File backup, Map<String, List<String>> resources);
+   CompletionStage<RestResponse> restore(String name, File backup, Map<String, List<String>> resources);
 
    /**
     * Restores the specified content from the backup file that's associated with this container's name.
     *
+    * @param name a unique name to identify the restore request.
     * @param backupLocation the path of the backup file already located on the server.
     * @param resources      a map of BackupManager.Resources.Type with the names of the resources to backup. If the
     *                       provided list only contains "*" then all available resources of that type are restored. A
     *                       null value indicates that all resources in the backup should be restored.
     */
-   CompletionStage<RestResponse> restore(String backupLocation, Map<String, List<String>> resources);
+   CompletionStage<RestResponse> restore(String name, String backupLocation, Map<String, List<String>> resources);
+
+   /**
+    * Polls a restore request progress with the given name. 201 indicates that the request has completed, 202 that it's
+    * in progress and 404 that it can't be found.
+    *
+    * @param name the name of the restore.
+    */
+   CompletionStage<RestResponse> getRestore(String name);
+
+   /**
+    * @return the names of all restores.
+    */
+   CompletionStage<RestResponse> getRestoreNames();
+
+   /**
+    * Deletes a restore request from the server. Container content is not affected.
+    *
+    * @param name the name of the restore.
+    */
+   CompletionStage<RestResponse> deleteRestore(String name);
 }

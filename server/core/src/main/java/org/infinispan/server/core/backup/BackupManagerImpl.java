@@ -45,6 +45,7 @@ public class BackupManagerImpl implements BackupManager {
    final Lock restoreLock;
    final Map<String, DefaultCacheManager> cacheManagers;
    final Map<String, BackupRequest> backupMap;
+   final Map<String, CompletionStage<Void>> restoreMap;
 
    public BackupManagerImpl(BlockingManager blockingManager, EmbeddedCacheManager cm,
                             Map<String, DefaultCacheManager> cacheManagers, Path dataRoot) {
@@ -56,6 +57,7 @@ public class BackupManagerImpl implements BackupManager {
       this.backupLock = new Lock("backup", cm);
       this.restoreLock = new Lock("restore", cm);
       this.backupMap = new ConcurrentHashMap<>();
+      this.restoreMap = new ConcurrentHashMap<>();
    }
 
    @Override
@@ -83,10 +85,15 @@ public class BackupManagerImpl implements BackupManager {
    }
 
    private Status getBackupStatus(BackupRequest request) {
-      if (request == null)
+      CompletableFuture<Path> future = request == null ? null : request.future;
+      return getFutureStatus(future);
+   }
+
+   private Status getFutureStatus(CompletionStage<?> stage) {
+      if (stage == null)
          return Status.NOT_FOUND;
 
-      CompletableFuture<Path> future = request.future;
+      CompletableFuture<?> future = stage.toCompletableFuture();
       if (future.isCompletedExceptionally())
          return Status.FAILED;
 
@@ -141,7 +148,7 @@ public class BackupManagerImpl implements BackupManager {
                if (!lockAcquired)
                   return CompletableFutures.completedExceptionFuture(log.backupInProgress());
 
-               log.initiatingClusterBackup();
+               log.initiatingBackup(name);
                return writer.create(params);
             });
 
@@ -163,8 +170,26 @@ public class BackupManagerImpl implements BackupManager {
    }
 
    @Override
-   public CompletionStage<Void> restore(Path backup) {
+   public CompletionStage<Status> removeRestore(String name) {
+      CompletionStage<Void> stage = restoreMap.remove(name);
+      Status status = getFutureStatus(stage);
+      return CompletableFuture.completedFuture(status);
+   }
+
+   @Override
+   public Status getRestoreStatus(String name) {
+      return getFutureStatus(restoreMap.get(name));
+   }
+
+   @Override
+   public Set<String> getRestoreNames() {
+      return new HashSet<>(restoreMap.keySet());
+   }
+
+   @Override
+   public CompletionStage<Void> restore(String name, Path backup) {
       return restore(
+            name,
             backup,
             cacheManagers.entrySet().stream()
                   .collect(Collectors.toMap(
@@ -174,7 +199,10 @@ public class BackupManagerImpl implements BackupManager {
    }
 
    @Override
-   public CompletionStage<Void> restore(Path backup, Map<String, Resources> params) {
+   public CompletionStage<Void> restore(String name, Path backup, Map<String, Resources> params) {
+      if (getRestoreStatus(name) != Status.NOT_FOUND)
+         return CompletableFutures.completedExceptionFuture(log.restoreAlreadyExists(name));
+
       if (!Files.exists(backup)) {
          CacheException e = log.errorRestoringBackup(backup, new FileNotFoundException(backup.toString()));
          log.error(e);
@@ -186,11 +214,11 @@ public class BackupManagerImpl implements BackupManager {
                if (!lockAcquired)
                   return CompletableFutures.completedExceptionFuture(log.restoreInProgress());
 
-               log.initiatingClusterRestore(backup);
+               log.initiatingRestore(name, backup);
                return reader.restore(backup, params);
             });
 
-      return CompletionStages.handleAndCompose(restoreStage,
+      restoreStage = CompletionStages.handleAndCompose(restoreStage,
             (path, t) -> {
                CompletionStage<Void> unlock = restoreLock.unlock();
                if (t != null) {
@@ -199,9 +227,11 @@ public class BackupManagerImpl implements BackupManager {
                         CompletableFutures.completedExceptionFuture(log.errorRestoringBackup(backup, t))
                   );
                }
-               log.restoreComplete();
+               log.restoreComplete(name);
                return unlock.thenCompose(ignore -> CompletableFuture.completedFuture(path));
             });
+      restoreMap.put(name, restoreStage);
+      return restoreStage;
    }
 
    static class BackupRequest {

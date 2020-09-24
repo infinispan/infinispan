@@ -56,6 +56,9 @@ BACKUP RESTORE OPTIONS
 *-u, --upload*::
 Defines the path to a local backup archive that is uploaded to the server.
 
+*-n, --name*='NAME'::
+Defines a name for the restore request.
+
 *--caches*='cache1,cache2,...'::
 Lists caches to restore. Use '*' to restore all caches from the backup archive.
 

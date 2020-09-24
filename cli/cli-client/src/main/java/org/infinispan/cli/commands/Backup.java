@@ -149,6 +149,9 @@ public class Backup extends CliCommand {
       @Argument(description = "The path of the backup file ", completer = FileOptionCompleter.class, required = true)
       Resource path;
 
+      @Option(shortName = 'n', description = "Defines a name for the restore request.")
+      String name;
+
       @Option(shortName = 'u', description = "Indicates that the path is a local file which must be uploaded to the server", hasValue = false, name = UPLOAD_BACKUP)
       boolean upload;
 
@@ -162,7 +165,8 @@ public class Backup extends CliCommand {
             throw Messages.MSG.backupAbsolutePathRequired();
 
          cmd.arg(PATH, path)
-               .optionalArg(UPLOAD_BACKUP, upload);
+               .optionalArg(UPLOAD_BACKUP, upload)
+               .option(NAME, name);
       }
    }
 
