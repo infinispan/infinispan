@@ -165,10 +165,6 @@ include::config_examples/zero_capacity_node.xml[]
 include::code_examples/ZeroCapacityNode.java[]
 ----
 
-However, note that this will be true for distributed caches only. If you are using replicated
-caches, the node will still keep a copy of the value. Use only distributed caches to make the
-best use of this feature.
-
 == Hashing Configuration
 This is how you configure hashing declaratively, via XML:
 
