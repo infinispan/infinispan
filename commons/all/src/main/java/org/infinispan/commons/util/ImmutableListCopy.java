@@ -3,7 +3,6 @@ package org.infinispan.commons.util;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.lang.reflect.Array;
 import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,12 +33,15 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.Immutable {
-   private E[] elements;
+   public static final Object[] EMPTY_ARRAY = new Object[0];
+
+   private final Object[] elements;
 
    /**
-    * Constructs a new ImmutableListCopy. Required by Serialization.
+    * Constructs an empty ImmutableListCopy.
     */
    public ImmutableListCopy() {
+      elements = EMPTY_ARRAY;
    }
 
    /**
@@ -49,10 +51,11 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.
     */
    @SuppressWarnings("unchecked")
    public ImmutableListCopy(Collection<? extends E> c) {
-      int size = c.size();
-      Object[] el = new Object[size]; // no room for growth;
-      el = c.toArray(el);
-      elements = (E[]) el;
+      if (c instanceof ImmutableListCopy) {
+         elements = ((ImmutableListCopy<? extends E>) c).elements;
+      } else {
+         elements = c.toArray();
+      }
    }
 
    /**
@@ -72,14 +75,27 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.
     */
    @SuppressWarnings("unchecked")
    public ImmutableListCopy(Collection<? extends E> collection1, Collection<? extends E> collection2) {
-      int size = collection1.size() + collection2.size();
-      elements = (E[]) new Object[size]; // no room for growth;
-      Object[] c1 = new Object[collection1.size()];
-      Object[] c2 = new Object[collection2.size()];
-      c1 = collection1.toArray(c1);
-      c2 = collection2.toArray(c2);
-      System.arraycopy(c1, 0, elements, 0, c1.length);
-      System.arraycopy(c2, 0, elements, c1.length, c2.length);
+      if (collection2.isEmpty()) {
+         if (collection1 instanceof ImmutableListCopy) {
+            elements = ((ImmutableListCopy<? extends E>) collection1).elements;
+         } else {
+            elements = collection1.toArray();
+         }
+      } else if (collection1.isEmpty()) {
+         if (collection2 instanceof ImmutableListCopy) {
+            elements = ((ImmutableListCopy<? extends E>) collection2).elements;
+         } else {
+            elements = collection2.toArray();
+         }
+      } else {
+         int c1Size = collection1.size();
+         int c2Size = collection2.size();
+         int size = c1Size + c2Size;
+         elements = new Object[size]; // no room for growth;
+         collection1.toArray(elements);
+         Object[] c2 = collection2.toArray();
+         System.arraycopy(c2, 0, elements, c1Size, c2Size);
+      }
    }
 
    @Override
@@ -104,10 +120,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.
 
    @Override
    public final Object[] toArray() {
-      int size = elements.length;
-      Object[] result = new Object[size];
-      System.arraycopy(elements, 0, result, 0, size);
-      return result;
+      return Arrays.copyOf(elements, elements.length);
    }
 
    @Override
@@ -115,10 +128,13 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.
    public final <T> T[] toArray(T[] a) {
       int size = elements.length;
       if (a.length < size) {
-         a = (T[]) Array.newInstance(a.getClass().getComponentType(), size);
+         return (T[]) Arrays.copyOf(elements, size, a.getClass());
       }
+
       System.arraycopy(elements, 0, a, 0, size);
-      if (a.length > size) a[size] = null;
+      if (a.length > size) {
+         a[size] = null;
+      }
       return a;
    }
 
@@ -152,9 +168,10 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.
       throw new UnsupportedOperationException();
    }
 
+   @SuppressWarnings("unchecked")
    @Override
    public final E get(int index) {
-      return elements[index];
+      return (E) elements[index];
    }
 
    @Override
@@ -199,7 +216,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.
 
    @Override
    public final List<E> subList(int fromIndex, int toIndex) {
-      return new ImmutableSubList<E>(fromIndex, toIndex);
+      return new ImmutableSubList(fromIndex, toIndex);
    }
 
    @Override
@@ -221,6 +238,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.
       return result;
    }
 
+   @SuppressWarnings("rawtypes")
    public static class Externalizer implements AdvancedExternalizer<ImmutableListCopy> {
 
       @Override
@@ -312,9 +330,9 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.
       }
    }
 
-   public class ImmutableSubList<E> extends AbstractList<E> {
-      private int offset;
-      private int size;
+   public class ImmutableSubList extends AbstractList<E> {
+      private final int offset;
+      private final int size;
 
       ImmutableSubList(int fromIndex, int toIndex) {
          int size = ImmutableListCopy.this.elements.length;
@@ -325,10 +343,9 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public final E get(int index) {
          if (index < 0 || index >= size) throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
-         return (E) ImmutableListCopy.this.get(index + offset);
+         return ImmutableListCopy.this.get(index + offset);
       }
 
       @Override
@@ -362,7 +379,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.
             throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
 
          return new ListIterator<E>() {
-            private ListIterator<?> i = ImmutableListCopy.this.listIterator(index + offset);
+            private final ListIterator<?> i = ImmutableListCopy.this.listIterator(index + offset);
 
             @Override
             public boolean hasNext() {
@@ -421,7 +438,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.
 
       @Override
       public final List<E> subList(int fromIndex, int toIndex) {
-         return new ImmutableSubList<E>(offset + fromIndex, offset + toIndex);
+         return new ImmutableSubList(offset + fromIndex, offset + toIndex);
       }
    }
 
