@@ -2,7 +2,6 @@ package org.infinispan.tools.licenses;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +17,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.TransformerException;
 
+import org.infinispan.tools.Dependency;
 import org.infinispan.tools.ToolUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -83,19 +83,9 @@ public class LicenseMerger {
          throw new IllegalArgumentException(filename);
    }
 
-   Node findFirstChildByTagName(Node parent, String tagName) {
-      for(Node child = parent.getFirstChild(); child != null; ) {
-         if (tagName.equals(child.getLocalName())) {
-            return child;
-         }
-         child = child.getNextSibling();
-      }
-      return null;
-   }
-
-   public void write(boolean inclusiveMode, OutputStream os) throws IOException, TransformerException {
+   public void write(boolean inclusiveMode, OutputStream os) throws TransformerException {
       if (verbose) {
-         System.out.printf("Inclusive mode %s\n", Boolean.toString(inclusiveMode));
+         System.out.printf("Inclusive mode %s\n", inclusiveMode);
       }
       Document aggregated = docBuilder.newDocument();
       Element aggregatedDependencies = (Element) aggregated
@@ -106,20 +96,10 @@ public class LicenseMerger {
       for (Map.Entry<String, Document> l : xmls.entrySet()) {
          Document doc = l.getValue();
          if (doc == emptyDocument) continue;
-         Node dependencies = doc.getElementsByTagName("dependencies").item(0);
-         for(Node dependency = dependencies.getFirstChild(); dependency != null; ) {
-            if ("dependency".equals(dependency.getLocalName())) {
-               String groupId = findFirstChildByTagName(dependency, "groupId").getTextContent().trim();
-               String artifactId = findFirstChildByTagName(dependency, "artifactId").getTextContent().trim();
-               String version = findFirstChildByTagName(dependency, "version").getTextContent().trim();
-               // Only include artifact if not in inclusive mode or if it's one of the included jars
-               if (!inclusiveMode || xmls.containsKey(String.format("%s-%s", artifactId, version))) {
-                  String artifact = String.format("%s:%s", groupId, artifactId);
-                  final Node dep = dependency;
-                  artifacts.computeIfAbsent(artifact, a -> aggregated.adoptNode(dep.cloneNode(true)));
-               }
+         for (Dependency dep : ToolUtils.parseXMLDependencies(doc)) {
+            if (!inclusiveMode || xmls.containsKey(String.format("%s-%s", dep.getArtifact(), dep.getVersion()))) {
+               artifacts.computeIfAbsent(dep.getId(), a -> aggregated.adoptNode(dep.getNode().cloneNode(true)));
             }
-            dependency = dependency.getNextSibling();
          }
       }
       artifacts.entrySet().stream()
@@ -129,7 +109,7 @@ public class LicenseMerger {
 
    }
 
-   public static void main(String argv[]) throws Exception {
+   public static void main(String[] argv) throws Exception {
       LicenseMerger licenseMerger = new LicenseMerger();
       File outputFile = new File(System.getProperty("user.dir"), "licenses.xml");
       boolean inclusiveMode = false;
@@ -165,5 +145,6 @@ public class LicenseMerger {
             System.out.printf("Wrote merged licenses to %s\n",  outputFile);
          }
       }
+      ToolUtils.removeEmptyLinesFromFile(outputFile);
    }
 }
