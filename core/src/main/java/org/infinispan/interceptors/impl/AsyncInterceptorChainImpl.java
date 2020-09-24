@@ -37,7 +37,7 @@ import org.infinispan.util.logging.LogFactory;
 public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    // Using the same list type everywhere may help with the optimization of the invocation context methods
    private static final ImmutableListCopy<AsyncInterceptor> EMPTY_INTERCEPTORS_LIST =
-         new ImmutableListCopy<>(new AsyncInterceptor[0]);
+         new ImmutableListCopy<>();
    private static final Log log = LogFactory.getLog(AsyncInterceptorChainImpl.class);
 
    private final ComponentRegistry componentRegistry;
