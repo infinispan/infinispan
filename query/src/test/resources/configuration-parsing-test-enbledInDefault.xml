@@ -15,6 +15,9 @@
       </local-cache-configuration>
       <local-cache name="default" configuration="base"/>
       <local-cache name="simple" configuration="base"/>
+      <local-cache name="not-searchable" configuration="base">
+         <indexing enabled="false"/>
+      </local-cache>
       <local-cache name="memory-searchable" configuration="base">
          <indexing>
             <indexed-entities>

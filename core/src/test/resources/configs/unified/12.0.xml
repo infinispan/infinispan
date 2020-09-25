@@ -171,7 +171,7 @@
       <distributed-cache name="indexed">
          <indexing>
             <indexed-entities>
-               <indexed-entity>Entity.class</indexed-entity>
+               <indexed-entity>TheEntity</indexed-entity>
             </indexed-entities>
          </indexing>
       </distributed-cache>

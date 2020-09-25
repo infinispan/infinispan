@@ -174,7 +174,7 @@ public final class LifecycleManager implements ModuleLifecycle {
                   if (!knownTypes.contains(typeName)) {
                      throw new CacheConfigurationException("The declared indexed type '" + typeName + "' is not known. Please register its proto schema file first.");
                   }
-                  if(searchMapping == null) {
+                  if (searchMapping == null) {
                      throw log.typeNotIndexed(typeName);
                   }
                }

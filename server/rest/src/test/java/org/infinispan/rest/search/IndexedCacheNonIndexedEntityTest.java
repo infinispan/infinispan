@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "rest.search.IndexedCacheNonIndexedEntityTest")
 public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
    private static final String CACHE_NAME = "IndexedCacheNonIndexedEntitiesTest";
-   private static final String SCHEMA = "message NonIndexed { required string name = 1; }";
+   private static final String SCHEMA = "message NonIndexed { optional string name = 1; }";
 
    protected RestClient client;
    protected RestCacheClient cacheClient;
@@ -70,6 +70,6 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
       RestCacheClient cacheClient = client.cache(CACHE_NAME);
       response = cacheClient.createWithConfiguration(configEntity, VOLATILE);
       ResponseAssertion.assertThat(response).isBadRequest();
-      ResponseAssertion.assertThat(response).containsReturnedText("The configured indexed-entity type 'NonIndexed' must be indexed");
+      ResponseAssertion.assertThat(response).containsReturnedText("The configured indexed-entity type 'NonIndexed' must be indexed. Please annotate it with @Indexed");
    }
 }

@@ -303,7 +303,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       // Indexed
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().addProperty("directory.type", "local-heap").enable();
-      builder.indexing().enable().addIndexedEntities("Entity");
+      builder.indexing().enable().addIndexedEntity("Entity");
       createCache(builder, "cacheIndexed");
       details = getCacheDetail("cacheIndexed");
       assertTrue(details.at("queryable").asBoolean());

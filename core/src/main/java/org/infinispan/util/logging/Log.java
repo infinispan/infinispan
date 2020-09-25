@@ -1401,9 +1401,6 @@ public interface Log extends BasicLogger {
          "classes or protobuf message types annotated with '@Indexed'", id = 403)
    CacheConfigurationException noIndexableClassesDefined();
 
-   @Message(value = "Cache configuration must not declare indexed entities if it is not indexed", id = 404)
-   CacheConfigurationException indexableClassesDefined();
-
 //   @Message(value = "The configured entity class %s is not indexable. Please remove it from the indexing configuration.", id = 404)
 //   CacheConfigurationException classNotIndexable(String className);
 
@@ -2075,4 +2072,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = FATAL)
    @Message(value = "[IRAC] Unexpected error occurred.", id = 608)
    void unexpectedErrorFromIrac(@Cause Throwable t);
+
+   @Message(value = "Cache configuration must not declare indexed entities if it is not indexed", id = 609)
+   CacheConfigurationException indexableClassesDefined();
 }

@@ -32,6 +32,7 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
          public void call() {
             assertIndexingEnabled(cm.getCache(), true);
             assertIndexingEnabled(cm.getCache("simple"), true);
+            assertIndexingEnabled(cm.getCache("not-searchable"), false);
             assertIndexingEnabled(cm.getCache("memory-searchable"), true);
             assertIndexingEnabled(cm.getCache("disk-searchable"), true);
          }
