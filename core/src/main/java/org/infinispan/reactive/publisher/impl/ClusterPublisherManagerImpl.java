@@ -602,7 +602,14 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          Map<Address, IntSet> targets) {
       DistributionInfo distributionInfo = topology.getSegmentDistribution(segment);
 
-      addToMap(targets, determineOwnerToReadFrom(distributionInfo, localAddress), segment);
+      Address targetAddres = determineOwnerToReadFrom(distributionInfo, localAddress);
+      // Scattered cache can have a state when it has no primary owner - thus we ignore those segments. The retry
+      // will wait for a new topology to try again
+      if (targetAddres != null) {
+         addToMap(targets, targetAddres, segment);
+      } else if (trace) {
+         log.tracef("No owner was found for segment %s.", segment);
+      }
    }
 
    private void addToMap(Map<Address, IntSet> map, Address owner, int segment) {
