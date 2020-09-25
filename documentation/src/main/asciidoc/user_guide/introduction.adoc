@@ -1,23 +1,13 @@
 [[introduction]]
 ==  Introduction
 
-Welcome to the official {brandname} user guide.
+Welcome to the official {brandname} User Guide.
 This comprehensive document will guide you through every last detail of {brandname}.
-Because of this, it can be a poor starting point if you are new to {brandname}.
-
-TIP: For newbies, starting with the link:../getting_started/getting_started.html[Getting Started Guide]
-or one of the link:http://www.infinispan.org/documentation[Quickstarts] is probably a better bet.
-
-The link:../faqs/faqs.html[Frequently Asked Questions] and link:../glossary/glossary.html[Glossary]
-are also useful documents to have alongside this user guide.
 
 === What is {brandname} ?
 
-{brandname} is a distributed in-memory key/value data store with optional schema, available under the Apache License 2.0.
-It can be used both as an embedded Java library and as a language-independent service accessed remotely over a variety of
-protocols (Hot Rod, REST, Memcached and WebSockets). It offers advanced functionality such as transactions, events,
-querying and distributed processing as well as numerous integrations with frameworks such as the JCache API standard,
-CDI, Hibernate, WildFly, Spring Cache, Spring Session, Lucene, Spark and Hadoop.
+{brandname} is a distributed in-memory key/value data store with optional schema.
+It can be used both as an embedded Java library and as a language-independent service accessed remotely over a variety of protocols (Hot Rod, REST, and Memcached). It offers advanced functionality such as transactions, events, querying and distributed processing as well as numerous integrations with frameworks such as the JCache API standard, CDI, Hibernate, WildFly, Spring Cache, Spring Session, Lucene, Spark and Hadoop.
 
 === Why use {brandname} ?
 
