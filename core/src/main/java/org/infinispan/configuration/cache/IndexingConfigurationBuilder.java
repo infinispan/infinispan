@@ -73,6 +73,15 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return this;
    }
 
+   public void reset() {
+      attributes.attribute(INDEX).reset();
+      attributes.attribute(AUTO_CONFIG).reset();
+      attributes.attribute(ENABLED).reset();
+      attributes.attribute(INDEXED_ENTITIES).reset();
+      attributes.attribute(PROPERTIES).reset();
+      attributes.attribute(KEY_TRANSFORMERS).reset();
+   }
+
    public IndexingConfigurationBuilder enable() {
       return enabled(true);
    }
@@ -93,9 +102,9 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @return <code>this</code>, for method chaining
     */
    public IndexingConfigurationBuilder addKeyTransformer(Class<?> keyClass, Class<?> keyTransformerClass) {
-      Map<Class<?>, Class<?>> indexedEntities = keyTransformers();
-      indexedEntities.put(keyClass, keyTransformerClass);
-      attributes.attribute(KEY_TRANSFORMERS).set(indexedEntities);
+      Map<Class<?>, Class<?>> keyTransformers = keyTransformers();
+      keyTransformers.put(keyClass, keyTransformerClass);
+      attributes.attribute(KEY_TRANSFORMERS).set(keyTransformers);
       return this;
    }
 
@@ -240,7 +249,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * The set of fully qualified names of indexed entity types, either Java classes or protobuf type names. This
     * configuration corresponds to the {@code <indexed-entities>} XML configuration element.
     */
-   public Set<String> indexedEntities() {
+   private Set<String> indexedEntities() {
       return attributes.attribute(INDEXED_ENTITIES).get();
    }
 
@@ -337,11 +346,18 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    @Override
    public IndexingConfigurationBuilder read(IndexingConfiguration template) {
       attributes.read(template.attributes());
+      Index index = attributes.attribute(INDEX).get();
+      if (index != null) {
+         enabled(index != Index.NONE);
+      }
+      if (autoConfig() && !attributes.attribute(ENABLED).isModified()) {
+         enable();
+      }
       return this;
    }
 
    @Override
-   public ElementDefinition getElementDefinition() {
+   public ElementDefinition<IndexingConfiguration> getElementDefinition() {
       return IndexingConfiguration.ELEMENT_DEFINITION;
    }
 

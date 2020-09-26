@@ -56,6 +56,7 @@ import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.cache.TransactionConfiguration;
+import org.infinispan.configuration.global.AllowListConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
@@ -66,7 +67,6 @@ import org.infinispan.configuration.global.ThreadPoolBuilderAdapter;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.ThreadsConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
-import org.infinispan.configuration.global.AllowListConfigurationBuilder;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
@@ -2753,6 +2753,11 @@ public class Parser implements ConfigurationParser {
       if (selfEnable) {
          // The presence of the <indexing> element without any explicit enabling or disabling results in auto-enabling indexing since 11.0
          builder.indexing().enable();
+      }
+
+      if (!builder.indexing().enabled()) {
+         // discard any eventually inherited indexing config if indexing is not enabled
+         builder.indexing().reset();
       }
 
       Properties indexingProperties = new Properties();

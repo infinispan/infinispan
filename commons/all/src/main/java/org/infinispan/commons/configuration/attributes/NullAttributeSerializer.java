@@ -6,8 +6,9 @@ import org.infinispan.commons.configuration.ConfigurationInfo;
 /**
  * @since 10.0
  */
-public class NullAttributeSerializer extends AttributeSerializer<Object, ConfigurationInfo, ConfigurationBuilderInfo> {
-   public static final AttributeSerializer INSTANCE = new NullAttributeSerializer();
+public final class NullAttributeSerializer extends AttributeSerializer<Object, ConfigurationInfo, ConfigurationBuilderInfo> {
+
+   public static final AttributeSerializer<Object, ConfigurationInfo, ConfigurationBuilderInfo> INSTANCE = new NullAttributeSerializer();
 
    private NullAttributeSerializer() {
    }
