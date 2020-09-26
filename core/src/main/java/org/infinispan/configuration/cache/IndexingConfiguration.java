@@ -28,6 +28,10 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    @Deprecated
    public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder("index", null, Index.class).immutable().build();
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+   /**
+    * @deprecated since 11.0
+    */
+   @Deprecated
    public static final AttributeDefinition<Boolean> AUTO_CONFIG = AttributeDefinition.builder("autoConfig", false).immutable().build();
    public static final AttributeDefinition<Map<Class<?>, Class<?>>> KEY_TRANSFORMERS = AttributeDefinition.builder("key-transformers", null, (Class<Map<Class<?>, Class<?>>>) (Class<?>) Map.class)
          .copier(CollectionAttributeCopier.INSTANCE)
@@ -72,7 +76,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    }
 
    @Override
-   public ElementDefinition getElementDefinition() {
+   public ElementDefinition<IndexingConfiguration> getElementDefinition() {
       return ELEMENT_DEFINITION;
    }
 

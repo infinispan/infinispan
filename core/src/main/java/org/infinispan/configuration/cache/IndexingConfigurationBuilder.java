@@ -69,8 +69,24 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       if (attributes.attribute(INDEX).isModified()) {
          throw CONFIG.indexEnabledAndIndexModeAreExclusive();
       }
+      if (!enabled) {
+         // discard any eventually inherited indexing config if indexing is not going to be enabled
+         reset();
+      }
       attributes.attribute(ENABLED).set(enabled);
       return this;
+   }
+
+   /**
+    * Wipe out all indexing configuration settings and disable indexing.
+    */
+   public void reset() {
+      attributes.attribute(INDEX).reset();
+      attributes.attribute(AUTO_CONFIG).reset();
+      attributes.attribute(ENABLED).reset();
+      attributes.attribute(INDEXED_ENTITIES).reset();
+      attributes.attribute(PROPERTIES).reset();
+      attributes.attribute(KEY_TRANSFORMERS).reset();
    }
 
    public IndexingConfigurationBuilder enable() {
@@ -93,9 +109,9 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @return <code>this</code>, for method chaining
     */
    public IndexingConfigurationBuilder addKeyTransformer(Class<?> keyClass, Class<?> keyTransformerClass) {
-      Map<Class<?>, Class<?>> indexedEntities = keyTransformers();
-      indexedEntities.put(keyClass, keyTransformerClass);
-      attributes.attribute(KEY_TRANSFORMERS).set(indexedEntities);
+      Map<Class<?>, Class<?>> keyTransformers = keyTransformers();
+      keyTransformers.put(keyClass, keyTransformerClass);
+      attributes.attribute(KEY_TRANSFORMERS).set(keyTransformers);
       return this;
    }
 
@@ -240,7 +256,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * The set of fully qualified names of indexed entity types, either Java classes or protobuf type names. This
     * configuration corresponds to the {@code <indexed-entities>} XML configuration element.
     */
-   public Set<String> indexedEntities() {
+   private Set<String> indexedEntities() {
       return attributes.attribute(INDEXED_ENTITIES).get();
    }
 
@@ -313,7 +329,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          applyAutoConfig(typedProperties);
          attributes.attribute(PROPERTIES).set(typedProperties);
 
-         // check that after autoconfig we still do not have multiple configured providers
+         // check that after autoConfig we still do not have multiple configured providers
          ensureSingleIndexingProvider();
       }
 
@@ -337,11 +353,22 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    @Override
    public IndexingConfigurationBuilder read(IndexingConfiguration template) {
       attributes.read(template.attributes());
+
+      // ensures inheritance works properly even when inheriting from an old config
+      // that uses INDEX or AUTO_CONFIG instead of ENABLED
+      Index index = attributes.attribute(INDEX).get();
+      if (index != null) {
+         enabled(index != Index.NONE);
+      }
+      if (autoConfig() && !attributes.attribute(ENABLED).isModified()) {
+         enable();
+      }
+
       return this;
    }
 
    @Override
-   public ElementDefinition getElementDefinition() {
+   public ElementDefinition<IndexingConfiguration> getElementDefinition() {
       return IndexingConfiguration.ELEMENT_DEFINITION;
    }
 

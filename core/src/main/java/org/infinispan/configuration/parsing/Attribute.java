@@ -26,6 +26,7 @@ public enum Attribute {
     ASYNC_MARSHALLING,
     AUDIT_LOGGER,
     AUTO_COMMIT,
+    @Deprecated
     AUTO_CONFIG,
     AVAILABILITY_INTERVAL,
     AWAIT_INITIAL_TRANSFER,
@@ -70,6 +71,7 @@ public enum Attribute {
     GROUP_NAME,
     HISTOGRAMS,
     ID,
+    @Deprecated
     INDEX,
     INITIAL_CLUSTER_SIZE,
     INITIAL_CLUSTER_TIMEOUT,

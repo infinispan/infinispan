@@ -181,7 +181,7 @@ public final class KeyTransformationHandler {
          try {
             return transformerClass.newInstance();
          } catch (Exception e) {
-            CONTAINER.couldNotInstantiaterTransformerClass(transformerClass, e);
+            CONTAINER.couldNotInstantiateTransformerClass(transformerClass, e);
          }
       }
       return null;

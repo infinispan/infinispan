@@ -154,7 +154,6 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
       } catch (CloneNotSupportedException e) {
          throw new CacheException(e);
       }
-
    }
 
    public void read(Attribute<T> other) {
@@ -186,7 +185,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
          return false;
       if (getClass() != obj.getClass())
          return false;
-      Attribute other = (Attribute) obj;
+      Attribute<?> other = (Attribute<?>) obj;
       if (definition == null) {
          if (other.definition != null)
             return false;
@@ -237,7 +236,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
       if (modified && value != null) {
          Class<?> klass = value.getClass();
          if (klass == Class.class) {
-            writer.writeAttribute(name, ((Class) value).getName());
+            writer.writeAttribute(name, ((Class<?>) value).getName());
          } else if (klass.isEnum()) {
             writer.writeAttribute(name, value.toString());
          } else if (Util.isBasicType(klass)) {
@@ -247,5 +246,4 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
          }
       }
    }
-
 }

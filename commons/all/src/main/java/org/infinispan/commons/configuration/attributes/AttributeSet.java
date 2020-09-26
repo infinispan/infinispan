@@ -3,7 +3,6 @@ package org.infinispan.commons.configuration.attributes;
 import static org.infinispan.commons.logging.Log.CONFIG;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -116,13 +115,10 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
     * @param other the source AttributeSet
     */
    public void read(AttributeSet other) {
-
-      for (Iterator<Attribute<?>> iterator = attributes.values().iterator(); iterator.hasNext();) {
-         Attribute<Object> attribute = (Attribute<Object>) iterator.next();
-
+      for (Attribute<?> attribute : attributes.values()) {
          Attribute<Object> a = other.attribute(attribute.name());
          if (a.isModified()) {
-            attribute.read(a);
+            ((Attribute<Object>) attribute).read(a);
          }
       }
    }
@@ -133,7 +129,7 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
     * @return
     */
    public AttributeSet protect() {
-      AttributeDefinition<?> attrDefs[] = new AttributeDefinition[attributes.size()];
+      AttributeDefinition<?>[] attrDefs = new AttributeDefinition[attributes.size()];
       int i = 0;
       for (Attribute<?> attribute : attributes.values()) {
          attrDefs[i++] = attribute.getAttributeDefinition();
@@ -270,13 +266,11 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
    public boolean matches(AttributeSet other) {
       if (other.attributes.size() != attributes.size())
          return false;
-      Iterator<Map.Entry<String, Attribute<?>>> i = attributes.entrySet().iterator();
-      while (i.hasNext()) {
-         Map.Entry<String, Attribute<?>> e = i.next();
+      for (Map.Entry<String, Attribute<?>> e : attributes.entrySet()) {
          String key = e.getKey();
          Attribute<?> value = e.getValue();
          if (value == null) {
-            if (!(other.attributes.containsKey(key) && other.attributes.get(key)==null))
+            if (!(other.attributes.containsKey(key) && other.attributes.get(key) == null))
                return false;
          } else {
             if (!value.matches(other.attributes.get(key)))
