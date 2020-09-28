@@ -186,7 +186,7 @@
       <version.osgi>4.3.1</version.osgi>
       <version.picketbox>5.0.3.Final</version.picketbox>
       <version.picketlink>2.5.5.SP12</version.picketlink>
-      <version.protostream>4.3.3.Final</version.protostream>
+      <version.protostream>4.3.4.Final</version.protostream>
       <version.protostuff>1.6.2</version.protostuff>
       <version.reactivestreams>1.0.3</version.reactivestreams>
       <version.rocksdb>6.8.1</version.rocksdb>
