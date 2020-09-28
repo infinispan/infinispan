@@ -1,5 +1,6 @@
 package org.infinispan.commons.util;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.PrimitiveIterator;
@@ -59,6 +60,26 @@ public class RangeSet implements IntSet {
       for (int i = 0; i < size; i++) {
          array[i] = i;
       }
+      return array;
+   }
+
+   @Override
+   public byte[] toBitSet() {
+      if (size == 0) {
+         return Util.EMPTY_BYTE_ARRAY;
+      }
+      int offset = (size >>> 3);
+      if ((size & 0xf) == 0) {
+         byte[] array = new byte[offset];
+         Arrays.fill(array, (byte) 0xff);
+         return array;
+      }
+      byte[] array = new byte[offset + 1];
+      if (offset > 0) {
+         Arrays.fill(array, 0, offset, (byte) 0xff);
+      }
+      int lastBitOffset = size > 8 ? size % 8 : size;
+      array[offset] = (byte) (0xff >> (8 - lastBitOffset));
       return array;
    }
 

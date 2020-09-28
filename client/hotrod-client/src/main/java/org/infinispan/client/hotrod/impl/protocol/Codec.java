@@ -51,6 +51,8 @@ public interface Codec {
     */
    void writeExpirationParams(ByteBuf buf, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit);
 
+   void writeBloomFilter(ByteBuf buf, int bloomFilterBits);
+
    int estimateExpirationSize(long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit);
 
    long readMessageId(ByteBuf buf);

@@ -1,6 +1,9 @@
 package org.infinispan.client.hotrod.near;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.function.BiConsumer;
 
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
@@ -15,8 +18,8 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
    }
 
    @Override
-   protected NearCache<K, V> createNearCache(NearCacheConfiguration config) {
-      NearCache<K, V> delegate = super.createNearCache(config);
+   protected NearCache<K, V> createNearCache(NearCacheConfiguration config, BiConsumer<K, MetadataValue<V>> biConsumer) {
+      NearCache<K, V> delegate = super.createNearCache(config, biConsumer);
       return new MockNearCache<>(delegate, events);
    }
 
@@ -79,6 +82,11 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
       @Override
       public int size() {
          return delegate.size();
+      }
+
+      @Override
+      public Iterator<Map.Entry<K, MetadataValue<V>>> iterator() {
+         return delegate.iterator();
       }
    }
 

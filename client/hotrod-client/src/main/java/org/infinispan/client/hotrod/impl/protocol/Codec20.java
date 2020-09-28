@@ -88,6 +88,13 @@ public class Codec20 implements Codec, HotRodConstants {
    }
 
    @Override
+   public void writeBloomFilter(ByteBuf buf, int bloomFilterBits) {
+      if (bloomFilterBits > 0) {
+         throw new UnsupportedOperationException("Bloom Filter optimization is not available for versions before 3.1");
+      }
+   }
+
+   @Override
    public int estimateExpirationSize(long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       int lifespanSeconds = CodecUtils.toSeconds(lifespan, lifespanTimeUnit);
       int maxIdleSeconds = CodecUtils.toSeconds(maxIdle, maxIdleTimeUnit);

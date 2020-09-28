@@ -27,7 +27,9 @@ not propagate the last access time for entries.
 the near cache. Unbounded near caches require you to keep the size of the near
 cache within the boundaries of the client JVM.
 
-* Near cache invalidation messages can degrade performance of write operations
+* Near cache invalidation messages can degrade performance of write operations. The near cache
+can be configured with a bloom filter to significantly reduce this degredation. However bloom
+filter can only be enabled with a bounded near cache.
 
 .Procedure
 
@@ -45,7 +47,8 @@ ConfigurationBuilder builder = new ConfigurationBuilder();
 builder
   .remoteCache("bounded")
     .nearCacheMode(NearCacheMode.INVALIDATED)
-    .nearCacheMaxEntries(100);
+    .nearCacheMaxEntries(100)
+    .bloomFilter(false);
   .remoteCache("unbounded").nearCache()
     .nearCacheMode(NearCacheMode.INVALIDATED)
     .nearCacheMaxEntries(-1);

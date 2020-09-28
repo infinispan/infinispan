@@ -4,6 +4,7 @@ import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 import static org.infinispan.client.hotrod.impl.Util.await;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
+import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,6 +51,7 @@ import org.infinispan.client.hotrod.impl.operations.RemoveIfUnmodifiedOperation;
 import org.infinispan.client.hotrod.impl.operations.RemoveOperation;
 import org.infinispan.client.hotrod.impl.operations.ReplaceIfUnmodifiedOperation;
 import org.infinispan.client.hotrod.impl.operations.ReplaceOperation;
+import org.infinispan.client.hotrod.impl.operations.RetryAwareCompletionStage;
 import org.infinispan.client.hotrod.impl.operations.SizeOperation;
 import org.infinispan.client.hotrod.impl.operations.StatsOperation;
 import org.infinispan.client.hotrod.logging.Log;
@@ -245,6 +247,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       GetWithMetadataOperation<V> op = operationsFactory.newGetWithMetadataOperation(
             keyAsObjectIfNeeded(key), keyToBytes(key), dataFormat);
       return op.execute();
+   }
+
+   @Override
+   public RetryAwareCompletionStage<MetadataValue<V>> getWithMetadataAsync(K key, SocketAddress preferredAddres) {
+      assertRemoteCacheManagerIsStarted();
+      GetWithMetadataOperation<V> op = operationsFactory.newGetWithMetadataOperation(
+            keyAsObjectIfNeeded(key), keyToBytes(key), dataFormat, preferredAddres);
+      return op.internalExecute();
    }
 
    @Override
@@ -513,6 +523,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       await(op.execute());
    }
 
+   @Override
+   public SocketAddress addNearCacheListener(Object listener, int bloomBits) {
+      throw new UnsupportedOperationException("Adding a near cache listener to a RemoteCache is not supported!");
+   }
+
    private byte[][] marshallParams(Object[] params) {
       if (params == null)
          return org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY_ARRAY;
@@ -675,5 +690,10 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public boolean hasForceReturnFlag() {
       return operationsFactory.hasFlag(Flag.FORCE_RETURN_VALUE);
+   }
+
+   @Override
+   public CompletionStage<Void> updateBloomFilter() {
+      return CompletableFuture.completedFuture(null);
    }
 }

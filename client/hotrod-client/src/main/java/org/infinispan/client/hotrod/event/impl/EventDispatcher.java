@@ -44,7 +44,7 @@ public abstract class EventDispatcher<T> {
       return status == DispatcherStatus.RUNNING;
    }
 
-   public abstract CompletableFuture<Short> executeFailover();
+   public abstract CompletableFuture<Void> executeFailover();
 
    protected abstract void invokeEvent(T event);
 

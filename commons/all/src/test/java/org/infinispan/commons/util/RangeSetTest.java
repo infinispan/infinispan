@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.PrimitiveIterator;
 import java.util.Set;
@@ -371,5 +372,26 @@ public class RangeSetTest {
       assertTrue(results.contains(1));
       assertTrue(results.contains(2));
       assertTrue(results.contains(3));
+   }
+
+   @Test
+   public void testToBitSet() {
+      testToArray(13);
+      testToArray(12);
+      testToArray(0);
+      testToArray(16);
+      testToArray(43);
+      testToArray(5);
+   }
+
+   private void testToArray(int bitToSet) {
+      BitSet bitSet = new BitSet();
+      for (int i = 0; i < bitToSet; ++i) {
+         bitSet.set(i);
+      }
+
+      IntSet sis = new RangeSet(bitToSet);
+
+      assertArrayEquals(bitSet.toByteArray(), sis.toBitSet());
    }
 }

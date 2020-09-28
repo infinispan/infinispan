@@ -25,6 +25,7 @@ import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.util.BloomFilter;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -118,37 +119,51 @@ class ClientListenerRegistry {
                           AdvancedCache<byte[], byte[]> cache, boolean includeState,
                           String filterFactory, List<byte[]> binaryFilterParams,
                           String converterFactory, List<byte[]> binaryConverterParams,
-                          boolean useRawData, int listenerInterests) {
-      boolean hasFilter = filterFactory != null && !filterFactory.isEmpty();
-      boolean hasConverter = converterFactory != null && !converterFactory.isEmpty();
-      ClientEventType eventType = ClientEventType.createType(hasConverter, useRawData, h.version);
+                          boolean useRawData, int listenerInterests, BloomFilter<byte[]> bloomFilter) {
 
       CacheEventFilter<byte[], byte[]> filter;
       CacheEventConverter<byte[], byte[], byte[]> converter;
-      if (hasFilter) {
-         if (hasConverter) {
-            if (filterFactory.equals(converterFactory)) {
-               List<byte[]> binaryParams = binaryFilterParams.isEmpty() ? binaryConverterParams : binaryFilterParams;
-               CacheEventFilterConverter<byte[], byte[], byte[]> filterConverter = getFilterConverter(h.getValueMediaType(),
-                     filterFactory, useRawData, binaryParams);
-               filter = filterConverter;
-               converter = filterConverter;
+      ClientEventType eventType;
+
+      if (bloomFilter != null) {
+         assert filterFactory == null || filterFactory.isEmpty();
+         assert converterFactory == null || converterFactory.isEmpty();
+         assert !includeState;
+         eventType = ClientEventType.createType(false, useRawData, h.version);
+         filter = null;
+         converter = new KeyValueFilterConverterAsCacheEventFilterConverter<>(HotRodServer.ToEmptyBytesKeyValueFilterConverter.INSTANCE);
+      } else {
+         boolean hasFilter = filterFactory != null && !filterFactory.isEmpty();
+         boolean hasConverter = converterFactory != null && !converterFactory.isEmpty();
+         eventType = ClientEventType.createType(hasConverter, useRawData, h.version);
+
+
+         if (hasFilter) {
+            if (hasConverter) {
+               if (filterFactory.equals(converterFactory)) {
+                  List<byte[]> binaryParams = binaryFilterParams.isEmpty() ? binaryConverterParams : binaryFilterParams;
+                  CacheEventFilterConverter<byte[], byte[], byte[]> filterConverter = getFilterConverter(h.getValueMediaType(),
+                        filterFactory, useRawData, binaryParams);
+                  filter = filterConverter;
+                  converter = filterConverter;
+               } else {
+                  filter = getFilter(h.getValueMediaType(), filterFactory, useRawData, binaryFilterParams);
+                  converter = getConverter(h.getValueMediaType(), converterFactory, useRawData, binaryConverterParams);
+               }
             } else {
                filter = getFilter(h.getValueMediaType(), filterFactory, useRawData, binaryFilterParams);
-               converter = getConverter(h.getValueMediaType(), converterFactory, useRawData, binaryConverterParams);
+               converter = null;
             }
+         } else if (hasConverter) {
+            filter = null;
+            converter = getConverter(h.getValueMediaType(), converterFactory, useRawData, binaryConverterParams);
          } else {
-            filter = getFilter(h.getValueMediaType(), filterFactory, useRawData, binaryFilterParams);
+            filter = null;
             converter = null;
          }
-      } else if (hasConverter) {
-         filter = null;
-         converter = getConverter(h.getValueMediaType(), converterFactory, useRawData, binaryConverterParams);
-      } else {
-         filter = null;
-         converter = null;
       }
-      Object clientEventSender = getClientEventSender(includeState, ch, h.encoder(), h.version, cache, listenerId, eventType, h.messageId);
+      Object clientEventSender = getClientEventSender(includeState, ch, h.encoder(), h.version, cache, listenerId,
+            eventType, h.messageId, bloomFilter);
 
       eventSenders.put(new WrappedByteArray(listenerId), clientEventSender);
 
@@ -268,6 +283,31 @@ class ClientListenerRegistry {
       }
    }
 
+   @Listener(clustered = true)
+   private class BloomAwareStatelessClientEventSender extends StatelessClientEventSender {
+      private final BloomFilter<byte[]> bloomFilter;
+
+      BloomAwareStatelessClientEventSender(Cache cache, Channel ch, VersionedEncoder encoder, byte[] listenerId,
+                                           byte version, ClientEventType targetEventType, BloomFilter<byte[]> bloomFilter) {
+         super(cache, ch, encoder, listenerId, version, targetEventType);
+         this.bloomFilter = bloomFilter;
+      }
+
+      boolean isSendEvent(CacheEntryEvent<byte[], byte[]> event) {
+         if (super.isSendEvent(event)) {
+            if (bloomFilter.possiblyPresent(event.getKey())) {
+               if (isTrace) {
+                  log.tracef("Event %s passed bloom filter", event);
+               }
+               return true;
+            } else if (isTrace) {
+               log.tracef("Event %s didn't pass bloom filter", event);
+            }
+         }
+         return false;
+      }
+   }
+
    private abstract class BaseClientEventSender {
       protected final Channel ch;
       protected final VersionedEncoder encoder;
@@ -353,7 +393,7 @@ class ClientListenerRegistry {
          return null;
       }
 
-      boolean isSendEvent(CacheEntryEvent<?, ?> event) {
+      boolean isSendEvent(CacheEntryEvent<byte[], byte[]> event) {
          if (isChannelDisconnected()) {
             log.debug("Channel disconnected, ignoring event");
             return false;
@@ -463,12 +503,17 @@ class ClientListenerRegistry {
    }
 
    private Object getClientEventSender(boolean includeState, Channel ch, VersionedEncoder encoder, byte version,
-                                       Cache cache, byte[] listenerId, ClientEventType eventType, long messageId) {
+                                       Cache cache, byte[] listenerId, ClientEventType eventType, long messageId,
+                                       BloomFilter<byte[]> bloomFilter) {
       BaseClientEventSender bces;
       if (includeState) {
          bces = new StatefulClientEventSender(cache, ch, encoder, listenerId, version, eventType, messageId);
       } else {
-         bces = new StatelessClientEventSender(cache, ch, encoder, listenerId, version, eventType);
+         if (bloomFilter != null) {
+            bces = new BloomAwareStatelessClientEventSender(cache, ch, encoder, listenerId, version, eventType, bloomFilter);
+         } else {
+            bces = new StatelessClientEventSender(cache, ch, encoder, listenerId, version, eventType);
+         }
       }
 
       bces.init();

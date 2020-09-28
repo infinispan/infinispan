@@ -567,6 +567,11 @@ class Encoder extends MessageToByteEncoder<Object> {
          writeNamedFactory(op.converterFactory, buffer);
          if (protocolVersion >= 21)
             buffer.writeByte(op.useRawData ? 1 : 0);
+      } else if (msg instanceof AddBloomNearCacheListener) {
+         AddBloomNearCacheListener op = (AddBloomNearCacheListener) msg;
+         writeHeader(op, buffer);
+         writeRangedBytes(op.listenerId, buffer);
+         writeUnsignedInt(op.bloomBits, buffer);
       } else if (msg instanceof RemoveClientListenerOp) {
          RemoveClientListenerOp op = (RemoveClientListenerOp) msg;
          writeHeader(op, buffer);
@@ -1252,6 +1257,18 @@ class AddClientListenerOp extends AbstractOp {
       this.filterFactory = filterFactory;
       this.converterFactory = converterFactory;
       this.useRawData = useRawData;
+   }
+}
+
+class AddBloomNearCacheListener extends AbstractOp {
+   final byte[] listenerId;
+   final int bloomBits;
+
+   public AddBloomNearCacheListener(int magic, byte version, String cacheName, byte clientIntel, int topologyId,
+                              byte[] listenerId, int bloomBits) {
+      super(magic, version, (byte) 0x25, cacheName, clientIntel, topologyId);
+      this.listenerId = listenerId;
+      this.bloomBits = bloomBits;
    }
 }
 

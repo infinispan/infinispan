@@ -97,6 +97,11 @@ public class ImmutableIntSet extends AbstractImmutableIntSet {
       return set.intSpliterator();
    }
 
+   @Override
+   public byte[] toBitSet() {
+      return set.toBitSet();
+   }
+
    private static class ImmutableIterator implements PrimitiveIterator.OfInt {
       private OfInt iterator;
 

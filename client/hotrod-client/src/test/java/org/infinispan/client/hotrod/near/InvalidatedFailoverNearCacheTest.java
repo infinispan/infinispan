@@ -72,17 +72,37 @@ public class InvalidatedFailoverNearCacheTest extends MultiHotRodServersTest {
          stickyClient.get(2, "v1").expectNearGetNull(2).expectNearPutIfAbsent(2, "v1");
          stickyClient.put(3, "v1").expectNearPreemptiveRemove(3);
          stickyClient.get(3, "v1").expectNearGetNull(3).expectNearPutIfAbsent(3, "v1");
-         findServerAndKill(stickyClient.manager, servers, cacheManagers);
+         boolean headClientClear = isClientListenerAttachedToSameServer(headClient(), stickyClient);
+         boolean tailClientClear = isClientListenerAttachedToSameServer(tailClient(), stickyClient);
+         killServerForClient(stickyClient);
          // The clear will be executed when the connection to the server is closed from the listener.
-         stickyClient.get(1, "v1").expectNearClear().expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
+         stickyClient.get(1, "v1")
+               .expectNearClear()
+               .expectNearGetNull(1)
+               .expectNearPutIfAbsent(1, "v1");
          stickyClient.expectNoNearEvents();
-         headClient().get(2, "v1").expectNearClear().expectNearGetNull(2).expectNearPutIfAbsent(2, "v1");
+         if (headClientClear) {
+            headClient().expectNearClear();
+         }
+         headClient().get(2, "v1").expectNearGetNull(2).expectNearPutIfAbsent(2, "v1");
          headClient().expectNoNearEvents();
-         tailClient().get(3, "v1").expectNearClear().expectNearGetNull(3).expectNearPutIfAbsent(3, "v1");
+         if (tailClientClear) {
+            tailClient().expectNearClear();
+         }
+         tailClient().get(3, "v1").expectNearGetNull(3).expectNearPutIfAbsent(3, "v1");
          tailClient().expectNoNearEvents();
       } finally {
          stickyClient.stop();
       }
+   }
+
+   protected boolean isClientListenerAttachedToSameServer(AssertsNearCache<Integer, String> client1,
+                                                          AssertsNearCache<Integer, String> client2) {
+      return true;
+   }
+
+   protected void killServerForClient(AssertsNearCache<Integer, String> stickyClient) {
+      findServerAndKill(stickyClient.manager, servers, cacheManagers);
    }
 
    protected AssertsNearCache<Integer, String> tailClient() {
@@ -92,5 +112,6 @@ public class InvalidatedFailoverNearCacheTest extends MultiHotRodServersTest {
    protected AssertsNearCache<Integer, String> headClient() {
       return assertClients.get(0);
    }
+
 
 }
