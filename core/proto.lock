@@ -47,43 +47,6 @@
         ],
         "messages": [
           {
-            "name": "EmbeddedExpirableMetadata",
-            "fields": [
-              {
-                "id": 1,
-                "name": "numericVersion",
-                "type": "NumericVersion"
-              },
-              {
-                "id": 2,
-                "name": "clusteredVersion",
-                "type": "SimpleClusteredVersion"
-              },
-              {
-                "id": 3,
-                "name": "lifespan",
-                "type": "int64",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "-1"
-                  }
-                ]
-              },
-              {
-                "id": 4,
-                "name": "maxIdle",
-                "type": "int64",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "-1"
-                  }
-                ]
-              }
-            ]
-          },
-          {
             "name": "IracMetadata",
             "fields": [
               {
@@ -111,6 +74,97 @@
                 "name": "clusteredVersion",
                 "type": "SimpleClusteredVersion"
               }
+            ],
+            "messages": [
+              {
+                "name": "EmbeddedExpirableMetadata",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "numericVersion",
+                    "type": "NumericVersion"
+                  },
+                  {
+                    "id": 2,
+                    "name": "clusteredVersion",
+                    "type": "SimpleClusteredVersion"
+                  },
+                  {
+                    "id": 3,
+                    "name": "lifespan",
+                    "type": "int64",
+                    "options": [
+                      {
+                        "name": "default",
+                        "value": "-1"
+                      }
+                    ]
+                  },
+                  {
+                    "id": 4,
+                    "name": "maxIdle",
+                    "type": "int64",
+                    "options": [
+                      {
+                        "name": "default",
+                        "value": "-1"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "EmbeddedMaxIdleExpirableMetadata",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "numericVersion",
+                    "type": "NumericVersion"
+                  },
+                  {
+                    "id": 2,
+                    "name": "clusteredVersion",
+                    "type": "SimpleClusteredVersion"
+                  },
+                  {
+                    "id": 3,
+                    "name": "maxIdle",
+                    "type": "int64",
+                    "options": [
+                      {
+                        "name": "default",
+                        "value": "-1"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "EmbeddedLifespanExpirableMetadata",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "numericVersion",
+                    "type": "NumericVersion"
+                  },
+                  {
+                    "id": 2,
+                    "name": "clusteredVersion",
+                    "type": "SimpleClusteredVersion"
+                  },
+                  {
+                    "id": 3,
+                    "name": "lifespan",
+                    "type": "int64",
+                    "options": [
+                      {
+                        "name": "default",
+                        "value": "-1"
+                      }
+                    ]
+                  }
+                ]
+              }
             ]
           },
           {
@@ -120,21 +174,6 @@
                 "id": 1,
                 "name": "bytes",
                 "type": "bytes"
-              }
-            ]
-          },
-          {
-            "name": "MapEntry",
-            "fields": [
-              {
-                "id": 1,
-                "name": "site",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "version",
-                "type": "TopologyIracVersion"
               }
             ]
           },
@@ -245,32 +284,6 @@
             ]
           },
           {
-            "name": "EmbeddedMaxIdleExpirableMetadata",
-            "fields": [
-              {
-                "id": 1,
-                "name": "numericVersion",
-                "type": "NumericVersion"
-              },
-              {
-                "id": 2,
-                "name": "clusteredVersion",
-                "type": "SimpleClusteredVersion"
-              },
-              {
-                "id": 3,
-                "name": "maxIdle",
-                "type": "int64",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "-1"
-                  }
-                ]
-              }
-            ]
-          },
-          {
             "name": "SimpleClusteredVersion",
             "fields": [
               {
@@ -303,8 +316,25 @@
               {
                 "id": 1,
                 "name": "entries",
-                "type": "MapEntry",
+                "type": "IracEntryVersion.MapEntry",
                 "is_repeated": true
+              }
+            ],
+            "messages": [
+              {
+                "name": "MapEntry",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "site",
+                    "type": "string"
+                  },
+                  {
+                    "id": 2,
+                    "name": "version",
+                    "type": "TopologyIracVersion"
+                  }
+                ]
               }
             ]
           },
@@ -383,32 +413,6 @@
                 "id": 3,
                 "name": "clusteredVersion",
                 "type": "SimpleClusteredVersion"
-              }
-            ]
-          },
-          {
-            "name": "EmbeddedLifespanExpirableMetadata",
-            "fields": [
-              {
-                "id": 1,
-                "name": "numericVersion",
-                "type": "NumericVersion"
-              },
-              {
-                "id": 2,
-                "name": "clusteredVersion",
-                "type": "SimpleClusteredVersion"
-              },
-              {
-                "id": 3,
-                "name": "lifespan",
-                "type": "int64",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "-1"
-                  }
-                ]
               }
             ]
           },
