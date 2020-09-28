@@ -150,7 +150,8 @@ listenerId: array;
 includeCurrentState: bool;
 useRawEvents: bool;
 listenerParams
-   : { version >= VERSION_21 }? filterFactory filterParams converterFactory converterParams useRawEvents
+   : { version >= VERSION_26 }? filterFactory filterParams converterFactory converterParams useRawEvents listenerInterests
+   | { version >= VERSION_21 }? filterFactory filterParams converterFactory converterParams useRawEvents
    | filterFactory filterParams converterFactory converterParams
    ;
 filterFactory: string;
@@ -167,10 +168,10 @@ converterParams returns List<byte[]>
    ;
 numParams: byte;
 param: array;
-listenerInterests
-   : { version >= VERSION_26 }? vInt
-   | { 0 }
-   ;
+listenerInterests: vInt;
+bloomBits: vInt;
+
+bloomArray: array;
 
 taskName: string;
 taskParam: string;
@@ -301,8 +302,10 @@ parameters switch opCode
    | { QUERY_REQUEST }? queryBytes { cacheProcessor.query(getHeader(), auth.getSubject(operation), queryBytes); }
    | { AUTH_MECH_LIST_REQUEST }? { auth.authMechList(header); }
    | { AUTH_REQUEST }? authMech authResponse { auth.auth(header, authMech, authResponse); }
-   | { ADD_CLIENT_LISTENER_REQUEST }? listenerId includeCurrentState listenerParams listenerInterests
-      { cacheProcessor.addClientListener(getHeader(), auth.getSubject(operation), listenerId, includeCurrentState, filterFactory, filterParams, converterFactory, converterParams, useRawEvents, listenerInterests); }
+   | { ADD_CLIENT_LISTENER_REQUEST }? listenerId includeCurrentState listenerParams
+      { cacheProcessor.addClientListener(getHeader(), auth.getSubject(operation), listenerId, includeCurrentState, filterFactory, filterParams, converterFactory, converterParams, useRawEvents, listenerInterests, 0); }
+   | { ADD_BLOOM_FILTER_NEAR_CACHE_LISTENER_REQUEST }? listenerId bloomBits
+      { cacheProcessor.addClientListener(getHeader(), auth.getSubject(operation), listenerId, false, null, null, null, null, false, 14, bloomBits); }
    | { REMOVE_CLIENT_LISTENER_REQUEST }? listenerId { cacheProcessor.removeClientListener(getHeader(), auth.getSubject(operation), listenerId); }
    | { SIZE_REQUEST }? { cacheProcessor.size(getHeader(), auth.getSubject(operation)); }
    | { EXEC_REQUEST }? taskName taskParams { taskProcessor.exec(getHeader(), auth.getSubject(operation), taskName, taskParams); }
@@ -314,6 +317,7 @@ parameters switch opCode
    | { ITERATION_END_REQUEST }? iterationId { cacheProcessor.iterationEnd(getHeader(), auth.getSubject(operation), iterationId); }
    | { GET_STREAM_REQUEST }? key offset { cacheProcessor.getWithMetadata(getHeader(), auth.getSubject(operation), key, offset); }
    | { PUT_STREAM_REQUEST }? key expiration entryVersion chunkedValue { cacheProcessor.putStream(getHeader(), auth.getSubject(operation), key, chunkedValue, entryVersion, expiration) }
+   | { UPDATE_BLOOM_FILTER_REQUEST }? bloomArray { cacheProcessor.updateBloomFilter(getHeader(), auth.getSubject(operation), bloomArray); }
 
 // Transactions
    | { PREPARE_TX }? xid onePhaseCommit modifications { cacheProcessor.prepareTransaction(getHeader(), auth.getSubject(operation), xid, onePhaseCommit, modifications, false, 60000); }

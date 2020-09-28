@@ -360,4 +360,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Configuration property '%s' has been deprecated", id = 4101)
    void deprecatedConfigurationProperty(String property);
+
+   @Message(value = "Near cache number of max entries must be a positive number when using bloom filter optimization, it was %d", id = 4102)
+   CacheConfigurationException nearCacheMaxEntriesPositiveWithBloom(int maxEntries);
 }

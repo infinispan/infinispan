@@ -192,6 +192,11 @@ public class SmallIntSet implements IntSet {
       return dest;
    }
 
+   @Override
+   public byte[] toBitSet() {
+      return bitSet.toByteArray();
+   }
+
    private void copyToArray(int size, int[] dest) {
       int lastSetBit = -1;
       for (int i = 0; i < size; i++) {

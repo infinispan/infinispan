@@ -1,6 +1,9 @@
 package org.infinispan.client.hotrod.near;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
 
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
@@ -23,8 +26,12 @@ final class BoundedConcurrentMapNearCache<K, V> implements NearCache<K, V> {
       this.map = cache.asMap();
    }
 
-   public static <K, V> NearCache<K, V> create(final NearCacheConfiguration config) {
-      Cache<K, MetadataValue<V>> cache = Caffeine.newBuilder().maximumSize(config.maxEntries()).build();
+   public static <K, V> NearCache<K, V> create(final NearCacheConfiguration config,
+                                               BiConsumer<? super K, ? super MetadataValue<V>> removedConsumer) {
+      Cache<K, MetadataValue<V>> cache = Caffeine.newBuilder()
+            .maximumSize(config.maxEntries())
+            .<K, MetadataValue<V>>removalListener((key, value, cause) -> removedConsumer.accept(key, value))
+            .build();
       return new BoundedConcurrentMapNearCache<>(cache);
    }
 
@@ -58,5 +65,10 @@ final class BoundedConcurrentMapNearCache<K, V> implements NearCache<K, V> {
       // Make sure to clean up any evicted entries so the returned size is correct
       cache.cleanUp();
       return map.size();
+   }
+
+   @Override
+   public Iterator<Map.Entry<K, MetadataValue<V>>> iterator() {
+      return map.entrySet().iterator();
    }
 }

@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.net.SocketAddress;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.DataFormat;
@@ -27,22 +29,44 @@ import net.jcip.annotations.Immutable;
  * @since 5.2
  */
 @Immutable
-public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataValue<V>> {
+public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataValue<V>> implements RetryAwareCompletionStage<MetadataValue<V>> {
 
    private static final Log log = LogFactory.getLog(GetWithMetadataOperation.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   private final SocketAddress preferredServer;
+
+   private volatile boolean retried;
+
    public GetWithMetadataOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
                                    byte[] cacheName, AtomicInteger topologyId, int flags,
-                                   Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
+                                   Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics,
+                                   SocketAddress preferredServer) {
       super(GET_WITH_METADATA, GET_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
             flags, cfg, dataFormat, clientStatistics);
+      this.preferredServer = preferredServer;
+   }
+
+   public RetryAwareCompletionStage<MetadataValue<V>> internalExecute() {
+      // The super.execute returns this, so the cast is safe
+      //noinspection unchecked
+      return (RetryAwareCompletionStage<MetadataValue<V>>) super.execute();
    }
 
    @Override
    protected void executeOperation(Channel channel) {
       scheduleRead(channel);
       sendArrayOperation(channel, keyBytes);
+   }
+
+   @Override
+   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
+      if (retryCount == 0 && preferredServer != null) {
+         channelFactory.fetchChannelAndInvoke(preferredServer, this);
+      } else {
+         retried = retryCount != 0;
+         super.fetchChannelAndInvoke(retryCount, failedServers);
+      }
    }
 
    @Override
@@ -72,5 +96,10 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
       V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), cfg.getClassAllowList());
       statsDataRead(true);
       complete(new MetadataValueImpl<V>(creation, lifespan, lastUsed, maxIdle, version, value));
+   }
+
+   @Override
+   public Boolean wasRetried() {
+      return isDone() ? retried : null;
    }
 }

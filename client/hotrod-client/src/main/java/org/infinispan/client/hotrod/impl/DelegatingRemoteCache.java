@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl;
 
+import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -20,6 +21,7 @@ import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
+import org.infinispan.client.hotrod.impl.operations.RetryAwareCompletionStage;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
@@ -104,6 +106,11 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
+   public SocketAddress addNearCacheListener(Object listener, int bloomBits) {
+      return delegate.addNearCacheListener(listener, bloomBits);
+   }
+
+   @Override
    public Set<Object> getListeners() {
       return delegate.getListeners();
    }
@@ -166,6 +173,11 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    @Override
    public CompletableFuture<MetadataValue<V>> getWithMetadataAsync(K key) {
       return delegate.getWithMetadataAsync(key);
+   }
+
+   @Override
+   public RetryAwareCompletionStage<MetadataValue<V>> getWithMetadataAsync(K key, SocketAddress preferredAddres) {
+      return delegate.getWithMetadataAsync(key, preferredAddres);
    }
 
    @Override
@@ -356,5 +368,10 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    @Override
    public CompletionStage<PingResponse> ping() {
       return delegate.ping();
+   }
+
+   @Override
+   public CompletionStage<Void> updateBloomFilter() {
+      return delegate.updateBloomFilter();
    }
 }

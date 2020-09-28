@@ -18,6 +18,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:#hot_rod_protocol_2_8[Hot Rod Protocol 2.8 (Infinispan 9.3)]
 * link:#hot_rod_protocol_2_9[Hot Rod Protocol 2.9 (Infinispan 9.4)]
 * link:#hot_rod_protocol_3_0[Hot Rod Protocol 3.0 (Infinispan 10.0)]
+* link:#hot_rod_protocol_3_1[Hot Rod Protocol 3.1 (Infinispan 12.0)]
 
 == Hot Rod Protocol 1.0
 
@@ -112,6 +113,7 @@ In this particular case, this is +10+
 +0x35+ = iterationEnd (since 2.3) +
 +0x37+ = getStream (since 2.6) +
 +0x39+ = putStream (since 2.6) +
++0x43+ = addBloomFilterClientListener (since 3.1) +
 | Cache Name Length   | vInt       | Length of cache name. If the passed
 length is +0+ (followed by no cache name), the operation will interact with
 the default cache.
@@ -3144,3 +3146,37 @@ Response (0x18):
 A new flag has been added:
 
 +0x0020+  = used when an operation wants to skip notifications to the registered listeners
+
+== Hot Rod Protocol 3.1
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 12.0
+
+.Bloom Filter Near Cache
+
+Near cache can now utilize a bloom filter that is kept in sync on the server to allow for better write scalability
+than is allowed without. This is because without the bloom filter every modify/remove/expire operation on the cache
+will cause an invalidation message to be sent. The bloom filter will limit the number of these messages that are
+generated.
+
+.add bloom filter client listener
+
+Request (0x43):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Request header
+| Listener ID   | byte array   | Listener identifier
+| Bloom filter bit size | vInt | Defines how many bits should be held on the
+server to keep track of the near cache in a bloom filter. This allows the server
+to not send a notification on many false positives.
+|==============================================================================
+
+Response (0x44):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Response header
+|==============================================================================
