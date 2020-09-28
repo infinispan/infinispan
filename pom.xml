@@ -153,7 +153,6 @@
       <module>hibernate</module>
       <module>api</module>
       <module>anchored-keys</module>
-      <module>search-mapper</module>
    </modules>
    <properties>
       <!-- Semantic versioning defaults. -->
@@ -1058,11 +1057,6 @@
             <artifactId>infinispan-scripting</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-search-mapper</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
