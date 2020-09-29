@@ -2055,4 +2055,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Remote site '%s' has an invalid cache configuration. Changing to offline.", id = 606)
    void xsiteInvalidConfigurationRemoteSite(String siteName);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Cannot obtain cache '%s' as it is in FAILED state. Please check the configuration", id = 609)
+   void cannotObtainFailedCache(String name, @Cause Throwable t);
 }

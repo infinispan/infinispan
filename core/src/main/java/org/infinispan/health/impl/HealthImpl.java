@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.health.CacheHealth;
 import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.Health;
@@ -29,16 +31,21 @@ public class HealthImpl implements Health {
 
    @Override
    public List<CacheHealth> getCacheHealth() {
-      return embeddedCacheManager.getCacheNames().stream()
-            .map(cacheName -> new CacheHealthImpl(SecurityActions.getCache(embeddedCacheManager, cacheName)))
-            .collect(Collectors.toList());
+      return embeddedCacheManager.getCacheNames().stream().map(this::getHealth).collect(Collectors.toList());
+   }
+
+   private CacheHealth getHealth(String cacheName) {
+      try {
+         Cache<?, ?> cache = SecurityActions.getCache(embeddedCacheManager, cacheName);
+         return new CacheHealthImpl(cache);
+      } catch (CacheException cacheException) {
+         return new InvalidCacheHealth(cacheName);
+      }
    }
 
    @Override
    public List<CacheHealth> getCacheHealth(Set<String> cacheNames) {
-      return cacheNames.stream()
-            .map(cacheName -> new CacheHealthImpl(SecurityActions.getCache(embeddedCacheManager, cacheName)))
-            .collect(Collectors.toList());
+      return cacheNames.stream().map(this::getHealth).collect(Collectors.toList());
    }
 
    @Override

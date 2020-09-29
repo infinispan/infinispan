@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
@@ -65,9 +66,12 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
          log.debugf("%s already has a cache %s with configuration %s", cacheManager.getAddress(), name, configuration);
       }
       // Ensure the cache is started
-
       return blockingManager.<Void>supplyBlocking(() -> {
-         SecurityActions.getCache(cacheManager, name);
+         try {
+            SecurityActions.getCache(cacheManager, name);
+         } catch (CacheException cacheException) {
+            log.cannotObtainFailedCache(name, cacheException);
+         }
          return null;
       }, name).toCompletableFuture();
    }

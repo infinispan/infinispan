@@ -40,6 +40,7 @@ import org.infinispan.health.CacheHealth;
 import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.Health;
 import org.infinispan.health.HealthStatus;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.InvocationHelper;
@@ -206,7 +207,8 @@ public class CacheManagerResource implements ResourceHandler {
                CacheInfo cacheInfo = new CacheInfo();
                String cacheName = chHealth.getKey();
                cacheInfo.name = cacheName;
-               cacheInfo.health = cachesHealth.get(cacheName);
+               HealthStatus cacheHealth = cachesHealth.get(cacheName);
+               cacheInfo.health = cacheHealth;
                Configuration cacheConfiguration = SecurityActions
                      .getCacheConfigurationFromManager(subjectCacheManager, cacheName);
                cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
@@ -224,9 +226,12 @@ public class CacheManagerResource implements ResourceHandler {
                if(ignoredCaches.contains(cacheName)) {
                   cacheInfo.status = "IGNORED";
                } else {
-                  // This action will fail for ignored caches
-                  Cache cache =  restCacheManager.getCache(cacheName, request);
-                  cacheInfo.status = cache.getStatus().toString();
+                  if(cacheHealth != HealthStatus.FAILED) {
+                     Cache cache = restCacheManager.getCache(cacheName, request);
+                     cacheInfo.status = cache.getStatus().toString();
+                  } else {
+                     cacheInfo.status = ComponentStatus.FAILED.toString();
+                  }
                }
                return cacheInfo;
             })
