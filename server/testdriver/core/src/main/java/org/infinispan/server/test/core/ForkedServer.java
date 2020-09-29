@@ -46,6 +46,7 @@ public class ForkedServer {
    private final List<String> commands = new ArrayList<>();
    private final UUID serverId;
    private Process process;
+   private Process serverLogProcess;
    private final String serverHome;
    private final String serverLogDir;
    private final String serverLog;
@@ -112,12 +113,16 @@ public class ForkedServer {
 
    private boolean checkServerLog(String pattern) {
       return unchecked(() -> {
-         Process process = Runtime.getRuntime().exec(String.format("tail -f %s", serverLog));
+         serverLogProcess = Runtime.getRuntime().exec(String.format("tail -f %s", serverLog));
          try (Stream<String> lines = new BufferedReader(
                new InputStreamReader(process.getInputStream())).lines()) {
             return lines.peek(System.out::println).anyMatch(line -> line.contains(pattern));
          }
       });
+   }
+
+   public void cleanup() {
+      this.serverLogProcess.destroy();
    }
 
    public void printServerLog(Consumer<String> c) {

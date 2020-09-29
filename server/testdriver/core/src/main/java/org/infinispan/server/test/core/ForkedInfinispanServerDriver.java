@@ -118,7 +118,11 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
 
    @Override
    public void kill(int server) {
-      Exceptions.unchecked(() -> new ProcessBuilder("kill", "-9", String.valueOf(forkedServers.get(server).getPid())).start().waitFor(10, TimeUnit.SECONDS));
+      ForkedServer forkedServer = forkedServers.get(server);
+      Exceptions.unchecked(() -> new ProcessBuilder("kill", "-9", String.valueOf(forkedServer.getPid())).start().waitFor(10, TimeUnit.SECONDS));
+
+      // Do an internal cleanup - stop the log monitoring process.
+      forkedServer.cleanup();
    }
 
    @Override
