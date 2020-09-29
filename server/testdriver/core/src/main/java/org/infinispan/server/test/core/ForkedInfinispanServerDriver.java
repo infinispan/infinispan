@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import javax.management.MBeanServerConnection;
 
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.test.Exceptions;
@@ -19,6 +20,7 @@ import org.infinispan.commons.util.Util;
 
 /**
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
+ * @author Radoslav Husar
  * @since 11.0
  **/
 public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver {
@@ -61,11 +63,16 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
    @Override
    protected void stop() {
       try {
-         sync(getRestClient(0).cluster().stop());
+         RestResponse response = sync(getRestClient(0).cluster().stop());
+         // Ensure non-error response code from the REST endpoint.
+         if (response.getStatus() >= 400) {
+            log.errorf("Failed to shutdown the cluster gracefully, got status %d.", response.getStatus());
+            throw new IllegalStateException();
+         }
       } catch (Exception e) {
          // kill the servers
-         log.error("Could not gracefully shutdown the cluster. Killing the servers.", e);
-         for (int i =0 ; i < configuration.numServers(); i++) {
+         log.error("Got exception while gracefully shutting down the cluster. Killing the servers.", e);
+         for (int i = 0; i < configuration.numServers(); i++) {
             kill(i);
          }
       }
@@ -101,17 +108,17 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
 
    @Override
    public void pause(int server) {
-      Exceptions.unchecked(() -> new ProcessBuilder("kill -SIGSTOP " + forkedServers.get(server).getPid()).start().waitFor(10, TimeUnit.SECONDS));
+      Exceptions.unchecked(() -> new ProcessBuilder("kill", "-SIGSTOP", String.valueOf(forkedServers.get(server).getPid())).start().waitFor(10, TimeUnit.SECONDS));
    }
 
    @Override
    public void resume(int server) {
-      Exceptions.unchecked(() -> new ProcessBuilder("kill -SIGCONT " + forkedServers.get(server).getPid()).start().waitFor(10, TimeUnit.SECONDS));
+      Exceptions.unchecked(() -> new ProcessBuilder("kill", "-SIGCONT", String.valueOf(forkedServers.get(server).getPid())).start().waitFor(10, TimeUnit.SECONDS));
    }
 
    @Override
    public void kill(int server) {
-      Exceptions.unchecked(() -> new ProcessBuilder("kill -9 " + forkedServers.get(server).getPid()).start().waitFor(10, TimeUnit.SECONDS));
+      Exceptions.unchecked(() -> new ProcessBuilder("kill", "-9", String.valueOf(forkedServers.get(server).getPid())).start().waitFor(10, TimeUnit.SECONDS));
    }
 
    @Override
@@ -141,7 +148,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
    }
 
    private int getServerPort(int server, int port) {
-      return server == 0 ?  port : ForkedServer.OFFSET_FACTOR * server + port;
+      return server == 0 ? port : ForkedServer.OFFSET_FACTOR * server + port;
    }
 
    private static <T> T sync(CompletionStage<T> stage) {
