@@ -55,12 +55,13 @@ include::json_examples/rest_cache_health_response.json[]
 *** `DEGRADED` indicates at least one of the caches is in degraded mode.
 *** `HEALTHY_REBALANCING` indicates at least one cache is in the rebalancing state.
 *** `HEALTHY` indicates all cache instances in the cluster are operating as expected.
+*** `FAILED` indicates the cache failed to start with the provided configuration.
 ** `number_of_nodes` displays the total number of cluster members.
 Returns a value of `0` for non-clustered (standalone) servers.
 ** `node_names` is an array of all cluster members.
 Empty for standalone servers.
 * `cache_health` contains health information per-cache
-** `status`  HEALTHY, DEGRADED or HEALTHY_REBALANCING
+** `status`  HEALTHY, DEGRADED, HEALTHY_REBALANCING or FAILED
 ** `cache_name` the name of the cache as defined in the configuration.
 
 
@@ -78,6 +79,7 @@ GET /rest/v2/cache-managers/{cacheManagerName}/health/status
 * `HEALTHY`
 * `HEALTHY_REBALANCING`
 * `DEGRADED`
+* `FAILED`
 
 
 [id='rest_v2_cache_manager_availability']
