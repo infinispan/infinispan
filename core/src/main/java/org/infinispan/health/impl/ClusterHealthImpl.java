@@ -4,11 +4,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.health.CacheHealth;
 import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.HealthStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -26,21 +28,21 @@ class ClusterHealthImpl implements ClusterHealth {
 
    @Override
    public HealthStatus getHealthStatus() {
-      HealthStatus globalHealthStatus = HealthStatus.HEALTHY;
-
-      Set<HealthStatus> healthStatuses = Stream.concat(cacheManager.getCacheNames().stream(), internalCacheRegistry.getInternalCacheNames().stream())
-            .map(cacheName -> cacheManager.getCache(cacheName, false))
+      return Stream.concat(cacheManager.getCacheNames().stream(), internalCacheRegistry.getInternalCacheNames().stream())
+            .map(this::getCacheHealth)
             .filter(Objects::nonNull)
-            .map(CacheHealthImpl::new)
-            .map(CacheHealthImpl::getStatus)
-            .collect(Collectors.toSet());
+            .map(CacheHealth::getStatus)
+            .filter(h -> !h.equals(HealthStatus.HEALTHY))
+            .findFirst().orElse(HealthStatus.HEALTHY);
+   }
 
-      if (healthStatuses.contains(HealthStatus.DEGRADED)) {
-         globalHealthStatus = HealthStatus.DEGRADED;
-      } else if (healthStatuses.contains(HealthStatus.HEALTHY_REBALANCING)) {
-         globalHealthStatus = HealthStatus.HEALTHY_REBALANCING;
+   private CacheHealth getCacheHealth(String cacheName) {
+      try {
+         Cache<?, ?> cache = cacheManager.getCache(cacheName, false);
+         return cache != null ? new CacheHealthImpl(cache) : null;
+      } catch (CacheException cacheException) {
+         return new InvalidCacheHealth(cacheName);
       }
-      return globalHealthStatus;
    }
 
    @Override

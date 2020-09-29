@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
@@ -22,6 +23,8 @@ import org.infinispan.jmx.annotations.Units;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.stats.Stats;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 
 /**
@@ -37,6 +40,7 @@ import org.infinispan.stats.Stats;
 @Deprecated
 public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisticsExposer {
 
+   private static final Log log = LogFactory.getLog(CacheContainerStatsImpl.class);
    private final EmbeddedCacheManager cm;
    private final AtomicLong resetNanoseconds = new AtomicLong(0);
    private boolean statisticsEnabled = false;
@@ -616,21 +620,34 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       List<Stats> stats = new ArrayList<>();
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            AdvancedCache<?, ?> cache = SecurityActions.getUnwrappedCache(cm.getCache(cn)).getAdvancedCache();
-            stats.add(cache.getStats());
+            AdvancedCache<?, ?> cache = getCache(cn);
+            if (cache != null) {
+               stats.add(cache.getStats());
+            }
          }
       }
       return stats;
+   }
+
+   private AdvancedCache<?, ?> getCache(String cacheName) {
+      try {
+         return SecurityActions.getUnwrappedCache(cm.getCache(cacheName)).getAdvancedCache();
+      } catch (CacheException t) {
+         log.cannotObtainFailedCache(cacheName, t);
+      }
+      return null;
    }
 
    private List<Stats> getEnabledStats() {
       List<Stats> stats = new ArrayList<>();
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            AdvancedCache<?, ?> cache = SecurityActions.getUnwrappedCache(cm.getCache(cn)).getAdvancedCache();
-            Configuration cfg = cache.getCacheConfiguration();
-            if (cfg.statistics().enabled()) {
-               stats.add(cache.getStats());
+            AdvancedCache<?, ?> cache = getCache(cn);
+            if (cache != null) {
+               Configuration cfg = cache.getCacheConfiguration();
+               if (cfg.statistics().enabled()) {
+                  stats.add(cache.getStats());
+               }
             }
          }
       }

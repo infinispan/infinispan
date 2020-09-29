@@ -30,10 +30,10 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -198,8 +198,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private CompletionStage<RestResponse> removeCache(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
-      Cache<?, ?> cache = restCacheManager.getCache(cacheName, request);
-      if (cache == null)
+      if (!restCacheManager.cacheExists(cacheName))
          return notFoundResponseFuture();
 
       return CompletableFuture.supplyAsync(() -> {
