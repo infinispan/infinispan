@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
@@ -22,6 +21,7 @@ import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
@@ -121,11 +121,17 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
             addClusterEnabledCacheManager(new GlobalConfigurationBuilder().read(configForNode.build()), getDefaultCacheBuilder(), TransportFlags.minimalXsiteFlags());
          }
          cacheManagers.forEach(this::defineCaches);
+         cacheManagers.forEach(cm -> cm.defineConfiguration("invalid", getDefaultCacheBuilder().indexing().enabled(true).addIndexedEntities("invalid").build()));
          for (EmbeddedCacheManager cm : cacheManagers) {
-            Set<String> cacheNames = cm.getCacheNames();
-            cacheNames.forEach(cm::getCache);
             cm.getClassAllowList().addClasses(TestClass.class);
-            waitForClusterToForm(cacheNames.toArray(new String[0]));
+            waitForClusterToForm(cm.getCacheNames().stream().filter(name -> {
+               try {
+                  cm.getCache(name);
+                  return true;
+               } catch (CacheConfigurationException ignored) {
+                  return false;
+               }
+            }).toArray(String[]::new));
             RestServerHelper restServerHelper = new RestServerHelper(cm);
             if (isSecurityEnabled()) {
                BasicAuthenticator basicAuthenticator = new BasicAuthenticator(new SimpleSecurityDomain(USER), REALM);
