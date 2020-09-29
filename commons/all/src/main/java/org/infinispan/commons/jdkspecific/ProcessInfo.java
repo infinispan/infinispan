@@ -26,7 +26,7 @@ public class ProcessInfo {
       return new ProcessInfo();
    }
 
-   public static ProcessInfo of(java.lang.Process process) {
+   public static ProcessInfo of(Process process) {
       throw new UnsupportedOperationException();
    }
 
