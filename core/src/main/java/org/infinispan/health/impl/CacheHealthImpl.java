@@ -1,7 +1,6 @@
 package org.infinispan.health.impl;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.health.CacheHealth;
 import org.infinispan.health.HealthStatus;
@@ -42,8 +41,4 @@ class CacheHealthImpl implements CacheHealth {
       }
    }
 
-   @Override
-   public Json toJson() {
-      return Json.object().set("status", getStatus()).set("cache_name", getCacheName());
-   }
 }

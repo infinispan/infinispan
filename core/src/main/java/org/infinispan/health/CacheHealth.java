@@ -1,5 +1,6 @@
 package org.infinispan.health;
 
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 
 /**
@@ -19,4 +20,8 @@ public interface CacheHealth extends JsonSerialization {
     * Returns Cache health status.
     */
    HealthStatus getStatus();
+
+   default Json toJson() {
+      return Json.object().set("status", getStatus()).set("cache_name", getCacheName());
+   }
 }
