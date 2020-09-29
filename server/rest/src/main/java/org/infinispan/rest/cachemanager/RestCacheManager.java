@@ -91,6 +91,10 @@ public class RestCacheManager<V> {
       return getCache(name, MATCH_ALL, MATCH_ALL, restRequest);
    }
 
+   public boolean cacheExists(String name) {
+      return instance.cacheExists(name);
+   }
+
    private void checkCacheAvailable(String cacheName) {
       if (!instance.getCacheNames().contains(cacheName))
          throw logger.cacheNotFound(cacheName);

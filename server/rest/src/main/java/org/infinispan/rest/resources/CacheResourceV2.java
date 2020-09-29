@@ -199,8 +199,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private CompletionStage<RestResponse> removeCache(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
-      Cache<?, ?> cache = restCacheManager.getCache(cacheName, request);
-      if (cache == null)
+      if (!restCacheManager.cacheExists(cacheName))
          return notFoundResponseFuture();
 
       return CompletableFuture.supplyAsync(() -> {
