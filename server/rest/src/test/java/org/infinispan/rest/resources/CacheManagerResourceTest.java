@@ -29,6 +29,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.health.HealthStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.testng.annotations.Test;
@@ -92,7 +93,8 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
 
       JsonNode jsonNode = mapper.readTree(response.getBody());
       JsonNode clusterHealth = jsonNode.get("cluster_health");
-      assertEquals(clusterHealth.get("health_status").asText(), "HEALTHY");
+      // One of the caches is in FAILED state
+      assertEquals(clusterHealth.get("health_status").asText(), HealthStatus.FAILED.toString());
       assertEquals(clusterHealth.get("number_of_nodes").asInt(), 2);
       assertEquals(clusterHealth.get("node_names").size(), 2);
 
@@ -148,7 +150,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       String json = response.getBody();
       JsonNode jsonNode = mapper.readTree(json);
       List<String> names = asText(jsonNode.findValues("name"));
-      Set<String> expectedNames = Util.asSet("defaultcache", "cache1", "cache2");
+      Set<String> expectedNames = Util.asSet("defaultcache", "cache1", "cache2", "invalid");
 
       assertEquals(expectedNames, new HashSet<>(names));
 
@@ -195,7 +197,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       String json = response.getBody();
       JsonNode jsonNode = mapper.readTree(json);
       List<String> names = asText(jsonNode.findValues("name"));
-      Set<String> expectedNames = Util.asSet("defaultcache", "cache1", "cache2");
+      Set<String> expectedNames = Util.asSet("defaultcache", "cache1", "cache2", "invalid");
 
       assertEquals(expectedNames, new HashSet<>(names));
 

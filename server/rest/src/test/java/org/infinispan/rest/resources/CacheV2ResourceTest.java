@@ -315,6 +315,37 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       assertTrue(details.get("queryable").asBoolean());
    }
 
+   @Test
+   public void testCreateInvalidCache() {
+      String invalidConfig = "<infinispan>\n" +
+            " <cache-container>\n" +
+            "   <replicated-cache name=\"books\">\n" +
+            "     <indexing>\n" +
+            "       <indexed-entities>\n" +
+            "         <indexed-entity>Dummy</indexed-entity>\n" +
+            "        </indexed-entities>\n" +
+            "     </indexing>\n" +
+            "   </replicated-cache>\n" +
+            " </cache-container>\n" +
+            "</infinispan>";
+
+      CompletionStage<RestResponse> response = client.cache("CACHE").createWithConfiguration(RestEntity.create(APPLICATION_XML, invalidConfig));
+      ResponseAssertion.assertThat(response).isBadRequest();
+
+      response = client.cache("CACHE").exists();
+      ResponseAssertion.assertThat(response).isOk();
+
+      CompletionStage<RestResponse> healthResponse = client.cacheManager("default").health();
+      ResponseAssertion.assertThat(healthResponse).isOk();
+
+      // The only way to recover from a broken cache is to delete it
+      response = client.cache("CACHE").delete();
+      ResponseAssertion.assertThat(response).isOk();
+
+      response = client.cache("CACHE").exists();
+      ResponseAssertion.assertThat(response).isNotFound();
+   }
+
    private void createCache(ConfigurationBuilder builder, String name) {
       String json = new JsonWriter().toJSON(builder.build());
       createCache(json, name);
@@ -476,7 +507,8 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testCacheExists() {
-      assertEquals(404, checkCache("invalid"));
+      assertEquals(404, checkCache("nonexistent"));
+      assertEquals(200, checkCache("invalid"));
       assertEquals(200, checkCache("default"));
       assertEquals(200, checkCache("indexedCache"));
    }
