@@ -55,6 +55,10 @@ Some operations that previously supported both `GET` and `POST` now support only
   Starting with version 12 this results in a fatal error preventing the cache to start.
   Please update your configurations accordingly.
 
+== Cache Health
+A new status `FAILED` has been added to the cache health, to indicate that a cache failed to start with the
+provided configuration. The possible statuses of the cache health are now HEALTHY, HEALTHY_REBALANCING, DEGRADED and FAILED.
+
 == Marshalling
 
 === Kryo and Protostuff marshaller deprecation
