@@ -57,6 +57,17 @@
             <pathelement path="${plugin_classpath}"/>
          </classpath>
       </java>
+      <java classname="org.infinispan.tools.licenses.LicenseReplacer">
+         <arg value="-i"/>
+         <arg value="${licenses.template.dir}/licenses-overwrite.xml"/>
+         <arg value="-l"/>
+         <arg value="${output.dir}/docs/licenses/licenses.xml"/>
+         <arg value="-o"/>
+         <arg value="${output.dir}/docs/licenses/licenses.xml"/>
+         <classpath>
+            <pathelement path="${plugin_classpath}"/>
+         </classpath>
+      </java>
       <copy todir="${output.dir}/docs/licenses/">
          <fileset dir="${licenses.data.dir}">
             <include name="apache license 2.0.txt"/>
