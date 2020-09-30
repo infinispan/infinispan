@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Manually collected licenses when the automatic report tool is unable to find the licenses -->
+<licenseSummary>
+  <dependencies>
+    <dependency>
+      <groupId>io.reactivex.rxjava3</groupId>
+      <artifactId>rxjava</artifactId>
+      <version/>
+      <licenses>
+        <license>
+          <name>The Apache Software License, Version 2.0</name>
+          <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+          <distribution>repo</distribution>
+        </license>
+      </licenses>
+    </dependency>
+    <dependency>
+      <groupId>org.reactivestreams</groupId>
+      <artifactId>reactive-streams</artifactId>
+      <version/>
+      <licenses>
+        <license>
+          <name>CC0</name>
+          <url>http://creativecommons.org/publicdomain/zero/1.0/</url>
+          <distribution>repo</distribution>
+        </license>
+      </licenses>
+    </dependency>
+    <dependency>
+      <packageName>json-schema</packageName>
+      <version/>
+      <licenses>
+        <license>
+          <name>Academic Free License v2.1</name>
+          <url>http://opensource.linux-mirror.org/licenses/afl-2.1.txt</url>
+        </license>
+        <license>
+          <name>BSD 3-clause "New" or "Revised" License</name>
+          <url>http://www.opensource.org/licenses/BSD-3-Clause</url>
+        </license>
+      </licenses>
+    </dependency>
+    <dependency>
+      <packageName>bootstrap-datepicker</packageName>
+      <version/>
+      <licenses>
+        <license>
+          <name>Apache License 2.0</name>
+          <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+      </licenses>
+    </dependency>
+  </dependencies>
+</licenseSummary>
