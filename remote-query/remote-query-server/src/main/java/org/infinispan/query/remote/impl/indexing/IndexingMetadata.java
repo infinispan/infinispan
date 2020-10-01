@@ -119,13 +119,6 @@ public final class IndexingMetadata {
    public static final String STORE_NO = "Store.NO";
 
    /**
-    * A special placeholder value that is indexed if the actual field value is {@code null} and no explicit indexing
-    * options were defined via protobuf annotations. This placeholder is needed because Lucene does not index actual null
-    * values.
-    */
-   public static final String DEFAULT_NULL_TOKEN = "_null_";
-
-   /**
     * A marker value that indicates nulls should not be indexed.
     */
    public static final String DO_NOT_INDEX_NULL = "__DO_NOT_INDEX_NULL__";
