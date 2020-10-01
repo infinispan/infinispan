@@ -71,9 +71,6 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
             AnnotationElement.Value indexAttribute = fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_INDEX_ATTRIBUTE);
             boolean isIndexed = IndexingMetadata.INDEX_YES.equals(indexAttribute.getValue());
 
-            AnnotationElement.Value boostAttribute = fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_BOOST_ATTRIBUTE);
-            float fieldLevelBoost = (Float) boostAttribute.getValue();
-
             AnnotationElement.Value analyzeAttribute = fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_ANALYZE_ATTRIBUTE);
             boolean isAnalyzed = IndexingMetadata.ANALYZE_YES.equals(analyzeAttribute.getValue());
 
@@ -100,7 +97,7 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
                throw new IllegalStateException("Cannot specify an analyzer for field " + fd.getFullName() + " unless the field is analyzed.");
             }
 
-            FieldMapping fieldMapping = new FieldMapping(fieldName, isIndexed, fieldLevelBoost, isAnalyzed, isStored, isSortable, fieldLevelAnalyzer, indexNullAs, fd);
+            FieldMapping fieldMapping = new FieldMapping(fieldName, isIndexed, isAnalyzed, isStored, isSortable, fieldLevelAnalyzer, indexNullAs, fd);
             fields.put(fieldName, fieldMapping);
             if (log.isDebugEnabled()) {
                log.debugf("fieldName=%s fieldMapping=%s", fieldName, fieldMapping);

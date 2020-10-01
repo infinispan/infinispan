@@ -103,7 +103,6 @@ public final class IndexingMetadata {
    public static final String FIELD_ANNOTATION = "Field";
    public static final String FIELD_NAME_ATTRIBUTE = "name";
    public static final String FIELD_INDEX_ATTRIBUTE = "index";
-   public static final String FIELD_BOOST_ATTRIBUTE = "boost";
    public static final String FIELD_ANALYZE_ATTRIBUTE = "analyze";
    public static final String FIELD_STORE_ATTRIBUTE = "store";
    public static final String FIELD_ANALYZER_ATTRIBUTE = "analyzer";
@@ -255,9 +254,6 @@ public final class IndexingMetadata {
                   .type(AnnotationElement.AttributeType.IDENTIFIER)
                   .allowedValues(INDEX_YES, INDEX_NO)
                   .defaultValue(INDEX_YES)
-               .attribute(FIELD_BOOST_ATTRIBUTE)
-                  .type(AnnotationElement.AttributeType.FLOAT)
-                  .defaultValue(1.0f)
                .attribute(FIELD_ANALYZE_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.IDENTIFIER)
                   .allowedValues(ANALYZE_YES, ANALYZE_NO)
