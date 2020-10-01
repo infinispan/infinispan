@@ -26,7 +26,7 @@ public class TheEntity {
       this.embeddedEntity = embeddedEntity;
    }
 
-   @SortableField
+   @SortableField(forField = "theField")
    @Field(name = "theField", store = Store.YES, analyze = Analyze.NO)
    public String getField() {
       return fieldX;

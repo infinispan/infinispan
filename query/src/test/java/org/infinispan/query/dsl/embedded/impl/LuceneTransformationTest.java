@@ -539,21 +539,21 @@ public class LuceneTransformationTest {
    public void testIsNullQuery() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name IS null",
-            "+(-ConstantScore(__HSEARCH_field_names:name) #*:*)");
+            "+(-ConstantScore(NormsFieldExistsQuery [field=name]) #*:*)");
    }
 
    @Test
    public void testIsNullQueryForEmbeddedEntity() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.author IS null",
-            "+(-(ConstantScore(__HSEARCH_field_names:author.name) ConstantScore(NormsFieldExistsQuery [field=author.address.street]) ConstantScore(NormsFieldExistsQuery [field=author.address.city])) #*:*)");
+            "+(-(ConstantScore(NormsFieldExistsQuery [field=author.name]) ConstantScore(NormsFieldExistsQuery [field=author.address.street]) ConstantScore(NormsFieldExistsQuery [field=author.address.city])) #*:*)");
    }
 
    @Test
    public void testIsNotNullQuery() {
       assertGeneratedLuceneQuery(
             "select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name IS NOT null",
-            "+ConstantScore(__HSEARCH_field_names:name)");
+            "+ConstantScore(NormsFieldExistsQuery [field=name])");
    }
 
    @Test
