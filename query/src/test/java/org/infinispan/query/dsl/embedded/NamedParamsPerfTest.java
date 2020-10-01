@@ -37,11 +37,11 @@ public class NamedParamsPerfTest extends AbstractQueryDslTest {
       @SortableField
       final int id;
 
-      @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
+      @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = "_null_")
       @SortableField
       final String firstName;
 
-      @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
+      @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = "_null_")
       @SortableField
       final String lastName;
 
