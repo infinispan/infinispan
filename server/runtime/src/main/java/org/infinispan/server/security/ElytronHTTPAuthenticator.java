@@ -23,6 +23,7 @@ import org.wildfly.security.auth.server.http.HttpAuthenticationFactory;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
+import org.wildfly.security.http.digest.DigestMechanismFactory;
 import org.wildfly.security.http.util.SecurityProviderServerMechanismFactory;
 import org.wildfly.security.http.util.SetMechanismInformationMechanismFactory;
 
@@ -34,7 +35,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * @since 10.0
  **/
 public class ElytronHTTPAuthenticator implements Authenticator {
-
    private final HttpAuthenticationFactory factory;
    private final ServerSecurityRealm serverSecurityRealm;
    private Executor executor;
@@ -114,6 +114,10 @@ public class ElytronHTTPAuthenticator implements Authenticator {
 
    @Override
    public void close() {
+      // Hack to shutdown the nonce executor
+      if (!Boolean.getBoolean("infinispan.security.elytron.skipnonceshutdown")) {
+         new DigestMechanismFactory().shutdown();
+      }
       factory.shutdownAuthenticationMechanismFactory();
    }
 }
