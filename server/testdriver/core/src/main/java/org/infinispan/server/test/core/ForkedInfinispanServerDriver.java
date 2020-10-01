@@ -26,9 +26,19 @@ import org.infinispan.commons.util.Util;
 public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver {
    private static final Log log = org.infinispan.commons.logging.LogFactory.getLog(ForkedInfinispanServerDriver.class);
    private final List<ForkedServer> forkedServers = new ArrayList<>();
+   private final String[] serverHomes;
 
    protected ForkedInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(configuration, InetAddress.getLoopbackAddress());
+      String allServerHomes = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_SERVER_HOME);
+      if (allServerHomes == null) {
+         throw new IllegalArgumentException("You must specify a " + TestSystemPropertyNames.INFINISPAN_SERVER_HOME + " property pointing to a comma-separated list of server homes.");
+      }
+      serverHomes = allServerHomes.replaceAll("\\s+", "").split(",");
+      if (serverHomes.length != configuration.numServers()) {
+         throw new IllegalArgumentException("configuration.numServers should be the same " +
+               "as the number of servers declared on org.infinispan.test.server");
+      }
    }
 
    @Override
@@ -38,15 +48,6 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
 
    @Override
    protected void start(String name, File rootDir, File configurationFile) {
-      String allServerHomes = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_SERVER_HOME);
-      if (allServerHomes == null) {
-         throw new IllegalArgumentException("You must specify a " + TestSystemPropertyNames.INFINISPAN_SERVER_HOME + " property pointing to a comma-separated list of server homes.");
-      }
-      String[] serverHomes = allServerHomes.replaceAll("\\s+", "").split(",");
-      if (serverHomes.length != configuration.numServers()) {
-         throw new IllegalArgumentException("configuration.numServers should be the same " +
-               "as the number of servers declared on org.infinispan.test.server");
-      }
       for (int i = 0; i < configuration.numServers(); i++) {
          ForkedServer server = new ForkedServer(serverHomes[i])
                .setServerConfiguration(configurationFile.getPath())
