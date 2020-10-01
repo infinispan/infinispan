@@ -2,6 +2,8 @@ package org.infinispan.persistence.keymappers;
 
 import org.testng.annotations.Test;
 
+import java.util.UUID;
+
 @Test(groups = "unit", testName = "persistence.keymappers.DefaultTwoWayKey2StringMapperTest")
 public class DefaultTwoWayKey2StringMapperTest {
 
@@ -33,6 +35,14 @@ public class DefaultTwoWayKey2StringMapperTest {
       Double d = (Double) mapper.getKeyMapping(skey);
 
       assert d == 3.141592d;
+
+      UUID uuid = UUID.randomUUID();
+      skey = mapper.getStringMapping(uuid);
+      assert !uuid.equals(uuid.toString());
+
+      UUID u = (UUID) mapper.getKeyMapping(skey);
+      assert u.equals(uuid);
+
    }
 
    public void testPrimitivesAreSupported() {
@@ -102,6 +112,11 @@ public class DefaultTwoWayKey2StringMapperTest {
       assert mapper.isSupportedType(Boolean.class);
       assert assertWorks(true);
       assert assertWorks(false);
+   }
+
+   public void testUuid() {
+      assert mapper.isSupportedType(UUID.class);
+      assert assertWorks(UUID.randomUUID());
    }
 
    private boolean assertWorks(Object key) {
