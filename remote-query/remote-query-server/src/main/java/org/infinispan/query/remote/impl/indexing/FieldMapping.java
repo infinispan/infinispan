@@ -21,8 +21,6 @@ public final class FieldMapping {
     */
    private final boolean index;
 
-   private final float boost;
-
    /**
     * Enable analysis.
     */
@@ -51,7 +49,7 @@ public final class FieldMapping {
 
    private Object indexNullAsObj;
 
-   FieldMapping(String name, boolean index, float boost, boolean analyze, boolean store, boolean sortable, String analyzer,
+   FieldMapping(String name, boolean index, boolean analyze, boolean store, boolean sortable, String analyzer,
                 String indexNullAs,
                 FieldDescriptor fieldDescriptor) {
       if (name == null) {
@@ -62,7 +60,6 @@ public final class FieldMapping {
       }
       this.name = name;
       this.index = index;
-      this.boost = boost;
       this.analyze = analyze;
       this.store = store;
       this.sortable = sortable;
@@ -77,10 +74,6 @@ public final class FieldMapping {
 
    public boolean index() {
       return index;
-   }
-
-   public float boost() {
-      return boost;
    }
 
    public boolean analyze() {
@@ -156,7 +149,6 @@ public final class FieldMapping {
       return "FieldMapping{" +
             "name='" + name + '\'' +
             ", index=" + index +
-            ", boost=" + boost +
             ", analyze=" + analyze +
             ", store=" + store +
             ", sortable=" + sortable +
