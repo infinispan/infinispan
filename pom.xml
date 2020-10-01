@@ -965,6 +965,11 @@
             <version>${versionx.org.hibernate.search.hibernate-search-mapper-pojo-base}</version>
          </dependency>
          <dependency>
+            <groupId>org.hibernate.search</groupId>
+            <artifactId>hibernate-search-v5migrationhelper-engine</artifactId>
+            <version>${versionx.org.hibernate.search.hibernate-search-mapper-pojo-base}</version>
+         </dependency>
+         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-testing</artifactId>
             <version>${versionx.org.hibernate.hibernate-testing}</version>
