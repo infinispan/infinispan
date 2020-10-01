@@ -463,7 +463,7 @@ public class Server implements ServerManagement, AutoCloseable {
       if (scheduler != null) {
          scheduler.shutdown();
       }
-      // Shutdown Log4jk context manually as we set shutdownHook="disable"
+      // Shutdown Log4j's context manually as we set shutdownHook="disable"
       // Log4j's shutdownHook may run concurrently with our shutdownHook,
       // disabling logging before the server has finished stopping.
       LogManager.shutdown();
