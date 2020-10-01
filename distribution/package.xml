@@ -57,7 +57,18 @@
             <arg line="@{dir}/docs/licenses/licenses.xml"/>
             <arg line="${licenses.xml}" if:true="@{database}"/>
             <classpath>
-               <pathelement path="${plugin_classpath}" />
+               <pathelement path="${plugin_classpath}"/>
+            </classpath>
+         </java>
+         <java classname="org.infinispan.tools.licenses.LicenseReplacer">
+            <arg value="-i"/>
+            <arg value="src/main/resources/template/licenses-overwrite.xml"/>
+            <arg value="-l"/>
+            <arg value="@{dir}/docs/licenses/licenses.xml"/>
+            <arg value="-o"/>
+            <arg value="@{dir}/docs/licenses/licenses.xml"/>
+            <classpath>
+               <pathelement path="${plugin_classpath}"/>
             </classpath>
          </java>
          <xslt in="@{dir}/docs/licenses/licenses.xml" style="src/main/resources/template/licenses.xsl" out="@{dir}/docs/licenses/licenses.html">

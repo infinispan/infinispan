@@ -48,7 +48,6 @@
 
       <artifact name="${org.hibernate:hibernate-search-engine}"/>
       <artifact name="${org.hibernate.common:hibernate-commons-annotations}"/>
-      <artifact name="${org.hibernate:hibernate-search-engine}"/>
       <artifact name="${org.jboss.marshalling:jboss-marshalling-river}"/>
       <artifact name="${org.jboss.threads:jboss-threads}"/>
       <artifact name="${commons-io:commons-io}"/>
