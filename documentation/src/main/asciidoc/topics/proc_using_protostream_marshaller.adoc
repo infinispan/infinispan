@@ -6,16 +6,43 @@ compatible format.
 
 .Procedure
 
-. Create implementations of the ProtoStream `SerializationContextInitializer` interface so that {brandname} can marshall your Java objects.
-. Configure {brandname} to use the implementations.
-+
+* Create implementations of the ProtoStream `SerializationContextInitializer` interface so that {brandname} can marshall your Java objects.
+
+{brandname} automatically registers any `SerializationContextInitializer`
+implementations that are on the application classpath.
+
+[NOTE]
+====
+You can disable automatic registration by explicitly setting a value of `false`
+for the `AutoProtoSchemaBuilder.service` annotation, as in the following 
+example:
+
+[source,java]
+----
+@AutoProtoSchemaBuilder(
+      includeClasses = SomeClass.class,
+      ...
+      service = false
+)
+----
+====
+
+You can manually register your implementations by declaring them in your
+{brandname} configuration. However, manually registering your implementations
+disables automatic registrations. In other words, if you manually register one
+`SerializationContextInitializer` you must register all implementations for
+them to take effect.
+
+The following examples show how to manually register
+`SerializationContextInitializer` implementations:
+
 * Programmatically:
 +
 [source,java]
 ----
 include::code_examples/ProtoStreamMarshaller.java[]
 ----
-+
+
 * Declaratively
 +
 [source,xml,options="nowrap",subs=attributes+]

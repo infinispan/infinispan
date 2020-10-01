@@ -593,7 +593,10 @@
       <xs:element name="context-initializer" minOccurs="0" maxOccurs="unbounded">
         <xs:annotation>
           <xs:documentation>
-            SerializationContextInitializer implementation which is used to initialize a Protostream based marshaller for user types.
+            SerializationContextInitializer implementation which is used to initialize a ProtoStream based marshaller
+            for user types. If no &lt;context-initializer&gt; elements are present then the java.util.ServiceLoader
+            mechanism will be used to automatically discover all SerializationContextInitializer implementations present
+            in classpath and load them.
           </xs:documentation>
         </xs:annotation>
         <xs:complexType>
