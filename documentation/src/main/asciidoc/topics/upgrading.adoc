@@ -65,6 +65,17 @@ provided configuration. The possible statuses of the cache health are now HEALTH
 
 The Kryo and Protostuff marshallers have been deprecated and will be removed in Infinispan 15.0
 
+=== {brandname} includes an upgraded version of the ProtoStream API that can
+affect upgrade from previous {brandname} versions.
+
+In previous versions, the ProtoStream API did not correctly nest message types
+with the result that the messages were generated as top-level only. For this
+reason, if you have Protobuf messages in a persistent cache store and upgrade
+to {brandname} 12, then you should modify Java classes so that Protobuf
+annotations are at top-level. This ensures that the nesting in your persisted
+messages matches the nesting in your Java classes, otherwise data
+incompatibility issues can occur. 
+
 === Allow lists
 
 All occurrences of "white list" have been renamed to "allow list".
