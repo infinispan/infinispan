@@ -172,8 +172,8 @@ public class ForkedServer {
          while ((psLine = input.readLine()) != null) {
             if (psLine.contains(this.serverId.toString()) && psLine.contains("bin" + File.separator + "java")) {
                psProcess.destroyForcibly();
-               long pid = Long.parseLong(psLine.substring(0, psLine.indexOf(" ")));
-               log.infof("Obtained pid is %d for process %s.", pid, this.serverId);
+               long pid = Long.parseLong(psLine.trim().split("\\s+")[0]);
+               log.infof("Obtained pid is %d for process with UUID %s.", pid, this.serverId);
                return pid;
             }
          }
