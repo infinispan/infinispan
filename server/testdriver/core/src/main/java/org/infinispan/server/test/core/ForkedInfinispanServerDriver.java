@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
@@ -71,8 +72,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
          RestResponse response = sync(getRestClient(0).cluster().stop());
          // Ensure non-error response code from the REST endpoint.
          if (response.getStatus() >= 400) {
-            log.errorf("Failed to shutdown the cluster gracefully, got status %d.", response.getStatus());
-            throw new IllegalStateException();
+            throw new IllegalStateException(String.format("Failed to shutdown the cluster gracefully, got status %d.", response.getStatus()));
          }
       } catch (Exception e) {
          // kill the servers
@@ -152,16 +152,28 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
 
    private RestClient getRestClient(int server) {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+
+      // Filter driver properties for REST client configuration properties, e.g. security configuration
+      // and apply them before applying rest of the dynamically created configuration, e.g. port.
+      Properties securityConfigurationProperties = new Properties();
+      configuration.properties().entrySet().stream()
+              // Filters for org.infinispan.client.rest.configuration.RestClientConfigurationProperties#ICR field value.
+              .filter(entry -> entry.getKey().toString().startsWith("infinispan.client.rest."))
+              .forEach(entry -> securityConfigurationProperties.put(entry.getKey(), entry.getValue()));
+      builder.withProperties(securityConfigurationProperties);
+      // Ensure to not print out the *values*!!!
+      log.debugf("Configured client with the following properties: %s", securityConfigurationProperties.keySet().toString());
+
       builder.addServer().host("localhost").port(getServerPort(server, ForkedServer.DEFAULT_SINGLE_PORT));
       return RestClient.forConfiguration(builder.build());
    }
 
    private int getServerPort(int server, int port) {
-      return server == 0 ? port : ForkedServer.OFFSET_FACTOR * server + port;
+      return port + ForkedServer.OFFSET_FACTOR * server;
    }
 
    private static <T> T sync(CompletionStage<T> stage) {
-      return Exceptions.unchecked(() -> stage.toCompletableFuture().get(5, TimeUnit.SECONDS));
+      return Exceptions.unchecked(() -> stage.toCompletableFuture().get(ForkedServer.TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
 }
