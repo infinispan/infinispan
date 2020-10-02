@@ -117,7 +117,9 @@ public class CacheResource extends AbstractContainerResource {
             try (InputStream is = zip.getInputStream(zip.getEntry(zipPath))) {
                ConfigurationBuilderHolder builderHolder = parserRegistry.parse(is, null);
                Configuration cfg = builderHolder.getNamedConfigurationBuilders().get(cacheName).build();
-               cm.defineConfiguration(cacheName, cfg);
+               // GetOrCreate in the event that a default cache is defined. This also allows cache-configurations to be
+               // modified prior to a restore if only the backed up data is required
+               cm.administration().getOrCreateCache(cacheName, cfg);
             } catch (IOException e) {
                throw new CacheException(e);
             }

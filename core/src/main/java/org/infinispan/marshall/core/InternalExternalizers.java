@@ -77,6 +77,7 @@ import org.infinispan.marshall.exts.TriangleAckExternalizer;
 import org.infinispan.marshall.exts.UuidExternalizer;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerRemoveCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
@@ -249,6 +250,7 @@ final class InternalExternalizers {
       addInternalExternalizer(EnumExternalizer.INSTANCE, exts);
       addInternalExternalizer(new CacheBiConsumers.Externalizer(), exts);
       addInternalExternalizer(PrepareResponse.EXTERNALIZER, exts);
+      addInternalExternalizer(new InternalMetadataImpl.Externalizer(), exts);
 
       return exts;
    }

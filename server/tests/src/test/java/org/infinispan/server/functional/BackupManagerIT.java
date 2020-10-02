@@ -34,6 +34,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.configuration.Element;
@@ -315,8 +316,9 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       assertEquals(restoreResponse.getBody(), 201, restoreResponse.getStatus());
       restoreResponse.close();
 
-      // Assert that all content has been restored as expected
-      assertTargetContent.accept(client);
+      // Assert that all content has been restored as expected, connecting to the second node in the cluster to ensure
+      // that configurations and caches are restored cluster-wide
+      assertTargetContent.accept(target.getClient(1));
 
       // Ensure that the backup files have been deleted from the target cluster
       assertNoServerBackupFilesExist(target);
@@ -325,7 +327,10 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
    private void populateContainer(RestClient client) throws Exception {
       String cacheName = "cache1";
-      createCache(cacheName, new ConfigurationBuilder(), client);
+
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      createCache(cacheName, builder, client);
 
       RestCacheClient cache = client.cache(cacheName);
       for (int i = 0; i < NUM_ENTRIES; i++) {
