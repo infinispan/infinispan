@@ -93,14 +93,19 @@ Underline (`[.underline]#value#`)::
 |for example  |e.g.
 |===
 
-Characters Per Line::
-Use a soft limit of 80 characters per line. This makes it easier to see changes
-in GitHub diffs, which are about 90 characters long.
-Asciidoc End of File::
-To avoid formatting issues, end `adoc` files with two empty lines.
-Notes and Admonitions::
-Encapsulate notes, tips, and warnings in brackets. Surround the text in four equals characters, as follows:
-+
+.Terminology
+
+See the link:#terminology[{brandname} Terminology] section for guidance on
+using words and phrases specific to {brandname} capabilities and features.
+
+.One Sentence Per Line
+Rather than using a soft limit of characters per line, put one sentence on each line.
+
+.Notes and Admonitions
+
+Encapsulate notes, tips, and warnings in brackets.
+Surround the text in four equals characters, as follows:
+
 ----
 [NOTE]
 ====
@@ -115,7 +120,8 @@ When creating anchors for section IDs, use the following format:
 
 `++[[anchor_name]]++`
 
-You should always use underscores (_) to delimit anchors. Do not use other characters such as dashes (-) or periods (.) to avoid issues at build time.
+You should always use underscores (_) to delimit anchors.
+Do not use other characters such as dashes (-) or periods (.) to avoid issues at build time.
 
 To create anchors for reusable content, use this format:
 

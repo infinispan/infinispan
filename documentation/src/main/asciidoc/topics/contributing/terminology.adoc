@@ -1,0 +1,111 @@
+[[terminology]]
+= {brandname} Terminology
+
+{brandname} terminology refers to words and phrases specific to {brandname}
+capabilities and features. It is important to use consistent terminology across
+documentation and the code base to avoid unclear or contradictory language.
+
+Add::
+Add an item to an existing list, group, view, or other container element. For example, "add entries to caches".
+Opposite to "Remove".
+
+Cache::
+A data structure for storing key/value pairs in memory.
+
+Cache configuration::
+A resource that instantiates and controls a cache.
+
+Cache template::
+Generally means a resource from which you create cache configurations.
+{brandname} provides some pre-defined templates (`org.infinispan.\*`).
+Users can define new templates in `infinispan.xml` with the `*-cache-configuration*` tags.
+In some APIs, you can use the configuration of an existing cache as a template to configure a new cache.
+
+Cache definition::
+Refers to a named cache instance. To avoid ambiguity, do not use in UI or documentation to mean "cache configuration".
+
+Cache Manager::
+Interface for creating and managing caches. Always spell as two words with capital letters when referring to the abstract notion of a Cache Manager.
+When referring to specific interfaces, use `CacheManager`, `EmbeddedCacheManager`, or `RemoteCacheManager`.
+
+Clear::
+Delete all the elements of a container. For example, "clear entries in a cache".
+
+Create::
+Build something new. For example, "create a cache".
+Opposite to "Delete".
+
+Delete::
+Permanently remove a single element or a group of similar elements from a container.
+For example, "delete an entry from the cache" or "delete all expired entries from the cache".
+Opposite to "Create".
+
+Destroy::
+Do not use to mean "delete".
+
+Index::
+Create an index to improve query performance or add an entry to an existing index when it is added to a cache.
+
+Indexes::
+Plural of index.
+Do not use "indices".
+
+Off-heap::
+Native memory space outside the managed JVM heap.
+Always hyphenate when used as an adjective.
+
+Please::
+Avoid using the word "please" because it can imply that actions are optional.
+Technical documentation should be authoritative and clear.
+Saying "please" can make language sound more "human" but politeness is not necessary in technical content.
+
+Purge::
+Can have negative connotations and is not a preferred term.
+Use only as a synonym for "clear" or "delete" in subsequent descriptions, such as in the body text of a dialog or text that follows a heading.
+Do not use as a primary verb or in headings.
+
+Query::
+Look up information within the data set.
+The words "query" and "search" are synonymous but frequently interchanging the two can lead to inconsistency.
+Use in verb form: "Query values in the cache."
+Use in noun form preceded by Ickle: "Perform an Ickle query on the cache."
+
+Reindex::
+Rebuild an index to update or change an existing index.
+Do not hyphenate (always "reindex" never "re-index").
+
+Remove::
+Use to describe removing an item from a list, group, view, or other container element without.
+Opposite to "Add".
++
+Can also use as a synonym for "clear" or "delete" in subsequent descriptions, such as in the body text of a dialog or text that follows a heading.
+Do not use as a primary verb or in headings to mean "clear" or "delete".
+Prefer using "Permanently remove" when describing the action to "delete" or "clear".
+
+Reset::
+Restore an initial value or state. For example, "Reset a counter."
+
+Search::
+Synonymous with "query" but not preferred.
+Use with common phrases like "full-text search" in conjunction with {brandname} Query API.
+
+== {brandname} methods and corresponding verbs
+
+When describing an action that the user performs that invokes an underlying method, use verbs as follows:
+
+|===
+|Method |Verb
+
+|`cache.put()`
+|Add
+
+|`cache.get()`
+|Retrieve
+
+|`cache.remove()`
+|Delete
+
+|`removeCache​()`
+|Delete
+
+|===

@@ -12,7 +12,7 @@ these projects into your IDE and start building and running applications with
 
 .Procedure
 
-. Open a terminal window and navigate to a directory where you
+. Open a terminal window in the directory where you want to create project files.
 . Generate projects from {brandname} archetypes with the following command:
 +
 ----
