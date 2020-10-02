@@ -1,0 +1,60 @@
+[[design_guidelines]]
+= UI Writing Guidelines
+
+This section describes guidelines for working with text in {brandname} user
+interface (UI) elements and applies, but is not limited, to the following
+components:
+
+* {brandname} Console
+* {brandname} CLI
+* log messages
+* error messages
+
+Content in the {brandname} UI should adhere to the link:https://www.patternfly.org/v4/ux-writing/about[PatternFly UX writing style guide].
+
+While the PatternFly design guidelines are the definitive resource for UI writing guidelines, the following sections outline some rules for creating microcopy in {brandname} UI.
+
+.Headings
+
+Headings on UI elements should use sentence casing. See the link:https://www.patternfly.org/v4/ux-writing/capitalization/[PatternFly capitalization rules]
+
+.Confirmation dialogs
+
+Dialogs that prompt for user action should follow this format:
+
+- Headline: A headline is usually phrased as a question. Include keywords (like “permanent”) in the headline.
+- Body text: Body text gives information about the action’s consequence.
+- Buttons: Buttons allow a user to answer the headline question.
+
+[NOTE]
+====
+Confirmation dialogs disrupt user task flow. For this reason, you should not provide confirmation dialogs for actions that are easily reversed or insignificant.
+====
+
+.Success or failure messages
+
+Use simple past tense form for success or failure messages.
+
+*Correct:* "Cache created."
+*Incorrect:* "Cache has been created."
+
+Success or failure messages do not need to be complete sentences. If your message is a fragment, do not include a period/full stop character (`.`).
+
+.Tooltip and hover help
+
+Icons and buttons with action should either have labels or tooltips.
+
+For accessibility reasons, you should add tooltips only to semantic icons that do not have labels.
+
+See the link:https://www.patternfly.org/v4/get-started/accessibility-guide/[PatternFly accessibility guide].
+
+.Abbreviations
+
+Use common and familiar abbreviations only, such as "URL". Write out all other abbreviations, especially the following:
+
+- Number: Avoid "No."
+- Average: Avoid "avg."
+- For example: Avoid "e.g."
+- In other words: Avoid "i.e."
+
+For more information on abbreviations and acronyms, see the Numerics page in the link:https://www.patternfly.org/v4/ux-writing/terminology[PatternFly UX writing style guide].

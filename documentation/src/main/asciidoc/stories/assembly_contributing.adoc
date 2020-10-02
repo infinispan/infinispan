@@ -8,6 +8,8 @@ include::{topics}/contributing/tests.adoc[leveloffset=+0]
 include::{topics}/contributing/help.adoc[leveloffset=+0]
 include::{topics}/contributing/configuration.adoc[leveloffset=+0]
 include::{topics}/contributing/docs.adoc[leveloffset=+0]
+include::{topics}/contributing/ui.adoc[leveloffset=+0]
+include::{topics}/contributing/terminology.adoc[leveloffset=+0]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
