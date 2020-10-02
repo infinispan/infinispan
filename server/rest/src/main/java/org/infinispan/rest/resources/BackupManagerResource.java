@@ -190,6 +190,9 @@ class BackupManagerResource {
          }
 
          function.apply(name, path, resourcesJson).whenComplete((Void, t) -> {
+                  if (t != null) {
+                     LOG.error(t);
+                  }
                   if (uploadedBackup) {
                      try {
                         Files.delete(path);

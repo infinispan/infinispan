@@ -2,8 +2,15 @@ package org.infinispan.metadata.impl;
 
 import static java.lang.Math.min;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.versioning.EntryVersion;
@@ -185,5 +192,32 @@ public class InternalMetadataImpl implements InternalMetadata {
          }
       }
       return toCheck;
+   }
+
+   public static class Externalizer extends AbstractExternalizer<InternalMetadataImpl> {
+      @Override
+      public void writeObject(ObjectOutput output, InternalMetadataImpl b) throws IOException {
+         output.writeLong(b.created);
+         output.writeLong(b.lastUsed);
+         output.writeObject(b.actual);
+      }
+
+      @Override
+      public InternalMetadataImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         long created = input.readLong();
+         long lastUsed = input.readLong();
+         Metadata actual = (Metadata) input.readObject();
+         return new InternalMetadataImpl(actual, created, lastUsed);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.INTERNAL_METADATA_ID;
+      }
+
+      @Override
+      public Set<Class<? extends InternalMetadataImpl>> getTypeClasses() {
+         return Util.asSet(InternalMetadataImpl.class);
+      }
    }
 }

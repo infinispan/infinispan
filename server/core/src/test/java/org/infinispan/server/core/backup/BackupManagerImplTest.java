@@ -48,11 +48,14 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.EncodingConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.function.TriConsumer;
@@ -213,6 +216,11 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
    private void createAndRestore(BiFunction<DefaultCacheManager, BackupManager, CompletionStage<Path>> backup,
                                  TriConsumer<DefaultCacheManager, BackupManager, Path> restore) {
       Path zip = withBackupManager(backup);
+      // Remove all source files, such as caches.xml from overlay
+      for (File f : workingDir.listFiles())
+         if (!f.isDirectory())
+            f.delete();
+
       withBackupManager((cm, bm) -> {
          restore.accept(cm, bm, zip);
          return CompletableFutures.completedNull();
@@ -220,7 +228,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
    }
 
    private <T> T withBackupManager(BiFunction<DefaultCacheManager, BackupManager, CompletionStage<T>> function) {
-      try (DefaultCacheManager cm = new DefaultCacheManager()) {
+      try (DefaultCacheManager cm = createManager()) {
          BlockingManager blockingManager = cm.getGlobalComponentRegistry().getComponent(BlockingManager.class);
          BackupManager backupManager = new BackupManagerImpl(blockingManager, cm, Collections.singletonMap("default", cm), workingDir.toPath());
          backupManager.init();
@@ -333,7 +341,15 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
 
    private Map<String, DefaultCacheManager> createManagerMap(String... containers) {
       return Arrays.stream(containers)
-            .collect(Collectors.toMap(Function.identity(), name -> new DefaultCacheManager()));
+            .collect(Collectors.toMap(Function.identity(), name -> createManager()));
+   }
+
+   private DefaultCacheManager createManager() {
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+      gcb.globalState().enable()
+            .configurationStorage(ConfigurationStorage.OVERLAY)
+            .persistentLocation(workingDir.getAbsolutePath());
+      return (DefaultCacheManager) TestCacheManagerFactory.newDefaultCacheManager(true, gcb, null);
    }
 
    private Configuration config(String type) {
