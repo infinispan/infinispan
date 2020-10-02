@@ -49,7 +49,8 @@ final class ClusteredQueryInvoker {
       this.asyncExecutor = asyncExecutor;
       this.rpcManager = cache.getRpcManager();
       this.myAddress = rpcManager.getAddress();
-      this.rpcOptions = new RpcOptions(DeliverOrder.NONE, 10000, TimeUnit.MILLISECONDS);
+      long timeout = cache.getCacheConfiguration().clustering().remoteTimeout();
+      this.rpcOptions = new RpcOptions(DeliverOrder.NONE, timeout, TimeUnit.MILLISECONDS);
       this.partitioner = new QueryPartitioner(cache);
    }
 
