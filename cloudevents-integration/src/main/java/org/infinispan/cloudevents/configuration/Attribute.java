@@ -1,36 +1,23 @@
-package org.infinispan.persistence.jdbc.configuration;
+package org.infinispan.cloudevents.configuration;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Enumerates the attributes used by the JDBC cache stores configuration
+ * Attribute.
  *
- * @author Tristan Tarrant
- * @since 5.2
+ * @author Dan Berindei
+ * @since 12
  */
 public enum Attribute {
    // must be first
    UNKNOWN(null),
 
-   BATCH_SIZE("batch-size"),
-   CONNECTION_URL("connection-url"),
-   CREATE_ON_START("create-on-start"),
-   DIALECT("dialect"),
-   DB_MAJOR_VERSION("db-major-version"),
-   DB_MINOR_VERSION("db-minor-version"),
-   JNDI_URL("jndi-url"),
-   DRIVER_CLASS("driver"),
-   DROP_ON_EXIT("drop-on-exit"),
-   FETCH_SIZE("fetch-size"),
-   KEY_TO_STRING_MAPPER("key-to-string-mapper"),
-   NAME("name"),
-   PASSIVATION("passivation"),
-   PASSWORD("password"),
-   PREFIX("prefix"),
-   PROPERTIES_FILE("properties-file"),
-   TYPE("type"),
-   USERNAME("username")
+   BOOTSTRAP_SERVERS("bootstrap-servers"),
+   ACKS("acks"),
+   AUDIT_TOPIC("audit-topic"),
+   CACHE_ENTRIES_TOPIC("cache-entries-topic"),
+   ENABLED("enabled"),
    ;
 
    private final String name;
@@ -64,10 +51,5 @@ public enum Attribute {
    public static Attribute forName(final String localName) {
       final Attribute attribute = attributes.get(localName);
       return attribute == null ? UNKNOWN : attribute;
-   }
-
-   @Override
-   public String toString() {
-      return name;
    }
 }

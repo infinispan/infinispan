@@ -1258,6 +1258,10 @@ public class Json implements java.io.Serializable {
       return f != null ? f : globalFactory;
    }
 
+   public static void escape(CharSequence sequence, Appendable out) throws IOException {
+      escaper.escapeJsonString(sequence, out);
+   }
+
    /**
     * <p>
     * Specify a global Json {@link Factory} to be used by all threads that don't have a
@@ -2256,14 +2260,7 @@ public class Json implements java.io.Serializable {
       }
 
       String toPrettyStringImpl(int ident) {
-         Json x = Json.read(this.val);
-         if (x.isObject()) {
-            return ((ObjectJson) x).toPrettyStringImpl(ident);
-         }
-         if (x.isArray()) {
-            return ((ArrayJson) x).toPrettyStringImpl(ident);
-         }
-         return x.toPrettyString();
+         return val;
       }
 
       @Override
@@ -2865,7 +2862,7 @@ public class Json implements java.io.Serializable {
          return escapedString.toString();
       }
 
-      private void escapeJsonString(CharSequence plainText, StringBuilder out) throws IOException {
+      private void escapeJsonString(CharSequence plainText, Appendable out) throws IOException {
          int pos = 0;  // Index just past the last char in plainText written to out.
          int len = plainText.length();
 

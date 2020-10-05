@@ -1,6 +1,7 @@
 package org.infinispan.distribution.rehash;
 
 import java.util.Collections;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.ReplicableCommand;
@@ -113,6 +114,35 @@ public enum TestWriteOperation {
          case PUT_MAP_CREATE:
             cache.putAll(Collections.singletonMap(key, value));
             return null;
+         default:
+            throw new IllegalArgumentException("Unsupported operation: " + this);
+      }
+   }
+
+   public CompletionStage<?> performAsync(AdvancedCache<Object, Object> cache, Object key) {
+      switch (this) {
+         case PUT_CREATE:
+         case PUT_OVERWRITE:
+         case PUT_CREATE_FUNCTIONAL:
+         case PUT_OVERWRITE_FUNCTIONAL:
+            return cache.putAsync(key, value);
+         case PUT_IF_ABSENT:
+         case PUT_IF_ABSENT_FUNCTIONAL:
+            return cache.putIfAbsentAsync(key, value);
+         case REPLACE:
+         case REPLACE_FUNCTIONAL:
+            return cache.replaceAsync(key, value);
+         case REPLACE_EXACT:
+         case REPLACE_EXACT_FUNCTIONAL:
+            return cache.replaceAsync(key, previousValue, value);
+         case REMOVE:
+         case REMOVE_FUNCTIONAL:
+            return cache.removeAsync(key);
+         case REMOVE_EXACT:
+         case REMOVE_EXACT_FUNCTIONAL:
+            return cache.removeAsync(key, previousValue);
+         case PUT_MAP_CREATE:
+            return cache.putAllAsync(Collections.singletonMap(key, value));
          default:
             throw new IllegalArgumentException("Unsupported operation: " + this);
       }

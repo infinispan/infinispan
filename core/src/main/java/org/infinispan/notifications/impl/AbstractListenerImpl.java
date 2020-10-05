@@ -423,7 +423,6 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                   getLog().tracef("Invoking listener: %s passing event %s", target, event);
                   result = method.invoke(target, event);
                }
-               getLog().tracef("Listener %s has completed event %s", target, event);
                return result;
             } catch (InvocationTargetException exception) {
                Throwable cause = getRealException(exception);
@@ -450,10 +449,17 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
             // Sync can run in a blocking (null) or non blocking (CompletionStage) fashion
             Object result = r.get();
             if (result instanceof CompletionStage) {
-               return (CompletionStage<Void>) result;
+               CompletionStage<Void> stage = (CompletionStage<Void>) result;
+               if (getLog().isTraceEnabled()) {
+                  stage = stage.whenComplete((v, t) -> {
+                     getLog().tracef("Listener %s has completed event %s", target, event);
+                  });
+               }
+               return stage;
             }
          } else {
             asyncProcessor.execute(r::get);
+            getLog().tracef("Listener %s has completed event %s", target, event);
          }
          return CompletableFutures.completedNull();
       }

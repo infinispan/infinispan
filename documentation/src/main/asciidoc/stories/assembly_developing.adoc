@@ -23,6 +23,9 @@ include::{topics}/multimapcache.adoc[leveloffset=+0]
 ifndef::productized[]
 include::{topics}/anchored_keys.adoc[leveloffset=+0]
 endif::productized[]
+ifndef::productized[]
+include::{topics}/cloudevents_integration.adoc[leveloffset=+0]
+endif::productized[]
 
 
 // Restore the parent context.

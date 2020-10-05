@@ -153,6 +153,7 @@
       <module>hibernate</module>
       <module>api</module>
       <module>anchored-keys</module>
+      <module>cloudevents-integration</module>
    </modules>
    <properties>
       <!-- Semantic versioning defaults. -->
