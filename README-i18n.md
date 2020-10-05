@@ -44,3 +44,4 @@ Infinispan logs fully support internationalization. The following is a list of m
     29001 - 29500    soft-index file store
     29501 - 30000    clustered counter
     30001 - 30501    anchored keys
+    30501 - 31000    cloudevents integration

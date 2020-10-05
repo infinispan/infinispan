@@ -44,7 +44,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    private boolean pre = false; // by default events are after the fact
    private transient Cache<K, V> cache;
    private K key;
-   private GlobalTransaction transaction;
+   private Object source;
    private Metadata metadata;
    private Metadata oldMetadata;
    private boolean originLocal = true; // by default events all originate locally
@@ -96,7 +96,15 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
 
    @Override
    public GlobalTransaction getGlobalTransaction() {
-      return this.transaction;
+      if (this.source instanceof GlobalTransaction)
+         return (GlobalTransaction) this.source;
+
+      return null;
+   }
+
+   @Override
+   public Object getSource() {
+      return source;
    }
 
    @Override
@@ -119,8 +127,21 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       this.key = key;
    }
 
+   /**
+    * @deprecated Since 12.0, will be removed in 15.0
+    */
+   @Deprecated
    public void setTransactionId(GlobalTransaction transaction) {
-      this.transaction = transaction;
+      setSource(transaction);
+   }
+
+   /**
+    * @param source An identifier of the transaction or cache invocation that triggered the event.
+    *               In a transactional cache, it is the same as {@link #getGlobalTransaction()}.
+    *               In a non-transactional cache, it is an internal object that identifies the cache invocation.
+    */
+   public void setSource(Object source) {
+      this.source = source;
    }
 
    public void setOriginLocal(boolean originLocal) {
@@ -244,7 +265,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       if (transactionSuccessful != event.transactionSuccessful) return false;
       if (cache != null ? !cache.equals(event.cache) : event.cache != null) return false;
       if (key != null ? !key.equals(event.key) : event.key != null) return false;
-      if (transaction != null ? !transaction.equals(event.transaction) : event.transaction != null) return false;
+      if (source != null ? !source.equals(event.source) : event.source != null) return false;
       if (type != event.type) return false;
       if (value != null ? !value.equals(event.value) : event.value != null) return false;
       if (!Util.safeEquals(readConsistentHashAtStart, event.readConsistentHashAtStart)) return false;
@@ -265,7 +286,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       int result = (pre ? 1 : 0);
       result = 31 * result + (cache != null ? cache.hashCode() : 0);
       result = 31 * result + (key != null ? key.hashCode() : 0);
-      result = 31 * result + (transaction != null ? transaction.hashCode() : 0);
+      result = 31 * result + (source != null ? source.hashCode() : 0);
       result = 31 * result + (originLocal ? 1 : 0);
       result = 31 * result + (transactionSuccessful ? 1 : 0);
       result = 31 * result + (type != null ? type.hashCode() : 0);
@@ -286,31 +307,31 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    public String toString() {
       if (type == Type.TOPOLOGY_CHANGED || type == Type.DATA_REHASHED)
          return "EventImpl{" +
-               "type=" + type +
-               ", pre=" + pre +
-               ", cache=" + cache +
-               ", readConsistentHashAtStart=" + readConsistentHashAtStart +
-               ", writeConsistentHashAtStart=" + writeConsistentHashAtStart +
-               ", readConsistentHashAtEnd=" + readConsistentHashAtEnd +
-               ", writeConsistentHashAtEnd=" + writeConsistentHashAtEnd +
-               ", unionConsistentHash=" + unionConsistentHash +
-               ", newTopologyId=" + newTopologyId +
-               '}';
+                "type=" + type +
+                ", pre=" + pre +
+                ", cache=" + cache +
+                ", readConsistentHashAtStart=" + readConsistentHashAtStart +
+                ", writeConsistentHashAtStart=" + writeConsistentHashAtStart +
+                ", readConsistentHashAtEnd=" + readConsistentHashAtEnd +
+                ", writeConsistentHashAtEnd=" + writeConsistentHashAtEnd +
+                ", unionConsistentHash=" + unionConsistentHash +
+                ", newTopologyId=" + newTopologyId +
+                '}';
       return "EventImpl{" +
-            "type=" + type +
-            ", pre=" + pre +
-            ", cache=" + cache +
-            ", key=" + key +
-            ", value=" + value +
-            ", oldValue=" + oldValue +
-            ", transaction=" + transaction +
-            ", originLocal=" + originLocal +
-            ", transactionSuccessful=" + transactionSuccessful +
-            ", entries=" + entries +
-            ", created=" + created +
-            ", isCurrentState=" + isCurrentState +
-            ", available=" + available +
-            '}';
+             "type=" + type +
+             ", pre=" + pre +
+             ", cache=" + cache +
+             ", key=" + key +
+             ", value=" + value +
+             ", oldValue=" + oldValue +
+             ", source=" + source +
+             ", originLocal=" + originLocal +
+             ", transactionSuccessful=" + transactionSuccessful +
+             ", entries=" + entries +
+             ", created=" + created +
+             ", isCurrentState=" + isCurrentState +
+             ", available=" + available +
+             '}';
    }
 
    @Override

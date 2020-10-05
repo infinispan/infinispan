@@ -40,8 +40,10 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.EncoderEntryMapper;
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
@@ -541,7 +543,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          e.setCommandRetried(true);
       }
       e.setKey(key);
-      setTx(ctx, e);
+      setSource(e, ctx, command);
    }
 
    /**
@@ -553,7 +555,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       e.setKey(convertKey(listenerInvocation, key));
       e.setValue(convertValue(listenerInvocation, value));
       e.setOriginLocal(ctx.isOriginLocal());
-      setTx(ctx, e);
+      setSource(e, ctx, null);
    }
 
    /**
@@ -566,7 +568,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       e.setMetadata(metadata);
       e.setOriginLocal(true);
       e.setPre(false);
-      setTx(ctx, e);
+      setSource(e, ctx, null);
    }
 
    @Override
@@ -724,10 +726,13 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
    }
 
-   private void setTx(InvocationContext ctx, EventImpl<K, V> e) {
+   private void setSource(EventImpl<K, V> e, InvocationContext ctx, FlagAffectedCommand command) {
       if (ctx != null && ctx.isInTxScope()) {
          GlobalTransaction tx = ((TxInvocationContext) ctx).getGlobalTransaction();
-         e.setTransactionId(tx);
+         e.setSource(tx);
+      } else if (command instanceof WriteCommand) {
+         CommandInvocationId invocationId = ((WriteCommand) command).getCommandInvocationId();
+         e.setSource(invocationId);
       }
    }
 

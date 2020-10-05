@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+      xmlns="urn:infinispan:config:${infinispan.core.schema.version}"
+      xmlns:cloud-events="urn:infinispan:config:cloud-events:${infinispan.core.schema.version}"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version}
+            https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd
+            urn:infinispan:config:cloud-events:${infinispan.core.schema.version}
+            https://infinispan.org/schemas/infinispan-cloud-events-config-${infinispan.core.schema.version}.xsd">
+
+    <cache-container>
+        <transport/>
+        <cloud-events:cloud-events cache-entries-topic="cache-events"/>
+        <distributed-cache name="cache1">
+        </distributed-cache>
+    </cache-container>
+
+</infinispan>

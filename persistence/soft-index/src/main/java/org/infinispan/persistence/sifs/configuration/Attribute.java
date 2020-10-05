@@ -40,7 +40,7 @@ public enum Attribute {
    private static final Map<String, Attribute> attributes;
 
    static {
-      final Map<String, Attribute> map = new HashMap<String, Attribute>(64);
+      Map<String, Attribute> map = new HashMap<>();
       for (Attribute attribute : values()) {
          final String name = attribute.getLocalName();
          if (name != null) {

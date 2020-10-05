@@ -38,4 +38,13 @@ public interface CacheEntryEvent<K, V> extends TransactionalEvent<K, V> {
    default boolean isCurrentState() {
       return false;
    }
+
+   /**
+    * @return an identifier of the transaction or cache invocation that triggered the event.
+    *   In a transactional cache, it is the same as {@link #getGlobalTransaction()}.
+    *   In a non-transactional cache, it is an internal object that identifies the cache invocation.
+    */
+   default Object getSource() {
+      return null;
+   }
 }
