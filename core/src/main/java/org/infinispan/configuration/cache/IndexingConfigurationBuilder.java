@@ -31,7 +31,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    private static final String DIRECTORY_PROVIDER_SUFFIX = "directory.type";
 
-   private static final String DIRECTORY_PROVIDER_KEY1 = "hibernate.search.backends.infinispan_backend.directory.type";
+   private static final String DIRECTORY_PROVIDER_KEY1 = "hibernate.search.backend.directory.type";
 
    private static final String DIRECTORY_PROVIDER_KEY2 = "directory.type";
 
