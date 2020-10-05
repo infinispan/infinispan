@@ -10,8 +10,8 @@ import java.lang.management.MemoryUsage;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 
 /**
  * @since 10.0
@@ -19,10 +19,10 @@ import org.infinispan.commons.dataconversion.internal.Json;
 @SuppressWarnings("unused")
 public final class JVMMemoryInfoInfo implements JsonSerialization {
 
-   private static MemoryMXBean memoryMBean;
-   private static List<MemoryPoolMXBean> memoryPoolMBeans;
-   private static List<BufferPoolMXBean> bufferPoolsMBeans;
-   private static List<GarbageCollectorMXBean> garbageCollectorMXBeans;
+   private final MemoryMXBean memoryMBean;
+   private final List<MemoryPoolMXBean> memoryPoolMBeans;
+   private final List<BufferPoolMXBean> bufferPoolsMBeans;
+   private final List<GarbageCollectorMXBean> garbageCollectorMXBeans;
 
    public JVMMemoryInfoInfo() {
       garbageCollectorMXBeans = ManagementFactory.getGarbageCollectorMXBeans();

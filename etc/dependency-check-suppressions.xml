@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+   <suppress>
+      <notes><![CDATA[
+      Suppress reports on ProtoStream which are for Infinispan instead
+      ]]></notes>
+      <packageUrl regex="true">^pkg:maven/org\.infinispan\.protostream/protostream@.*$</packageUrl>
+      <cpe>cpe:/a:infinispan:infinispan</cpe>
+   </suppress>
+   <suppress>
+      <notes><![CDATA[
+      Suppress reports on ProtoStream which are for Infinispan instead
+      ]]></notes>
+      <packageUrl regex="true">^pkg:maven/org\.infinispan\.protostream/protostream\-processor@.*$</packageUrl>
+      <cpe>cpe:/a:infinispan:infinispan</cpe>
+   </suppress>
+   <suppress>
+      <notes><![CDATA[
+      Suppress reports on WildFly OpenSSL which are for unrelated packages instead
+      ]]></notes>
+      <packageUrl regex="true">^pkg:maven/org\.wildfly\.openssl/wildfly\-openssl\-java@.*$</packageUrl>
+      <cpe>cpe:/a:openssl:openssl</cpe>
+      <cpe>cpe:/a:redhat:openssl</cpe>
+      <cpe>cpe:/a:redhat:wildfly</cpe>
+      <cpe>cpe:/a:wildfly:wildfly</cpe>
+   </suppress>
+</suppressions>

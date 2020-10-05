@@ -97,7 +97,7 @@ public class ImmutableIntSet extends AbstractImmutableIntSet {
       return set.intSpliterator();
    }
 
-   private class ImmutableIterator implements PrimitiveIterator.OfInt {
+   private static class ImmutableIterator implements PrimitiveIterator.OfInt {
       private OfInt iterator;
 
       ImmutableIterator(OfInt iterator) {

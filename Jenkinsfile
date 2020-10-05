@@ -32,6 +32,11 @@ pipeline {
                     env.DISTRIBUTION_BUILD = env.BRANCH_NAME.startsWith('PR-') && !pullRequest.labels.contains('Documentation') ? "" : "-Pdistribution"
                 }
 
+                // Collect reports on non-prs
+                script {
+                    env.REPORTS_BUILD = env.BRANCH_NAME.startsWith('PR-') ? "" : "surefire-report:report pmd:cpd pmd:pmd spotbugs:spotbugs dependency-check:check"
+                }
+
                 sh 'cleanup.sh'
             }
         }
@@ -45,7 +50,7 @@ pipeline {
         stage('Build') {
             steps {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    sh "$MAVEN_HOME/bin/mvn clean install -B -V -e -s $MAVEN_SETTINGS -DskipTests $DISTRIBUTION_BUILD"
+                    sh "$MAVEN_HOME/bin/mvn clean install $REPORTS_BUILD -B -V -e -s $MAVEN_SETTINGS -DskipTests $DISTRIBUTION_BUILD"
                 }
             }
         }
@@ -78,6 +83,14 @@ pipeline {
     }
 
     post {
+        always {
+            recordIssues enabledForFailure: true, tools: [mavenConsole(), java(), javaDoc()]
+            recordIssues enabledForFailure: true, tool: checkStyle()
+            recordIssues enabledForFailure: true, tool: spotBugs()
+            recordIssues enabledForFailure: true, tool: pmdParser(pattern: '**/target/pmd.xml')
+            recordIssues enabledForFailure: true, tool: cpd(pattern: '**/target/cpd.xml')
+        }
+
         // Deploy snapshots of successful master builds
         success {
             script {

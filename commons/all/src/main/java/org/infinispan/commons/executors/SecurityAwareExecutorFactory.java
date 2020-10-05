@@ -11,5 +11,5 @@ import java.util.concurrent.ExecutorService;
  * @since 7.0
  */
 public interface SecurityAwareExecutorFactory extends ExecutorFactory {
-   public ExecutorService getExecutor(Properties p, AccessControlContext context);
+   ExecutorService getExecutor(Properties p, AccessControlContext context);
 }

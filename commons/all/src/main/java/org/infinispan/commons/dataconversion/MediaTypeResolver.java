@@ -2,6 +2,7 @@ package org.infinispan.commons.dataconversion;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -35,7 +36,7 @@ public final class MediaTypeResolver {
             LOG.cannotLoadMimeTypes(MIME_TYPES);
          } else {
             bis = new BufferedInputStream(in);
-            Scanner scanner = new Scanner(bis);
+            Scanner scanner = new Scanner(bis, StandardCharsets.UTF_8.name());
             while (scanner.hasNextLine()) {
                String line = scanner.nextLine();
                if (!line.startsWith("#")) {
