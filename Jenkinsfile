@@ -34,7 +34,7 @@ pipeline {
 
                 // Collect reports on non-prs
                 script {
-                    env.REPORTS_BUILD = env.BRANCH_NAME.startsWith('PR-') ? "" : "surefire-report:report pmd:cpd pmd:pmd spotbugs:spotbugs dependency-check:check"
+                    env.REPORTS_BUILD = env.BRANCH_NAME.startsWith('PR-') ? "" : "surefire-report:report pmd:cpd pmd:pmd spotbugs:spotbugs"
                 }
 
                 sh 'cleanup.sh'

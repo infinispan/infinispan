@@ -34,7 +34,7 @@ public class ProcessorInfo {
    public static int availableProcessors() {
       if (System.getSecurityManager() != null) {
          return AccessController.doPrivileged((PrivilegedAction<Integer>) () ->
-               Integer.valueOf(org.infinispan.commons.jdkspecific.ProcessorInfo.availableProcessors()).intValue());
+               org.infinispan.commons.jdkspecific.ProcessorInfo.availableProcessors());
       }
 
       return org.infinispan.commons.jdkspecific.ProcessorInfo.availableProcessors();

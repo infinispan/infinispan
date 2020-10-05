@@ -15,6 +15,7 @@ import org.infinispan.commons.util.IntSetsExternalization;
  * @author wburns
  * @since 9.0
  */
+@SuppressWarnings("deprecated")
 public class IntSetExternalizer extends AbstractExternalizer<IntSet> {
 
    @Override
