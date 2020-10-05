@@ -14,15 +14,13 @@ import org.infinispan.search.mapper.model.impl.InfinispanBootstrapIntrospector;
 
 public class SearchMappingHelper {
 
-   private static final String INFINISPAN_BACKEND_NAME = "infinispan_backend";
-   private static final String BACKEND_PREFIX = "hibernate.search.backends." + INFINISPAN_BACKEND_NAME;
+   private static final String BACKEND_PREFIX = "hibernate.search.backend";
 
    private SearchMappingHelper() {
    }
 
    public static SearchMapping createSearchMappingForTests(Class<?> ... types) {
       Map<String, Object> properties = new LinkedHashMap<>();
-      properties.put("hibernate.search.default_backend", INFINISPAN_BACKEND_NAME);
       properties.put(BACKEND_PREFIX + ".type", "lucene");
       properties.put(BACKEND_PREFIX + ".analysis.configurer", new DefaultAnalysisConfigurer());
       properties.put(SearchConfig.DIRECTORY_TYPE, SearchConfig.HEAP);
