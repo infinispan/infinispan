@@ -51,12 +51,12 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
     * Gets the internal buffer array. Note that the length of this array will almost certainly be longer than the data
     * written to it; call <code>size()</code> to get the number of bytes of actual data.
     */
-   public final byte[] getRawBuffer() {
+   public byte[] getRawBuffer() {
       return buf;
    }
 
    @Override
-   public final void write(byte[] b, int off, int len) {
+   public void write(byte[] b, int off, int len) {
       if ((off < 0) || (off > b.length) || (len < 0) ||
             ((off + len) > b.length) || ((off + len) < 0)) {
          throw new IndexOutOfBoundsException();
@@ -76,7 +76,7 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
    }
 
    @Override
-   public final void write(int b) {
+   public void write(int b) {
       int newcount = count + 1;
       if (newcount > buf.length) {
          byte newbuf[] = new byte[getNewBufferSize(buf.length, newcount)];
@@ -102,7 +102,7 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
     * @param minNewSize the minimum number of bytes required
     * @return the size to which the internal buffer should be resized
     */
-   public final int getNewBufferSize(int curSize, int minNewSize) {
+   public int getNewBufferSize(int curSize, int minNewSize) {
       if (curSize <= maxDoublingSize)
          return Math.max(curSize << 1, minNewSize);
       else
@@ -113,7 +113,7 @@ public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
     * Overriden only to avoid unneeded synchronization
     */
    @Override
-   public final int size() {
+   public int size() {
       return count;
    }
 }

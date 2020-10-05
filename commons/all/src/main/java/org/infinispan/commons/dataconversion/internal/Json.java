@@ -24,6 +24,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
@@ -306,7 +307,7 @@ public class Json implements java.io.Serializable {
     * @author Borislav Iordanov
     *
     */
-   public static interface Factory {
+   public interface Factory {
       /**
        * Construct and return an object representing JSON <code>null</code>. Implementations are
        * free to cache a return the same instance. The resulting value must return
@@ -379,7 +380,7 @@ public class Json implements java.io.Serializable {
       Json make(Object anything);
    }
 
-   public static interface Function<T, R> {
+   public interface Function<T, R> {
 
       /**
        * Applies this function to the given argument.
@@ -413,7 +414,7 @@ public class Json implements java.io.Serializable {
     * @author Borislav Iordanov
     *
     */
-   public static interface Schema {
+   public interface Schema {
       /**
        * <p>
        * Validate a JSON document according to this schema. The validations attempts to
@@ -445,7 +446,7 @@ public class Json implements java.io.Serializable {
    static String fetchContent(URL url) {
       java.io.Reader reader = null;
       try {
-         reader = new java.io.InputStreamReader((java.io.InputStream) url.getContent());
+         reader = new java.io.InputStreamReader((java.io.InputStream) url.getContent(), StandardCharsets.UTF_8);
          StringBuilder content = new StringBuilder();
          char[] buf = new char[1024];
          for (int n = reader.read(buf); n > -1; n = reader.read(buf))
@@ -578,7 +579,7 @@ public class Json implements java.io.Serializable {
    }
 
    static class DefaultSchema implements Schema {
-      static interface Instruction extends Function<Json, Json> {
+      interface Instruction extends Function<Json, Json> {
       }
 
       static Json maybeError(Json errors, Json E) {
@@ -654,7 +655,7 @@ public class Json implements java.io.Serializable {
          }
       }
 
-      class CheckNumber implements Instruction {
+      static class CheckNumber implements Instruction {
          double min = Double.NaN, max = Double.NaN, multipleOf = Double.NaN;
          boolean exclusiveMin = false, exclusiveMax = false;
 
@@ -795,7 +796,7 @@ public class Json implements java.io.Serializable {
          }
       }
 
-      class Sequence implements Instruction {
+      static class Sequence implements Instruction {
          ArrayList<Instruction> seq = new ArrayList<Instruction>();
 
          public Json apply(Json param) {
@@ -907,7 +908,7 @@ public class Json implements java.io.Serializable {
          }
       }
 
-      class CheckSchemaDependency implements Instruction {
+      static class CheckSchemaDependency implements Instruction {
          Instruction schema;
          String property;
 
@@ -2957,12 +2958,12 @@ public class Json implements java.io.Serializable {
    }
 
    private static class Reader {
-      private static final Object OBJECT_END = new String("}");
-      private static final Object ARRAY_END = new String("]");
-      private static final Object OBJECT_START = new String("{");
-      private static final Object ARRAY_START = new String("[");
-      private static final Object COLON = new String(":");
-      private static final Object COMMA = new String(",");
+      private static final Object OBJECT_END = "}";
+      private static final Object ARRAY_END = "]";
+      private static final Object OBJECT_START = "{";
+      private static final Object ARRAY_START = "[";
+      private static final Object COLON = ":";
+      private static final Object COMMA = ",";
       private static final HashSet<Object> PUNCTUATION = new HashSet<Object>(
             Arrays.asList(OBJECT_END, OBJECT_START, ARRAY_END, ARRAY_START, COLON, COMMA));
       public static final int FIRST = 0;
@@ -2972,14 +2973,14 @@ public class Json implements java.io.Serializable {
       private static Map<Character, Character> escapes = new HashMap<Character, Character>();
 
       static {
-         escapes.put(new Character('"'), new Character('"'));
-         escapes.put(new Character('\\'), new Character('\\'));
-         escapes.put(new Character('/'), new Character('/'));
-         escapes.put(new Character('b'), new Character('\b'));
-         escapes.put(new Character('f'), new Character('\f'));
-         escapes.put(new Character('n'), new Character('\n'));
-         escapes.put(new Character('r'), new Character('\r'));
-         escapes.put(new Character('t'), new Character('\t'));
+         escapes.put(Character.valueOf('"'), Character.valueOf('"'));
+         escapes.put(Character.valueOf('\\'), Character.valueOf('\\'));
+         escapes.put(Character.valueOf('/'), Character.valueOf('/'));
+         escapes.put(Character.valueOf('b'), Character.valueOf('\b'));
+         escapes.put(Character.valueOf('f'), Character.valueOf('\f'));
+         escapes.put(Character.valueOf('n'), Character.valueOf('\n'));
+         escapes.put(Character.valueOf('r'), Character.valueOf('\r'));
+         escapes.put(Character.valueOf('t'), Character.valueOf('\t'));
       }
 
       private CharacterIterator it;
@@ -3002,8 +3003,7 @@ public class Json implements java.io.Serializable {
 
       private void skipWhiteSpace() {
          do {
-            if (Character.isWhitespace(c)) {
-            } else if (c == '/') {
+            if (c == '/') {
                next();
                if (c == '*') {
                   // skip multiline comments
@@ -3019,7 +3019,7 @@ public class Json implements java.io.Serializable {
                   previous();
                   break;
                }
-            } else
+            } else if (!Character.isWhitespace(c))
                break;
          } while (next() != CharacterIterator.DONE);
       }
@@ -3201,7 +3201,7 @@ public class Json implements java.io.Serializable {
                if (c == 'u') {
                   add(unicode());
                } else {
-                  Object value = escapes.get(new Character(c));
+                  Object value = escapes.get(Character.valueOf(c));
                   if (value != null) {
                      add(((Character) value).charValue());
                   }

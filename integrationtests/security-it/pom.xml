@@ -120,7 +120,7 @@
             <executions>
                <execution>
                   <id>copy-test-libs</id>
-                  <phase>process-test-resources</phase>
+                  <phase>pre-integration-test</phase>
                   <configuration>
                      <includeScope>test</includeScope>
                      <outputDirectory>${project.build.directory}/test-libs</outputDirectory>
