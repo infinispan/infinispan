@@ -66,7 +66,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
    private static final String DEFAULT_CACHE_NAME = "defaultCache";
 
    /**
-    * Cache that will hold marshalled entries, configured to use application/x-jboss-marshalling for K and V.
+    * Cache that will hold marshalled entries, configured to use application/x-protostream for K and V.
     */
    private static final String MARSHALLED_CACHE_NAME = "marshalledCache";
 
@@ -140,7 +140,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
    @Test
    public void testStringKeysAndByteArrayValue() throws Exception {
       // The Hot Rod client writes marshalled content. The cache is explicitly configured with
-      // 'application/x-jboss-marshalling' for both K and V.
+      // 'application/x-protostream' for both K and V.
       String key = "string-1";
       byte[] value = {1, 2, 3};
       byte[] marshalledValue = new ProtoStreamMarshaller().objectToByteBuffer(value);
