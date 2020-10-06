@@ -30,6 +30,9 @@ class DefaultQuerySerializer implements QuerySerializer<QueryResponse> {
 
    @Override
    public QueryRequest decodeQueryRequest(byte[] queryRequest, MediaType mediaType) {
+      // QueryRequests are sent in 'unwrapped' protobuf format
+      if (mediaType.match(APPLICATION_PROTOSTREAM)) mediaType = PROTOSTREAM_UNWRAPPED;
+
       Transcoder transcoder = encoderRegistry.getTranscoder(APPLICATION_OBJECT, mediaType);
       return (QueryRequest) transcoder.transcode(queryRequest, mediaType, QUERY_REQUEST_TYPE);
    }
@@ -63,6 +66,7 @@ class DefaultQuerySerializer implements QuerySerializer<QueryResponse> {
 
    public byte[] encodeQueryResponse(Object queryResponse, MediaType destinationType) {
       MediaType destination = destinationType;
+      // QueryResponses are sent in 'unwrapped' protobuf format
       if (destinationType.match(APPLICATION_PROTOSTREAM)) destination = PROTOSTREAM_UNWRAPPED;
       Transcoder transcoder = encoderRegistry.getTranscoder(APPLICATION_OBJECT, destinationType);
       return (byte[]) transcoder.transcode(queryResponse, APPLICATION_OBJECT, destination);

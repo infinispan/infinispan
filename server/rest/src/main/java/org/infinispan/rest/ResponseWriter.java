@@ -2,7 +2,6 @@ package org.infinispan.rest;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.CONNECTION;
 import static io.netty.handler.codec.http.HttpHeaderValues.KEEP_ALIVE;
-import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,10 +43,10 @@ public enum ResponseWriter {
          HttpResponse res = response.getResponse();
          ByteBuf responseContent = ((FullHttpResponse) res).content();
          Object entity = response.getEntity();
-         if (entity instanceof String) {
-            ByteBufUtil.writeUtf8(responseContent, entity.toString());
-         } else if (entity instanceof byte[]) {
+         if (entity instanceof byte[]) {
             responseContent.writeBytes((byte[]) entity);
+         } else {
+            ByteBufUtil.writeUtf8(responseContent, entity.toString());
          }
          HttpUtil.setContentLength(res, responseContent.readableBytes());
          accessLog.log(ctx, request, response.getResponse());
@@ -87,9 +86,8 @@ public enum ResponseWriter {
 
    static ResponseWriter forContent(Object content) {
       if (content == null) return EMPTY;
-      if (content instanceof String || content instanceof byte[]) return FULL;
       if (content instanceof File) return CHUNKED_FILE;
       if (content instanceof InputStream) return CHUNKED_STREAM;
-      throw new RestResponseException(INTERNAL_SERVER_ERROR, "Cannot write content of type " + content.getClass());
+      return FULL;
    }
 }
