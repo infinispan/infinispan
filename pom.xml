@@ -327,7 +327,6 @@
       <versionx.org.hibernate.gson-jbossmodules.gson-jbossmodules>${version.gson.featurepack}</versionx.org.hibernate.gson-jbossmodules.gson-jbossmodules>
       <versionx.org.hibernate.hibernate-core>${version.hibernate.core}</versionx.org.hibernate.hibernate-core>
       <versionx.org.hibernate.hibernate-osgi>${version.hibernate.core}</versionx.org.hibernate.hibernate-osgi>
-      <versionx.org.hibernate.hibernate-search-backend-jms>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-backend-jms>
       <versionx.org.hibernate.hibernate-search-engine>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-engine>
       <versionx.org.hibernate.hibernate-search-jbossmodules-engine>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-jbossmodules-engine>
       <versionx.org.hibernate.hibernate-search-orm>${version.hibernate.search}</versionx.org.hibernate.hibernate-search-orm>
@@ -1001,12 +1000,6 @@
             <artifactId>hibernate-osgi</artifactId>
             <version>${versionx.org.hibernate.hibernate-osgi}</version>
             <scope>runtime</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-search-backend-jms</artifactId>
-            <version>${versionx.org.hibernate.hibernate-search-backend-jms}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>
