@@ -375,10 +375,18 @@ public class ConfigurationProperties {
       props.setProperty(TRUST_STORE_PASSWORD, trustStorePassword);
    }
 
+   /**
+    * @deprecated Since 12.0 and will be removed in 15.0
+    */
+   @Deprecated
    public String getTrustStorePath() {
       return props.getProperty(TRUST_STORE_PATH);
    }
 
+   /**
+    * @deprecated Since 12.0 and will be removed in 15.0
+    */
+   @Deprecated
    public void setTrustStorePath(String trustStorePath) {
       props.setProperty(TRUST_STORE_PATH, trustStorePath);
    }

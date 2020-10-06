@@ -8,8 +8,6 @@ import java.util.Properties;
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -21,7 +19,6 @@ import org.infinispan.commons.util.TypedProperties;
  * @since 5.3
  */
 public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<SslConfiguration> {
-   private static final Log log = LogFactory.getLog(SslConfigurationBuilder.class);
    private boolean enabled = false;
    private String keyStoreFileName;
    private String keyStoreType;
@@ -117,6 +114,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       return enable();
    }
 
+   /**
+    * Specifies a pre-built {@link SSLContext}
+    */
    public SslConfigurationBuilder sslContext(SSLContext sslContext) {
       this.sslContext = sslContext;
       return enable();
@@ -136,8 +136,12 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     * Specifies a path containing certificates in PEM format. An in-memory {@link java.security.KeyStore} will be built
     * with all the certificates found undert that path. This is mutually exclusive with {@link #trustStoreFileName}
     * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
+    *
+    * @deprecated since 12.0 to be removed in 15.0. Use {@link #trustStoreFileName(String)} and pass <tt>pem</tt> to {@link #trustStoreType(String)}.
     */
+   @Deprecated
    public SslConfigurationBuilder trustStorePath(String trustStorePath) {
+      HOTROD.deprecatedConfigurationProperty(ConfigurationProperties.TRUST_STORE_PATH);
       this.trustStorePath = trustStorePath;
       return enable();
    }
@@ -196,7 +200,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
             if (trustStoreFileName != null && trustStorePath != null) {
                throw HOTROD.trustStoreFileAndPathExclusive();
             }
-            if (trustStoreFileName != null && trustStorePassword == null) {
+            if (trustStoreFileName != null && trustStorePassword == null && !"pem".equalsIgnoreCase(trustStoreType)) {
                throw HOTROD.missingTrustStorePassword(trustStoreFileName);
             }
          } else {
@@ -256,8 +260,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       if (typed.containsKey(ConfigurationProperties.TRUST_STORE_FILE_NAME))
          this.trustStoreFileName(typed.getProperty(ConfigurationProperties.TRUST_STORE_FILE_NAME, trustStoreFileName, true));
 
-      if (typed.containsKey(ConfigurationProperties.TRUST_STORE_PATH))
+      if (typed.containsKey(ConfigurationProperties.TRUST_STORE_PATH)) {
          this.trustStorePath(typed.getProperty(ConfigurationProperties.TRUST_STORE_PATH, trustStorePath, true));
+      }
 
       if (typed.containsKey(ConfigurationProperties.TRUST_STORE_TYPE))
          this.trustStoreType(typed.getProperty(ConfigurationProperties.TRUST_STORE_TYPE, null, true));

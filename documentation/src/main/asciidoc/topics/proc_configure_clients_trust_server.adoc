@@ -12,7 +12,8 @@ the `ConfigurationBuilder` or by specifying properties in
 
 . Enable SSL with the `ssl()` method. This implicitly enables SSL if you specify a truststore.
 . Specify the name of the truststore with the `trustStoreFileName()` method.
-. Specify the truststore secret with the `trustStorePassword()` method.
+. Specify the truststore secret with the `trustStorePassword()` method. Not needed for `PEM` certificates.
+. Specify the truststore type with the `trustStoreType()` method. Valid values are `JKS`, `JCEKS`, `PKCS12` and `PEM`.
 
 [source,java]
 ----
