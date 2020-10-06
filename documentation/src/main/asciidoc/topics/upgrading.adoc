@@ -89,6 +89,9 @@ the current {brandname} version and configuration.
 === Rest Store
 The rest-store has been removed. Users should utilise the HotRod based remote-store for reading/writing to Infinispan clusters.
 
+=== Hot Rod client
+The `trust_store_path` property has been deprecated. Use `trust_store_filename` instead and specify `pem` in `trust_store_type`.
+
 = Upgrading from 10.1 to 11.0
 
 == HotRod Client

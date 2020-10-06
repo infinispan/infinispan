@@ -241,6 +241,7 @@
       <!-- dependencies version -->
       <versionx.ant-contrib.ant-contrib>${version.ant-contrib}</versionx.ant-contrib.ant-contrib>
       <versionx.com.amazonaws>1.11.368</versionx.com.amazonaws>
+      <versionx.com.bouncycastle>${version.bouncycastle}</versionx.com.bouncycastle>
       <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
       <versionx.com.esotericsoftware.kryo>4.0.2</versionx.com.esotericsoftware.kryo>
       <versionx.com.fasterxml.jackson.core.jackson-annotations>${version.jackson}</versionx.com.fasterxml.jackson.core.jackson-annotations>
@@ -447,6 +448,11 @@
             <groupId>com.amazonaws</groupId>
             <artifactId>jmespath-java</artifactId>
             <version>${versionx.com.amazonaws}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15to18</artifactId>
+            <version>${versionx.com.bouncycastle}</version>
          </dependency>
          <dependency>
             <groupId>com.clearspring.analytics</groupId>

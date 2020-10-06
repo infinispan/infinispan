@@ -356,4 +356,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Error reaching the server during iteration", id = 4100)
    void throwableDuringPublisher(@Cause Throwable t);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Configuration property '%s' has been deprecated", id = 4101)
+   void deprecatedConfigurationProperty(String property);
 }

@@ -125,6 +125,7 @@
       <version.antlr3>3.5.2</version.antlr3>
       <version.arquillian>1.6.0.Final</version.arquillian>
       <version.blockhound>1.0.3.RELEASE</version.blockhound>
+      <version.bouncycastle>1.66</version.bouncycastle>
       <version.byteman>4.0.6</version.byteman>
       <version.caffeine>2.8.4</version.caffeine>
       <version.cdi>2.0</version.cdi>

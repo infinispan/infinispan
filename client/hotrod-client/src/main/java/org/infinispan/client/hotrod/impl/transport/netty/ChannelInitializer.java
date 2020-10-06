@@ -117,12 +117,16 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
                      .getKeyManagerFactory());
             }
             if (ssl.trustStoreFileName() != null) {
-               builder.trustManager(new SslContextFactory()
-                     .trustStoreFileName(ssl.trustStoreFileName())
-                     .trustStoreType(ssl.trustStoreType())
-                     .trustStorePassword(ssl.trustStorePassword())
-                     .classLoader(configuration.classLoader())
-                     .getTrustManagerFactory());
+               if ("pem".equalsIgnoreCase(ssl.trustStoreType())) {
+                  builder.trustManager(new File(ssl.trustStoreFileName()));
+               } else {
+                  builder.trustManager(new SslContextFactory()
+                        .trustStoreFileName(ssl.trustStoreFileName())
+                        .trustStoreType(ssl.trustStoreType())
+                        .trustStorePassword(ssl.trustStorePassword())
+                        .classLoader(configuration.classLoader())
+                        .getTrustManagerFactory());
+               }
             }
             if (ssl.trustStorePath() != null) {
                builder.trustManager(new File(ssl.trustStorePath()));
