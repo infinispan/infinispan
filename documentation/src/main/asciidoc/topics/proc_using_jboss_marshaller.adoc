@@ -19,14 +19,15 @@ JBoss Marshalling.
 
 . Add the `infinispan-jboss-marshalling` dependency to your classpath.
 . Configure {brandname} to use the `JBossUserMarshaller`.
-+
+. Add your Java classes to the deserialization allowlist.
+
 * Programmatically:
 +
 [source,java]
 ----
 include::code_examples/JBossUserMarshaller.java[]
 ----
-+
+
 * Declaratively:
 +
 [source,xml,options="nowrap",subs=attributes+]

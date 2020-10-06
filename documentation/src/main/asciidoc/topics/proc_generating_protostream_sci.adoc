@@ -1,0 +1,57 @@
+[id='generating_protostream_sci-{context}']
+= Generating Serialization Context Initializers
+A ProtoStream `SerializationContext` contains Protobuf type definitions for
+custom Java objects, loaded from Protobuf schemas, and the accompanying
+marshallers for those objects.
+
+{brandname} provides a `protostream-processor` artifact that processes Java
+annotations in your classes at compile time. The processor generates Protobuf
+schemas, marshallers, and a concrete implementation of the
+`SerializationContextInitializer` interface that you can use to initialize a
+ProtoStream `SerializationContext`.
+
+[NOTE]
+====
+By default, implementation names are the annotated class name with an "Impl"
+suffix.
+====
+
+.Procedure
+
+. Add the `protostream-processor` dependency to your `pom.xml`.
++
+[source,xml]
+----
+include::dependencies_maven/protostream-processor.xml[]
+----
++
+. Annotate the Java objects that you want to marshall with `@ProtoField` and `@ProtoFactory`.
++
+[source,java]
+.Author.java
+----
+include::code_examples/Author.java[]
+----
++
+[source,java]
+.Book.java
+----
+include::code_examples/Book.java[]
+----
++
+. Define an interface that extends `SerializationContextInitializer` and is annotated with `@AutoProtoSchemaBuilder`.
++
+[source,java]
+----
+include::code_examples/LibraryInitializer.java[]
+----
++
+<1> Names the generated `.proto` schema file.
+<2> Sets the path under `target/classes` where the schema file is generated.
+
+.Next steps
+
+Add the `SerializationContextInitializer` implementation to your {brandname}
+configuration to register it.
+
+See link:#registering_sci-marshalling[Registering Serialization Context Initializers].

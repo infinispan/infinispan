@@ -1,0 +1,22 @@
+[id='registering_sci-{context}']
+= Registering Serialization Context Initializers
+Declare `SerializationContextInitializer` implementations in your
+{brandname} configuration to register them.
+
+.Procedure
+
+* Manually register `SerializationContextInitializer` implementations either programmatically or declaratively, as in the following examples:
+
+.Programmatic configuration
+
+[source,java]
+----
+include::code_examples/ProtoStreamMarshaller.java[]
+----
+
+.Declarative configuration
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/protostream_marshaller.xml[]
+----
