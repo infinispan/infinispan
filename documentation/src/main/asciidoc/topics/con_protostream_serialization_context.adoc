@@ -1,9 +1,0 @@
-[id='protostream_ctx']
-= ProtoStream Serialization Contexts
-A ProtoStream `SerializationContext` contains Protobuf type definitions for
-custom Java objects, loaded from `.proto` schema files, and the accompanying
-Marshallers for the objects.
-
-The `SerializationContextInitializer` interface registers Java objects and
-marshallers so that the ProtoStream library can encode your custom objects to 
-Protobuf format, which then enables {brandname} to transmit and store your data.

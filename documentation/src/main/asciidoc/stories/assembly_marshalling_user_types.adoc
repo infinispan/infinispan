@@ -1,0 +1,15 @@
+[id='marshalling_user_types']
+:context: marshalling
+= Marshalling User Types with ProtoStream
+User types are Java objects that {brandname} does not support out of the box.
+To marshall user types, you implement the `SerializationContextInitializer`
+interface to describe your Java objects so that the ProtoStream library can
+encode them to Protobuf format and {brandname} can transmit and store them.
+
+include::{topics}/proc_generating_protostream_sci.adoc[leveloffset=+1]
+include::{topics}/proc_implementing_protostream_sci.adoc[leveloffset=+1]
+include::{topics}/proc_manually_registering_sci.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

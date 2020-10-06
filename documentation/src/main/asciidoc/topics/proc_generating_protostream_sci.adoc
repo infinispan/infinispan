@@ -1,0 +1,79 @@
+[id='generating_protostream_sci-{context}']
+= Generating Serialization Context Initializers
+A ProtoStream `SerializationContext` contains Protobuf type definitions for
+custom Java objects, loaded from Protobuf schemas, and the accompanying
+marshallers for those objects.
+
+{brandname} provides a `protostream-processor` artifact that processes Java
+annotations in your classes at compile time. The processor generates Protobuf
+schemas, marshallers, and a concrete implementation of the
+`SerializationContextInitializer` interface that you can use to initialize a
+ProtoStream `SerializationContext`.
+
+[NOTE]
+====
+By default, implementation names are the annotated class name with an "Impl"
+suffix.
+====
+
+.Procedure
+
+. Add the `protostream-processor` dependency to your `pom.xml`.
++
+[source,xml]
+----
+include::dependencies_maven/protostream-processor.xml[]
+----
++
+. Annotate the Java objects that you want to marshall with `@ProtoField` and `@ProtoFactory`.
++
+[source,java]
+.Author.java
+----
+include::code_examples/Author.java[]
+----
++
+[source,java]
+.Book.java
+----
+include::code_examples/Book.java[]
+----
++
+. Define an interface that extends `SerializationContextInitializer` and is annotated with `@AutoProtoSchemaBuilder`.
++
+[source,java]
+----
+include::code_examples/LibraryInitializer.java[]
+----
++
+<1> Names the generated `.proto` schema file.
+<2> Sets the path under `target/classes` where the schema file is generated.
+
+.Next steps
+
+{brandname} automatically registers any `SerializationContextInitializer`
+implementations on the application classpath. After you generate a
+`SerializationContextInitializer`, {brandname} is ready to marshall your Java
+objects.
+
+[NOTE]
+====
+If you do not want {brandname} to automatically register your
+`SerializationContextInitializer` implementation, you should set a value of
+`false` for the `AutoProtoSchemaBuilder.service` annotation. However, you must
+then declare the implementation in your {brandname} configuration to register
+it.
+
+[source,java]
+----
+@AutoProtoSchemaBuilder(
+      includeClasses = SomeClass.class,
+      ...
+      service = false
+)
+----
+====
+
+.Reference
+
+* link:#manually_registering_sci-marshalling[Manually Registering Serialization Context Initializers]

@@ -1,0 +1,56 @@
+[id='implementing_proto_marshallers']
+= Manually Implementing Serialization Context Initializers
+In some cases you might need to manually define Protobuf schemas and implement
+ProtoStream marshallers. For example, if you cannot modify Java object classes
+to add annotations.
+
+.Procedure
+
+. Create a Protobuf schema, `.proto` file, that provides a structured
+representations of the Java objects to marshall.
++
+[source,proto]
+----
+include::config_examples/library.proto[]
+----
++
+The preceding `.library.proto` file defines an entity (Protobuf message type)
+named _Book_ that is contained in the _book_sample_ package. _Book_ declares
+several fields of primitive types and an array (Protobuf repeatable field)
+named _authors_, which is the _Author_ message type.
++
+* You can nest messages but the resulting structure is strictly a tree, never a graph.
+* Type inheritance is not possible.
+* Collections are not supported but you can emulate arrays with repeated fields.
++
+. Use the `org.infinispan.protostream.MessageMarshaller` interface to implement
+marshallers for your classes.
++
+[source,java]
+.BookMarshaller.java
+----
+include::code_examples/BookMarshaller.java[]
+----
++
+[source,java]
+.AuthorMarshaller.java
+----
+include::code_examples/AuthorMarshaller.java[]
+----
++
+. Create a `SerializationContextInitializer` implementation that registers the
+`.proto` schema and the ProtoStream marshaller implementations with a
+`SerializationContext`.
++
+[source,java]
+.ManualSerializationContextInitializer.java
+----
+include::code_examples/ManualSerializationContextInitializer.java[]
+----
++
+. Add the `SerializationContextInitializer` implementation to your {brandname}
+configuration to register it.
+
+.Reference
+
+* link:#manually_registering_sci-marshalling[Manually Registering Serialization Context Initializers]
