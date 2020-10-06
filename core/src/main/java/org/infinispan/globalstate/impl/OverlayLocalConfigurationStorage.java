@@ -37,6 +37,7 @@ import org.infinispan.globalstate.LocalConfigurationStorage;
 
 public class OverlayLocalConfigurationStorage extends VolatileLocalConfigurationStorage {
    private Set<String> persistentCaches = ConcurrentHashMap.newKeySet();
+   private Set<String> persistentTemplates = ConcurrentHashMap.newKeySet();
 
    @Override
    public void validateFlags(EnumSet<CacheContainerAdmin.AdminFlag> flags) {
@@ -45,12 +46,37 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
          throw CONFIG.globalStateDisabled();
    }
 
+   @Override
+   public CompletableFuture<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      CompletableFuture<Void> future = super.createTemplate(name, configuration, flags);
+      if (!flags.contains(CacheContainerAdmin.AdminFlag.VOLATILE)) {
+         return blockingManager.thenApplyBlocking(future, (v) -> {
+            persistentTemplates.add(name);
+            storeTemplates();
+            return v;
+         }, name).toCompletableFuture();
+      } else {
+         return future;
+      }
+   }
+
+   @Override
+   public CompletableFuture<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      return blockingManager.<Void>supplyBlocking(() -> {
+         if (persistentTemplates.remove(name)) {
+            storeTemplates();
+         }
+         removeTemplateSync(name, flags);
+         return null;
+      }, name).toCompletableFuture();
+   }
+
    public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       CompletableFuture<Void> future = super.createCache(name, template, configuration, flags);
       if (!flags.contains(CacheContainerAdmin.AdminFlag.VOLATILE)) {
          return blockingManager.thenApplyBlocking(future, (v) -> {
             persistentCaches.add(name);
-            storeAll();
+            storeCaches();
             return v;
          }, name).toCompletableFuture();
       } else {
@@ -61,17 +87,29 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
    public CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       return blockingManager.<Void>supplyBlocking(() -> {
          if (persistentCaches.remove(name)) {
-            storeAll();
+            storeCaches();
          }
          removeCacheSync(name, flags);
          return null;
       }, name).toCompletableFuture();
    }
 
-   public Map<String, Configuration> loadAll() {
-      // Load any persisted configs
+   @Override
+   public Map<String, Configuration> loadAllCaches() {
+      Map<String, Configuration> configs = load(getCachesFile());
+      log.tracef("Loaded cache configurations from local persistence: %s", configs.keySet());
+      return configs;
+   }
 
-      try (FileInputStream fis = new FileInputStream(getPersistentFile())) {
+   @Override
+   public Map<String, Configuration> loadAllTemplates() {
+      Map<String, Configuration> configs = load(getTemplateFile());
+      log.tracef("Loaded templates from local persistence: %s", configs.keySet());
+      return configs;
+   }
+
+   private Map<String, Configuration> load(File file) {
+      try (FileInputStream fis = new FileInputStream(file)) {
          Map<String, Configuration> configurations = new HashMap<>();
          ConfigurationBuilderHolder holder = parserRegistry.parse(fis, null);
          for (Map.Entry<String, ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
@@ -79,7 +117,6 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
             Configuration configuration = entry.getValue().build();
             configurations.put(name, configuration);
          }
-         log.tracef("Loaded configurations from local persistence: %s", configurations.keySet());
          return configurations;
       } catch (FileNotFoundException e) {
          // Ignore
@@ -89,35 +126,50 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
       }
    }
 
-   private void storeAll() {
+   private void storeCaches() {
+      persistConfigurations("caches", getCachesFile(), getCachesFileLock(), persistentCaches);
+   }
+
+   private void storeTemplates() {
+      persistConfigurations("templates", getTemplateFile(), getTemplateFileLock(), persistentTemplates);
+   }
+
+   private void persistConfigurations(String prefix, File file, File lock, Set<String> configNames) {
       try {
          GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
          File sharedDirectory = new File(globalConfiguration.globalState().sharedPersistentLocation());
          sharedDirectory.mkdirs();
-         File temp = File.createTempFile("caches", null, sharedDirectory);
+         File temp = File.createTempFile(prefix, null, sharedDirectory);
          Map<String, Configuration> configurationMap = new HashMap<>();
-         for (String cacheName : persistentCaches) {
-            configurationMap.put(cacheName, configurationManager.getConfiguration(cacheName, true));
+         for (String config : configNames) {
+            configurationMap.put(config, configurationManager.getConfiguration(config, true));
          }
          try (FileOutputStream f = new FileOutputStream(temp)) {
             parserRegistry.serialize(f, null, configurationMap);
          }
-         File persistentFile = getPersistentFile();
          try {
-            renameTempFile(temp, getPersistentFileLock(), persistentFile);
+            renameTempFile(temp, lock, file);
          } catch (Exception e) {
-            throw CONFIG.cannotRenamePersistentFile(temp.getAbsolutePath(), persistentFile, e);
+            throw CONFIG.cannotRenamePersistentFile(temp.getAbsolutePath(), file, e);
          }
       } catch (Exception e) {
          throw CONFIG.errorPersistingGlobalConfiguration(e);
       }
    }
 
-   private File getPersistentFile() {
+   private File getCachesFile() {
       return new File(configurationManager.getGlobalConfiguration().globalState().sharedPersistentLocation(), "caches.xml");
    }
 
-   private File getPersistentFileLock() {
+   private File getCachesFileLock() {
       return new File(configurationManager.getGlobalConfiguration().globalState().sharedPersistentLocation(), "caches.xml.lck");
+   }
+
+   private File getTemplateFile() {
+      return new File(configurationManager.getGlobalConfiguration().globalState().sharedPersistentLocation(), "templates.xml");
+   }
+
+   private File getTemplateFileLock() {
+      return new File(configurationManager.getGlobalConfiguration().globalState().sharedPersistentLocation(), "templates.xml.lck");
    }
 }

@@ -16,7 +16,9 @@ public class EmbeddedServerAdminOperationHandler extends AdminOperationsHandler 
             new CacheGetOrCreateTask(),
             new CacheNamesTask(),
             new CacheRemoveTask(),
-            new CacheReindexTask()
+            new CacheReindexTask(),
+            new TemplateCreateTask(),
+            new TemplateRemoveTask()
       );
    }
 }

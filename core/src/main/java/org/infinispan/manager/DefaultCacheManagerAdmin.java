@@ -64,6 +64,25 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    }
 
    @Override
+   public void createTemplate(String name, Configuration configuration) {
+      authzHelper.checkPermission(subject, AuthorizationPermission.ADMIN);
+      uncheckedAwait(clusterConfigurationManager.createTemplate(name, configuration, flags));
+   }
+
+   @Override
+   public Configuration getOrCreateTemplate(String name, Configuration configuration) {
+      authzHelper.checkPermission(subject, AuthorizationPermission.ADMIN);
+      uncheckedAwait(clusterConfigurationManager.getOrCreateTemplate(name, configuration, flags));
+      return cacheManager.getCacheConfiguration(name);
+   }
+
+   @Override
+   public void removeTemplate(String name) {
+      authzHelper.checkPermission(subject, AuthorizationPermission.ADMIN);
+      uncheckedAwait(clusterConfigurationManager.removeTemplate(name, flags));
+   }
+
+   @Override
    public void removeCache(String cacheName) {
       authzHelper.checkPermission(subject, AuthorizationPermission.ADMIN);
       uncheckedAwait(clusterConfigurationManager.removeCache(cacheName, flags));

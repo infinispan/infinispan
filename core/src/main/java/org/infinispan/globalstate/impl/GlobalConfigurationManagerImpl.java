@@ -46,6 +46,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    public static final String CACHE_SCOPE = "cache";
+   public static final String TEMPLATE_SCOPE = "template";
 
    @Inject EmbeddedCacheManager cacheManager;
    @Inject LocalTopologyManager localTopologyManager;
@@ -57,6 +58,10 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
    private LocalConfigurationStorage localConfigurationManager;
+
+   static boolean isKnownScope(String scope) {
+      return CACHE_SCOPE.equals(scope) || TEMPLATE_SCOPE.equals(scope);
+   }
 
    @Start
    void start() {
@@ -91,48 +96,63 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
       localConfigurationManager.initialize(cacheManager, configurationManager, blockingManager);
 
-      // Load any state we previously had in the local persistent state into the global state
-      Map<String, Configuration> persistedConfigurations = localConfigurationManager.loadAll();
-
       // Install the global state listener
       GlobalConfigurationStateListener stateCacheListener = new GlobalConfigurationStateListener(this);
       getStateCache().addListener(stateCacheListener);
 
-      // Create all the caches that exist in the global state
+      Map<String, Configuration> persistedCaches = localConfigurationManager.loadAllCaches();
+      Map<String, Configuration> persistedTemplates = localConfigurationManager.loadAllTemplates();
+
       getStateCache().forEach((key, v) -> {
-         if (CACHE_SCOPE.equals(key.getScope())) {
-            String cacheName = key.getName();
-            CacheState cacheState = (CacheState) v;
-            Configuration persisted = persistedConfigurations.get(cacheName);
-            if (persisted != null) {
-               Configuration configuration = CompletionStages.join(buildConfiguration(cacheName, cacheState));
-               if (!persisted.matches(configuration)) {
-                  throw CONFIG.incompatibleClusterConfiguration(cacheName, configuration, persisted);
-               } else {
-                  // The cache configuration matches, we can skip it when iterating the ones from the local state
-                  persistedConfigurations.remove(cacheName);
-               }
-            }
-            CompletionStages.join(createCacheLocally(cacheName, cacheState));
+         String scope = key.getScope();
+         if (isKnownScope(scope)) {
+            String name = key.getName();
+            CacheState state = (CacheState) v;
+            boolean cacheScope = CACHE_SCOPE.equals(scope);
+            Map<String, Configuration> map = cacheScope ? persistedCaches : persistedTemplates;
+            ensureClusterCompatibility(name, state, map);
+            CompletableFuture<Void> future = cacheScope ? createCacheLocally(name, state) : createTemplateLocally(name, state);
+            CompletionStages.join(future);
          }
       });
 
-      // Create caches that are in the local persistent state but not in the global state
-      persistedConfigurations.forEach((cacheName, configuration) -> {
-         Configuration staticConfiguration = cacheManager.getCacheConfiguration(cacheName);
-         if (staticConfiguration != null) {
-            if (!staticConfiguration.matches(configuration)) {
-               throw CONFIG.incompatiblePersistedConfiguration(cacheName, configuration, staticConfiguration);
-            } else {
-               // The cache configuration matches, we can skip it when iterating the ones from the local state
-               persistedConfigurations.remove(cacheName);
-            }
-         }
-
+      EnumSet<CacheContainerAdmin.AdminFlag> adminFlags = EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class);
+      persistedCaches.forEach((name, configuration) -> {
+         ensurePersistenceCompatibility(name, configuration, persistedCaches);
          // The cache configuration was permanent, it still needs to be
-         EnumSet<CacheContainerAdmin.AdminFlag> adminFlags = EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class);
-         CompletionStages.join(getOrCreateCache(cacheName, configuration, adminFlags));
+         CompletionStages.join(getOrCreateCache(name, configuration, adminFlags));
       });
+
+      persistedTemplates.forEach((name, configuration) -> {
+         ensurePersistenceCompatibility(name, configuration, persistedTemplates);
+         // The template was permanent, it still needs to be
+         CompletionStages.join(getOrCreateTemplate(name, configuration, adminFlags));
+      });
+   }
+
+   private void ensureClusterCompatibility(String name, CacheState state, Map<String, Configuration> configs) {
+      Configuration persisted = configs.get(name);
+      if (persisted != null) {
+         // Template value is not serialized, so buildConfiguration param is irrelevant
+         Configuration configuration = CompletionStages.join(buildConfiguration(name, state, false));
+         if (!persisted.matches(configuration)) {
+            throw CONFIG.incompatibleClusterConfiguration(name, configuration, persisted);
+         } else {
+            // The configuration matches, we can skip it when iterating the ones from the local state
+            configs.remove(name);
+         }
+      }
+   }
+
+   private void ensurePersistenceCompatibility(String name, Configuration configuration, Map<String, Configuration> configs) {
+      Configuration staticConfiguration = cacheManager.getCacheConfiguration(name);
+      if (staticConfiguration != null) {
+         if (!staticConfiguration.matches(configuration)) {
+            throw CONFIG.incompatiblePersistedConfiguration(name, configuration, staticConfiguration);
+         } else {
+            configs.remove(name);
+         }
+      }
    }
 
    @Override
@@ -141,6 +161,28 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          stateCache = cacheManager.getCache(CONFIG_STATE_CACHE_NAME);
       }
       return stateCache;
+   }
+
+   @Override
+   public CompletableFuture<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      Cache<ScopedState, Object> cache = getStateCache();
+      ScopedState key = new ScopedState(TEMPLATE_SCOPE, name);
+      return cache.containsKeyAsync(key).thenCompose(exists -> {
+         if (exists)
+            throw CONFIG.configAlreadyDefined(name);
+         return cache.putAsync(key, new CacheState(null, parserRegistry.serialize(name, configuration), flags));
+      }).thenApply(v -> null);
+   }
+
+   @Override
+   public CompletableFuture<Configuration> getOrCreateTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      localConfigurationManager.validateFlags(flags);
+      try {
+         CacheState state = new CacheState(null, parserRegistry.serialize(name, configuration), flags);
+         return getStateCache().putIfAbsentAsync(new ScopedState(TEMPLATE_SCOPE, name), state).thenApply((v) -> configuration);
+      } catch (Exception e) {
+         throw CONFIG.configurationSerializationFailed(name, configuration, e);
+      }
    }
 
    @Override
@@ -204,16 +246,23 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       }
    }
 
+   CompletableFuture<Void> createTemplateLocally(String name, CacheState state) {
+      log.debugf("Starting template %s from global state", name);
+      CompletionStage<Configuration> configurationStage = buildConfiguration(name, state, true);
+      return configurationStage.thenCompose(configuration -> localConfigurationManager.createTemplate(name, configuration, state.getFlags()))
+            .toCompletableFuture();
+   }
+
    CompletableFuture<Void> createCacheLocally(String name, CacheState state) {
       log.debugf("Starting cache %s from global state", name);
-      CompletionStage<Configuration> configurationStage = buildConfiguration(name, state);
+      CompletionStage<Configuration> configurationStage = buildConfiguration(name, state, false);
       return configurationStage.thenCompose(configuration -> localConfigurationManager.createCache(name, state.getTemplate(), configuration, state.getFlags()))
             .toCompletableFuture();
    }
 
-   private CompletionStage<Configuration> buildConfiguration(String name, CacheState state) {
+   private CompletionStage<Configuration> buildConfiguration(String name, CacheState state, boolean template) {
       ConfigurationBuilderHolder builderHolder = parserRegistry.parse(state.getConfiguration());
-      Configuration config = builderHolder.getNamedConfigurationBuilders().get(name).build(configurationManager.getGlobalConfiguration());
+      Configuration config = builderHolder.getNamedConfigurationBuilders().get(name).template(template).build(configurationManager.getGlobalConfiguration());
       return CompletableFuture.completedFuture(config);
    }
 
@@ -232,7 +281,16 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       }
    }
 
+   @Override
+   public CompletableFuture<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      return getStateCache().removeAsync(new ScopedState(TEMPLATE_SCOPE, name)).thenCompose((r) -> CompletableFutures.completedNull());
+   }
+
    CompletableFuture<Void> removeCacheLocally(String name, CacheState state) {
       return localConfigurationManager.removeCache(name, state.getFlags());
+   }
+
+   CompletableFuture<Void> removeTemplateLocally(String name, CacheState state) {
+      return localConfigurationManager.removeTemplate(name, state.getFlags());
    }
 }

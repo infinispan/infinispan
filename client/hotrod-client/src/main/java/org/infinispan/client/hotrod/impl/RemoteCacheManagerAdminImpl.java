@@ -118,6 +118,23 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       await(operationsFactory.newAdminOperation("@@cache@reindex", Collections.singletonMap(CACHE_NAME, string(name))).execute());
    }
 
+   @Override
+   public void createTemplate(String name, BasicConfiguration configuration) {
+      Map<String, byte[]> params = new HashMap<>(2);
+      params.put(CACHE_NAME, string(name));
+      if (configuration != null) params.put(CACHE_CONFIGURATION, string(configuration.toXMLString(name)));
+      if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
+      await(operationsFactory.newAdminOperation("@@template@create", params).execute());
+   }
+
+   @Override
+   public void removeTemplate(String name) {
+      Map<String, byte[]> params = new HashMap<>(2);
+      params.put(CACHE_NAME, string(name));
+      if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
+      await(operationsFactory.newAdminOperation("@@template@remove", params).execute());
+   }
+
    private static byte[] flags(EnumSet<AdminFlag> flags) {
       String sFlags = flags.stream().map(AdminFlag::toString).collect(Collectors.joining(","));
       return string(sFlags);
