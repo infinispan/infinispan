@@ -46,7 +46,22 @@ public class ImmutableLocalConfigurationStorage implements LocalConfigurationSto
    }
 
    @Override
-   public Map<String, Configuration> loadAll() {
+   public CompletableFuture<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      throw CONFIG.immutableConfiguration();
+   }
+
+   @Override
+   public CompletableFuture<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      throw CONFIG.immutableConfiguration();
+   }
+
+   @Override
+   public Map<String, Configuration> loadAllCaches() {
+      return Collections.emptyMap();
+   }
+
+   @Override
+   public Map<String, Configuration> loadAllTemplates() {
       return Collections.emptyMap();
    }
 }

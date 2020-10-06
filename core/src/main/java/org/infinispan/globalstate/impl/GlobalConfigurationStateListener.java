@@ -1,5 +1,7 @@
 package org.infinispan.globalstate.impl;
 
+import static org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl.CACHE_SCOPE;
+import static org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl.isKnownScope;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.concurrent.CompletionStage;
@@ -27,23 +29,34 @@ public class GlobalConfigurationStateListener {
    }
 
    @CacheEntryCreated
-   public CompletionStage<Void> createCache(CacheEntryCreatedEvent<ScopedState, Object> event) {
-      if (!GlobalConfigurationManagerImpl.CACHE_SCOPE.equals(event.getKey().getScope()))
+   public CompletionStage<Void> handleCreate(CacheEntryCreatedEvent<ScopedState, CacheState> event) {
+      String scope = event.getKey().getScope();
+      if (!isKnownScope(scope))
          return CompletableFutures.completedNull();
 
-      String cacheName = event.getKey().getName();
-      CacheState state = (CacheState) event.getValue();
+      String name = event.getKey().getName();
+      CacheState state = event.getValue();
 
-      return gcm.createCacheLocally(cacheName, state);
+      return CACHE_SCOPE.equals(scope) ?
+            gcm.createCacheLocally(name, state) :
+            gcm.createTemplateLocally(name, state);
    }
 
    @CacheEntryRemoved
-   public CompletionStage<Void> removeCache(CacheEntryRemovedEvent<ScopedState, CacheState> event) {
-      if (!GlobalConfigurationManagerImpl.CACHE_SCOPE.equals(event.getKey().getScope()))
+   public CompletionStage<Void> handleRemove(CacheEntryRemovedEvent<ScopedState, CacheState> event) {
+      String scope = event.getKey().getScope();
+      if (!isKnownScope(scope))
          return CompletableFutures.completedNull();
 
-      String cacheName = event.getKey().getName();
-      CONTAINER.debugf("Stopping cache %s because it was removed from global state", cacheName);
-      return gcm.removeCacheLocally(cacheName, event.getOldValue());
+      String name = event.getKey().getName();
+      CacheState state = event.getOldValue();
+
+      if (CACHE_SCOPE.equals(scope)) {
+         CONTAINER.debugf("Stopping cache %s because it was removed from global state", name);
+         return gcm.removeCacheLocally(name, state);
+      } else {
+         CONTAINER.debugf("Removing template %s because it was removed from global state", name);
+         return gcm.removeTemplateLocally(name, state);
+      }
    }
 }

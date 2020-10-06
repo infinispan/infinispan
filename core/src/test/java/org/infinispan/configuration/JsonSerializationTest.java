@@ -627,7 +627,22 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       }
 
       @Override
-      public Map<String, Configuration> loadAll() {
+      public CompletableFuture<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+         return CompletableFutures.completedNull();
+      }
+
+      @Override
+      public CompletableFuture<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+         return CompletableFutures.completedNull();
+      }
+
+      @Override
+      public Map<String, Configuration> loadAllCaches() {
+         return null;
+      }
+
+      @Override
+      public Map<String, Configuration> loadAllTemplates() {
          return null;
       }
    }

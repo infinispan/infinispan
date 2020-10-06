@@ -119,4 +119,19 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends Ba
     * @return
     */
    C withFlags(EnumSet<AdminFlag> flags);
+
+   /**
+    *  Creates a template on the container using the provided configuration.
+    *
+    * @param name the name of the template
+    * @param configuration the configuration to use. It must be a clustered configuration (e.g. distributed)
+    */
+   void createTemplate(String name, A configuration);
+
+   /**
+    * Removes a template from the cache container. Any persisted data will be cleared.
+    *
+    * @param name the name of the template to remove
+    */
+   void removeTemplate(String name);
 }

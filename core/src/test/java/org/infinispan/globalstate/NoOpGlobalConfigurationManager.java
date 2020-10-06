@@ -44,6 +44,21 @@ public class NoOpGlobalConfigurationManager implements GlobalConfigurationManage
       return CompletableFutures.completedNull();
    }
 
+   @Override
+   public CompletableFuture<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public CompletableFuture<Configuration> getOrCreateTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public CompletableFuture<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      return CompletableFutures.completedNull();
+   }
+
    public static void amendCacheManager(EmbeddedCacheManager cm) {
       TestingUtil.replaceComponent(cm, GlobalConfigurationManager.class, new NoOpGlobalConfigurationManager(), true);
    }

@@ -2,7 +2,10 @@ package org.infinispan.globalstate;
 
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.fail;
 
 import java.io.File;
@@ -12,6 +15,7 @@ import java.lang.reflect.Method;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -28,6 +32,42 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "globalstate.GlobalStateTest", groups = "functional")
 public class GlobalStateTest extends AbstractInfinispanTest {
+
+   public void testReplicatedState(Method m) {
+      String state1 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "1");
+      GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
+      String state2 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "2");
+      GlobalConfigurationBuilder global2 = statefulGlobalBuilder(state2, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, null, new TransportFlags());
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, null, new TransportFlags());
+      try {
+         Configuration cacheConfig = new ConfigurationBuilder().build();
+         Configuration template = new ConfigurationBuilder().template(true).build();
+         cm1.start();
+         cm2.start();
+         cm1.defineConfiguration("not-replicated-template", template);
+         cm1.createCache("not-replicated-cache", cacheConfig);
+         assertNull(cm2.getCacheConfiguration("not-replicated-template"));
+         assertFalse(cm2.cacheExists("not-replicated-cache"));
+
+         cm1.administration().getOrCreateCache("replicated-cache", cacheConfig);
+         cm1.administration().getOrCreateTemplate("replicated-template", template);
+         assertNotNull(cm2.getCache("replicated-cache"));
+         assertNotNull(cm2.getCacheConfiguration("replicated-template"));
+
+         assertEquals(2, cm1.getCacheNames().size());
+         assertEquals(1, cm2.getCacheNames().size());
+         cm1.stop();
+         cm2.stop();
+
+         global1 = statefulGlobalBuilder(state1, false);
+         EmbeddedCacheManager newCm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
+         assertNotNull(newCm1.getCache("replicated-cache"));
+         assertNotNull(newCm1.getCacheConfiguration("replicated-template"));
+      } finally {
+         TestingUtil.killCacheManagers(cm1, cm2);
+      }
+   }
 
    public void testLockPersistentLocation() {
       String stateDirectory = tmpDirectory(this.getClass().getSimpleName(), "COMMON");

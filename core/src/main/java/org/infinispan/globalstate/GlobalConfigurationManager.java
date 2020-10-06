@@ -27,6 +27,24 @@ public interface GlobalConfigurationManager {
    Cache<ScopedState, Object> getStateCache();
 
    /**
+    * Defines a cluster-wide configuration template
+    *
+    * @param name the name of the template
+    * @param configuration the configuration object
+    * @param flags the flags to apply
+    */
+   CompletableFuture<Void> createTemplate(String name, Configuration configuration, EnumSet<AdminFlag> flags);
+
+   /**
+    * Defines a cluster-wide configuration template
+    *
+    * @param name the name of the template
+    * @param configuration the configuration object
+    * @param flags the flags to apply
+    */
+   CompletableFuture<Configuration> getOrCreateTemplate(String name, Configuration configuration, EnumSet<AdminFlag> flags);
+
+   /**
     * Defines a cluster-wide cache configuration
     * @param cacheName the name of the configuration
     * @param configuration the configuration object
@@ -65,5 +83,10 @@ public interface GlobalConfigurationManager {
     */
    CompletableFuture<Void> removeCache(String cacheName, EnumSet<AdminFlag> flags);
 
-
+   /**
+    * Removes a cluster-wide template
+    * @param name the name of the template
+    * @param flags
+    */
+   CompletableFuture<Void> removeTemplate(String name, EnumSet<AdminFlag> flags);
 }
