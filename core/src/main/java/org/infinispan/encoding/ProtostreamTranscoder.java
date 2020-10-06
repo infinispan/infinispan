@@ -142,12 +142,10 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
 
    private Object unmarshall(byte[] bytes, MediaType contentType, MediaType destinationType) throws IOException {
       try {
+         if (isWrapped(contentType)) return ProtobufUtil.fromWrappedByteArray(ctx(), bytes);
+
          String type = destinationType.getClassType();
-         boolean wrapped = isWrapped(contentType);
-         if (type == null) {
-            if(wrapped) return ProtobufUtil.fromWrappedByteArray(ctx(), bytes);
-            throw logger.missingTypeForUnwrappedPayload();
-         }
+         if (type == null) throw logger.missingTypeForUnwrappedPayload();
          Class<?> destination = Util.loadClass(type, classLoader);
          return ProtobufUtil.fromByteArray(ctx(), bytes, destination);
       } catch (IllegalArgumentException iae) {
