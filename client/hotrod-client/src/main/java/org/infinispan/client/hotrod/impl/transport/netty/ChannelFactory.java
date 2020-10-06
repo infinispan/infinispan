@@ -216,7 +216,7 @@ public class ChannelFactory {
    public void destroy() {
       try {
          channelPoolMap.values().forEach(ChannelPool::close);
-         eventLoopGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS).get();
+         eventLoopGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS).get();  //todo set this parameters by properties??
          executorService.shutdownNow();
       } catch (Exception e) {
          log.warn("Exception while shutting down the connection pool.", e);
