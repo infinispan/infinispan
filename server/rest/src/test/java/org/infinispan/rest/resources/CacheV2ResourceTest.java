@@ -15,6 +15,8 @@ import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
 import static org.infinispan.context.Flag.SKIP_INDEXING;
 import static org.infinispan.globalstate.GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
+import static org.infinispan.rest.RequestHeader.ACCEPT_HEADER;
+import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -22,7 +24,9 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
@@ -36,6 +40,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -58,6 +63,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    @Override
    protected void defineCaches(EmbeddedCacheManager cm) {
       cm.defineConfiguration("default", getDefaultCacheBuilder().build());
+      cm.defineConfiguration("proto", getProtoCacheBuilder().build());
 
       Cache<String, String> metadataCache = cm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
       String proto = "/* @Indexed */ message Entity { /* @Field */ required int32 value=1; }";
@@ -65,6 +71,12 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       cm.defineConfiguration("indexedCache", getIndexedPersistedCache().build());
+   }
+
+   public ConfigurationBuilder getProtoCacheBuilder() {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      builder.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
+      return builder;
    }
 
    @Override
@@ -510,6 +522,35 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       assertEquals(200, checkCache("invalid"));
       assertEquals(200, checkCache("default"));
       assertEquals(200, checkCache("indexedCache"));
+   }
+
+   @Test
+   public void testCRUDWithProtobufPrimitives() throws Exception {
+      RestCacheClient client = this.client.cache("proto");
+      MediaType integerType = MediaType.APPLICATION_OBJECT.withClassType(Integer.class);
+
+      // Insert a pair of Integers
+      RestEntity value = RestEntity.create(integerType, "1");
+      CompletionStage<RestResponse> response = client.put("1", integerType.toString(), value);
+      ResponseAssertion.assertThat(response).isOk();
+
+      // Change the value to another Integer
+      RestEntity anotherValue = RestEntity.create(integerType, "2");
+      response = client.put("1", integerType.toString(), anotherValue);
+      ResponseAssertion.assertThat(response).isOk();
+
+      // Read the changed value as an integer
+      response = client.get("1", integerType.toString());
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).hasReturnedText("2");
+
+      // Read the changed value as protobuf
+      Map<String, String> headers = new HashMap<>();
+      headers.put(KEY_CONTENT_TYPE_HEADER.getValue(), integerType.toString());
+      headers.put(ACCEPT_HEADER.getValue(), MediaType.APPLICATION_PROTOSTREAM_TYPE);
+      response = client.get("1", headers);
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).hasReturnedBytes(new ProtoStreamMarshaller().objectToByteBuffer(2));
    }
 
    private int checkCache(String name) {
