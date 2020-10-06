@@ -1,12 +1,12 @@
 [id='java_serialization']
 = Using Java Serialization
 You can use Java serialization with {brandname} to marshall your objects, but
-only if your Java objects implement Java's `Serializable` interface.
+only if your Java objects implement the Java `Serializable` interface.
 
 .Procedure
 
 . Configure {brandname} to use `JavaSerializationMarshaller` as the marshaller.
-. Add your Java classes to the deserialization white list.
+. Add your Java classes to the deserialization allowlist.
 +
 * Programmatically:
 +
