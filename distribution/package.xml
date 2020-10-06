@@ -62,7 +62,7 @@
          </java>
          <java classname="org.infinispan.tools.licenses.LicenseReplacer">
             <arg value="-i"/>
-            <arg value="src/main/resources/template/licenses-overwrite.xml"/>
+            <arg value="${basedir}/src/main/resources/template/licenses-overwrite.xml"/>
             <arg value="-l"/>
             <arg value="@{dir}/docs/licenses/licenses.xml"/>
             <arg value="-o"/>

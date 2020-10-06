@@ -201,18 +201,6 @@
             <type>zip</type>
         </dependency>
 
-        <!-- just to be caught by the licenses plugin -->
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-search-backend-jms</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
         <dependency>
             <groupId>org.hibernate.lucene-jbossmodules</groupId>
             <artifactId>lucene-jbossmodules</artifactId>
