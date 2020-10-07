@@ -1737,6 +1737,14 @@
          <classifier>runtime</classifier>
          <scope>test</scope>
       </dependency>
+
+      <!-- To help debug errorprone issues -->
+      <dependency>
+         <groupId>javax.annotation</groupId>
+         <artifactId>javax.annotation-api</artifactId>
+         <version>${versionx.javax.annotation.javax.annotation-api}</version>
+         <optional>true</optional>
+      </dependency>
    </dependencies>
 
    <build>
@@ -2022,6 +2030,34 @@
                   </excludes>
                   <!-- Include method parameter debug info -->
                   <parameters>true</parameters>
+                  <compilerArgs>
+                     <!-- In case the compiler is forked -->
+                     <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
+                     <arg>-XDcompilePolicy=simple</arg>
+                     <arg>-Xplugin:ErrorProne</arg>
+                  </compilerArgs>
+                  <annotationProcessorPaths>
+                     <path>
+                        <groupId>org.kohsuke.metainf-services</groupId>
+                        <artifactId>metainf-services</artifactId>
+                        <version>${versionx.org.kohsuke.metainf-services.metainf-services}</version>
+                     </path>
+                     <path>
+                        <groupId>com.google.errorprone</groupId>
+                        <artifactId>error_prone_core</artifactId>
+                        <version>2.4.0</version>
+                     </path>
+                     <path>
+                        <groupId>org.infinispan.protostream</groupId>
+                        <artifactId>protostream-processor</artifactId>
+                        <version>${version.protostream}</version>
+                     </path>
+                     <path>
+                        <groupId>javax.annotation</groupId>
+                        <artifactId>javax.annotation-api</artifactId>
+                        <version>${versionx.javax.annotation.javax.annotation-api}</version>
+                     </path>
+                  </annotationProcessorPaths>
                </configuration>
             </plugin>
             <plugin>
