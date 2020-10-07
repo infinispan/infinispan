@@ -16,7 +16,9 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
 
 /**
@@ -25,7 +27,8 @@ import org.infinispan.commons.util.Util;
  * @since 11.0
  **/
 public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver {
-   private static final Log log = org.infinispan.commons.logging.LogFactory.getLog(ForkedInfinispanServerDriver.class);
+   private static final Log log = LogFactory.getLog(ForkedInfinispanServerDriver.class);
+   private static final int SHUTDOWN_TIMEOUT_SECONDS = 15;
    private final List<ForkedServer> forkedServers = new ArrayList<>();
    private final String[] serverHomes;
 
@@ -59,12 +62,11 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
          }
          copyArtifactsToUserLibDir(server.getServerLib());
          forkedServers.add(server.start());
-         forkedServers.get(0).printServerLog(log::info);
       }
    }
 
    /**
-    * Stop all cluster
+    * Stop whole cluster.
     */
    @Override
    protected void stop() {
@@ -73,12 +75,38 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
          // Ensure non-error response code from the REST endpoint.
          if (response.getStatus() >= 400) {
             throw new IllegalStateException(String.format("Failed to shutdown the cluster gracefully, got status %d.", response.getStatus()));
+         } else {
+            // Ensure that the server process has really quit
+            // - if it has; the getPid will throw an exception
+            boolean javaProcessQuit = false;
+            long endTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(SHUTDOWN_TIMEOUT_SECONDS);
+            while (!(javaProcessQuit || endTime < System.currentTimeMillis())) {
+               try {
+                  forkedServers.get(0).getPid();
+                  Thread.sleep(500);
+               } catch (IllegalStateException ignore) {
+                  // The process has quit.
+                  javaProcessQuit = true;
+               }
+            }
+            if (!javaProcessQuit) {
+               throw new IllegalStateException("Server Java process has not gracefully quit within " + SHUTDOWN_TIMEOUT_SECONDS + " seconds.");
+            }
          }
       } catch (Exception e) {
          // kill the servers
          log.error("Got exception while gracefully shutting down the cluster. Killing the servers.", e);
          for (int i = 0; i < configuration.numServers(); i++) {
-            kill(i);
+            try {
+               kill(i);
+            } catch (Exception exception) {
+               log.errorf("Failed to kill server #%d, exception was: %s", i, exception);
+            }
+         }
+      } finally {
+         for (int i = 0; i < configuration.numServers(); i++) {
+            // Do an internal stop - e.g. stops the log monitoring process.
+            forkedServers.get(i).stopInternal();
          }
       }
    }
@@ -113,31 +141,40 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
 
    @Override
    public void pause(int server) {
-      Exceptions.unchecked(() -> new ProcessBuilder("kill", "-SIGSTOP", String.valueOf(forkedServers.get(server).getPid())).start().waitFor(10, TimeUnit.SECONDS));
+      if (OS.getCurrentOs() == OS.WINDOWS) {
+         throw new UnsupportedOperationException("Forked mode does not support pause on Windows!");
+      } else {
+         Exceptions.unchecked(() -> new ProcessBuilder("kill", "-SIGSTOP", String.valueOf(forkedServers.get(server).getPid())).start().waitFor(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      }
    }
 
    @Override
    public void resume(int server) {
-      Exceptions.unchecked(() -> new ProcessBuilder("kill", "-SIGCONT", String.valueOf(forkedServers.get(server).getPid())).start().waitFor(10, TimeUnit.SECONDS));
+      if (OS.getCurrentOs() == OS.WINDOWS) {
+         throw new UnsupportedOperationException("Forked mode does not support resume on Windows!");
+      } else {
+         Exceptions.unchecked(() -> new ProcessBuilder("kill", "-SIGCONT", String.valueOf(forkedServers.get(server).getPid())).start().waitFor(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      }
    }
 
    @Override
    public void kill(int server) {
-      ForkedServer forkedServer = forkedServers.get(server);
-      Exceptions.unchecked(() -> new ProcessBuilder("kill", "-9", String.valueOf(forkedServer.getPid())).start().waitFor(10, TimeUnit.SECONDS));
-
-      // Do an internal cleanup - stop the log monitoring process.
-      forkedServer.cleanup();
+      String pid = String.valueOf(forkedServers.get(server).getPid());
+      if (OS.getCurrentOs() == OS.WINDOWS) {
+         Exceptions.unchecked(() -> new ProcessBuilder("TASKKILL", "/PID", pid, "/F", "/T").start().waitFor(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      } else {
+         Exceptions.unchecked(() -> new ProcessBuilder("kill", "-9", pid).start().waitFor(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      }
    }
 
    @Override
    public void restart(int server) {
-      throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException("Forked mode does not support restart!");
    }
 
    @Override
    public void restartCluster() {
-      throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException("Forked mode does not support cluster restart!");
    }
 
    @Override
@@ -173,7 +210,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
    }
 
    private static <T> T sync(CompletionStage<T> stage) {
-      return Exceptions.unchecked(() -> stage.toCompletableFuture().get(ForkedServer.TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      return Exceptions.unchecked(() -> stage.toCompletableFuture().get(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
 }
