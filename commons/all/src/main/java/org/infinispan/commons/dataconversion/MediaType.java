@@ -402,6 +402,10 @@ public final class MediaType {
       return new MediaType(typeSubtype, newParams);
    }
 
+   /**
+    * @deprecated Use {@link #getParameters()} and {@link #getTypeSubtype()} to build a custom String representation.
+    */
+   @Deprecated
    public String toStringExcludingParam(String... params) {
       if (!hasParameters()) return typeSubtype;
       StringBuilder builder = new StringBuilder().append(typeSubtype);
@@ -426,7 +430,14 @@ public final class MediaType {
 
    @Override
    public String toString() {
-      return toStringExcludingParam(WEIGHT_PARAM_NAME);
+      if (!hasParameters()) return typeSubtype;
+      StringBuilder builder = new StringBuilder().append(typeSubtype);
+
+      String strParams = this.params.entrySet().stream()
+            .map(e -> e.getKey() + "=" + e.getValue())
+            .collect(Collectors.joining("; "));
+
+      return builder.append("; ").append(strParams).toString();
    }
 
    public static final class MediaTypeExternalizer implements Externalizer<MediaType> {

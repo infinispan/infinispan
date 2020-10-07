@@ -60,6 +60,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
@@ -749,6 +750,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public AdvancedCache<K, V> withMediaType(String keyMediaType, String valueMediaType) {
+      throw new UnsupportedOperationException("Conversion requires EncoderCache");
+   }
+
+   @Override
+   public <K1, V1> AdvancedCache<K1, V1> withMediaType(MediaType keyMediaType, MediaType valueMediaType) {
       throw new UnsupportedOperationException("Conversion requires EncoderCache");
    }
 

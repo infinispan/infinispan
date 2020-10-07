@@ -1,5 +1,6 @@
 package org.infinispan.security;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 
 import java.util.Collections;
@@ -855,6 +856,11 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.NONE)
    public void testWithMediaType_String_String(SecureCache<String, String> cache) {
       cache.withMediaType(APPLICATION_OBJECT_TYPE, APPLICATION_OBJECT_TYPE);
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testWithMediaType_MediaType_MediaType(SecureCache<String, String> cache) {
+      cache.withMediaType(APPLICATION_OBJECT, APPLICATION_OBJECT);
    }
 
    @TestCachePermission(AuthorizationPermission.NONE)

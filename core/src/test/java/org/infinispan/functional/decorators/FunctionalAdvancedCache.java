@@ -30,6 +30,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.AbstractDelegatingCollection;
 import org.infinispan.commons.util.AbstractDelegatingSet;
@@ -605,6 +606,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    @Override
    public AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType) {
+      return cache.withMediaType(keyMediaType, valueMediaType);
+   }
+
+   @Override
+   public <K1, V1> AdvancedCache<K1, V1> withMediaType(MediaType keyMediaType, MediaType valueMediaType) {
       return cache.withMediaType(keyMediaType, valueMediaType);
    }
 

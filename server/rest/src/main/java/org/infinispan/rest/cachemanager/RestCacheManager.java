@@ -1,7 +1,6 @@
 package org.infinispan.rest.cachemanager;
 
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
-import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
 
 import java.security.PrivilegedAction;
 import java.util.Collection;
@@ -20,7 +19,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.notifications.Listener;
@@ -33,7 +31,8 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.security.Security;
-import org.infinispan.upgrade.RollingUpgradeManager;
+import org.infinispan.server.core.CacheInfo;
+import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -47,7 +46,7 @@ public class RestCacheManager<V> {
    private final InternalCacheRegistry icr;
    private final Predicate<? super String> isCacheIgnored;
    private final boolean allowInternalCacheAccess;
-   private final Map<String, AdvancedCache<Object, V>> knownCaches = new ConcurrentHashMap<>(4, 0.9f, 16);
+   private final Map<String, CacheInfo<Object, V>> knownCaches = new ConcurrentHashMap<>(4, 0.9f, 16);
    private final RemoveCacheListener removeCacheListener;
 
    public RestCacheManager(EmbeddedCacheManager instance, Predicate<? super String> isCacheIgnored) {
@@ -60,7 +59,6 @@ public class RestCacheManager<V> {
       SecurityActions.addListener(instance, removeCacheListener);
    }
 
-   @SuppressWarnings("unchecked")
    public AdvancedCache<Object, V> getCache(String name, MediaType keyContentType, MediaType valueContentType, RestRequest request) {
       Subject subject = request.getSubject();
       Flag[] flags = request.getFlags();
@@ -71,20 +69,16 @@ public class RestCacheManager<V> {
          throw logger.missingRequiredMediaType(name);
       }
       checkCacheAvailable(name);
-      String cacheKey = name + "-" + keyContentType.getTypeSubtype() + valueContentType.getTypeSubtype();
-      AdvancedCache<Object, V> cache = knownCaches.get(cacheKey);
-      if (cache == null) {
-         cache = instance.<Object, V>getCache(name).getAdvancedCache();
-         tryRegisterMigrationManager(cache);
-
-         cache = (AdvancedCache<Object, V>) cache.getAdvancedCache()
-               .withMediaType(keyContentType.toString(), valueContentType.toString())
-               .withFlags(IGNORE_RETURN_VALUES);
-
-         knownCaches.putIfAbsent(cacheKey, cache);
+      CacheInfo<Object, V> cacheInfo = knownCaches.get(name);
+      if (cacheInfo == null) {
+         AdvancedCache<Object, V> cache = instance.<Object, V>getCache(name).getAdvancedCache()
+               .withFlags(Flag.IGNORE_RETURN_VALUES);
+         cacheInfo = new CacheInfo<>(cache);
+         knownCaches.putIfAbsent(name, cacheInfo);
       }
+      AdvancedCache<Object, V> cache = cacheInfo.getCache(new KeyValuePair<>(keyContentType, valueContentType), subject);
       if (flags != null && flags.length > 0) cache = cache.withFlags(flags);
-      return subject == null ? cache : cache.withSubject(subject);
+      return cache;
    }
 
    public AdvancedCache<Object, V> getCache(String name, RestRequest restRequest) {
@@ -188,13 +182,6 @@ public class RestCacheManager<V> {
       }
    }
 
-   @SuppressWarnings("unchecked")
-   private void tryRegisterMigrationManager(AdvancedCache<?, ?> cache) {
-      ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache);
-      RollingUpgradeManager migrationManager = cr.getComponent(RollingUpgradeManager.class);
-      if (migrationManager != null) migrationManager.addSourceMigrator(new RestSourceMigrator(cache));
-   }
-
    public void stop() {
       if (removeCacheListener != null) {
          SecurityActions.removeListener(instance, removeCacheListener);
@@ -205,7 +192,7 @@ public class RestCacheManager<V> {
    class RemoveCacheListener {
       @CacheStopped
       public void cacheStopped(CacheStoppedEvent event) {
-         knownCaches.keySet().stream().filter(k -> k.startsWith(event.getCacheName() + "-")).forEach(knownCaches::remove);
+         knownCaches.remove(event.getCacheName());
       }
    }
 

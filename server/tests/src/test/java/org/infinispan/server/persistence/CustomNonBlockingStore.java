@@ -1,12 +1,13 @@
 package org.infinispan.server.persistence;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -22,8 +23,7 @@ public class CustomNonBlockingStore implements NonBlockingStore<String, String> 
    @Override
    public CompletionStage<Void> start(InitializationContext ctx) {
       marshallableEntryFactory = ctx.getMarshallableEntryFactory();
-      AdvancedCache<String, String> object = (AdvancedCache) ctx.getCache().getAdvancedCache()
-            .withMediaType(MediaType.APPLICATION_OBJECT_TYPE, MediaType.APPLICATION_OBJECT_TYPE);
+      AdvancedCache<String, String> object = ctx.getCache().getAdvancedCache().withMediaType(APPLICATION_OBJECT, APPLICATION_OBJECT);
       keyDataConversion = object.getKeyDataConversion();
       valueDataConversion = object.getValueDataConversion();
       return CompletableFutures.completedNull();

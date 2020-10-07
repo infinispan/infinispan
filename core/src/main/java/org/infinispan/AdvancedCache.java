@@ -17,6 +17,7 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.commons.api.TransactionalCache;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
@@ -854,8 +855,16 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param valueMediaType {@link org.infinispan.commons.dataconversion} for the values.
     * @return an instance of {@link AdvancedCache} where all data will formatted according to the supplied {@link
     * org.infinispan.commons.dataconversion.MediaType}.
+    *
+    * @deprecated Use {@link #withMediaType(MediaType, MediaType)} instead.
     */
+   @Deprecated
    AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType);
+
+   /**
+    * @see #withMediaType(String, String)
+    */
+   <K1, V1> AdvancedCache<K1, V1> withMediaType(MediaType keyMediaType, MediaType valueMediaType);
 
    /**
     * Perform any cache operations using the same {@link org.infinispan.commons.dataconversion.MediaType} of the cache

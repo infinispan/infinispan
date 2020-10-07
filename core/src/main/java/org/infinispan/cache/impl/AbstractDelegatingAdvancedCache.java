@@ -20,6 +20,7 @@ import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.DataContainer;
@@ -542,6 +543,16 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
          return rewrap(encoderCache);
       } else {
          return this;
+      }
+   }
+
+   @Override
+   public <K1, V1> AdvancedCache<K1, V1> withMediaType(MediaType keyMediaType, MediaType valueMediaType) {
+      AdvancedCache encoderCache = this.cache.withMediaType(keyMediaType, valueMediaType);
+      if (encoderCache != cache) {
+         return rewrap(encoderCache);
+      } else {
+         return (AdvancedCache<K1, V1>) this;
       }
    }
 

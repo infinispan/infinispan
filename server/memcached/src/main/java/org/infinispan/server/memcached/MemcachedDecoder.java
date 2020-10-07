@@ -1,7 +1,7 @@
 package org.infinispan.server.memcached;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.server.core.transport.ExtendedByteBuf.buffer;
 import static org.infinispan.server.core.transport.ExtendedByteBuf.wrappedBuffer;
 import static org.infinispan.server.memcached.TextProtocolUtil.CLIENT_ERROR_BAD_FORMAT;
@@ -52,11 +52,11 @@ import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.util.Version;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
@@ -94,7 +94,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
                            MediaType valuePayload) {
 
       super(MemcachedDecoderState.DECODE_HEADER);
-      this.cache = (AdvancedCache<byte[], byte[]>) memcachedCache.withMediaType(TEXT_PLAIN_TYPE, valuePayload.toString());
+      this.cache = memcachedCache.withMediaType(TEXT_PLAIN, valuePayload);
       this.scheduler = scheduler;
       this.transport = transport;
       this.ignoreCache = ignoreCache;

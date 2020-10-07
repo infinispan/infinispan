@@ -123,8 +123,8 @@ public class MediaTypeTest {
 
    @Test
    public void testToString() {
-      assertEquals("application/xml",
-                   new MediaType("application", "xml", createMap(new MapEntry("q", "0.9"))).toString());
+      assertEquals("application/xml; q=0.9",
+            new MediaType("application", "xml", createMap(new MapEntry("q", "0.9"))).toString());
       assertEquals("text/csv", new MediaType("text", "csv").toString());
       assertEquals("foo/bar; a=2", new MediaType("foo", "bar", createMap(new MapEntry("a", "2"))).toString());
       assertEquals("foo/bar; a=2; b=1; c=2", new MediaType("foo", "bar",

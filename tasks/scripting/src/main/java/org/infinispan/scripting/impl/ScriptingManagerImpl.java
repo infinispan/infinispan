@@ -154,7 +154,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
       }
 
-      String scriptMediaType = metadata.dataType().toString();
+      MediaType scriptMediaType = metadata.dataType();
       MediaType requestMediaType = context.getCache().map(c -> c.getAdvancedCache().getValueDataConversion().getRequestMediaType()).orElse(MediaType.MATCH_ALL);
       Bindings userBindings = context.getParameters()
             .map(p -> {

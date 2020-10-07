@@ -2,9 +2,8 @@ package org.infinispan.dataconversion;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.notifications.Listener.Observation.POST;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
@@ -219,13 +218,12 @@ public class DataConversionTest extends AbstractInfinispanTest {
             assertEquals(valueMap, cache.get("CoinMap"));
 
             // Obtain the value with a different MediaType
-            AdvancedCache<String, String> xmlCache = (AdvancedCache<String, String>) cache.getAdvancedCache()
-                  .withMediaType(APPLICATION_OBJECT_TYPE, APPLICATION_XML_TYPE);
+            AdvancedCache<String, String> xmlCache = cache.getAdvancedCache().withMediaType(APPLICATION_OBJECT, APPLICATION_XML);
 
             assertEquals(xmlCache.get("CoinMap"), "<root><BTC>Bitcoin</BTC><ETH>Ethereum</ETH><LTC>Litecoin</LTC></root>");
 
             // Reading with same configured MediaType should not change content
-            assertEquals(xmlCache.withMediaType(APPLICATION_OBJECT_TYPE, APPLICATION_OBJECT_TYPE).get("CoinMap"), valueMap);
+            assertEquals(xmlCache.withMediaType(APPLICATION_OBJECT, APPLICATION_OBJECT).get("CoinMap"), valueMap);
 
             // Writing using XML
             xmlCache.put("AltCoinMap", "<root><CAT>Catcoin</CAT><DOGE>Dogecoin</DOGE></root>");
@@ -257,13 +255,15 @@ public class DataConversionTest extends AbstractInfinispanTest {
             cache.put("foo-key", "bar-value");
             assertEquals(cache.get("foo-key"), "bar-value");
 
-            Cache<String, String> fooCache = (Cache<String, String>) cache.getAdvancedCache().withMediaType("application/foo", "application/foo");
+            MediaType appFoo = MediaType.fromString("application/foo");
+            MediaType appBar = MediaType.fromString("application/bar");
+            Cache<String, String> fooCache = cache.getAdvancedCache().withMediaType(appFoo, appFoo);
             assertEquals(fooCache.get("foo-key"), "foo-value");
 
-            Cache<String, String> barCache = (Cache<String, String>) cache.getAdvancedCache().withMediaType("application/bar", "application/bar");
+            Cache<String, String> barCache = cache.getAdvancedCache().withMediaType(appBar, appBar);
             assertEquals(barCache.get("bar-key"), "bar-value");
 
-            Cache<String, String> barFooCache = (Cache<String, String>) cache.getAdvancedCache().withMediaType("application/bar", "application/foo");
+            Cache<String, String> barFooCache = cache.getAdvancedCache().withMediaType(appBar, appFoo);
             assertEquals(barFooCache.get("bar-key"), "foo-value");
          }
       });
@@ -291,7 +291,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
             assertEquals(cache.get(key), value);
 
             // Value as UTF-16
-            Cache<byte[], byte[]> utf16ValueCache = (Cache<byte[], byte[]>) cache.getAdvancedCache().withMediaType("text/plain; charset=ISO-8859-1", "text/plain; charset=UTF-16");
+            Cache<byte[], byte[]> utf16ValueCache = cache.getAdvancedCache().withMediaType(MediaType.fromString("text/plain; charset=ISO-8859-1"), MediaType.fromString("text/plain; charset=UTF-16"));
 
             assertEquals(utf16ValueCache.get(key), new byte[]{-2, -1, 0, 97, 0, 118, 0, 105, 0, -29, 0, 111});
          }

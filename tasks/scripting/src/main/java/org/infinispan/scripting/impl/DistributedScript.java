@@ -13,6 +13,7 @@ import javax.script.SimpleBindings;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -41,7 +42,7 @@ class DistributedScript<T> implements Function<EmbeddedCacheManager, T> {
       ScriptingManagerImpl scriptManager = (ScriptingManagerImpl) SecurityActions.getGlobalComponentRegistry(embeddedCacheManager).getComponent(ScriptingManager.class);
       Bindings bindings = new SimpleBindings();
 
-      String scriptMediaType = metadata.dataType().toString();
+      MediaType scriptMediaType = metadata.dataType();
       DataTypedCacheManager dataTypedCacheManager = new DataTypedCacheManager(scriptMediaType, embeddedCacheManager, null);
       bindings.put("cacheManager", dataTypedCacheManager);
       AdvancedCache<?, ?> cache = embeddedCacheManager.getCache(cacheName).getAdvancedCache();
