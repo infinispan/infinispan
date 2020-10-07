@@ -99,8 +99,7 @@ public class Closeables {
     */
    public static <E> Stream<E> stream(CloseableSpliterator<E> spliterator, boolean parallel) {
       Stream<E> stream = StreamSupport.stream(spliterator, parallel);
-      stream.onClose(spliterator::close);
-      return stream;
+      return stream.onClose(spliterator::close);
    }
 
    /**
@@ -114,8 +113,7 @@ public class Closeables {
     */
    public static <E> Stream<E> stream(CloseableIterator<E> iterator, boolean parallel, long size, int characteristics) {
       Stream<E> stream = StreamSupport.stream(Spliterators.spliterator(iterator, size, characteristics), parallel);
-      stream.onClose(iterator::close);
-      return stream;
+      return stream.onClose(iterator::close);
    }
 
    private static class IteratorAsCloseableIterator<E> implements CloseableIterator<E> {
