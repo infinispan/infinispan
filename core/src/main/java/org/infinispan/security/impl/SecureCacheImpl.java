@@ -20,6 +20,7 @@ import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -765,6 +766,11 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType) {
+      return new SecureCacheImpl<>(delegate.withMediaType(keyMediaType, valueMediaType), authzManager, subject);
+   }
+
+   @Override
+   public <K1, V1> AdvancedCache<K1, V1> withMediaType(MediaType keyMediaType, MediaType valueMediaType) {
       return new SecureCacheImpl<>(delegate.withMediaType(keyMediaType, valueMediaType), authzManager, subject);
    }
 

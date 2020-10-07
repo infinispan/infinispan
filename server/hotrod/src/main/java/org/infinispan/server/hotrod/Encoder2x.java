@@ -454,7 +454,7 @@ class Encoder2x implements VersionedEncoder {
             cacheTopology = null;
             newTopology = Optional.empty();
          } else {
-            HotRodServer.CacheInfo cacheInfo = server.getCacheInfo(header);
+            HotRodServer.ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
             Configuration configuration = cacheInfo.configuration;
             CacheMode cacheMode = configuration.clustering().cacheMode();
 

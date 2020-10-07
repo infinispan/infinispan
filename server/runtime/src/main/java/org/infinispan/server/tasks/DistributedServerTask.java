@@ -61,7 +61,7 @@ public class DistributedServerTask<T> implements Function<EmbeddedCacheManager, 
       context.cacheManager(embeddedCacheManager);
       Map<String, String> params = parameters.stream().collect(Collectors.toMap(p -> p.key, p -> p.value));
       context.parameters(params);
-      String type = MediaType.APPLICATION_OBJECT_TYPE;
+      MediaType type = MediaType.APPLICATION_OBJECT;
       if (cache != null) context.cache(cache.getAdvancedCache().withMediaType(type, type));
       if (marshaller != null) context.marshaller(marshaller);
 

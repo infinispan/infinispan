@@ -70,6 +70,7 @@ import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.core.AbstractProtocolServer;
+import org.infinispan.server.core.CacheInfo;
 import org.infinispan.server.core.QueryFacade;
 import org.infinispan.server.core.ServerConstants;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
@@ -109,7 +110,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private Address clusterAddress;
    private ServerAddress address;
    private Cache<Address, ServerAddress> addressCache;
-   private final Map<String, CacheInfo> knownCaches = new ConcurrentHashMap<>();
+   private final Map<String, ExtendedCacheInfo> knownCaches = new ConcurrentHashMap<>();
    private QueryFacade queryFacade;
    private ClientListenerRegistry clientListenerRegistry;
    private Marshaller marshaller;
@@ -353,7 +354,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return builder;
    }
 
-   public AdvancedCache<byte[], byte[]> cache(CacheInfo cacheInfo, HotRodHeader header, Subject subject) {
+   public AdvancedCache<byte[], byte[]> cache(ExtendedCacheInfo cacheInfo, HotRodHeader header, Subject subject) {
       KeyValuePair<MediaType, MediaType> requestMediaTypes = getRequestMediaTypes(header, cacheInfo.configuration);
       AdvancedCache<byte[], byte[]> cache =
          cacheInfo.getCache(requestMediaTypes, subject);
@@ -366,21 +367,21 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return new EmbeddedMultimapCache(cache);
    }
 
-   public CacheInfo getCacheInfo(HotRodHeader header) {
+   public ExtendedCacheInfo getCacheInfo(HotRodHeader header) {
       return getCacheInfo(header.cacheName, header.version, header.messageId, true);
    }
 
-   public CacheInfo getCacheInfo(String cacheName, byte hotRodVersion, long messageId, boolean checkIgnored) {
+   public ExtendedCacheInfo getCacheInfo(String cacheName, byte hotRodVersion, long messageId, boolean checkIgnored) {
       if (checkIgnored && isCacheIgnored(cacheName)) {
          throw new CacheUnavailableException();
       }
-      CacheInfo info = knownCaches.get(cacheName);
+      ExtendedCacheInfo info = knownCaches.get(cacheName);
       if (info == null) {
          boolean keep = checkCacheIsAvailable(cacheName, hotRodVersion, messageId);
 
          AdvancedCache<byte[], byte[]> cache = obtainAnonymizedCache(cacheName);
          Configuration cacheCfg = SecurityActions.getCacheConfiguration(cache);
-         info = new CacheInfo(cache, cacheCfg);
+         info = new ExtendedCacheInfo(cache, cacheCfg);
          updateCacheInfo(info);
          if (keep) {
             knownCaches.put(cacheName, info);
@@ -413,11 +414,11 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return keep;
    }
 
-   public void updateCacheInfo(CacheInfo info) {
-      if (info.anonymizedCache.getStatus() != ComponentStatus.RUNNING)
+   public void updateCacheInfo(ExtendedCacheInfo info) {
+      if (info.getCache().getStatus() != ComponentStatus.RUNNING)
          return;
 
-      boolean hasIndexing = SecurityActions.getCacheConfiguration(info.anonymizedCache).indexing().enabled();
+      boolean hasIndexing = SecurityActions.getCacheConfiguration(info.getCache()).indexing().enabled();
       info.update(hasIndexing);
    }
 
@@ -602,10 +603,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
             ']';
    }
 
-   public static class CacheInfo {
-      final AdvancedCache<byte[], byte[]> anonymizedCache;
-      final Map<KeyValuePair<MediaType, MediaType>, AdvancedCache<byte[], byte[]>> encodedCaches =
-         new ConcurrentHashMap<>();
+   public static class ExtendedCacheInfo extends CacheInfo<byte[], byte[]> {
       final DistributionManager distributionManager;
       final VersionGenerator versionGenerator;
       final Configuration configuration;
@@ -613,8 +611,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       final boolean clustered;
       volatile boolean indexing;
 
-      CacheInfo(AdvancedCache<byte[], byte[]> cache, Configuration configuration) {
-         this.anonymizedCache = SecurityActions.anonymizeSecureCache(cache);
+      ExtendedCacheInfo(AdvancedCache<byte[], byte[]> cache, Configuration configuration) {
+         super(SecurityActions.anonymizeSecureCache(cache));
          this.distributionManager = SecurityActions.getDistributionManager(cache);
          ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache);
          //Note: HotRod cannot use the same version generator as Optimistic Transaction.
@@ -625,21 +623,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
          // Start conservative and assume we have all the stuff that can cause operations to block
          this.indexing = true;
-      }
-
-      AdvancedCache<byte[], byte[]> getCache(KeyValuePair<MediaType, MediaType> requestMediaTypes, Subject subject) {
-         AdvancedCache<byte[], byte[]> cache = encodedCaches.get(requestMediaTypes);
-         if (cache == null) {
-            // The client always sends byte[] keys and values
-            cache = (AdvancedCache<byte[], byte[]>) anonymizedCache.withMediaType(
-               requestMediaTypes.getKey().getTypeSubtype(), requestMediaTypes.getValue().getTypeSubtype());
-            encodedCaches.put(requestMediaTypes, cache);
-         }
-         if (subject == null) {
-            return cache;
-         } else {
-            return cache.withSubject(subject);
-         }
       }
 
       public void update(boolean indexing) {
@@ -693,7 +676,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private class CacheInfoUpdateTask implements Runnable {
       @Override
       public void run() {
-         for (CacheInfo cacheInfo : knownCaches.values()) {
+         for (ExtendedCacheInfo cacheInfo : knownCaches.values()) {
             updateCacheInfo(cacheInfo);
          }
       }

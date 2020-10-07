@@ -107,8 +107,8 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
                globalConfig, configurationBuilder);
          TestingUtil.replaceComponent(localCacheManager, TimeService.class, timeService, true);
 
-         localCache = (AdvancedCache<Object, Object>) localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache()
-               .withMediaType(MediaType.APPLICATION_OBJECT_TYPE, MediaType.APPLICATION_OBJECT_TYPE);
+         localCache = localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache()
+               .withMediaType(MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_OBJECT);
          keyPartitioner = localCache.getAdvancedCache().getComponentRegistry().getComponent(KeyPartitioner.class);
 
          hrServer = HotRodClientTestingUtil.startHotRodServer(localCacheManager);

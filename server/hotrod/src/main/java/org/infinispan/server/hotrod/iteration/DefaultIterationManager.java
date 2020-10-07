@@ -174,7 +174,7 @@ public class DefaultIterationManager implements IterationManager {
          MediaType filterMediaType = customFilter.format();
 
          if (filterMediaType != null && filterMediaType.equals(storageMediaType)) {
-            iterationCache = advancedCache.withEncoding(IdentityEncoder.class).withMediaType(filterMediaType.toString(), filterMediaType.toString());
+            iterationCache = advancedCache.withEncoding(IdentityEncoder.class).withMediaType(filterMediaType, filterMediaType);
          }
          stream = iterationCache.cacheEntrySet().stream();
          if (segments != null) {

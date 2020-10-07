@@ -580,11 +580,12 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       return withMediaType(kType, vType);
    }
 
-   private AdvancedCache<K, V> withMediaType(MediaType kType, MediaType vType) {
+   @Override
+   public AdvancedCache<K, V> withMediaType(MediaType kType, MediaType vType) {
       DataConversion newKeyDataConversion = keyDataConversion.withRequestMediaType(kType);
       DataConversion newValueDataConversion = valueDataConversion.withRequestMediaType(vType);
       EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, entryFactory, componentRegistry,
-                                                           newKeyDataConversion, newValueDataConversion);
+            newKeyDataConversion, newValueDataConversion);
       encoderCache.lookupEncoderWrapper();
       return encoderCache;
    }

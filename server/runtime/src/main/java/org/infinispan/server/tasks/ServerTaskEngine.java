@@ -1,7 +1,6 @@
 package org.infinispan.server.tasks;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,7 +77,7 @@ public class ServerTaskEngine implements TaskEngine {
       }
       launderParameters(context);
       MediaType requestMediaType = context.getCache().map(c -> c.getAdvancedCache().getValueDataConversion().getRequestMediaType()).orElse(MediaType.MATCH_ALL);
-      context.getCache().ifPresent(c -> context.cache(c.getAdvancedCache().withMediaType(APPLICATION_OBJECT_TYPE, APPLICATION_OBJECT_TYPE)));
+      context.getCache().ifPresent(c -> context.cache(c.getAdvancedCache().withMediaType(APPLICATION_OBJECT, APPLICATION_OBJECT)));
       return runner.execute(task.getName(), context).thenApply(r -> (T) scriptConversions.convertToRequestType(r, APPLICATION_OBJECT, requestMediaType));
    }
 
