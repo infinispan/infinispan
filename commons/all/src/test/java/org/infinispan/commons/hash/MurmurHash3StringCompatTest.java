@@ -17,6 +17,7 @@ public class MurmurHash3StringCompatTest {
    public void compareHashes() {
       Random random = new Random(9005);
       for (int i = 0; i < NUM_KEYS; i++) {
+         @SuppressWarnings("IdentityBinaryExpression")
          int cpLen = Math.abs(random.nextInt(MAX_KEY_SIZE) - random.nextInt(MAX_KEY_SIZE)) + 1;
          int[] codePoints = random.ints(cpLen, 0, 0x110000).filter(Character::isDefined).toArray();
          String s = new String(codePoints, 0, codePoints.length);
