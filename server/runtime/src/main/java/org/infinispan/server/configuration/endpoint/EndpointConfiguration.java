@@ -19,6 +19,7 @@ public class EndpointConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<String> SOCKET_BINDING = AttributeDefinition.builder("socket-binding", null, String.class).build();
    static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder("security-realm", null, String.class).build();
    static final AttributeDefinition<Boolean> IMPLICIT_CONNECTOR_SECURITY = AttributeDefinition.builder("implicit-connector-security", false, Boolean.class).build();
+   static final AttributeDefinition<Boolean> ADMIN = AttributeDefinition.builder("admin", true, Boolean.class).build();
 
    private final List<ProtocolServerConfiguration> connectors;
    private final SinglePortRouterConfiguration singlePort;
@@ -58,6 +59,10 @@ public class EndpointConfiguration implements ConfigurationInfo {
 
    public boolean implicitConnectorSecurity() {
       return attributes.attribute(IMPLICIT_CONNECTOR_SECURITY).get();
+   }
+
+   public boolean admin() {
+      return attributes.attribute(ADMIN).get();
    }
 
    @Override

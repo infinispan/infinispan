@@ -301,7 +301,7 @@
                <xs:element type="tns:rest-connector" name="rest-connector" maxOccurs="unbounded"/>
                <xs:element type="tns:memcached-connector" name="memcached-connector" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
-            <xs:attribute name="socket-binding" type="xs:string">
+            <xs:attribute name="socket-binding" type="xs:string" use="required">
                <xs:annotation>
                   <xs:documentation>Specifies the socket the endpoint connector binds to.</xs:documentation>
                </xs:annotation>
@@ -309,6 +309,11 @@
             <xs:attribute name="security-realm" type="xs:string">
                <xs:annotation>
                   <xs:documentation>Names the security realm to use for authentication, cache authorization, and encryption. </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="admin" type="xs:boolean">
+               <xs:annotation>
+                  <xs:documentation>Enable/disable administrative features on this endpoint. Defaults to true.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
          </xs:extension>

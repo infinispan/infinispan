@@ -365,7 +365,9 @@ public class Server implements ServerManagement, AutoCloseable {
                try {
                   Class<? extends ProtocolServer> protocolServerClass = configuration.getClass().getAnnotation(ConfigurationFor.class).value().asSubclass(ProtocolServer.class);
                   ProtocolServer protocolServer = Util.getInstance(protocolServerClass);
-                  if (protocolServer instanceof RestServer) ((RestServer) protocolServer).setServer(this);
+                  if (endpoint.admin()) {
+                     protocolServer.setServer(this);
+                  }
                   protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
                   SecurityActions.startProtocolServer(protocolServer, configuration, cm);
                   ProtocolServerConfiguration protocolConfig = protocolServer.getConfiguration();

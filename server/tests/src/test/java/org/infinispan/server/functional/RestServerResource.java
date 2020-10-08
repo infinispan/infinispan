@@ -46,9 +46,9 @@ public class RestServerResource {
       String inetAddress = SERVERS.getServerDriver() instanceof ContainerInfinispanServerDriver ? "SITE_LOCAL" : "127.0.0.1";
       assertEquals(inetAddress, interfaces.at("interface").at("inet-address").at("value").asString());
       assertEquals("default", security.at("security-realms").at("security-realm").at("name").asString());
-      assertEquals("hotrod", endpoints.at("hotrod-connector").at("name").asString());
-      assertEquals("rest", endpoints.at("rest-connector").at("name").asString());
-      assertEquals("memcachedCache", endpoints.at("memcached-connector").at("cache").asString());
+      assertEquals("hotrod", endpoints.at("endpoints").at("hotrod-connector").at("name").asString());
+      assertEquals("rest", endpoints.at("endpoints").at("rest-connector").at("name").asString());
+      assertEquals("memcachedCache", endpoints.at("endpoints").at("memcached-connector").at("cache").asString());
    }
 
    @Test

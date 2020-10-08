@@ -23,6 +23,7 @@ import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
+import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.core.configuration.SniConfigurationBuilder;
 import org.infinispan.server.security.ServerSecurityRealm;
@@ -76,9 +77,12 @@ public class RestServerConfigurationParser implements ConfigurationParser {
    private void parseRest(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder)
          throws XMLStreamException {
       boolean dedicatedSocketBinding = false;
-      RestServerConfigurationBuilder builder = serverBuilder.endpoints().current().addConnector(RestServerConfigurationBuilder.class);
-      String serverHome = reader.getProperties().getProperty(Server.INFINISPAN_SERVER_HOME_PATH);
-      builder.staticResources(Paths.get(serverHome, Server.DEFAULT_SERVER_STATIC_DIR));
+      EndpointConfigurationBuilder endpoint = serverBuilder.endpoints().current();
+      RestServerConfigurationBuilder builder = endpoint.addConnector(RestServerConfigurationBuilder.class);
+      if (endpoint.admin()) {
+         String serverHome = reader.getProperties().getProperty(Server.INFINISPAN_SERVER_HOME_PATH);
+         builder.staticResources(Paths.get(serverHome, Server.DEFAULT_SERVER_STATIC_DIR));
+      }
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -106,7 +110,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
             }
             case SOCKET_BINDING: {
                builder.socketBinding(value);
-               serverBuilder.applySocketBinding(value, builder, serverBuilder.endpoints().current().singlePort());
+               serverBuilder.applySocketBinding(value, builder, endpoint.singlePort());
                builder.startTransport(true);
                dedicatedSocketBinding = true;
                break;

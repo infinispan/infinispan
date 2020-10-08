@@ -47,6 +47,15 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       return this;
    }
 
+   public EndpointConfigurationBuilder admin(boolean admin) {
+      attributes.attribute(EndpointConfiguration.ADMIN).set(admin);
+      return this;
+   }
+
+   public boolean admin() {
+      return attributes.attribute(EndpointConfiguration.ADMIN).get();
+   }
+
    public List<ProtocolServerConfigurationBuilder<?, ?>> connectors() {
       return connectorBuilders;
    }

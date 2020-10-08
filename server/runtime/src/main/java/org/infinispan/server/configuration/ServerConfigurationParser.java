@@ -1114,6 +1114,9 @@ public class ServerConfigurationParser implements ConfigurationParser {
             case SOCKET_BINDING:
                // Already seen
                break;
+            case ADMIN:
+               endpoint.admin(Boolean.parseBoolean(value));
+               break;
             case SECURITY_REALM:
                // Set the endpoint security realm and fall-through. Starting with 11.0 we also enable implicit authentication configuration
                endpoint.securityRealm(value).implicitConnectorSecurity(reader.getSchema().since(11, 0));
