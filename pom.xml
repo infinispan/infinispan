@@ -376,6 +376,7 @@
       <versionx.org.jgroups.azure.jgroups-azure>1.2.1.Final</versionx.org.jgroups.azure.jgroups-azure>
       <versionx.org.jgroups.jgroups>${version.jgroups}</versionx.org.jgroups.jgroups>
       <versionx.org.jgroups.kubernetes.jgroups-kubernetes>1.0.13.Final</versionx.org.jgroups.kubernetes.jgroups-kubernetes>
+      <versionx.org.jsoup>1.9.2</versionx.org.jsoup>
       <versionx.org.kohsuke.metainf-services.metainf-services>${version.metainf-services}</versionx.org.kohsuke.metainf-services.metainf-services>
       <versionx.org.latencyutils.LatencyUtils>2.0.2</versionx.org.latencyutils.LatencyUtils>
       <versionx.org.mockito.mockito-core>${version.mockito}</versionx.org.mockito.mockito-core>
@@ -1510,6 +1511,12 @@
             <groupId>org.jgroups.kubernetes</groupId>
             <artifactId>jgroups-kubernetes</artifactId>
             <version>${versionx.org.jgroups.kubernetes.jgroups-kubernetes}</version>
+         </dependency>
+         <!-- Force this jsoup version -->
+         <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${versionx.org.jsoup}</version>
          </dependency>
          <dependency>
             <groupId>org.kohsuke.metainf-services</groupId>
