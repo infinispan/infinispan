@@ -54,11 +54,6 @@ public class FakeTestClass implements ITestClass {
    }
 
    @Override
-   public int getInstanceCount() {
-      return 1;
-   }
-
-   @Override
    public ITestNGMethod[] getTestMethods() {
       return new ITestNGMethod[]{method};
    }

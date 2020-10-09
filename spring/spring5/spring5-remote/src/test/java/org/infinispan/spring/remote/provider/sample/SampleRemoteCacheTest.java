@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
  * @author Matej Cimbora (mcimbora@redhat.com)
  */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-@Test(testName = "spring.provider.SampleRemoteCacheTest", groups = "functional", sequential = true)
+@Test(testName = "spring.provider.SampleRemoteCacheTest", groups = "functional", singleThreaded = true)
 @ContextConfiguration(locations = "classpath:/org/infinispan/spring/remote/provider/sample/SampleRemoteCacheTestConfig.xml")
 @TestExecutionListeners(InfinispanTestExecutionListener.class)
 public class SampleRemoteCacheTest extends AbstractTestTemplateJsr107 {

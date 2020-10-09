@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  *
  * @author Matej Cimbora (mcimbora@redhat.com)
  */
-@Test(testName = "spring.embedded.provider.SampleJavaConfigurationTest", groups = "functional", sequential = true)
+@Test(testName = "spring.embedded.provider.SampleJavaConfigurationTest", groups = "functional", singleThreaded = true)
 @ContextConfiguration(classes = SampleJavaConfigurationTest.ContextConfiguration.class, loader = AnnotationConfigContextLoader.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @TestExecutionListeners(InfinispanTestExecutionListener.class)

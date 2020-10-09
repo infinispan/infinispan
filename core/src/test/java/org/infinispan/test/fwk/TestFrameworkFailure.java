@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import org.mockito.Mockito;
 import org.testng.IInstanceInfo;
 import org.testng.TestNGException;
-import org.testng.annotations.Test;
 
 public class TestFrameworkFailure<T> implements IInstanceInfo<T> {
    private static final Set<String> OBJECT_METHODS =
@@ -25,12 +24,6 @@ public class TestFrameworkFailure<T> implements IInstanceInfo<T> {
    public TestFrameworkFailure(Class<T> testClass, Throwable t) {
       this.testClass = testClass;
       this.t = t;
-   }
-
-   // All the groups in TestNGSuiteChecksTest.REQUIRED_GROUPS, so the method is not excluded when running from Maven
-   @Test(groups = {"unit", "functional", "xsite", "arquillian", "stress", "profiling", "manual", "unstable"})
-   public void fail() throws Throwable {
-      throw t;
    }
 
    @Override
