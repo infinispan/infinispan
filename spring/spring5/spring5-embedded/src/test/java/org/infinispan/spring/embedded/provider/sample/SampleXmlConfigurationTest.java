@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
  *
  * @author Matej Cimbora (mcimbora@redhat.com)
  */
-@Test(testName = "spring.embedded.provider.SampleXmlConfigurationTest", groups = "functional", sequential = true)
+@Test(testName = "spring.embedded.provider.SampleXmlConfigurationTest", groups = "functional", singleThreaded = true)
 @ContextConfiguration(locations = "classpath:/org/infinispan/spring/embedded/provider/sample/SampleXmlConfigurationTestConfig.xml")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @TestExecutionListeners(InfinispanTestExecutionListener.class)

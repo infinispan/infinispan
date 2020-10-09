@@ -1,6 +1,9 @@
 package org.infinispan.extendedstats;
 
-import static org.testng.Assert.fail;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,7 +15,6 @@ import org.infinispan.extendedstats.container.ConcurrentGlobalContainer;
 import org.infinispan.extendedstats.container.ExtendedStatistic;
 import org.infinispan.extendedstats.container.StatisticsSnapshot;
 import org.infinispan.util.EmbeddedTimeService;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -94,8 +96,8 @@ public class ConcurrentContainerTest {
       final ExtendedStatistic localStat = ExtendedStatistic.PREPARE_COMMAND_SIZE;
       final ExtendedStatistic remoteStat = ExtendedStatistic.NUM_COMMITTED_WR_TX;
 
-      Assert.assertTrue(localStat.isLocal());
-      Assert.assertTrue(remoteStat.isRemote());
+      assertTrue(localStat.isLocal());
+      assertTrue(remoteStat.isRemote());
 
       globalContainer.add(localStat, 10, true);
 
@@ -212,8 +214,8 @@ public class ConcurrentContainerTest {
       final ExtendedStatistic localStat = ExtendedStatistic.PREPARE_COMMAND_SIZE;
       final ExtendedStatistic remoteStat = ExtendedStatistic.NUM_COMMITTED_WR_TX;
 
-      Assert.assertTrue(localStat.isLocal());
-      Assert.assertTrue(remoteStat.isRemote());
+      assertTrue(localStat.isLocal());
+      assertTrue(remoteStat.isRemote());
 
       globalContainer.add(localStat, 10, true);
       globalContainer.add(remoteStat, 20, false);
@@ -272,7 +274,7 @@ public class ConcurrentContainerTest {
       localTransactionStatistics.flushTo(globalContainer);
       remoteTransactionStatistics.flushTo(globalContainer);
 
-      Assert.assertEquals(globalContainer.queue().size(), 6);
+      assertEquals(6, globalContainer.queue().size());
 
       snapshots.add(globalContainer.getSnapshot());
 
@@ -338,8 +340,8 @@ public class ConcurrentContainerTest {
 
       snapshots.add(globalContainer.getSnapshot());
 
-      Assert.assertTrue(globalContainer.isReset());
-      Assert.assertEquals(globalContainer.queue().size(), 6);
+      assertTrue(globalContainer.isReset());
+      assertEquals(6, globalContainer.queue().size());
 
       localIndex = 0;
       remoteIndex = 0;
@@ -356,7 +358,7 @@ public class ConcurrentContainerTest {
 
       globalContainer.flushing().set(false);
       snapshots.add(globalContainer.getSnapshot());
-      Assert.assertFalse(globalContainer.isReset());
+      assertFalse(globalContainer.isReset());
 
       localIndex = 0;
       remoteIndex = 0;
@@ -383,8 +385,8 @@ public class ConcurrentContainerTest {
       final ExtendedStatistic localStat = ExtendedStatistic.PREPARE_COMMAND_SIZE;
       final ExtendedStatistic remoteStat = ExtendedStatistic.NUM_COMMITTED_WR_TX;
 
-      Assert.assertTrue(localStat.isLocal());
-      Assert.assertTrue(remoteStat.isRemote());
+      assertTrue(localStat.isLocal());
+      assertTrue(remoteStat.isRemote());
 
       globalContainer.flushing().set(true);
 
@@ -396,7 +398,7 @@ public class ConcurrentContainerTest {
       assertSnapshotValues(snapshots, Arrays.asList(0D, 0D), localStat, true);
       assertSnapshotValues(snapshots, Arrays.asList(0D, 0D), remoteStat, false);
 
-      Assert.assertEquals(globalContainer.queue().size(), 2);
+      assertEquals(2, globalContainer.queue().size());
       globalContainer.flushing().set(false);
 
       snapshots.add(globalContainer.getSnapshot());
@@ -418,8 +420,8 @@ public class ConcurrentContainerTest {
       globalContainer.reset();
 
       snapshots.add(globalContainer.getSnapshot());
-      Assert.assertTrue(globalContainer.isReset());
-      Assert.assertEquals(globalContainer.queue().size(), 2);
+      assertTrue(globalContainer.isReset());
+      assertEquals(2, globalContainer.queue().size());
 
       assertSnapshotValues(snapshots, Arrays.asList(0D, 0D), localStat, true);
       assertSnapshotValues(snapshots, Arrays.asList(0D, 0D), remoteStat, false);
@@ -427,8 +429,8 @@ public class ConcurrentContainerTest {
       globalContainer.flushing().set(false);
 
       snapshots.add(globalContainer.getSnapshot());
-      Assert.assertFalse(globalContainer.isReset());
-      Assert.assertTrue(globalContainer.queue().isEmpty());
+      assertFalse(globalContainer.isReset());
+      assertTrue(globalContainer.queue().isEmpty());
 
       assertSnapshotValues(snapshots, Arrays.asList(0D, 0D, 0D), localStat, true);
       assertSnapshotValues(snapshots, Arrays.asList(0D, 0D, 0D), remoteStat, false);
@@ -437,19 +439,19 @@ public class ConcurrentContainerTest {
    }
 
    private void assertSnapshotValues(List<StatisticsSnapshot> snapshots, List<Double> expected, ExtendedStatistic stat, boolean local) {
-      Assert.assertEquals(snapshots.size(), expected.size());
+      assertEquals(expected.size(), snapshots.size());
       for (int i = 0; i < snapshots.size(); ++i) {
          if (local) {
-            Assert.assertEquals(expected.get(i), snapshots.get(i).getLocal(stat));
+            assertEquals(expected.get(i), snapshots.get(i).getLocal(stat));
          } else {
-            Assert.assertEquals(expected.get(i), snapshots.get(i).getRemote(stat));
+            assertEquals(expected.get(i), snapshots.get(i).getRemote(stat));
          }
       }
    }
 
    private void assertFinalState(ConcurrentGlobalContainer globalContainer) {
-      Assert.assertTrue(globalContainer.queue().isEmpty());
-      Assert.assertFalse(globalContainer.isReset());
-      Assert.assertFalse(globalContainer.flushing().get());
+      assertTrue(globalContainer.queue().isEmpty());
+      assertFalse(globalContainer.isReset());
+      assertFalse(globalContainer.flushing().get());
    }
 }

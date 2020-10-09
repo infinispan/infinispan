@@ -1,6 +1,5 @@
 package org.infinispan.test.fwk;
 
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -37,20 +36,8 @@ public class NamedTestMethod implements ITestNGMethod {
    }
 
    @Override
-   @Deprecated
-   public Method getMethod() {
-      return method.getMethod();
-   }
-
-   @Override
    public String getMethodName() {
       return name;
-   }
-
-   @Override
-   @Deprecated
-   public Object[] getInstances() {
-      return method.getInstances();
    }
 
    @Override
@@ -176,11 +163,6 @@ public class NamedTestMethod implements ITestNGMethod {
    @Override
    public void setInvocationCount(int count) {
       method.setInvocationCount(count);
-   }
-
-   @Override
-   public int getTotalInvocationCount() {
-      return method.getTotalInvocationCount();
    }
 
    @Override
@@ -344,6 +326,16 @@ public class NamedTestMethod implements ITestNGMethod {
    }
 
    @Override
+   public int getInterceptedPriority() {
+      return method.getInterceptedPriority();
+   }
+
+   @Override
+   public void setInterceptedPriority(int i) {
+      method.setInterceptedPriority(i);
+   }
+
+   @Override
    public XmlTest getXmlTest() {
       return method.getXmlTest();
    }
@@ -366,7 +358,7 @@ public class NamedTestMethod implements ITestNGMethod {
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || !(o instanceof ITestNGMethod)) return false;
+      if (!(o instanceof ITestNGMethod)) return false;
 
       return method.equals(o);
    }
