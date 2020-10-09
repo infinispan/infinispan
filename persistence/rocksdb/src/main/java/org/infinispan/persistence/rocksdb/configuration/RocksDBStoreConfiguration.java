@@ -105,6 +105,11 @@ public class RocksDBStoreConfiguration extends AbstractStoreConfiguration implem
       return expiration.expiryQueueSize();
    }
 
+   /**
+    * @deprecated clearThreshold is no longer being used.
+    * @return the configured clear threshold
+    */
+   @Deprecated
    public int clearThreshold() {
       return clearThreshold.get();
    }

@@ -5,6 +5,8 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -154,5 +156,54 @@ public class RocksDBStoreTest extends BaseNonBlockingStoreTest {
       store.write(me);
 
       assertTrue(store.contains(key));
+   }
+
+   // deleteRange uses a magic begin and end key. we assert that everything was removed
+   public void testDeleteRange() {
+      for (int i = 0; i < 100; i++) {
+         String key = "key-" + i;
+         String value = "value-" + i;
+         InternalCacheEntry entry = TestInternalCacheEntryFactory.create(key, value);
+         MarshallableEntry me = MarshalledEntryUtil.create(entry, getMarshaller());
+         store.write(me);
+         assertTrue(store.contains(key));
+      }
+
+      store.clear();
+
+      for (int i = 0; i < 100; i++) {
+         String key = "key-" + i;
+         boolean contains = store.contains(key);
+         assertFalse(contains);
+      }
+   }
+
+   // deleteRange uses a magic begin and end key. we assert that only the data from the give segment was removed
+   public void testDeleteRangeForGivenSegment() {
+      int segmentUnderTest = 1;
+      List<String> keysInTheSegment = new ArrayList<>();
+      for (int i = 0; i < 100; i++) {
+         String key = "key-" + i;
+         String value = "value-" + i;
+         InternalCacheEntry entry = TestInternalCacheEntryFactory.create(key, value);
+         MarshallableEntry me = MarshalledEntryUtil.create(entry, getMarshaller());
+         int segmentFromKey = store.getKeyPartitioner().getSegment(entry.getKey());
+         if (segmentFromKey == segmentUnderTest) {
+            keysInTheSegment.add(key);
+         }
+         store.write(me);
+      }
+
+      store.removeSegments(IntSets.immutableSet(segmentUnderTest));
+
+      for (int i = 0; i < 100; i++) {
+         String key = "key-" + i;
+         boolean contains = store.contains(key);
+         if (keysInTheSegment.contains(key)) {
+            assertFalse(contains);
+         } else {
+            assertTrue(contains);
+         }
+      }
    }
 }
