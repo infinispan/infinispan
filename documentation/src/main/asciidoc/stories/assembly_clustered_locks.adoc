@@ -1,0 +1,14 @@
+[id='clustered_locks']
+:context: locking
+= Clustered Locks
+Clustered locks are data structures that are distributed and shared across
+nodes in a {brandname} cluster. Clustered locks allow you to run code that is
+synchronized between nodes.
+
+include::{topics}/con_lock_api.adoc[leveloffset=+1]
+include::{topics}/proc_using_clustered_locks.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_internal_caches_locks.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

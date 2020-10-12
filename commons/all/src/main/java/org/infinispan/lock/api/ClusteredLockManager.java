@@ -11,7 +11,6 @@ import org.infinispan.lock.exception.ClusteredLockException;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
-@Experimental
 public interface ClusteredLockManager {
 
    /**
