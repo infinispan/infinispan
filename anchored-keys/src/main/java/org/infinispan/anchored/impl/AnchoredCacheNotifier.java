@@ -2,7 +2,6 @@ package org.infinispan.anchored.impl;
 
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
 
 /**
@@ -19,8 +18,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
  */
 public class AnchoredCacheNotifier<K, V> extends CacheNotifierImpl<K, V> {
    @Override
-   protected boolean clusterListenerOnPrimaryOnly(CacheMode mode) {
-      assert mode.isReplicated();
+   protected boolean clusterListenerOnPrimaryOnly() {
       return true;
    }
 

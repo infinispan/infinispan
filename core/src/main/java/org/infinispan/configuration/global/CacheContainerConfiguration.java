@@ -110,7 +110,7 @@ class CacheContainerConfiguration implements ConfigurationInfo {
    }
 
    public boolean getZeroCapacityNode() {
-      return zeroCapacityAvailable & zeroCapacityNode.get();
+      return zeroCapacityAvailable && zeroCapacityNode.get();
    }
 
    public GlobalMetricsConfiguration metrics() {
