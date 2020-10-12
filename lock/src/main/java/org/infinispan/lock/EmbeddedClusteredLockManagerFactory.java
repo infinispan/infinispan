@@ -9,12 +9,11 @@ import org.infinispan.lock.logging.Log;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
- * A {@link ClusteredLockManager} factory for embedded cached.
+ * A {@link ClusteredLockManager} factory for embedded caches.
  *
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
-@Experimental
 public final class EmbeddedClusteredLockManagerFactory {
 
    private static final Log log = LogFactory.getLog(EmbeddedClusteredLockManagerFactory.class, Log.class);
