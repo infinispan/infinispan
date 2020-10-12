@@ -2,7 +2,6 @@ package org.infinispan.lock.api;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commons.util.Experimental;
 import org.infinispan.lock.exception.ClusteredLockException;
 
 /**
@@ -11,7 +10,6 @@ import org.infinispan.lock.exception.ClusteredLockException;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
-@Experimental
 public interface ClusteredLockManager {
 
    /**

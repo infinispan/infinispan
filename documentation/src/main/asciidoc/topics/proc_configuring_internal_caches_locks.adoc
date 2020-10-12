@@ -1,0 +1,44 @@
+[id='configuring_clustered_locks-{context}']
+= Configuring Internal Caches for Locks
+Clustered Lock Managers include an internal cache that stores lock state. You
+can configure the internal cache either declaratively or programmatically.
+
+.Procedure
+
+. Define the number of nodes in the cluster that store the state of clustered locks. The default value is `-1`, which replicates the value to all nodes.
+. Specify one of the following values for the cache reliability, which controls how clustered locks behave when clusters split into partitions or multiple nodes leave:
++
+* `AVAILABLE`: Nodes in any partition can concurrently operate on locks.
+* `CONSISTENT`: Only nodes that belong to the majority partition can operate on locks. This is the default value.
+
+* Programmatic configuration
++
+[source,java,options="nowrap",subs=attributes+]
+----
+import org.infinispan.lock.configuration.ClusteredLockManagerConfiguration;
+import org.infinispan.lock.configuration.ClusteredLockManagerConfigurationBuilder;
+import org.infinispan.lock.configuration.Reliability;
+...
+
+GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+
+final ClusteredLockManagerConfiguration config = global.addModule(ClusteredLockManagerConfigurationBuilder.class).numOwner(2).reliability(Reliability.AVAILABLE).create();
+
+DefaultCacheManager cm = new DefaultCacheManager(global.build());
+
+ClusteredLockManager clm1 = EmbeddedClusteredLockManagerFactory.from(cm);
+
+clm1.defineLock("lock");
+----
+
+* Declarative configuration
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/clustered_lock_manager.xml[]
+----
+
+.Reference
+
+* link:{javadocroot}/org/infinispan/lock/configuration/ClusteredLockManagerConfiguration.html[ClusteredLockManagerConfiguration]
+* link:{configdocroot}infinispan-clustered-locks-config-infinispan-clustered-locks-config-12.0.html.html[Clustered Locks Configuration Schema]
