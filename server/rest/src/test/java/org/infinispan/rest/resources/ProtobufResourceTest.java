@@ -15,7 +15,6 @@ import org.infinispan.client.rest.RestSchemaClient;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -139,11 +138,9 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
 
       String personProto = getResourceAsString("person.proto", getClass().getClassLoader());
 
-      join(CompletionStages.allOf(
-            schemaClient.post("users", personProto),
-            schemaClient.post("people", personProto),
-            schemaClient.post("dancers", personProto)
-      ));
+      join(schemaClient.post("users", personProto));
+      join(schemaClient.post("people", personProto));
+      join(schemaClient.post("dancers", personProto));
 
       RestResponse response = join(schemaClient.names());
 
