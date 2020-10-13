@@ -1,7 +1,5 @@
 package org.infinispan.lock.api;
 
-import org.infinispan.commons.util.Experimental;
-
 /**
  * A Clustered Lock can be reentrant and there are different ownership levels.
  * <p>
