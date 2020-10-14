@@ -200,7 +200,7 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-hibernate-commons</artifactId>
+                <artifactId>infinispan-hibernate-cache-commons</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
             <dependency>
