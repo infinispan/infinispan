@@ -64,8 +64,8 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <configuration combine.self="override">
-               <skipTests>true</skipTests>
+            <configuration>
+               <skipTests combine.self="override">true</skipTests>
             </configuration>
          </plugin>
       </plugins>
