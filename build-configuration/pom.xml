@@ -164,7 +164,7 @@
       <version.jcip-annotations>1.0</version.jcip-annotations>
       <version.jgroups>4.2.1.Final</version.jgroups>
       <version.jsr107>1.1.0</version.jsr107>
-      <version.junit>4.13</version.junit>
+      <version.junit>4.13.1</version.junit>
       <version.junit5>5.6.2</version.junit5>
       <version.log4j>2.13.2</version.log4j>
       <version.lucene>8.6.1</version.lucene>
