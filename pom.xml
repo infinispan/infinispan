@@ -298,9 +298,8 @@
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.directory.server.apacheds-all>2.0.0-M24</versionx.org.apache.directory.server.apacheds-all>
       <versionx.org.apache.geronimo.components.geronimo-transaction>3.1.1</versionx.org.apache.geronimo.components.geronimo-transaction>
-      <versionx.org.apache.httpcomponents.httpasyncclient>4.1.3</versionx.org.apache.httpcomponents.httpasyncclient>
-      <versionx.org.apache.httpcomponents.httpclient>4.5.4</versionx.org.apache.httpcomponents.httpclient>
-      <versionx.org.apache.httpcomponents.httpcore>4.4.5</versionx.org.apache.httpcomponents.httpcore>
+      <versionx.org.apache.httpcomponents.httpclient>4.5.13</versionx.org.apache.httpcomponents.httpclient>
+      <versionx.org.apache.httpcomponents.httpcore>4.4.13</versionx.org.apache.httpcomponents.httpcore>
       <versionx.org.apache.karaf.features.framework>${version.karaf}</versionx.org.apache.karaf.features.framework>
       <versionx.org.apache.karaf.features.org.apache.karaf.features.core>${version.karaf}</versionx.org.apache.karaf.features.org.apache.karaf.features.core>
       <versionx.org.apache.logging.log4j.log4j-api>${version.log4j}</versionx.org.apache.logging.log4j.log4j-api>
