@@ -135,7 +135,7 @@ public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTe
         EmbeddedCacheManager defaultCacheManager = TestCacheManagerFactory.newDefaultCacheManager(true, gcb, builder);
         String cacheName = defaultCacheManager.getCache().getName();
         PersistenceMarshaller marshaller = defaultCacheManager.getCache().getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
-        InitializationContext ctx = new DummyInitializationContext(null, null, marshaller, null, null, null, null, null);
+        InitializationContext ctx = new DummyInitializationContext(null, null, marshaller, null, null, null, null, null, null);
         tableManager = TableManagerFactory.getManager(ctx, connectionFactory, storeBuilder.create(), cacheName);
 
         return defaultCacheManager;

@@ -29,6 +29,7 @@ public class DummyInitializationContext implements InitializationContext {
 
    GlobalConfiguration globalConfiguration;
    BlockingManager manager;
+   TimeService timeService;
 
    public DummyInitializationContext() {
    }
@@ -36,7 +37,7 @@ public class DummyInitializationContext implements InitializationContext {
    public DummyInitializationContext(StoreConfiguration clc, Cache cache, PersistenceMarshaller marshaller,
                                      ByteBufferFactory byteBufferFactory, MarshallableEntryFactory marshalledEntryFactory,
                                      ExecutorService executorService, GlobalConfiguration globalConfiguration,
-                                     BlockingManager manager) {
+                                     BlockingManager manager, TimeService timeService) {
       this.clc = clc;
       this.cache = cache;
       this.marshaller = marshaller;
@@ -45,6 +46,7 @@ public class DummyInitializationContext implements InitializationContext {
       this.executorService = executorService;
       this.globalConfiguration = globalConfiguration;
       this.manager = manager;
+      this.timeService = timeService;
    }
 
    @Override
@@ -64,7 +66,7 @@ public class DummyInitializationContext implements InitializationContext {
 
    @Override
    public TimeService getTimeService() {
-      return cache.getAdvancedCache().getComponentRegistry().getTimeService();
+      return timeService;
    }
 
    @Override
