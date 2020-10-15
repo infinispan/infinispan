@@ -2,6 +2,7 @@ package org.infinispan.persistence.async;
 
 import java.lang.invoke.MethodHandles;
 import java.util.AbstractMap;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -16,6 +17,7 @@ import java.util.function.Supplier;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
@@ -27,21 +29,16 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
-import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.flowables.ConnectableFlowable;
-import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.functions.Function;
-import io.reactivex.rxjava3.processors.FlowableProcessor;
-import io.reactivex.rxjava3.processors.MulticastProcessor;
-import io.reactivex.rxjava3.processors.UnicastProcessor;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -64,17 +61,9 @@ import net.jcip.annotations.GuardedBy;
  * @param <K> key type for the store
  * @param <V> value type for the store
  */
-public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V> implements Consumer<Flowable<AsyncNonBlockingStore.Modification>> {
+public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final NonBlockingStore<K, V> actual;
-
-   // Any non-null value can be passed to `onNext` when a new batch should be submitted - A value should only be
-   // submitted to this if the `batchFuture` was null and the caller was able to assign it to a new value
-   private final MulticastProcessor<Object> requestFlowable;
-   // Submit new Modifications to this on every write
-   private volatile FlowableProcessor<Modification> submissionFlowable;
-   // Closing this will stop the subsmissionFlowable subscription
-   private volatile Disposable startSub;
 
    private Executor nonBlockingExecutor;
    private int segmentCount;
@@ -108,15 +97,14 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    // via reference (thus the map is safe to read outside of this lock, but the reference must be read in synchronized)
    // This map contains all the modifications currently being replicated to the delegating store
    @GuardedBy("this")
-   private Map<Object, Modification> replicatingModifications;
+   private Map<Object, Modification> replicatingModifications = Collections.emptyMap();
    // True if there is an outstanding clear that is being ran on the delegating store
    @GuardedBy("this")
    private boolean isReplicatingClear;
+   private volatile boolean stopped = true;
 
    public AsyncNonBlockingStore(NonBlockingStore<K, V> actual) {
       this.actual = actual;
-      this.requestFlowable = MulticastProcessor.create(1);
-      requestFlowable.start();
    }
 
    @Override
@@ -129,36 +117,23 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
       segmentCount = storeConfiguration.segmented() ? cacheConfiguration.clustering().hash().numSegments() : 1;
       asyncConfiguration = storeConfiguration.async();
       modificationQueueSize = asyncConfiguration.modificationQueueSize();
-      // It is possible for multiple threads to write to this processor at the same time
-      submissionFlowable = UnicastProcessor.<Modification>create(1).toSerialized();
       nonBlockingExecutor = ctx.getNonBlockingExecutor();
-      startSub = submissionFlowable.window(requestFlowable).subscribe(this);
+      stopped = false;
       return actual.start(ctx);
    }
 
    @Override
    public CompletionStage<Void> stop() {
       CompletionStage<Void> asyncStage;
-      if (submissionFlowable != null) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Stopping async store containing store %s", actual);
-         }
-         submissionFlowable = null;
-         asyncStage = awaitQuiescence().whenComplete((ignore, t) -> {
-            // We can only dispose of the subscription after we are sure we are totally stopped
-            if (startSub != null) {
-               startSub.dispose();
-               startSub = null;
-            }
-         });
-
-      } else {
-         asyncStage = CompletableFutures.completedNull();
+      if (log.isTraceEnabled()) {
+         log.tracef("Stopping async store containing store %s", actual);
       }
+      asyncStage = awaitQuiescence();
       return asyncStage.thenCompose(ignore -> {
          if (log.isTraceEnabled()) {
             log.tracef("Stopping store %s from async store", actual);
          }
+         stopped = true;
          return actual.stop();
       });
    }
@@ -180,14 +155,14 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
       return stage.thenCompose(ignore -> awaitQuiescence());
    }
 
-   private synchronized void putModification(Object key, Modification modification) {
+   void putModification(Object key, Modification modification) {
       if (log.isTraceEnabled()) {
          log.tracef("Adding modification %s to %s", modification, System.identityHashCode(pendingModifications));
       }
       pendingModifications.put(key, modification);
    }
 
-   private synchronized void putClearModification() {
+   void putClearModification() {
       if (log.isTraceEnabled()) {
          log.tracef("Clear modification encountered for %s", System.identityHashCode(pendingModifications));
       }
@@ -196,84 +171,85 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    }
 
    /**
-    * This method is invoked every time a new batch of entries is generated. When the Flowable is completed, any
-    * enqueued values should be replicated to the underlying store.
-    * @param modificationFlowable the next stream of values to enqueue and eventually send
+    * This method submits a batch of modifications to the underlying store and completes {@code batchFuture}
+    * when the modifications are done.
+    *
+    * If there are any pending modifications at that time, it automatically submits a new batch,
+    * otherwise it sets {@code batchFuture} to null.
+    *
+    * Callers must atomically check that {@code batchFuture} is null and set it to a non-null value,
+    * to ensure that only one batch is being processed at any time.
     */
-   @Override
-   public void accept(Flowable<Modification> modificationFlowable) {
-      modificationFlowable.subscribe(modification -> modification.apply(this),
-            RxJavaInterop.emptyConsumer(),
-            () -> {
-               Map<Object, Modification> newMap = new HashMap<>();
-               if (log.isTraceEnabled()) {
-                  log.tracef("Starting new batch with id %s", System.identityHashCode(newMap));
-               }
-               boolean ourClearToReplicate;
-               Map<Object, Modification> ourModificationsToReplicate;
+   private void submitTask() {
+      Map<Object, Modification> newMap = new HashMap<>();
+      if (log.isTraceEnabled()) {
+         log.tracef("Starting new batch with id %s", System.identityHashCode(newMap));
+      }
+      boolean ourClearToReplicate;
+      Map<Object, Modification> ourModificationsToReplicate;
+      synchronized (this) {
+         // The isReplicatingClear would be true or replicatingModifications non empty if an update was currently pending
+         // But we should only allow one at a time
+         assert replicatingModifications.isEmpty() && !isReplicatingClear;
+         replicatingModifications = pendingModifications;
+         ourModificationsToReplicate = pendingModifications;
+         pendingModifications = newMap;
+         isReplicatingClear = hasPendingClear;
+         ourClearToReplicate = hasPendingClear;
+         hasPendingClear = false;
+      }
+
+      CompletionStage<Void> asyncBatchStage;
+      if (ourClearToReplicate) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Sending clear to underlying store for id %s", System.identityHashCode(ourModificationsToReplicate));
+         }
+         asyncBatchStage = retry(actual::clear, persistenceConfiguration.connectionAttempts()).whenComplete((ignore, t) -> {
+            synchronized (this) {
+               isReplicatingClear = false;
+            }
+         });
+      } else {
+         asyncBatchStage = CompletableFutures.completedNull();
+      }
+
+      if (!ourModificationsToReplicate.isEmpty()) {
+         asyncBatchStage = asyncBatchStage.thenCompose(ignore -> {
+            if (log.isTraceEnabled()) {
+               log.tracef("Sending batch write/remove operations %s to underlying store with id %s", ourModificationsToReplicate.size(),
+                     System.identityHashCode(ourModificationsToReplicate));
+            }
+            return retry(() -> replicateModifications(ourModificationsToReplicate), persistenceConfiguration.connectionAttempts()).whenComplete((ignore2, t) -> {
                synchronized (this) {
-                  assert replicatingModifications == null || replicatingModifications.isEmpty();
-                  replicatingModifications = pendingModifications;
-                  ourModificationsToReplicate = pendingModifications;
-                  pendingModifications = newMap;
-                  isReplicatingClear = hasPendingClear;
-                  ourClearToReplicate = hasPendingClear;
-                  hasPendingClear = false;
+                  replicatingModifications = Collections.emptyMap();
                }
-
-
-               CompletionStage<Void> asyncBatchStage;
-               if (ourClearToReplicate) {
-                  if (log.isTraceEnabled()) {
-                     log.tracef("Sending clear to underlying store for id %s", System.identityHashCode(ourModificationsToReplicate));
-                  }
-                  asyncBatchStage = retry(actual::clear, persistenceConfiguration.connectionAttempts()).whenComplete((ignore, t) -> {
-                     synchronized (this) {
-                        isReplicatingClear = false;
-                     }
-                  });
-               } else {
-                  asyncBatchStage = CompletableFutures.completedNull();
-               }
-
-               if (!ourModificationsToReplicate.isEmpty()) {
-                  asyncBatchStage = asyncBatchStage.thenCompose(ignore -> {
-                     if (log.isTraceEnabled()) {
-                        log.tracef("Sending batch write/remove operations %s to underlying store with id %s", ourModificationsToReplicate.values(),
-                              System.identityHashCode(ourModificationsToReplicate));
-                     }
-                     return retry(() -> replicateModifications(ourModificationsToReplicate), persistenceConfiguration.connectionAttempts()).whenComplete((ignore2, t) -> {
-                        synchronized (this) {
-                           replicatingModifications = null;
-                        }
-                     });
-                  });
-               }
-
-               asyncBatchStage.whenComplete((ignore, t) -> {
-                  if (log.isTraceEnabled()) {
-                     log.tracef("Async operations completed for id %s", System.identityHashCode(ourModificationsToReplicate));
-                  }
-                  boolean submitNewBatch;
-                  CompletableFuture<Void> future;
-                  synchronized (this) {
-                     submitNewBatch = !pendingModifications.isEmpty() || hasPendingClear;
-                     future = batchFuture;
-                     batchFuture = submitNewBatch ? new CompletableFuture<>() : null;
-                  }
-                  if (t != null) {
-                     future.completeExceptionally(t);
-                  } else {
-                     future.complete(null);
-                  }
-                  if (submitNewBatch) {
-                     if (log.isTraceEnabled()) {
-                        log.trace("Submitting new batch after completion of prior");
-                     }
-                     requestFlowable.onNext(requestFlowable);
-                  }
-               });
             });
+         });
+      }
+
+      asyncBatchStage.whenComplete((ignore, t) -> {
+         if (log.isTraceEnabled()) {
+            log.tracef("Async operations completed for id %s", System.identityHashCode(ourModificationsToReplicate));
+         }
+         boolean submitNewBatch;
+         CompletableFuture<Void> future;
+         synchronized (this) {
+            submitNewBatch = !pendingModifications.isEmpty() || hasPendingClear;
+            future = batchFuture;
+            batchFuture = submitNewBatch ? new CompletableFuture<>() : null;
+         }
+         if (t != null) {
+            future.completeExceptionally(t);
+         } else {
+            future.complete(null);
+         }
+         if (submitNewBatch) {
+            if (log.isTraceEnabled()) {
+               log.trace("Submitting new batch after completion of prior");
+            }
+            submitTask();
+         }
+      });
    }
 
    /**
@@ -425,9 +401,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
          clearToReplicate = this.isReplicatingClear;
       }
 
-      if (modificationsToReplicate != null) {
-         modificationCopy.putAll(modificationsToReplicate);
-      }
+      modificationCopy.putAll(modificationsToReplicate);
       return new AbstractMap.SimpleImmutableEntry<>(clearToReplicate, modificationCopy);
    }
 
@@ -449,22 +423,32 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
          // Note that writes to this map are done only in synchronized block, so we have to do same for get
          Modification modification = pendingModifications.get(wrappedKey);
          if (modification != null) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Found entry was pending write in async store: %s", modification);
+            }
             return modification.asStage();
          }
          if (hasPendingClear) {
+            if (log.isTraceEnabled()) {
+               log.trace("There is a pending clear from async store, returning null");
+            }
             return CompletableFutures.completedNull();
          }
          // This map is never written to so just reading reference in synchronized block is sufficient
          modificationsToReplicate = this.replicatingModifications;
          clearToReplicate = this.isReplicatingClear;
       }
-      if (modificationsToReplicate != null) {
-         Modification modification = modificationsToReplicate.get(wrappedKey);
-         if (modification != null) {
-            return modification.asStage();
-         } else if (clearToReplicate) {
-            return CompletableFutures.completedNull();
+      Modification modification = modificationsToReplicate.get(wrappedKey);
+      if (modification != null) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Found entry was replicating write in async store: %s", modification);
          }
+         return modification.asStage();
+      } else if (clearToReplicate) {
+         if (log.isTraceEnabled()) {
+            log.trace("There is a clear being replicated from async store, returning null");
+         }
+         return CompletableFutures.completedNull();
       }
       return null;
    }
@@ -473,72 +457,67 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    public CompletionStage<Void> batch(int publisherCount, Publisher<SegmentedPublisher<Object>> removePublisher,
          Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
       assertNotStopped();
-      Flowable.fromPublisher(removePublisher)
-            .subscribe(sp ->
-               Flowable.fromPublisher(sp)
-                     .subscribe(key -> submissionFlowable.onNext(new RemoveModification(sp.getSegment(), key)))
-            );
-      Flowable.fromPublisher(writePublisher)
-            .subscribe(sp ->
-                  Flowable.fromPublisher(sp)
-                        .subscribe(me -> submissionFlowable.onNext(new PutModification(sp.getSegment(), me)))
-            );
-      submitBatchIfNecessary();
-      return asyncOrThrottledStage();
+      Completable removeCompletable = Flowable.fromPublisher(removePublisher)
+            .flatMapCompletable(sp -> Flowable.fromPublisher(sp)
+                  .concatMapCompletable(key -> Completable.fromCompletionStage(submitModification(new RemoveModification(sp.getSegment(), key))), publisherCount));
+      Completable modifyCompletable = Flowable.fromPublisher(writePublisher)
+            .flatMapCompletable(sp -> Flowable.fromPublisher(sp)
+                  .concatMapCompletable(me -> Completable.fromCompletionStage(submitModification(new PutModification(sp.getSegment(), me))), publisherCount));
+      return removeCompletable.mergeWith(modifyCompletable)
+            .toCompletionStage(null);
    }
 
-   @Override
-   public CompletionStage<Void> write(int segment, MarshallableEntry<? extends K, ? extends V> entry) {
-      assertNotStopped();
-      submissionFlowable.onNext(new PutModification(segment, entry));
-      submitBatchIfNecessary();
-      return asyncOrThrottledStage();
-   }
-
-   @Override
-   public CompletionStage<Boolean> delete(int segment, Object key) {
-      assertNotStopped();
-      submissionFlowable.onNext(new RemoveModification(segment, key));
-      submitBatchIfNecessary();
-      return asyncOrThrottledStage()
-            // We always assume it was removed with async
-            .thenCompose(ignore -> CompletableFutures.completedTrue());
-   }
-
-   private void submitBatchIfNecessary() {
+   CompletionStage<Void> submitModification(Modification modification) {
       boolean startNewBatch;
+      CompletionStage<Void> submitStage;
       synchronized (this) {
+         modification.apply(this);
+
          if (startNewBatch = batchFuture == null) {
             batchFuture = new CompletableFuture<>();
          }
+         int replicatingSize = replicatingModifications.size();
+
+         submitStage = pendingModifications.size() + replicatingSize > modificationQueueSize
+               ? batchFuture : null;
+      }
+
+      boolean isTraceEnabled = log.isTraceEnabled();
+      if (isTraceEnabled) {
+         log.tracef("A new modification %s has been enqueued with async store", modification);
       }
 
       if (startNewBatch) {
          if (log.isTraceEnabled()) {
             log.tracef("Requesting a new async batch operation to be ran!");
          }
-         // Any old object will work
-         requestFlowable.onNext(requestFlowable);
+         submitTask();
       }
+      if (submitStage != null && isTraceEnabled) {
+         log.tracef("Operation will not return immediately, must wait until current batch completes");
+      }
+      return submitStage == null ? CompletableFutures.completedNull() :
+            submitStage.thenApplyAsync(CompletableFutures.toNullFunction(), nonBlockingExecutor);
    }
 
-   private synchronized CompletionStage<Void> asyncOrThrottledStage() {
-      if (pendingModifications.size() > modificationQueueSize) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Operation will not return immediately, must wait until current batch completes");
-         }
-         // We could have multiple waiting on the stage, so make sure we can don't block the thread
-         // that completes the stage
-         return batchFuture.thenApplyAsync(CompletableFutures.toNullFunction(), nonBlockingExecutor);
-      }
-      return CompletableFutures.completedNull();
+   @Override
+   public CompletionStage<Void> write(int segment, MarshallableEntry<? extends K, ? extends V> entry) {
+      assertNotStopped();
+      return submitModification(new PutModification(segment, entry));
+   }
+
+   @Override
+   public CompletionStage<Boolean> delete(int segment, Object key) {
+      assertNotStopped();
+      return submitModification(new RemoveModification(segment, key))
+            // We always assume it was removed with async
+            .thenCompose(ignore -> CompletableFutures.completedTrue());
    }
 
    @Override
    public CompletionStage<Void> clear() {
       assertNotStopped();
-      submissionFlowable.onNext(ClearModification.INSTANCE);
-      submitBatchIfNecessary();
+      submitModification(ClearModification.INSTANCE);
       return CompletableFutures.completedNull();
    }
 
@@ -581,7 +560,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
 
    @Override
    public CompletionStage<Boolean> isAvailable() {
-      if (submissionFlowable == null) {
+      if (stopped) {
          return CompletableFutures.completedFalse();
       }
 
@@ -608,7 +587,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
          boolean isReplicating;
          int queueSize;
          synchronized (this) {
-            isReplicating = (replicatingModifications != null && !replicatingModifications.isEmpty()) || isReplicatingClear;
+            isReplicating = !replicatingModifications.isEmpty() || isReplicatingClear;
             queueSize = pendingModifications.size();
             if (delegateUnavailable = delegateAvailableFuture == null) {
                delegateAvailableFuture = new CompletableFuture<>();
@@ -627,118 +606,8 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    }
 
    private void assertNotStopped() throws CacheException {
-      if (submissionFlowable == null)
+      if (stopped)
          throw new IllegalLifecycleStateException("AsyncCacheWriter stopped; no longer accepting more entries.");
-   }
-
-   interface Modification {
-      <K, V> void apply(AsyncNonBlockingStore<K, V> store);
-
-      int getSegment();
-
-      <K, V> CompletionStage<MarshallableEntry<K, V>> asStage();
-   }
-
-   private static class RemoveModification implements AsyncNonBlockingStore.Modification {
-      private final int segment;
-      private final Object key;
-
-      private RemoveModification(int segment, Object key) {
-         this.segment = segment;
-         this.key = key;
-      }
-
-      @Override
-      public <K, V> void apply(AsyncNonBlockingStore<K, V> store) {
-         store.putModification(wrapKeyIfNeeded(key), this);
-      }
-
-      @Override
-      public int getSegment() {
-         return segment;
-      }
-
-      @Override
-      public <K, V> CompletionStage<MarshallableEntry<K, V>> asStage() {
-         return CompletableFutures.completedNull();
-      }
-
-      public Object getKey() {
-         return key;
-      }
-
-      @Override
-      public String toString() {
-         return "RemoveModification{" +
-               "segment=" + segment +
-               ", key=" + key +
-               '}';
-      }
-   }
-
-   private static class PutModification implements AsyncNonBlockingStore.Modification {
-      private final int segment;
-      private final MarshallableEntry entry;
-
-      private PutModification(int segment, MarshallableEntry entry) {
-         this.segment = segment;
-         this.entry = entry;
-      }
-
-      @Override
-      public <K, V> void apply(AsyncNonBlockingStore<K, V> store) {
-         store.putModification(wrapKeyIfNeeded(entry.getKey()), this);
-      }
-
-      @Override
-      public int getSegment() {
-         return segment;
-      }
-
-      @SuppressWarnings("unchecked")
-      @Override
-      public <K, V> CompletionStage<MarshallableEntry<K, V>> asStage() {
-         return CompletableFuture.completedFuture(entry);
-      }
-
-      @SuppressWarnings("unchecked")
-      public <K, V> MarshallableEntry<K, V> getEntry() {
-         return entry;
-      }
-
-      @Override
-      public String toString() {
-         return "PutModification{" +
-               "segment=" + segment +
-               ", entry=" + entry +
-               '}';
-      }
-   }
-
-   private static class ClearModification implements AsyncNonBlockingStore.Modification {
-      private ClearModification() { }
-
-      public static final ClearModification INSTANCE = new ClearModification();
-
-      @Override
-      public <K, V> void apply(AsyncNonBlockingStore<K, V> store) {
-         store.putClearModification();
-      }
-
-      @Override
-      public int getSegment() {
-         throw new UnsupportedOperationException("This should never be invoked");
-      }
-
-      @Override
-      public <K, V> CompletionStage<MarshallableEntry<K, V>> asStage() {
-         throw new UnsupportedOperationException("This should never be invoked");
-      }
-
-      @Override
-      public String toString() {
-         return "ClearModification{}";
-      }
    }
 
    /**
@@ -746,7 +615,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
     * @param key the key to wrap
     * @return the wrapped object (if required) or the object itself
     */
-   private static Object wrapKeyIfNeeded(Object key) {
+   static Object wrapKeyIfNeeded(Object key) {
       if (key instanceof byte[]) {
          return new WrappedByteArray((byte[]) key);
       }

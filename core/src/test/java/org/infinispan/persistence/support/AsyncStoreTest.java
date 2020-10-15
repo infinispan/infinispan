@@ -370,7 +370,10 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
          ConfigurationBuilder config = new ConfigurationBuilder();
          config.memory().maxCount(1).persistence().passivation(passivation).addStore(LockableStoreConfigurationBuilder.class)
                .async()
-                  .modificationQueueSize(1)
+                  // This cannot be 1. When using passivation in doTestEndToEndPutPut we block a store write to key X.
+                  // This would then mean we have a batch of 1 we would not allow any subsequent writes to complete
+                  // as they will be enqueued. This allows us to let the test block passivation but continue.
+                  .modificationQueueSize(2)
                   .enable();
          return config;
       }
@@ -412,7 +415,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
                   }
                });
 
-               Exceptions.expectException(TimeoutException.class, () -> f.get(100, TimeUnit.MILLISECONDS));
+               Exceptions.expectException(TimeoutException.class, () -> f.get(DummyInMemoryStore.SLOW_STORE_WAIT * 2 + 5, TimeUnit.MILLISECONDS));
 
                assertEquals("2", cache.get("X"));
                if (!passivation) {

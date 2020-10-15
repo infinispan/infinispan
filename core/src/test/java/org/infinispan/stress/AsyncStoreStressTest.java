@@ -11,29 +11,35 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.time.DefaultTimeService;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.BlockingRejectedExecutionHandler;
+import org.infinispan.commons.util.concurrent.NonBlockingRejectedExecutionHandler;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
+import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.distribution.ch.impl.SingleSegmentKeyPartitioner;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.TestComponentAccessors;
+import org.infinispan.factories.threads.DefaultThreadFactory;
+import org.infinispan.factories.threads.NonBlockingThreadFactory;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
@@ -99,12 +105,19 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
 
       nonBlockingExecutor = new ThreadPoolExecutor(0, ProcessorInfo.availableProcessors() * 2,
             60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(),
-            getTestThreadFactory("NonBlocking"));
+            new ArrayBlockingQueue<>(KnownComponentNames.getDefaultQueueSize(KnownComponentNames.NON_BLOCKING_EXECUTOR)),
+            new NonBlockingThreadFactory("ISPN-non-blocking-thread-group", Thread.NORM_PRIORITY,
+                  DefaultThreadFactory.DEFAULT_PATTERN, "Test", "non-blocking"),
+            NonBlockingRejectedExecutionHandler.getInstance());
       blockingExecutor = new ThreadPoolExecutor(0, 150,
             60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(),
-            getTestThreadFactory("Blocking"));
+            new ArrayBlockingQueue<>(KnownComponentNames.getDefaultQueueSize(KnownComponentNames.BLOCKING_EXECUTOR)),
+            getTestThreadFactory("Blocking"),
+            BlockingRejectedExecutionHandler.getInstance());
+
+      PerKeyLockContainer lockContainer = new PerKeyLockContainer();
+      TestingUtil.inject(lockContainer, new DefaultTimeService());
+      locks = lockContainer;
    }
 
    @AfterClass(alwaysRun = true)
@@ -133,7 +146,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
    // ImmortalCacheEntry{key=key165168, value=ImmortalCacheValue {value=61456}}}
    // (Thread-194:) Expected state updated with key=key165168, value=61456
    // (Thread-200:) Expected state updated with key=key165168, value=60483
-   private LockContainer locks = new PerKeyLockContainer();
+   private LockContainer locks;
 
    private AsyncNonBlockingStore<Object, Object> createDummyAsyncStore() {
       DummyInMemoryStoreConfiguration dummyConfiguration = TestCacheManagerFactory
@@ -152,6 +165,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
             .getDefaultCacheConfiguration(false)
             .persistence()
             .addSingleFileStore()
+            .location(location)
             .segmented(false)
             .create();
 
@@ -166,10 +180,12 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
             new TestComponentAccessors.NamedComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, nonBlockingExecutor),
             new TestComponentAccessors.NamedComponent(KnownComponentNames.BLOCKING_EXECUTOR, blockingExecutor));
       TestingUtil.startComponent(blockingManager);
-      CompletionStages.join(store.start(new DummyInitializationContext(storeConfiguration, Mockito.mock(Cache.class, Mockito.RETURNS_DEEP_STUBS), marshaller, new ByteBufferFactoryImpl(),
-            new MarshalledEntryFactoryImpl(marshaller),
-            Executors.newScheduledThreadPool(1, getTestThreadFactory("PersistenceExecutorThreadFactory")),
-            new GlobalConfigurationBuilder().globalState().persistentLocation(location).build(), blockingManager)));
+      Cache cacheMock = Mockito.mock(Cache.class, Mockito.RETURNS_DEEP_STUBS);
+      Mockito.when(cacheMock.getAdvancedCache().getComponentRegistry().getComponent(KeyPartitioner.class))
+            .thenReturn(SingleSegmentKeyPartitioner.getInstance());
+      CompletionStages.join(store.start(new DummyInitializationContext(storeConfiguration, cacheMock, marshaller, new ByteBufferFactoryImpl(),
+            new MarshalledEntryFactoryImpl(marshaller), nonBlockingExecutor,
+            new GlobalConfigurationBuilder().globalState().persistentLocation(location).build(), blockingManager, new DefaultTimeService())));
       return store;
    }
 
@@ -183,8 +199,8 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
    @DataProvider(name = "readWriteRemove")
    public Object[][] independentReadWriteRemoveParams() {
       return new Object[][]{
-            new Object[]{CAPACITY, 3 * CAPACITY, 90, 9, 1},
-            new Object[]{CAPACITY, 3 * CAPACITY, 9, 1, 0},
+            new Object[]{CAPACITY, 3 * CAPACITY, 9, 20, 1},
+            new Object[]{CAPACITY, 3 * CAPACITY, 90, 1, 0},
       };
    }
 
@@ -326,7 +342,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
             final InternalCacheEntry entry =
                   entryFactory.create(key, value, new EmbeddedMetadata.Builder().build());
             // Store acquiring locks and catching exceptions
-            return withStore(key, () -> {
+            return withKeyLock(key, () -> {
                CompletionStages.join(store.write(0, MarshalledEntryUtil.create(entry, marshaller)));
                expectedState.put(key, entry);
                if (log.isTraceEnabled())
@@ -342,7 +358,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
          @Override
          public boolean call(final String key, long run) {
             // Remove acquiring locks and catching exceptions
-            return withStore(key, () -> {
+            return withKeyLock(key, () -> {
                boolean removed = CompletionStages.join(store.delete(0, key));
                if (removed) {
                   expectedState.remove(key);
@@ -355,13 +371,14 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
       };
    }
 
-   private boolean withStore(String key, Callable<Boolean> call) {
+   private boolean withKeyLock(String key, Callable<Boolean> call) {
       boolean result = false;
       try {
-         locks.acquire(key, Thread.currentThread(), 30, TimeUnit.SECONDS).lock();
+         locks.acquire(key, Thread.currentThread(), 5, TimeUnit.SECONDS).lock();
          result = call.call();
       } catch (Exception e) {
          //ignored
+         e.printStackTrace();
       } finally {
          locks.release(key, Thread.currentThread());
       }
