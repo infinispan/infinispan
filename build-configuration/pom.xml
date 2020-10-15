@@ -6,6 +6,7 @@
       <groupId>org.jboss</groupId>
       <artifactId>jboss-parent</artifactId>
       <version>36</version>
+      <relativePath/>
    </parent>
 
    <groupId>org.infinispan</groupId>
