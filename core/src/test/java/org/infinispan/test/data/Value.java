@@ -20,6 +20,14 @@ public class Value {
       this.value = value;
    }
 
+   public String getName() {
+      return name;
+   }
+
+   public String getValue() {
+      return value;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;

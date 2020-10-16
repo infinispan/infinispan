@@ -50,15 +50,15 @@
             <directory>${project.basedir}/src/test/resources</directory>
             <filtering>true</filtering>
             <excludes>
-               <exclude>10_1_x_sifs_data/**</exclude>
+               <exclude>*_x_sifs_data/**</exclude>
             </excludes>
          </testResource>
-         <!-- Make sure the filtering is disabled for 10.1.x SIFS data, otherwise the files get "corrupted" -->
+         <!-- Make sure the filtering is disabled for SIFS data, otherwise the files get "corrupted" -->
          <testResource>
             <directory>${project.basedir}/src/test/resources</directory>
             <filtering>false</filtering>
             <includes>
-               <include>10_1_x_sifs_data/**</include>
+               <include>*_x_sifs_data/**</include>
             </includes>
          </testResource>
       </testResources>

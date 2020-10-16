@@ -43,7 +43,7 @@ public class SingleFileStoreReader implements StoreIterator {
          }
          if (Arrays.equals(magicBytes, SingleFileStore.MAGIC_BEFORE_11)) {
             this.reader = new OldReader();
-         } else if (Arrays.equals(magicBytes, SingleFileStore.MAGIC_11_0)) {
+         } else if (Arrays.equals(magicBytes, SingleFileStore.MAGIC_11_0) || Arrays.equals(magicBytes, SingleFileStore.MAGIC_LATEST)) {
             this.reader = new NewReader();
          } else {
             throw new CacheException(String.format("File at \"%s\" is corrupted. Unexpected magic number.", location));

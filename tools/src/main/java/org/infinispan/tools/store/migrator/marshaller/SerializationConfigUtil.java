@@ -14,6 +14,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.SerializationConfigurationBuilder;
@@ -47,6 +48,9 @@ public class SerializationConfigUtil {
 
    public static Marshaller getMarshaller(StoreProperties props) {
       int majorVersion = props.getMajorVersion();
+      if (props.isTargetStore() && majorVersion != Integer.parseInt(Version.getMajor())) {
+         throw new CacheConfigurationException(String.format("The marshaller associated with Infinispan %d can only be specified for source stores.", majorVersion));
+      }
       switch (majorVersion) {
          case 8:
          case 9:
@@ -55,30 +59,37 @@ public class SerializationConfigUtil {
                return marshaller;
             }
 
-            if (props.isTargetStore())
-               throw new CacheConfigurationException(String.format("The marshaller associated with Infinispan %d can only be specified for source stores.", majorVersion));
             Map<Integer, AdvancedExternalizer> userExts = getExternalizersFromProps(props);
             return majorVersion == 8 ? new Infinispan8Marshaller(userExts) : new Infinispan9Marshaller(userExts);
          case 10:
          case 11:
-         case 12:
-            if (props.isTargetStore())
-               return null;
-
-            GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
-            configureSerializationContextInitializers(props, globalConfig.serialization());
-            marshaller = loadMarshallerInstance(props);
-            if (marshaller != null) {
-               globalConfig.serialization().marshaller(marshaller);
+            String marshallerClass = props.get(MARSHALLER, CLASS);
+            PersistenceMarshaller pm = createPersistenceMarshaller(props);
+            if (marshallerClass != null) {
+               // If a custom marshaller was specified, then return PersistenceMarshaller as user values are all wrapped
+               return pm;
             }
-
-            EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig.build());
-            Cache<Object, Object> cache = manager.createCache(props.cacheName(), new ConfigurationBuilder().build());
-            return cache.getAdvancedCache().getComponentRegistry()
-                        .getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
+            // Return the user marshaller so that PersistenceMarshaller object wrapping is avoided
+            return pm.getUserMarshaller();
+         case 12:
+            return props.isTargetStore() ? null : createPersistenceMarshaller(props);
          default:
             throw new IllegalStateException(String.format("Unexpected major version '%d'", majorVersion));
       }
+   }
+
+   private static PersistenceMarshaller createPersistenceMarshaller(StoreProperties props) {
+      GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
+      configureSerializationContextInitializers(props, globalConfig.serialization());
+      Marshaller marshaller = loadMarshallerInstance(props);
+      if (marshaller != null) {
+         globalConfig.serialization().marshaller(marshaller);
+      }
+
+      EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig.build());
+      Cache<Object, Object> cache = manager.createCache(props.cacheName(), new ConfigurationBuilder().build());
+      return cache.getAdvancedCache().getComponentRegistry()
+            .getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
    }
 
    private static Marshaller loadMarshallerInstance(StoreProperties props) {

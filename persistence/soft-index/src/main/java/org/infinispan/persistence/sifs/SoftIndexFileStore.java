@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
@@ -116,6 +117,8 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
 
    public static final String PREFIX_10_1 = "";
    public static final String PREFIX_11_0 = "ispn.";
+   public static final String PREFIX_12_0 = "ispn12.";
+   public static final String PREFIX_LATEST = PREFIX_12_0;
 
    private SoftIndexFileStoreConfiguration configuration;
    private boolean started = false;
@@ -153,7 +156,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
       temporaryTable = new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments());
       storeQueue = new SyncProcessingQueue<>();
       indexQueue = new IndexQueue(configuration.indexSegments(), configuration.indexQueueLength());
-      fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_11_0);
+      fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_LATEST);
       compactor = new Compactor(fileProvider, temporaryTable, indexQueue, marshaller, timeService, configuration.maxFileSize(), configuration.compactionThreshold());
       logAppender = new LogAppender(storeQueue, indexQueue, temporaryTable, compactor, fileProvider, configuration.syncWrites(), configuration.maxFileSize());
       try {
@@ -172,6 +175,10 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
          // we don't destroy the data on startup
          // get the old files
          FileProvider oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_10_1);
+         if (oldFileProvider.hasFiles()) {
+            throw PERSISTENCE.persistedDataMigrationAcrossMajorVersions();
+         }
+         oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_11_0);
          if (oldFileProvider.hasFiles()) {
             PERSISTENCE.startMigratingPersistenceData();
             migrateFromOldFormat(oldFileProvider);
@@ -196,18 +203,34 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
       } catch (IOException e) {
          throw PERSISTENCE.persistedDataMigrationFailed(e);
       }
+      // Only update the key/value/meta bytes if the default marshaller is configured
+      boolean transformationRequired = ctx.getGlobalConfiguration().serialization().marshaller() == null;
       try(CloseableIterator<Integer> it = oldFileProvider.getFileIterator()) {
          while (it.hasNext()) {
             int fileId = it.next();
             try (FileProvider.Handle handle = oldFileProvider.getFile(fileId)) {
                int offset = 0;
                while (true) {
-                  EntryHeader header = EntryRecord.readOldEntryHeader(handle, offset);
+                  EntryHeader header = EntryRecord.readEntryHeader(handle, offset);
                   if (header == null) {
                      //end of file. go to next one
                      break;
                   }
-                  MarshallableEntry<Object, Object> entry = readEntry(handle, header, offset, null, true);
+                  MarshallableEntry<Object, Object> entry = readEntry(handle, header, offset, null, true,
+                        (key, value, meta, internalMeta, created, lastUsed) -> {
+                           if (!transformationRequired) {
+                              return marshallableEntryFactory.create(key, value, meta, internalMeta, created, lastUsed);
+                           }
+                           try {
+                              Object k = unmarshallLegacy(key, false);
+                              Object v = unmarshallLegacy(value, false);
+                              Metadata m = unmarshallLegacy(meta, true);
+                              PrivateMetadata im = internalMeta == null ? null : (PrivateMetadata) ctx.getPersistenceMarshaller().objectFromByteBuffer(internalMeta.getBuf());
+                              return marshallableEntryFactory.create(k, v, m, im, created, lastUsed);
+                           } catch (ClassNotFoundException | IOException e) {
+                              throw new MarshallingException(e);
+                           }
+                        });
                   // entry is null if expired or removed (tombstone), in both case, we can ignore it.
                   //noinspection ConstantConditions (entry is not null!)
                   if (entry.getValueBytes() != null) {
@@ -226,6 +249,22 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
          PERSISTENCE.persistedDataSuccessfulMigrated();
       } catch (InterruptedException | IOException e) {
          throw PERSISTENCE.persistedDataMigrationFailed(e);
+      }
+   }
+
+   private <T> T unmarshallLegacy(ByteBuffer buf, boolean allowInternal) throws ClassNotFoundException, IOException {
+      if (buf == null)
+         return null;
+      // Read using raw user marshaller without MarshallUserObject wrapping
+      Marshaller marshaller = ctx.getPersistenceMarshaller().getUserMarshaller();
+      try {
+         return (T) marshaller.objectFromByteBuffer(buf.getBuf(), buf.getOffset(), buf.getLength());
+      } catch (IllegalArgumentException e) {
+         // For metadata we need to attempt to read with user-marshaller first in case custom metadata used, otherwise use the persistence marshaller
+         if (allowInternal) {
+            return (T) ctx.getPersistenceMarshaller().objectFromByteBuffer(buf.getBuf(), buf.getOffset(), buf.getLength());
+         }
+         throw e;
       }
    }
 
@@ -484,7 +523,9 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
                      if (header == null) {
                         throw new IllegalStateException("Error reading from " + entry.file + ":" + entry.offset + " | " + handle.getFileSize());
                      }
-                     return readEntry(handle, header, entry.offset, key, false);
+                     return readEntry(handle, header, entry.offset, key, false,
+                           (serializedKey, value, meta, internalMeta, created, lastUsed) ->
+                                 marshallableEntryFactory.create(serializedKey, value, meta, internalMeta, created, lastUsed));
                   } finally {
                      handle.close();
                   }
@@ -501,14 +542,15 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
       }
    }
 
-   private MarshallableEntry<Object, Object> readEntry(FileProvider.Handle handle, EntryHeader header, int offset, Object key, boolean nonNull)
+   private MarshallableEntry<Object, Object> readEntry(FileProvider.Handle handle, EntryHeader header, int offset,
+                                                       Object key, boolean nonNull, EntryCreator<Object, Object> entryCreator)
          throws IOException {
       if (header.expiryTime() > 0 && header.expiryTime() <= timeService.wallClockTime()) {
          if (log.isTraceEnabled()) {
             log.tracef("Entry for key=%s found in temporary table on %d:%d but it is expired", key, handle.getFileId(), offset);
          }
          return nonNull ?
-               marshallableEntryFactory.create(readAndCheckKey(handle, header, offset), (ByteBuffer) null) :
+               entryCreator.create(readAndCheckKey(handle, header, offset), null, null, null, -1, -1) :
                null;
       }
       ByteBuffer serializedKey = readAndCheckKey(handle, header, offset);
@@ -516,7 +558,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
          if (log.isTraceEnabled()) {
             log.tracef("Entry for key=%s found in temporary table on %d:%d but it is a tombstone in log", key, handle.getFileId(), offset);
          }
-         return nonNull ? marshallableEntryFactory.create(serializedKey, (ByteBuffer) null) : null;
+         return nonNull ? entryCreator.create(serializedKey, null, null, null, -1, -1) : null;
       }
 
       if (log.isTraceEnabled()) {
@@ -542,7 +584,12 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore<Object, Object
             toBuffer(EntryRecord.readInternalMetadata(handle, header, offset)) :
             null;
 
-      return marshallableEntryFactory.create(serializedKey, value, serializedMetadata, internalMetadata, created, lastUsed);
+      return entryCreator.create(serializedKey, value, serializedMetadata, internalMetadata, created, lastUsed);
+   }
+
+   interface EntryCreator<K,V> {
+      MarshallableEntry<K, V> create(ByteBuffer key, ByteBuffer value, ByteBuffer metadata,
+                                            ByteBuffer internalMetadata, long created, long lastUsed) throws IOException;
    }
 
    private ByteBuffer readAndCheckKey(FileProvider.Handle handle, EntryHeader header, int offset) throws IOException {

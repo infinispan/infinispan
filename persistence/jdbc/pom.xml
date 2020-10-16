@@ -86,7 +86,7 @@
             <directory>${project.basedir}/src/test/resources</directory>
             <filtering>true</filtering>
             <excludes>
-               <exclude>10_1_x_jdbc_data/*</exclude>
+               <exclude>*_x_jdbc_data/*</exclude>
             </excludes>
          </testResource>
          <!-- Make sure the filtering is disabled for 10.1.x JDBC data, otherwise the files get "corrupted" -->
@@ -94,7 +94,7 @@
             <directory>${project.basedir}/src/test/resources</directory>
             <filtering>false</filtering>
             <includes>
-               <include>10_1_x_jdbc_data/*</include>
+               <include>*_x_jdbc_data/*</include>
             </includes>
          </testResource>
       </testResources>

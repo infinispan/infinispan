@@ -11,9 +11,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.concurrent.CompletionException;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -22,6 +25,8 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestDataSCI;
+import org.infinispan.test.data.Value;
 import org.testng.annotations.Test;
 
 /**
@@ -33,34 +38,74 @@ import org.testng.annotations.Test;
 @Test(groups = "functional")
 public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManagerTest {
 
-   private static final int NUMBER_KEYS = 10;
-   private final KeyValueWrapper<String, String, T> valueWrapper;
-   protected String tmpDirectory;
-
-   protected PersistenceCompatibilityTest(KeyValueWrapper<String, String, T> valueWrapper) {
-      this.valueWrapper = valueWrapper;
+   protected enum Version {
+      _10_1,
+      _11_0
    }
 
-   private static String key(int index) {
+   protected static final int NUMBER_KEYS = 10;
+   private final KeyValueWrapper<String, Value, T> valueWrapper;
+   protected String tmpDirectory;
+
+   protected PersistenceCompatibilityTest(KeyValueWrapper<String, Value, T> valueWrapper) {
+      this.valueWrapper = valueWrapper;
+      this.cleanup = CleanupPhase.AFTER_METHOD;
+   }
+
+   protected String key(int index) {
       return "key-" + index;
    }
 
-   private static String value(int index) {
-      return "value-" + index;
+   private Value value(int index) {
+      String i = Integer.toString(index);
+      return new Value(i, i);
    }
 
-   protected static void copyFile(String file_10_1, Path location, String fileName) throws IOException {
+   protected static void copyFile(String src, Path dst, String fileName) throws IOException {
       InputStream is = FileLookupFactory.newInstance()
-            .lookupFile(file_10_1, Thread.currentThread().getContextClassLoader());
-      File f = new File(location.toFile(), fileName);
+            .lookupFile(src, Thread.currentThread().getContextClassLoader());
+      File f = new File(dst.toFile(), fileName);
       Files.copy(is, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
    }
 
    @Test
    public void testReadWriteFrom101() throws Exception {
+      beforeStartCache(Version._10_1);
+      Exceptions.expectException(CacheConfigurationException.class, CompletionException.class, ".*ISPN000616.*",
+            () -> cacheManager.getCache(cacheName()));
+   }
+
+   protected void doTestReadWriteFrom101() throws Exception {
+      beforeStartCache(Version._10_1);
+      Cache<String, String> cache = cacheManager.getCache(cacheName());
+
+      for (int i = 0; i < NUMBER_KEYS; ++i) {
+         String key = key(i);
+         if (i % 2 != 0) {
+            assertNull("Expected null value for key " + key, cache.get(key));
+         } else {
+            assertEquals("Wrong value read for key " + key, "value-" + i, cache.get(key));
+         }
+      }
+
+      for (int i = 0; i < NUMBER_KEYS; ++i) {
+         if (i % 2 != 0) {
+            String key = key(i);
+            cache.put(key, "value-" + i);
+         }
+      }
+
+      for (int i = 0; i < NUMBER_KEYS; ++i) {
+         String key = key(i);
+         assertEquals("Wrong value read for key " + key, "value-" + i, cache.get(key));
+      }
+   }
+
+   @Test
+   public void testReadWriteFrom11() throws Exception {
       // 10 keys
       // even keys stored, odd keys removed
-      beforeStartCache();
+      beforeStartCache(Version._11_0);
       Cache<String, T> cache = cacheManager.getCache(cacheName());
 
       for (int i = 0; i < NUMBER_KEYS; ++i) {
@@ -83,7 +128,6 @@ public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManager
          String key = key(i);
          assertEquals("Wrong value read for key " + key, value(i), valueWrapper.unwrap(cache.get(key)));
       }
-
    }
 
    @Override
@@ -100,12 +144,13 @@ public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManager
       Util.recursiveFileRemove(tmpDirectory);
    }
 
-   protected abstract void beforeStartCache() throws Exception;
+   protected abstract void beforeStartCache(Version version) throws Exception;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().nonClusteredDefault();
       builder.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory());
+      builder.serialization().addContextInitializer(TestDataSCI.INSTANCE);
       amendGlobalConfigurationBuilder(builder);
       DefaultCacheManager cacheManager = new DefaultCacheManager(builder.build());
       cacheManager.defineConfiguration(cacheName(), cacheConfiguration().build());
@@ -135,5 +180,4 @@ public abstract class PersistenceCompatibilityTest<T> extends SingleCacheManager
       configurePersistence(builder);
       return builder;
    }
-
 }

@@ -1,11 +1,13 @@
 package org.infinispan.persistence.rocksdb;
 
-import static org.infinispan.persistence.PersistenceUtil.getQualifiedLocation;
+import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,10 +36,13 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshallableEntryImpl;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration;
 import org.infinispan.persistence.rocksdb.logging.Log;
@@ -52,6 +57,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 import org.rocksdb.BuiltinComparator;
@@ -110,13 +116,6 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
 
       ctx.getPersistenceMarshaller().register(new PersistenceContextInitializerImpl());
 
-      AdvancedCache cache = ctx.getCache().getAdvancedCache();
-      if (configuration.segmented()) {
-         handler = new SegmentedRocksDBHandler(cache.getCacheConfiguration().clustering().hash().numSegments());
-      } else {
-         handler = new NonSegmentedRocksDBHandler(keyPartitioner);
-      }
-
       // Has to be done before we open the database, so we can pass the properties
       Properties allProperties = configuration.properties();
       for (Map.Entry<Object, Object> entry : allProperties.entrySet()) {
@@ -136,30 +135,111 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
 
       return blockingManager.runBlocking(() -> {
          try {
-            db = handler.open(getLocation(), dataDbOptions());
-            expiredDb = openDatabase(getExpirationLocation(), expiredDbOptions());
-
+            initDefaultHandler();
             MetadataImpl existingMeta = handler.loadMetadata();
-            boolean versionsMatch = true;
-            if (existingMeta != null) {
-               // TODO Perform data migration as part of ISPN-11614 and remove versionsMatch check
-               versionsMatch = existingMeta.version == Version.getVersionShort();
+            if (existingMeta == null && !configuration.purgeOnStartup()) {
+               // Metadata does not exist, therefore we must be reading from a pre-12.x store. Migrate the old data
+               PERSISTENCE.startMigratingPersistenceData();
+               migrateFromV11();
+               PERSISTENCE.persistedDataSuccessfulMigrated();
             }
             // Update the metadata entry to use the current Infinispan version
-            if (versionsMatch)
-               handler.writeMetadata();
+            handler.writeMetadata();
          } catch (Exception e) {
             throw new CacheConfigurationException("Unable to open database", e);
          }
       }, "rocksdb-open");
    }
 
+   private void initDefaultHandler() throws RocksDBException {
+      this.handler = createHandler(getLocation(), getExpirationLocation());
+      this.db = handler.db;
+      this.expiredDb = handler.expiredDb;
+   }
+
+   private RocksDBHandler createHandler(Path data, Path expired) throws RocksDBException {
+      AdvancedCache<?, ?> cache = ctx.getCache().getAdvancedCache();
+      if (configuration.segmented()) {
+         return new SegmentedRocksDBHandler(data, expired, cache.getCacheConfiguration().clustering().hash().numSegments());
+      }
+      return new NonSegmentedRocksDBHandler(data, expired, keyPartitioner);
+   }
+
+   private void migrateFromV11() throws IOException, RocksDBException {
+      IntSet segments;
+      if (configuration.segmented()) {
+         int numSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
+         segments = IntSets.immutableRangeSet(numSegments);
+      } else {
+         segments = null;
+      }
+
+      // If no entries exist in the store, then nothing to migrate
+      if (CompletionStages.join(handler.size(segments)) == 0)
+         return;
+
+      Path newDbLocation = getQualifiedLocation("new_data");
+      Path newExpiredDbLocation = getQualifiedLocation("new_expired");
+      try {
+         // Create new DB and open handle
+         RocksDBHandler migrationHandler = createHandler(newDbLocation, newExpiredDbLocation);
+
+         Function<RocksIterator, Flowable<MarshallableEntry<K, V>>> function =
+               it -> Flowable.fromIterable(() -> new RocksLegacyEntryIterator(it));
+
+         // Iterate and convert entries from old handle
+         Publisher<MarshallableEntry<K, V>> publisher = configuration.segmented() ?
+               ((SegmentedRocksDBHandler) handler).handleIteratorFunction(function, segments) :
+               handler.publish(-1, function);
+
+         WriteBatch batch = new WriteBatch();
+         Set<MarshallableEntry<K, V>> expirableEntries = new HashSet<>();
+         Flowable.fromPublisher(publisher)
+               .subscribe(e -> {
+                  ColumnFamilyHandle handle = migrationHandler.getHandle(keyPartitioner.getSegment(e.getKey()));
+                  batch.put(handle, e.getKeyBytes().copy().getBuf(), marshall(e.getMarshalledValue()));
+                  if (e.expiryTime() > 1)
+                     expirableEntries.add(e);
+               });
+
+         if (batch.count() <= 0)
+            batch.close();
+
+         migrationHandler.db.write(dataWriteOptions(), batch);
+         for (MarshallableEntry<K, V> e : expirableEntries)
+            addNewExpiry(migrationHandler.expiredDb, e);
+
+         // Close original and new handler
+         handler.close();
+         migrationHandler.close();
+
+         // Copy new db to original location
+         Path dataLocation = getLocation();
+         Path expirationLocation = getExpirationLocation();
+         Util.recursiveFileRemove(dataLocation);
+         Util.recursiveFileRemove(expirationLocation);
+         Files.move(newDbLocation, dataLocation, StandardCopyOption.REPLACE_EXISTING);
+         Files.move(newExpiredDbLocation, expirationLocation, StandardCopyOption.REPLACE_EXISTING);
+
+         // Open db handle to new db at original location
+         initDefaultHandler();
+      } finally {
+         // In the event of a failure, always remove the new dbs
+         Util.recursiveFileRemove(newDbLocation);
+         Util.recursiveFileRemove(newExpiredDbLocation);
+      }
+   }
+
+   private Path getQualifiedLocation(String qualifier) {
+      return org.infinispan.persistence.PersistenceUtil.getQualifiedLocation(ctx.getGlobalConfiguration(), configuration.location(), ctx.getCache().getName(), qualifier);
+   }
+
    private Path getLocation() {
-      return getQualifiedLocation(ctx.getGlobalConfiguration(), configuration.location(), ctx.getCache().getName(), "data");
+      return getQualifiedLocation("data");
    }
 
    private Path getExpirationLocation() {
-      return getQualifiedLocation(ctx.getGlobalConfiguration(), configuration.expiredLocation(), ctx.getCache().getName(), "expired");
+      return getQualifiedLocation("expired");
    }
 
    private WriteOptions dataWriteOptions() {
@@ -196,7 +276,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
    /**
     * Creates database if it doesn't exist.
     */
-   protected RocksDB openDatabase(Path location, Options options) throws RocksDBException {
+   protected static RocksDB openDatabase(Path location, Options options) throws RocksDBException {
       File dir = location.toFile();
       dir.mkdirs();
       return RocksDB.open(options, location.toString());
@@ -206,7 +286,6 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
    public CompletionStage<Void> stop() {
       return blockingManager.runBlocking(() -> {
          handler.close();
-         expiredDb.close();
       }, "rocksdb-stop");
    }
 
@@ -299,7 +378,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          try {
             db.write(dataWriteOptions(), batch);
             for (MarshallableEntry<K, V> me : expirableEntries) {
-               addNewExpiry(me);
+               addNewExpiry(expiredDb, me);
             }
          } catch (RocksDBException e) {
             throw new PersistenceException(e);
@@ -435,7 +514,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       }
    }
 
-   private <E> E unmarshall(byte[] bytes) {
+   private <E> E unmarshall(byte[] bytes, Marshaller marshaller) {
       if (bytes == null)
          return null;
 
@@ -447,6 +526,10 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       }
    }
 
+   private <E> E unmarshall(byte[] bytes) {
+      return unmarshall(bytes, this.marshaller);
+   }
+
    private MarshallableEntry<K, V> unmarshallEntry(Object key, byte[] valueBytes) {
       MarshalledValue value = unmarshall(valueBytes);
       if (value == null) return null;
@@ -455,7 +538,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
             value.getCreated(), value.getLastUsed());
    }
 
-   private void addNewExpiry(MarshallableEntry entry) throws RocksDBException {
+   private void addNewExpiry(RocksDB expiredDb, MarshallableEntry<? extends K, ? extends V> entry) throws RocksDBException {
       long expiry = entry.expiryTime();
       long maxIdle = entry.getMetadata().maxIdle();
       if (maxIdle > 0) {
@@ -464,7 +547,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          expiry = maxIdle + ctx.getTimeService().wallClockTime();
       }
       byte[] keyBytes = entry.getKeyBytes().copy().getBuf();
-      putExpireDbData(new ExpiryEntry(expiry, keyBytes));
+      putExpireDbData(expiredDb, new ExpiryEntry(expiry, keyBytes));
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.ROCKSDB_EXPIRY_BUCKET)
@@ -519,6 +602,45 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       }
    }
 
+   private class RocksLegacyEntryIterator extends AbstractIterator<MarshallableEntry<K, V>> {
+      private final RocksIterator it;
+      private final long now;
+      private final PersistenceMarshaller pm;
+      private final Marshaller userMarshaller;
+
+      RocksLegacyEntryIterator(RocksIterator it) {
+         this.it = it;
+         this.now = timeService.wallClockTime();
+         this.pm = ctx.getPersistenceMarshaller();
+         this.userMarshaller = pm.getUserMarshaller();
+      }
+
+      @Override
+      protected MarshallableEntry<K, V> getNext() {
+         MarshallableEntry<K, V> entry = null;
+         while (entry == null && it.isValid()) {
+            K key = unmarshall(it.key(), userMarshaller);
+            MarshalledValue mv = unmarshall(it.value(), pm);
+            V value = unmarshall(mv.getValueBytes().getBuf(), userMarshaller);
+            Metadata meta;
+            try {
+               meta = unmarshall(mv.getMetadataBytes().getBuf(), userMarshaller);
+            } catch (IllegalArgumentException e) {
+               // For metadata we need to attempt to read with user-marshaller first in case custom metadata used, otherwise use the persistence marshaller
+               meta = unmarshall(mv.getMetadataBytes().getBuf(), pm);
+            }
+
+            PrivateMetadata internalMeta = unmarshall(mv.getInternalMetadataBytes().copy().getBuf(), userMarshaller);
+            MarshallableEntry<K, V> me = entryFactory.create(key, value, meta, internalMeta, mv.getCreated(), mv.getLastUsed());
+            if (me != null && !me.isExpired(now)) {
+               entry = me;
+            }
+            it.next();
+         }
+         return entry;
+      }
+   }
+
    private class RocksEntryIterator extends AbstractIterator<MarshallableEntry<K, V>> {
       private final RocksIterator it;
       private final Predicate<? super K> filter;
@@ -549,6 +671,8 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
 
    private abstract class RocksDBHandler {
 
+      protected RocksDB db;
+      protected RocksDB expiredDb;
       protected ColumnFamilyHandle metaColumnFamilyHandle;
 
       abstract RocksDB open(Path location, DBOptions options) throws RocksDBException;
@@ -625,7 +749,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
                try {
                   db.put(handle, marshalledKey, marshalledValue);
                   if (me.expiryTime() > -1) {
-                     addNewExpiry(me);
+                     addNewExpiry(expiredDb, me);
                   }
                } catch (RocksDBException e) {
                   throw new PersistenceException(e);
@@ -697,7 +821,9 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
 
       private ColumnFamilyHandle defaultColumnFamilyHandle;
 
-      private NonSegmentedRocksDBHandler(KeyPartitioner keyPartitioner) {
+      private NonSegmentedRocksDBHandler(Path data, Path expired, KeyPartitioner keyPartitioner) throws RocksDBException {
+         this.db = open(data, dataDbOptions());
+         this.expiredDb = openDatabase(expired, expiredDbOptions());
          this.keyPartitioner = keyPartitioner;
       }
 
@@ -764,6 +890,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          defaultColumnFamilyHandle.close();
 
          db.close();
+         expiredDb.close();
       }
 
       protected RocksIterator wrapIterator(RocksDB db, ReadOptions readOptions, int segment) {
@@ -802,8 +929,10 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
    private class SegmentedRocksDBHandler extends RocksDBHandler {
       private final AtomicReferenceArray<ColumnFamilyHandle> handles;
 
-      private SegmentedRocksDBHandler(int segmentCount) {
+      private SegmentedRocksDBHandler(Path data, Path expired, int segmentCount) throws RocksDBException {
          this.handles = new AtomicReferenceArray<>(segmentCount);
+         this.db = open(data, dataDbOptions());
+         this.expiredDb = openDatabase(expired, expiredDbOptions());
       }
 
       byte[] byteArrayFromInt(int val) {
@@ -883,6 +1012,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          }
 
          db.close();
+         expiredDb.close();
       }
 
       @Override
@@ -966,7 +1096,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       }
    }
 
-   private void putExpireDbData(ExpiryEntry entry) throws RocksDBException {
+   private void putExpireDbData(RocksDB expiredDb, ExpiryEntry entry) throws RocksDBException {
       final byte[] expiryBytes = marshall(entry.expiry);
       final byte[] existingBytes = expiredDb.get(expiryBytes);
 

@@ -25,6 +25,7 @@ import javax.transaction.Transaction;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.time.TimeService;
@@ -34,6 +35,8 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
@@ -129,14 +132,34 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       }
 
       if (!configuration.table().createOnStart()) {
-         TableManager.Metadata meta = tableManager.getMetadata();
-         int storedSegments = meta.getSegments();
-         if (!configuration.segmented() && storedSegments != -1)
-            throw log.existingStoreNoSegmentation();
+         Connection connection = null;
+         try {
+            connection = connectionFactory.getConnection();
+            // If meta exists, then ensure that the stored configuration is compatible with the current settings
+            if (tableManager.metaTableExists(connection)) {
+               TableManager.Metadata meta = tableManager.getMetadata(connection);
+               int storedSegments = meta.getSegments();
+               if (!configuration.segmented() && storedSegments != -1)
+                  throw log.existingStoreNoSegmentation();
 
-         int configuredSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
-         if (configuration.segmented() && storedSegments != configuredSegments)
-            throw log.existingStoreSegmentMismatch(storedSegments, configuredSegments);
+               int configuredSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
+               if (configuration.segmented() && storedSegments != configuredSegments)
+                  throw log.existingStoreSegmentMismatch(storedSegments, configuredSegments);
+               tableManager.updateMetaTable(connection);
+            } else {
+               // The meta table does not exist, therefore we must be reading from a 11.x store. Migrate the old data
+               org.infinispan.util.logging.Log.PERSISTENCE.startMigratingPersistenceData();
+               try {
+                  migrateFromV11();
+               } catch (SQLException e) {
+                  throw org.infinispan.util.logging.Log.PERSISTENCE.persistedDataMigrationFailed(e);
+               }
+               tableManager.createMetaTable(connection);
+               org.infinispan.util.logging.Log.PERSISTENCE.persistedDataSuccessfulMigrated();
+            }
+         } finally {
+            connectionFactory.releaseConnection(connection);
+         }
       }
 
       try {
@@ -156,6 +179,66 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       }
       if (isDistributedCache) {
          enforceTwoWayMapper("distribution/rehashing");
+      }
+   }
+
+   private void migrateFromV11() throws SQLException {
+      // If a custom user marshaller was previously used, no need to update rows
+      if (ctx.getGlobalConfiguration().serialization().marshaller() != null)
+         return;
+
+      Connection conn = null;
+      PreparedStatement ps = null;
+      ResultSet rs = null;
+      try {
+         conn = connectionFactory.getConnection();
+         conn.setAutoCommit(false);
+         String sql = tableManager.getLoadNonExpiredAllRowsSql();
+         ps = conn.prepareStatement(sql);
+         ps.setLong(1, timeService.wallClockTime());
+         rs = ps.executeQuery();
+
+         Marshaller userMarshaller = marshaller.getUserMarshaller();
+         try (PreparedStatement upsertBatch = conn.prepareStatement(tableManager.getUpdateRowSql())) {
+            int batchSize = 0;
+            while (rs.next()) {
+               batchSize++;
+               InputStream inputStream = rs.getBinaryStream(1);
+               String keyStr = rs.getString(2);
+               long timestamp = rs.getLong(3);
+               int segment = keyPartitioner == null ? -1 : rs.getInt(4);
+
+               MarshalledValue mv = unmarshall(inputStream, marshaller);
+               V value = unmarshall(mv.getValueBytes(), userMarshaller);
+               Metadata meta;
+               try {
+                  meta = unmarshall(mv.getMetadataBytes(), userMarshaller);
+               } catch (IllegalArgumentException e) {
+                  // For metadata we need to attempt to read with user-marshaller first in case custom metadata used, otherwise use the persistence marshaller
+                  meta = unmarshall(mv.getMetadataBytes(), marshaller);
+               }
+
+               PrivateMetadata internalMeta = unmarshall(mv.getInternalMetadataBytes(), marshaller);
+               MarshallableEntry<K, V> entry = marshalledEntryFactory.create(null, value, meta, internalMeta, mv.getCreated(), mv.getLastUsed());
+               ByteBuffer byteBuffer = marshall(entry.getMarshalledValue(), marshaller);
+               tableManager.prepareUpdateStatement(upsertBatch, keyStr, timestamp, segment, byteBuffer);
+               upsertBatch.addBatch();
+
+               if (batchSize == configuration.maxBatchSize()) {
+                  batchSize = 0;
+                  upsertBatch.executeBatch();
+                  upsertBatch.clearBatch();
+               }
+            }
+            if (batchSize != 0)
+               upsertBatch.executeBatch();
+
+            conn.commit();
+         }
+      } finally {
+         JdbcUtil.safeClose(rs);
+         JdbcUtil.safeClose(ps);
+         connectionFactory.releaseConnection(conn);
       }
    }
 
@@ -762,11 +845,11 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       }
    }
 
-   private void prepareUpsertStatement(MarshallableEntry entry, String key, int segment, PreparedStatement ps) throws InterruptedException, SQLException {
+   private void prepareUpsertStatement(MarshallableEntry entry, String key, int segment, PreparedStatement ps) throws SQLException {
       prepareStatement(entry, key, segment, ps, true);
    }
 
-   private void prepareStatement(MarshallableEntry entry, String key, int segment, PreparedStatement ps, boolean upsert) throws InterruptedException, SQLException {
+   private void prepareStatement(MarshallableEntry entry, String key, int segment, PreparedStatement ps, boolean upsert) throws SQLException {
       ByteBuffer byteBuffer = marshall(entry.getMarshalledValue(), marshaller);
       if (upsert) {
          tableManager.prepareUpsertStatement(ps, key, entry.expiryTime(), segment, byteBuffer);

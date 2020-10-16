@@ -24,6 +24,7 @@ test-output
 classes
 # log files
 *.log
+!persistence/rocksdb/src/test/resources/**/*.log
 !tools/src/test/resources/infinispan*/leveldbstore/reader-test/*.log
 # vim files
 *.swp
