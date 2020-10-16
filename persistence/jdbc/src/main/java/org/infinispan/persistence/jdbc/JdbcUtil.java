@@ -74,4 +74,16 @@ public class JdbcUtil {
          throw new MarshallingException(e);
       }
    }
+
+   @SuppressWarnings("unchecked")
+   public static <T> T unmarshall(ByteBuffer buf, Marshaller marshaller) {
+      try {
+         return (T) marshaller.objectFromByteBuffer(buf.getBuf(), buf.getOffset(), buf.getLength());
+      } catch (IOException e) {
+         throw new MarshallingException("I/O error while unmarshalling", e);
+      } catch (ClassNotFoundException e) {
+         PERSISTENCE.unexpectedClassNotFoundException(e);
+         throw new MarshallingException(e);
+      }
+   }
 }

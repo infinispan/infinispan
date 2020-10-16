@@ -2,12 +2,15 @@ package org.infinispan.persistence.jdbc;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.IdentityKeyValueWrapper;
 import org.infinispan.persistence.PersistenceCompatibilityTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
+import org.infinispan.test.data.Value;
 import org.testng.annotations.Test;
 
 /**
@@ -17,19 +20,30 @@ import org.testng.annotations.Test;
  * @since 11.0
  */
 @Test(groups = "functional", testName = "persistence.jdbc.JdbcStoreCompatibilityTest")
-public class JdbcStoreCompatibilityTest extends PersistenceCompatibilityTest<String> {
+public class JdbcStoreCompatibilityTest extends PersistenceCompatibilityTest<Value> {
 
    private static final String DB_FILE_NAME = "jdbc_db.mv.db";
-   private static final String DATA_10_1_FOLDER = "10_1_x_jdbc_data";
+   private static final Map<Version, String> data = new HashMap<>(2);
+
+   static {
+      data.put(Version._10_1, "10_1_x_jdbc_data");
+      data.put(Version._11_0, "11_0_x_jdbc_data");
+   }
 
    public JdbcStoreCompatibilityTest() {
       super(IdentityKeyValueWrapper.instance());
    }
 
+   // The jdbc store should still be able to migrate data from 10.x stream
    @Override
-   protected void beforeStartCache() throws Exception {
+   public void testReadWriteFrom101() throws Exception {
+      doTestReadWriteFrom101();
+   }
+
+   @Override
+   protected void beforeStartCache(Version version) throws Exception {
       new File(tmpDirectory).mkdirs();
-      copyFile(combinePath(DATA_10_1_FOLDER, DB_FILE_NAME), Paths.get(tmpDirectory), DB_FILE_NAME);
+      copyFile(combinePath(data.get(version), DB_FILE_NAME), Paths.get(tmpDirectory), DB_FILE_NAME);
    }
 
    @Override
@@ -42,7 +56,7 @@ public class JdbcStoreCompatibilityTest extends PersistenceCompatibilityTest<Str
       JdbcStringBasedStoreConfigurationBuilder jdbcB = builder.persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
       jdbcB.table()
-            .createOnStart(true)
+            .createOnStart(false)
             .tableNamePrefix("ISPN_STRING_TABLE")
             .idColumnName("ID_COLUMN").idColumnType("VARCHAR(255)")
             .dataColumnName("DATA_COLUMN").dataColumnType("BINARY")

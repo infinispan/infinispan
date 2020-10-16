@@ -61,9 +61,10 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
       SoftIndexIterator() {
          if (majorVersion < 11) {
             this.fileProvider = new FileProvider(location, 1000, SoftIndexFileStore.PREFIX_10_1);
-            this.reader = EntryRecord::readOldEntryHeader;
+            this.reader = EntryRecord::read10_1EntryHeader;
          } else {
-            this.fileProvider = new FileProvider(location, 1000, SoftIndexFileStore.PREFIX_11_0);
+            String prefix = majorVersion == 11 ? SoftIndexFileStore.PREFIX_11_0 : SoftIndexFileStore.PREFIX_12_0;
+            this.fileProvider = new FileProvider(location, 1000, prefix);
             this.reader = EntryRecord::readEntryHeader;
          }
          this.iterator = fileProvider.getFileIterator();

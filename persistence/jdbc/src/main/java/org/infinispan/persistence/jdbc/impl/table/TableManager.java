@@ -17,7 +17,11 @@ public interface TableManager {
 
    void stop() throws PersistenceException;
 
-   boolean tableExists(Connection connection, TableName tableName) throws PersistenceException;
+   boolean tableExists(Connection connection, TableName tableName);
+
+   default boolean metaTableExists(Connection conn) {
+      return tableExists(conn, getMetaTableName());
+   }
 
    void createDataTable(Connection conn) throws PersistenceException;
 
@@ -32,7 +36,7 @@ public interface TableManager {
     */
    void updateMetaTable(Connection conn) throws PersistenceException;
 
-   Metadata getMetadata() throws PersistenceException;
+   Metadata getMetadata(Connection conn) throws PersistenceException;
 
    default void dropTables(Connection conn) throws PersistenceException {
       dropDataTable(conn);

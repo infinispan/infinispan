@@ -2099,4 +2099,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unable to unmarshall '%s' as a marshaller is not present in the user or global SerializationContext", id = 615)
    MarshallingException marshallerMissingFromUserAndGlobalContext(String type);
+
+   @Message(value = "Unable to migrate data across multiple major versions", id = 616)
+   PersistenceException persistedDataMigrationAcrossMajorVersions();
 }

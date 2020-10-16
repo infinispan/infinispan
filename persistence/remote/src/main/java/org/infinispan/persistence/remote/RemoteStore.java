@@ -107,7 +107,8 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       } else if (configuration.hotRodWrapping()) {
          marshaller = new HotRodEntryMarshaller(ctx.getByteBufferFactory());
       } else {
-         marshaller = ctx.getPersistenceMarshaller();
+         // If rawValues are required, then it's necessary to utilise the user marshaller directly to prevent objects being wrapped with a MarshallableUserObject
+         marshaller = configuration.rawValues() ? ctx.getPersistenceMarshaller().getUserMarshaller() : ctx.getPersistenceMarshaller();
       }
 
       if (clusterConfiguration.cacheMode().isClustered() && !configuration.shared()) {

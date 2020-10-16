@@ -32,7 +32,7 @@ class OracleTableManager extends AbstractTableManager {
    }
 
    @Override
-   public boolean tableExists(Connection connection, TableName tableName) throws PersistenceException {
+   public boolean tableExists(Connection connection, TableName tableName) {
       Objects.requireNonNull(tableName, "table name is mandatory");
       ResultSet rs = null;
       try {

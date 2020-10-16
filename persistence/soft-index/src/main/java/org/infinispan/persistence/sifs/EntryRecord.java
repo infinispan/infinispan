@@ -74,7 +74,7 @@ public class EntryRecord {
       }
    }
 
-   public static EntryHeader readOldEntryHeader(FileProvider.Handle handle, long offset) throws IOException {
+   public static EntryHeader read10_1EntryHeader(FileProvider.Handle handle, long offset) throws IOException {
       ByteBuffer header = ByteBuffer.allocate(EntryHeader.HEADER_SIZE_10_1);
       if (read(handle, header, offset, EntryHeader.HEADER_SIZE_10_1) < 0) {
          return null;

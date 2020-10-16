@@ -85,7 +85,8 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
       ConnectionFactory connectionFactory = mock(ConnectionFactory.class);
       TableManager tableManager = mock(TableManager.class);
       TableManager.Metadata meta = new AbstractTableManager.MetadataImpl(Version.getVersionShort(), HashConfiguration.NUM_SEGMENTS.getDefaultValue());
-      when(tableManager.getMetadata()).thenReturn(meta);
+      when(tableManager.metaTableExists(null)).thenReturn(true);
+      when(tableManager.getMetadata(null)).thenReturn(meta);
 
       tableManager.start();
       assertNull(stringBasedCacheStore.getConnectionFactory());

@@ -24,6 +24,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
+import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
 import org.infinispan.persistence.BaseNonBlockingStoreTest;
 import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
@@ -192,7 +193,7 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
    void countWithSegments(ToIntBiFunction<NonBlockingStore<Object, Object>, IntSet> countFunction) {
       store.write(marshalledEntry(internalCacheEntry("k1", "v1", 100)));
 
-      int segment = keyPartitioner.getSegment(keyToStorage("k1"));
+      int segment = getKeySegment("k1");
 
       // Publish keys should return our key if we use a set that contains that segment
       assertEquals(1, countFunction.applyAsInt(store, IntSets.immutableSet(segment)));
@@ -208,6 +209,13 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
 
       // Publish keys shouldn't return our key since the IntSet doesn't contain our segment
       assertEquals(0, countFunction.applyAsInt(store, intSet));
+   }
+
+   int getKeySegment(Object obj) {
+      Object key = keyToStorage(obj);
+      if (segmented && !isRawValues && cacheMediaType.equals(MediaType.APPLICATION_OBJECT))
+         key = new MarshallableUserObject<>(key);
+      return keyPartitioner.getSegment(key);
    }
 
    public void testPublishKeysWithSegments() {

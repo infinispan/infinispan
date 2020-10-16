@@ -72,7 +72,7 @@ public class ByRef<T> {
    public static class Long {
       long ref;
 
-      public Long(int i) {
+      public Long(long i) {
          ref = i;
       }
 
@@ -82,6 +82,12 @@ public class ByRef<T> {
 
       public void set(long i) {
          ref = i;
+      }
+
+      public long getAndAdd(long i) {
+         long ret = ref;
+         ref += i;
+         return ret;
       }
 
       public void inc() {

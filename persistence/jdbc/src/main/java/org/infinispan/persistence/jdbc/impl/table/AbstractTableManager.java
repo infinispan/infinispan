@@ -132,7 +132,7 @@ public abstract class AbstractTableManager implements TableManager {
       }
    }
 
-   public boolean tableExists(Connection connection, TableName tableName) throws PersistenceException {
+   public boolean tableExists(Connection connection, TableName tableName) {
       Objects.requireNonNull(tableName, "table name is mandatory");
       ResultSet rs = null;
       try {
@@ -181,9 +181,9 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    @Override
-   public TableManager.Metadata getMetadata() throws PersistenceException {
+   public TableManager.Metadata getMetadata(Connection connection) throws PersistenceException {
       if (metadata == null) {
-         try (Connection connection = connectionFactory.getConnection()) {
+         try {
             String sql = String.format("SELECT %s FROM %s", META_TABLE_DATA_COLUMN, metaTableName.toString());
             ResultSet rs = connection.createStatement().executeQuery(sql);
             rs.next();
@@ -434,9 +434,15 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    protected String initLoadNonExpiredAllRowsSql() {
-      return String.format("SELECT %1$s, %2$s, %3$s FROM %4$s WHERE %3$s > ? OR %3$s < 0",
-            config.dataColumnName(), config.idColumnName(),
-            config.timestampColumnName(), dataTableName);
+      if (dbMetadata.isSegmentedDisabled()) {
+         return String.format("SELECT %1$s, %2$s, %3$s FROM %4$s WHERE %3$s > ? OR %3$s < 0",
+               config.dataColumnName(), config.idColumnName(),
+               config.timestampColumnName(), dataTableName);
+      } else {
+         return String.format("SELECT %1$s, %2$s, %3$s, %4$s FROM %5$s WHERE %3$s > ? OR %3$s < 0",
+               config.dataColumnName(), config.idColumnName(),
+               config.timestampColumnName(), config.segmentColumnName(), dataTableName);
+      }
    }
 
    @Override

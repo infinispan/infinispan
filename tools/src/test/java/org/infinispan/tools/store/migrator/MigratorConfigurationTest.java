@@ -169,11 +169,15 @@ public class MigratorConfigurationTest {
    public void testCorrectMarshallerLoadedForVersion() {
       assertTrue(getMarshallerForVersion(8, SOURCE) instanceof Infinispan8Marshaller);
       assertTrue(getMarshallerForVersion(9, SOURCE) instanceof Infinispan9Marshaller);
-      assertTrue(getMarshallerForVersion(10, SOURCE) instanceof PersistenceMarshaller);
+      assertTrue(getMarshallerForVersion(10, SOURCE) instanceof DelegatingUserMarshaller);
+      assertTrue(getMarshallerForVersion(11, SOURCE) instanceof DelegatingUserMarshaller);
+      assertTrue(getMarshallerForVersion(12, SOURCE) instanceof PersistenceMarshaller);
 
       Exceptions.expectException(CacheConfigurationException.class, () -> getMarshallerForVersion(8, TARGET));
       Exceptions.expectException(CacheConfigurationException.class, () -> getMarshallerForVersion(9, TARGET));
-      assertNull(getMarshallerForVersion(10, TARGET));
+      Exceptions.expectException(CacheConfigurationException.class, () -> getMarshallerForVersion(10, TARGET));
+      Exceptions.expectException(CacheConfigurationException.class, () -> getMarshallerForVersion(11, TARGET));
+      assertNull(getMarshallerForVersion(12, TARGET));
    }
 
    private Marshaller getMarshallerForVersion(int version, Element storeType) {
