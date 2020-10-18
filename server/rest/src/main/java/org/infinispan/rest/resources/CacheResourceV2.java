@@ -1,5 +1,48 @@
 package org.infinispan.rest.resources;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.StandardConversions;
+import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.util.ProcessorInfo;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.manager.EmbeddedCacheManagerAdmin;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.query.impl.InfinispanQueryStatisticsInfo;
+import org.infinispan.rest.CacheInputStream;
+import org.infinispan.rest.InvocationHelper;
+import org.infinispan.rest.NettyRestResponse;
+import org.infinispan.rest.RestResponseException;
+import org.infinispan.rest.cachemanager.RestCacheManager;
+import org.infinispan.rest.framework.ContentSource;
+import org.infinispan.rest.framework.ResourceHandler;
+import org.infinispan.rest.framework.RestRequest;
+import org.infinispan.rest.framework.RestResponse;
+import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.rest.logging.Log;
+import org.infinispan.stats.Stats;
+import org.infinispan.upgrade.RollingUpgradeManager;
+
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
@@ -20,45 +63,6 @@ import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
-
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.StandardConversions;
-import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
-import org.infinispan.commons.util.ProcessorInfo;
-import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.manager.EmbeddedCacheManagerAdmin;
-import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.query.impl.InfinispanQueryStatisticsInfo;
-import org.infinispan.rest.CacheInputStream;
-import org.infinispan.rest.InvocationHelper;
-import org.infinispan.rest.NettyRestResponse;
-import org.infinispan.rest.RestResponseException;
-import org.infinispan.rest.cachemanager.RestCacheManager;
-import org.infinispan.rest.framework.ContentSource;
-import org.infinispan.rest.framework.ResourceHandler;
-import org.infinispan.rest.framework.RestRequest;
-import org.infinispan.rest.framework.RestResponse;
-import org.infinispan.rest.framework.impl.Invocations;
-import org.infinispan.rest.logging.Log;
-import org.infinispan.stats.Stats;
-import org.infinispan.upgrade.RollingUpgradeManager;
-
-import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * REST resource to manage the caches.
@@ -81,6 +85,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::getCacheValue)
             .invocation().method(DELETE).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::deleteCacheValue)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("keys").handleWith(this::streamKeys)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("entries").handleWith(this::entries)
 
             // Info and statistics
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}").withAction("config").handleWith(this::getCacheConfig)
@@ -188,6 +193,27 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return CompletableFuture.supplyAsync(() -> {
          NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
          responseBuilder.entity(new CacheInputStream(cache.keySet().stream(), batch));
+
+         responseBuilder.contentType(APPLICATION_JSON_TYPE);
+
+         return responseBuilder.build();
+      }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<RestResponse> entries(RestRequest request) {
+      String cacheName = request.variables().get("cacheName");
+      String limitParam = request.getParameter("limit");
+      int limit = limitParam == null ? 100 : Integer.parseInt(limitParam);
+
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, APPLICATION_JSON, APPLICATION_JSON, request);
+      if (cache == null)
+         return notFoundResponseFuture();
+
+      // Streaming over the cache is blocking
+      return CompletableFuture.supplyAsync(() -> {
+         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+         responseBuilder.entity(cache.entrySet().stream().limit(limit).map(this::mapToEntryInfo)
+               .sorted(Comparator.comparingLong(o -> o.created)).map(EntryInfo::toJson).collect(Collectors.toList()));
 
          responseBuilder.contentType(APPLICATION_JSON_TYPE);
 
@@ -391,6 +417,41 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
                .set("indexing_in_progress", indexingInProgress)
                .set("statistics", statistics)
                .set("queryable", queryable);
+      }
+   }
+
+   private EntryInfo mapToEntryInfo(Map.Entry entry) {
+      EntryInfo entryInfo = new EntryInfo();
+      entryInfo.key = entry.getKey();
+      entryInfo.value = entry.getValue();
+      if (entry instanceof InternalCacheEntry) {
+         InternalCacheEntry ice = (InternalCacheEntry) entry;
+         Metadata meta = ice.getMetadata();
+         entryInfo.timeToLive = meta.lifespan();
+         entryInfo.maxIdle = meta.maxIdle();
+         entryInfo.created = ice.getCreated();
+         entryInfo.lastUsed = ice.getLastUsed();
+      }
+      return entryInfo;
+   }
+
+   static class EntryInfo implements JsonSerialization {
+      public Object key;
+      public Object value;
+      public long timeToLive;
+      public long maxIdle;
+      public long created;
+      public long lastUsed;
+
+      @Override
+      public Json toJson() {
+         return Json.object()
+               .set("key", key)
+               .set("value", value)
+               .set("timeToLive", timeToLive)
+               .set("maxIdle", maxIdle)
+               .set("created", created)
+               .set("lastUsed", lastUsed);
       }
    }
 }

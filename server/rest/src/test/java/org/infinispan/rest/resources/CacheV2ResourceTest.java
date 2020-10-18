@@ -463,6 +463,25 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
+   public void testGetEntriesSample() {
+      RestResponse response = join(client.cache("default").entries(2));
+      Collection<?> emptyEntries = Json.read(response.getBody()).asJsonList();
+      assertEquals(0, emptyEntries.size());
+
+      putStringValueInCache("default", "1", "value");
+      response = join(client.cache("default").keys());
+      Collection<?> singleSet = Json.read(response.getBody()).asJsonList();
+      assertEquals(1, singleSet.size());
+
+      int entries = 20;
+      for (int i = 0; i < entries; i++) {
+         putStringValueInCache("default", String.valueOf(i), "value_" + i);
+      }
+      response = join(client.cache("default").entries(10));
+      System.out.println(response.getBody());
+   }
+
+   @Test
    public void testProtobufMetadataManipulation() throws Exception {
       // Special role {@link ProtobufMetadataManager#SCHEMA_MANAGER_ROLE} is needed for authz. Subject USER has it
       String cache = PROTOBUF_METADATA_CACHE_NAME;

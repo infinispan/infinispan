@@ -19,6 +19,11 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> keys();
 
    /**
+    * Retrieves entries
+    */
+   CompletionStage<RestResponse> entries(int limit);
+
+   /**
     * Retrieves all keys from the cache with a specific MediaType or list of MediaTypes.
     */
    CompletionStage<RestResponse> keys(String mediaType);

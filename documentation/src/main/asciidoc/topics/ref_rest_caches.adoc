@@ -318,7 +318,7 @@ GET /rest/v2/caches/{cacheName}?action=keys
 |===
 |Parameter |Required or Optional |Value
 
-|`batch-size`
+|`batch`
 |OPTIONAL
 |Specifies the internal batch size when retrieving the keys. The default value is `1000`.
 |===

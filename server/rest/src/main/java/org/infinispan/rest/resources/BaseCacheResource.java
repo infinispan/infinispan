@@ -1,17 +1,6 @@
 package org.infinispan.rest.resources;
 
-import static org.infinispan.rest.RequestHeader.EXTENDED_HEADER;
-import static org.infinispan.rest.framework.Method.GET;
-import static org.infinispan.rest.framework.Method.POST;
-import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
-
-import java.util.Date;
-import java.util.List;
-import java.util.OptionalInt;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
-
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -32,7 +21,17 @@ import org.infinispan.rest.operations.CacheOperationsHelper;
 import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 import org.infinispan.rest.operations.exceptions.NoKeyException;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
+import java.util.Date;
+import java.util.List;
+import java.util.OptionalInt;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+
+import static org.infinispan.rest.RequestHeader.EXTENDED_HEADER;
+import static org.infinispan.rest.framework.Method.GET;
+import static org.infinispan.rest.framework.Method.POST;
+import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
 
 /**
  * Handle basic cache operations.
