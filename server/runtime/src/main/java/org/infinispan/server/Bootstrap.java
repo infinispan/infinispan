@@ -1,5 +1,7 @@
 package org.infinispan.server;
 
+import static org.infinispan.server.Server.DEFAULT_SERVER_CONFIG;
+import static org.infinispan.server.Server.INFINISPAN_SERVER_CONFIG_PATH;
 import static org.infinispan.server.logging.Messages.MSG;
 
 import java.io.File;
@@ -108,15 +110,14 @@ public class Bootstrap extends Main {
       if (!serverRoot.isAbsolute()) {
          serverRoot = serverRoot.getAbsoluteFile();
       }
-      File confDir = new File(serverRoot, Server.DEFAULT_SERVER_CONFIG);
+      properties.putIfAbsent(INFINISPAN_SERVER_CONFIG_PATH, new File(serverRoot, DEFAULT_SERVER_CONFIG).getAbsolutePath());
+      File confDir = new File(properties.getProperty(INFINISPAN_SERVER_CONFIG_PATH));
       if (configurationFile == null) {
          configurationFile = new File(confDir, Server.DEFAULT_CONFIGURATION_FILE);
       } else if (!configurationFile.isAbsolute()) {
          configurationFile = Paths.get(confDir.getPath(), configurationFile.getPath()).toFile();
       }
-      File logDir = new File(serverRoot, Server.DEFAULT_SERVER_LOG);
-      properties.putIfAbsent(Server.INFINISPAN_SERVER_LOG_PATH, logDir.getAbsolutePath());
-
+      properties.putIfAbsent(Server.INFINISPAN_SERVER_LOG_PATH, new File(serverRoot, Server.DEFAULT_SERVER_LOG).getAbsolutePath());
       if (loggingFile == null) {
          loggingFile = new File(confDir, Server.DEFAULT_LOGGING_FILE);
       } else if (!loggingFile.isAbsolute()) {
