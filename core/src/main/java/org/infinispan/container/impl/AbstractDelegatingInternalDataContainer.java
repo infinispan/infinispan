@@ -1,10 +1,5 @@
 package org.infinispan.container.impl;
 
-import java.util.Iterator;
-import java.util.Spliterator;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Consumer;
-
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.ComponentRegistry;
@@ -14,6 +9,12 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+
+import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
+import java.util.function.ObjIntConsumer;
 
 /**
  * Delegating data container that delegates all calls to the container returned from {@link #delegate()}
@@ -164,6 +165,11 @@ public abstract class AbstractDelegatingInternalDataContainer<K, V> implements I
    @Override
    public void forEach(IntSet segments, Consumer<? super InternalCacheEntry<K, V>> action) {
       delegate().forEach(segments, action);
+   }
+
+   @Override
+   public void forEachSegment(ObjIntConsumer<PeekableTouchableMap<K, V>> segmentMapConsumer) {
+      delegate().forEachSegment(segmentMapConsumer);
    }
 
    @Override

@@ -13,15 +13,14 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commands.CommandsFactory;
+import org.infinispan.AdvancedCache;
+import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -30,7 +29,6 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -57,13 +55,11 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    @Inject protected CacheNotifier<K, V> cacheNotifier;
    @Inject protected TimeService timeService;
    @Inject protected KeyPartitioner keyPartitioner;
-   @Inject protected ComponentRef<CommandsFactory> cf;
-   @Inject protected ComponentRef<AsyncInterceptorChain> invokerRef;
-   @Inject protected ComponentRef<InvocationContextFactory> cfRef;
-   @Inject protected ComponentRegistry componentRegistry;
+   @Inject protected ComponentRef<AdvancedCache<K, V>> cacheRef;
 
    protected boolean enabled;
    protected String cacheName;
+   protected AdvancedCache<K, V> cache;
 
    /**
     * This map is used for performance reasons.  Essentially when an expiration event should not be raised this
@@ -75,13 +71,6 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    protected ScheduledFuture<?> expirationTask;
 
    private final List<ExpirationConsumer<K, V>> listeners = new CopyOnWriteArrayList<>();
-
-   // used only for testing
-   void initialize(ScheduledExecutorService executor, String cacheName, Configuration cfg) {
-      this.executor = executor;
-      this.configuration = cfg;
-      this.cacheName = cacheName;
-   }
 
    @Start(priority = 55)
    // make sure this starts after the PersistenceManager
@@ -99,6 +88,9 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
                   expWakeUpInt, expWakeUpInt, TimeUnit.MILLISECONDS);
          }
       }
+      // Data container entries are retrieved directly, so we don't need to worry about an encodings
+      this.cache = AbstractDelegatingCache.unwrapCache(cacheRef.wired()).getAdvancedCache();
+      this.cacheName = cache.getName();
    }
 
    @Override
@@ -202,7 +194,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
             shouldRemove = true;
             deleteFromStoresAndNotify(key, value, metadata, privateMetadata);
          } else if (oldEntry.canExpire()) {
-            long time = timeService.time();
+            long time = timeService.wallClockTime();
             if (oldEntry.isExpired(time)) {
                synchronized (oldEntry) {
                   if (oldEntry.isExpired(time)) {
@@ -258,8 +250,8 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
             });
          }
          return expiredStage;
-      } else if (!isWrite && ice.canExpireMaxIdle()) {
-         return checkExpiredMaxIdle(ice, segment);
+      } else if (ice.canExpireMaxIdle()) {
+         return checkExpiredMaxIdle(ice, segment, currentTime);
       }
       return CompletableFutures.completedFalse();
    }
@@ -269,11 +261,11 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
     * or not, that is if it couldn't be touched - we assumed expired (as it was removed in some way).
     * @param entry the entry to check expiration and touch
     * @param segment the segment the entry maps to
+    * @param currentTime the current time in milliseconds
     * @return whether the entry was expired or not
     */
-   protected CompletionStage<Boolean> checkExpiredMaxIdle(InternalCacheEntry entry, int segment) {
-      TouchCommand touchCommand = cf.running().buildTouchCommand(entry.getKey(), segment);
-      CompletionStage<Boolean> future = (CompletionStage) touchCommand.invokeAsync(componentRegistry);
+   protected CompletionStage<Boolean> checkExpiredMaxIdle(InternalCacheEntry entry, int segment, long currentTime) {
+      CompletionStage<Boolean> future = cache.touch(entry.getKey(), segment, true);
       return future.thenApply(touched -> !touched);
    }
 

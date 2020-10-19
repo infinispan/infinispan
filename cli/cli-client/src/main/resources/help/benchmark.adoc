@@ -1,0 +1,78 @@
+BENCHMARK(1)
+============
+:doctype: manpage
+
+
+NAME
+----
+benchmark - runs a performance benchmark against a cache.
+
+You can run performance benchmarks for the following HTTP and Hot Rod
+protocols: `http`, `https`, `hotrod`, and `hotrods`. You specify the protocol
+for the benchmark with a URI. If you do not specify a protocol, the benchmark
+uses the URI of the current CLI connection.
+
+Benchmarks for Hot Rod URIs connect to the entire cluster. For HTTP URIs,
+benchmarks connect to a single node only.
+
+Benchmarks test performance against an existing cache. Before you run a
+benchmark, you should create a cache with the capabilities you want to measure.
+For example, if you want to evaluate the performance of cross-site replication,
+you should create a cache that has backup locations. If you want to test the
+performance of persistence, create a cache that uses an appropriate cache store.
+
+
+SYNOPSIS
+--------
+*benchmark* ['OPTIONS'] [`uri`]
+
+
+BENCHMARK OPTIONS
+-----------------
+*-t, --threads*='num'::
+Specifies the number of threads to create. Defaults to `10`.
+
+*--cache*='cache'::
+Names the cache against which the benchmark is performed. Defaults to `benchmark`. You must create the cache before running the benchmark if it does not already exist.
+
+**--key-size*='num'::
+Sets the size, in bytes, of the key. Defaults to 16 bytes.
+
+**--value-size*='num'::
+Sets the size, in bytes, of the value. Defaults to 1000 bytes.
+
+**--keyset-size*='num'::
+Defines the size, in bytes, of the test key set. Defaults to `1000`.
+
+*--verbosity*=['SILENT', 'NORMAL', 'EXTRA']::
+Specifies the verbosity level of the output. Possible values, from least to most verbose, are `SILENT`, `NORMAL`, and `EXTRA`. The default is `NORMAL`.
+
+*-c, --count*='num'::
+Specifies how many measurement iterations to perform. Defaults to `5`.
+
+*--time*='time'::
+Sets the amount of time, in seconds, that each iteration takes. Defaults to `10`.
+
+*--warmup-count*='num'::
+Specifies how many warmup iterations to perform. Defaults to `5`.
+
+*--warmup-time*='time'::
+Sets the amount of time, in seconds, that each warmup iteration takes. Defaults to `1`.
+
+*--mode*='mode'::
+Specifies the benchmark mode. Possible values are `Throughput`, `AverageTime`, `SampleTime`, `SingleShotTime`, and `All`. The default is `Throughput`.
+
+*--time-unit*='unit'::
+Specifies the time unit for results in the benchmark report. Possible values are `NANOSECONDS`, `MICROSECONDS`, `MILLISECONDS`, and `SECONDS`. The default is `MICROSECONDS`.
+
+
+EXAMPLES
+--------
+`benchmark hotrod://localhost:11222` +
+Performs a benchmark test with the Hot Rod protocol.
+
+`benchmark --value-size=10000 --cache=largecache hotrod://localhost:11222` +
+Performs a benchmark test with the Hot Rod protocol against the `largecache` cache using test values that are 10000 bytes in size.
+
+`benchmark --mode=All --threads=20 https://user:password@server:11222` +
+Performs a benchmark test with the HTTPS protocol using 20 threads and includes all modes in the report.

@@ -23,6 +23,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.DependencyGraph;
 import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -53,6 +54,20 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
    public void validateFlags(EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       if (!flags.contains(CacheContainerAdmin.AdminFlag.VOLATILE))
          throw CONFIG.globalStateDisabled();
+   }
+
+   @Override
+   public CompletableFuture<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      Configuration existing = SecurityActions.getCacheConfiguration(cacheManager, name);
+      if (existing == null) {
+         SecurityActions.defineConfiguration(cacheManager, name, configuration);
+         log.debugf("Defined template '%s' on '%s' using %s", name, cacheManager.getAddress(), configuration);
+      } else if (!existing.matches(configuration)) {
+         throw CONFIG.incompatibleClusterConfiguration(name, configuration, existing);
+      } else {
+         log.debugf("%s already has a template %s with configuration %s", cacheManager.getAddress(), name, configuration);
+      }
+      return CompletableFutures.completedNull();
    }
 
    public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
@@ -104,7 +119,27 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
       globalComponentRegistry.getComponent(DependencyGraph.class, CACHE_DEPENDENCY_GRAPH).remove(name);
    }
 
-   public Map<String, Configuration> loadAll() {
+   @Override
+   public CompletableFuture<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      removeTemplateSync(name, flags);
+      return CompletableFutures.completedNull();
+   }
+
+   protected void removeTemplateSync(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      log.debugf("Remove template %s", name);
+      GlobalComponentRegistry globalComponentRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager);
+      // Remove cache configuration and remove it from the computed cache name list
+      globalComponentRegistry.getComponent(ConfigurationManager.class).removeConfiguration(name);
+   }
+
+   @Override
+   public Map<String, Configuration> loadAllCaches() {
+      // This is volatile, so nothing to do here
+      return Collections.emptyMap();
+   }
+
+   @Override
+   public Map<String, Configuration> loadAllTemplates() {
       // This is volatile, so nothing to do here
       return Collections.emptyMap();
    }

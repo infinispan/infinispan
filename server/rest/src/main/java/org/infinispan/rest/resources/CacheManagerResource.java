@@ -116,7 +116,8 @@ public class CacheManagerResource implements ResourceHandler {
             // BackupManager
             .invocation().methods(GET).path("/v2/cache-managers/{name}/backups").handleWith(this::getAllBackupNames)
             .invocation().methods(DELETE, GET, HEAD, POST).path("/v2/cache-managers/{name}/backups/{backupName}").handleWith(this::backup)
-            .invocation().methods(POST).path("/v2/cache-managers/{name}/backups").withAction("restore").handleWith(this::restore)
+            .invocation().methods(GET).path("/v2/cache-managers/{name}/restores").handleWith(this::getAllRestoreNames)
+            .invocation().methods(DELETE, HEAD, POST).path("/v2/cache-managers/{name}/restores/{restoreName}").handleWith(this::restore)
             .create();
    }
 
@@ -309,12 +310,18 @@ public class CacheManagerResource implements ResourceHandler {
       });
    }
 
+   private CompletionStage<RestResponse> getAllRestoreNames(RestRequest request) {
+      BackupManager backupManager = invocationHelper.getServer().getBackupManager();
+      Set<String> names = backupManager.getRestoreNames();
+      return asJsonResponseFuture(Json.make(names));
+   }
+
    private CompletionStage<RestResponse> restore(RestRequest request) {
-      return BackupManagerResource.handleRestoreRequest(request, (path, json) -> {
+      BackupManager backupManager = invocationHelper.getServer().getBackupManager();
+      return BackupManagerResource.handleRestoreRequest(request, backupManager, (name, path, json) -> {
          BackupManager.Resources resources = BackupManagerResource.getResources(json);
          Map<String, BackupManager.Resources> restoreParams = Collections.singletonMap(cacheManagerName, resources);
-         BackupManager backupManager = invocationHelper.getServer().getBackupManager();
-         return backupManager.restore(path, restoreParams);
+         return backupManager.restore(name, path, restoreParams);
       });
    }
 

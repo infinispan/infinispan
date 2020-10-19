@@ -18,7 +18,7 @@ import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.server.hotrod.HotRodServer.CacheInfo;
+import org.infinispan.server.hotrod.HotRodServer.ExtendedCacheInfo;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.iteration.IterationState;
 import org.infinispan.server.hotrod.logging.Log;
@@ -53,7 +53,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void get(HotRodHeader header, Subject subject, byte[] key) {
-      CacheInfo cacheInfo = server.getCacheInfo(header);
+      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
 
       getInternal(header, cache, key);
@@ -101,7 +101,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void getWithMetadata(HotRodHeader header, Subject subject, byte[] key, int offset) {
-      CacheInfo cacheInfo = server.getCacheInfo(header);
+      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       getWithMetadataInternal(header, cache, key, offset);
    }
@@ -134,7 +134,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void containsKey(HotRodHeader header, Subject subject, byte[] key) {
-      CacheInfo cacheInfo = server.getCacheInfo(header);
+      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       containsKeyInternal(header, cache, key);
    }
@@ -159,7 +159,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void put(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
-      CacheInfo cacheInfo = server.getCacheInfo(header);
+      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
       putInternal(header, cache, key, value, metadata.build());
@@ -179,7 +179,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void replaceIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version, byte[] value, Metadata.Builder metadata) {
-      CacheInfo cacheInfo = server.getCacheInfo(header);
+      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
       replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build());
@@ -216,7 +216,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void replace(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
-      CacheInfo cacheInfo = server.getCacheInfo(header);
+      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
       replaceInternal(header, cache, key, value, metadata.build());
@@ -252,7 +252,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void putIfAbsent(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
-      CacheInfo cacheInfo = server.getCacheInfo(header);
+      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
       putIfAbsentInternal(header, cache, key, value, metadata.build());
@@ -285,7 +285,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void remove(HotRodHeader header, Subject subject, byte[] key) {
-      CacheInfo cacheInfo = server.getCacheInfo(header);
+      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       removeInternal(header, cache, key);
    }
@@ -305,7 +305,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void removeIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version) {
-      CacheInfo cacheInfo = server.getCacheInfo(header);
+      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       removeIfUnmodifiedInternal(header, cache, key, version);
    }
@@ -340,7 +340,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void clear(HotRodHeader header, Subject subject) {
-      CacheInfo cacheInfo = server.getCacheInfo(header);
+      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       clearInternal(header, cache);
    }
@@ -356,7 +356,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void putAll(HotRodHeader header, Subject subject, Map<byte[], byte[]> entries, Metadata.Builder metadata) {
-      CacheInfo cacheInfo = server.getCacheInfo(header);
+      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       putAllInternal(header, cache, entries, metadata.build());
    }
@@ -374,7 +374,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void getAll(HotRodHeader header, Subject subject, Set<?> keys) {
-      CacheInfo cacheInfo = server.getCacheInfo(header);
+      ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       getAllInternal(header, cache, keys);
    }

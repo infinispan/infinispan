@@ -47,6 +47,15 @@ public interface LocalConfigurationStorage {
    CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags);
 
    /**
+    * Creates the template using the supplied configuration and flags.
+    *
+    * @param name the name of the template to create
+    * @param configuration the {@link Configuration} to use
+    * @param flags the desired {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag}s
+    */
+   CompletableFuture<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags);
+
+   /**
     * Removes the specified cache.
     *
     * @param name the name of the cache to remove
@@ -55,7 +64,29 @@ public interface LocalConfigurationStorage {
    CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags);
 
    /**
+    * Removes the specified template.
+    *
+    * @param name the name of the template to remove
+    * @param flags the desired {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag}s
+    */
+   CompletableFuture<Void> removeTemplate(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags);
+
+   /**
+    * Loads all persisted cache configurations
+    * @deprecated since 12.0, use {@link #loadAllCaches} instead
+    */
+   @Deprecated
+   default Map<String, Configuration> loadAll() {
+      return loadAllCaches();
+   }
+
+   /**
     * Loads all persisted cache configurations
     */
-   Map<String, Configuration> loadAll();
+   Map<String, Configuration> loadAllCaches();
+
+   /**
+    * Loads all persisted templates
+    */
+   Map<String, Configuration> loadAllTemplates();
 }

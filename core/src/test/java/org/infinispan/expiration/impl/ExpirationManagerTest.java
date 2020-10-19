@@ -14,9 +14,14 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.impl.TestComponentAccessors;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
+import org.mockito.Answers;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "expiration.impl.ExpirationManagerTest")
@@ -32,7 +37,8 @@ public class ExpirationManagerTest extends AbstractInfinispanTest {
       Configuration cfg = getCfg().expiration().wakeUpInterval(0L).build();
 
       ScheduledExecutorService mockService = mock(ScheduledExecutorService.class);
-      em.initialize(mockService, "", cfg);
+      TestingUtil.inject(em, cfg, mock(AdvancedCache.class, Answers.RETURNS_MOCKS),
+            new TestComponentAccessors.NamedComponent(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR, mockService));
       em.start();
 
       assertNull("Expiration task is not null!  Should not have scheduled anything!", em.expirationTask);
@@ -43,7 +49,8 @@ public class ExpirationManagerTest extends AbstractInfinispanTest {
       Configuration cfg = getCfg().expiration().wakeUpInterval(789L).build();
 
       ScheduledExecutorService mockService = mock(ScheduledExecutorService.class);
-      em.initialize(mockService, "", cfg);
+      TestingUtil.inject(em, cfg, mock(AdvancedCache.class, Answers.RETURNS_MOCKS),
+            new TestComponentAccessors.NamedComponent(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR, mockService));
 
       ScheduledFuture mockFuture = mock(ScheduledFuture.class);
       when(mockService.scheduleWithFixedDelay(isA(ExpirationManagerImpl.ScheduledTask.class), eq(789l),

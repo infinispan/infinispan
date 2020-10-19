@@ -92,8 +92,7 @@ class CacheConfigResource extends AbstractContainerResource {
 
                // Only define configurations that don't already exist so that we don't overwrite newer versions of the default
                // templates e.g. org.infinispan.DIST_SYNC when upgrading a cluster
-               if (cm.getCacheConfiguration(configName) == null)
-                  cm.defineConfiguration(configName, cfg);
+               cm.administration().getOrCreateTemplate(configName, cfg);
             } catch (IOException e) {
                throw new CacheException(e);
             }

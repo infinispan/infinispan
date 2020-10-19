@@ -1,0 +1,86 @@
+[id='using_clustered_locks-{context}']
+= Using Clustered Locks
+Learn how to use clustered locks with {brandname} embedded in your application.
+
+.Prerequisites
+
+* Add the `infinispan-clustered-lock` dependency to your `pom.xml`:
+
+[source,xml,options="nowrap"]
+----
+<dependency>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-clustered-lock</artifactId>
+</dependency>
+----
+
+.Procedure
+
+. Initialize the `ClusteredLockManager` interface from a Cache Manager. This interface is the entry point for defining, retrieving, and removing clustered locks.
+. Give a unique name for each clustered lock.
+. Acquire locks with the `lock.tryLock(1, TimeUnit.SECONDS)` method.
+
+[source,java]
+----
+// Set up a clustered Cache Manager.
+GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+
+// Configure the cache mode, in this case it is distributed and synchronous.
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+
+// Initialize a new default Cache Manager.
+DefaultCacheManager cm = new DefaultCacheManager(global.build(), builder.build());
+
+// Initialize a Clustered Lock Manager.
+ClusteredLockManager clm1 = EmbeddedClusteredLockManagerFactory.from(cm);
+
+// Define a clustered lock named 'lock'.
+clm1.defineLock("lock");
+
+// Get a lock from each node in the cluster.
+ClusteredLock lock = clm1.get("lock");
+
+AtomicInteger counter = new AtomicInteger(0);
+
+// Acquire the lock as follows.
+// Each 'lock.tryLock(1, TimeUnit.SECONDS)' method attempts to acquire the lock.
+// If the lock is not available, the method waits for the timeout period to elapse. When the lock is acquired, other calls to acquire the lock are blocked until the lock is released.
+CompletableFuture<Boolean> call1 = lock.tryLock(1, TimeUnit.SECONDS).whenComplete((r, ex) -> {
+    if (r) {
+        System.out.println("lock is acquired by the call 1");
+        lock.unlock().whenComplete((nil, ex2) -> {
+            System.out.println("lock is released by the call 1");
+            counter.incrementAndGet();
+        });
+    }
+});
+
+CompletableFuture<Boolean> call2 = lock.tryLock(1, TimeUnit.SECONDS).whenComplete((r, ex) -> {
+    if (r) {
+        System.out.println("lock is acquired by the call 2");
+        lock.unlock().whenComplete((nil, ex2) -> {
+            System.out.println("lock is released by the call 2");
+            counter.incrementAndGet();
+        });
+    }
+});
+
+CompletableFuture<Boolean> call3 = lock.tryLock(1, TimeUnit.SECONDS).whenComplete((r, ex) -> {
+    if (r) {
+        System.out.println("lock is acquired by the call 3");
+        lock.unlock().whenComplete((nil, ex2) -> {
+            System.out.println("lock is released by the call 3");
+            counter.incrementAndGet();
+        });
+    }
+});
+
+CompletableFuture.allOf(call1, call2, call3).whenComplete((r, ex) -> {
+    // Print the value of the counter.
+    System.out.println("Value of the counter is " + counter.get());
+
+    // Stop the Cache Manager.
+    cm.stop();
+});
+----

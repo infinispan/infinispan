@@ -3,18 +3,16 @@ package org.infinispan.lock;
 import static java.util.Objects.requireNonNull;
 
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.Experimental;
 import org.infinispan.lock.api.ClusteredLockManager;
 import org.infinispan.lock.logging.Log;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
- * A {@link ClusteredLockManager} factory for embedded cached.
+ * A {@link ClusteredLockManager} factory for embedded caches.
  *
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
-@Experimental
 public final class EmbeddedClusteredLockManagerFactory {
 
    private static final Log log = LogFactory.getLog(EmbeddedClusteredLockManagerFactory.class, Log.class);

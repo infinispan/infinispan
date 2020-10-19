@@ -6,6 +6,8 @@ import static org.junit.Assert.assertEquals;
 
 import java.net.InetSocketAddress;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -98,7 +100,7 @@ class AbstractMultiClusterIT {
     */
    static class Cluster {
       final AbstractInfinispanServerDriver driver;
-      RestClient client;
+      final Map<Integer, RestClient> serverClients = new HashMap<>();
 
       Cluster(ClusterConfiguration simpleConfiguration) {
          Properties sysProps = System.getProperties();
@@ -117,7 +119,7 @@ class AbstractMultiClusterIT {
 
       void stop(String name) throws Exception {
          driver.stop(name);
-         if (client != null)
+         for (RestClient client : serverClients.values())
             client.close();
       }
 
@@ -128,14 +130,16 @@ class AbstractMultiClusterIT {
       }
 
       RestClient getClient() {
-         if (client == null) {
-            InetSocketAddress serverSocket = driver.getServerSocket(0, 11222);
-            client = RestClient.forConfiguration(
+         return getClient(0);
+      }
+      RestClient getClient(int server) {
+         return serverClients.computeIfAbsent(server, k -> {
+            InetSocketAddress serverSocket = driver.getServerSocket(server, 11222);
+            return RestClient.forConfiguration(
                   new RestClientConfigurationBuilder().addServer()
                         .host(serverSocket.getHostName()).port(serverSocket.getPort()).build()
             );
-         }
-         return client;
+         });
       }
    }
 }

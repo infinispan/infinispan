@@ -128,6 +128,8 @@
             <properties>
                 <infinispan.server.integration.launch>tomcat</infinispan.server.integration.launch>
                 <catalinaHome>${project.build.directory}/tomcat</catalinaHome>
+                <!-- jws=jws-*/tomcat -->
+                <catalinaUnzipExpression>apache-tomcat-*</catalinaUnzipExpression>
             </properties>
             <dependencies>
                 <!-- there is no arquillian-tomcat-managed-9. we are using arquillian-tomcat-managed-8 -->
@@ -155,7 +157,7 @@
                                         <echo message="unzipping tomcat server" />
                                         <unzip src="${tomcat.zip}" dest="${project.build.directory}/tomcat" />
                                         <pathconvert property="tomcat.unzip.dir">
-                                            <dirset dir="${project.build.directory}/tomcat" includes="apache-tomcat-*"/>
+                                            <dirset dir="${project.build.directory}/tomcat" includes="${catalinaUnzipExpression}"/>
                                         </pathconvert>
                                         <move todir="${project.build.directory}/tomcat">
                                             <fileset dir="${tomcat.unzip.dir}"/>

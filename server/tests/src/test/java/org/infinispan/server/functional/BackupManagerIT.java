@@ -34,6 +34,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.configuration.Element;
@@ -67,40 +68,50 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
    @Test
    public void testManagerBackupUpload() throws Exception {
-      String backupName = "testManagerBackup";
+      String name = "testManagerBackup";
       performTest(
             client -> {
                RestCacheManagerClient cm = client.cacheManager("clustered");
-               RestResponse response = await(cm.createBackup(backupName));
+               RestResponse response = await(cm.createBackup(name));
                assertEquals(202, response.getStatus());
-               return awaitOk(() -> cm.getBackup(backupName, false));
+               return awaitOk(() -> cm.getBackup(name, false));
             },
-            client -> await(client.cacheManager("clustered").deleteBackup(backupName)),
-            (zip, client) -> client.cacheManager("clustered").restore(zip),
+            client -> await(client.cacheManager("clustered").deleteBackup(name)),
+            (zip, client) -> {
+               RestCacheManagerClient cm = client.cacheManager("clustered");
+               RestResponse response = await(cm.restore(name, zip));
+               assertEquals(202, response.getStatus());
+               return awaitCreated(() -> cm.getRestore(name));
+            },
             this::assertWildcardContent
       );
    }
 
    @Test
    public void testManagerBackupFromFile() throws Exception {
-      String backupName = "testManagerBackup";
+      String name = "testManagerBackup";
       performTest(
             client -> {
                RestCacheManagerClient cm = client.cacheManager("clustered");
-               RestResponse response = await(cm.createBackup(backupName));
+               RestResponse response = await(cm.createBackup(name));
                assertEquals(202, response.getStatus());
                response.close();
-               return awaitOk(() -> cm.getBackup(backupName, false));
+               return awaitOk(() -> cm.getBackup(name, false));
             },
-            client -> await(client.cacheManager("clustered").deleteBackup(backupName)),
-            (zip, client) -> client.cacheManager("clustered").restore(zip.getPath(), null),
+            client -> await(client.cacheManager("clustered").deleteBackup(name)),
+            (zip, client) -> {
+               RestCacheManagerClient cm = client.cacheManager("clustered");
+               RestResponse response = await(cm.restore(name, zip.getPath(), null));
+               assertEquals(202, response.getStatus());
+               return awaitCreated(() -> cm.getRestore(name));
+            },
             this::assertWildcardContent
       );
    }
 
    @Test
    public void testManagerBackupParameters() throws Exception {
-      String backupName = "testManagerBackupParameters";
+      String name = "testManagerBackupParameters";
       performTest(
             client -> {
                Map<String, List<String>> params = new HashMap<>();
@@ -108,16 +119,20 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
                params.put("counters", Collections.singletonList("weak-volatile"));
 
                RestCacheManagerClient cm = client.cacheManager("clustered");
-               RestResponse response = await(cm.createBackup(backupName, params));
+               RestResponse response = await(cm.createBackup(name, params));
                assertEquals(202, response.getStatus());
-               return awaitOk(() -> cm.getBackup(backupName, false));
+               return awaitOk(() -> cm.getBackup(name, false));
             },
-            client -> await(client.cacheManager("clustered").deleteBackup(backupName)),
+            client -> await(client.cacheManager("clustered").deleteBackup(name)),
             (zip, client) -> {
                Map<String, List<String>> params = new HashMap<>();
                params.put("caches", Collections.singletonList("cache1"));
                params.put("counters", Collections.singletonList("*"));
-               return client.cacheManager("clustered").restore(zip, params);
+
+               RestCacheManagerClient cm = client.cacheManager("clustered");
+               RestResponse response = await(cm.restore(name, zip, params));
+               assertEquals(202, response.getStatus());
+               return awaitCreated(() -> cm.getRestore(name));
             },
             client -> {
                // Assert that only caches and the specified "weak-volatile" counter have been backed up. Internal caches will still be present
@@ -163,21 +178,24 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
    @Test
    public void testManagerRestoreParameters() throws Exception {
-      String backupName = "testManagerRestoreParameters";
+      String name = "testManagerRestoreParameters";
       performTest(
             client -> {
                // Create a backup of all container content
                RestCacheManagerClient cm = client.cacheManager("clustered");
-               RestResponse response = await(cm.createBackup(backupName));
+               RestResponse response = await(cm.createBackup(name));
                assertEquals(202, response.getStatus());
-               return awaitOk(() -> cm.getBackup(backupName, false));
+               return awaitOk(() -> cm.getBackup(name, false));
             },
-            client -> await(client.cacheManager("clustered").deleteBackup(backupName)),
+            client -> await(client.cacheManager("clustered").deleteBackup(name)),
             (zip, client) -> {
                // Request that only the 'test.js' script is restored
                Map<String, List<String>> params = new HashMap<>();
                params.put("scripts", Collections.singletonList("test.js"));
-               return client.cacheManager("clustered").restore(zip, params);
+               RestCacheManagerClient cm = client.cacheManager("clustered");
+               RestResponse response = await(cm.restore(name, zip, params));
+               assertEquals(202, response.getStatus());
+               return awaitCreated(() -> cm.getRestore(name));
             },
             client -> {
                // Assert that the test.js script has been restored
@@ -195,38 +213,52 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
    @Test
    public void testClusterBackupUpload() throws Exception {
-      String backupName = "testClusterBackup";
+      String name = "testClusterBackup";
       performTest(
             client -> {
                RestClusterClient cluster = client.cluster();
-               RestResponse response = await(cluster.createBackup(backupName));
+               RestResponse response = await(cluster.createBackup(name));
                assertEquals(202, response.getStatus());
-               return awaitOk(() -> cluster.getBackup(backupName, false));
+               return awaitOk(() -> cluster.getBackup(name, false));
             },
-            client -> await(client.cacheManager("clustered").deleteBackup(backupName)),
-            (zip, client) -> client.cluster().restore(zip),
+            client -> await(client.cacheManager("clustered").deleteBackup(name)),
+            (zip, client) -> {
+               RestClusterClient c = client.cluster();
+               RestResponse response = await(c.restore(name, zip));
+               assertEquals(202, response.getStatus());
+               return awaitCreated(() -> c.getRestore(name));
+            },
             this::assertWildcardContent
       );
    }
 
    @Test
    public void testClusterBackupFromFile() throws Exception {
-      String backupName = "testClusterBackup";
+      String name = "testClusterBackup";
       performTest(
             client -> {
                RestClusterClient cluster = client.cluster();
-               RestResponse response = await(cluster.createBackup(backupName));
+               RestResponse response = await(cluster.createBackup(name));
                assertEquals(202, response.getStatus());
-               return awaitOk(() -> cluster.getBackup(backupName, false));
+               return awaitOk(() -> cluster.getBackup(name, false));
             },
-            client -> await(client.cacheManager("clustered").deleteBackup(backupName)),
-            (zip, client) -> client.cluster().restore(zip.getPath()),
+            client -> await(client.cacheManager("clustered").deleteBackup(name)),
+            (zip, client) -> {
+               RestClusterClient c = client.cluster();
+               RestResponse response = await(c.restore(name, zip.getPath()));
+               assertEquals(202, response.getStatus());
+               return awaitCreated(() -> c.getRestore(name));
+            },
             this::assertWildcardContent
       );
    }
 
    private RestResponse awaitOk(Supplier<CompletionStage<RestResponse>> request) {
       return awaitStatus(request, 202, 200);
+   }
+
+   private RestResponse awaitCreated(Supplier<CompletionStage<RestResponse>> request) {
+      return awaitStatus(request, 202, 201);
    }
 
    private RestResponse awaitStatus(Supplier<CompletionStage<RestResponse>> request, int pendingStatus, int completeStatus) {
@@ -242,7 +274,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
    private void performTest(Function<RestClient, RestResponse> backupAndDownload,
                             Function<RestClient, RestResponse> delete,
-                            BiFunction<File, RestClient, CompletionStage<RestResponse>> restore,
+                            BiFunction<File, RestClient, RestResponse> restore,
                             Consumer<RestClient> assertTargetContent) throws Exception {
       // Start the source cluster
       startSourceCluster();
@@ -280,12 +312,13 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       getResponse.close();
 
       // Upload the backup to the target cluster
-      deleteResponse = await(restore.apply(backupZip, client));
-      assertEquals(deleteResponse.getBody(), 204, deleteResponse.getStatus());
-      deleteResponse.close();
+      RestResponse restoreResponse = restore.apply(backupZip, client);
+      assertEquals(restoreResponse.getBody(), 201, restoreResponse.getStatus());
+      restoreResponse.close();
 
-      // Assert that all content has been restored as expected
-      assertTargetContent.accept(client);
+      // Assert that all content has been restored as expected, connecting to the second node in the cluster to ensure
+      // that configurations and caches are restored cluster-wide
+      assertTargetContent.accept(target.getClient(1));
 
       // Ensure that the backup files have been deleted from the target cluster
       assertNoServerBackupFilesExist(target);
@@ -294,7 +327,10 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
    private void populateContainer(RestClient client) throws Exception {
       String cacheName = "cache1";
-      createCache(cacheName, new ConfigurationBuilder(), client);
+
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      createCache(cacheName, builder, client);
 
       RestCacheClient cache = client.cache(cacheName);
       for (int i = 0; i < NUM_ENTRIES; i++) {

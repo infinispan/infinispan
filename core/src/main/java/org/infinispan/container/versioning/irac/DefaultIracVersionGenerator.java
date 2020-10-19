@@ -52,6 +52,12 @@ public class DefaultIracVersionGenerator implements IracVersionGenerator {
    }
 
    @Override
+   public IracMetadata generateMetadataWithCurrentVersion(int segment) {
+      Map<String, TopologyIracVersion> v = segmentVersion.compute(segment, this::getVectorFunction);
+      return new IracMetadata(localSite, new IracEntryVersion(v));
+   }
+
+   @Override
    public IracMetadata mergeVersion(int segment, IracEntryVersion localVersion, IracEntryVersion remoteVersion,
          String siteName) {
       Map<String, TopologyIracVersion> newVersion = mergeVectorsFunction(localVersion.toMap(), remoteVersion.toMap());
@@ -109,6 +115,15 @@ public class DefaultIracVersionGenerator implements IracVersionGenerator {
          Map<String, TopologyIracVersion> copy = new HashMap<>(versions);
          copy.compute(localSite, this::incrementVersionFunction);
          return copy;
+      }
+   }
+
+   private Map<String, TopologyIracVersion> getVectorFunction(Integer s,
+                                                               Map<String, TopologyIracVersion> versions) {
+      if (versions == null) {
+         return Collections.singletonMap(localSite, TopologyIracVersion.newVersion(topologyId));
+      } else {
+         return versions;
       }
    }
 

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -87,6 +88,7 @@ import org.infinispan.client.rest.configuration.ServerConfiguration;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -120,8 +122,17 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
+   public String getURI() {
+      if (client != null) {
+         return client.getConfiguration().toURI();
+      } else {
+         return null;
+      }
+   }
+
+   @Override
    public void close() throws IOException {
-      client.close();
+      Util.close(client);
    }
 
    @Override
@@ -199,6 +210,7 @@ public class RestConnection implements Connection, Closeable {
    private RestResponse handleResponseStatus(RestResponse response) throws IOException {
       switch (response.getStatus()) {
          case 200:
+         case 201:
          case 202:
             return response;
          case 204:
@@ -298,15 +310,33 @@ public class RestConnection implements Connection, Closeable {
                      Map<String, List<String>> resources = Backup.createResourceMap(command);
                      Boolean upload = command.argAs(Backup.Restore.UPLOAD_BACKUP);
                      FileResource resource = command.argAs(Backup.Restore.PATH);
+                     String restoreName = command.optionOrDefault(Backup.NAME, () -> {
+                        // If the restore name has not been specified generate one based upon the Infinispan version and timestamp
+                        LocalDateTime now = LocalDateTime.now();
+                        return String.format("%s-%tY%2$tm%2$td%2$tH%2$tM%2$tS\n", Version.getBrandName(), now);
+                     });
                      if (upload != null && upload) {
                         File file = resource.getFile();
                         sb.append("Uploading backup '").append(file.getName()).append("' and restoring");
-                        response = manager.restore(file, resources);
+                        response = manager.restore(restoreName, file, resources);
                      } else {
                         String path = resource.getAbsolutePath();
                         sb.append("Restoring from backup '").append(path).append("'");
-                        response = manager.restore(path, resources);
+                        response = manager.restore(restoreName, path, resources);
                      }
+
+                     response = response.thenCompose(rsp -> {
+                              if (rsp.getStatus() != 202) {
+                                 return CompletableFuture.completedFuture(rsp);
+                              }
+                              // Poll the restore progress every 500 milliseconds with a maximum of 100 attempts
+                              return Flowable.timer(500, TimeUnit.MILLISECONDS, Schedulers.trampoline())
+                                    .repeat(100)
+                                    .flatMapSingle(Void -> Single.fromCompletionStage(manager.getRestore(restoreName)))
+                                    .takeUntil(r -> r.getStatus() != 202)
+                                    .lastOrErrorStage();
+                           }
+                     );
                      break;
                }
                break;

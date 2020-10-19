@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -16,6 +17,7 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.commons.api.TransactionalCache;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
@@ -706,6 +708,33 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    void setAvailability(AvailabilityMode availabilityMode);
 
    /**
+    * Touches the given key if present. This will refresh its last access time, used for max idle, and count as a recent
+    * access for eviction purposes.
+    * <p>
+    * Note that it is possible to touch an entry that is expired via max idle if {@code touchEvenIfExpired} argument is
+    * {@code true}.
+    * <p>
+    * This method will return without blocking and complete the returned stage with a value after all appropriate nodes
+    * have actually touched the value.
+    * @param key key of the entry to touch
+    * @param touchEvenIfExpired true if the entry should be touched even if already expired via max idle, effectively
+    *                           making it so the entry is no longer expired via max idle
+    * @return true if the entry was actually touched
+    */
+   CompletionStage<Boolean> touch(Object key, boolean touchEvenIfExpired);
+
+   /**
+    * The same as {@link #touch(Object, boolean)} except that the segment is already known. This can be helpful to reduce
+    * an extra segment computation
+    * @param key key of the entry to touch
+    * @param segment segment of the key
+    * @param touchEvenIfExpired true if the entry should be touched even if already expired via max idle, effectively
+    *                           making it so the entry is no longer expired via max idle
+    * @return true if the entry was actually touched
+    */
+   CompletionStage<Boolean> touch(Object key, int segment, boolean touchEvenIfExpired);
+
+   /**
     * Identical to {@link Cache#entrySet()} but is typed to return CacheEntries instead of Entries.  Please see the
     * other method for a description of its behaviors.
     * <p>
@@ -826,8 +855,16 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param valueMediaType {@link org.infinispan.commons.dataconversion} for the values.
     * @return an instance of {@link AdvancedCache} where all data will formatted according to the supplied {@link
     * org.infinispan.commons.dataconversion.MediaType}.
+    *
+    * @deprecated Use {@link #withMediaType(MediaType, MediaType)} instead.
     */
+   @Deprecated
    AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType);
+
+   /**
+    * @see #withMediaType(String, String)
+    */
+   <K1, V1> AdvancedCache<K1, V1> withMediaType(MediaType keyMediaType, MediaType valueMediaType);
 
    /**
     * Perform any cache operations using the same {@link org.infinispan.commons.dataconversion.MediaType} of the cache

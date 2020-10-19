@@ -164,7 +164,7 @@ public class RestCacheManagerClientOkHttp implements RestCacheManagerClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> restore(File backup, Map<String, List<String>> resources) {
+   public CompletionStage<RestResponse> restore(String name, File backup, Map<String, List<String>> resources) {
       Json json = resources != null ? Json.factory().make(resources) : Json.object();
       RequestBody zipBody = new FileRestEntityOkHttp(MediaType.APPLICATION_ZIP, backup).toRequestBody();
 
@@ -174,12 +174,12 @@ public class RestCacheManagerClientOkHttp implements RestCacheManagerClient {
             .setType(MultipartBody.FORM)
             .build();
 
-      Request.Builder builder = restore().post(multipartBody);
+      Request.Builder builder = restore(name).post(multipartBody);
       return client.execute(builder);
    }
 
    @Override
-   public CompletionStage<RestResponse> restore(String backupLocation, Map<String, List<String>> resources) {
+   public CompletionStage<RestResponse> restore(String name, String backupLocation, Map<String, List<String>> resources) {
       Json json = Json.object();
       json.set("location", backupLocation);
 
@@ -187,15 +187,30 @@ public class RestCacheManagerClientOkHttp implements RestCacheManagerClient {
          json.set("resources", Json.factory().make(resources));
 
       RequestBody body = new StringRestEntityOkHttp(MediaType.APPLICATION_JSON, json.toString()).toRequestBody();
-      Request.Builder builder = restore().post(body);
+      Request.Builder builder = restore(name).post(body);
       return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> getRestore(String name) {
+      return client.execute(restore(name).head());
+   }
+
+   @Override
+   public CompletionStage<RestResponse> getRestoreNames() {
+      return client.execute(new Request.Builder().url(baseCacheManagerUrl + "/restores"));
+   }
+
+   @Override
+   public CompletionStage<RestResponse> deleteRestore(String name) {
+      return client.execute(restore(name).delete());
    }
 
    private Request.Builder backup(String name) {
       return new Request.Builder().url(baseCacheManagerUrl + "/backups/" + name);
    }
 
-   private Request.Builder restore() {
-      return new Request.Builder().url(baseCacheManagerUrl + "/backups?action=restore");
+   private Request.Builder restore(String name) {
+      return new Request.Builder().url(baseCacheManagerUrl + "/restores/" + name);
    }
 }

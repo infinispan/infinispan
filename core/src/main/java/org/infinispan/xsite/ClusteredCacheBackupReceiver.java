@@ -35,6 +35,7 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.TimeService;
@@ -111,7 +112,6 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    @Inject InvocationContextFactory invocationContextFactory;
    @Inject RpcManager rpcManager;
    @Inject ClusteringDependentLogic clusteringDependentLogic;
-   @Inject ComponentRegistry componentRegistry;
 
    private final ByteString cacheName;
 
@@ -257,6 +257,11 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       return defaultHandler.cache().clearAsync();
    }
 
+   @Override
+   public CompletionStage<Boolean> touchEntry(Object key) {
+      return cache.getAdvancedCache().touch(key, false);
+   }
+
    private CompletionStage<Void> invokeRemotelyInLocalSite(CacheRpcCommand command) {
       CompletionStage<Map<Address, Response>> remote = rpcManager
             .invokeCommandOnAll(command, validOnly(), rpcManager.getSyncRpcOptions());
@@ -288,6 +293,14 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       @Override
       public CompletionStage<Object> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
          return cache().removeAsync(command.getKey());
+      }
+
+      @Override
+      public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) {
+         if (!command.isMaxIdle()) {
+            throw new UnsupportedOperationException("Lifespan based expiration is not supported for xsite");
+         }
+         return cache().removeMaxIdleExpired(command.getKey(), command.getValue());
       }
 
       @Override

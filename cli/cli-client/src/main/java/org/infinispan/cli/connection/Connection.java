@@ -9,9 +9,12 @@ import org.infinispan.cli.commands.CommandInputLine;
 import org.infinispan.cli.resources.Resource;
 
 public interface Connection extends Closeable {
+
    void connect() throws IOException;
 
    void connect(String username, String password) throws IOException;
+
+   String getURI();
 
    /**
     * Executes the supplied commands

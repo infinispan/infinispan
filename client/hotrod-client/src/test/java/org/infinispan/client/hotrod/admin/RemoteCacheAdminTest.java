@@ -21,6 +21,7 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDo
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
@@ -71,6 +72,18 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    @Override
    protected SerializationContextInitializer contextInitializer() {
       return TestDomainSCI.INSTANCE;
+   }
+
+   public void templateCreateRemoveTest(Method m) {
+      String templateName = m.getName();
+      String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"/></cache-container></infinispan>", templateName);
+      BasicConfiguration template = new XMLStringConfiguration(xml);
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createTemplate(templateName, template);
+      assertTrue(manager(0).getCacheConfigurationNames().contains(templateName));
+      assertTrue(manager(0).getCacheConfigurationNames().contains(templateName));
+      client(1).administration().removeTemplate(templateName);
+      assertFalse(manager(0).getCacheConfigurationNames().contains(templateName));
+      assertFalse(manager(0).getCacheConfigurationNames().contains(templateName));
    }
 
    public void cacheCreateRemoveTest(Method m) {

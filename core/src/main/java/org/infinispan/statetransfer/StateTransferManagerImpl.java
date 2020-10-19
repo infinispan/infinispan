@@ -1,5 +1,6 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.globalstate.GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME;
 import static org.infinispan.util.concurrent.CompletionStages.ignoreValue;
 
 import java.util.Collection;
@@ -107,7 +108,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
          persistentStateChecksum = Optional.empty();
       }
 
-      float capacityFactor = globalConfiguration.isZeroCapacityNode() ? 0.0f : configuration.clustering().hash().capacityFactor();
+      float capacityFactor = globalConfiguration.isZeroCapacityNode() && !CONFIG_STATE_CACHE_NAME.equals(cacheName) ? 0.0f :
+            configuration.clustering().hash().capacityFactor();
 
       CacheJoinInfo joinInfo = new CacheJoinInfo(pickConsistentHashFactory(globalConfiguration, configuration),
             configuration.clustering().hash().numSegments(),

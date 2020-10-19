@@ -32,6 +32,8 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
@@ -137,6 +139,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       when(mockCache.getKeyDataConversion()).thenReturn(DataConversion.IDENTITY_KEY);
       when(mockCache.getValueDataConversion()).thenReturn(DataConversion.IDENTITY_VALUE);
       Configuration config = new ConfigurationBuilder().clustering().cacheMode(cacheMode).build();
+      GlobalConfiguration globalConfig = GlobalConfigurationBuilder.defaultClusteredBuilder().build();
       when(mockCache.getStatus()).thenReturn(ComponentStatus.INITIALIZING);
 
       mockPublisherManager = mock(ClusterPublisherManager.class);
@@ -153,7 +156,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       when(cem.sendEvents(any())).thenReturn(CompletableFutures.completedNull());
       BlockingManager handler = mock(BlockingManager.class);
       when(handler.continueOnNonBlockingThread(any(), any())).thenReturn(CompletableFutures.completedNull());
-      TestingUtil.inject(n, mockCache, cdl, config, mockRegistry, mockPublisherManager,
+      TestingUtil.inject(n, mockCache, cdl, config, globalConfig, mockRegistry, mockPublisherManager,
                          new InternalEntryFactoryImpl(), cem, mock(KeyPartitioner.class), handler,
                          TestingUtil.named(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR, new WithinThreadExecutor()));
       n.start();

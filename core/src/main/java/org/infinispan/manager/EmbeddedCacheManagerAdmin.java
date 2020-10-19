@@ -69,6 +69,37 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
    <K, V> Cache<K, V> getOrCreateCache(String name, Configuration configuration);
 
    /**
+    * Creates a template that is replicated across the cluster using the specified configuration.
+    * The template will survive topology changes, e.g. when a new node joins the cluster,
+    * it will automatically be created there. This method will wait for the template to be created on all nodes before
+    * returning.
+    *
+    * @param name the name of the template
+    * @param configuration the configuration to use. It must be a clustered configuration (e.g. distributed)
+    * @throws org.infinispan.commons.CacheConfigurationException if a template with the same name already exists
+    */
+   void createTemplate(String name, Configuration configuration);
+
+   /**
+    * Retrieves an existing template or creates one across the cluster using the specified configuration.
+    * The template will survive topology changes, e.g. when a new node joins the cluster,
+    * it will automatically be created there. This method will wait for the template to be created on all nodes before
+    * returning.
+    *
+    * @param name the name of the template
+    * @param configuration the configuration to use. It must be a clustered configuration (e.g. distributed)
+    * @return the template configuration
+    */
+   Configuration getOrCreateTemplate(String name, Configuration configuration);
+
+   /**
+    * Removes a template from the cache container. Any persisted data will be cleared.
+    *
+    * @param name the name of the template to remove
+    */
+   void removeTemplate(String name);
+
+   /**
     * Performs any cache manager operations using the specified {@link Subject}. Only applies to cache managers with authorization
     * enabled (see {@link GlobalConfigurationBuilder#security()}.
     *

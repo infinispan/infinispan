@@ -21,11 +21,13 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.Ownership;
 import org.infinispan.metadata.impl.IracMetadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -143,11 +145,6 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
    }
 
    @Override
-   public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) {
-      return visitDataWriteCommand(ctx, command);
-   }
-
-   @Override
    public boolean isTraceEnabled() {
       return trace;
    }
@@ -166,7 +163,7 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
       if (skipCommand(ctx, command)) {
          return invokeNext(ctx, command);
       }
-      visitKey(key, command);
+      visitKey(ctx, key, command);
       return invokeNextAndFinally(ctx, command, this::handleDataWriteCommand);
    }
 
@@ -175,7 +172,7 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
          return invokeNext(ctx, command);
       }
       for (Object key : command.getAffectedKeys()) {
-         visitKey(key, command);
+         visitKey(ctx, key, command);
       }
       return invokeNextAndFinally(ctx, command, this::handleWriteCommand);
    }
@@ -189,12 +186,26 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
     * <p>
     * The primary owner generates a new {@link IracMetadata} and stores it in the {@link WriteCommand}.
     */
-   private void visitKey(Object key, WriteCommand command) {
+   private void visitKey(InvocationContext ctx, Object key, WriteCommand command) {
       int segment = getSegment(command, key);
       if (getOwnership(segment) != Ownership.PRIMARY) {
          return;
       }
-      IracMetadata metadata = iracVersionGenerator.generateNewMetadata(segment);
+      IracMetadata metadata = null;
+      // RemoveExpired should lose to any other conflicting write
+      if (command instanceof RemoveExpiredCommand) {
+         CacheEntry<?, ?> ce = ctx.lookupEntry(key);
+         PrivateMetadata pm = ce.getInternalMetadata();
+         if (pm != null) {
+            metadata = pm.iracMetadata();
+         }
+
+         if (metadata == null) {
+            metadata = iracVersionGenerator.generateMetadataWithCurrentVersion(segment);
+         }
+      } else {
+         metadata = iracVersionGenerator.generateNewMetadata(segment);
+      }
       updateCommandMetadata(key, command, metadata);
       if (trace) {
          log.tracef("[IRAC] New metadata for key '%s' is %s. Command=%s", key, metadata, command);

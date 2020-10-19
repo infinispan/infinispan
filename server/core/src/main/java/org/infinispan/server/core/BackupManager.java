@@ -94,20 +94,47 @@ public interface BackupManager {
    /**
     * Restore content from the provided backup file.
     *
+    * @param name a unique name to identify the restore process
     * @param backup a path to the backup file to be restored.
     * @return a {@link CompletionStage} that completes when all of the entries in the backup have been restored.
     */
-   CompletionStage<Void> restore(Path backup);
+   CompletionStage<Void> restore(String name, Path backup);
 
    /**
     * Restore content from the provided backup file. The keyset of the provided {@link Map} determines which containers
     * are restored from the backup file. Similarly, the {@link Resources} object determines which {@link
     * Resources.Type}s are restored.
     *
+    * @param name a unique name to identify the restore request.
     * @param backup a path to the backup file to be restored.
     * @return a {@link CompletionStage} that completes when all of the entries in the backup have been restored.
     */
-   CompletionStage<Void> restore(Path backup, Map<String, Resources> params);
+   CompletionStage<Void> restore(String name, Path backup, Map<String, Resources> params);
+
+   /**
+    * Remove the meta information associated with a restoration. When a restoration is not currently in progress, then a
+    * {@link Status#COMPLETE} is returned. However, if a restore operation is currently in progress, then the removal is
+    * attempted once the restore has completed and {@link Status#IN_PROGRESS} is returned. Finally, {@link
+    * Status#NOT_FOUND} is returned if no restore exists with the specified name.
+    *
+    * @param name a unique name to identify the restore request.
+    * @return a {@link CompletionStage} that returns a {@link Status} when complete to indicate what course of action
+    * was taken.
+    */
+   CompletionStage<Status> removeRestore(String name);
+
+   /**
+    * Return the current {@link Status} of a Restore request.
+    *
+    * @param name a unique name to identify the restore request.
+    * @return the {@link Status} of the restore.
+    */
+   Status getRestoreStatus(String name);
+
+   /**
+    * @return the names of all restores.
+    */
+   Set<String> getRestoreNames();
 
    /**
     * An interface to encapsulate the various arguments required by the {@link BackupManager} in order to

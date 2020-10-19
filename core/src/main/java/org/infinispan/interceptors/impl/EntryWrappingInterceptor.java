@@ -75,6 +75,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -110,6 +111,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private boolean isSync;
    private boolean useRepeatableRead;
    private boolean isVersioned;
+   private boolean isPessimistic;
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -167,6 +169,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ
             || cacheConfiguration.clustering().cacheMode().isScattered();
       isVersioned = Configurations.isTxVersioned(cacheConfiguration);
+      isPessimistic = cacheConfiguration.transaction().transactionMode().isTransactional()
+            && cacheConfiguration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
    }
 
    private boolean ignoreOwnership(FlagAffectedCommand command) {
@@ -214,7 +218,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) {
       final Object key = command.getKey();
       CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, command.getSegment(),
-            ignoreOwnership(command) || canRead(command));
+            ignoreOwnership(command) || canRead(command), command.hasAnyFlag(FlagBitSets.ALREADY_HAS_LOCK)
+                  || (isPessimistic && command.hasAnyFlag(FlagBitSets.FORCE_WRITE_LOCK)));
       return makeStage(asyncInvokeNext(ctx, command, stage)).thenApply(ctx, command, dataReadReturnHandler);
    }
 
@@ -224,7 +229,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       AggregateCompletionStage<Void> aggregateCompletionStage = null;
       for (Object key : command.getKeys()) {
          CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
-               ignoreOwnership || canReadKey(key));
+               ignoreOwnership || canReadKey(key), false);
          aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
       }
 
@@ -488,7 +493,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          // TxReadOnlyKeyCommand may apply some mutations on the entry in context so we need to always wrap it
          stage = entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command), true);
       } else {
-         stage = entryFactory.wrapEntryForReading(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command));
+         stage = entryFactory.wrapEntryForReading(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command), false);
       }
 
       // Repeatable reads are not achievable with functional commands, as we don't store the value locally
@@ -513,7 +518,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       } else {
          for (Object key : command.getKeys()) {
             CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
-                  ignoreOwnership || canReadKey(key));
+                  ignoreOwnership || canReadKey(key), false);
             aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
          }
       }

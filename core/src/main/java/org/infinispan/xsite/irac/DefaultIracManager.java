@@ -10,12 +10,14 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
@@ -245,6 +247,42 @@ public class DefaultIracManager implements IracManager, Runnable {
       iracVersionGenerator.storeTombstoneIfAbsent(key, tombstone);
       updatedKeys.putIfAbsent(key, lockOwner);
       senderNotifier.release();
+   }
+
+   @Override
+   public CompletionStage<Boolean> checkAndTrackExpiration(Object key) {
+      if (trace) {
+         log.tracef("Checking remote backup sites to see if key %s has been touched recently", key);
+      }
+      IracTouchKeyCommand command = commandsFactory.buildIracTouchCommand(key);
+      AtomicBoolean expired = new AtomicBoolean(true);
+      // TODO: technically this waits for all backups to respond - we can optimize so we return early
+      // if at least one backup says it isn't expired
+      AggregateCompletionStage<AtomicBoolean> collector = CompletionStages.aggregateCompletionStage(expired);
+      for (XSiteBackup backup : asyncBackups) {
+         if (takeOfflineManager.getSiteState(backup.getSiteName()) == SiteState.OFFLINE) {
+            if (trace) {
+               log.tracef("Skipping %s as it is offline", backup.getSiteName());
+            }
+            continue; //backup is offline
+         }
+         if (trace) {
+            log.tracef("Sending irac touch key command to %s", backup);
+         }
+         XSiteResponse<Boolean> response = sendToRemoteSite(backup, command);
+         collector.dependsOn(response.thenAccept(touched -> {
+            if (touched) {
+               if (trace) {
+                  log.tracef("Key %s was recently touched on a remote site %s", key, backup);
+               }
+               expired.set(false);
+            } else if (trace) {
+               log.tracef("Entry %s was expired on remote site %s", key, backup);
+            }
+         }));
+      }
+      return collector.freeze()
+              .thenApply(AtomicBoolean::get);
    }
 
    //public for testing purposes

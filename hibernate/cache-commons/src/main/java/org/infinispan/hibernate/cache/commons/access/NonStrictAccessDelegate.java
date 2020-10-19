@@ -116,8 +116,6 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 		// Even if value is instanceof CacheEntry, we have to wrap it in VersionedEntry and add transaction timestamp.
 		// Otherwise, old eviction record wouldn't be overwritten.
 		CompletableFuture<Void> future = putFromLoadMap.eval(key, new VersionedEntry(value, version, txTimestamp));
-		// async try-locking should be done immediately
-		assert future.isDone();
 		// Rethrow exceptions
 		future.join();
 		return true;

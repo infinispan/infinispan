@@ -38,6 +38,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
@@ -58,6 +59,7 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
@@ -128,6 +130,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Inject InternalDataContainer<K, V> dataContainer;
    @Inject CacheNotifier<K, V> cacheNotifier;
    @Inject TimeService timeService;
+   @Inject KeyPartitioner keyPartitioner;
 
    private Metadata defaultMetadata;
 
@@ -391,6 +394,27 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public CompletionStage<Boolean> touch(Object key, boolean touchEvenIfExpired) {
+      return touch(key, -1, touchEvenIfExpired);
+   }
+
+   @Override
+   public CompletionStage<Boolean> touch(Object key, int segment, boolean touchEvenIfExpired) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      if (segment < 0) {
+         segment = keyPartitioner.getSegment(key);
+      }
+      InternalCacheEntry<K, V> entry = dataContainer.peek(segment, key);
+      if (entry != null) {
+         long currentTime = timeService.wallClockTime();
+         if (touchEvenIfExpired || !entry.isExpired(currentTime)) {
+            return CompletableFutures.booleanStage(dataContainer.touch(segment, key, currentTime));
+         }
+      }
+      return CompletableFutures.completedFalse();
+   }
+
+   @Override
    public void evict(K key) {
       ByRef<InternalCacheEntry<K, V>> oldEntryRef = new ByRef<>(null);
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
@@ -600,6 +624,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public <K1, V1> AdvancedCache<K1, V1> withMediaType(MediaType keyMediaType, MediaType valueMediaType) {
       throw new UnsupportedOperationException();
    }
 

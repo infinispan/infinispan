@@ -3,6 +3,7 @@ package org.infinispan.rest.resources;
 import static io.netty.handler.codec.http.HttpResponseStatus.ACCEPTED;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
+import static io.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
@@ -19,8 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.function.BiFunction;
 
+import org.hibernate.search.util.common.function.TriFunction;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.rest.NettyRestRequest;
@@ -90,21 +91,7 @@ class BackupManagerResource {
    }
 
    private static CompletionStage<RestResponse> handleDeleteBackup(String name, BackupManager backupManager) {
-      return backupManager.removeBackup(name).handle((s, t) -> {
-         if (t != null)
-            return response(INTERNAL_SERVER_ERROR, t.getMessage());
-
-         switch (s) {
-            case NOT_FOUND:
-               return response(NOT_FOUND);
-            case IN_PROGRESS:
-               return response(ACCEPTED);
-            case COMPLETE:
-               return response(NO_CONTENT);
-            default:
-               return response(INTERNAL_SERVER_ERROR);
-         }
-      });
+      return backupManager.removeBackup(name).handle(BackupManagerResource::handleDelete);
    }
 
    private static CompletionStage<RestResponse> handleGetBackup(String name, BackupManager backupManager, Method method) {
@@ -130,7 +117,47 @@ class BackupManagerResource {
       }
    }
 
-   static CompletionStage<RestResponse> handleRestoreRequest(RestRequest request, BiFunction<Path, Json, CompletionStage<Void>> function) {
+   static CompletionStage<RestResponse> handleRestoreRequest(RestRequest request, BackupManager backupManager,
+                                                             TriFunction<String, Path, Json, CompletionStage<Void>> function) {
+      String name = request.variables().get("restoreName");
+      Method method = request.method();
+      switch (method) {
+         case DELETE:
+            return handleDeleteRestore(name, backupManager);
+         case HEAD:
+            return handleRestoreStatus(name, backupManager);
+         case POST:
+            return handleRestore(name, request, backupManager, function);
+         default:
+            return responseFuture(BAD_REQUEST, "Unsupported request method " + method);
+      }
+   }
+
+   static CompletionStage<RestResponse> handleDeleteRestore(String name, BackupManager backupManager) {
+      return backupManager.removeRestore(name).handle(BackupManagerResource::handleDelete);
+   }
+
+   static CompletionStage<RestResponse> handleRestoreStatus(String name, BackupManager backupManager) {
+      BackupManager.Status status = backupManager.getRestoreStatus(name);
+      switch (status) {
+         case NOT_FOUND:
+            return responseFuture(NOT_FOUND);
+         case IN_PROGRESS:
+            return responseFuture(ACCEPTED);
+         case COMPLETE:
+            return responseFuture(CREATED);
+         case FAILED:
+         default:
+            return responseFuture(INTERNAL_SERVER_ERROR);
+      }
+   }
+
+   static CompletionStage<RestResponse> handleRestore(String name, RestRequest request, BackupManager backupManager,
+                                                      TriFunction<String, Path, Json, CompletionStage<Void>> function) {
+      BackupManager.Status existingStatus = backupManager.getRestoreStatus(name);
+      if (existingStatus != BackupManager.Status.NOT_FOUND)
+         return responseFuture(CONFLICT);
+
       Path path;
       Json resourcesJson = Json.object();
       MediaType contentType = request.contentType();
@@ -146,7 +173,7 @@ class BackupManagerResource {
             DiskAttribute resources = (DiskAttribute) decoder.getBodyHttpData("resources");
             if (resources != null)
                resourcesJson = Json.read(resources.getString());
-         } else if (contentType.match(MediaType.APPLICATION_JSON)){
+         } else if (contentType.match(MediaType.APPLICATION_JSON)) {
             // Attempt to parse body as json
             Json json = Json.read(request.contents().asString());
             Json resources = json.at(RESOURCES_KEY);
@@ -162,7 +189,10 @@ class BackupManagerResource {
             return responseFuture(UNSUPPORTED_MEDIA_TYPE);
          }
 
-         return function.apply(path, resourcesJson).handle((Void, t) -> {
+         function.apply(name, path, resourcesJson).whenComplete((Void, t) -> {
+                  if (t != null) {
+                     LOG.error(t);
+                  }
                   if (uploadedBackup) {
                      try {
                         Files.delete(path);
@@ -170,11 +200,9 @@ class BackupManagerResource {
                         LOG.warnf(e, "Unable to delete uploaded backup file '%s'", path);
                      }
                   }
-                  return t != null ?
-                        response(INTERNAL_SERVER_ERROR, t.getMessage()) :
-                        response(NO_CONTENT);
                }
          );
+         return responseFuture(ACCEPTED);
       } catch (IOException e) {
          LOG.error(e);
          return responseFuture(INTERNAL_SERVER_ERROR, e.getMessage());
@@ -201,5 +229,21 @@ class BackupManagerResource {
          }
       }
       return builder.build();
+   }
+
+   private static RestResponse handleDelete(BackupManager.Status s, Throwable t) {
+      if (t != null)
+         return response(INTERNAL_SERVER_ERROR, t.getMessage());
+
+      switch (s) {
+         case NOT_FOUND:
+            return response(NOT_FOUND);
+         case IN_PROGRESS:
+            return response(ACCEPTED);
+         case COMPLETE:
+            return response(NO_CONTENT);
+         default:
+            return response(INTERNAL_SERVER_ERROR);
+      }
    }
 }

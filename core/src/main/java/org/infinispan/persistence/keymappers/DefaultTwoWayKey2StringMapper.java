@@ -5,6 +5,7 @@ import java.util.Base64;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import java.util.UUID;
 
 /**
  * Default implementation for {@link TwoWayKey2StringMapper} that knows how to handle all primitive
@@ -28,6 +29,7 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
    private static final char BOOLEAN_IDENTIFIER = '7';
    private static final char BYTEARRAYKEY_IDENTIFIER = '8';
    private static final char NATIVE_BYTEARRAYKEY_IDENTIFIER = '9';
+   private static final char UUID_IDENTIFIER = 'a';
 
    @Override
    public String getStringMapping(Object key) {
@@ -52,6 +54,8 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
          return generateString(BYTEARRAYKEY_IDENTIFIER, Base64.getEncoder().encodeToString(((WrappedByteArray)key).getBytes()));
       } else if (key.getClass().equals(byte[].class)) {
          return generateString(NATIVE_BYTEARRAYKEY_IDENTIFIER, Base64.getEncoder().encodeToString((byte[]) key));
+      } else if (key.getClass().equals(UUID.class)) {
+         identifier = UUID_IDENTIFIER;
       } else {
          throw new IllegalArgumentException("Unsupported key type: " + key.getClass().getName());
       }
@@ -84,6 +88,8 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
                return new WrappedByteArray(bytes);
             case NATIVE_BYTEARRAYKEY_IDENTIFIER:
                return Base64.getDecoder().decode(value);
+            case UUID_IDENTIFIER:
+               return UUID.fromString(value);
             default:
                throw new IllegalArgumentException("Unsupported type code: " + type);
          }
@@ -94,7 +100,7 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
 
    @Override
    public boolean isSupportedType(Class<?> keyType) {
-      return isPrimitive(keyType) || keyType == WrappedByteArray.class;
+      return isPrimitive(keyType) || keyType == WrappedByteArray.class|| keyType == UUID.class;
    }
 
    private String generateString(char identifier, String s) {

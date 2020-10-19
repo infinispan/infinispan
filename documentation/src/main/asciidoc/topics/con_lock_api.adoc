@@ -1,0 +1,27 @@
+[id='lock_api-{context}']
+= Lock API
+{brandname} provides a `ClusteredLock` API that lets you concurrently execute
+code on a cluster when using {brandname} in embedded mode.
+
+The API consists of the following:
+
+* `ClusteredLock` exposes methods to implement clustered locks.
+* `ClusteredLockManager` exposes methods to define, configure, retrieve, and remove clustered locks.
+* `EmbeddedClusteredLockManagerFactory` initializes `ClusteredLockManager` implementations.
+
+.Ownership
+{brandname} supports `NODE` ownership so that all nodes in a cluster can use a
+lock.
+
+.Reentrancy
+{brandname} clustered locks are non-reentrant so any node in the cluster can
+acquire a lock but only the node that creates the lock can release it.
+
+If two consecutive lock calls are sent for the same owner, the first call
+acquires the lock if it is available and the second call is blocked.
+
+.Reference
+
+* link:{javadocroot}/org/infinispan/lock/EmbeddedClusteredLockManagerFactory.html[EmbeddedClusteredLockManagerFactory]
+* link:{javadocroot}/org/infinispan/lock/api/ClusteredLockManager.html[ClusteredLockManager]
+* link:{javadocroot}/org/infinispan/lock/api/ClusteredLock.html[ClusteredLock]

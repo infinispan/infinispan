@@ -13,6 +13,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -52,6 +53,7 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
    @Inject Configuration config;
    @Inject EventLogManager eventLogManager;
    @Inject RpcManager rpcManager;
+   @Inject InternalDataContainer<Object, Object> dataContainer;
 
    public DefaultTakeOfflineManager(String cacheName) {
       this.cacheName = cacheName;
@@ -197,6 +199,9 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
       @Override
       public void siteOffline() {
          getEventLogger().info(EventLogCategory.CLUSTER, MESSAGES.siteOffline(siteName));
+         log.debug("Touching all in memory entries as a site has gone offline");
+         long currentTimeMillis = timeService.wallClockTime();
+         dataContainer.forEachSegment((map, segment) -> map.touchAll(currentTimeMillis));
       }
 
       @Override

@@ -3,6 +3,7 @@ package org.infinispan.rest.resources;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
+import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
@@ -39,7 +40,8 @@ public class ClusterResource implements ResourceHandler {
             .invocation().methods(POST).path("/v2/cluster").withAction("stop").handleWith(this::stop)
             .invocation().methods(GET).path("/v2/cluster/backups").handleWith(this::getAllBackupNames)
             .invocation().methods(DELETE, GET, POST).path("/v2/cluster/backups/{backupName}").handleWith(this::backup)
-            .invocation().methods(POST).path("/v2/cluster/backups").withAction("restore").handleWith(this::restore)
+            .invocation().methods(GET).path("/v2/cluster/restores").handleWith(this::getAllRestoreNames)
+            .invocation().methods(DELETE, HEAD, POST).path("/v2/cluster/restores/{restoreName}").handleWith(this::restore)
             .create();
    }
 
@@ -65,7 +67,13 @@ public class ClusterResource implements ResourceHandler {
             (name, workingDir, json) -> backupManager.create(name, workingDir));
    }
 
+   private CompletionStage<RestResponse> getAllRestoreNames(RestRequest request) {
+      BackupManager backupManager = invocationHelper.getServer().getBackupManager();
+      Set<String> names = backupManager.getRestoreNames();
+      return asJsonResponseFuture(Json.make(names));
+   }
+
    private CompletionStage<RestResponse> restore(RestRequest request) {
-      return BackupManagerResource.handleRestoreRequest(request, (path, json) -> backupManager.restore(path));
+      return BackupManagerResource.handleRestoreRequest(request, backupManager, (name, path, json) -> backupManager.restore(name, path));
    }
 }

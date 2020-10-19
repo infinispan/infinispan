@@ -36,6 +36,7 @@ import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.functions.MergeFunction;
@@ -59,6 +60,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
@@ -83,6 +85,7 @@ import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
+import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -697,7 +700,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final CompletableFuture<Boolean> removeLifespanExpired(K key, V value, Long lifespan, long explicitFlags) {
       RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value, keyPartitioner.getSegment(key),
             lifespan, explicitFlags | FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_XSITE_BACKUP);
-      return performRemoveExpiredCommand(command);
+      return performVisitableNonTxCommand(command);
    }
 
    @Override
@@ -707,11 +710,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value, long explicitFlags) {
       RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value, keyPartitioner.getSegment(key),
-            explicitFlags | FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_XSITE_BACKUP);
-      return performRemoveExpiredCommand(command);
+            explicitFlags | FlagBitSets.SKIP_CACHE_LOAD);
+      return performVisitableNonTxCommand(command);
    }
 
-   private CompletableFuture<Boolean> performRemoveExpiredCommand(RemoveExpiredCommand command) {
+   private CompletableFuture<Boolean> performVisitableNonTxCommand(VisitableCommand command) {
       Transaction ongoingTransaction = null;
       try {
          ongoingTransaction = suspendOngoingTransactionIfExists();
@@ -747,6 +750,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public AdvancedCache<K, V> withMediaType(String keyMediaType, String valueMediaType) {
+      throw new UnsupportedOperationException("Conversion requires EncoderCache");
+   }
+
+   @Override
+   public <K1, V1> AdvancedCache<K1, V1> withMediaType(MediaType keyMediaType, MediaType valueMediaType) {
       throw new UnsupportedOperationException("Conversion requires EncoderCache");
    }
 
@@ -1216,6 +1224,24 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public String toString() {
       return "Cache '" + name + "'@" + (config != null && config.clustering().cacheMode().isClustered() ? getRpcManager().getAddress() : Util.hexIdHashCode(getCacheManager()));
+   }
+
+   @Override
+   public CompletionStage<Boolean> touch(Object key, boolean touchEvenIfExpired) {
+      return touch(key, -1, touchEvenIfExpired, EnumUtil.EMPTY_BIT_SET);
+   }
+
+   @Override
+   public CompletionStage<Boolean> touch(Object key, int segment, boolean touchEvenIfExpired) {
+      return touch(key, segment, touchEvenIfExpired, EnumUtil.EMPTY_BIT_SET);
+   }
+
+   public CompletionStage<Boolean> touch(Object key, int segment, boolean touchEvenIfExpired, long flagBitSet) {
+      if (segment < 0) {
+         segment = keyPartitioner.getSegment(key);
+      }
+      TouchCommand command = commandsFactory.buildTouchCommand(key, segment, touchEvenIfExpired, flagBitSet);
+      return performVisitableNonTxCommand(command);
    }
 
    @Override

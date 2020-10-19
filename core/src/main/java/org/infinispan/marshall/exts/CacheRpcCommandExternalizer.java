@@ -9,10 +9,11 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.irac.IracCleanupKeyCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
+import org.infinispan.commands.irac.IracPutKeyCommand;
 import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
-import org.infinispan.commands.irac.IracPutKeyCommand;
+import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
@@ -45,7 +46,6 @@ import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
-import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand;
@@ -98,7 +98,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             VersionedPrepareCommand.class,
             VersionedCommitCommand.class,
             XSiteStatePushCommand.class, SingleXSiteRpcCommand.class,
-            ClusteredGetAllCommand.class, TouchCommand.class,
+            ClusteredGetAllCommand.class,
             SingleKeyBackupWriteCommand.class,
             SingleKeyFunctionalBackupWriteCommand.class,
             PutMapBackupWriteCommand.class,
@@ -119,7 +119,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             StateTransferGetTransactionsCommand.class, StateTransferStartCommand.class,
             IracPutKeyCommand.class, IracRemoveKeyCommand.class, IracClearKeysCommand.class,
             IracCleanupKeyCommand.class, IracMetadataRequestCommand.class,
-            IracRequestStateCommand.class, IracStateResponseCommand.class);
+            IracRequestStateCommand.class, IracStateResponseCommand.class, IracTouchKeyCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;
