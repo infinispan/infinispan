@@ -1,15 +1,13 @@
 package org.infinispan.query.api;
 
-import java.io.Serializable;
-
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-@Indexed(index="indexB")
-public class AnotherTestEntity implements Serializable {
+@Indexed(index = "indexB")
+public class AnotherTestEntity {
 
    private final String value;
 
@@ -19,9 +17,8 @@ public class AnotherTestEntity implements Serializable {
    }
 
    @Field(analyze = Analyze.NO, name="name")
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public String getValue() {
       return value;
    }
-
 }

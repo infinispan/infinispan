@@ -28,7 +28,7 @@ public class KeyValueEntity implements Serializable {
       this.value = value;
    }
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public String getK() {
       return k;
    }
@@ -37,7 +37,7 @@ public class KeyValueEntity implements Serializable {
       this.k = k;
    }
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public String getValue() {
       return value;
    }

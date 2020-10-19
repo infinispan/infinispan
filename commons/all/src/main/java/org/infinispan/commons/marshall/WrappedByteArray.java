@@ -37,7 +37,7 @@ public class WrappedByteArray implements WrappedBytes {
    }
 
    @Override
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public byte[] getBytes() {
       return bytes;
    }

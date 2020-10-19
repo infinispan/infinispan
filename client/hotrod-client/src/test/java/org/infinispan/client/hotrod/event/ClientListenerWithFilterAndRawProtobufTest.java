@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -127,12 +126,14 @@ public class ClientListenerWithFilterAndRawProtobufTest extends MultiHotRodServe
    }
 
    @ProtoName("RawProtobufCustomEventFilter")
-   public static class CustomEventFilter implements CacheEventFilter<byte[], byte[]>, Serializable {
+   public static class CustomEventFilter implements CacheEventFilter<byte[], byte[]> {
 
       private transient ProtoStreamMarshaller marshaller;
-      @ProtoField(number = 1)
+
+      @ProtoField(1)
       final String firstParam;
-      @ProtoField(number = 2)
+
+      @ProtoField(2)
       final String secondParam;
 
       @ProtoFactory

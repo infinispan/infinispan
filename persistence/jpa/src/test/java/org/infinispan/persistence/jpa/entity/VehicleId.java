@@ -14,10 +14,10 @@ import org.infinispan.protostream.annotations.ProtoField;
 @Embeddable
 public class VehicleId implements Serializable {
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    String state;
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    String licensePlate;
 
    public VehicleId() {
@@ -37,6 +37,7 @@ public class VehicleId implements Serializable {
       result = prime * result + ((state == null) ? 0 : state.hashCode());
       return result;
    }
+
    @Override
    public boolean equals(Object obj) {
       if (this == obj)
@@ -58,9 +59,9 @@ public class VehicleId implements Serializable {
          return false;
       return true;
    }
+
    @Override
    public String toString() {
-      return "VehicleId [state=" + state + ", licensePlate=" + licensePlate
-            + "]";
+      return "VehicleId [state=" + state + ", licensePlate=" + licensePlate + "]";
    }
 }

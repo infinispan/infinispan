@@ -22,7 +22,6 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.CurrencyMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.GenderMarshaller;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
@@ -537,7 +536,6 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
          ctx.registerMarshaller(new EmbeddedUserMarshaller());
          ctx.registerMarshaller(new GenderMarshaller());
          ctx.registerMarshaller(new EmbeddedTransactionMarshaller());
-         ctx.registerMarshaller(new NotIndexedMarshaller());
          NotIndexedSCI.INSTANCE.registerMarshallers(ctx);
       }
    }

@@ -362,7 +362,7 @@ class JsonMarshaller extends AbstractMarshaller {
 
 class ComplexKey {
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    String id;
 
    @ProtoField(number = 2, defaultValue = "0")
@@ -402,7 +402,7 @@ class ComplexValue {
       this.uuid = uuid;
    }
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    @ProtoDoc("@Field(store = Store.YES)")
    public String getUuid() {
       return uuid.toString();

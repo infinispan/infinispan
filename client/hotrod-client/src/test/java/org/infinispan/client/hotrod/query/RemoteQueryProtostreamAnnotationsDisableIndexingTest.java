@@ -39,10 +39,10 @@ public class RemoteQueryProtostreamAnnotationsDisableIndexingTest extends Single
       @ProtoField(number = 10, required = true)
       public int id;
 
-      @ProtoField(number = 20)
+      @ProtoField(20)
       public String text;
 
-      @ProtoField(number = 30)
+      @ProtoField(30)
       public Author author;
 
       public Memo(int id, String text) {
@@ -64,7 +64,7 @@ public class RemoteQueryProtostreamAnnotationsDisableIndexingTest extends Single
       @ProtoField(number = 1, required = true)
       public int id;
 
-      @ProtoField(number = 2)
+      @ProtoField(2)
       public String name;
 
       public Author(int id, String name) {

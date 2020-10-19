@@ -143,7 +143,7 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
 
    public static class GroupKey {
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       final String group;
 
       @ProtoField(number = 2, defaultValue = "0")

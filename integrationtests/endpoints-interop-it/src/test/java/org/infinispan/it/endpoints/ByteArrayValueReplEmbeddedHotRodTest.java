@@ -26,7 +26,7 @@ public class ByteArrayValueReplEmbeddedHotRodTest extends AbstractInfinispanTest
    EndpointsCacheFactory<Object, Object> cacheFactory1;
    EndpointsCacheFactory<Object, Object> cacheFactory2;
 
-   public void testHotRodPutEmbeddedGet() throws Exception {
+   public void testHotRodPutEmbeddedGet() {
       final String key = "4";
       final byte[] value = "v1".getBytes();
 
@@ -38,7 +38,7 @@ public class ByteArrayValueReplEmbeddedHotRodTest extends AbstractInfinispanTest
       assertArrayEquals(value, (byte[]) cacheFactory2.getEmbeddedCache().get(key));
    }
 
-   public void testHotRodReplace() throws Exception {
+   public void testHotRodReplace() {
       final String key = "5";
       final byte[] value1 = "v1".getBytes();
       final byte[] value2 = "v2".getBytes();
@@ -48,11 +48,11 @@ public class ByteArrayValueReplEmbeddedHotRodTest extends AbstractInfinispanTest
       assertNull(remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, value1));
 
       // 2. Replace with HotRod
-      VersionedValue versioned = cacheFactory1.getHotRodCache().getWithMetadata(key);
+      VersionedValue<?> versioned = cacheFactory1.getHotRodCache().getWithMetadata(key);
       assertTrue(cacheFactory1.getHotRodCache().replaceWithVersion(key, value2, versioned.getVersion()));
    }
 
-   public void testHotRodRemove() throws Exception {
+   public void testHotRodRemove() {
       final String key = "7";
       final byte[] value = "v1".getBytes();
 
@@ -61,12 +61,12 @@ public class ByteArrayValueReplEmbeddedHotRodTest extends AbstractInfinispanTest
       assertNull(remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, value));
 
       // 2. Remove with HotRod
-      VersionedValue versioned = cacheFactory1.getHotRodCache().getWithMetadata(key);
+      VersionedValue<?> versioned = cacheFactory1.getHotRodCache().getWithMetadata(key);
       assertTrue(cacheFactory1.getHotRodCache().removeWithVersion(key, versioned.getVersion()));
    }
 
    //This test can fail only if there's a marshaller specified for EmbeddedTypeConverter
-   public void testEmbeddedPutHotRodGet() throws Exception {
+   public void testEmbeddedPutHotRodGet() {
       final String key = "8";
       final byte[] value = "v1".getBytes();
 

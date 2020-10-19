@@ -87,7 +87,7 @@ public class TestUtil {
       @ProtoField(number = 1, defaultValue = "0")
       int id;
 
-      @ProtoField(number = 2)
+      @ProtoField(2)
       String someString;
 
       TestObject() {

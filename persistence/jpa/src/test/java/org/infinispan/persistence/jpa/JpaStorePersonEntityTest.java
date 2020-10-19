@@ -44,7 +44,7 @@ public class JpaStorePersonEntityTest extends BaseJpaStoreTest {
 
       person.setNickNames(nickNames);
       person.setAddress(adr);
-      person.setSecondaryAdresses(secAdrs);
+      person.setSecondaryAddresses(secAdrs);
 
       return new TestObject(person.getId(), person);
    }

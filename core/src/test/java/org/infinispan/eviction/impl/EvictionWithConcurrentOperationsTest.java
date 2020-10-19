@@ -556,7 +556,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
    public static class SameHashCodeKey {
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       final String name;
 
       @ProtoField(number = 2, defaultValue = "0")

@@ -41,17 +41,17 @@ public class KeyValueWithPrevious<K, V> implements Serializable {
       return prev;
    }
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    WrappedMessage getWrappedKey() {
       return new WrappedMessage(key);
    }
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    WrappedMessage getWrappedValue() {
       return new WrappedMessage(value);
    }
 
-   @ProtoField(number = 3)
+   @ProtoField(3)
    WrappedMessage getWrappedPrev() {
       return new WrappedMessage(prev);
    }

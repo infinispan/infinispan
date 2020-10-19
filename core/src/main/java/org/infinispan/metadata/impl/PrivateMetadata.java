@@ -29,8 +29,9 @@ public final class PrivateMetadata {
     */
    private static final PrivateMetadata EMPTY = new PrivateMetadata(null, null);
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    final IracMetadata iracMetadata;
+
    private final IncrementableEntryVersion entryVersion;
 
    private PrivateMetadata(IracMetadata iracMetadata, IncrementableEntryVersion entryVersion) {
@@ -127,16 +128,15 @@ public final class PrivateMetadata {
       return Objects.hash(iracMetadata, entryVersion);
    }
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public NumericVersion getNumericVersion() {
       return entryVersion instanceof NumericVersion ? (NumericVersion) entryVersion : null;
    }
 
-   @ProtoField(number = 3)
+   @ProtoField(3)
    public SimpleClusteredVersion getClusteredVersion() {
       return entryVersion instanceof SimpleClusteredVersion ? (SimpleClusteredVersion) entryVersion : null;
    }
-
 
    public static class Builder {
 

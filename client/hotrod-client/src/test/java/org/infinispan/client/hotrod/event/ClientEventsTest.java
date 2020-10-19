@@ -4,7 +4,6 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClie
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.Serializable;
 import java.util.Set;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -227,7 +226,7 @@ public class ClientEventsTest extends SingleHotRodServerTest {
       }
    }
 
-   static final class CustomKey implements Serializable {
+   static final class CustomKey {
       @ProtoField(number = 1, defaultValue = "0")
       final int id;
 

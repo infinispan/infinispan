@@ -1,7 +1,5 @@
 package org.infinispan.persistence.jpa.entity;
 
-import java.io.Serializable;
-
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 
@@ -13,14 +11,14 @@ import org.infinispan.protostream.annotations.ProtoField;
  *
  */
 @Entity
-public class Vehicle implements Serializable {
+public class Vehicle {
 
    @EmbeddedId
    private VehicleId id;
 
    private String color;
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public VehicleId getId() {
       return id;
    }
@@ -29,7 +27,7 @@ public class Vehicle implements Serializable {
       this.id = id;
    }
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public String getColor() {
       return color;
    }

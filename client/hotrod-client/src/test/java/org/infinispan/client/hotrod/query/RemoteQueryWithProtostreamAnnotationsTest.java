@@ -63,7 +63,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       }
 
       @ProtoDoc("@Field(store = Store.YES)")
-      @ProtoField(number = 20)
+      @ProtoField(20)
       public String getText() {
          return text;
       }
@@ -73,7 +73,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       }
 
       @ProtoDoc("@Field(store = Store.YES)")
-      @ProtoField(number = 30)
+      @ProtoField(30)
       public Author getAuthor() {
          return author;
       }

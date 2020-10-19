@@ -1,17 +1,15 @@
 package org.infinispan.rest.search.entity;
 
-import java.io.Serializable;
-
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * @since 9.2
  */
-public class PhoneNumber implements Serializable {
+public class PhoneNumber {
 
    private String number;
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public String getNumber() {
       return number;
    }

@@ -146,12 +146,15 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
    }
 
    public static final class CustomEvent<K> {
-      @ProtoField(number = 1)
+      @ProtoField(1)
       final WrappedMessage key;
-      @ProtoField(number = 2)
+
+      @ProtoField(2)
       final String value;
+
       @ProtoField(number = 3, defaultValue = "-1")
       final long timestamp;
+
       @ProtoField(number = 4, defaultValue = "0")
       final int counter;
 
@@ -172,7 +175,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          if (this == o) return true;
          if (o == null || getClass() != o.getClass()) return false;
 
-         CustomEvent that = (CustomEvent) o;
+         CustomEvent<?> that = (CustomEvent<?>) o;
 
          if (counter != that.counter) return false;
          if (!key.getValue().equals(that.key.getValue())) return false;
@@ -356,8 +359,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          return new FilterConverter(params);
       }
 
-      static class FilterConverter extends AbstractCacheEventFilterConverter<Integer, String, CustomEvent>
-         implements Serializable {
+      static class FilterConverter extends AbstractCacheEventFilterConverter<Integer, String, CustomEvent> {
          private final Object[] params;
 
          @ProtoField(number = 1, defaultValue = "0")

@@ -51,7 +51,7 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
          this.name = name;
       }
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       public String getName() {
          return name;
       }
@@ -62,7 +62,7 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
    static class EvilTwin {
 
       @ProtoDoc("@Field(index=Index.YES, analyze=Analyze.NO)")
-      @ProtoField(number = 1)
+      @ProtoField(1)
       public String name;
    }
 

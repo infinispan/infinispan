@@ -41,7 +41,7 @@ public class MetadataEntityKey implements Serializable {
 
    @Override
    public boolean equals(Object o) {
-      if (o == null || !(o instanceof MetadataEntityKey))
+      if (!(o instanceof MetadataEntityKey))
          return false;
       return keySha.equals(((MetadataEntityKey) o).getKeySha());
    }

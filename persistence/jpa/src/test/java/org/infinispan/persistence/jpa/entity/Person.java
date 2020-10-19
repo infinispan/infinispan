@@ -1,6 +1,5 @@
 package org.infinispan.persistence.jpa.entity;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,7 +15,7 @@ import javax.persistence.Id;
 import org.infinispan.protostream.annotations.ProtoField;
 
 @Entity
-public class Person implements Serializable {
+public class Person {
 
    @Id
    private String id;
@@ -31,9 +30,9 @@ public class Person implements Serializable {
    private Address address;
 
    @ElementCollection(fetch = FetchType.EAGER)
-   private Set<Address> secondaryAdresses;
+   private Set<Address> secondaryAddresses;
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    public String getId() {
       return id;
    }
@@ -42,7 +41,7 @@ public class Person implements Serializable {
       this.id = id;
    }
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    public String getName() {
       return name;
    }
@@ -60,7 +59,7 @@ public class Person implements Serializable {
       this.nickNames = nickNames;
    }
 
-   @ProtoField(number = 4)
+   @ProtoField(4)
    public Address getAddress() {
       return address;
    }
@@ -70,12 +69,12 @@ public class Person implements Serializable {
    }
 
    @ProtoField(number = 5, collectionImplementation = HashSet.class)
-   public Set<Address> getSecondaryAdresses() {
-      return secondaryAdresses;
+   public Set<Address> getSecondaryAddresses() {
+      return secondaryAddresses;
    }
 
-   public void setSecondaryAdresses(Set<Address> secondaryAdresses) {
-      this.secondaryAdresses = secondaryAdresses;
+   public void setSecondaryAddresses(Set<Address> secondaryAddresses) {
+      this.secondaryAddresses = secondaryAddresses;
    }
 
    public boolean equals(Object o) {
@@ -95,8 +94,8 @@ public class Person implements Serializable {
          return false;
       if (address != null ? !address.equals(person.getAddress()) : person.getAddress() != null)
          return false;
-      if ( (secondaryAdresses != null  && !secondaryAdresses.isEmpty() ) ? !secondaryAdresses.equals(person.getSecondaryAdresses()) :
-         (person.getSecondaryAdresses() != null && !person.getSecondaryAdresses().isEmpty()))
+      if ( (secondaryAddresses != null  && !secondaryAddresses.isEmpty() ) ? !secondaryAddresses.equals(person.getSecondaryAddresses()) :
+         (person.getSecondaryAddresses() != null && !person.getSecondaryAddresses().isEmpty()))
          return false;
 
       return true;
@@ -109,7 +108,7 @@ public class Person implements Serializable {
       result = prime * result + (name != null ? name.hashCode() : 0);
       result = prime * result + (nickNames != null ? nickNames.hashCode() : 0);
       result = prime * result + (address != null ? address.hashCode() : 0);
-      result = prime * result + (secondaryAdresses != null ? secondaryAdresses.hashCode() : 0);
+      result = prime * result + (secondaryAddresses != null ? secondaryAddresses.hashCode() : 0);
       return result;
    }
 
@@ -120,7 +119,7 @@ public class Person implements Serializable {
             ", name='" + name + '\'' +
             ", nickNames=" + nickNames +
             ", address=" + address +
-            ", secondaryAdresses=" + secondaryAdresses +
+            ", secondaryAddresses=" + secondaryAddresses +
             '}';
    }
 }

@@ -4,7 +4,6 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.Assert.assertEquals;
 
 import java.io.File;
-import java.io.Serializable;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -108,7 +107,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
    }
 
    @Indexed
-   public static class SEntity implements Serializable {
+   public static class SEntity {
 
       public static final String IDX_NAME = "name";
 

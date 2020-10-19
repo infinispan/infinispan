@@ -1,28 +1,17 @@
 package org.infinispan.client.hotrod.marshall;
 
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
-import org.infinispan.marshall.AbstractSerializationContextInitializer;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 
-public class NotIndexedSCI extends AbstractSerializationContextInitializer {
+@AutoProtoSchemaBuilder(
+      includeClasses = NotIndexed.class,
+      schemaPackageName = "sample_bank_account",
+      schemaFileName = "not_indexed.proto",
+      schemaFilePath = "/",
+      service = false
+)
+public interface NotIndexedSCI extends SerializationContextInitializer {
 
-   public static final SerializationContextInitializer INSTANCE = new NotIndexedSCI();
-
-   NotIndexedSCI() {
-      super("not_indexed.proto");
-   }
-
-   @Override
-   public String getProtoFile() {
-      return "package sample_bank_account;\n" +
-            "message NotIndexed {\n" +
-            "\toptional string notIndexedField = 1;\n" +
-            "}\n";
-   }
-
-   @Override
-   public void registerMarshallers(SerializationContext ctx) {
-      ctx.registerMarshaller(new NotIndexedMarshaller());
-   }
+   SerializationContextInitializer INSTANCE = new NotIndexedSCIImpl();
 }

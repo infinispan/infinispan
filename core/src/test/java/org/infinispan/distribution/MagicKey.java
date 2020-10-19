@@ -37,7 +37,7 @@ public class MagicKey implements Serializable {
    /**
     * The name is used only for easier debugging and may be null. It is not part of equals()/hashCode().
     */
-   @ProtoField(number = 1)
+   @ProtoField(1)
    final String name;
 
    @ProtoField(number = 2, defaultValue = "0")
@@ -51,7 +51,7 @@ public class MagicKey implements Serializable {
    @ProtoField(number = 4, defaultValue = "0")
    final int segment;
 
-   @ProtoField(number = 5)
+   @ProtoField(5)
    final String address;
 
    @ProtoFactory

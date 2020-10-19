@@ -243,9 +243,10 @@ public class IracEntryVersion {
    @ProtoTypeId(ProtoStreamTypeIds.IRAC_VERSION_ENTRY)
    public static class MapEntry {
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       final String site;
-      @ProtoField(number = 2)
+
+      @ProtoField(2)
       final TopologyIracVersion version;
 
       @ProtoFactory

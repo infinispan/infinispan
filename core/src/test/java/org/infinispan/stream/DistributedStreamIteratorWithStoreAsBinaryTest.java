@@ -128,10 +128,10 @@ public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCach
 
    static class MapPair {
 
-      @ProtoField(number = 1)
+      @ProtoField(1)
       MagicKey key;
 
-      @ProtoField(number = 2)
+      @ProtoField(2)
       String value;
 
       MapPair() {}

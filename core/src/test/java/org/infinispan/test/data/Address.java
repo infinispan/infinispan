@@ -7,10 +7,10 @@ import org.infinispan.protostream.annotations.ProtoField;
 public class Address implements Serializable {
    private static final long serialVersionUID = 5943073369866339615L;
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    String street = null;
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    String city = "San Jose";
 
    @ProtoField(number = 3, defaultValue = "0")

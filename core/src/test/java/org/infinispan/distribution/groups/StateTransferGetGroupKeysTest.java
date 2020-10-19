@@ -147,7 +147,7 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
 
    public static class CustomConsistentHashFactory<CH extends ConsistentHash> extends BaseControlledConsistentHashFactory<CH> {
 
-      @ProtoField(number = 2)
+      @ProtoField(2)
       CacheMode cacheMode;
 
       CustomConsistentHashFactory() {}
