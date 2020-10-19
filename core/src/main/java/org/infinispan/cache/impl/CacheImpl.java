@@ -59,9 +59,11 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.commons.internal.QueryManager;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -175,6 +177,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Inject StorageConfigurationManager storageConfigurationManager;
    // TODO Remove after all ISPN-11584 is fixed and the AdvancedCache methods are implemented in EncoderCache
    @Inject ComponentRef<AdvancedCache> encoderCache;
+   @Inject QueryManager queryManager;
 
    protected Metadata defaultMetadata;
    private final String name;
@@ -1887,4 +1890,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return new PropertyFormatter().format(config);
    }
 
+   @Override
+   public <T> Query<T> query(String queryString) {
+      if (queryManager != null) {
+         return queryManager.createQuery(queryString);
+      } else {
+         throw new IllegalStateException();
+      }
+   }
 }

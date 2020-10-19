@@ -1,58 +1,32 @@
-package org.infinispan.query.dsl;
+package org.infinispan.commons.api;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.query.SearchTimeoutException;
-
-//todo [anistor] We need to deprecate the 'always caching' behaviour and provide a clearCachedResults method
 
 /**
  * An immutable object representing both the query and the result. The result is obtained lazily when one of the methods
  * in this interface is executed first time. The query is executed only once. Further calls will just return the
  * previously cached results. If you intend to re-execute the query to obtain fresh data you need to build another
- * instance using a {@link QueryBuilder}.
+ * instance using {@link QueryableCache#query(String)}
  *
  * @author anistor@redhat.com
- * @since 6.0
+ * @since 12.0
  */
-@Deprecated
-public interface Query<T> extends org.infinispan.commons.api.Query<T>, PaginationContext<Query<T>>, ParameterContext<Query<T>> {
+public interface Query<T> extends Iterable<T> {
+
    /**
-    * Returns the results of a search as a list.
-    *
-    * @return list of objects that were found from the search.
-    * @deprecated since 11.0, use {@link QueryResult#list()} instead.
+    * Returns the Ickle query string.
     */
-   @Deprecated
-   List<T> list();
+   String getQueryString();
 
    /**
     *  Executes the query. Subsequent invocations cause the query to be re-executed.
     *
     * @return {@link QueryResult} with the results.
-    * @since 11.0
     */
    QueryResult<T> execute();
-
-   /**
-    * Gets the total number of results matching the query, ignoring pagination (startOffset, maxResults).
-    *
-    * @return total number of results.
-    * @deprecated since 10.1. This will be removed in 12. It's closest replacement is {@link QueryResult#hitCount()}
-    * which returns an optional long.
-    */
-   @Deprecated
-   int getResultSize();
-
-   /**
-    * @return the values for query projections or {@code null} if the query does not have projections.
-    * @deprecated since 11.0. This method will be removed in next major version. To find out if a query uses projections use {@link #hasProjections()}
-    */
-   @Deprecated
-   String[] getProjection();
 
    /**
     * Indicates if the parsed query has projections (a SELECT clause) and consequently the returned results will
@@ -105,7 +79,7 @@ public interface Query<T> extends org.infinispan.commons.api.Query<T>, Paginatio
 
    /**
     *  Set the timeout for this query. If the query hasn't finished processing before the timeout,
-    *  a {@link SearchTimeoutException} will be thrown.
+    *  a {@link org.infinispan.commons.TimeoutException} will be thrown.
     */
    Query<T> timeout(long timeout, TimeUnit timeUnit);
 }

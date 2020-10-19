@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
 import org.infinispan.commons.api.BasicCache;
+import org.infinispan.commons.api.QueryableCache;
 import org.infinispan.commons.api.TransactionalCache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
@@ -55,7 +56,7 @@ import org.reactivestreams.Publisher;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache {
+public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache, QueryableCache {
    /**
     * Removes the given entry only if its version matches the supplied version. A typical use case looks like this:
     * <pre>

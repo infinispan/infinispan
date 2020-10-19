@@ -7,6 +7,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.Query;
+import org.infinispan.commons.internal.QueryManager;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
@@ -49,7 +53,8 @@ import org.infinispan.util.logging.LogFactory;
  * @param <TypeMetadata> the metadata of the indexed entities, either a java.lang.Class or an
  *                       org.infinispan.protostream.descriptors.Descriptor
  */
-public class QueryEngine<TypeMetadata> {
+@Scope(Scopes.NAMED_CACHE)
+public class QueryEngine<TypeMetadata> implements QueryManager {
 
    private static final Log log = LogFactory.getLog(QueryEngine.class, Log.class);
 
@@ -78,6 +83,11 @@ public class QueryEngine<TypeMetadata> {
 
    QueryEngine(AdvancedCache<?, ?> cache) {
       this(cache, ReflectionMatcher.class);
+   }
+
+   @Override
+   public <T> Query<T> createQuery(String queryString) {
+      return new EmbeddedQueryFactory(this).create(queryString);
    }
 
    public BaseQuery<?> buildQuery(QueryFactory queryFactory, IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults) {

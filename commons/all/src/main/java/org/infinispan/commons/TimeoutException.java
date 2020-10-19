@@ -1,4 +1,4 @@
-package org.infinispan.util.concurrent;
+package org.infinispan.commons;
 
 /**
  * Thrown when a timeout occurred. used by operations with timeouts, e.g. lock acquisition, or waiting for responses
@@ -6,9 +6,9 @@ package org.infinispan.util.concurrent;
  *
  * @author <a href="mailto:bela@jboss.org">Bela Ban</a>.
  * @author Mircea.Markus@jboss.com
- * @since 4.0
+ * @since 12.0
  */
-public class TimeoutException extends org.infinispan.commons.TimeoutException {
+public class TimeoutException extends CacheException {
 
    /**
     * The serialVersionUID

@@ -52,9 +52,11 @@ import org.infinispan.client.hotrod.impl.operations.ReplaceIfUnmodifiedOperation
 import org.infinispan.client.hotrod.impl.operations.ReplaceOperation;
 import org.infinispan.client.hotrod.impl.operations.SizeOperation;
 import org.infinispan.client.hotrod.impl.operations.StatsOperation;
+import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
+import org.infinispan.commons.api.Query;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
@@ -62,7 +64,6 @@ import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.query.dsl.Query;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -214,14 +215,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    }
 
    @Override
-   public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query<?> filterQuery, Set<Integer> segments, int batchSize) {
+   public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(org.infinispan.query.dsl.Query<?> filterQuery, Set<Integer> segments, int batchSize) {
       Publisher<Entry<K, Object>> remotePublisher = publishEntriesByQuery(filterQuery, segments, batchSize);
       //noinspection unchecked
       return Closeables.iterator((Publisher) remotePublisher, batchSize);
    }
 
    @Override
-   public <E> Publisher<Entry<K, E>> publishEntriesByQuery(Query<?> filterQuery, Set<Integer> segments, int batchSize) {
+   public <E> Publisher<Entry<K, E>> publishEntriesByQuery(org.infinispan.query.dsl.Query<?> filterQuery, Set<Integer> segments, int batchSize) {
       Object[] factoryParams = makeFactoryParams(filterQuery);
       return publishEntries(Filters.ITERATION_QUERY_FILTER_CONVERTER_FACTORY_NAME, factoryParams, segments, batchSize);
    }
@@ -675,5 +676,10 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public boolean hasForceReturnFlag() {
       return operationsFactory.hasFlag(Flag.FORCE_RETURN_VALUE);
+   }
+
+   @Override
+   public <T> Query<T> query(String queryString) {
+      return new RemoteQueryFactory(this).create(queryString);
    }
 }
