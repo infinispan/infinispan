@@ -144,8 +144,15 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
          resourceManager.registerResource(restContext, new ServerResource(invocationHelper));
          resourceManager.registerResource(restContext, new ClusterResource(invocationHelper));
          resourceManager.registerResource(restContext, new LoginResource(invocationHelper, rootContext + "console/", rootContext + "console/forbidden.html"));
-         resourceManager.registerResource(restContext, new LoggingResource(invocationHelper));
+         registerLoggingResource(resourceManager, restContext);
       }
       this.restDispatcher = new RestDispatcherImpl(resourceManager);
+   }
+
+   private void registerLoggingResource(ResourceManager resourceManager, String restContext) {
+      String includeLoggingResource = System.getProperty("infinispan.server.resource.logging", "true");
+      if (Boolean.parseBoolean(includeLoggingResource)) {
+         resourceManager.registerResource(restContext, new LoggingResource(invocationHelper));
+      }
    }
 }
