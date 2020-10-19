@@ -1,6 +1,7 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd"
+        version="4.2.0">
    <!-- Disable the regular thread pool queue for tests so we can set a lower min_threads -->
    <TCP_NIO2
          bind_addr="${jgroups.tcp.address:127.0.0.1}"
